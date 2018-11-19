@@ -123,45 +123,36 @@ const ascendingThresholdCheck = (value: number, thresholds: Thresholds): Thresho
   return { value: value, status: HEALTHY };
 };
 
-export const getRequestErrorsRatio = (rh: RequestHealth, propName?: keyof RequestHealth): ThresholdStatus => {
-  if (propName === undefined) {
-    propName = 'errorRatio';
-  }
-
-  if (rh[propName] < 0) {
+export const getRequestErrorsStatus = (ratio: number): ThresholdStatus => {
+  if (ratio < 0) {
     return {
       value: RATIO_NA,
       status: NA
     };
   }
-  return ascendingThresholdCheck(100 * rh[propName], REQUESTS_THRESHOLDS);
+  return ascendingThresholdCheck(100 * ratio, REQUESTS_THRESHOLDS);
+};
+
+export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix: string): HealthSubItem => {
+  return {
+    status: thresholdStatus.status,
+    text: prefix + ': ' + (thresholdStatus.status === NA ? 'No requests' : thresholdStatus.value.toFixed(2) + '%')
+  };
+};
+
+export const getRequestErrorsViolations = (reqIn: ThresholdStatus, reqOut: ThresholdStatus): string => {
+  const violations: string[] = [];
+  if (reqIn.violation) {
+    violations.push(`Inbound errors ${reqIn.status.name.toLowerCase()}: ${reqIn.violation}`);
+  }
+  if (reqOut.violation) {
+    violations.push(`Outbound errors ${reqOut.status.name.toLowerCase()}: ${reqOut.violation}`);
+  }
+  return violations.join(', ');
 };
 
 export abstract class Health {
   items: HealthItem[];
-
-  protected static getErrorsRatioDetail(rh: RequestHealth, direction: 'inbound' | 'outbound'): HealthSubItem {
-    const errorRatio = getRequestErrorsRatio(rh, `${direction}ErrorRatio` as keyof RequestHealth);
-    const health: HealthSubItem = {
-      status: errorRatio.status,
-      text: errorRatio.status === NA ? `No ${direction} requests` : `${errorRatio.value.toFixed(2)}% ${direction} error`
-    };
-
-    return health;
-  }
-
-  protected static adjustOverallHealth(health: HealthItem) {
-    // Show in the overall requests health status, the one of the highest priority
-    if (health.children === undefined) {
-      return;
-    }
-
-    health.children.forEach(child => {
-      if (child.status.priority > health.status.priority) {
-        health.status = child.status;
-      }
-    });
-  }
 
   constructor(items: HealthItem[]) {
     this.items = items;
@@ -208,7 +199,7 @@ export class ServiceHealth extends Health {
     }
     {
       // Request errors
-      const reqErrorsRatio = getRequestErrorsRatio(requests);
+      const reqErrorsRatio = getRequestErrorsStatus(requests.errorRatio);
       const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
       const item: HealthItem = {
         title: 'Error Rate',
@@ -295,26 +286,19 @@ export class AppHealth extends Health {
     }
     {
       // Request errors
-      const reqErrorsRatio = getRequestErrorsRatio(requests);
-      const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
+      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
+      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const both = mergeStatus(reqIn.status, reqOut.status);
       const item: HealthItem = {
-        title: 'Error Rate',
-        status: reqErrorsRatio.status,
-        text: reqErrorsText + ' over ' + getName(rateInterval).toLowerCase()
+        title: 'Error Rate over ' + getName(rateInterval).toLowerCase(),
+        status: both,
+        children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
-      if (reqErrorsRatio.violation) {
-        item.report = `Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`;
+      const violations = getRequestErrorsViolations(reqIn, reqOut);
+      if (violations.length > 0) {
+        item.report = violations;
       }
 
-      if (reqErrorsRatio.status !== NA) {
-        // Inbound and outbound detail
-        item.children = [
-          this.getErrorsRatioDetail(requests, 'inbound'),
-          this.getErrorsRatioDetail(requests, 'outbound')
-        ];
-      }
-
-      this.adjustOverallHealth(item);
       items.push(item);
     }
     return items;
@@ -355,26 +339,19 @@ export class WorkloadHealth extends Health {
     }
     {
       // Request errors
-      const reqErrorsRatio = getRequestErrorsRatio(requests);
-      const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
+      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
+      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const both = mergeStatus(reqIn.status, reqOut.status);
       const item: HealthItem = {
-        title: 'Error Rate',
-        status: reqErrorsRatio.status,
-        text: reqErrorsText + ' over ' + getName(rateInterval).toLowerCase()
+        title: 'Error Rate over ' + getName(rateInterval).toLowerCase(),
+        status: both,
+        children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
-      if (reqErrorsRatio.violation) {
-        item.report = `Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`;
+      const violations = getRequestErrorsViolations(reqIn, reqOut);
+      if (violations.length > 0) {
+        item.report = violations;
       }
 
-      if (reqErrorsRatio.status !== NA) {
-        // Inbound and outbound detail
-        item.children = [
-          this.getErrorsRatioDetail(requests, 'inbound'),
-          this.getErrorsRatioDetail(requests, 'outbound')
-        ];
-      }
-
-      this.adjustOverallHealth(item);
       items.push(item);
     }
     return items;

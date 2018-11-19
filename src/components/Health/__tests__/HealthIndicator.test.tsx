@@ -144,6 +144,7 @@ describe('HealthIndicator', () => {
     expect(wrapper).toMatchSnapshot();
     html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).toContain('Error rate failure');
+    expect(html).toContain('Outbound errors failure');
+    expect(html).toContain('Inbound errors degraded');
   });
 });

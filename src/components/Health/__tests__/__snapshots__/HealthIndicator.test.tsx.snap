@@ -80,14 +80,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -203,14 +222,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -341,14 +379,33 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
               "status": Object {
                 "color": "#72767b",
                 "name": "No health information",
                 "priority": 0,
                 "text": "N/A",
               },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -478,14 +535,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -616,14 +692,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -771,14 +866,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -895,14 +1009,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -1041,14 +1174,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -1191,14 +1343,33 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
                     "status": Object {
                       "color": "#72767b",
                       "name": "No health information",
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -1337,14 +1508,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -1505,14 +1695,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -1629,14 +1838,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -1768,14 +1996,33 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
               "status": Object {
                 "color": "#72767b",
                 "name": "No health information",
                 "priority": 0,
                 "text": "N/A",
               },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -1906,14 +2153,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -2045,14 +2311,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -2201,14 +2486,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -2326,14 +2630,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -2486,14 +2809,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -2680,14 +3022,33 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
                     "status": Object {
                       "color": "#72767b",
                       "name": "No health information",
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -2840,14 +3201,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -3049,7 +3429,7 @@ ShallowWrapper {
                   "name": "Degraded",
                   "priority": 2,
                 },
-                "text": "10.00% inbound error",
+                "text": "Inbound: 10.00%",
               },
               Object {
                 "status": Object {
@@ -3058,18 +3438,17 @@ ShallowWrapper {
                   "name": "Failure",
                   "priority": 3,
                 },
-                "text": "20.00% outbound error",
+                "text": "Outbound: 20.00%",
               },
             ],
-            "report": "Error rate failure: 30.00%>=20%",
+            "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
             "status": Object {
               "color": "#cc0000",
               "icon": "error-circle-o",
               "name": "Failure",
               "priority": 3,
             },
-            "text": "30.00% over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -3179,7 +3558,7 @@ ShallowWrapper {
                       "name": "Degraded",
                       "priority": 2,
                     },
-                    "text": "10.00% inbound error",
+                    "text": "Inbound: 10.00%",
                   },
                   Object {
                     "status": Object {
@@ -3188,18 +3567,17 @@ ShallowWrapper {
                       "name": "Failure",
                       "priority": 3,
                     },
-                    "text": "20.00% outbound error",
+                    "text": "Outbound: 20.00%",
                   },
                 ],
-                "report": "Error rate failure: 30.00%>=20%",
+                "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "text": "30.00% over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -3324,7 +3702,7 @@ ShallowWrapper {
                     "name": "Degraded",
                     "priority": 2,
                   },
-                  "text": "10.00% inbound error",
+                  "text": "Inbound: 10.00%",
                 },
                 Object {
                   "status": Object {
@@ -3333,18 +3711,17 @@ ShallowWrapper {
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "text": "20.00% outbound error",
+                  "text": "Outbound: 20.00%",
                 },
               ],
-              "report": "Error rate failure: 30.00%>=20%",
+              "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
               "status": Object {
                 "color": "#cc0000",
                 "icon": "error-circle-o",
                 "name": "Failure",
                 "priority": 3,
               },
-              "text": "30.00% over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -3468,7 +3845,7 @@ ShallowWrapper {
                         "name": "Degraded",
                         "priority": 2,
                       },
-                      "text": "10.00% inbound error",
+                      "text": "Inbound: 10.00%",
                     },
                     Object {
                       "status": Object {
@@ -3477,18 +3854,17 @@ ShallowWrapper {
                         "name": "Failure",
                         "priority": 3,
                       },
-                      "text": "20.00% outbound error",
+                      "text": "Outbound: 20.00%",
                     },
                   ],
-                  "report": "Error rate failure: 30.00%>=20%",
+                  "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "text": "30.00% over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -3613,7 +3989,7 @@ ShallowWrapper {
                       "name": "Degraded",
                       "priority": 2,
                     },
-                    "text": "10.00% inbound error",
+                    "text": "Inbound: 10.00%",
                   },
                   Object {
                     "status": Object {
@@ -3622,18 +3998,17 @@ ShallowWrapper {
                       "name": "Failure",
                       "priority": 3,
                     },
-                    "text": "20.00% outbound error",
+                    "text": "Outbound: 20.00%",
                   },
                 ],
-                "report": "Error rate failure: 30.00%>=20%",
+                "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "text": "30.00% over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -3775,7 +4150,7 @@ ShallowWrapper {
                   "name": "Degraded",
                   "priority": 2,
                 },
-                "text": "10.00% inbound error",
+                "text": "Inbound: 10.00%",
               },
               Object {
                 "status": Object {
@@ -3784,18 +4159,17 @@ ShallowWrapper {
                   "name": "Failure",
                   "priority": 3,
                 },
-                "text": "20.00% outbound error",
+                "text": "Outbound: 20.00%",
               },
             ],
-            "report": "Error rate failure: 30.00%>=20%",
+            "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
             "status": Object {
               "color": "#cc0000",
               "icon": "error-circle-o",
               "name": "Failure",
               "priority": 3,
             },
-            "text": "30.00% over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -3906,7 +4280,7 @@ ShallowWrapper {
                         "name": "Degraded",
                         "priority": 2,
                       },
-                      "text": "10.00% inbound error",
+                      "text": "Inbound: 10.00%",
                     },
                     Object {
                       "status": Object {
@@ -3915,18 +4289,17 @@ ShallowWrapper {
                         "name": "Failure",
                         "priority": 3,
                       },
-                      "text": "20.00% outbound error",
+                      "text": "Outbound: 20.00%",
                     },
                   ],
-                  "report": "Error rate failure: 30.00%>=20%",
+                  "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "text": "30.00% over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -3972,7 +4345,7 @@ ShallowWrapper {
             Envoy health degraded
           </li>
           <li>
-            Error rate failure: 30.00%&gt;=20%
+            Inbound errors degraded: 10.00%&gt;=0.1%, Outbound errors failure: 20.00%&gt;=20%
           </li>
         </ul>,
       ],
@@ -4072,7 +4445,7 @@ ShallowWrapper {
                       "name": "Degraded",
                       "priority": 2,
                     },
-                    "text": "10.00% inbound error",
+                    "text": "Inbound: 10.00%",
                   },
                   Object {
                     "status": Object {
@@ -4081,18 +4454,17 @@ ShallowWrapper {
                       "name": "Failure",
                       "priority": 3,
                     },
-                    "text": "20.00% outbound error",
+                    "text": "Outbound: 20.00%",
                   },
                 ],
-                "report": "Error rate failure: 30.00%>=20%",
+                "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                 "status": Object {
                   "color": "#cc0000",
                   "icon": "error-circle-o",
                   "name": "Failure",
                   "priority": 3,
                 },
-                "text": "30.00% over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -4152,7 +4524,7 @@ ShallowWrapper {
               Envoy health degraded
             </li>,
             <li>
-              Error rate failure: 30.00%&gt;=20%
+              Inbound errors degraded: 10.00%&gt;=0.1%, Outbound errors failure: 20.00%&gt;=20%
             </li>,
           ],
           "style": Object {
@@ -4177,10 +4549,10 @@ ShallowWrapper {
             "key": "1",
             "nodeType": "host",
             "props": Object {
-              "children": "Error rate failure: 30.00%>=20%",
+              "children": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
             },
             "ref": null,
-            "rendered": "Error rate failure: 30.00%>=20%",
+            "rendered": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
             "type": "li",
           },
         ],
@@ -4272,7 +4644,7 @@ ShallowWrapper {
                           "name": "Degraded",
                           "priority": 2,
                         },
-                        "text": "10.00% inbound error",
+                        "text": "Inbound: 10.00%",
                       },
                       Object {
                         "status": Object {
@@ -4281,18 +4653,17 @@ ShallowWrapper {
                           "name": "Failure",
                           "priority": 3,
                         },
-                        "text": "20.00% outbound error",
+                        "text": "Outbound: 20.00%",
                       },
                     ],
-                    "report": "Error rate failure: 30.00%>=20%",
+                    "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                     "status": Object {
                       "color": "#cc0000",
                       "icon": "error-circle-o",
                       "name": "Failure",
                       "priority": 3,
                     },
-                    "text": "30.00% over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -4338,7 +4709,7 @@ ShallowWrapper {
               Envoy health degraded
             </li>
             <li>
-              Error rate failure: 30.00%&gt;=20%
+              Inbound errors degraded: 10.00%&gt;=0.1%, Outbound errors failure: 20.00%&gt;=20%
             </li>
           </ul>,
         ],
@@ -4438,7 +4809,7 @@ ShallowWrapper {
                         "name": "Degraded",
                         "priority": 2,
                       },
-                      "text": "10.00% inbound error",
+                      "text": "Inbound: 10.00%",
                     },
                     Object {
                       "status": Object {
@@ -4447,18 +4818,17 @@ ShallowWrapper {
                         "name": "Failure",
                         "priority": 3,
                       },
-                      "text": "20.00% outbound error",
+                      "text": "Outbound: 20.00%",
                     },
                   ],
-                  "report": "Error rate failure: 30.00%>=20%",
+                  "report": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
                   "status": Object {
                     "color": "#cc0000",
                     "icon": "error-circle-o",
                     "name": "Failure",
                     "priority": 3,
                   },
-                  "text": "30.00% over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -4518,7 +4888,7 @@ ShallowWrapper {
                 Envoy health degraded
               </li>,
               <li>
-                Error rate failure: 30.00%&gt;=20%
+                Inbound errors degraded: 10.00%&gt;=0.1%, Outbound errors failure: 20.00%&gt;=20%
               </li>,
             ],
             "style": Object {
@@ -4543,10 +4913,10 @@ ShallowWrapper {
               "key": "1",
               "nodeType": "host",
               "props": Object {
-                "children": "Error rate failure: 30.00%>=20%",
+                "children": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
               },
               "ref": null,
-              "rendered": "Error rate failure: 30.00%>=20%",
+              "rendered": "Inbound errors degraded: 10.00%>=0.1%, Outbound errors failure: 20.00%>=20%",
               "type": "li",
             },
           ],
@@ -4655,14 +5025,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -4777,14 +5166,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -4914,14 +5322,33 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
               "status": Object {
                 "color": "#72767b",
                 "name": "No health information",
                 "priority": 0,
                 "text": "N/A",
               },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -5050,14 +5477,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -5187,14 +5633,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -5341,14 +5806,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -5464,14 +5948,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -5609,14 +6112,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -5758,14 +6280,33 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
                     "status": Object {
                       "color": "#72767b",
                       "name": "No health information",
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -5903,14 +6444,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -6070,14 +6630,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -6193,14 +6772,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -6331,14 +6929,33 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
               "status": Object {
                 "color": "#72767b",
                 "name": "No health information",
                 "priority": 0,
                 "text": "N/A",
               },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -6468,14 +7085,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -6606,14 +7242,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -6761,14 +7416,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -6885,14 +7559,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -7031,14 +7724,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -7181,14 +7893,33 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
                     "status": Object {
                       "color": "#72767b",
                       "name": "No health information",
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -7327,14 +8058,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -7494,14 +8244,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -7617,14 +8386,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -7755,14 +8543,33 @@ ShallowWrapper {
               "title": "Envoy Health",
             },
             Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "color": "#72767b",
+                    "name": "No health information",
+                    "priority": 0,
+                    "text": "N/A",
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
               "status": Object {
                 "color": "#72767b",
                 "name": "No health information",
                 "priority": 0,
                 "text": "N/A",
               },
-              "text": "No requests over last 10 min",
-              "title": "Error Rate",
+              "title": "Error Rate over last 10 min",
             },
           ],
           "rateInterval": 600,
@@ -7892,14 +8699,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -8030,14 +8856,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -8185,14 +9030,33 @@ ShallowWrapper {
             "title": "Envoy Health",
           },
           Object {
+            "children": Array [
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Inbound: No requests",
+              },
+              Object {
+                "status": Object {
+                  "color": "#72767b",
+                  "name": "No health information",
+                  "priority": 0,
+                  "text": "N/A",
+                },
+                "text": "Outbound: No requests",
+              },
+            ],
             "status": Object {
               "color": "#72767b",
               "name": "No health information",
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 10 min",
-            "title": "Error Rate",
+            "title": "Error Rate over last 10 min",
           },
         ],
         "rateInterval": 600,
@@ -8309,14 +9173,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
@@ -8455,14 +9338,33 @@ ShallowWrapper {
                 "title": "Envoy Health",
               },
               Object {
+                "children": Array [
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Inbound: No requests",
+                  },
+                  Object {
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "text": "Outbound: No requests",
+                  },
+                ],
                 "status": Object {
                   "color": "#72767b",
                   "name": "No health information",
                   "priority": 0,
                   "text": "N/A",
                 },
-                "text": "No requests over last 10 min",
-                "title": "Error Rate",
+                "title": "Error Rate over last 10 min",
               },
             ],
             "rateInterval": 600,
@@ -8605,14 +9507,33 @@ ShallowWrapper {
                     "title": "Envoy Health",
                   },
                   Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
                     "status": Object {
                       "color": "#72767b",
                       "name": "No health information",
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "text": "No requests over last 10 min",
-                    "title": "Error Rate",
+                    "title": "Error Rate over last 10 min",
                   },
                 ],
                 "rateInterval": 600,
@@ -8751,14 +9672,33 @@ ShallowWrapper {
                   "title": "Envoy Health",
                 },
                 Object {
+                  "children": Array [
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Inbound: No requests",
+                    },
+                    Object {
+                      "status": Object {
+                        "color": "#72767b",
+                        "name": "No health information",
+                        "priority": 0,
+                        "text": "N/A",
+                      },
+                      "text": "Outbound: No requests",
+                    },
+                  ],
                   "status": Object {
                     "color": "#72767b",
                     "name": "No health information",
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "text": "No requests over last 10 min",
-                  "title": "Error Rate",
+                  "title": "Error Rate over last 10 min",
                 },
               ],
               "rateInterval": 600,
