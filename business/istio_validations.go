@@ -35,7 +35,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 
 	// Get Gateways and ServiceEntries to validate VirtualServices
 	wg := sync.WaitGroup{}
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 64)
 
 	istioDetails := kubernetes.IstioDetails{}
 	vs := make([]kubernetes.IstioObject, 0)
@@ -48,6 +48,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	go fetch(&drs, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
 	go in.serviceFetcher(&services, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
+	gwChecker := in.getGatewayChecker(errChan, &wg) // Block
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
@@ -59,6 +60,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 		checkers.VirtualServiceChecker{namespace, drs, vs},
 		checkers.DestinationRulesChecker{DestinationRules: drs},
 		checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads},
+		gwChecker,
 	}
 
 	// Get group validations for same kind istio objects
@@ -83,7 +85,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 
 	// Get Gateways and ServiceEntries to validate VirtualServices
 	wg := sync.WaitGroup{}
-	errChan := make(chan error, 4)
+	errChan := make(chan error, 64)
 
 	gws := make([]kubernetes.IstioObject, 0)
 	ses := make([]kubernetes.IstioObject, 0)
@@ -95,6 +97,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	go fetchNoEntry(&ses, namespace, in.k8s.GetServiceEntries, &wg, errChan)
 	go in.serviceFetcher(&services, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
+	gwChecker := in.getGatewayChecker(errChan, &wg) // Block current goroutine
 
 	wg.Wait()
 	if len(errChan) == 0 {
@@ -110,6 +113,7 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 			istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, Services: services, WorkloadList: workloads},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules},
+		gwChecker,
 	}
 
 	return models.NamespaceValidations{namespace: runObjectCheckers(objectCheckers)}, nil
@@ -132,11 +136,12 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	var objectCheckers []ObjectChecker
 	istioDetails := kubernetes.IstioDetails{}
 	wg := sync.WaitGroup{}
-	errChan := make(chan error, 4)
+	errChan := make(chan error, 64)
 
 	switch objectType {
 	case Gateways:
-		// Validations on Gateways are not yet in place
+		// This will block the processing thread, but we have no option. We don't know which requests to make before we have this information
+		objectCheckers = []ObjectChecker{in.getGatewayChecker(errChan, &wg)}
 	case VirtualServices:
 		wg.Add(5)
 		go fetch(&vss, namespace, "", in.k8s.GetVirtualServices, &wg, errChan)
@@ -158,9 +163,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 			noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads}
 			objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
-		} else {
-			err = <-errChan
-			close(errChan)
 		}
 	case DestinationRules:
 		// TODO Replicated code from the virtualservices part also.. this package needs an overhaul
@@ -186,9 +188,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 			destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: drs}
 			noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads}
 			objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
-		} else {
-			err = <-errChan
-			close(errChan)
 		}
 	case ServiceEntries:
 		// Validations on ServiceEntries are not yet in place
@@ -202,11 +201,41 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
 
+	if len(errChan) > 0 {
+		if err == nil {
+			err = <-errChan
+		}
+		close(errChan)
+	}
+
 	if objectCheckers == nil || err != nil {
 		return models.IstioValidations{}, err
 	}
 
 	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), nil
+}
+
+func (in *IstioValidationsService) getGatewayChecker(errChan chan error, wg *sync.WaitGroup) checkers.GatewayChecker {
+	if nss, err := in.k8s.GetNamespaces(); err == nil {
+		gwss := make([][]kubernetes.IstioObject, len(nss))
+		for i := range nss {
+			gwss[i] = make([]kubernetes.IstioObject, 0)
+		}
+
+		wg.Add(len(nss))
+		for i, ns := range nss {
+			go fetchNoEntry(&gwss[i], ns.Name, in.k8s.GetGateways, wg, errChan)
+		}
+		wg.Wait()
+
+		if len(errChan) == 0 {
+			return checkers.GatewayChecker{GatewaysPerNamespace: gwss}
+		}
+	} else {
+		errChan <- err
+	}
+
+	return checkers.GatewayChecker{}
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
@@ -234,7 +263,7 @@ func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher fu
 	defer wg.Done()
 	fetched, err := fetcher(namespace)
 	*rValue = append(*rValue, fetched...)
-	if err != nil {
+	if err != nil && len(errChan) == 0 {
 		errChan <- err
 	}
 }
@@ -242,7 +271,7 @@ func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher fu
 func (in *IstioValidationsService) serviceFetcher(rValue *[]v1.Service, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	services, err := in.k8s.GetServices(namespace, nil)
-	if err != nil {
+	if err != nil && len(errChan) == 0 {
 		errChan <- err
 	} else {
 		*rValue = services
@@ -252,7 +281,7 @@ func (in *IstioValidationsService) serviceFetcher(rValue *[]v1.Service, namespac
 func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	workloadList, err := in.ws.GetWorkloadList(namespace)
-	if err != nil {
+	if err != nil && len(errChan) == 0 {
 		errChan <- err
 	} else {
 		*rValue = workloadList
