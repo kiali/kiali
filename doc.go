@@ -114,11 +114,11 @@ type GraphTypeParam struct {
 
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
 type GroupByParam struct {
-	// App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].
+	// App box grouping characteristic. Available groupings: [app, none, version].
 	//
 	// in: query
 	// required: false
-	// default: version
+	// default: none
 	Name string `json:"groupBy"`
 }
 

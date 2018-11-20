@@ -9,7 +9,7 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "reviews",
-          "isGroup": "version"
+          "isGroup": "app"
         }
       },
       {

@@ -849,9 +849,9 @@
           },
           {
             "type": "string",
-            "default": "version",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
             "in": "query"
           },
@@ -950,9 +950,9 @@
           },
           {
             "type": "string",
-            "default": "version",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
             "in": "query"
           },
@@ -1051,9 +1051,9 @@
           },
           {
             "type": "string",
-            "default": "version",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
             "in": "query"
           },
@@ -1487,9 +1487,9 @@
           },
           {
             "type": "string",
-            "default": "version",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
             "in": "query"
           },
@@ -1697,9 +1697,9 @@
           },
           {
             "type": "string",
-            "default": "version",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "App box grouping characteristic. Ignored unless graph type is versionedApp. Available groupings: [version].",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
             "name": "groupBy",
             "in": "query"
           },

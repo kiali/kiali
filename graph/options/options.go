@@ -19,14 +19,17 @@ import (
 
 const (
 	AppenderAll               string = "_all_"
+	GroupByApp                string = "app"
+	GroupByNone               string = "none"
 	GroupByVersion            string = "version"
 	NamespaceIstio            string = "istio-system"
+	VendorCytoscape           string = "cytoscape"
 	defaultDuration           string = "10m"
 	defaultGraphType          string = graph.GraphTypeWorkload
-	defaultGroupBy            string = GroupByVersion
+	defaultGroupBy            string = GroupByNone
 	defaultIncludeIstio       bool   = false
 	defaultInjectServiceNodes bool   = false
-	defaultVendor             string = "cytoscape"
+	defaultVendor             string = VendorCytoscape
 )
 
 const (
@@ -88,10 +91,10 @@ func NewOptions(r *http.Request) Options {
 	if durationErr != nil {
 		duration, _ = time.ParseDuration(defaultDuration)
 	}
-	if "" == graphType {
+	if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
 		graphType = defaultGraphType
 	}
-	if "" == groupBy {
+	if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
 		groupBy = defaultGroupBy
 	}
 	if includeIstioErr != nil {
@@ -103,7 +106,7 @@ func NewOptions(r *http.Request) Options {
 	if queryTimeErr != nil {
 		queryTime = time.Now().Unix()
 	}
-	if "" == vendor {
+	if vendor != VendorCytoscape {
 		vendor = defaultVendor
 	}
 

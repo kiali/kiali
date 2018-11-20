@@ -87,42 +87,14 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Ser
 	return &models.ServiceList{Namespace: namespace, Services: services}
 }
 
-// GetService returns a single service
+// GetService returns a single service and associated data using the interval and queryTime
 func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
 	defer promtimer.ObserveNow(&err)
 
-	var svc *v1.Service
-	var eps *v1.Endpoints
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	errChan := make(chan error, 2)
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		svc, err2 = in.k8s.GetService(namespace, service)
-		if err2 != nil {
-			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		eps, err2 = in.k8s.GetEndpoints(namespace, service)
-		if err2 != nil {
-			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
-			errChan <- err2
-		}
-	}()
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err = <-errChan
+	svc, eps, err := in.getServiceDefinition(namespace, service)
+	if err != nil {
 		return nil, err
 	}
 
@@ -132,9 +104,9 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var sWk map[string][]prometheus.Workload
 	var ws models.Workloads
 
-	wg = sync.WaitGroup{}
+	wg := sync.WaitGroup{}
 	wg.Add(8)
-	errChan = make(chan error, 6)
+	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -229,4 +201,55 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetDestinationRules(dr, drUpdate, drDelete)
 	s.SetSourceWorkloads(sWk)
 	return &s, nil
+}
+
+// GetServiceDefinition returns a single service definition (the service object and endpoints), no istio or runtime information
+func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.ServiceDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceDefinition")
+	defer promtimer.ObserveNow(&err)
+
+	svc, eps, err := in.getServiceDefinition(namespace, service)
+	if err != nil {
+		return nil, err
+	}
+
+	s := models.ServiceDetails{}
+	s.SetService(svc)
+	s.SetEndpoints(eps)
+	return &s, nil
+}
+
+func (in *SvcService) getServiceDefinition(namespace, service string) (svc *v1.Service, eps *v1.Endpoints, err error) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	errChan := make(chan error, 2)
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		svc, err2 = in.k8s.GetService(namespace, service)
+		if err2 != nil {
+			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		eps, err2 = in.k8s.GetEndpoints(namespace, service)
+		if err2 != nil {
+			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
+			errChan <- err2
+		}
+	}()
+
+	wg.Wait()
+	if len(errChan) != 0 {
+		err = <-errChan
+		return nil, nil, err
+	}
+
+	return svc, eps, nil
 }

@@ -433,7 +433,7 @@ func populateTrafficMapHttp(trafficMap graph.TrafficMap, vector *model.Vector, o
 	}
 }
 
-func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) {
+func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) (source, dest *graph.Node) {
 
 	source, sourceFound := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
@@ -478,6 +478,8 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 	addToMetadataValue(source.Metadata, "rateOut", val)
 	addToMetadataValue(dest.Metadata, ck, val)
 	addToMetadataValue(dest.Metadata, "rate", val)
+
+	return source, dest
 }
 
 func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
@@ -532,7 +534,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 	}
 }
 
-func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) {
+func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string, o options.Options) (source, dest *graph.Node) {
 
 	source, sourceFound := addNode(trafficMap, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destWl, destApp, destVer, destSvcName, o)
@@ -563,6 +565,8 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceW
 	addToMetadataValue(edge.Metadata, "tcpSentRate", val)
 	addToMetadataValue(source.Metadata, "tcpSentRateOut", val)
 	addToMetadataValue(dest.Metadata, "tcpSentRate", val)
+
+	return source, dest
 }
 
 func addToMetadataValue(md map[string]interface{}, k string, v float64) {
@@ -659,20 +663,14 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
-	// Here, it's true that o.Namespaces has only one item. So, it's safe to use "for" knowing
-	// that only one iteration will happen.
-	var n graph.Node
-	var namespace graph.NamespaceInfo
-	for _, namespace = range o.Namespaces {
-		n = graph.NewNode(namespace.Name, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.NodeOptions.Service, o.GraphType)
-	}
+	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.NodeOptions.Service, o.GraphType)
 
 	log.Debugf("Build graph for node [%+v]", n)
 
-	trafficMap := buildNodeTrafficMap(namespace.Name, n, o, client)
+	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
 	globalInfo := appender.NewGlobalInfo()
-	namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
+	namespaceInfo := appender.NewNamespaceInfo(o.NodeOptions.Namespace)
 
 	for _, a := range o.Appenders {
 		appenderTimer := internalmetrics.GetGraphAppenderTimePrometheusTimer(a.Name())
@@ -686,6 +684,10 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	// - mark the traffic generators
 	markOutsiders(trafficMap, o)
 	markTrafficGenerators(trafficMap)
+
+	// Note that this is where we would call reduceToServiceGraph for graphTypeService but
+	// the current decision is to not reduce the node graph to provide more detail.  This may be
+	// confusing to users, we'll see...
 
 	generateGraph(trafficMap, w, o)
 

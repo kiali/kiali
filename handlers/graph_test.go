@@ -391,7 +391,7 @@ func TestAppGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespaces
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&groupBy=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -425,7 +425,7 @@ func TestVersionedAppGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespaces
-	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -697,7 +697,7 @@ func TestAppNodeGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNode
-	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/graph?graphType=versionedApp&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/graph?graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -901,7 +901,7 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNode
-	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/versions/v1/graph?graphType=versionedApp&appenders&queryTime=1523364075"
+	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/versions/v1/graph?graphType=versionedApp&groupBy=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
@@ -1306,7 +1306,7 @@ func TestComplexGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespaces
-	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial"
+	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&groupBy=app&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

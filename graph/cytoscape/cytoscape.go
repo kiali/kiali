@@ -107,9 +107,18 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 
 	buildConfig(trafficMap, &nodes, &edges, o)
 
-	// Add compound nodes that group together different versions of the same node
-	if o.GraphType == graph.GraphTypeVersionedApp && o.GroupBy == options.GroupByVersion {
-		groupByVersion(&nodes)
+	// Add compound nodes as needed
+	switch o.GroupBy {
+	case options.GroupByApp:
+		if o.GraphType != graph.GraphTypeService {
+			groupByApp(&nodes)
+		}
+	case options.GroupByVersion:
+		if o.GraphType == graph.GraphTypeVersionedApp {
+			groupByVersion(&nodes)
+		}
+	default:
+		// no grouping
 	}
 
 	// sort nodes and edges for better json presentation (and predictable testing)
@@ -346,18 +355,36 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 
 // groupByVersion adds compound nodes to group multiple versions of the same app
 func groupByVersion(nodes *[]*NodeWrapper) {
-	grouped := make(map[string][]*NodeData)
+	appBox := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
 		if nw.Data.NodeType == graph.NodeTypeApp {
 			k := fmt.Sprintf("box_%s_%s", nw.Data.Namespace, nw.Data.App)
-			grouped[k] = append(grouped[k], nw.Data)
+			appBox[k] = append(appBox[k], nw.Data)
 		}
 	}
 
-	for k, members := range grouped {
+	generateGroupCompoundNodes(appBox, nodes, options.GroupByVersion)
+}
+
+// groupByApp adds compound nodes to group all nodes for the same app
+func groupByApp(nodes *[]*NodeWrapper) {
+	appBox := make(map[string][]*NodeData)
+
+	for _, nw := range *nodes {
+		if nw.Data.App != "unknown" && nw.Data.App != "" {
+			k := fmt.Sprintf("box_%s_%s", nw.Data.Namespace, nw.Data.App)
+			appBox[k] = append(appBox[k], nw.Data)
+		}
+	}
+
+	generateGroupCompoundNodes(appBox, nodes, options.GroupByApp)
+}
+
+func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWrapper, groupBy string) {
+	for k, members := range appBox {
 		if len(members) > 1 {
-			// create the compound grouping all versions of the app
+			// create the compound (parent) node for the member nodes
 			nodeId := nodeHash(k)
 			nd := NodeData{
 				Id:        nodeId,
@@ -365,14 +392,14 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 				Namespace: members[0].Namespace,
 				App:       members[0].App,
 				Version:   "",
-				IsGroup:   options.GroupByVersion,
+				IsGroup:   groupBy,
 			}
 
 			nw := NodeWrapper{
 				Data: &nd,
 			}
 
-			// assign each app version node to the compound parent
+			// assign each member node to the compound parent
 			nd.HasMissingSC = false // TODO: this is probably unecessarily noisy
 			nd.IsInaccessible = false
 			nd.IsOutside = false
