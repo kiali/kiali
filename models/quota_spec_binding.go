@@ -25,6 +25,6 @@ func (qsb *QuotaSpecBinding) Parse(quotaSpecBinding kubernetes.IstioObject) {
 	qsb.Name = quotaSpecBinding.GetObjectMeta().Name
 	qsb.CreatedAt = formatTime(quotaSpecBinding.GetObjectMeta().CreationTimestamp.Time)
 	qsb.ResourceVersion = quotaSpecBinding.GetObjectMeta().ResourceVersion
-	qsb.QuotaSpecs = quotaSpecBinding.GetSpec()["rules"]
+	qsb.QuotaSpecs = quotaSpecBinding.GetSpec()["quotaSpecs"]
 	qsb.Services = quotaSpecBinding.GetSpec()["services"]
 }
