@@ -5,7 +5,11 @@ import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 
 export namespace IstioConfigListFilters {
   export const getType = (item: IstioConfigItem): string => {
-    return item.type === 'adapter' ? item.type + '_' + item.adapter!.adapter : item.type === 'template' ? item.type + '_' + item.template!.template : item.type;
+    return item.type === 'adapter'
+      ? item.type + '_' + item.adapter!.adapter
+      : item.type === 'template'
+        ? item.type + '_' + item.template!.template
+        : item.type;
   };
   export const sortFields: SortField<IstioConfigItem>[] = [
     {
@@ -35,7 +39,9 @@ export namespace IstioConfigListFilters {
         // On same name order is not well defined, we need some fallback methods
         // This happens specially on adapters/templates where Istio 1.0.x calls them "handler"
         // So, we have a lot of objects with same namespace+name
-        return a.name.localeCompare(b.name) || a.namespace.localeCompare(b.namespace) || getType(a).localeCompare(getType(b));
+        return (
+          a.name.localeCompare(b.name) || a.namespace.localeCompare(b.namespace) || getType(a).localeCompare(getType(b))
+        );
       }
     },
     {
