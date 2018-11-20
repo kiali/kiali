@@ -154,7 +154,23 @@ export class GraphStyles {
 
       if (getCyGlobalData(ele).showNodeLabels) {
         if (ele.data('parent')) {
-          content = nodeType !== NodeType.APP ? 'error/unknown' : version;
+          switch (nodeType) {
+            case NodeType.APP:
+              if (version && version !== 'unknown') {
+                content = version;
+              } else {
+                content = app;
+              }
+              break;
+            case NodeType.SERVICE:
+              content = service;
+              break;
+            case NodeType.WORKLOAD:
+              content = workload;
+              break;
+            default:
+              content = '';
+          }
         } else {
           switch (nodeType) {
             case NodeType.APP:

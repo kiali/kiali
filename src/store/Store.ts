@@ -19,15 +19,15 @@ export interface NamespaceState {
 // Various pages are described here with their various sections
 export interface GraphFilterState {
   // Toggle props
-  readonly showLegend: boolean;
-  readonly showNodeLabels: boolean;
   readonly showCircuitBreakers: boolean;
-  readonly showVirtualServices: boolean;
+  readonly showLegend: boolean;
   readonly showMissingSidecars: boolean;
+  readonly showNodeLabels: boolean;
   readonly showSecurity: boolean;
   readonly showServiceNodes: boolean;
   readonly showTrafficAnimation: boolean;
   readonly showUnusedNodes: boolean;
+  readonly showVirtualServices: boolean;
 }
 
 export interface MessageCenterState {

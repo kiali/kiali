@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
 
+import { GraphActions } from '../actions/GraphActions';
 import { NamespaceActions, NamespaceThunkActions } from '../actions/NamespaceAction';
 import { NamespaceDropdown } from '../components/NamespaceDropdown';
 import Namespace from '../types/Namespace';
@@ -20,6 +21,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
     },
     onSelect: (namespace: Namespace) => {
+      dispatch(GraphActions.changed());
       dispatch(NamespaceActions.setActiveNamespace(namespace));
     }
   };

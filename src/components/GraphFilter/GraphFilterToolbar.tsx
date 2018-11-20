@@ -18,11 +18,11 @@ export class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarTy
 
   render() {
     const graphParams: GraphParamsType = {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.graphLayout,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      injectServiceNodes: this.props.injectServiceNodes,
+      node: this.props.node
     };
 
     return (
@@ -81,11 +81,11 @@ export class GraphFilterToolbar extends React.PureComponent<GraphFilterToolbarTy
 
   private getGraphParams: () => GraphParamsType = () => {
     return {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.graphLayout,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      injectServiceNodes: this.props.injectServiceNodes,
+      node: this.props.node
     };
   };
 }

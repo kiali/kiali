@@ -137,22 +137,22 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     const prevActiveNamespace = prevProps.activeNamespace;
     const prevDuration = prevProps.duration;
     const prevGraphType = prevProps.graphType;
-    const prevPollInterval = prevProps.pollInterval;
     const prevInjectServiceNodes = prevProps.injectServiceNodes;
+    const prevPollInterval = prevProps.pollInterval;
 
     const activeNamespaceHasChanged = prevActiveNamespace.name !== this.props.activeNamespace.name;
-    const nodeHasChanged = prevProps.node !== this.props.node;
-    const graphTypeHasChanged = prevGraphType !== this.props.graphType;
     const durationHasChanged = prevDuration !== this.props.duration;
-    const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
+    const graphTypeHasChanged = prevGraphType !== this.props.graphType;
     const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
+    const nodeHasChanged = prevProps.node !== this.props.node;
+    const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
 
     if (
       activeNamespaceHasChanged ||
-      graphTypeHasChanged ||
-      nodeHasChanged ||
       durationHasChanged ||
-      injectServiceNodesHasChanged
+      graphTypeHasChanged ||
+      injectServiceNodesHasChanged ||
+      nodeHasChanged
     ) {
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
@@ -196,11 +196,11 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   render() {
     const graphParams: GraphParamsType = {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.graphLayout,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      injectServiceNodes: this.props.injectServiceNodes,
+      node: this.props.node
     };
 
     return (
@@ -345,11 +345,11 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   private getGraphParams: () => GraphParamsType = () => {
     return {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
       edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.graphLayout,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      injectServiceNodes: this.props.injectServiceNodes,
+      node: this.props.node
     };
   };
 }

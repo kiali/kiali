@@ -5,15 +5,15 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 
 const INITIAL_STATE: GraphFilterState = {
-  showLegend: false,
-  showNodeLabels: true,
   showCircuitBreakers: true,
-  showVirtualServices: true,
+  showLegend: false,
   showMissingSidecars: true,
+  showNodeLabels: true,
   showSecurity: false,
   showServiceNodes: false,
   showTrafficAnimation: false,
-  showUnusedNodes: false
+  showUnusedNodes: false,
+  showVirtualServices: true
   // @ todo: add disableLayers back in later
   // disableLayers: false
   // edgeLabelMode: EdgeLabelMode.HIDE,

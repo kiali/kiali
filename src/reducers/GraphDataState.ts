@@ -13,15 +13,15 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   graphData: {},
   sidePanelInfo: null,
   filterState: {
-    showLegend: false,
-    showNodeLabels: true,
     showCircuitBreakers: true,
-    showVirtualServices: true,
+    showLegend: false,
     showMissingSidecars: true,
+    showNodeLabels: true,
     showSecurity: false,
     showServiceNodes: false,
     showTrafficAnimation: false,
-    showUnusedNodes: false
+    showUnusedNodes: false,
+    showVirtualServices: true
   }
 };
 

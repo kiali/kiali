@@ -5,7 +5,7 @@ import * as API from '../services/Api';
 import { authenticationToken } from '../utils/AuthenticationToken';
 import { MessageCenterActions } from './MessageCenterActions';
 import { GraphDataActionKeys } from './GraphDataActionKeys';
-import { GraphType, NodeParamsType } from '../types/Graph';
+import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { serverConfig } from '../config';
 
@@ -103,9 +103,18 @@ export const GraphDataThunkActions = {
   ) => {
     return (dispatch, getState) => {
       dispatch(GraphDataActions.getGraphDataStart());
-      let restParams = { duration: duration + 's', graphType: graphType, injectServiceNodes: injectServiceNodes };
+      let restParams = {
+        duration: duration + 's',
+        graphType: graphType,
+        injectServiceNodes: injectServiceNodes
+      };
+
       if (namespace.name === serverConfig().istioNamespace) {
         restParams['includeIstio'] = true;
+      }
+
+      if (graphType === GraphType.APP || graphType === GraphType.VERSIONED_APP) {
+        restParams['groupBy'] = GroupByType.APP;
       }
 
       // Some appenders are expensive so only specify an appender if needed.

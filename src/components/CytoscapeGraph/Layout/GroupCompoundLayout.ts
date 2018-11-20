@@ -67,6 +67,11 @@ class SyntheticEdgeGenerator {
   public getEdge(source: any, target: any) {
     const sourceId = this.normalizeToParent(source).id();
     const targetId = this.normalizeToParent(target).id();
+
+    if (sourceId === targetId) {
+      return false;
+    }
+
     const key = `${sourceId}->${targetId}`;
 
     if (this.generatedMap[key]) {

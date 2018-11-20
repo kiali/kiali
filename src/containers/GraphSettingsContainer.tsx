@@ -25,11 +25,11 @@ interface GraphDispatch {
     showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => void;
-  toggleGraphNodeLabels(): void;
   toggleGraphCircuitBreakers(): void;
-  toggleGraphVirtualServices(): void;
   toggleGraphMissingSidecars(): void;
+  toggleGraphNodeLabels(): void;
   toggleGraphSecurity(): void;
+  toggleGraphVirtualServices(): void;
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
   toggleUnusedNodes(): void;
@@ -64,7 +64,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   }
 
   componentDidUpdate(prevProps: GraphSettingsProps) {
-    if (this.props.showServiceNodes !== prevProps.showServiceNodes) {
+    const serviceNodesChanged = this.props.showServiceNodes !== prevProps.showServiceNodes;
+    if (serviceNodesChanged) {
       this.handleFilterChangeToUrl({
         ...this.getGraphParams(),
         injectServiceNodes: this.props.showServiceNodes
@@ -101,22 +102,22 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     // map our attributes from redux
     const {
       showCircuitBreakers,
-      showVirtualServices,
-      showNodeLabels,
       showMissingSidecars,
+      showNodeLabels,
       showSecurity,
       showServiceNodes,
       showTrafficAnimation,
-      showUnusedNodes
+      showUnusedNodes,
+      showVirtualServices
     } = this.props;
 
     // map our dispatchers for redux
     const {
       toggleGraphCircuitBreakers,
-      toggleGraphVirtualServices,
-      toggleGraphNodeLabels,
       toggleGraphMissingSidecars,
+      toggleGraphNodeLabels,
       toggleGraphSecurity,
+      toggleGraphVirtualServices,
       toggleServiceNodes,
       toggleTrafficAnimation,
       toggleUnusedNodes
@@ -239,14 +240,14 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespace: activeNamespaceSelector(state),
   duration: durationSelector(state),
-  showNodeLabels: state.graph.filterState.showNodeLabels,
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
-  showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showNodeLabels: state.graph.filterState.showNodeLabels,
   showSecurity: state.graph.filterState.showSecurity,
   showServiceNodes: state.graph.filterState.showServiceNodes,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
-  showUnusedNodes: state.graph.filterState.showUnusedNodes
+  showUnusedNodes: state.graph.filterState.showUnusedNodes,
+  showVirtualServices: state.graph.filterState.showVirtualServices
 });
 
 // Map our actions to Redux
@@ -274,11 +275,11 @@ const mapDispatchToProps = (dispatch: any) => {
           node
         )
       ),
-    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
-    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
+    toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
+    toggleGraphVirtualServices: bindActionCreators(GraphFilterActions.toggleGraphVirtualServices, dispatch),
     toggleServiceNodes: bindActionCreators(GraphFilterActions.toggleServiceNodes, dispatch),
     toggleTrafficAnimation: bindActionCreators(GraphFilterActions.toggleTrafficAnimation, dispatch),
     toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)

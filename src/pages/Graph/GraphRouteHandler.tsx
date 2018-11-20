@@ -182,11 +182,12 @@ export default class GraphRouteHandler extends React.Component<
     if (namespaceHasChanged) {
       store.dispatch(NamespaceActions.setActiveNamespace(nextNamespaces));
     }
-    if (graphTypeChanged || namespaceHasChanged || nodeHasChanged) {
+    // if the graph has fundamentally changed then init relevant redux graph state
+    if (graphTypeChanged || injectServiceNodesChanged || namespaceHasChanged || nodeHasChanged) {
       store.dispatch(GraphActions.changed());
     }
 
-    if (edgeLabelModeChanged || injectServiceNodesChanged || graphTypeChanged || layoutHasChanged || nodeHasChanged) {
+    if (edgeLabelModeChanged || graphTypeChanged || injectServiceNodesChanged || layoutHasChanged || nodeHasChanged) {
       const newGraphParams: GraphParamsType = {
         edgeLabelMode: nextEdgeLabelMode,
         graphLayout: nextLayout,

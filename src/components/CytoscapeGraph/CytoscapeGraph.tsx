@@ -40,16 +40,16 @@ type CytoscapeGraphType = {
   elements?: any;
   edgeLabelMode: EdgeLabelMode;
   node?: NodeParamsType; // node for initial selection
-  showNodeLabels: boolean;
   showCircuitBreakers: boolean;
-  showVirtualServices: boolean;
   showMissingSidecars: boolean;
+  showNodeLabels: boolean;
   showSecurity: boolean;
   showServiceNodes: boolean;
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
-  onReady: (cytoscapeRef: any) => void;
+  showVirtualServices: boolean;
   onClick: (event: CytoscapeClickEvent) => void;
+  onReady: (cytoscapeRef: any) => void;
   refresh: () => void;
   setActiveNamespace: (namespace: Namespace) => void;
 };
@@ -107,19 +107,19 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
     this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
     let result =
-      this.props.node !== nextProps.node ||
-      this.props.graphLayout !== nextProps.graphLayout ||
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
-      this.props.showNodeLabels !== nextProps.showNodeLabels ||
+      this.props.elements !== nextProps.elements ||
+      this.props.isError !== nextProps.isError ||
+      this.props.graphLayout !== nextProps.graphLayout ||
+      this.props.node !== nextProps.node ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
-      this.props.showVirtualServices !== nextProps.showVirtualServices ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
+      this.props.showNodeLabels !== nextProps.showNodeLabels ||
       this.props.showSecurity !== nextProps.showSecurity ||
       this.props.showServiceNodes !== nextProps.showServiceNodes ||
       this.props.showTrafficAnimation !== nextProps.showTrafficAnimation ||
       this.props.showUnusedNodes !== nextProps.showUnusedNodes ||
-      this.props.elements !== nextProps.elements ||
-      this.props.isError !== nextProps.isError;
+      this.props.showVirtualServices !== nextProps.showVirtualServices;
 
     if (!nextProps.elements || !nextProps.elements.nodes || nextProps.elements.nodes.length < 1) {
       result = true;
@@ -247,7 +247,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
-        if (target.data('isGroup') === 'version') {
+        if (target.data('isGroup')) {
           return { summaryType: 'group', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
@@ -356,7 +356,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     cy.startBatch();
 
-    // KIALI-1291 issue was caused because because some layouts (can't tell if all) do reuse the existing positions.
+    // KIALI-1291 issue was caused because some layouts (can't tell if all) do reuse the existing positions.
     // We got some issues when changing from/to cola/cose, as the nodes started to get far away from each other.
     // Previously we deleted the nodes prior to a layout update, this was too much and it seems that only reseting the
     // positions to 0,0 makes the layout more predictable.
@@ -481,11 +481,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     const graphParamsWithNode: GraphParamsType = {
-      graphLayout: this.props.graphLayout,
-      node: targetNode,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
+      graphLayout: this.props.graphLayout,
+      injectServiceNodes: this.props.injectServiceNodes,
+      node: targetNode
     };
     this.context.router.history.push(makeNodeGraphUrlFromParams(graphParamsWithNode));
   };
@@ -630,23 +630,26 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespace: activeNamespaceSelector(state),
   duration: durationSelector(state),
-  showNodeLabels: state.graph.filterState.showNodeLabels,
+  elements: state.graph.graphData,
+  isError: state.graph.isError,
+  isLoading: state.graph.isLoading,
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
-  showVirtualServices: state.graph.filterState.showVirtualServices,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
+  showNodeLabels: state.graph.filterState.showNodeLabels,
   showSecurity: state.graph.filterState.showSecurity,
   showServiceNodes: state.graph.filterState.showServiceNodes,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
   showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  elements: state.graph.graphData,
-  isLoading: state.graph.isLoading,
-  isError: state.graph.isError
+  showVirtualServices: state.graph.filterState.showVirtualServices
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
   onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
   onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
-  setActiveNamespace: (namespace: Namespace) => dispatch(NamespaceActions.setActiveNamespace(namespace))
+  setActiveNamespace: (namespace: Namespace) => {
+    dispatch(GraphActions.changed());
+    dispatch(NamespaceActions.setActiveNamespace(namespace));
+  }
 });
 
 const CytoscapeGraphContainer = connect(

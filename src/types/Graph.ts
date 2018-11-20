@@ -27,6 +27,12 @@ export enum GraphType {
   WORKLOAD = 'workload'
 }
 
+export enum GroupByType {
+  APP = 'app',
+  NONE = 'none',
+  VERSION = 'version'
+}
+
 export enum NodeType {
   APP = 'app',
   SERVICE = 'service',
@@ -44,11 +50,11 @@ export interface NodeParamsType {
 }
 
 export interface GraphParamsType {
-  node?: NodeParamsType;
-  graphLayout: Layout;
   edgeLabelMode: EdgeLabelMode;
+  graphLayout: Layout;
   graphType: GraphType;
   injectServiceNodes: boolean;
+  node?: NodeParamsType;
 }
 
 // This data is stored in the _global scratch area in the cy graph
