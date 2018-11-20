@@ -59,7 +59,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       : API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object);
 
     // Note that adapters/templates are not supported yet for validations
-    // This logic will be refactored later on KIALI-
+    // This logic will be refactored later on KIALI-1671
     const promiseConfigValidations = API.getIstioConfigValidations(
       authentication(),
       props.namespace,
@@ -119,8 +119,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       });
   };
 
-  renderEditor = (routingObject: any) => {
-    const yamlSource = yaml.safeDump(routingObject, safeDumpOptions);
+  renderEditor = (istioObject: any) => {
+    const yamlSource = yaml.safeDump(istioObject, safeDumpOptions);
     const aceValidations = parseAceValidations(yamlSource, this.state.validations);
     return (
       <div className="container-fluid container-cards-pf">
@@ -191,42 +191,36 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   render() {
+    let istioObject;
+    if (this.state.istioObjectDetails) {
+      if (this.state.istioObjectDetails.gateway) {
+        istioObject = this.state.istioObjectDetails.gateway;
+      } else if (this.state.istioObjectDetails.routeRule) {
+        istioObject = this.state.istioObjectDetails.routeRule;
+      } else if (this.state.istioObjectDetails.destinationPolicy) {
+        istioObject = this.state.istioObjectDetails.destinationPolicy;
+      } else if (this.state.istioObjectDetails.virtualService) {
+        istioObject = this.state.istioObjectDetails.virtualService;
+      } else if (this.state.istioObjectDetails.destinationRule) {
+        istioObject = this.state.istioObjectDetails.destinationRule;
+      } else if (this.state.istioObjectDetails.serviceEntry) {
+        istioObject = this.state.istioObjectDetails.serviceEntry;
+      } else if (this.state.istioObjectDetails.rule) {
+        istioObject = this.state.istioObjectDetails.rule;
+      } else if (this.state.istioObjectDetails.adapter) {
+        istioObject = this.state.istioObjectDetails.adapter;
+      } else if (this.state.istioObjectDetails.template) {
+        istioObject = this.state.istioObjectDetails.template;
+      } else if (this.state.istioObjectDetails.quotaSpec) {
+        istioObject = this.state.istioObjectDetails.quotaSpec;
+      } else if (this.state.istioObjectDetails.quotaSpecBinding) {
+        istioObject = this.state.istioObjectDetails.quotaSpecBinding;
+      }
+    }
     return (
       <>
         {this.renderBreadcrumbs()}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.gateway
-          ? this.renderEditor(this.state.istioObjectDetails.gateway)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.routeRule
-          ? this.renderEditor(this.state.istioObjectDetails.routeRule)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationPolicy
-          ? this.renderEditor(this.state.istioObjectDetails.destinationPolicy)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.virtualService
-          ? this.renderEditor(this.state.istioObjectDetails.virtualService)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule
-          ? this.renderEditor(this.state.istioObjectDetails.destinationRule)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.serviceEntry
-          ? this.renderEditor(this.state.istioObjectDetails.serviceEntry)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.rule
-          ? this.renderEditor(this.state.istioObjectDetails.rule)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.adapter
-          ? this.renderEditor(this.state.istioObjectDetails.adapter)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.template
-          ? this.renderEditor(this.state.istioObjectDetails.template)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpec
-          ? this.renderEditor(this.state.istioObjectDetails.quotaSpec)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpecBinding
-          ? this.renderEditor(this.state.istioObjectDetails.quotaSpecBinding)
-          : undefined}
+        {this.renderEditor(istioObject)}
       </>
     );
   }
