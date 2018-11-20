@@ -217,10 +217,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.quotaSpecBinding;
       }
     }
+    let istioEditor: any = istioObject ? this.renderEditor(istioObject) : undefined;
     return (
       <>
         {this.renderBreadcrumbs()}
-        {this.renderEditor(istioObject)}
+        {istioEditor}
       </>
     );
   }
