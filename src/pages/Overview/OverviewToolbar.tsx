@@ -111,6 +111,11 @@ class OverviewToolbar extends React.Component<Props, State> {
     this.setState({ isSortAscending: newDir });
   };
 
+  updateDuration = (duration: DurationInSeconds) => {
+    this.props.setDuration(duration);
+    this.props.onRefresh();
+  };
+
   updateOverviewType = (otype: OverviewType) => {
     HistoryManager.setParam(URLParams.OVERVIEW_TYPE, otype);
     this.setState({ overviewType: otype });
@@ -145,7 +150,7 @@ class OverviewToolbar extends React.Component<Props, State> {
           <ToolbarDropdown
             id="overview-duration"
             disabled={false}
-            handleSelect={this.props.setDuration}
+            handleSelect={this.updateDuration}
             nameDropdown="Displaying"
             value={this.props.duration}
             label={DURATIONS[this.props.duration]}
