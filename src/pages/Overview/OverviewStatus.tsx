@@ -9,6 +9,7 @@ type Props = {
   namespace: string;
   status: Status;
   items: string[];
+  isApp: boolean;
 };
 
 class OverviewStatus extends React.Component<Props, {}> {
@@ -38,7 +39,7 @@ class OverviewStatus extends React.Component<Props, {}> {
       >
         <AggregateStatusNotification>
           <ListPageLink
-            target={TargetPage.APPLICATIONS}
+            target={this.props.isApp ? TargetPage.APPLICATIONS : TargetPage.WORKLOADS}
             namespace={this.props.namespace}
             health={this.props.status.name}
           >

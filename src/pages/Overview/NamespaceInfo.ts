@@ -1,8 +1,8 @@
 export type NamespaceInfo = {
   name: string;
-  appsInError: string[];
-  appsInWarning: string[];
-  appsInSuccess: string[];
+  inError: string[];
+  inWarning: string[];
+  inSuccess: string[];
 };
 
 export default NamespaceInfo;

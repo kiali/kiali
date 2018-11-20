@@ -17,7 +17,7 @@ import { AxiosError } from 'axios';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import * as API from '../../services/Api';
-import { AppHealth, DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
+import { DEGRADED, FAILURE, HEALTHY, Health, NamespaceAppHealth, NamespaceWorkloadHealth } from '../../types/Health';
 import Namespace from '../../types/Namespace';
 import { authentication } from '../../utils/Authentication';
 
@@ -30,11 +30,10 @@ import { SortField } from '../../types/SortFilters';
 
 type State = {
   namespaces: NamespaceInfo[];
+  isApp: boolean;
 };
 
-interface OverviewProps {
-  setActiveNamespace(name: Namespace): (namespace: Namespace) => void;
-}
+interface OverviewProps {}
 
 class OverviewPage extends React.Component<OverviewProps, State> {
   private static summarizeHealthFilters() {
@@ -75,7 +74,8 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   constructor(props: OverviewProps) {
     super(props);
     this.state = {
-      namespaces: []
+      namespaces: [],
+      isApp: OverviewToolbar.currentOverviewType() === 'app'
     };
   }
 
@@ -94,43 +94,47 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         const namespaces: Namespace[] = namespacesResponse['data'].filter(ns => {
           return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
         });
-        this.fetchAppsHealth(namespaces.map(namespace => namespace.name));
+        this.fetchHealth(namespaces.map(namespace => namespace.name));
       })
       .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list', namespacesError));
   };
 
-  fetchAppsHealth(namespaces: string[]) {
+  fetchHealth(namespaces: string[]) {
     const rateInterval = ListPagesHelper.currentDuration();
     const isAscending = ListPagesHelper.isCurrentSortAscending();
     const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
-    const appsPromises = namespaces.map(namespace =>
-      API.getNamespaceAppHealth(authentication(), namespace, rateInterval).then(r => ({
+    const isApp = OverviewToolbar.currentOverviewType() === 'app';
+    const promises = namespaces.map(namespace => {
+      const appOrWorkloadHealth: Promise<NamespaceAppHealth | NamespaceWorkloadHealth> = isApp
+        ? API.getNamespaceAppHealth(authentication(), namespace, rateInterval)
+        : API.getNamespaceWorkloadHealth(authentication(), namespace, rateInterval);
+      return appOrWorkloadHealth.then(r => ({
         namespace: namespace,
-        appHealth: r
-      }))
-    );
-    Promise.all(appsPromises).then(responses => {
+        health: r
+      }));
+    });
+    Promise.all(promises).then(responses => {
       const allNamespaces: NamespaceInfo[] = [];
       responses.forEach(response => {
         const info: NamespaceInfo = {
           name: response.namespace,
-          appsInError: [],
-          appsInWarning: [],
-          appsInSuccess: []
+          inError: [],
+          inWarning: [],
+          inSuccess: []
         };
         const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
         let show = noFilter;
-        Object.keys(response.appHealth).forEach(app => {
-          const health: AppHealth = response.appHealth[app];
+        Object.keys(response.health).forEach(item => {
+          const health: Health = response.health[item];
           const status = health.getGlobalStatus();
           if (status === FAILURE) {
-            info.appsInError.push(app);
+            info.inError.push(item);
             show = show || showInError;
           } else if (status === DEGRADED) {
-            info.appsInWarning.push(app);
+            info.inWarning.push(item);
             show = show || showInWarning;
           } else if (status === HEALTHY) {
-            info.appsInSuccess.push(app);
+            info.inSuccess.push(item);
             show = show || showInSuccess;
           }
         });
@@ -139,7 +143,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         }
       });
 
-      this.setState({ namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
+      this.setState({ isApp: isApp, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
     });
   }
 
@@ -163,7 +167,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
           <CardGrid matchHeight={true}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
               {this.state.namespaces.map(ns => {
-                const nbApps = ns.appsInError.length + ns.appsInWarning.length + ns.appsInSuccess.length;
+                const nbItems = ns.inError.length + ns.inWarning.length + ns.inSuccess.length;
                 const encodedNsName = encodeURIComponent(ns.name);
                 return (
                   <Col xs={6} sm={3} md={3} key={ns.name}>
@@ -172,36 +176,42 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                         <Link to={`/graph/namespaces?namespaces=` + encodedNsName}>{ns.name}</Link>
                       </CardTitle>
                       <CardBody>
-                        <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name}>
-                          {nbApps === 1 && '1 Application'}
-                          {nbApps !== 1 && nbApps + ' Applications'}
+                        <ListPageLink
+                          target={this.state.isApp ? TargetPage.APPLICATIONS : TargetPage.WORKLOADS}
+                          namespace={ns.name}
+                        >
+                          {nbItems === 1 && (this.state.isApp ? '1 Application' : '1 Workload')}
+                          {nbItems !== 1 && nbItems + (this.state.isApp ? ' Applications' : ' Workloads')}
                         </ListPageLink>
                         <AggregateStatusNotifications>
-                          {ns.appsInError.length > 0 && (
+                          {ns.inError.length > 0 && (
                             <OverviewStatus
                               id={ns.name + '-failure'}
                               namespace={ns.name}
                               status={FAILURE}
-                              items={ns.appsInError}
+                              items={ns.inError}
+                              isApp={this.state.isApp}
                             />
                           )}
-                          {ns.appsInWarning.length > 0 && (
+                          {ns.inWarning.length > 0 && (
                             <OverviewStatus
                               id={ns.name + '-degraded'}
                               namespace={ns.name}
                               status={DEGRADED}
-                              items={ns.appsInWarning}
+                              items={ns.inWarning}
+                              isApp={this.state.isApp}
                             />
                           )}
-                          {ns.appsInSuccess.length > 0 && (
+                          {ns.inSuccess.length > 0 && (
                             <OverviewStatus
                               id={ns.name + '-healthy'}
                               namespace={ns.name}
                               status={HEALTHY}
-                              items={ns.appsInSuccess}
+                              items={ns.inSuccess}
+                              isApp={this.state.isApp}
                             />
                           )}
-                          {nbApps === 0 && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
+                          {nbItems === 0 && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
                         </AggregateStatusNotifications>
                         <div>
                           <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">

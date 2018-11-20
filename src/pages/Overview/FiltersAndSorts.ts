@@ -53,11 +53,11 @@ export namespace FiltersAndSorts {
       isNumeric: false,
       param: 'h',
       compare: (a: NamespaceInfo, b: NamespaceInfo) => {
-        let diff = b.appsInError.length - a.appsInError.length;
+        let diff = b.inError.length - a.inError.length;
         if (diff !== 0) {
           return diff;
         }
-        diff = b.appsInWarning.length - a.appsInWarning.length;
+        diff = b.inWarning.length - a.inWarning.length;
         if (diff !== 0) {
           return diff;
         }

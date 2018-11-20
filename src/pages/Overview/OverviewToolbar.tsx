@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Sort, ToolbarRightContent } from 'patternfly-react';
+import { FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -19,54 +19,41 @@ type Props = {
   sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
 };
 
+const overviewTypes = {
+  app: 'Apps',
+  workload: 'Workloads'
+};
+
+type OverviewType = keyof typeof overviewTypes;
+
 type State = {
   sortField: SortField<NamespaceInfo>;
   isSortAscending: boolean;
   duration: number;
   pollInterval: number;
+  overviewType: OverviewType;
 };
 
 const DURATIONS = config().toolbar.intervalDuration;
 
 class OverviewToolbar extends React.Component<Props, State> {
+  static currentOverviewType(): OverviewType {
+    const otype = ListPagesHelper.getSingleQueryParam(URLParams.OVERVIEW_TYPE);
+    if (otype === undefined) {
+      return 'app';
+    }
+    return otype as OverviewType;
+  }
+
   constructor(props: Props) {
     super(props);
     this.state = {
       sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields),
       isSortAscending: ListPagesHelper.isCurrentSortAscending(),
       duration: ListPagesHelper.currentDuration(),
-      pollInterval: ListPagesHelper.currentPollInterval()
+      pollInterval: ListPagesHelper.currentPollInterval(),
+      overviewType: OverviewToolbar.currentOverviewType()
     };
-  }
-
-  componentDidUpdate() {
-    const urlSortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
-    const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
-    const urlDuration = ListPagesHelper.currentDuration();
-    const urlPollInterval = ListPagesHelper.currentPollInterval();
-    if (!this.paramsAreSynced(urlSortField, urlIsSortAscending, urlDuration, urlPollInterval)) {
-      this.setState({
-        sortField: urlSortField,
-        isSortAscending: urlIsSortAscending,
-        duration: urlDuration,
-        pollInterval: urlPollInterval
-      });
-      this.props.onRefresh();
-    }
-  }
-
-  paramsAreSynced(
-    urlSortField: SortField<NamespaceInfo>,
-    urlIsSortAscending: boolean,
-    urlDuration: number,
-    urlPollInterval: number
-  ) {
-    return (
-      urlIsSortAscending === this.state.isSortAscending &&
-      urlSortField.title === this.state.sortField.title &&
-      urlDuration === this.state.duration &&
-      urlPollInterval === this.state.pollInterval
-    );
   }
 
   updateSortField = (sortField: SortField<NamespaceInfo>) => {
@@ -85,11 +72,18 @@ class OverviewToolbar extends React.Component<Props, State> {
   updateDuration = (duration: number) => {
     HistoryManager.setParam(URLParams.DURATION, String(duration));
     this.setState({ duration: duration });
+    this.props.onRefresh();
   };
 
   updatePollInterval = (pollInterval: PollIntervalInMs) => {
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(pollInterval));
     this.setState({ pollInterval: pollInterval });
+  };
+
+  updateOverviewType = (otype: OverviewType) => {
+    HistoryManager.setParam(URLParams.OVERVIEW_TYPE, otype);
+    this.setState({ overviewType: otype });
+    this.props.onRefresh();
   };
 
   render() {
@@ -107,15 +101,26 @@ class OverviewToolbar extends React.Component<Props, State> {
             onClick={this.updateSortDirection}
           />
         </Sort>
-        <ToolbarDropdown
-          id="overview-duration"
-          disabled={false}
-          handleSelect={this.updateDuration}
-          nameDropdown="Displaying"
-          value={this.state.duration}
-          label={DURATIONS[this.state.duration]}
-          options={DURATIONS}
-        />
+        <FormGroup>
+          <ToolbarDropdown
+            id="overview-type"
+            disabled={false}
+            handleSelect={this.updateOverviewType}
+            nameDropdown="Show health for"
+            value={this.state.overviewType}
+            label={overviewTypes[this.state.overviewType]}
+            options={overviewTypes}
+          />
+          <ToolbarDropdown
+            id="overview-duration"
+            disabled={false}
+            handleSelect={this.updateDuration}
+            nameDropdown="Displaying"
+            value={this.state.duration}
+            label={DURATIONS[this.state.duration]}
+            options={DURATIONS}
+          />
+        </FormGroup>
         <ToolbarRightContent>
           <RefreshContainer
             id="overview-refresh"
