@@ -34,7 +34,7 @@ func TestGetServiceHealth(t *testing.T) {
 	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal("ns", args[0])
 		assert.Equal("httpbin", args[1])
-	}).Return(k8s.FakeService(), nil)
+	}).Return(kubetest.FakeService(), nil)
 
 	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
 		assert.Equal("ns", args[0])

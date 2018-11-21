@@ -34,6 +34,8 @@ var (
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
 	DeleteIstioObject(api, namespace, resourceType, name string) error
+	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
+	GetAdapters(namespace string) ([]IstioObject, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
 	GetDeployments(namespace string) ([]v1beta1.Deployment, error)
@@ -45,8 +47,8 @@ type IstioClientInterface interface {
 	GetGateway(namespace string, gateway string) (IstioObject, error)
 	GetGateways(namespace string) ([]IstioObject, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
-	GetIstioRules(namespace string) (*IstioRules, error)
-	GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error)
+	GetIstioRule(namespace string, istiorule string) (IstioObject, error)
+	GetIstioRules(namespace string) ([]IstioObject, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*v1.Namespace, error)
 	GetNamespaces() ([]v1.Namespace, error)
@@ -66,6 +68,8 @@ type IstioClientInterface interface {
 	GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error)
 	GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
+	GetTemplate(namespace, templateType, templateName string) (IstioObject, error)
+	GetTemplates(namespace string) ([]IstioObject, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
@@ -174,13 +178,28 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
-			for _, kind := range istioKnownTypes {
-				gv := kind.groupVersion
-				scheme.AddKnownTypeWithName(gv.WithKind(kind.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(gv.WithKind(kind.collectionKind), &GenericIstioObjectList{})
+			// Register networking types
+			for _, nt := range networkingTypes {
+				scheme.AddKnownTypeWithName(networkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(networkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
 			}
-			meta_v1.AddToGroupVersion(scheme, istioConfigGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, istioNetworkingGroupVersion)
+			// Register config types
+			for _, cf := range configTypes {
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(cf.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(cf.collectionKind), &GenericIstioObjectList{})
+			}
+			// Register adapter types
+			for _, ad := range adapterTypes {
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(ad.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(ad.collectionKind), &GenericIstioObjectList{})
+			}
+			// Register template types
+			for _, tp := range templateTypes {
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.collectionKind), &GenericIstioObjectList{})
+			}
+			meta_v1.AddToGroupVersion(scheme, configGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, networkingGroupVersion)
 			return nil
 		})
 
@@ -194,7 +213,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &istioConfigGroupVersion,
+			GroupVersion:         &configGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
 			ContentType:          runtime.ContentTypeJSON,
 		},
@@ -214,7 +233,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		Host:    config.Host,
 		APIPath: "/apis",
 		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &istioNetworkingGroupVersion,
+			GroupVersion:         &networkingGroupVersion,
 			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
 			ContentType:          runtime.ContentTypeJSON,
 		},

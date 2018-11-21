@@ -15,6 +15,8 @@ type IstioConfigList struct {
 	DestinationRules  DestinationRules  `json:"destinationRules"`
 	ServiceEntries    ServiceEntries    `json:"serviceEntries"`
 	Rules             IstioRules        `json:"rules"`
+	Adapters          IstioAdapters     `json:"adapters"`
+	Templates         IstioTemplates    `json:"templates"`
 	QuotaSpecs        QuotaSpecs        `json:"quotaSpecs"`
 	QuotaSpecBindings QuotaSpecBindings `json:"quotaSpecBindings"`
 }
@@ -26,7 +28,9 @@ type IstioConfigDetails struct {
 	VirtualService   *VirtualService     `json:"virtualService"`
 	DestinationRule  *DestinationRule    `json:"destinationRule"`
 	ServiceEntry     *ServiceEntry       `json:"serviceEntry"`
-	Rule             *IstioRuleDetails   `json:"rule"`
+	Rule             *IstioRule          `json:"rule"`
+	Adapter          *IstioAdapter       `json:"adapter"`
+	Template         *IstioTemplate      `json:"template"`
 	QuotaSpec        *QuotaSpec          `json:"quotaSpec"`
 	QuotaSpecBinding *QuotaSpecBinding   `json:"quotaSpecBinding"`
 	Permissions      ResourcePermissions `json:"permissions"`

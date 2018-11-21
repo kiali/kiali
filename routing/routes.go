@@ -146,28 +146,15 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
-		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object}
-		// ---
-		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
 		//
-		//     Produces:
-		//     - application/json
+		// NOTE: Order of routes is important when two patterns may match
+		// On this case, this endpoint will have priority
+		// 	GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
+		//  vs
+		//  GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}
 		//
-		//     Schemes: http, https
+		// TODO This is going to be refactored in KIALI-1671 so this workaround is temporal for KIALI-1947
 		//
-		// responses:
-		//      default: genericError
-		//      404: notFoundError
-		//      500: internalError
-		//      200: delete
-		//
-		{
-			"IstioConfigDelete",
-			"DELETE",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
-			handlers.IstioConfigDelete,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
 		// ---
 		// Endpoint to get the list of istio object validations for a service
@@ -188,6 +175,72 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations",
 			handlers.IstioConfigValidations,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigAdapterTemplateDetails
+		// ---
+		// Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigDetailsResponse
+		//
+		{
+			"IstioConfigDetailsSubtype",
+			"GET",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			handlers.IstioConfigDetails,
+			true,
+		},
+		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}
+		// ---
+		// Endpoint to delete the Istio Config of an Istio object used for templates and adapters
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: delete
+		//
+		{
+			"IstioConfigDeleteSubtype",
+			"DELETE",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			handlers.IstioConfigDelete,
+			true,
+		},
+		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object}
+		// ---
+		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: delete
+		//
+		{
+			"IstioConfigDelete",
+			"DELETE",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			handlers.IstioConfigDelete,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services services serviceList

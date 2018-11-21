@@ -2,13 +2,11 @@ package kubernetes
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/kiali/kiali/log"
 )
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
-func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
+func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Do().Get()
 	if err != nil {
 		return nil, err
@@ -18,17 +16,22 @@ func (in *IstioClient) GetIstioRules(namespace string) (*IstioRules, error) {
 		return nil, fmt.Errorf("%s doesn't return a rules list", namespace)
 	}
 
-	istioRules := IstioRules{}
-	istioRules.Rules = make([]IstioObject, 0)
+	istioRules := make([]IstioObject, 0)
 	for _, rule := range ruleList.Items {
-		istioRules.Rules = append(istioRules.Rules, rule.DeepCopyIstioObject())
+		istioRules = append(istioRules, rule.DeepCopyIstioObject())
 	}
-
-	return &istioRules, nil
+	return istioRules, nil
 }
 
-// GetIstioRuleDetails returns the handlers and instances details for a given mixer rule.
-func (in *IstioClient) GetIstioRuleDetails(namespace string, istiorule string) (*IstioRuleDetails, error) {
+func (in *IstioClient) GetAdapters(namespace string) ([]IstioObject, error) {
+	return in.getAdaptersTemplates(namespace, "adapter", adapterPlurals)
+}
+
+func (in *IstioClient) GetTemplates(namespace string) ([]IstioObject, error) {
+	return in.getAdaptersTemplates(namespace, "template", templatePlurals)
+}
+
+func (in *IstioClient) GetIstioRule(namespace string, istiorule string) (IstioObject, error) {
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).SubResource(istiorule).Do().Get()
 	if err != nil {
 		return nil, err
@@ -37,153 +40,98 @@ func (in *IstioClient) GetIstioRuleDetails(namespace string, istiorule string) (
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a Rule", namespace, istiorule)
 	}
-
-	istioRuleDetails := IstioRuleDetails{}
-	istioRuleDetails.Rule = mRule.DeepCopyIstioObject()
-
-	actions, ok := istioRuleDetails.Rule.GetSpec()["actions"].(actionsType)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return an Action", namespace, istiorule)
-	}
-
-	istioRuleDetails.Actions = make([]*IstioRuleAction, 0)
-	for _, rawAction := range actions {
-		action, ok := rawAction.(actionType)
-		if !ok {
-			return nil, fmt.Errorf("%s doesn't follow a map format", action)
-		}
-		actionDetails, err := in.getActionDetails(namespace, istiorule, action)
-		if err != nil {
-			return nil, err
-		}
-		istioRuleDetails.Actions = append(istioRuleDetails.Actions, actionDetails)
-	}
-
-	return &istioRuleDetails, nil
+	return mRule.DeepCopyIstioObject(), nil
 }
 
-func (in *IstioClient) getActionDetails(namespace string, istiorule string, action actionType) (*IstioRuleAction, error) {
-	handler := action["handler"]
-	hName, hType, hNamespace := parseFQN(handler.(string))
-	if hNamespace != "" && hNamespace != namespace {
-		return nil, fmt.Errorf("Istio Rule %s/%s has a handler for a different namespace", namespace, istiorule)
-	}
-
-	// KIALI-1819 Istio 1.1.x has introduced generic handlers
-	if hType == "" {
-		hType = handlerType
-	}
-
-	handlerChan, instancesChan := make(chan istioResponse), make(chan istioResponse)
-
-	go in.getActionHandler(namespace, hType, hName, handlerChan)
-
-	instances := action["instances"]
-	for _, instance := range instances.(instancesType) {
-		iName, iType, iNamespace := parseFQN(instance.(string))
-		go in.getActionInstance(namespace, istiorule, iNamespace, iType, iName, instancesChan)
-	}
-
-	istioRuleAction := IstioRuleAction{}
-
-	handlerResponse := <-handlerChan
-	if handlerResponse.err != nil {
-		return nil, handlerResponse.err
-	}
-	istioRuleAction.Handler = handlerResponse.result
-
-	istioRuleAction.Instances = make([]IstioObject, 0)
-	for i := 0; i < len(instances.(instancesType)); i++ {
-		instanceResponse := <-instancesChan
-		if instanceResponse.err != nil {
-			return nil, instanceResponse.err
-		}
-		istioRuleAction.Instances = append(istioRuleAction.Instances, instanceResponse.result)
-	}
-
-	return &istioRuleAction, nil
+func (in *IstioClient) GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error) {
+	return in.getAdapterTemplate(namespace, "adapter", adapterType, adapterName, adapterPlurals)
 }
 
-func (in *IstioClient) getActionHandler(namespace string, handlerType string, handlerName string, handlerChan chan<- istioResponse) {
-	handlerTypePlural, ok := istioTypePlurals[handlerType]
-	if !ok {
-		log.Warningf("Handler type %s is not supported", handlerType)
-		handlerChan <- istioResponse{}
-		return
+func (in *IstioClient) GetTemplate(namespace, templateType, templateName string) (IstioObject, error) {
+	return in.getAdapterTemplate(namespace, "template", templateType, templateName, templatePlurals)
+}
+
+func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, pluralsMap map[string]string) ([]IstioObject, error) {
+	resultsChan := make(chan istioResponse)
+	for name, plural := range pluralsMap {
+		go func(name, plural string) {
+			results, err := in.istioConfigApi.Get().Namespace(namespace).Resource(plural).Do().Get()
+			istioObjects := istioResponse{}
+			resultList, ok := results.(*GenericIstioObjectList)
+			if !ok {
+				err = fmt.Errorf("%s doesn't return a %s list", namespace, plural)
+			}
+			if err == nil {
+				istioObjects.results = make([]IstioObject, 0)
+				for _, result := range resultList.Items {
+					adapter := result.DeepCopyIstioObject()
+					// We need to specifically add the adapter name in the label
+					if adapter.GetObjectMeta().Labels == nil {
+						objectMeta := adapter.GetObjectMeta()
+						objectMeta.Labels = make(map[string]string)
+						adapter.SetObjectMeta(objectMeta)
+					}
+					adapter.GetObjectMeta().Labels[itemType] = name
+					// To support plural, we have only adapter/template -> adapters/templates
+					adapter.GetObjectMeta().Labels[itemType] = name
+					adapter.GetObjectMeta().Labels[itemType+"s"] = plural
+					istioObjects.results = append(istioObjects.results, adapter)
+					istioObjects.err = nil
+				}
+			} else {
+				istioObjects.results = nil
+				istioObjects.err = err
+			}
+			resultsChan <- istioObjects
+		}(name, plural)
 	}
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(handlerTypePlural).SubResource(handlerName).Do().Get()
+
+	results := make([]IstioObject, 0)
+	for i := 0; i < len(pluralsMap); i++ {
+		adapterTemplate := <-resultsChan
+		if adapterTemplate.err == nil {
+			for _, istioObject := range adapterTemplate.results {
+				results = append(results, istioObject)
+			}
+		} else {
+			log.Warningf("Querying %s got an error: %s", itemType, adapterTemplate.err)
+		}
+	}
+	return results, nil
+}
+
+func (in *IstioClient) getAdapterTemplate(namespace string, itemType string, itemSubtype, itemName string, pluralsMap map[string]string) (IstioObject, error) {
+	ok := false
+	subtype := ""
+	for key, plural := range pluralsMap {
+		if itemSubtype == plural {
+			subtype = key
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return nil, fmt.Errorf("%s is not supported", itemSubtype)
+	}
+
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(itemSubtype).SubResource(itemName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
 		istioObject = nil
 		if err == nil {
-			err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", handlerType, handlerName)
+			err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", itemSubtype, itemName)
 		}
 	}
-	if istioObject != nil {
-		if istioObject.GetSpec() != nil {
-			istioObject.GetSpec()["adapter"] = handlerType
-		} else {
-			istioObject.SetSpec(map[string]interface{}{
-				"adapter": handlerType,
-			})
-		}
+	if err != nil {
+		return nil, err
 	}
-	handlerChan <- istioResponse{result: istioObject, err: err}
-}
-
-func (in *IstioClient) getActionInstance(namespace string, istiorule string, instanceNamespace string, instanceType string, instanceName string, instancesChan chan<- istioResponse) {
-	if instanceNamespace != "" && instanceNamespace != namespace {
-		err := fmt.Errorf("Istio Rule %s/%s has an instance for a different namespace", namespace, istiorule)
-		instancesChan <- istioResponse{err: err}
-		return
+	if istioObject.GetObjectMeta().Labels == nil {
+		objectMeta := istioObject.GetObjectMeta()
+		objectMeta.Labels = make(map[string]string)
+		istioObject.SetObjectMeta(objectMeta)
 	}
-	istioTypePlural, ok := istioTypePlurals[instanceType]
-	if !ok {
-		log.Warningf("Instance type %s is not supported", instanceType)
-		instancesChan <- istioResponse{}
-		return
-	}
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(istioTypePlural).SubResource(instanceName).Do().Get()
-	istioObject, ok := result.(IstioObject)
-	if !ok {
-		istioObject = nil
-		if err == nil {
-			err = fmt.Errorf("%s/%s doesn't return a valid IstioObject", instanceType, instanceName)
-		}
-	}
-	if istioObject != nil {
-		if istioObject.GetSpec() != nil {
-			istioObject.GetSpec()["template"] = instanceType
-		} else {
-			istioObject.SetSpec(map[string]interface{}{
-				"template": instanceType,
-			})
-		}
-	}
-	instancesChan <- istioResponse{result: istioObject, err: err}
-}
-
-func parseFQN(fqn string) (fqnName string, fqnType string, fqnNamespace string) {
-	if fqn == "" {
-		return "", "", ""
-	}
-
-	iName := strings.Index(fqn, ".")
-	if iName == -1 {
-		return fqn, "", ""
-	}
-
-	runesHandler := []rune(fqn)
-	fName := string(runesHandler[0:iName])
-	fType := string(runesHandler[iName+1:])
-	fNamespace := ""
-
-	iNamespace := strings.Index(fType, ".")
-	if iNamespace != -1 {
-		runesType := []rune(fType)
-		fType = string(runesType[0:iNamespace])
-		fNamespace = string(runesType[iNamespace+1:])
-	}
-
-	return fName, fType, fNamespace
+	// Adding the singular name of the adapter/template to propagate it into the Kiali model
+	istioObject.GetObjectMeta().Labels[itemType] = subtype
+	istioObject.GetObjectMeta().Labels[itemType+"s"] = itemSubtype
+	return istioObject, nil
 }
