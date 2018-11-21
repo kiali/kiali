@@ -10,14 +10,13 @@ type ComponentProps = {
 };
 
 type ReduxProps = {
-  pollInterval: PollIntervalInMs;
+  refreshInterval: PollIntervalInMs;
   setRefreshInterval: (pollInterval: PollIntervalInMs) => void;
 };
 
 type Props = ComponentProps & ReduxProps;
 
 type State = {
-  pollInterval?: PollIntervalInMs;
   pollerRef?: number;
 };
 
@@ -27,11 +26,10 @@ class Refresh extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     let pollerRef: number | undefined = undefined;
-    if (this.props.pollInterval) {
-      pollerRef = window.setInterval(this.props.handleRefresh, this.props.pollInterval);
+    if (this.props.refreshInterval) {
+      pollerRef = window.setInterval(this.props.handleRefresh, this.props.refreshInterval);
     }
     this.state = {
-      pollInterval: this.props.pollInterval,
       pollerRef: pollerRef
     };
   }
@@ -50,23 +48,23 @@ class Refresh extends React.Component<Props, State> {
     if (pollInterval > 0) {
       newRefInterval = window.setInterval(this.props.handleRefresh, pollInterval);
     }
-    this.setState({ pollerRef: newRefInterval, pollInterval: pollInterval });
+    this.setState({ pollerRef: newRefInterval });
     this.props.setRefreshInterval(pollInterval); // notify redux of the change
   };
 
   render() {
-    if (this.state.pollInterval !== undefined) {
+    if (this.props.refreshInterval !== undefined) {
       return (
         <>
           <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>
-          <DropdownButton id={this.props.id} title={POLL_INTERVALS[this.state.pollInterval]}>
+          <DropdownButton id={this.props.id} title={POLL_INTERVALS[this.props.refreshInterval]}>
             {Object.keys(POLL_INTERVALS).map(strKey => {
               const key = Number(strKey);
               return (
                 <MenuItem
                   key={key}
                   eventKey={key}
-                  active={key === this.state.pollInterval}
+                  active={key === this.props.refreshInterval}
                   onSelect={this.updatePollInterval}
                 >
                   {POLL_INTERVALS[key]}

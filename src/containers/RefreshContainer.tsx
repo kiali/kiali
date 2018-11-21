@@ -7,7 +7,7 @@ import Refresh from '../components/Refresh/Refresh';
 import { PollIntervalInMs } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  pollInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => {

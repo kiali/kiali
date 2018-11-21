@@ -28,7 +28,7 @@ ShallowWrapper {
             Namespaces
           </BreadcrumbItem>
         </Breadcrumb>,
-        <OverviewToolbar
+        <Connect(OverviewToolbar)
           onError={[Function]}
           onRefresh={[Function]}
           sort={[Function]}
@@ -178,7 +178,7 @@ ShallowWrapper {
               Namespaces
             </BreadcrumbItem>
           </Breadcrumb>,
-          <OverviewToolbar
+          <Connect(OverviewToolbar)
             onError={[Function]}
             onRefresh={[Function]}
             sort={[Function]}

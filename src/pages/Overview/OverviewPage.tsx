@@ -23,7 +23,7 @@ import { authentication } from '../../utils/Authentication';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
 import OverviewStatus from './OverviewStatus';
-import OverviewToolbar from './OverviewToolbar';
+import OverviewToolbarContainer from './OverviewToolbar';
 import NamespaceInfo from './NamespaceInfo';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { SortField } from '../../types/SortFilters';
@@ -75,7 +75,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     super(props);
     this.state = {
       namespaces: [],
-      isApp: OverviewToolbar.currentOverviewType() === 'app'
+      isApp: OverviewToolbarContainer.currentOverviewType() === 'app'
     };
   }
 
@@ -103,7 +103,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     const rateInterval = ListPagesHelper.currentDuration();
     const isAscending = ListPagesHelper.isCurrentSortAscending();
     const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
-    const isApp = OverviewToolbar.currentOverviewType() === 'app';
+    const isApp = OverviewToolbarContainer.currentOverviewType() === 'app';
     const promises = namespaces.map(namespace => {
       const appOrWorkloadHealth: Promise<NamespaceAppHealth | NamespaceWorkloadHealth> = isApp
         ? API.getNamespaceAppHealth(authentication(), namespace, rateInterval)
@@ -162,7 +162,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         <Breadcrumb title={true}>
           <Breadcrumb.Item active={true}>Namespaces</Breadcrumb.Item>
         </Breadcrumb>
-        <OverviewToolbar onRefresh={this.load} onError={ListPagesHelper.handleError} sort={this.sort} />
+        <OverviewToolbarContainer onRefresh={this.load} onError={ListPagesHelper.handleError} sort={this.sort} />
         <div className="cards-pf">
           <CardGrid matchHeight={true}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
