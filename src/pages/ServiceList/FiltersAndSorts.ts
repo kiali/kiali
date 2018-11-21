@@ -1,5 +1,5 @@
 import { ActiveFilter, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
-import { getRequestErrorsRatio, ServiceHealth } from '../../types/Health';
+import { getRequestErrorsStatus, ServiceHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
 import { SortField } from '../../types/SortFilters';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
@@ -56,8 +56,8 @@ export namespace ServiceListFilters {
       isNumeric: true,
       param: 'er',
       compare: (a: ServiceItemHealth, b: ServiceItemHealth) => {
-        const ratioA = getRequestErrorsRatio(a.health.requests).value;
-        const ratioB = getRequestErrorsRatio(b.health.requests).value;
+        const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
+        const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
         return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
       }
     }

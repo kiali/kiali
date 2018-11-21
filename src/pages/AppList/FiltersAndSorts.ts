@@ -1,7 +1,7 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
-import { AppHealth, getRequestErrorsRatio } from '../../types/Health';
+import { AppHealth, getRequestErrorsStatus } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 import {
   istioSidecarFilter,
@@ -57,8 +57,8 @@ export namespace AppListFilters {
       param: 'er',
       compare: (a: AppListItemHealth, b: AppListItemHealth) => {
         if (a.health && b.health) {
-          const ratioA = getRequestErrorsRatio(a.health.requests).value;
-          const ratioB = getRequestErrorsRatio(b.health.requests).value;
+          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
+          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioA - ratioB;
         }
         return 0;

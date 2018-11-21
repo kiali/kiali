@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NA, getRequestErrorsRatio, RequestHealth } from '../../types/Health';
+import { NA, getRequestErrorsStatus, RequestHealth } from '../../types/Health';
 
 type AppErrorRateProps = {
   requestHealth: RequestHealth;
@@ -16,7 +16,7 @@ export default class AppErrorRate extends React.Component<AppErrorRateProps> {
   }
 
   private errorRateIndicator = () => {
-    const ratio = getRequestErrorsRatio(this.props.requestHealth);
+    const ratio = getRequestErrorsStatus(this.props.requestHealth.errorRatio);
     return ratio.status === NA ? 'No requests' : ratio.value.toFixed(2) + '%';
   };
 }

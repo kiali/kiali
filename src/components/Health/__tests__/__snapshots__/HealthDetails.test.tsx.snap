@@ -63,6 +63,8 @@ ShallowWrapper {
         "rateInterval": 60,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
       }
     }
@@ -309,6 +311,8 @@ ShallowWrapper {
         "rateInterval": 60,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
       }
     }
@@ -554,6 +558,8 @@ ShallowWrapper {
         "rateInterval": 60,
         "requests": Object {
           "errorRatio": -1,
+          "inboundErrorRatio": -1,
+          "outboundErrorRatio": -1,
         },
       }
     }

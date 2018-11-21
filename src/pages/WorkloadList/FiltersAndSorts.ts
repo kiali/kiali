@@ -1,7 +1,7 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
-import { getRequestErrorsRatio, WorkloadHealth } from '../../types/Health';
+import { getRequestErrorsStatus, WorkloadHealth } from '../../types/Health';
 import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 import {
   presenceValues,
@@ -95,8 +95,8 @@ export namespace WorkloadListFilters {
       param: 'er',
       compare: (a: WorkloadItemHealth, b: WorkloadItemHealth) => {
         if (a.health && b.health) {
-          const ratioA = getRequestErrorsRatio(a.health.requests).value;
-          const ratioB = getRequestErrorsRatio(b.health.requests).value;
+          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
+          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
           return ratioA === ratioB ? a.workload.name.localeCompare(b.workload.name) : ratioA - ratioB;
         }
         return 0;
