@@ -224,6 +224,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         {this.renderBreadcrumbs(parsedSearch, !!(editorVisible && istioObject))}
         {editorVisible && istioObject ? (
           <IstioObjectDetails
+            namespace={this.props.match.params.namespace}
             object={istioObject}
             validations={this.searchValidation(parsedSearch)}
             onSelectTab={this.tabSelectHandler}
