@@ -199,13 +199,13 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var vsUpdate, vsDelete bool
 	go func() {
 		defer wg.Done()
-		vsUpdate, vsDelete = getUpdateDeletePermissions(in.k8s, namespace, VirtualServices)
+		vsUpdate, vsDelete = getUpdateDeletePermissions(in.k8s, namespace, VirtualServices, "")
 	}()
 
 	var drUpdate, drDelete bool
 	go func() {
 		defer wg.Done()
-		drUpdate, drDelete = getUpdateDeletePermissions(in.k8s, namespace, DestinationRules)
+		drUpdate, drDelete = getUpdateDeletePermissions(in.k8s, namespace, DestinationRules, "")
 	}()
 
 	wg.Wait()

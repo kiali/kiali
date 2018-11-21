@@ -192,7 +192,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 
 	go func() {
 		defer wg.Done()
-		canUpdate, canDelete := getUpdateDeletePermissions(in.k8s, namespace, objectType)
+		canUpdate, canDelete := getUpdateDeletePermissions(in.k8s, namespace, objectType, objectSubtype)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
 			Update: canUpdate,
 			Delete: canDelete,
@@ -273,10 +273,16 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 	return err
 }
 
-func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType string) (bool, bool) {
+func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {
 	var canUpdate, canDelete bool
 	if api, ok := resourceTypesToAPI[objectType]; ok {
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, objectType, []string{"update", "delete"})
+		// objectType will always match the api used in adapters/templates
+		// but if objectSubtype is present it should be used as resourceType
+		resourceType := objectType
+		if objectSubtype != "" {
+			resourceType = objectSubtype
+		}
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"update", "delete"})
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
@@ -289,7 +295,7 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 				}
 			}
 		} else {
-			log.Errorf("Error getting permissions [namespace: %s, api: %s, objectType: %s]: %v", namespace, api, objectType, permErr)
+			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
 	return canUpdate, canDelete
