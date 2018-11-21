@@ -6,9 +6,12 @@ import LocalTime from '../../../components/Time/LocalTime';
 import Label from '../../../components/Label/Label';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
+import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
+import { ObjectValidation } from '../../../types/IstioObjects';
 
 interface ServiceInfoDestinationRulesProps extends EditorLink {
   destinationRules?: DestinationRule[];
+  validations: { [key: string]: ObjectValidation };
 }
 
 class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestinationRulesProps> {
@@ -27,6 +30,19 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   columns() {
     return {
       columns: [
+        {
+          property: 'status',
+          header: {
+            label: 'Status',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat],
+            props: {
+              align: 'text-center'
+            }
+          }
+        },
         {
           property: 'name',
           header: {
@@ -107,10 +123,15 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
     );
   }
 
+  validation(destinationRule: DestinationRule): ObjectValidation {
+    return this.props.validations[destinationRule.name];
+  }
+
   rows() {
     return (this.props.destinationRules || []).map((destinationRule, vsIdx) => ({
       id: vsIdx,
       name: destinationRule.name,
+      status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
       trafficPolicy: destinationRule.trafficPolicy ? (
         <DetailObject name="" detail={destinationRule.trafficPolicy} />
       ) : (
