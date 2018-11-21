@@ -1,0 +1,134 @@
+properties([
+  disableConcurrentBuilds(),
+  parameters([
+    string(name: 'BACKEND_RELEASING_BRANCH',
+      defaultValue: 'refs/heads/master',
+      trim: true,
+      description: 'Branch of the backend to release'),
+    string(
+      name: 'UI_RELEASING_BRANCH',
+      defaultValue: 'refs/heads/master',
+      trim: true,
+      description: 'Branch of the UI to release'),
+    string(
+      name: 'BACKEND_GITHUB_URI',
+      defaultValue: 'git@github.com:kiali/kiali.git',
+      trim: true,
+      description: 'SSH Url of the kiali-backend GitHub repository'),
+    string(
+      name: 'UI_GITHUB_URI',
+      defaultValue: 'git@github.com:kiali/kiali-ui.git',
+      trim: true,
+      description: 'SSH Url of the kiali-ui GitHub repository'),
+    string(
+      name: 'DOCKER_NAME',
+      defaultValue: 'docker.io/kiali/kiali',
+      trim: true,
+      description: 'The name of the Docker repository to push the release'),
+    string(
+      name: 'BACKEND_PULL_URI',
+      defaultValue: 'https://api.github.com/repos/kiali/kiali/pulls',
+      trim: true,
+      description: 'The URL of the GitHub API to use to create pull requests for the back-end (changes to prepare for next version)'),
+    string(
+      name: 'UI_PULL_URI',
+      defaultValue: 'https://api.github.com/repos/kiali/kiali-ui/pulls',
+      trim: true,
+      description: 'The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)'),
+    string(
+      name: 'NPM_DRY_RUN',
+      defaultValue: 'n',
+      trim: true,
+      description: 'Set to "y" if you want to make a "dry run" of the front-end release process')
+  ])
+])
+
+node('kiali-build') {
+  def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
+  def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
+  def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
+
+  try {
+    cleanWs()
+    stage('Checkout code') {
+      checkout([
+        $class: 'GitSCM',
+        branches: [[name: params.BACKEND_RELEASING_BRANCH]],
+        doGenerateSubmoduleConfigurations: false,
+        extensions: [
+          [$class: 'RelativeTargetDirectory', relativeTargetDir: backendDir]
+        ],
+        submoduleCfg: [],
+        userRemoteConfigs: [[
+          credentialsId: 'kiali-bot-gh-ssh',
+          url: params.BACKEND_GITHUB_URI]]
+      ])
+      checkout([
+        $class: 'GitSCM',
+        branches: [[name: params.UI_RELEASING_BRANCH]],
+        doGenerateSubmoduleConfigurations: false,
+        extensions: [
+          [$class: 'RelativeTargetDirectory', relativeTargetDir: uiDir]
+        ],
+        submoduleCfg: [],
+        userRemoteConfigs: [[
+          credentialsId: 'kiali-bot-gh-ssh',
+          url: params.UI_GITHUB_URI]]
+      ])
+
+      sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
+      sh "cd ${backendDir}; git config user.name 'kiali-bot'"
+      sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
+      sh "cd ${uiDir}; git config user.name 'kiali-bot'"
+    }
+
+    withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
+            "GOPATH=${env.WORKSPACE}",
+            "BACKEND_FORK_URI=${backendForkUri}",
+            "UI_FORK_URI=${uiForkUri}"
+    ]) {
+      parallel backend: {
+        withEnv(["GOPATH=${env.WORKSPACE}"]) {
+          stage('Build backend') {
+            sh "make -f ${backendMakefile} -C ${backendDir} backend-build-release"
+          }
+          stage('Test backend') {
+            sh "make -f ${backendMakefile} -C ${backendDir} backend-test"
+          }
+        }
+      }, ui: {
+        stage('Build UI') {
+          sh "make -f ${uiMakefile} -C ${uiDir} ui-build"
+        }
+        stage('Test UI') {
+          sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
+        }
+      },
+      failFast: true
+
+      stage('Release kiali-ui to NPM') {
+        withCredentials([string(credentialsId: 'kiali-npm', variable: 'NPM_TOKEN')]) {
+          sh "make -f ${uiMakefile} -C ${uiDir} ui-npm-publish"
+        }
+      }
+
+      stage('Release Kiali to DockerHub') {
+        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+          sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
+        }
+      }
+
+      stage('Create tags and push to Git') {
+        withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+          sshagent(['kiali-bot-gh-ssh']) {
+            sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-create-pr-next-version"
+            sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-create-pr-next-version"
+          }
+        }
+      }
+    }
+  } finally {
+    cleanWs()
+  }
+}
+
