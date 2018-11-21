@@ -1,20 +1,12 @@
 import * as React from 'react';
 import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
-import {
-  aceOptions,
-  IstioConfigDetails,
-  IstioConfigId,
-  IstioRuleDetails,
-  ParsedSearch,
-  safeDumpOptions
-} from '../../types/IstioConfigDetails';
+import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
 import { dicIstioType } from '../../types/IstioConfigList';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
-import IstioRuleInfo from './IstioRuleInfo';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
@@ -23,6 +15,7 @@ import { Validations } from '../../types/IstioObjects';
 import { parseAceValidations } from '../../types/AceValidations';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
+import './IstioConfigDetailsPage.css';
 
 const yaml = require('js-yaml');
 
@@ -55,12 +48,18 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
-    const promiseConfigDetails = API.getIstioConfigDetail(
-      authentication(),
-      props.namespace,
-      props.objectType,
-      props.object
-    );
+    const promiseConfigDetails = props.objectSubtype
+      ? API.getIstioConfigDetailSubtype(
+          authentication(),
+          props.namespace,
+          props.objectType,
+          props.objectSubtype,
+          props.object
+        )
+      : API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object);
+
+    // Note that adapters/templates are not supported yet for validations
+    // This logic will be refactored later on KIALI-1671
     const promiseConfigValidations = API.getIstioConfigValidations(
       authentication(),
       props.namespace,
@@ -77,72 +76,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details', error));
       });
-  };
-
-  // Handlers and Instances have a type attached to the name with '.'
-  // i.e. handler=myhandler.kubernetes
-  validateRuleParams = (parsed: ParsedSearch, rule: IstioRuleDetails): boolean => {
-    if (!parsed.type || !parsed.name || rule.actions.length === 0) {
-      return false;
-    }
-    let validationType = ['handler', 'instance'];
-    if (parsed.type && validationType.indexOf(parsed.type) < 0) {
-      return false;
-    }
-    let splitName = parsed.name.split('.');
-    if (splitName.length !== 2) {
-      return false;
-    }
-    // i.e. handler=myhandler.kubernetes
-    // innerName == myhandler
-    // innerType == kubernetes
-    let innerName = splitName[0];
-    let innerType = splitName[1];
-
-    for (let i = 0; i < rule.actions.length; i++) {
-      if (
-        parsed.type === 'handler' &&
-        rule.actions[i].handler.name === innerName &&
-        rule.actions[i].handler.adapter === innerType
-      ) {
-        return true;
-      }
-      if (parsed.type === 'instance') {
-        for (let j = 0; j < rule.actions[i].instances.length; j++) {
-          if (rule.actions[i].instances[j].name === innerName && rule.actions[i].instances[j].template === innerType) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  };
-
-  // Helper method to extract search urls with format
-  // ?handler=name.handlertype or ?instance=name.instancetype
-  // Those url are expected to be received on this page.
-  parseRuleSearchParams = (): ParsedSearch => {
-    let parsed: ParsedSearch = {};
-    if (this.props.location.search) {
-      let urlParams = new URLSearchParams(this.props.location.search);
-      let handler = urlParams.get('handler');
-      let instance = urlParams.get('instance');
-      if (handler) {
-        parsed.type = 'handler';
-        parsed.name = handler;
-      } else if (instance) {
-        parsed.type = 'instance';
-        parsed.name = instance;
-      }
-      if (
-        this.state.istioObjectDetails &&
-        this.state.istioObjectDetails.rule &&
-        this.validateRuleParams(parsed, this.state.istioObjectDetails.rule)
-      ) {
-        return parsed;
-      }
-    }
-    return {};
   };
 
   componentDidMount() {
@@ -162,12 +95,21 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   }
 
   onDelete = () => {
-    API.deleteIstioConfigDetail(
-      authentication(),
-      this.props.match.params.namespace,
-      this.props.match.params.objectType,
-      this.props.match.params.object
-    )
+    const deletePromise = this.props.match.params.objectSubtype
+      ? API.deleteIstioConfigDetailSubtype(
+          authentication(),
+          this.props.match.params.namespace,
+          this.props.match.params.objectType,
+          this.props.match.params.objectSubtype,
+          this.props.match.params.object
+        )
+      : API.deleteIstioConfigDetail(
+          authentication(),
+          this.props.match.params.namespace,
+          this.props.match.params.objectType,
+          this.props.match.params.object
+        );
+    deletePromise
       .then(r => {
         // Back to list page
         ListPageLink.navigateTo(TargetPage.ISTIO, this.props.match.params.namespace);
@@ -177,8 +119,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       });
   };
 
-  renderEditor = (routingObject: any) => {
-    const yamlSource = yaml.safeDump(routingObject, safeDumpOptions);
+  renderEditor = (istioObject: any) => {
+    const yamlSource = yaml.safeDump(istioObject, safeDumpOptions);
     const aceValidations = parseAceValidations(yamlSource, this.state.validations);
     return (
       <div className="container-fluid container-cards-pf">
@@ -221,26 +163,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
-  renderBreadcrumbs = (parsedRuleParams: ParsedSearch): any => {
-    let titleBreadcrumb: any[] = [];
-    if (!parsedRuleParams.type && !parsedRuleParams.name) {
-      titleBreadcrumb.push(
-        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} active={true}>
-          Istio Object: {this.props.match.params.object}
-        </Breadcrumb.Item>
-      );
-    } else if (parsedRuleParams.type && parsedRuleParams.name) {
-      titleBreadcrumb.push(
-        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} componentClass={'span'}>
-          <Link to={this.props.location.pathname}>Istio Object: {this.props.match.params.object}</Link>
-        </Breadcrumb.Item>
-      );
-      titleBreadcrumb.push(
-        <Breadcrumb.Item key={'breadcrumb_' + parsedRuleParams.type + '_' + parsedRuleParams.name} active={true}>
-          {dicIstioType[parsedRuleParams.type]}: {parsedRuleParams.name}
-        </Breadcrumb.Item>
-      );
-    }
+  renderBreadcrumbs = (): any => {
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
@@ -260,50 +183,45 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
           </ListPageLink>
         </Breadcrumb.Item>
-        {titleBreadcrumb}
+        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} active={true}>
+          Istio Object: {this.props.match.params.object}
+        </Breadcrumb.Item>
       </Breadcrumb>
     );
   };
 
   render() {
-    const parsedRuleParams = this.parseRuleSearchParams();
+    let istioObject;
+    if (this.state.istioObjectDetails) {
+      if (this.state.istioObjectDetails.gateway) {
+        istioObject = this.state.istioObjectDetails.gateway;
+      } else if (this.state.istioObjectDetails.routeRule) {
+        istioObject = this.state.istioObjectDetails.routeRule;
+      } else if (this.state.istioObjectDetails.destinationPolicy) {
+        istioObject = this.state.istioObjectDetails.destinationPolicy;
+      } else if (this.state.istioObjectDetails.virtualService) {
+        istioObject = this.state.istioObjectDetails.virtualService;
+      } else if (this.state.istioObjectDetails.destinationRule) {
+        istioObject = this.state.istioObjectDetails.destinationRule;
+      } else if (this.state.istioObjectDetails.serviceEntry) {
+        istioObject = this.state.istioObjectDetails.serviceEntry;
+      } else if (this.state.istioObjectDetails.rule) {
+        istioObject = this.state.istioObjectDetails.rule;
+      } else if (this.state.istioObjectDetails.adapter) {
+        istioObject = this.state.istioObjectDetails.adapter;
+      } else if (this.state.istioObjectDetails.template) {
+        istioObject = this.state.istioObjectDetails.template;
+      } else if (this.state.istioObjectDetails.quotaSpec) {
+        istioObject = this.state.istioObjectDetails.quotaSpec;
+      } else if (this.state.istioObjectDetails.quotaSpecBinding) {
+        istioObject = this.state.istioObjectDetails.quotaSpecBinding;
+      }
+    }
+    let istioEditor: any = istioObject ? this.renderEditor(istioObject) : undefined;
     return (
       <>
-        {this.renderBreadcrumbs(parsedRuleParams)}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.gateway
-          ? this.renderEditor(this.state.istioObjectDetails.gateway)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.routeRule
-          ? this.renderEditor(this.state.istioObjectDetails.routeRule)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationPolicy
-          ? this.renderEditor(this.state.istioObjectDetails.destinationPolicy)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.virtualService
-          ? this.renderEditor(this.state.istioObjectDetails.virtualService)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.destinationRule
-          ? this.renderEditor(this.state.istioObjectDetails.destinationRule)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.serviceEntry
-          ? this.renderEditor(this.state.istioObjectDetails.serviceEntry)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.rule ? (
-          <IstioRuleInfo
-            namespace={this.state.istioObjectDetails.namespace.name}
-            rule={this.state.istioObjectDetails.rule}
-            parsedSearch={parsedRuleParams}
-            rightToolbar={this.renderRightToolbar}
-          />
-        ) : (
-          undefined
-        )}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpec
-          ? this.renderEditor(this.state.istioObjectDetails.quotaSpec)
-          : undefined}
-        {this.state.istioObjectDetails && this.state.istioObjectDetails.quotaSpecBinding
-          ? this.renderEditor(this.state.istioObjectDetails.quotaSpecBinding)
-          : undefined}
+        {this.renderBreadcrumbs()}
+        {istioEditor}
       </>
     );
   }

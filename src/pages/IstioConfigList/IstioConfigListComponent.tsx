@@ -250,6 +250,14 @@ class IstioConfigListComponent extends ListComponent.Component<
       iconName = 'migration';
       iconType = 'pf';
       type = 'Rule';
+    } else if (istioItem.type === 'adapter') {
+      iconName = 'migration';
+      iconType = 'pf';
+      type = 'Adapter: ' + istioItem.adapter!.adapter;
+    } else if (istioItem.type === 'template') {
+      iconName = 'migration';
+      iconType = 'pf';
+      type = 'Template: ' + istioItem.template!.template;
     } else if (istioItem.type === 'quotaspec') {
       iconName = 'process-automation';
       iconType = 'pf';
@@ -259,7 +267,16 @@ class IstioConfigListComponent extends ListComponent.Component<
       iconType = 'pf';
       type = 'QuotaSpecBinding';
     }
-    to = to + '/' + dicIstioType[type] + '/' + name;
+    // Adapters and Templates need to pass subtype
+    if (istioItem.type === 'adapter' || istioItem.type === 'template') {
+      // Build a /adapters/<adapter_type_plural>/<adapter_name> or
+      //         /templates/<template_type_plural>/<template_name>
+      let istioType = istioItem.type + 's';
+      let subtype = istioItem.type === 'adapter' ? istioItem.adapter!.adapters : istioItem.template!.templates;
+      to = to + '/' + istioType + '/' + subtype + '/' + name;
+    } else {
+      to = to + '/' + dicIstioType[type] + '/' + name;
+    }
 
     const itemDescription = (
       <table style={{ width: '30em', tableLayout: 'fixed' }}>

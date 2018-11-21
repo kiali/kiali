@@ -87,6 +87,8 @@ const conf = {
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioConfigDetail: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
       istioConfigValidations: (namespace: string, objectType: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
       jaeger: 'api/jaeger',
