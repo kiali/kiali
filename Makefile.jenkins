@@ -1,0 +1,69 @@
+# This Makefile is a support file to automatize the kiali release process. It is
+# used in a Jenkins Pipeline.
+# It can also be used to run the release process without Jenkins. Read the
+# RELEASING.adoc file for more information.
+
+UI_GITHUB_URI ?= git@github.com:kiali/kiali-ui.git
+UI_FORK_URI ?= $(shell git config --get remote.origin.url)
+UI_PULL_URI ?= https://api.github.com/repos/kiali/kiali-ui/pulls
+
+UI_VERSION ?= $(shell jq -r '.version' package.json)
+UI_BUMPED_VERSION ?= $(shell semver bump minor $(UI_VERSION))
+UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.0$$//')
+
+BUILD_TAG ?= prepare-next-version
+BUMP_BRANCH_ID ?= $(BUILD_TAG)
+
+NPM_DRY_RUN ?= n
+
+.PHONY: all ui-bump-minor-version ui-build ui-test ui-npm-publish
+.PHONY: ui-push-version-tag ui-create-pr-next-version release
+
+all:
+	$(error You must explicitly specify a target)
+
+ui-bump-minor-version:
+	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.bumped
+	mv package.json.bumped package.json
+
+ui-build:
+	rm -fr build/*
+	CI=true yarn --frozen-lockfile --non-interactive
+	CI=true yarn build:dev
+	echo '$(UI_VERSION)' > build/version.txt
+	# (Not implemented yet) For snapshots: yarn set-snapshot-version $(git rev-parse --short HEAD)
+
+ui-test:
+	CI=true yarn test --maxWorkers=4
+
+ui-npm-publish:
+ifdef NPM_TOKEN
+	echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
+endif
+ifeq ($(NPM_DRY_RUN), y)
+	npm publish --dry-run
+else
+	npm publish
+endif
+ifdef NPM_TOKEN
+	rm .npmrc
+endif
+
+ui-push-version-tag:
+	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(UI_VERSION)
+ifndef OMIT_VERSION_BRANCH
+	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/v$(UI_VERSION_BRANCH)
+endif
+
+ui-create-pr-next-version: ui-bump-minor-version
+	git add package.json
+	git commit -m "Prepare for next version"
+	git push $(UI_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
+ifdef GH_TOKEN
+	curl -s -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"title": "Prepare for next version", "head": "kiali-bot:$(BUMP_BRANCH_ID)", "base": "master"}' \
+	  -X POST $(UI_PULL_URI)
+endif
+
+release: ui-build ui-test ui-npm-publish ui-push-version-tag ui-create-pr-next-version
