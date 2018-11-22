@@ -25,6 +25,7 @@ type ClientInterface interface {
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
+	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
 }
 
 // Client for Prometheus API.
@@ -137,6 +138,7 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 	query := fmt.Sprintf("sum(rate(istio_requests_total{reporter=\"%s\",source_workload=\"%s\",source_workload_namespace=\"%s\"}[%vs])) by %s",
 		reporter, workloadname, namespace, int(queryInterval.Seconds()), groupBy)
 	log.Debugf("GetDestinationServices query: %s", query)
+	log.Infof("GetDestinationServices query: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("GetDestinationServices")
 	result, err := in.api.Query(context.Background(), query, queryTime)
 	if err != nil {
@@ -144,7 +146,7 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 	}
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
-	routes := make([]Service, 0, 0)
+	routes := make([]Service, 0)
 	switch result.Type() {
 	case model.ValVector:
 		matrix := result.(model.Vector)
