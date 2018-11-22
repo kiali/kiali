@@ -7,7 +7,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="966"
+   width="1040"
    height="143"
    version="1.1"
    id="svg220"
@@ -21,6 +21,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Group 47</dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -33,20 +34,91 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1664"
-     inkscape:window-height="955"
+     inkscape:window-width="1920"
+     inkscape:window-height="1136"
      id="namedview222"
      showgrid="false"
-     showguides="true"
+     showguides="false"
      inkscape:guide-bbox="true"
-     inkscape:zoom="1.5792837"
-     inkscape:cx="482.43658"
-     inkscape:cy="71"
-     inkscape:window-x="0"
+     inkscape:zoom="1.1167222"
+     inkscape:cx="475.78193"
+     inkscape:cy="31.347205"
+     inkscape:window-x="1920"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg220"
-     inkscape:snap-global="false" />
+     inkscape:snap-global="false">
+    <sodipodi:guide
+       position="412.36755,137.90359"
+       orientation="0,1"
+       id="guide1124"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="-29.550769,109.2483"
+       orientation="0,1"
+       id="guide1126"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="7.1638228,130.29203"
+       orientation="1,0"
+       id="guide1128"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="207.30312,111.03925"
+       orientation="1,0"
+       id="guide1130"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="415.50172,81.936223"
+       orientation="1,0"
+       id="guide1132"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="560.12139,67.160838"
+       orientation="1,0"
+       id="guide1134"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="753.09687,185.81165"
+       orientation="1,0"
+       id="guide1136"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="917.41705,182.22974"
+       orientation="1,0"
+       id="guide1138"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="12.088951,93.577435"
+       orientation="1,0"
+       id="guide1140"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="212.22825,81.488484"
+       orientation="1,0"
+       id="guide1142"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="420.87459,41.191981"
+       orientation="1,0"
+       id="guide1144"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="565.04652,19.700513"
+       orientation="1,0"
+       id="guide1146"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="747.27626,174.17044"
+       orientation="1,0"
+       id="guide1148"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="921.89444,186.70713"
+       orientation="1,0"
+       id="guide1150"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
   <!-- Generator: Sketch 51.1 (57501) - http://www.bohemiancoding.com/sketch -->
   <title
      id="title10">Group 47</title>
@@ -101,43 +173,29 @@
     </marker>
   </defs>
   <path
-     d="M 793,2 V 142"
+     d="m 738.82359,2.24276 v 140"
      id="Line-4"
      inkscape:connector-curvature="0"
      style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:1;stroke-linecap:square" />
   <path
-     d="M 449,2 V 142"
+     d="m 416.7628,2.24276 v 140"
      id="path17"
      inkscape:connector-curvature="0"
      style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:1;stroke-linecap:square" />
   <path
-     d="M 216.19599,2 V 142"
+     d="M 200.07739,1.1045222 V 141.10452"
      id="path19"
      inkscape:connector-curvature="0"
      style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:1;stroke-linecap:square" />
+  <circle
+     id="Oval-7"
+     cx="226.93367"
+     cy="47.750866"
+     r="12.5"
+     style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1" />
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
-     id="Group-8"
-     transform="translate(231,39)">
-    <text
-       transform="translate(231 39)"
-       class="B C D"
-       id="text20">
-      <tspan
-         id="tspan21"
-         y="16"
-         x="32">Healthy</tspan>
-    </text>
-    <circle
-       style="fill:#ffffff;stroke:#8b8d8f"
-       r="12.5"
-       cy="12.5"
-       cx="12.5"
-       id="Oval-7" />
-  </g>
-  <g
-     style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
-     transform="translate(321,39)"
+     transform="translate(295.03115,35.250867)"
      id="Group-9">
     <text
        style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303"
@@ -159,7 +217,7 @@
   </g>
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
-     transform="translate(231,100)"
+     transform="translate(214.43366,76.591794)"
      id="Group-10">
     <text
        style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303"
@@ -185,19 +243,19 @@
      font-weight="normal"
      line-spacing="18"
      style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     x="321"
-     y="94">
+     x="295.92664"
+     y="70.208984">
     <tspan
-       x="354"
-       y="107"
+       x="328.92664"
+       y="83.208984"
        id="tspan38">Unused</tspan>
     <tspan
-       x="354"
-       y="125"
+       x="328.92664"
+       y="101.20898"
        id="tspan40">(no traffic yet)</tspan>
   </text>
   <path
-     d="m 333.5,125 c 6.90356,0 12.5,-5.59644 12.5,-12.5 0,-6.90356 -5.59644,-12.5 -12.5,-12.5 -6.90356,0 -12.5,5.59644 -12.5,12.5 0,6.90356 5.59644,12.5 12.5,12.5 z"
+     d="m 305.74019,101.59179 c 6.90356,0 12.5,-5.596436 12.5,-12.499996 0,-6.90356 -5.59644,-12.5 -12.5,-12.5 -6.90356,0 -12.5,5.59644 -12.5,12.5 0,6.90356 5.59644,12.499996 12.5,12.499996 z"
      id="path43"
      inkscape:connector-curvature="0"
      style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1;stroke-dasharray:6, 5" />
@@ -207,16 +265,16 @@
      font-weight="normal"
      font-size="12"
      id="text447"
-     x="467.0083"
-     y="27.601658">
+     x="432.21582"
+     y="29.110807">
     <tspan
        id="tspan443"
-       y="40.601658"
-       x="500.0083">External</tspan>
+       y="42.110806"
+       x="465.21585">External</tspan>
     <tspan
        id="tspan445"
-       y="58.601662"
-       x="500.0083">Namespace</tspan>
+       y="60.110821"
+       x="465.21585">Namespace</tspan>
   </text>
   <text
      id="Node-Colors"
@@ -224,11 +282,11 @@
      font-weight="500"
      line-spacing="10"
      style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     x="-93"
-     y="2">
+     x="-117.8495"
+     y="-0.014825223">
     <tspan
-       x="231"
-       y="18"
+       x="206.15048"
+       y="15.985174"
        id="tspan47">Node Colors</tspan>
   </text>
   <text
@@ -237,16 +295,16 @@
      font-weight="500"
      line-spacing="10"
      style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     x="51"
-     y="2">
+     x="-0.042237256"
+     y="0.0040653171">
     <tspan
-       x="618"
-       y="18"
+       x="566.95782"
+       y="16.004065"
        id="tspan51">Edges</tspan>
   </text>
   <text
-     y="32.281326"
-     x="601.72272"
+     y="25.775566"
+     x="551.57788"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -255,13 +313,13 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan58"
-       y="44.802456"
-       x="660.47565"
+       y="38.296696"
+       x="610.33081"
        style="stroke-width:0.96316379">20% Error</tspan>
   </text>
   <text
-     y="32.281326"
-     x="601.80737"
+     y="25.775566"
+     x="551.66254"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -270,13 +328,13 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan61"
-       y="64.065735"
-       x="660.5603"
+       y="57.559978"
+       x="610.41547"
        style="stroke-width:0.96316379">0.1 - 20% Error</tspan>
   </text>
   <text
-     y="32.281326"
-     x="601.80737"
+     y="25.775566"
+     x="551.66254"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -285,13 +343,13 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan64"
-       y="83.32901"
-       x="660.5603"
+       y="76.82325"
+       x="610.41547"
        style="stroke-width:0.96316379">0.1% Error</tspan>
   </text>
   <text
-     y="32.281326"
-     x="601.43488"
+     y="25.775566"
+     x="551.29004"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -300,13 +358,13 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan67"
-       y="121.85556"
-       x="660.18781"
+       y="115.3498"
+       x="610.04297"
        style="stroke-width:0.96316379">Idle</tspan>
   </text>
   <text
-     y="32.281326"
-     x="602.60309"
+     y="25.775566"
+     x="552.45825"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -315,166 +373,139 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan70"
-       y="102.59229"
-       x="661.35602"
+       y="96.086533"
+       x="611.21118"
        style="stroke-width:0.96316379">TCP Connection</tspan>
   </text>
-  <path
-     id="Line"
-     d="M 671.22008,96.224562 657.2184,89.731548 v 12.986032 z m -44.00527,0.927574 h 31.00371 1.00012 v -1.855147 h -1.00012 -31.00371 -1.00012 v 1.855147 z"
-     inkscape:connector-curvature="0"
-     style="fill:#004368;fill-rule:nonzero;stroke:none;stroke-width:0.96316379" />
-  <path
-     d="M 651.99386,90.453191 V 101.58407"
-     id="Line-2"
-     inkscape:connector-curvature="0"
-     style="fill:none;fill-rule:evenodd;stroke:#004368;stroke-width:2.88949132;stroke-linecap:square" />
   <text
      id="Traffic-Animations"
      font-size="15"
      font-weight="500"
      line-spacing="10"
      style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     x="51"
-     y="2">
+     x="-10.564102"
+     y="0.22793482">
     <tspan
-       x="807"
-       y="18"
+       x="745.43591"
+       y="16.227936"
        id="tspan79">Traffic Animations</tspan>
   </text>
+  <g
+     id="g1254"
+     transform="translate(7.1638216,4.0296502)">
+    <text
+       y="25.221195"
+       x="747.56897"
+       id="Normal-Request"
+       font-size="12"
+       font-weight="normal"
+       line-spacing="18"
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
+      <tspan
+         x="807.56897"
+         y="38.221191"
+         id="tspan82">Normal Request</tspan>
+    </text>
+    <path
+       d="m 747.79348,35.104005 h 43.77551"
+       id="path88"
+       inkscape:connector-curvature="0"
+       style="fill:none;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:2;stroke-linecap:square;stroke-opacity:1" />
+    <circle
+       id="Oval-3"
+       cx="770.56897"
+       cy="35.104004"
+       r="5"
+       style="fill:#fffffb;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
   <text
-     style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     line-spacing="18"
-     font-weight="normal"
-     font-size="12"
-     id="Normal-Request"
-     x="806.67053"
-     y="23.433834">
-    <tspan
-       id="tspan82"
-       y="36.433834"
-       x="866.67053">Normal Request</tspan>
-  </text>
-  <text
-     style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     line-spacing="18"
-     font-weight="normal"
-     font-size="12"
-     id="Failed-Request"
-     x="806.67053"
-     y="23.433834">
-    <tspan
-       id="tspan85"
-       y="56.433834"
-       x="866.67053">Failed Request</tspan>
-  </text>
-  <path
-     style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:2;stroke-linecap:square"
-     inkscape:connector-curvature="0"
-     id="path88"
-     d="m 806.89502,32.267167 h 43.77551" />
-  <path
-     style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:2;stroke-linecap:square"
-     inkscape:connector-curvature="0"
-     id="path90"
-     d="m 806.89502,52.267167 h 43.77551" />
-  <circle
-     style="fill:#393f44;fill-rule:evenodd;stroke:none;stroke-width:1"
-     r="5"
-     cy="32.433834"
-     cx="829.67053"
-     id="Oval-3" />
-  <polygon
-     style="fill:#cc0000;fill-rule:evenodd;stroke:none;stroke-width:1"
-     points="23,23 29,29 23,35 17,29 "
-     id="Polygon"
-     transform="translate(806.67053,23.433834)" />
-  <text
-     y="39.313969"
-     x="11.163209"
+     y="37.250866"
+     x="13.401904"
      id="App/Workload"
      font-size="12"
      font-weight="normal"
      line-spacing="18"
      style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
     <tspan
-       x="42.163208"
-       y="54.313969"
+       x="44.401901"
+       y="52.250866"
        id="tspan95">Workload</tspan>
   </text>
   <circle
      id="Oval-5"
-     cx="23.66321"
-     cy="51.813969"
+     cx="25.901903"
+     cy="47.750866"
      r="12.5"
      style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1" />
   <circle
      style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1"
      r="12.5"
-     cy="45.813969"
-     cx="477.87851"
+     cy="47.993626"
+     cx="443.40262"
      id="circle2046" />
   <text
-     x="131.06461"
+     x="117.1847"
      id="App/Workload-(Extern"
      font-size="12"
      font-weight="normal"
      line-spacing="18"
      style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     y="39.966312">
+     y="37.610241">
     <tspan
-       x="162.06462"
-       y="52.966312"
+       x="148.18471"
+       y="50.610241"
        id="tspan100">App</tspan>
   </text>
-  <text
-     y="94.313972"
-     x="128.06461"
-     id="Service"
-     font-size="12"
-     font-weight="normal"
-     line-spacing="18"
-     style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
-    <tspan
-       x="162.06462"
-       y="114.31397"
-       id="tspan108">Service</tspan>
-  </text>
   <g
-     style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
-     transform="translate(9.1632089,100.31397)"
-     id="Group-7">
+     id="g1210"
+     transform="translate(0.89547784,13.009812)">
     <text
-       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303"
+       y="59.569736"
+       x="15.431554"
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
        line-spacing="18"
        font-weight="normal"
        font-size="12"
        id="Traffic-Source">
       <tspan
          id="tspan114"
-         y="15"
-         x="30">Traffic Source</tspan>
+         y="74.569733"
+         x="45.431553">Traffic</tspan>
     </text>
-    <polygon
-       style="fill:#ffffff;stroke:#8b8d8f"
-       points="0,12.5 12.5,0 25,12.5 12.5,25 "
-       id="polygon117" />
+    <text
+       id="text1105"
+       y="71.658684"
+       x="15.879292"
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
+       line-spacing="18"
+       font-weight="normal"
+       font-size="12">
+      <tspan
+         id="tspan1107"
+         y="86.658684"
+         x="45.879292">Source</tspan>
+    </text>
   </g>
+  <polygon
+     id="polygon117"
+     points="12.5,0 25,12.5 12.5,25 0,12.5 "
+     style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1"
+     transform="translate(13.640598,76.591794)" />
   <text
      id="Node-Shapes"
      font-size="15"
      font-weight="500"
      line-spacing="10"
      style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-     x="1"
-     y="2">
+     x="5.9251285"
+     y="0.65678322">
     <tspan
-       x="1"
-       y="18"
+       x="5.9251285"
+       y="16.656784"
        id="tspan121">Node Shapes</tspan>
   </text>
   <path
-     transform="matrix(0.88669661,0,0,0.91033252,8.761059,7.274937)"
+     transform="matrix(0.88669661,0,0,0.91033252,-5.1188476,3.2136786)"
      d="m 163.62782,61.192884 -24.53759,0 0,-24.537593 24.53759,0 z"
      inkscape:randomized="0"
      inkscape:rounded="0"
@@ -489,26 +520,43 @@
      id="path1261"
      style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1.21389782;stroke-opacity:1"
      sodipodi:type="star" />
-  <path
-     sodipodi:type="star"
-     id="path132"
-     sodipodi:sides="3"
-     sodipodi:cx="142.97058"
-     sodipodi:cy="112.10398"
-     sodipodi:r1="13.398211"
-     sodipodi:r2="6.6991057"
-     sodipodi:arg1="-1.5707963"
-     sodipodi:arg2="-0.52359878"
-     inkscape:flatsided="true"
-     inkscape:rounded="0"
-     inkscape:randomized="0"
-     d="m 142.97058,98.70577 11.60319,20.09732 -23.20638,0 z"
-     inkscape:transform-center-y="-3.3495544"
-     style="fill:none;fill-opacity:1;stroke:#8b8d8f;stroke-width:0.88739789;stroke-opacity:1"
-     inkscape:transform-center-x="6.8550593e-06" />
+  <g
+     id="g1164"
+     transform="translate(0.89547784,11.900943)">
+    <text
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
+       line-spacing="18"
+       font-weight="normal"
+       font-size="12"
+       id="Service"
+       x="111.94601"
+       y="62.972248">
+      <tspan
+         id="tspan108"
+         y="82.972244"
+         x="145.94601">Service</tspan>
+    </text>
+    <path
+       inkscape:transform-center-x="6.8550593e-06"
+       style="fill:none;fill-opacity:1;stroke:#8b8d8f;stroke-width:0.88739789;stroke-opacity:1"
+       inkscape:transform-center-y="-3.3495544"
+       d="m 126.85198,67.364042 11.60319,20.097316 -23.20638,0 z"
+       inkscape:randomized="0"
+       inkscape:rounded="0"
+       inkscape:flatsided="true"
+       sodipodi:arg2="-0.52359878"
+       sodipodi:arg1="-1.5707963"
+       sodipodi:r2="6.6991057"
+       sodipodi:r1="13.398211"
+       sodipodi:cy="80.762253"
+       sodipodi:cx="126.85198"
+       sodipodi:sides="3"
+       id="path132"
+       sodipodi:type="star" />
+  </g>
   <text
-     y="2"
-     x="135.43494"
+     y="0.45180199"
+     x="98.272614"
      style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
      line-spacing="10"
      font-weight="500"
@@ -516,9 +564,9 @@
      id="text2036">
     <tspan
        id="tspan2034"
-       y="18"
-       x="459.43494"
-       style="-inkscape-font-specification:'Open Sans';font-family:'Open Sans';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal">Node Background</tspan>
+       y="16.451801"
+       x="422.27261"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Open Sans';-inkscape-font-specification:'Open Sans'">Node Background</tspan>
   </text>
   <flowRoot
      xml:space="preserve"
@@ -534,21 +582,25 @@
      style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:1;stroke-linecap:square"
      inkscape:connector-curvature="0"
      id="path137"
-     d="M 609,2 V 142" />
-  <path
-     style="fill:#004368;fill-rule:nonzero;stroke:none;stroke-width:0.96316379"
-     inkscape:connector-curvature="0"
-     d="M 670.90037,96.304074 656.89869,89.81106 v 12.98603 z m -44.00527,0.927573 h 31.00371 1.00012 V 95.3765 h -1.00012 -31.00371 -1.00012 v 1.855147 z"
-     id="Line-36" />
-  <path
-     style="fill:none;fill-rule:evenodd;stroke:#004368;stroke-width:2.88949132;stroke-linecap:square"
-     inkscape:connector-curvature="0"
-     id="Line-2-7"
-     d="M 651.89809,90.738634 V 101.86952" />
+     d="m 561.98741,2.24276 v 140" />
+  <g
+     id="g1172"
+     transform="translate(3.4686117,-7.0390222)">
+    <path
+       style="fill:#004368;fill-rule:nonzero;stroke:none;stroke-width:0.96316379"
+       inkscape:connector-curvature="0"
+       d="m 615.25271,97.12004 -14.00168,-6.493014 v 12.986034 z m -44.00527,0.927574 h 31.00371 1.00012 v -1.855147 h -1.00012 -31.00371 -1.00012 v 1.855147 z"
+       id="Line" />
+    <path
+       d="M 595.93072,91.634112 V 102.765"
+       id="Line-2-7"
+       inkscape:connector-curvature="0"
+       style="fill:none;fill-rule:evenodd;stroke:#004368;stroke-width:2.88949132;stroke-linecap:square" />
+  </g>
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
      id="g1839"
-     transform="matrix(1.0193768,0,0,0.94852758,48.631255,3.701231)">
+     transform="matrix(1.0193768,0,0,0.94852758,-3.4375999,-2.5641333)">
     <path
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;vector-effect:none;fill:#cc0000;fill-opacity:1;fill-rule:nonzero;stroke:#cc0000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.9000001;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        d="m 566.22449,35.833333 v 2 H 599 v -2 z"
@@ -565,7 +617,7 @@
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
      id="g1869"
-     transform="matrix(1.0193768,0,0,0.94852758,48.631255,24.294291)">
+     transform="matrix(1.0193768,0,0,0.94852758,-3.4375999,18.028927)">
     <path
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;vector-effect:none;fill:#ec7a08;fill-opacity:1;fill-rule:nonzero;stroke:#ec7a08;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.9000001;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        d="m 566.22449,35.833333 v 2 H 599 v -2 z"
@@ -582,7 +634,7 @@
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
      id="g1902"
-     transform="matrix(1.0193768,0,0,0.94852758,48.631255,42.828048)">
+     transform="matrix(1.0193768,0,0,0.94852758,-3.4375999,36.562684)">
     <path
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;vector-effect:none;fill:#3f9c35;fill-opacity:1;fill-rule:nonzero;stroke:#3f9c35;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.9000001;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        d="m 566.22449,35.833333 v 2 H 599 v -2 z"
@@ -599,7 +651,7 @@
   <g
      style="fill:none;fill-rule:evenodd;stroke:none;stroke-width:1"
      id="g1908"
-     transform="matrix(1.0193768,0,0,0.94852758,48.631255,79.957253)">
+     transform="matrix(1.0193768,0,0,0.94852758,-3.4375999,73.691889)">
     <path
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;vector-effect:none;fill:#8b8d8f;fill-opacity:1;fill-rule:nonzero;stroke:#8b8d8f;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.9000001;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
        d="m 566.22449,35.833333 v 2 H 599 v -2 z"
@@ -615,7 +667,7 @@
   </g>
   <g
      id="g34"
-     transform="translate(470.37851,39.478499)">
+     transform="translate(435.90262,40.992127)">
     <path
        inkscape:connector-curvature="0"
        id="path2"
@@ -639,97 +691,99 @@
      font-weight="normal"
      font-size="12"
      id="text447-3"
-     x="466.69897"
-     y="69.65863">
+     x="432.22308"
+     y="70.451729">
     <tspan
        id="tspan443-6"
-       y="82.65863"
-       x="499.69897">Restricted</tspan>
+       y="83.451729"
+       x="465.22311">Restricted</tspan>
     <tspan
        id="tspan445-7"
-       y="100.65865"
-       x="499.69897">Namespace</tspan>
+       y="101.45175"
+       x="465.22311">Namespace</tspan>
   </text>
-  <circle
-     style="fill:#8b8d8f;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1;fill-opacity:1"
-     r="12.5"
-     cy="87.870941"
-     cx="477.56918"
-     id="circle2046-5" />
   <g
-     id="g1021"
-     transform="translate(170.33492,-115.64325)">
+     id="g1259"
+     transform="translate(2.2735658,4.0296492)">
     <text
-       y="184.28604"
-       x="616.24933"
+       y="6.6040072"
+       x="886.43005"
        id="Failed-Request-7-36"
        font-size="12"
        font-weight="normal"
        line-spacing="18"
        style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
       <tspan
-         x="676.24927"
-         y="217.28604"
+         x="946.42987"
+         y="39.604004"
          id="tspan85-5-7">Circuit Breaker</tspan>
     </text>
     <path
        id="path1166-5"
-       d="m 656.63011,210.61086 h -2.64648 l 0.7939,-2.97706 c 0.093,-0.34922 -0.1705,-0.69221 -0.53183,-0.69221 h -3.11887 c -0.27586,0 -0.5091,0.20422 -0.54555,0.47765 l -0.73375,5.50389 c -0.044,0.32998 0.21302,0.62314 0.54555,0.62314 h 2.72215 l -1.05627,4.45967 c -0.0825,0.34818 0.18376,0.67729 0.5354,0.67729 0.19149,0 0.37555,-0.10033 0.47649,-0.27469 l 4.03558,-6.97153 c 0.21199,-0.36617 -0.0525,-0.82615 -0.47632,-0.82615 z"
+       d="m 926.81082,32.902455 h -2.64649 l 0.79389,-2.97706 c 0.093,-0.34922 -0.1705,-0.69221 -0.5318,-0.69221 h -3.11889 c -0.27586,0 -0.5091,0.20422 -0.54555,0.47765 l -0.73375,5.50389 c -0.044,0.32998 0.21302,0.62314 0.54555,0.62314 h 2.72215 l -1.05627,4.45967 c -0.0825,0.34818 0.18376,0.67729 0.5354,0.67729 0.19149,0 0.37555,-0.10033 0.47649,-0.27469 l 4.03557,-6.97153 c 0.212,-0.36617 -0.053,-0.82615 -0.4763,-0.82615 z"
        style="fill:#40199a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.02293289"
        inkscape:connector-curvature="0" />
+  </g>
+  <text
+     y="0.30456859"
+     x="160.13191"
+     id="Traffic-Animations-3-6"
+     font-size="15"
+     font-weight="500"
+     line-spacing="10"
+     style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
+    <tspan
+       x="916.1319"
+       y="16.304569"
+       id="tspan79-6-2">Node Badges</tspan>
+  </text>
+  <g
+     id="g1264"
+     transform="translate(1.1775203,4.0296502)">
     <path
        inkscape:connector-curvature="0"
        style="fill:#40199a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.02097152"
-       d="m 655.18958,234.19629 c 0,0.92509 -0.75262,1.67772 -1.67772,1.67772 -0.9251,0 -1.67772,-0.75263 -1.67772,-1.67772 0,-0.9251 0.75262,-1.67773 1.67772,-1.67773 0.9251,0 1.67772,0.75263 1.67772,1.67773 z m -3.16125,-8.53124 0.28521,5.70425 c 0.0134,0.26787 0.2345,0.47817 0.5027,0.47817 h 1.39124 c 0.2682,0 0.48929,-0.21029 0.5027,-0.47817 l 0.28521,-5.70425 c 0.0143,-0.2875 -0.21484,-0.52846 -0.50269,-0.52846 h -1.96168 c -0.28785,0 -0.51706,0.24096 -0.50269,0.52846 z"
+       d="m 924.47488,62.593754 c 0,0.92509 -0.75274,1.67772 -1.6778,1.67772 -0.9251,0 -1.67772,-0.75263 -1.67772,-1.67772 0,-0.9251 0.75262,-1.67773 1.67772,-1.67773 0.92506,0 1.6778,0.75263 1.6778,1.67773 z m -3.16133,-8.53124 0.28521,5.70425 c 0.0134,0.26787 0.2345,0.47817 0.5027,0.47817 h 1.39128 c 0.2682,0 0.48934,-0.21029 0.50274,-0.47817 l 0.2852,-5.70425 c 0.014,-0.2875 -0.2149,-0.52846 -0.50274,-0.52846 h -1.9617 c -0.28785,0 -0.51706,0.24096 -0.50269,0.52846 z"
        id="path1214-3" />
-    <path
-       inkscape:connector-curvature="0"
-       style="fill:#40199a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.02359296"
-       d="m 658.04171,245.55577 c 0,-1.04281 -0.84463,-1.88743 -1.88743,-1.88743 -1.04282,0 -1.88744,0.84462 -1.88744,1.88743 0,0.85879 0.5733,1.58309 1.35659,1.81194 -0.0142,0.37985 -0.0991,0.6724 -0.25952,0.87058 -0.36333,0.45299 -1.16314,0.52849 -2.01012,0.60634 -0.66532,0.0613 -1.35423,0.1274 -1.91811,0.39872 v -3.39739 c 0.76677,-0.24064 1.3212,-0.95551 1.3212,-1.80014 0,-1.04281 -0.84462,-1.88743 -1.88744,-1.88743 -1.0428,0 -1.88743,0.84462 -1.88743,1.88743 0,0.84463 0.55444,1.5595 1.32121,1.80014 v 4.70208 c -0.76677,0.24301 -1.32121,0.95788 -1.32121,1.80251 0,1.04281 0.84463,1.88743 1.88743,1.88743 1.04282,0 1.88744,-0.84462 1.88744,-1.88743 0,-0.80216 -0.50017,-1.48872 -1.20796,-1.76004 0.0731,-0.12268 0.18404,-0.23121 0.35154,-0.31614 0.3822,-0.19347 0.95316,-0.24537 1.5595,-0.30199 0.99562,-0.092 2.12336,-0.19819 2.78868,-1.02394 0.33031,-0.41052 0.49782,-0.939 0.50961,-1.60196 0.74554,-0.2548 1.28346,-0.96023 1.28346,-1.79071 z m -7.17227,-1.88743 c 0.20762,0 0.3775,0.16987 0.3775,0.37748 0,0.20762 -0.16988,0.37749 -0.3775,0.37749 -0.20761,0 -0.37748,-0.16987 -0.37748,-0.37749 0,-0.20761 0.16987,-0.37748 0.37748,-0.37748 z m 0,9.05969 c -0.20761,0 -0.37748,-0.16987 -0.37748,-0.37748 0,-0.20762 0.16987,-0.37749 0.37748,-0.37749 0.20762,0 0.3775,0.16987 0.3775,0.37749 0,0.20761 -0.16988,0.37748 -0.3775,0.37748 z m 5.28484,-7.54974 c 0.20761,0 0.37748,0.16987 0.37748,0.37748 0,0.20762 -0.16987,0.37749 -0.37748,0.37749 -0.20762,0 -0.3775,-0.16987 -0.3775,-0.37749 0,-0.20761 0.16988,-0.37748 0.3775,-0.37748 z"
-       id="path1287-5" />
     <text
-       style="font-weight:500;font-size:15px;font-family:OpenSans-Semibold, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
-       line-spacing="10"
-       font-weight="500"
-       font-size="15"
-       id="Traffic-Animations-3-6"
-       x="-121.24226"
-       y="183.98524">
-      <tspan
-         id="tspan79-6-2"
-         y="199.98524"
-         x="634.75775">Node Badges</tspan>
-    </text>
-    <text
-       y="201.97894"
-       x="616.50574"
+       y="29.019964"
+       x="885.79095"
        id="Failed-Request-7-3-9"
        font-size="12"
        font-weight="normal"
        line-spacing="18"
        style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
       <tspan
-         x="676.50568"
-         y="234.97893"
+         x="945.79071"
+         y="62.019951"
          id="tspan85-5-5-1">Missing Sidecar</tspan>
     </text>
+  </g>
+  <g
+     id="g1269"
+     transform="translate(4.0296503,4.0296502)">
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#40199a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.02359296"
+       d="m 927.32702,79.807059 c 0,-1.04281 -0.8446,-1.88743 -1.8874,-1.88743 -1.0429,0 -1.88758,0.84462 -1.88758,1.88743 0,0.85879 0.57334,1.58309 1.35668,1.81194 -0.014,0.37985 -0.099,0.6724 -0.2595,0.87058 -0.36334,0.45299 -1.16328,0.52849 -2.01021,0.60634 -0.66532,0.0613 -1.35423,0.1274 -1.91811,0.39872 v -3.39739 c 0.76677,-0.24064 1.3212,-0.95551 1.3212,-1.80014 0,-1.04281 -0.84462,-1.88743 -1.88744,-1.88743 -1.0428,0 -1.88743,0.84462 -1.88743,1.88743 0,0.84463 0.55444,1.5595 1.32121,1.80014 v 4.70208 c -0.76677,0.24301 -1.32121,0.95788 -1.32121,1.80251 0,1.04281 0.84463,1.88743 1.88743,1.88743 1.04282,0 1.88744,-0.84462 1.88744,-1.88743 0,-0.80216 -0.50017,-1.48872 -1.20796,-1.76004 0.0731,-0.12268 0.18404,-0.23121 0.35154,-0.31614 0.3822,-0.19347 0.95316,-0.24537 1.5595,-0.30199 0.99566,-0.092 2.12344,-0.19819 2.78874,-1.02394 0.3303,-0.41052 0.4978,-0.939 0.5096,-1.60196 0.7456,-0.2548 1.2835,-0.96023 1.2835,-1.79071 z m -7.17236,-1.88743 c 0.20762,0 0.3775,0.16987 0.3775,0.37748 0,0.20762 -0.16988,0.37749 -0.3775,0.37749 -0.20761,0 -0.37748,-0.16987 -0.37748,-0.37749 0,-0.20761 0.16987,-0.37748 0.37748,-0.37748 z m 0,9.05969 c -0.20761,0 -0.37748,-0.16987 -0.37748,-0.37748 0,-0.20762 0.16987,-0.37749 0.37748,-0.37749 0.20762,0 0.3775,0.16987 0.3775,0.37749 0,0.20761 -0.16988,0.37748 -0.3775,0.37748 z m 5.28496,-7.54974 c 0.2076,0 0.3774,0.16987 0.3774,0.37748 0,0.20762 -0.1698,0.37749 -0.3774,0.37749 -0.2077,0 -0.3775,-0.16987 -0.3775,-0.37749 0,-0.20761 0.1698,-0.37748 0.3775,-0.37748 z"
+       id="path1287-5" />
     <text
-       y="219.67181"
-       x="616.50574"
+       y="53.949486"
+       x="885.79095"
        id="Failed-Request-7-6-2"
        font-size="12"
        font-weight="normal"
        line-spacing="18"
        style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
       <tspan
-         x="676.50568"
-         y="252.67181"
+         x="945.79077"
+         y="86.949471"
          id="tspan85-5-2-7">Virtual Services</tspan>
     </text>
   </g>
   <g
      id="g1186"
-     transform="matrix(1.7670012,0,0,1.7670012,-367.15982,-186.35052)">
+     transform="matrix(1.7670012,0,0,1.7670012,-401.63571,-184.88691)">
     <circle
        r="6.157156"
        cy="155.19031"
@@ -747,8 +801,8 @@
        inkscape:connector-curvature="0" />
   </g>
   <text
-     y="51.38652"
-     x="601.51953"
+     y="44.88076"
+     x="551.37469"
      style="font-weight:normal;font-size:11.55796528px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:0.96316379"
      line-spacing="18"
      font-weight="normal"
@@ -757,13 +811,104 @@
      transform="scale(1.0383692,0.96304859)">
     <tspan
        id="tspan67-6"
-       y="140.96077"
-       x="660.27246"
+       y="134.455"
+       x="610.12762"
        style="stroke-width:0.96316379">mTLS (badge)</tspan>
   </text>
   <path
      id="path8855"
-     d="m 649.45152,130.98534 h -0.66211 v -2.10083 c 0,-2.44513 -1.88151,-4.43508 -4.1934,-4.43508 -2.31188,0 -4.19338,1.98995 -4.19338,4.43508 v 2.10083 h -0.66212 c -0.73108,0 -1.32423,0.62733 -1.32423,1.40055 v 5.6022 c 0,0.77323 0.59315,1.40056 1.32423,1.40056 h 9.71101 c 0.73109,0 1.32423,-0.62733 1.32423,-1.40056 v -5.6022 c 0,-0.77322 -0.59314,-1.40055 -1.32423,-1.40055 z m -2.86916,0 h -3.97269 v -2.10083 c 0,-1.15837 0.8911,-2.10083 1.98634,-2.10083 1.09526,0 1.98635,0.94246 1.98635,2.10083 z"
+     d="m 597.38266,124.71997 h -0.66211 v -2.10083 c 0,-2.44513 -1.88151,-4.43508 -4.1934,-4.43508 -2.31188,0 -4.19338,1.98995 -4.19338,4.43508 v 2.10083 h -0.66212 c -0.73108,0 -1.32423,0.62733 -1.32423,1.40055 v 5.6022 c 0,0.77323 0.59315,1.40056 1.32423,1.40056 h 9.71101 c 0.73109,0 1.32423,-0.62733 1.32423,-1.40056 v -5.6022 c 0,-0.77322 -0.59314,-1.40055 -1.32423,-1.40055 z m -2.86916,0 h -3.97269 v -2.10083 c 0,-1.15837 0.8911,-2.10083 1.98634,-2.10083 1.09526,0 1.98635,0.94246 1.98635,2.10083 z"
      inkscape:connector-curvature="0"
      style="fill:currentColor;stroke-width:0.028372" />
+  <path
+     d="M 910.70096,2.5000105 V 142.5"
+     id="Line-4-3"
+     inkscape:connector-curvature="0"
+     style="fill:none;fill-rule:evenodd;stroke:#d1d1d1;stroke-width:1;stroke-linecap:square" />
+  <g
+     id="g1240"
+     transform="translate(7.0604116,4.0296502)">
+    <text
+       y="53.981701"
+       x="747.67236"
+       id="Failed-Request-5"
+       font-size="12"
+       font-weight="normal"
+       line-spacing="18"
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
+      <tspan
+         x="807.67236"
+         y="86.981697"
+         id="tspan85-6">TCP Traffic</tspan>
+    </text>
+    <g
+       transform="translate(0,4.5348013)"
+       id="g1230">
+      <path
+         style="fill:#004368;fill-opacity:1;fill-rule:evenodd;stroke:#004368;stroke-width:2;stroke-linecap:square;stroke-opacity:1"
+         inkscape:connector-curvature="0"
+         id="path90-2"
+         d="M 747.89689,78.160283 H 791.6724" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:0.61144638;stroke-opacity:1"
+         r="3.0572319"
+         cy="75.461037"
+         cx="752.55255"
+         id="Oval-3-1" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:0.61144638;stroke-opacity:1"
+         r="3.0572319"
+         cy="78.389572"
+         cx="764.02924"
+         id="Oval-3-1-2" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:0.61144638;stroke-opacity:1"
+         r="3.0572319"
+         cy="80.447464"
+         cx="776.37671"
+         id="Oval-3-1-2-7" />
+      <circle
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:0.61144638;stroke-opacity:1"
+         r="3.0572319"
+         cy="75.381882"
+         cx="786.50781"
+         id="Oval-3-1-2-7-0" />
+    </g>
+  </g>
+  <g
+     id="g1248"
+     transform="translate(8.0593006,4.0296502)">
+    <text
+       y="29.019953"
+       x="746.67346"
+       id="Failed-Request"
+       font-size="12"
+       font-weight="normal"
+       line-spacing="18"
+       style="font-weight:normal;font-size:12px;font-family:OpenSans, 'Open Sans';fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1">
+      <tspan
+         x="806.67346"
+         y="62.019951"
+         id="tspan85">Failed Request</tspan>
+    </text>
+    <g
+       transform="translate(-0.44773892,0.85330122)"
+       id="g1223">
+      <path
+         style="fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:2;stroke-linecap:square;stroke-opacity:1"
+         inkscape:connector-curvature="0"
+         id="path90"
+         d="m 747.34574,57.882795 h 43.77551" />
+      <polygon
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#cc0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         points="17,29 23,23 29,29 23,35 "
+         id="Polygon"
+         transform="translate(747.12125,29.049462)" />
+      <polygon
+         style="fill:#cc0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         points="17,29 23,23 29,29 23,35 "
+         id="Polygon-9"
+         transform="matrix(0.56467605,0,0,0.56467605,757.1337,41.673856)" />
+    </g>
+  </g>
 </svg>
