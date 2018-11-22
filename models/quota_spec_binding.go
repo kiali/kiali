@@ -1,16 +1,18 @@
 package models
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
 type QuotaSpecBindings []QuotaSpecBinding
 type QuotaSpecBinding struct {
-	Name            string      `json:"name"`
-	CreatedAt       string      `json:"createdAt"`
-	ResourceVersion string      `json:"resourceVersion"`
-	QuotaSpecs      interface{} `json:"quotaSpecs"`
-	Services        interface{} `json:"services"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     struct {
+		QuotaSpecs interface{} `json:"quotaSpecs"`
+		Services   interface{} `json:"services"`
+	} `json:"spec"`
 }
 
 func (qsbs *QuotaSpecBindings) Parse(quotaSpecBindings []kubernetes.IstioObject) {
@@ -22,9 +24,7 @@ func (qsbs *QuotaSpecBindings) Parse(quotaSpecBindings []kubernetes.IstioObject)
 }
 
 func (qsb *QuotaSpecBinding) Parse(quotaSpecBinding kubernetes.IstioObject) {
-	qsb.Name = quotaSpecBinding.GetObjectMeta().Name
-	qsb.CreatedAt = formatTime(quotaSpecBinding.GetObjectMeta().CreationTimestamp.Time)
-	qsb.ResourceVersion = quotaSpecBinding.GetObjectMeta().ResourceVersion
-	qsb.QuotaSpecs = quotaSpecBinding.GetSpec()["quotaSpecs"]
-	qsb.Services = quotaSpecBinding.GetSpec()["services"]
+	qsb.Metadata = quotaSpecBinding.GetObjectMeta()
+	qsb.Spec.QuotaSpecs = quotaSpecBinding.GetSpec()["quotaSpecs"]
+	qsb.Spec.Services = quotaSpecBinding.GetSpec()["services"]
 }
