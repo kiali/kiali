@@ -119,6 +119,67 @@ func TestGetSourceWorkloads(t *testing.T) {
 	assert.Equal(t, "v2", sources["v2"][0].Version)
 }
 
+func TestGetDestinationServices(t *testing.T) {
+	rqCustReviews := model.Metric{
+		"__name__":                      "istio_requests_total",
+		"destination_app":               "reviews",
+		"destination_service":           "reviews.bookinfo.svc.cluster.local",
+		"destination_service_name":      "reviews",
+		"destination_service_namespace": "bookinfo"}
+
+	rqCustDetails := model.Metric{
+		"__name__":                      "istio_requests_total",
+		"destination_app":               "details",
+		"destination_service":           "details.bookinfo.svc.cluster.local",
+		"destination_service_name":      "details",
+		"destination_service_namespace": "bookinfo"}
+
+	vector := model.Vector{
+		&model.Sample{
+			Metric: rqCustReviews,
+			Value:  4},
+		&model.Sample{
+			Metric: rqCustDetails,
+			Value:  4},
+	}
+
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	mockQuery(api, "sum(rate(istio_requests_total{reporter=\"source\",source_workload=\"productpage-v1\",source_workload_namespace=\"bookinfo\"}[50s])) by (destination_service_namespace, destination_service_name, destination_service)", &vector)
+	clock := util.ClockMock{time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
+	util.Clock = clock
+
+	destinations, err := client.GetDestinationServices("bookinfo", clock.Time.Add(-time.Second*50), "productpage-v1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	assert := assert.New(t)
+
+	assert.Equal(2, len(destinations), "Map should have 2 keys (versions)")
+
+	if len(destinations) < 2 {
+		return
+	}
+
+	svc := destinations[0]
+	assert.Equal("reviews", svc.App)
+	assert.Equal("reviews.bookinfo.svc.cluster.local", svc.Service)
+	assert.Equal("reviews", svc.ServiceName)
+	assert.Equal("bookinfo", svc.Namespace)
+
+	svc = destinations[1]
+	assert.Equal("details", svc.App)
+	assert.Equal("details.bookinfo.svc.cluster.local", svc.Service)
+	assert.Equal("details", svc.ServiceName)
+	assert.Equal("bookinfo", svc.Namespace)
+}
+
 func TestGetServiceMetrics(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
