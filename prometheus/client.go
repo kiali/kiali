@@ -25,6 +25,7 @@ type ClientInterface interface {
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
+	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
 }
 
 // Client for Prometheus API.
@@ -48,7 +49,6 @@ type Service struct {
 	Namespace   string
 	App         string
 	ServiceName string
-	Service     string
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -144,7 +144,7 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 	}
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
-	routes := make([]Service, 0, 0)
+	routes := make([]Service, 0)
 	switch result.Type() {
 	case model.ValVector:
 		matrix := result.(model.Vector)
@@ -152,7 +152,6 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 			metric := sample.Metric
 			destination := Service{
 				App:         string(metric["destination_app"]),
-				Service:     string(metric["destination_service"]),
 				ServiceName: string(metric["destination_service_name"]),
 				Namespace:   string(metric["destination_service_namespace"]),
 			}
