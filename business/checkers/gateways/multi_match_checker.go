@@ -3,6 +3,7 @@ package gateways
 import (
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -19,9 +20,11 @@ const (
 )
 
 type Host struct {
-	Port     uint32
-	Hostname string
-	Index    int
+	Port            uint32
+	Hostname        string
+	ServerIndex     int
+	HostIndex       int
+	GatewayRuleName string
 }
 
 // Check validates that no two gateways share the same host+port combination
@@ -37,13 +40,18 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 					for i, def := range servers {
 						if serverDef, ok := def.(map[string]interface{}); ok {
 							hosts := parsePortAndHostnames(serverDef)
-							for _, host := range hosts {
-								duplicate := m.findMatch(host)
-								if !duplicate {
-									m.existingList = append(m.existingList, host)
-								} else {
-									validations = addError(validations, gatewayRuleName, i)
+							for hi, host := range hosts {
+								host.ServerIndex = i
+								host.HostIndex = hi
+								host.GatewayRuleName = gatewayRuleName
+								duplicate, dhosts := m.findMatch(host)
+								if duplicate {
+									validations = addError(validations, gatewayRuleName, i, hi)
+									for _, dh := range dhosts {
+										validations = addError(validations, dh.GatewayRuleName, dh.ServerIndex, dh.HostIndex)
+									}
 								}
+								m.existingList = append(m.existingList, host)
 							}
 						}
 					}
@@ -54,10 +62,10 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func addError(validations models.IstioValidations, gatewayRuleName string, index int) models.IstioValidations {
+func addError(validations models.IstioValidations, gatewayRuleName string, serverIndex, hostIndex int) models.IstioValidations {
 	key := models.IstioValidationKey{Name: gatewayRuleName, ObjectType: GatewayCheckerType}
 	checks := models.BuildCheck("More than one Gateway for same host port combination",
-		"warning", "spec/servers["+strconv.Itoa(index)+"]")
+		"warning", "spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
 		ObjectType: GatewayCheckerType,
@@ -103,21 +111,25 @@ func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
 }
 
 // findMatch uses a linear search with regexp to check for matching gateway host + port combinations. If this becomes a bottleneck for performance, replace with a graph or trie algorithm.
-func (m MultiMatchChecker) findMatch(host Host) bool {
+func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
+	duplicates := make([]Host, 0)
 	for _, h := range m.existingList {
 		if h.Port == host.Port {
 			// wildcardMatches will always match
 			if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
-				return true
+				duplicates = append(duplicates, h)
+				break
 			}
-			// Either one could include wildcards, so we need to check both ways
-			if regexp.MustCompile(host.Hostname).MatchString(h.Hostname) {
-				return true
-			}
-			if regexp.MustCompile(h.Hostname).MatchString(host.Hostname) {
-				return true
+
+			// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
+			current := strings.Replace(host.Hostname, "*", ".*", -1)
+			previous := strings.Replace(h.Hostname, "*", ".*", -1)
+
+			if regexp.MustCompile(current).MatchString(previous) || regexp.MustCompile(previous).MatchString(current) {
+				duplicates = append(duplicates, h)
+				break
 			}
 		}
 	}
-	return false
+	return len(duplicates) > 0, duplicates
 }

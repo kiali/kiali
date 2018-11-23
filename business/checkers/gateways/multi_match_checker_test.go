@@ -56,7 +56,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.Equal(2, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
 	assert.False(validation.Valid)
@@ -79,14 +79,20 @@ func TestWildCardMatchingHost(t *testing.T) {
 			"app": "someother",
 		}))
 
-	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}, []kubernetes.IstioObject{gwObject2}}
+	// Another namespace
+	gwObject3 := data.AddServerToGateway(data.CreateServer([]string{"*.justhost.com"}, 80, "http", "http"),
+		data.CreateEmptyGateway("keepsvalid", map[string]string{
+			"app": "someother",
+		}))
+
+	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}, []kubernetes.IstioObject{gwObject2, gwObject3}}
 
 	validations := MultiMatchChecker{
 		GatewaysPerNamespace: gws,
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.Equal(3, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
 	assert.False(validation.Valid)
@@ -117,7 +123,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
+	assert.Equal(2, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
 	assert.False(validation.Valid)
