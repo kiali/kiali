@@ -12,23 +12,43 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 		statusCode := http.StatusOK
 		conf := Get()
 
-		token := r.Header.Get("X-Forwarded-Access-Token")
-		if token != "" {
-			// No-op, user is logged in (request is not proxied if user is available)
-		} else if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
-			err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-
-			if err != nil {
-				log.Warning("Token error: ", err)
+		switch strategy := conf.AuthStrategy; strategy {
+		case "oauth":
+			// Oauth is the default strategy for openshift, and for it, we just need
+			// to make sure the header is available. The token is generated and
+			// verified by the proxy.
+			//
+			// If it's not present, we just return a 403.
+			if r.Header.Get("X-Forwarded-Access-Token") == "" {
 				statusCode = http.StatusUnauthorized
+			} else {
+				log.Trace("Access allowed via oauth strategy...")
 			}
-		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {
-			u, p, ok := r.BasicAuth()
+		case "login":
+			/// For login, we check the authorization header, or force basic auth.
+			if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
+				err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 
-			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
+				if err != nil {
+					log.Warning("Token error: ", err)
+					statusCode = http.StatusUnauthorized
+				}
+			} else if conf.Server.Credentials.Username == "" || conf.Server.Credentials.Password == "" {
+				// Blocks anonymous requests if the server has no defined credentials.
+				// This is not the perfect solution, as it can cause some confusion on
+				// malformed configurations, but is still better than to allow an
+				// unknown user to access the data.
 				statusCode = http.StatusUnauthorized
+			} else {
+				u, p, ok := r.BasicAuth()
+
+				if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
+					statusCode = http.StatusUnauthorized
+				}
 			}
-		} else {
+		case "none":
+			// For none, we just bypass the auth entirely, allowing for anonymous
+			// user. This is not recommended in production.
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
 		}
 
