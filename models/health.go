@@ -40,6 +40,14 @@ func EmptyAppHealth() AppHealth {
 	}
 }
 
+// EmptyServiceHealth create an empty ServiceHealth
+func EmptyServiceHealth() ServiceHealth {
+	return ServiceHealth{
+		Envoy:    prometheus.EnvoyServiceHealth{},
+		Requests: NewEmptyRequestHealth(),
+	}
+}
+
 // WorkloadHealth contains aggregated health from various sources, for a given workload
 type WorkloadHealth struct {
 	WorkloadStatus WorkloadStatus `json:"workloadStatus"`
