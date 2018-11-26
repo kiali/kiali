@@ -76,8 +76,8 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 		return
 	}
 
-	params := prometheus.MetricsQuery{Namespace: namespace, Workload: workload}
-	err := extractMetricsQueryParams(r, &params, namespaceInfo)
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

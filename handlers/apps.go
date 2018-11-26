@@ -75,8 +75,8 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 		return
 	}
 
-	params := prometheus.MetricsQuery{Namespace: namespace, App: app}
-	err := extractMetricsQueryParams(r, &params, namespaceInfo)
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, App: app}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
@@ -84,4 +84,57 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+// CustomMetrics is the API handler to fetch runtime metrics to be displayed, related to a single app
+func CustomMetrics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	app := vars["app"]
+	template := vars["template"]
+
+	k8s, err := kubernetes.NewClient()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
+		return
+	}
+	prometheusClient, err := prometheus.NewClient()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return
+	}
+
+	namespaceInfo := checkNamespaceAccess(w, k8s, prometheusClient, vars["namespace"])
+	if namespaceInfo == nil {
+		return
+	}
+
+	monitoringClient, err := kubernetes.NewKialiMonitoringClient()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Kiali monitoring client error: "+err.Error())
+		return
+	}
+
+	svc := business.NewDashboardsService(monitoringClient, prometheusClient)
+
+	params := prometheus.CustomMetricsQuery{Namespace: namespace, App: app}
+	err = extractCustomMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	dashboard, err := svc.GetDashboard(params, template)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, dashboard)
 }

@@ -185,7 +185,7 @@ func TestGetServiceMetrics(t *testing.T) {
 		return
 	}
 
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		Service:   "productpage",
 	}
@@ -249,7 +249,7 @@ func TestGetAppMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
@@ -295,7 +295,7 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 	}
 	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)", 1.5)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.4)
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
@@ -319,7 +319,7 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 		return
 	}
 	mockRange(api, "round(sum(irate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[1m])), 0.001)", 1.5)
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
@@ -370,7 +370,7 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	// Mock everything to return empty data
 	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)")
 	mockEmptyHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]")
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
 	}
@@ -427,7 +427,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
-	q := prometheus.MetricsQuery{
+	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 	}
 	q.FillDefaults()

@@ -497,6 +497,27 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} customMetrics
+		// ---
+		// Endpoint to fetch custom metrics to be displayed in a dashboard, based on the provided template
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"CustomMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/cstmetrics/{template}",
+			handlers.CustomMetrics,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth
 		// ---
 		// Get health associated to the given service

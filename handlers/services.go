@@ -50,8 +50,8 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 		return
 	}
 
-	params := prometheus.MetricsQuery{Namespace: namespace, Service: service}
-	err := extractMetricsQueryParams(r, &params, namespaceInfo)
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, Service: service}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

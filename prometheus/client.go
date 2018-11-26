@@ -26,6 +26,8 @@ type ClientInterface interface {
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
 	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
+	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
+	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
 }
 
 // Client for Prometheus API.
@@ -162,7 +164,7 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 }
 
 // GetMetrics returns the Metrics related to the provided query options.
-func (in *Client) GetMetrics(query *MetricsQuery) Metrics {
+func (in *Client) GetMetrics(query *IstioMetricsQuery) Metrics {
 	return getMetrics(in.api, query)
 }
 
@@ -206,6 +208,16 @@ func (in *Client) GetAppRequestRates(namespace, app, ratesInterval string, query
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return getItemRequestRates(in.api, namespace, workload, "workload", queryTime, ratesInterval)
+}
+
+// FetchRateRange fetches a counter's rate in given range
+func (in *Client) FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
+	return fetchRateRange(in.api, metricName, labels, grouping, q)
+}
+
+// FetchHistogramRange fetches bucketed metric as histogram in given range
+func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram {
+	return fetchHistogramRange(in.api, metricName, labels, grouping, q)
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client

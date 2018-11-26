@@ -27,8 +27,8 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,8 +58,8 @@ func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:20
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,8 +83,8 @@ func TestExtractMetricsQueryIntervalBoundary(t *testing.T) {
 	q.Add("rateInterval", "35m")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{Namespace: "ns"}
-	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC)))
+	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Date(2018, 4, 10, 12, 10, 0, 0, time.UTC)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,10 +105,10 @@ func TestExtractMetricsQueryStartTimeBoundary(t *testing.T) {
 	q.Add("rateInterval", "1m")
 	req.URL.RawQuery = q.Encode()
 
-	mq := prometheus.MetricsQuery{Namespace: "ns"}
+	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
 	namespaceTimestamp := time.Date(2018, 4, 10, 12, 30, 0, 0, time.UTC)
 
-	err = extractMetricsQueryParams(req, &mq, buildNamespace("ns", namespaceTimestamp))
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", namespaceTimestamp))
 	if err != nil {
 		t.Fatal(err)
 	}
