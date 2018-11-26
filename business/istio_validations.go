@@ -40,10 +40,12 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	istioDetails := kubernetes.IstioDetails{}
 	vs := make([]kubernetes.IstioObject, 0)
 	drs := make([]kubernetes.IstioObject, 0)
+	gws := make([]kubernetes.IstioObject, 0)
 	var services []v1.Service
 	var workloads models.WorkloadList
 
-	wg.Add(4)
+	wg.Add(5)
+	go fetchNoEntry(&gws, namespace, in.k8s.GetGateways, &wg, errChan)
 	go fetch(&vs, namespace, service, in.k8s.GetVirtualServices, &wg, errChan)
 	go fetch(&drs, namespace, service, in.k8s.GetDestinationRules, &wg, errChan)
 	go in.serviceFetcher(&services, namespace, errChan, &wg)
@@ -56,6 +58,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	}
 	istioDetails.DestinationRules = drs
 	istioDetails.VirtualServices = vs
+	istioDetails.Gateways = gws
 	objectCheckers := []ObjectChecker{
 		checkers.VirtualServiceChecker{namespace, drs, vs},
 		checkers.DestinationRulesChecker{DestinationRules: drs},
