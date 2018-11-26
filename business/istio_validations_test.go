@@ -45,6 +45,16 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	assert.NotEmpty(validations)
 }
 
+func TestGatewayValidation(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	v := mockMultiNamespaceGatewaysValidationService()
+	validations, _ := v.GetIstioObjectValidations("test", "gateways", "second")
+	assert.NotEmpty(validations)
+}
+
 func mockWorkLoadService() WorkloadService {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
@@ -62,6 +72,15 @@ func mockWorkLoadService() WorkloadService {
 	return svc
 }
 
+func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
+	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
+	k8s.On("GetNamespaces").Return(fakeNamespaces(), nil)
+
+	return IstioValidationsService{k8s: k8s, ws: mockWorkLoadService()}
+}
+
 func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
@@ -69,8 +88,12 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().DestinationRules, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
-	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(fakeNamespace(), nil)
+
+	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
+	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
+	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
+	k8s.On("GetNamespaces").Return(fakeNamespaces(), nil)
 
 	return IstioValidationsService{k8s: k8s, ws: mockWorkLoadService()}
 }
@@ -90,10 +113,32 @@ func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
+func getGateway(name string) []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
+		data.CreateEmptyGateway(name, map[string]string{
+			"app": "real",
+		}))}
+}
+
 func fakeNamespace() *v1.Namespace {
 	return &v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "test",
+		},
+	}
+}
+
+func fakeNamespaces() []v1.Namespace {
+	return []v1.Namespace{
+		v1.Namespace{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "test",
+			},
+		},
+		v1.Namespace{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "test2",
+			},
 		},
 	}
 }
