@@ -139,7 +139,7 @@ func validateConfig() error {
 		return fmt.Errorf("server static content root directory does not exist: %v", config.Get().Server.StaticContentRootDirectory)
 	}
 
-	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z\d_\$]*$`)
+	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z\d_/\$]*$`)
 	if path := config.Get().Server.WebRoot; !validPathRegEx.MatchString(path) {
 		return fmt.Errorf("web root must begin with a / and contain only alphanumerics: %v", path)
 	}
