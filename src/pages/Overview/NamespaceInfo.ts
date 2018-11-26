@@ -3,6 +3,7 @@ export type NamespaceInfo = {
   inError: string[];
   inWarning: string[];
   inSuccess: string[];
+  notAvailable: string[];
 };
 
 export default NamespaceInfo;

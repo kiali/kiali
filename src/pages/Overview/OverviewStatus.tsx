@@ -9,7 +9,7 @@ type Props = {
   namespace: string;
   status: Status;
   items: string[];
-  isApp: boolean;
+  targetPage: TargetPage;
 };
 
 class OverviewStatus extends React.Component<Props, {}> {
@@ -38,11 +38,7 @@ class OverviewStatus extends React.Component<Props, {}> {
         rootClose={true}
       >
         <AggregateStatusNotification>
-          <ListPageLink
-            target={this.props.isApp ? TargetPage.APPLICATIONS : TargetPage.WORKLOADS}
-            namespace={this.props.namespace}
-            health={this.props.status.name}
-          >
+          <ListPageLink target={this.props.targetPage} namespace={this.props.namespace} health={this.props.status.name}>
             <Icon type="pf" name={this.props.status.icon} />
             {length}
           </ListPageLink>

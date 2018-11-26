@@ -35,10 +35,11 @@ type Props = ReduxProps & {
 
 const overviewTypes = {
   app: 'Apps',
-  workload: 'Workloads'
+  workload: 'Workloads',
+  service: 'Services'
 };
 
-type OverviewType = keyof typeof overviewTypes;
+export type OverviewType = keyof typeof overviewTypes;
 
 type State = {
   isSortAscending: boolean;
