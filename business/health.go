@@ -227,7 +227,7 @@ func (in *HealthService) getNamespaceServiceHealth(namespace string, services []
 
 	// Prepare all data
 	for _, service := range services {
-		h := models.ServiceHealth{}
+		h := models.EmptyServiceHealth()
 		allHealth[service.Name] = &h
 	}
 
