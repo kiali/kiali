@@ -120,6 +120,9 @@ export default class Tour extends React.PureComponent<TourProps> {
   };
 
   render() {
+    if (!this.props.show) {
+      return null;
+    }
     const step = this.props.steps[this.props.currentStep];
 
     return (
@@ -133,7 +136,7 @@ export default class Tour extends React.PureComponent<TourProps> {
           disableAnimation={true}
           target={step.target}
           component={TourModal(this.props, step)}
-          open={this.props.show}
+          open={true}
           placement={step.placement ? step.placement : defaults.placement}
           offset={step.offset !== undefined ? step.offset : defaults.offset}
         />
