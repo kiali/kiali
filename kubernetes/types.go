@@ -163,11 +163,6 @@ var (
 	}
 	apiNetworkingVersion = networkingGroupVersion.Group + "/" + networkingGroupVersion.Version
 
-	routeGroupVersion = schema.GroupVersion{
-		Group:   "route.openshift.io",
-		Version: "v1",
-	}
-
 	networkingTypes = []struct {
 		objectKind     string
 		collectionKind string
@@ -409,7 +404,6 @@ type istioResponse struct {
 }
 
 // GenericIstioObject is a type to test Istio types defined by Istio as a Kubernetes extension.
-
 type GenericIstioObject struct {
 	meta_v1.TypeMeta   `json:",inline"`
 	meta_v1.ObjectMeta `json:"metadata"`

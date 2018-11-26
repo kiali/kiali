@@ -84,8 +84,8 @@ rules:
   - projects
   verbs:
   - get
-- apiGroups: ["route.openshift.io"]
+- apiGroups: ["monitoring.kiali.io"]
   resources:
-  - routes
+  - monitoringdashboards
   verbs:
   - get

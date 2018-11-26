@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-type osRouteSupplier func(string, string) (string, error)
 type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
 type dashboardSupplier func(string, string) (string, error)
 

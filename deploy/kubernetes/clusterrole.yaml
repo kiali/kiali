@@ -72,3 +72,8 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["monitoring.kiali.io"]
+  resources:
+  - monitoringdashboards
+  verbs:
+  - get

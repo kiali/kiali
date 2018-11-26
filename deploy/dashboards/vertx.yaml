@@ -1,0 +1,25 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx
+spec:
+  title: Vert.x
+  charts:
+    - name: "Server response time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_http_server_responseTime_seconds"
+      metricType: "histogram"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+    - name: "Request count rate"
+      unit: "ops"
+      spans: 6
+      metricName: "vertx_http_server_requestCount_total"
+      metricType: "counter"
+      aggregations:
+        - label: "code"
+          displayName: "Error code"
+        - label: "path"
+          displayName: "Path"
