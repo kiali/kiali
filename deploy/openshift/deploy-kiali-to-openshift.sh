@@ -19,7 +19,7 @@
 ##############################################################################
 
 # The Auth Strategy we are going to use:
-# - oauth: OAuth from Openshift
+# - openshift: OAuth from Openshift
 # - login: username/password
 # - none:  anonymous usage
 export AUTH_STRATEGY="${AUTH_STRATEGY:-oauth}"
@@ -27,7 +27,7 @@ export AUTH_STRATEGY="${AUTH_STRATEGY:-oauth}"
 # If OAuth is enabled, we just use the default proxy configuration. If not, we
 # ask for credentials and use the default login page strategy, as well as
 # setting the proxy to bypass everything.
-if [ "${AUTH_STRATEGY}" == "oauth" ]; then
+if [ "${AUTH_STRATEGY}" == "openshift" ]; then
   export AUTH_BYPASS=""
 else
   # The credentials can be specified either as already base64 encoded, or in plain text.

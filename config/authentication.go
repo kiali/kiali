@@ -13,12 +13,11 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 		conf := Get()
 
 		switch strategy := conf.AuthStrategy; strategy {
-		case "oauth":
-			// Oauth is the default strategy for openshift, and for it, we just need
-			// to make sure the header is available. The token is generated and
-			// verified by the proxy.
+		case "openshift":
+			// For openshift logins, we just need to make sure the header is
+			// available. The token is generated and verified by the proxy.
 			//
-			// If it's not present, we just return a 403.
+			// If it's not present, return 403.
 			if r.Header.Get("X-Forwarded-Access-Token") == "" {
 				statusCode = http.StatusUnauthorized
 			} else {

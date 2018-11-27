@@ -529,7 +529,7 @@ api:
 ----
 
 |`AUTH_STRATEGY`
-|The authentication strategy to be used by Kiali. The possible values are `none`, for no checking of credentials, `oauth` for using Openshift oauth, and `login` for the default login page (default).
+|The authentication strategy to be used by Kiali. The possible values are `none`, for no checking of credentials, `openshift` for using Openshift's oauth, and `login` for the default login page (default).
 [source,yaml]
 ----
 auth_strategy: VALUE
