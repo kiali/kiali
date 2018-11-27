@@ -54,7 +54,7 @@ def __remove_assets():
   print('Assets deleted: {}'.format(file_count))
 
 def get_istio_clusterrole_file():
-      yaml_content = requests.get( __get_environment_config__(ENV_FILE).get('istio_clusterrole_permissions_file_address')).content.decode("utf-8")
+      yaml_content = requests.get( __get_environment_config__(ENV_FILE).get('istio_clusterrole')).content.decode("utf-8")
 
       yaml_content = re.sub("app: {{.+}}", "app: kiali", yaml_content)
       yaml_content = re.sub("chart: {{.+}}", "version: 0.10 ", yaml_content)
@@ -63,8 +63,14 @@ def get_istio_clusterrole_file():
       return yaml.load(yaml_content)
 
 
-def get_kiali_clusterrole_file():
-    yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_clusterrole_file_address')).content.decode("utf-8")
+def get_kiali_clusterrole_file(file_type):
+
+    if(file_type == "Openshift"):
+        yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_openshift_clusterrole')).content.decode("utf-8")
+    elif(file_type == "Kubernetes"):
+        yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_kubernetes_clusterrole')).content.decode("utf-8")
+
 
     yaml_content = re.sub("\${VERSION_LABEL}", "0.10", yaml_content)
     return yaml.load(yaml_content)
+
