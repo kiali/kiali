@@ -22,7 +22,7 @@
 # - openshift: OAuth from Openshift
 # - login: username/password
 # - none:  anonymous usage
-export AUTH_STRATEGY="${AUTH_STRATEGY:-oauth}"
+export AUTH_STRATEGY="${AUTH_STRATEGY:-login}"
 
 # If OAuth is enabled, we just use the default proxy configuration. If not, we
 # ask for credentials and use the default login page strategy, as well as
