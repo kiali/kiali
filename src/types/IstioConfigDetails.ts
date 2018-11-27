@@ -1,16 +1,19 @@
 import Namespace from './Namespace';
-import { DestinationPolicy, DestinationRule, RouteRule, VirtualService } from './ServiceInfo';
 import { AceOptions } from 'react-ace';
+import { ResourcePermissions } from './Permissions';
 import {
+  DestinationPolicy,
+  DestinationRule,
   Gateway,
   IstioAdapter,
   IstioRule,
   IstioTemplate,
   QuotaSpec,
   QuotaSpecBinding,
-  ServiceEntry
-} from './IstioConfigList';
-import { ResourcePermissions } from './Permissions';
+  RouteRule,
+  ServiceEntry,
+  VirtualService
+} from './IstioObjects';
 
 export interface IstioConfigId {
   namespace: string;

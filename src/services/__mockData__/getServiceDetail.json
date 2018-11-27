@@ -48,24 +48,28 @@
   "virtualServices": {
     "items": [
       {
-        "name": "reviews",
-        "createdAt": "2018-07-02T13:44:01+02:00",
-        "resourceVersion": "393057",
-        "hosts": ["reviews"],
-        "gateways": null,
-        "http": [
-          {
-            "route": [
-              {
-                "destination": {
-                  "host": "reviews",
-                  "subset": "v1"
+        "metadata": {
+          "name": "reviews",
+          "creationTimestamp": "2018-07-02T13:44:01+02:00",
+          "resourceVersion": "393057"
+        },
+        "spec": {
+          "hosts": ["reviews"],
+          "gateways": null,
+          "http": [
+            {
+              "route": [
+                {
+                  "destination": {
+                    "host": "reviews",
+                    "subset": "v1"
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        "tcp": null
+              ]
+            }
+          ],
+          "tcp": null
+        }
       }
     ],
     "permissions": {
@@ -76,31 +80,35 @@
   "destinationRules": {
     "items": [
       {
-        "name": "reviews",
-        "createdAt": "2018-07-02T13:44:01+02:00",
-        "resourceVersion": "393061",
-        "host": "reviews",
-        "trafficPolicy": null,
-        "subsets": [
-          {
-            "labels": {
-              "version": "v1"
+        "metadata": {
+          "name": "reviews",
+          "createdTimestamp": "2018-07-02T13:44:01+02:00",
+          "resourceVersion": "393061"
+        },
+        "spec": {
+          "host": "reviews",
+          "trafficPolicy": null,
+          "subsets": [
+            {
+              "labels": {
+                "version": "v1"
+              },
+              "name": "v1"
             },
-            "name": "v1"
-          },
-          {
-            "labels": {
-              "version": "v2"
+            {
+              "labels": {
+                "version": "v2"
+              },
+              "name": "v2"
             },
-            "name": "v2"
-          },
-          {
-            "labels": {
-              "version": "v3"
-            },
-            "name": "v3"
-          }
-        ]
+            {
+              "labels": {
+                "version": "v3"
+              },
+              "name": "v3"
+            }
+          ]
+        }
       }
     ],
     "permissions": {

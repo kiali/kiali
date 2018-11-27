@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import { Link } from 'react-router-dom';
-import { EditorLink, VirtualService } from '../../../types/ServiceInfo';
-import { ObjectValidation } from '../../../types/IstioObjects';
+import { EditorLink } from '../../../types/ServiceInfo';
+import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
@@ -87,20 +87,22 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
   }
 
   validation(virtualService: VirtualService): ObjectValidation {
-    return this.props.validations[virtualService.name];
+    return this.props.validations[virtualService.metadata.name];
   }
 
   overviewLink(virtualService: VirtualService) {
     return (
-      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name + '&detail=overview'}>
-        {virtualService.name}
+      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.metadata.name + '&detail=overview'}>
+        {virtualService.metadata.name}
       </Link>
     );
   }
 
   yamlLink(virtualService: VirtualService) {
     return (
-      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.name + '&detail=yaml'}>View YAML</Link>
+      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.metadata.name + '&detail=yaml'}>
+        View YAML
+      </Link>
     );
   }
 
@@ -109,8 +111,8 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
       id: vsIdx,
       status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(virtualService)]} />,
       name: this.overviewLink(virtualService),
-      createdAt: <LocalTime time={virtualService.createdAt} />,
-      resourceVersion: virtualService.resourceVersion,
+      createdAt: <LocalTime time={virtualService.metadata.creationTimestamp || ''} />,
+      resourceVersion: virtualService.metadata.resourceVersion,
       actions: this.yamlLink(virtualService)
     }));
   }

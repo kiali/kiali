@@ -2,8 +2,8 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Icon } from 'patternfly-react';
 import { default as DetailObject } from '../DetailObject';
-import { DestinationWeight } from '../../../types/ServiceInfo';
 import { PfColors } from '../../Pf/PfColors';
+import { DestinationWeight } from '../../../types/IstioObjects';
 
 describe('DetailObject test', () => {
   const detail: DestinationWeight = {

@@ -92,9 +92,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   searchObject(parsed: ParsedSearch) {
     if (parsed.type === 'virtualservice') {
-      return this.state.serviceDetailsInfo.virtualServices.items.find(vs => parsed.name === vs.name);
+      return this.state.serviceDetailsInfo.virtualServices.items.find(vs => parsed.name === vs.metadata.name);
     } else if (parsed.type === 'destinationrule') {
-      return this.state.serviceDetailsInfo.destinationRules.items.find(dr => parsed.name === dr.name);
+      return this.state.serviceDetailsInfo.destinationRules.items.find(dr => parsed.name === dr.metadata.name);
     }
     return undefined;
   }

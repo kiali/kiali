@@ -86,9 +86,9 @@ describe('#GetIstioConfigDetail using Promises', () => {
     return API.getIstioConfigDetail('istio-system', 'rules', 'promhttp').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('istio-system');
-      expect(data.rule.name).toEqual('promhttp');
-      expect(data.rule.match).toEqual('context.protocol == "http"');
-      expect(data.rule.actions).toBeInstanceOf(Array);
+      expect(data.rule.metadata.name).toEqual('promhttp');
+      expect(data.rule.spec.match).toEqual('context.protocol == "http"');
+      expect(data.rule.spec.actions).toBeInstanceOf(Array);
     });
   });
 });

@@ -60,15 +60,16 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     validationChecks.hasVirtualServiceChecks = this.props.serviceDetails.virtualServices.items.some(
       virtualService =>
         this.props.validations['virtualservice'] &&
-        this.props.validations['virtualservice'][virtualService.name] &&
-        this.props.validations['virtualservice'][virtualService.name].checks.length > 0
+        this.props.validations['virtualservice'][virtualService.metadata.name] &&
+        this.props.validations['virtualservice'][virtualService.metadata.name].checks.length > 0
     );
 
     validationChecks.hasDestinationRuleChecks = this.props.serviceDetails.destinationRules.items.some(
       destinationRule =>
         this.props.validations['destinationrule'] &&
-        this.props.validations['destinationrule'][destinationRule.name] &&
-        this.props.validations['destinationrule'][destinationRule.name].checks.length > 0
+        destinationRule.metadata &&
+        this.props.validations['destinationrule'][destinationRule.metadata.name] &&
+        this.props.validations['destinationrule'][destinationRule.metadata.name].checks.length > 0
     );
 
     return validationChecks;
@@ -159,7 +160,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {'Virtual Services (' + virtualServices.items.length + ')'}
                       {validationChecks.hasVirtualServiceChecks
                         ? getValidationIcon(
-                            (this.props.serviceDetails.virtualServices.items || []).map(a => a.name),
+                            (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
                             'virtualservice'
                           )
                         : undefined}
@@ -168,7 +169,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {'Destination Rules (' + destinationRules.items.length + ')'}
                       {validationChecks.hasDestinationRuleChecks
                         ? getValidationIcon(
-                            (this.props.serviceDetails.destinationRules.items || []).map(a => a.name),
+                            (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
                             'destinationrule'
                           )
                         : undefined}

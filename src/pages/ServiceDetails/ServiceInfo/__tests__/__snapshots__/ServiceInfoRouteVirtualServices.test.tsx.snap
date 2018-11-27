@@ -10,56 +10,60 @@ ShallowWrapper {
     virtualServices={
       Array [
         Object {
-          "createdAt": "2018-03-14T10:17:52Z",
-          "gateways": Array [
-            "reviews",
-          ],
-          "hosts": Array [
-            "rewiews",
-          ],
-          "http": Array [
-            Object {
-              "route": Array [
-                Object {
-                  "destination": Object {
-                    "host": "reviews",
-                    "subset": "v1",
+          "metadata": Object {
+            "creationTimestamp": "2018-03-14T10:17:52Z",
+            "name": "reviews-default",
+            "resourceVersion": "1234",
+          },
+          "spec": Object {
+            "gateways": Array [
+              "reviews",
+            ],
+            "hosts": Array [
+              "rewiews",
+            ],
+            "http": Array [
+              Object {
+                "route": Array [
+                  Object {
+                    "destination": Object {
+                      "host": "reviews",
+                      "subset": "v1",
+                    },
+                    "weight": 55,
                   },
-                  "weight": 55,
-                },
-                Object {
-                  "destination": Object {
-                    "host": "reviews",
-                    "subset": "v3",
+                  Object {
+                    "destination": Object {
+                      "host": "reviews",
+                      "subset": "v3",
+                    },
+                    "weight": 55,
                   },
-                  "weight": 55,
-                },
-              ],
-            },
-          ],
-          "name": "reviews-default",
-          "resourceVersion": "1234",
-          "tcp": Array [
-            Object {
-              "match": Array [],
-              "route": Array [
-                Object {
-                  "destination": Object {
-                    "host": "reviews",
-                    "subset": "v1",
+                ],
+              },
+            ],
+            "tcp": Array [
+              Object {
+                "match": Array [],
+                "route": Array [
+                  Object {
+                    "destination": Object {
+                      "host": "reviews",
+                      "subset": "v1",
+                    },
+                    "weight": 55,
                   },
-                  "weight": 55,
-                },
-                Object {
-                  "destination": Object {
-                    "host": "reviews",
-                    "subset": "v2",
+                  Object {
+                    "destination": Object {
+                      "host": "reviews",
+                      "subset": "v2",
+                    },
+                    "weight": 55,
                   },
-                  "weight": 55,
-                },
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          },
         },
       ]
     }

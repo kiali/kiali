@@ -1,16 +1,14 @@
 import * as React from 'react';
 import * as resolve from 'table-resolver';
+import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../../types/ServiceInfo';
 import {
-  checkForPath,
   Destination,
   DestinationWeight,
-  highestSeverity,
   HTTPRoute,
-  severityToColor,
-  severityToIconName,
+  ObjectCheck,
+  ObjectValidation,
   TCPRoute
-} from '../../../../types/ServiceInfo';
-import { ObjectCheck, ObjectValidation } from '../../../../types/IstioObjects';
+} from '../../../../types/IstioObjects';
 import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
 import DetailObject from '../../../../components/Details/DetailObject';
 import { PfColors } from '../../../../components/Pf/PfColors';

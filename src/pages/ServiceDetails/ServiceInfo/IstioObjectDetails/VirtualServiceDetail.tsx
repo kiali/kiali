@@ -6,10 +6,9 @@ import {
   highestSeverity,
   severityToColor,
   severityToIconName,
-  validationToSeverity,
-  VirtualService
+  validationToSeverity
 } from '../../../../types/ServiceInfo';
-import { ObjectValidation } from '../../../../types/IstioObjects';
+import { ObjectValidation, VirtualService } from '../../../../types/IstioObjects';
 import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
@@ -27,7 +26,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   validation(virtualService: VirtualService): ObjectValidation {
-    return this.props.validations[virtualService.name];
+    return this.props.validations[virtualService.metadata.name];
   }
 
   globalStatus(rule: VirtualService) {
@@ -93,25 +92,25 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   rawConfig(virtualService: VirtualService) {
     return (
       <div className="card-pf-body" key={'virtualServiceConfig'}>
-        <h4>VirtualService: {virtualService.name}</h4>
+        <h4>VirtualService: {virtualService.metadata.name}</h4>
         <div>{this.globalStatus(virtualService)}</div>
         <div>
-          <strong>Created at</strong>: <LocalTime time={virtualService.createdAt} />
+          <strong>Created at</strong>: <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
         </div>
         <div>
-          <strong>Resource Version</strong>: {virtualService.resourceVersion}
+          <strong>Resource Version</strong>: {virtualService.metadata.resourceVersion}
         </div>
-        {virtualService.hosts && virtualService.hosts.length > 0 ? (
+        {virtualService.spec.hosts && virtualService.spec.hosts.length > 0 ? (
           <DetailObject
             name="Hosts"
-            detail={virtualService.hosts}
+            detail={virtualService.spec.hosts}
             validation={this.hostStatusMessage(virtualService)}
           />
         ) : (
           undefined
         )}
-        {virtualService.gateways && virtualService.gateways.length > 0
-          ? this.generateGatewaysList(virtualService.gateways)
+        {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
+          ? this.generateGatewaysList(virtualService.spec.gateways)
           : undefined}
       </div>
     );
@@ -121,36 +120,36 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     return (
       <Row className="card-pf-body" key={'virtualServiceWeights'}>
         <Col>
-          {virtualService.http && virtualService.http.length > 0 ? (
+          {virtualService.spec.http && virtualService.spec.http.length > 0 ? (
             <>
               <VirtualServiceRoute
-                name={virtualService.name}
+                name={virtualService.metadata.name}
                 kind="HTTP"
-                routes={virtualService.http}
+                routes={virtualService.spec.http}
                 validations={this.props.validations}
               />
             </>
           ) : (
             undefined
           )}
-          {virtualService.tcp && virtualService.tcp.length > 0 ? (
+          {virtualService.spec.tcp && virtualService.spec.tcp.length > 0 ? (
             <>
               <VirtualServiceRoute
-                name={virtualService.name}
+                name={virtualService.metadata.name}
                 kind="TCP"
-                routes={virtualService.tcp}
+                routes={virtualService.spec.tcp}
                 validations={this.props.validations}
               />
             </>
           ) : (
             undefined
           )}
-          {virtualService.tls && virtualService.tls.length > 0 ? (
+          {virtualService.spec.tls && virtualService.spec.tls.length > 0 ? (
             <>
               <VirtualServiceRoute
-                name={virtualService.name}
+                name={virtualService.metadata.name}
                 kind="TLS"
-                routes={virtualService.tls}
+                routes={virtualService.spec.tls}
                 validations={this.props.validations}
               />
             </>

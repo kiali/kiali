@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { DestinationRule, VirtualService } from '../../types/ServiceInfo';
-import { Validations } from '../../types/IstioObjects';
+import { DestinationRule, Validations, VirtualService } from '../../types/IstioObjects';
 import { Col, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { AceValidations, parseAceValidations } from '../../types/AceValidations';
 import AceEditor, { AceOptions } from 'react-ace';
@@ -127,7 +126,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
   }
 
   typeIstioObject() {
-    if ('tcp' in this.props.object && 'http' in this.props.object) {
+    if ('tcp' in this.props.object.spec && 'http' in this.props.object.spec) {
       return 'VirtualService';
     }
     return 'DestinationRule';
@@ -138,7 +137,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
       case 'VirtualService':
         return (
           <VirtualServiceDetail
-            virtualService={istioObj}
+            virtualService={istioObj as VirtualService}
             validations={this.props.validations['virtualservice']}
             namespace={this.props.namespace}
           />
@@ -146,7 +145,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
       case 'DestinationRule':
         return (
           <DestinationRuleDetail
-            destinationRule={istioObj}
+            destinationRule={istioObj as DestinationRule}
             validations={this.props.validations['destinationRule']}
             namespace={this.props.namespace}
           />
@@ -185,7 +184,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
       <div className="container-fluid container-cards-pf">
         <div style={{ float: 'right' }}>
           <IstioActionDropdown
-            objectName={this.props.object.name}
+            objectName={this.props.object.metadata.name}
             canDelete={this.props.permissions.delete}
             onDelete={this.props.onDelete}
           />

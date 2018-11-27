@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Col, Icon, Row, Table } from 'patternfly-react';
-import {
-  globalChecks,
-  severityToColor,
-  severityToIconName,
-  validationToSeverity,
-  DestinationRule,
-  Subset
-} from '../../../../types/ServiceInfo';
-import { ObjectValidation } from '../../../../types/IstioObjects';
+import { globalChecks, severityToColor, severityToIconName, validationToSeverity } from '../../../../types/ServiceInfo';
+import { DestinationRule, ObjectValidation, Subset } from '../../../../types/IstioObjects';
 import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import * as resolve from 'table-resolver';
@@ -26,8 +19,8 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   }
 
   validation(destinationRule: DestinationRule): ObjectValidation | undefined {
-    if (this.props.validations && this.props.validations[destinationRule.name]) {
-      return this.props.validations[destinationRule.name];
+    if (this.props.validations && this.props.validations[destinationRule.metadata.name]) {
+      return this.props.validations[destinationRule.metadata.name];
     }
     return undefined;
   }
@@ -134,23 +127,23 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   rawConfig(destinationRule: DestinationRule) {
     return (
       <div className="card-pf-body" key={'virtualServiceConfig'}>
-        <h4>DestinationRule: {destinationRule.name}</h4>
+        <h4>DestinationRule: {destinationRule.metadata.name}</h4>
         <div>{this.globalStatus(destinationRule)}</div>
         <div>
-          <strong>Created at</strong>: <LocalTime time={destinationRule.createdAt} />
+          <strong>Created at</strong>: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />
         </div>
         <div>
-          <strong>Resource Version</strong>: {destinationRule.resourceVersion}
+          <strong>Resource Version</strong>: {destinationRule.metadata.resourceVersion}
         </div>
-        {destinationRule.host && (
+        {destinationRule.spec.host && (
           <div>
-            <strong>Host</strong>: {destinationRule.host}
+            <strong>Host</strong>: {destinationRule.spec.host}
           </div>
         )}
-        {destinationRule.trafficPolicy && (
+        {destinationRule.spec.trafficPolicy && (
           <div>
             <strong>Traffic Policy</strong>
-            <DetailObject name="" detail={destinationRule.trafficPolicy} />
+            <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
           </div>
         )}
       </div>
@@ -163,12 +156,12 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
         <Col xs={12} sm={12} md={3} lg={3}>
           {this.rawConfig(this.props.destinationRule)}
         </Col>
-        {this.props.destinationRule.subsets && (
+        {this.props.destinationRule.spec.subsets && (
           <Col xs={12} sm={12} md={3} lg={3}>
             <Row className="card-pf-body" key={'destinationRulesSubsets'}>
               <Col>
                 <strong> Subsets : </strong>
-                {this.generateSubsets(this.props.destinationRule.subsets)}
+                {this.generateSubsets(this.props.destinationRule.spec.subsets)}
               </Col>
             </Row>
           </Col>

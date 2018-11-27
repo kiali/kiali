@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DestinationRule, EditorLink, Subset } from '../../../types/ServiceInfo';
+import { EditorLink } from '../../../types/ServiceInfo';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import LocalTime from '../../../components/Time/LocalTime';
@@ -7,7 +7,7 @@ import Label from '../../../components/Label/Label';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
-import { ObjectValidation } from '../../../types/IstioObjects';
+import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
 
 interface ServiceInfoDestinationRulesProps extends EditorLink {
   destinationRules?: DestinationRule[];
@@ -119,18 +119,20 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   yamlLink(destinationRule: DestinationRule) {
     return (
-      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name + '&detail=yaml'}>View YAML</Link>
+      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.metadata.name + '&detail=yaml'}>
+        View YAML
+      </Link>
     );
   }
 
   validation(destinationRule: DestinationRule): ObjectValidation {
-    return this.props.validations[destinationRule.name];
+    return this.props.validations[destinationRule.metadata.name];
   }
 
   overviewLink(destinationRule: DestinationRule) {
     return (
-      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name + '&detail=overview'}>
-        {destinationRule.name}
+      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.metadata.name + '&detail=overview'}>
+        {destinationRule.metadata.name}
       </Link>
     );
   }
@@ -140,18 +142,18 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
       id: vsIdx,
       name: this.overviewLink(destinationRule),
       status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
-      trafficPolicy: destinationRule.trafficPolicy ? (
-        <DetailObject name="" detail={destinationRule.trafficPolicy} />
+      trafficPolicy: destinationRule.spec.trafficPolicy ? (
+        <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
       ) : (
         'None'
       ),
       subsets:
-        destinationRule.subsets && destinationRule.subsets.length > 0
-          ? this.generateSubsets(destinationRule.subsets)
+        destinationRule.spec.subsets && destinationRule.spec.subsets.length > 0
+          ? this.generateSubsets(destinationRule.spec.subsets)
           : 'None',
-      host: destinationRule.host ? <DetailObject name="" detail={destinationRule.host} /> : undefined,
-      createdAt: <LocalTime time={destinationRule.createdAt} />,
-      resourceVersion: destinationRule.resourceVersion,
+      host: destinationRule.spec.host ? <DetailObject name="" detail={destinationRule.spec.host} /> : undefined,
+      createdAt: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />,
+      resourceVersion: destinationRule.metadata.resourceVersion,
       actions: this.yamlLink(destinationRule)
     }));
   }

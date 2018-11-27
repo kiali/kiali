@@ -19,29 +19,25 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     permissions: {}
   };
   names.forEach(name => {
-    testData.gateways.push({ name: name + '0', createdAt: 't0', resourceVersion: 'r0' });
-    testData.virtualServices.items.push({ name: name + '1', createdAt: 't1', resourceVersion: 'r1' });
-    testData.destinationRules.items.push({ name: name + '2', createdAt: 't2', resourceVersion: 'r2' });
-    testData.serviceEntries.push({ name: name + '3', createdAt: 't3', resourceVersion: 'r3' });
-    testData.rules.push({ name: name + '4', createdAt: 't4', resourceVersion: 'r4', match: '', actions: [] });
+    testData.gateways.push({ metadata: { name: name + '0' }, spec: {} });
+    testData.virtualServices.items.push({ metadata: { name: name + '1' }, spec: {} });
+    testData.destinationRules.items.push({ metadata: { name: name + '2' }, spec: {} });
+    testData.serviceEntries.push({ metadata: { name: name + '3' }, spec: {} });
+    testData.rules.push({ metadata: { name: name + '4' }, spec: { match: '', actions: [] } });
     testData.adapters.push({
-      name: name + '5',
-      createdAt: 't5',
-      resourceVersion: 'r5',
+      metadata: { name: name + '5' },
       adapter: name + '5',
       adapters: name + '5',
       spec: ''
     });
     testData.templates.push({
-      name: name + '6',
-      createdAt: 't6',
-      resourceVersion: 'r6',
+      metadata: { name: name + '6' },
       template: name + '6',
       templates: name + '6',
       spec: ''
     });
-    testData.quotaSpecs.push({ name: name + '7', createdAt: 't7', resourceVersion: 'r7' });
-    testData.quotaSpecBindings.push({ name: name + '8', createdAt: 't8', resourceVersion: 'r8' });
+    testData.quotaSpecs.push({ metadata: { name: name + '7' }, spec: {} });
+    testData.quotaSpecBindings.push({ metadata: { name: name + '8' }, spec: {} });
   });
   return testData;
 };
@@ -62,14 +58,14 @@ describe('IstioConfigListComponent#filterByName', () => {
     expect(filtered.quotaSpecs.length).toBe(2);
     expect(filtered.quotaSpecBindings.length).toBe(2);
 
-    expect(filtered.virtualServices.items[0].name).toBe('white1');
-    expect(filtered.destinationRules.items[0].name).toBe('white2');
-    expect(filtered.serviceEntries[0].name).toBe('white3');
-    expect(filtered.rules[0].name).toBe('white4');
-    expect(filtered.adapters[0].name).toBe('white5');
-    expect(filtered.templates[0].name).toBe('white6');
-    expect(filtered.quotaSpecs[0].name).toBe('white7');
-    expect(filtered.quotaSpecBindings[0].name).toBe('white8');
+    expect(filtered.virtualServices.items[0].metadata.name).toBe('white1');
+    expect(filtered.destinationRules.items[0].metadata.name).toBe('white2');
+    expect(filtered.serviceEntries[0].metadata.name).toBe('white3');
+    expect(filtered.rules[0].metadata.name).toBe('white4');
+    expect(filtered.adapters[0].metadata.name).toBe('white5');
+    expect(filtered.templates[0].metadata.name).toBe('white6');
+    expect(filtered.quotaSpecs[0].metadata.name).toBe('white7');
+    expect(filtered.quotaSpecBindings[0].metadata.name).toBe('white8');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
@@ -112,15 +108,15 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
       const first = sorted[0];
       expect(first.gateway).toBeDefined();
-      expect(first.gateway!.name).toBe('blue0');
+      expect(first.gateway!.metadata.name).toBe('blue0');
 
       const second = sorted[1];
       expect(second.virtualService).toBeDefined();
-      expect(second.virtualService!.name).toBe('blue1');
+      expect(second.virtualService!.metadata.name).toBe('blue1');
 
       const last = sorted[26];
       expect(last.quotaSpecBinding).toBeDefined();
-      expect(last.quotaSpecBinding!.name).toBe('white8');
+      expect(last.quotaSpecBinding!.metadata.name).toBe('white8');
     });
   });
 
@@ -136,11 +132,11 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
       const first = sorted[0];
       expect(first.quotaSpecBinding).toBeDefined();
-      expect(first.quotaSpecBinding!.name).toBe('white8');
+      expect(first.quotaSpecBinding!.metadata.name).toBe('white8');
 
       const last = sorted[26];
       expect(last.gateway).toBeDefined();
-      expect(last.gateway!.name).toBe('blue0');
+      expect(last.gateway!.metadata.name).toBe('blue0');
     });
   });
 
@@ -155,15 +151,15 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
       const first = sorted[0];
       expect(first.adapter).toBeDefined();
-      expect(first.adapter!.name).toBe('blue5');
+      expect(first.adapter!.metadata.name).toBe('blue5');
 
       const second = sorted[3];
       expect(second.destinationRule).toBeDefined();
-      expect(second.destinationRule!.name).toBe('blue2');
+      expect(second.destinationRule!.metadata.name).toBe('blue2');
 
       const last = sorted[26];
       expect(last.virtualService).toBeDefined();
-      expect(last.virtualService!.name).toBe('white1');
+      expect(last.virtualService!.metadata.name).toBe('white1');
     });
   });
 
@@ -178,7 +174,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
       const first = sorted[0];
       expect(first.virtualService).toBeDefined();
-      expect(first.virtualService!.name).toBe('white1');
+      expect(first.virtualService!.metadata.name).toBe('white1');
     });
   });
 });
