@@ -186,33 +186,33 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	configService := mockGetIstioConfigDetails()
 
 	istioConfigDetails, err := configService.GetIstioConfigDetails("test", "gateways", "", "gw-1")
-	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
+	assert.Equal("gw-1", istioConfigDetails.Gateway.Metadata.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "virtualservices", "", "reviews")
-	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
+	assert.Equal("reviews", istioConfigDetails.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "destinationrules", "", "reviews-dr")
-	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
+	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules", "", "checkfromcustomer")
-	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Name)
+	assert.Equal("checkfromcustomer", istioConfigDetails.Rule.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "adapters", "listcheckers", "preferencewhitelist")
-	assert.Equal("preferencewhitelist", istioConfigDetails.Adapter.Name)
+	assert.Equal("preferencewhitelist", istioConfigDetails.Adapter.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "templates", "listentries", "preferencesource")
-	assert.Equal("preferencesource", istioConfigDetails.Template.Name)
+	assert.Equal("preferencesource", istioConfigDetails.Template.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "serviceentries", "", "googleapis")
-	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
+	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Metadata.Name)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails("test", "rules-bad", "", "stdio")

@@ -139,8 +139,8 @@ func isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo 
 		checkError(err)
 
 		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Hosts != nil && entry.Location == "MESH_EXTERNAL" {
-				for _, host := range entry.Hosts.([]interface{}) {
+			if entry.Spec.Hosts != nil && entry.Spec.Location == "MESH_EXTERNAL" {
+				for _, host := range entry.Spec.Hosts.([]interface{}) {
 					namespaceInfo.ExternalServices[host.(string)] = true
 				}
 			}

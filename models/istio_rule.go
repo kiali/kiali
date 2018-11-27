@@ -1,6 +1,8 @@
 package models
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -24,20 +26,11 @@ type IstioRules []IstioRule
 //
 // swagger:model istioRule
 type IstioRule struct {
-	// The name of the istioRule
-	//
-	// required: true
-	Name string `json:"name"`
-	// The creation date of the virtualService
-	//
-	// required: true
-	CreatedAt string `json:"createdAt"`
-	// The resource version of the virtualService
-	//
-	// required: true
-	ResourceVersion string      `json:"resourceVersion"`
-	Match           interface{} `json:"match"`
-	Actions         interface{} `json:"actions"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     struct {
+		Match   interface{} `json:"match"`
+		Actions interface{} `json:"actions"`
+	} `json:"spec"`
 }
 
 // IstioAdapters istioAdapters
@@ -55,19 +48,11 @@ type IstioAdapters []IstioAdapter
 //
 // swagger:model istioAdapter
 type IstioAdapter struct {
-	Name string `json:"name"`
-	// The creation date of the virtualService
-	//
-	// required: true
-	CreatedAt string `json:"createdAt"`
-	// The resource version of the virtualService
-	//
-	// required: true
-	ResourceVersion string `json:"resourceVersion"`
-	Adapter         string `json:"adapter"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     interface{}        `json:"spec"`
+	Adapter  string             `json:"adapter"`
 	// We need to bring the plural to use it from the UI to build the API
-	Adapters string      `json:"adapters"`
-	Spec     interface{} `json:"spec"`
+	Adapters string `json:"adapters"`
 }
 
 // IstioTemplates istioTemplates
@@ -85,19 +70,11 @@ type IstioTemplates []IstioTemplate
 //
 // swagger:model istioTemplate
 type IstioTemplate struct {
-	Name string `json:"name"`
-	// The creation date of the virtualService
-	//
-	// required: true
-	CreatedAt string `json:"createdAt"`
-	// The resource version of the virtualService
-	//
-	// required: true
-	ResourceVersion string `json:"resourceVersion"`
-	Template        string `json:"template"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     interface{}        `json:"spec"`
+	Template string             `json:"template"`
 	// We need to bring the plural to use it from the UI to build the API
-	Templates string      `json:"templates"`
-	Spec      interface{} `json:"spec"`
+	Templates string `json:"templates"`
 }
 
 func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
@@ -110,11 +87,9 @@ func CastIstioRulesCollection(rules []kubernetes.IstioObject) IstioRules {
 
 func CastIstioRule(rule kubernetes.IstioObject) IstioRule {
 	istioRule := IstioRule{}
-	istioRule.Name = rule.GetObjectMeta().Name
-	istioRule.CreatedAt = formatTime(rule.GetObjectMeta().CreationTimestamp.Time)
-	istioRule.ResourceVersion = rule.GetObjectMeta().ResourceVersion
-	istioRule.Match = rule.GetSpec()["match"]
-	istioRule.Actions = rule.GetSpec()["actions"]
+	istioRule.Metadata = rule.GetObjectMeta()
+	istioRule.Spec.Match = rule.GetSpec()["match"]
+	istioRule.Spec.Actions = rule.GetSpec()["actions"]
 	return istioRule
 }
 
@@ -128,12 +103,10 @@ func CastIstioAdaptersCollection(adapters []kubernetes.IstioObject) IstioAdapter
 
 func CastIstioAdapter(adapter kubernetes.IstioObject) IstioAdapter {
 	istioAdapter := IstioAdapter{}
-	istioAdapter.Name = adapter.GetObjectMeta().Name
-	istioAdapter.CreatedAt = formatTime(adapter.GetObjectMeta().CreationTimestamp.Time)
-	istioAdapter.ResourceVersion = adapter.GetObjectMeta().ResourceVersion
+	istioAdapter.Metadata = adapter.GetObjectMeta()
+	istioAdapter.Spec = adapter.GetSpec()
 	istioAdapter.Adapter = adapter.GetObjectMeta().Labels["adapter"]
 	istioAdapter.Adapters = adapter.GetObjectMeta().Labels["adapters"]
-	istioAdapter.Spec = adapter.GetSpec()
 	return istioAdapter
 }
 
@@ -147,11 +120,9 @@ func CastIstioTemplatesCollection(templates []kubernetes.IstioObject) IstioTempl
 
 func CastIstioTemplate(template kubernetes.IstioObject) IstioTemplate {
 	istioTemplate := IstioTemplate{}
-	istioTemplate.Name = template.GetObjectMeta().Name
-	istioTemplate.CreatedAt = formatTime(template.GetObjectMeta().CreationTimestamp.Time)
-	istioTemplate.ResourceVersion = template.GetObjectMeta().ResourceVersion
+	istioTemplate.Metadata = template.GetObjectMeta()
+	istioTemplate.Spec = template.GetSpec()
 	istioTemplate.Template = template.GetObjectMeta().Labels["template"]
 	istioTemplate.Templates = template.GetObjectMeta().Labels["templates"]
-	istioTemplate.Spec = template.GetSpec()
 	return istioTemplate
 }

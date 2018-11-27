@@ -21,7 +21,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetService(fakeService())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
-	service.SetVirtualServices(fakeVirtualService(), false, false)
+	service.SetVirtualServices(fakeVirtualServices(), false, false)
 	service.SetDestinationRules(fakeDestinationRules(), false, false)
 	service.SetSourceWorkloads(fakeSourceWorkloads())
 
@@ -48,128 +48,102 @@ func TestServiceDetailParsing(t *testing.T) {
 				Port{Name: "http", Protocol: "TCP", Port: 3000},
 			}}})
 
-	assert.Equal(service.VirtualServices, VirtualServices{
-		Items: []VirtualService{VirtualService{
-			Name:            "reviews",
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Hosts: []interface{}{
-				"reviews",
-			},
-			Http: []interface{}{
+	assert.Equal(2, len(service.VirtualServices.Items))
+	assert.Equal("reviews", service.VirtualServices.Items[0].Metadata.Name)
+	assert.Equal([]interface{}{
+		map[string]interface{}{
+			"route": []interface{}{
 				map[string]interface{}{
-					"route": []interface{}{
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v2",
-							},
-							"weight": 50,
-						},
-						map[string]interface{}{
-							"destination": map[string]interface{}{
-								"name":   "reviews",
-								"subset": "v3",
-							},
-							"weight": 50,
-						},
+					"destination": map[string]interface{}{
+						"name":   "reviews",
+						"subset": "v2",
 					},
+					"weight": 50,
+				},
+				map[string]interface{}{
+					"destination": map[string]interface{}{
+						"name":   "reviews",
+						"subset": "v3",
+					},
+					"weight": 50,
 				},
 			},
-		},
-			VirtualService{
-				Name:            "ratings",
-				CreatedAt:       "2018-03-08T17:47:00+03:00",
-				ResourceVersion: "1234",
-				Hosts: []interface{}{
-					"reviews",
-				},
-				Http: []interface{}{
-					map[string]interface{}{
-						"match": []interface{}{
-							map[string]interface{}{
-								"headers": map[string]interface{}{
-									"cookie": map[string]interface{}{
-										"regex": "^(.*?;)?(user=jason)(;.*)?$",
-									},
-								},
-							},
-						},
-						"fault": map[string]interface{}{
-							"delay": map[string]interface{}{
-								"percent":    100,
-								"fixedDelay": "7s",
-							},
-						},
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"name":   "ratings",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-					map[string]interface{}{
-						"route": []interface{}{
-							map[string]interface{}{
-								"destination": map[string]interface{}{
-									"name":   "ratings",
-									"subset": "v1",
-								},
-							},
-						},
-					},
-				},
-			},
-		}})
+		}}, service.VirtualServices.Items[0].Spec.Http)
 
-	assert.Equal(service.DestinationRules, DestinationRules{
-		Items: []DestinationRule{DestinationRule{
-			Name:            "reviews-destination",
-			CreatedAt:       "2018-03-08T17:47:00+03:00",
-			ResourceVersion: "1234",
-			Host:            "reviews",
-			Subsets: []interface{}{
+	assert.Equal("ratings", service.VirtualServices.Items[1].Metadata.Name)
+	assert.Equal([]interface{}{
+		map[string]interface{}{
+			"match": []interface{}{
 				map[string]interface{}{
-					"name": "v1",
-					"labels": map[string]interface{}{
-						"version": "v1",
+					"headers": map[string]interface{}{
+						"cookie": map[string]interface{}{
+							"regex": "^(.*?;)?(user=jason)(;.*)?$",
+						},
 					},
 				},
+			},
+			"fault": map[string]interface{}{
+				"delay": map[string]interface{}{
+					"percent":    100,
+					"fixedDelay": "7s",
+				},
+			},
+			"route": []interface{}{
 				map[string]interface{}{
-					"name": "v2",
-					"labels": map[string]interface{}{
-						"version": "v2",
+					"destination": map[string]interface{}{
+						"name":   "ratings",
+						"subset": "v1",
 					},
 				},
 			},
 		},
-			DestinationRule{
-				Name:            "bookinfo-ratings",
-				CreatedAt:       "2018-03-08T17:47:00+03:00",
-				ResourceVersion: "1234",
-				Host:            "ratings",
-				TrafficPolicy: map[string]interface{}{
-					"loadBalancer": map[string]interface{}{
-						"simple": "LEAST_CONN",
-					},
-				},
-				Subsets: []interface{}{
-					map[string]interface{}{
-						"name": "testversion",
-						"labels": map[string]interface{}{
-							"version": "v3",
-						},
-						"trafficPolicy": map[string]interface{}{
-							"loadBalancer": map[string]interface{}{
-								"simple": "ROUND_ROBIN",
-							},
-						},
+		map[string]interface{}{
+			"route": []interface{}{
+				map[string]interface{}{
+					"destination": map[string]interface{}{
+						"name":   "ratings",
+						"subset": "v1",
 					},
 				},
 			},
-		}})
+		},
+	}, service.VirtualServices.Items[1].Spec.Http)
+
+	assert.Equal(2, len(service.DestinationRules.Items))
+	assert.Equal("reviews-destination", service.DestinationRules.Items[0].Metadata.Name)
+	assert.Equal([]interface{}{
+		map[string]interface{}{
+			"name": "v1",
+			"labels": map[string]interface{}{
+				"version": "v1",
+			},
+		},
+		map[string]interface{}{
+			"name": "v2",
+			"labels": map[string]interface{}{
+				"version": "v2",
+			},
+		},
+	}, service.DestinationRules.Items[0].Spec.Subsets)
+	assert.Equal("bookinfo-ratings", service.DestinationRules.Items[1].Metadata.Name)
+	assert.Equal(map[string]interface{}{
+		"loadBalancer": map[string]interface{}{
+			"simple": "LEAST_CONN",
+		},
+	}, service.DestinationRules.Items[1].Spec.TrafficPolicy)
+	assert.Equal([]interface{}{
+		map[string]interface{}{
+			"name": "testversion",
+			"labels": map[string]interface{}{
+				"version": "v3",
+			},
+			"trafficPolicy": map[string]interface{}{
+				"loadBalancer": map[string]interface{}{
+					"simple": "ROUND_ROBIN",
+				},
+			},
+		},
+	}, service.DestinationRules.Items[1].Spec.Subsets)
 
 	assert.Equal(service.Dependencies, map[string][]SourceWorkload{
 		"v1": {SourceWorkload{Name: "unknown", Namespace: "ns"}, SourceWorkload{Name: "products-v1", Namespace: "ns"}, SourceWorkload{Name: "reviews-v2", Namespace: "ns"}},
@@ -267,7 +241,7 @@ func fakePods() []v1.Pod {
 	}
 }
 
-func fakeVirtualService() []kubernetes.IstioObject {
+func fakeVirtualServices() []kubernetes.IstioObject {
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:47 +0300")
 
 	virtualService1 := kubernetes.GenericIstioObject{

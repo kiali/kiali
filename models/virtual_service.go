@@ -1,6 +1,8 @@
 package models
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/kubernetes"
 )
 
@@ -22,23 +24,14 @@ type VirtualServices struct {
 //
 // swagger:model virtualService
 type VirtualService struct {
-	// The name of the virtualService
-	//
-	// required: true
-	Name string `json:"name"`
-	// The creation date of the virtualService
-	//
-	// required: true
-	CreatedAt string `json:"createdAt"`
-	// The resource version of the virtualService
-	//
-	// required: true
-	ResourceVersion string      `json:"resourceVersion"`
-	Hosts           interface{} `json:"hosts"`
-	Gateways        interface{} `json:"gateways"`
-	Http            interface{} `json:"http"`
-	Tcp             interface{} `json:"tcp"`
-	Tls             interface{} `json:"tls"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     struct {
+		Hosts    interface{} `json:"hosts"`
+		Gateways interface{} `json:"gateways"`
+		Http     interface{} `json:"http"`
+		Tcp      interface{} `json:"tcp"`
+		Tls      interface{} `json:"tls"`
+	} `json:"spec"`
 }
 
 func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject) {
@@ -51,14 +44,12 @@ func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject
 }
 
 func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
-	vService.Name = virtualService.GetObjectMeta().Name
-	vService.CreatedAt = formatTime(virtualService.GetObjectMeta().CreationTimestamp.Time)
-	vService.ResourceVersion = virtualService.GetObjectMeta().ResourceVersion
-	vService.Hosts = virtualService.GetSpec()["hosts"]
-	vService.Gateways = virtualService.GetSpec()["gateways"]
-	vService.Http = virtualService.GetSpec()["http"]
-	vService.Tcp = virtualService.GetSpec()["tcp"]
-	vService.Tls = virtualService.GetSpec()["tls"]
+	vService.Metadata = virtualService.GetObjectMeta()
+	vService.Spec.Hosts = virtualService.GetSpec()["hosts"]
+	vService.Spec.Gateways = virtualService.GetSpec()["gateways"]
+	vService.Spec.Http = virtualService.GetSpec()["http"]
+	vService.Spec.Tcp = virtualService.GetSpec()["tcp"]
+	vService.Spec.Tls = virtualService.GetSpec()["tls"]
 }
 
 // IsValidHost returns true if VirtualService hosts applies to the service
@@ -66,7 +57,7 @@ func (vService *VirtualService) IsValidHost(namespace string, serviceName string
 	if serviceName == "" {
 		return false
 	}
-	if hosts, ok := vService.Hosts.([]interface{}); ok {
+	if hosts, ok := vService.Spec.Hosts.([]interface{}); ok {
 		for _, host := range hosts {
 			if kubernetes.FilterByHost(host.(string), serviceName, namespace) {
 				return true

@@ -1981,6 +1981,11 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "CauseType": {
+      "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Config": {
       "type": "object",
       "properties": {
@@ -2172,25 +2177,22 @@
     "Gateway": {
       "type": "object",
       "properties": {
-        "createdAt": {
-          "type": "string",
-          "x-go-name": "CreatedAt"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "selector": {
+        "spec": {
           "type": "object",
-          "x-go-name": "Selector"
-        },
-        "servers": {
-          "type": "object",
-          "x-go-name": "Servers"
+          "properties": {
+            "selector": {
+              "type": "object",
+              "x-go-name": "Selector"
+            },
+            "servers": {
+              "type": "object",
+              "x-go-name": "Servers"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -2240,6 +2242,36 @@
         "$ref": "#/definitions/Metric"
       },
       "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
+    "Initializer": {
+      "type": "object",
+      "title": "Initializer is information about an initializer that has not yet completed.",
+      "properties": {
+        "name": {
+          "description": "name of the process that is responsible for initializing this object.",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "Initializers": {
+      "type": "object",
+      "title": "Initializers tracks the progress of initialization.",
+      "properties": {
+        "pending": {
+          "description": "Pending is a list of initializers that must execute in order before this object is visible.\nWhen the last pending initializer is removed, and no failing result is set, the initializers\nstruct will be set to nil and the object is considered as initialized and visible to all\nclients.\n+patchMergeKey=name\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Initializer"
+          },
+          "x-go-name": "Pending"
+        },
+        "result": {
+          "$ref": "#/definitions/Status"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "IstioCheck": {
       "type": "object",
@@ -2586,6 +2618,134 @@
       },
       "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
     },
+    "ObjectMeta": {
+      "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects\nusers must create.",
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "description": "Annotations is an unstructured key value map stored with a resource that may be\nset by external tools to store and retrieve arbitrary metadata. They are not\nqueryable and should be preserved when modifying objects.\nMore info: http://kubernetes.io/docs/user-guide/annotations\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
+        "clusterName": {
+          "description": "The name of the cluster which the object belongs to.\nThis is used to distinguish resources with same name and namespace in different clusters.\nThis field is not set anywhere right now and apiserver is going to ignore it if set in create or update request.\n+optional",
+          "type": "string",
+          "x-go-name": "ClusterName"
+        },
+        "creationTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "deletionGracePeriodSeconds": {
+          "description": "Number of seconds allowed for this object to gracefully terminate before\nit will be removed from the system. Only set when deletionTimestamp is also set.\nMay only be shortened.\nRead-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DeletionGracePeriodSeconds"
+        },
+        "deletionTimestamp": {
+          "$ref": "#/definitions/Time"
+        },
+        "finalizers": {
+          "description": "Must be empty before the object is deleted from the registry. Each entry\nis an identifier for the responsible component that will remove the entry\nfrom the list. If the deletionTimestamp of the object is non-nil, entries\nin this list can only be removed.\n+optional\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Finalizers"
+        },
+        "generateName": {
+          "description": "GenerateName is an optional prefix, used by the server, to generate a unique\nname ONLY IF the Name field has not been provided.\nIf this field is used, the name returned to the client will be different\nthan the name passed. This value will also be combined with a unique suffix.\nThe provided value has the same validation rules as the Name field,\nand may be truncated by the length of the suffix required to make the value\nunique on the server.\n\nIf this field is specified and the generated name exists, the server will\nNOT return a 409 - instead, it will either return 201 Created or 500 with Reason\nServerTimeout indicating a unique name could not be found in the time allotted, and the client\nshould retry (optionally after the time indicated in the Retry-After header).\n\nApplied only if Name is not specified.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#idempotency\n+optional",
+          "type": "string",
+          "x-go-name": "GenerateName"
+        },
+        "generation": {
+          "description": "A sequence number representing a specific generation of the desired state.\nPopulated by the system. Read-only.\n+optional",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Generation"
+        },
+        "initializers": {
+          "$ref": "#/definitions/Initializers"
+        },
+        "labels": {
+          "description": "Map of string keys and values that can be used to organize and categorize\n(scope and select) objects. May match selectors of replication controllers\nand services.\nMore info: http://kubernetes.io/docs/user-guide/labels\n+optional",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Labels"
+        },
+        "name": {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although\nsome resources may allow a client to request the generation of an appropriate name\nautomatically. Name is primarily intended for creation idempotence and configuration\ndefinition.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "description": "Namespace defines the space within each name must be unique. An empty namespace is\nequivalent to the \"default\" namespace, but \"default\" is the canonical representation.\nNot all objects are required to be scoped to a namespace - the value of this field for\nthose objects will be empty.\n\nMust be a DNS_LABEL.\nCannot be updated.\nMore info: http://kubernetes.io/docs/user-guide/namespaces\n+optional",
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "ownerReferences": {
+          "description": "List of objects depended by this object. If ALL objects in the list have\nbeen deleted, this object will be garbage collected. If this object is managed by a controller,\nthen an entry in this list will point to this controller, with the controller field set to true.\nThere cannot be more than one managing controller.\n+optional\n+patchMergeKey=uid\n+patchStrategy=merge",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OwnerReference"
+          },
+          "x-go-name": "OwnerReferences"
+        },
+        "resourceVersion": {
+          "description": "An opaque value that represents the internal version of this object that can\nbe used by clients to determine when objects have changed. May be used for optimistic\nconcurrency, change detection, and the watch operation on a resource or set of resources.\nClients must treat these values as opaque and passed unmodified back to the server.\nThey may only be valid for a particular resource or set of resources.\n\nPopulated by the system.\nRead-only.\nValue must be treated as opaque by clients and .\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "SelfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "OwnerReference": {
+      "description": "OwnerReference contains enough information to let you identify an owning\nobject. Currently, an owning object must be in the same namespace, so there\nis no namespace field.",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "API version of the referent.",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "blockOwnerDeletion": {
+          "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then\nthe owner cannot be deleted from the key-value store until this\nreference is removed.\nDefaults to false.\nTo set this field, a user needs \"delete\" permission of the owner,\notherwise 422 (Unprocessable Entity) will be returned.\n+optional",
+          "type": "boolean",
+          "x-go-name": "BlockOwnerDeletion"
+        },
+        "controller": {
+          "description": "If true, this reference points to the managing controller.\n+optional",
+          "type": "boolean",
+          "x-go-name": "Controller"
+        },
+        "kind": {
+          "description": "Kind of the referent.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "description": "Name of the referent.\nMore info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Pod": {
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
       "type": "object",
@@ -2678,21 +2838,18 @@
     "QuotaSpec": {
       "type": "object",
       "properties": {
-        "createdAt": {
-          "type": "string",
-          "x-go-name": "CreatedAt"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "rules": {
+        "spec": {
           "type": "object",
-          "x-go-name": "Rules"
+          "properties": {
+            "rules": {
+              "type": "object",
+              "x-go-name": "Rules"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -2700,25 +2857,22 @@
     "QuotaSpecBinding": {
       "type": "object",
       "properties": {
-        "createdAt": {
-          "type": "string",
-          "x-go-name": "CreatedAt"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "quotaSpecs": {
+        "spec": {
           "type": "object",
-          "x-go-name": "QuotaSpecs"
-        },
-        "resourceVersion": {
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "services": {
-          "type": "object",
-          "x-go-name": "Services"
+          "properties": {
+            "quotaSpecs": {
+              "type": "object",
+              "x-go-name": "QuotaSpecs"
+            },
+            "services": {
+              "type": "object",
+              "x-go-name": "Services"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -2933,41 +3087,38 @@
     "ServiceEntry": {
       "type": "object",
       "properties": {
-        "addresses": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
           "type": "object",
-          "x-go-name": "Addresses"
-        },
-        "createdAt": {
-          "type": "string",
-          "x-go-name": "CreatedAt"
-        },
-        "endpoints": {
-          "type": "object",
-          "x-go-name": "Endpoints"
-        },
-        "hosts": {
-          "type": "object",
-          "x-go-name": "Hosts"
-        },
-        "location": {
-          "type": "object",
-          "x-go-name": "Location"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "ports": {
-          "type": "object",
-          "x-go-name": "Ports"
-        },
-        "resolution": {
-          "type": "object",
-          "x-go-name": "Resolution"
-        },
-        "resourceVersion": {
-          "type": "string",
-          "x-go-name": "ResourceVersion"
+          "properties": {
+            "addresses": {
+              "type": "object",
+              "x-go-name": "Addresses"
+            },
+            "endpoints": {
+              "type": "object",
+              "x-go-name": "Endpoints"
+            },
+            "hosts": {
+              "type": "object",
+              "x-go-name": "Hosts"
+            },
+            "location": {
+              "type": "object",
+              "x-go-name": "Location"
+            },
+            "ports": {
+              "type": "object",
+              "x-go-name": "Ports"
+            },
+            "resolution": {
+              "type": "object",
+              "x-go-name": "Resolution"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3052,6 +3203,119 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Status": {
+      "type": "object",
+      "title": "Status is a return value for calls that don't return other objects.",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "code": {
+          "description": "Suggested HTTP return code for this status, 0 if not set.\n+optional",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "Code"
+        },
+        "continue": {
+          "description": "continue may be set if the user set a limit on the number of items returned, and indicates that\nthe server has more data available. The value is opaque and may be used to issue another request\nto the endpoint that served this list to retrieve the next set of available objects. Continuing a\nlist may not be possible if the server configuration has changed or more than a few minutes have\npassed. The resourceVersion field returned when using this continue value will be identical to\nthe value in the first response.",
+          "type": "string",
+          "x-go-name": "Continue"
+        },
+        "details": {
+          "$ref": "#/definitions/StatusDetails"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "message": {
+          "description": "A human-readable description of the status of this operation.\n+optional",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "reason": {
+          "$ref": "#/definitions/StatusReason"
+        },
+        "resourceVersion": {
+          "description": "String that identifies the server's internal version of this object that\ncan be used by clients to determine when objects have changed.\nValue must be treated as opaque by clients and passed unmodified back to the server.\nPopulated by the system.\nRead-only.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency\n+optional",
+          "type": "string",
+          "x-go-name": "ResourceVersion"
+        },
+        "selfLink": {
+          "description": "selfLink is a URL representing this object.\nPopulated by the system.\nRead-only.\n+optional",
+          "type": "string",
+          "x-go-name": "SelfLink"
+        },
+        "status": {
+          "description": "Status of the operation.\nOne of: \"Success\" or \"Failure\".\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status\n+optional",
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "StatusCause": {
+      "description": "StatusCause provides more information about an api.Status failure, including\ncases when multiple errors are encountered.",
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "The field of the resource that has caused this error, as named by its JSON\nserialization. May include dot and postfix notation for nested attributes.\nArrays are zero-indexed.  Fields may appear more than once in an array of\ncauses due to fields having multiple errors.\nOptional.\n\nExamples:\n\"name\" - the field \"name\" on the current resource\n\"items[0].name\" - the field \"name\" on the first array entry in \"items\"\n+optional",
+          "type": "string",
+          "x-go-name": "Field"
+        },
+        "message": {
+          "description": "A human-readable description of the cause of the error.  This field may be\npresented as-is to a reader.\n+optional",
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "reason": {
+          "$ref": "#/definitions/CauseType"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "StatusDetails": {
+      "description": "StatusDetails is a set of additional properties that MAY be set by the\nserver to provide additional information about a response. The Reason\nfield of a Status object defines what attributes will be set. Clients\nmust ignore fields that do not match the defined type of each attribute,\nand should assume that any attribute may be empty, invalid, or under\ndefined.",
+      "type": "object",
+      "properties": {
+        "causes": {
+          "description": "The Causes array includes more details associated with the StatusReason\nfailure. Not all StatusReasons may provide detailed causes.\n+optional",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StatusCause"
+          },
+          "x-go-name": "Causes"
+        },
+        "group": {
+          "description": "The group attribute of the resource associated with the status StatusReason.\n+optional",
+          "type": "string",
+          "x-go-name": "Group"
+        },
+        "kind": {
+          "description": "The kind attribute of the resource associated with the status StatusReason.\nOn some operations may differ from the requested resource Kind.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "name": {
+          "description": "The name attribute of the resource associated with the status StatusReason\n(when there is a single name which can be described).\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "retryAfterSeconds": {
+          "description": "If specified, the time in seconds before the operation should be retried. Some errors may indicate\nthe client must take an alternate action - for those errors this field may indicate how long to wait\nbefore taking the alternate action.\n+optional",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "RetryAfterSeconds"
+        },
+        "uid": {
+          "$ref": "#/definitions/UID"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "StatusInfo": {
       "description": "This is used for returning a response of Kiali Status",
       "type": "object",
@@ -3089,11 +3353,16 @@
       },
       "x-go-package": "github.com/kiali/kiali/status"
     },
+    "StatusReason": {
+      "description": "StatusReason is an enumeration of possible failure causes.  Each StatusReason\nmust map to a single HTTP status code, but multiple reasons may map\nto the same HTTP status code.\nTODO: move to apiserver",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
     "Time": {
-      "description": "Time is the number of milliseconds since the epoch\n(1970-01-01 00:00 UTC) excluding leap seconds.",
-      "type": "integer",
-      "format": "int64",
-      "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+      "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
+      "type": "object",
+      "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "TokenGenerated": {
       "description": "This is used for returning the token",
@@ -3126,6 +3395,11 @@
         "$ref": "#/definitions/NameIstioValidation"
       },
       "x-go-package": "github.com/kiali/kiali"
+    },
+    "UID": {
+      "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
+      "type": "string",
+      "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/types"
     },
     "Workload": {
       "description": "Workload has the details of a workload",
@@ -3393,38 +3667,27 @@
       "description": "This is used for returning a DestinationRule",
       "type": "object",
       "title": "DestinationRule destinationRule",
-      "required": [
-        "name",
-        "createdAt",
-        "resourceVersion"
-      ],
       "properties": {
-        "createdAt": {
-          "description": "The creation date of the destinationRule",
-          "type": "string",
-          "x-go-name": "CreatedAt"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "host": {
+        "spec": {
           "type": "object",
-          "x-go-name": "Host"
-        },
-        "name": {
-          "description": "The name of the destinationRule",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the destinationRule",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "subsets": {
-          "type": "object",
-          "x-go-name": "Subsets"
-        },
-        "trafficPolicy": {
-          "type": "object",
-          "x-go-name": "TrafficPolicy"
+          "properties": {
+            "host": {
+              "type": "object",
+              "x-go-name": "Host"
+            },
+            "subsets": {
+              "type": "object",
+              "x-go-name": "Subsets"
+            },
+            "trafficPolicy": {
+              "type": "object",
+              "x-go-name": "TrafficPolicy"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-name": "DestinationRule",
@@ -3483,10 +3746,6 @@
       "description": "This type type is used for returning a IstioAdapter",
       "type": "object",
       "title": "IstioAdapter istioAdapter",
-      "required": [
-        "createdAt",
-        "resourceVersion"
-      ],
       "properties": {
         "adapter": {
           "type": "string",
@@ -3497,19 +3756,8 @@
           "type": "string",
           "x-go-name": "Adapters"
         },
-        "createdAt": {
-          "description": "The creation date of the virtualService",
-          "type": "string",
-          "x-go-name": "CreatedAt"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the virtualService",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
         "spec": {
           "type": "object",
@@ -3533,34 +3781,23 @@
       "description": "This type type is used for returning a IstioRule",
       "type": "object",
       "title": "IstioRule istioRule",
-      "required": [
-        "name",
-        "createdAt",
-        "resourceVersion"
-      ],
       "properties": {
-        "actions": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
           "type": "object",
-          "x-go-name": "Actions"
-        },
-        "createdAt": {
-          "description": "The creation date of the virtualService",
-          "type": "string",
-          "x-go-name": "CreatedAt"
-        },
-        "match": {
-          "type": "object",
-          "x-go-name": "Match"
-        },
-        "name": {
-          "description": "The name of the istioRule",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the virtualService",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
+          "properties": {
+            "actions": {
+              "type": "object",
+              "x-go-name": "Actions"
+            },
+            "match": {
+              "type": "object",
+              "x-go-name": "Match"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-name": "IstioRule",
@@ -3580,24 +3817,9 @@
       "description": "This type type is used for returning a IstioTemplate",
       "type": "object",
       "title": "IstioTemplate istioTemplate",
-      "required": [
-        "createdAt",
-        "resourceVersion"
-      ],
       "properties": {
-        "createdAt": {
-          "description": "The creation date of the virtualService",
-          "type": "string",
-          "x-go-name": "CreatedAt"
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the virtualService",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
         "spec": {
           "type": "object",
@@ -3647,46 +3869,35 @@
       "description": "This type is used for returning a VirtualService",
       "type": "object",
       "title": "VirtualService virtualService",
-      "required": [
-        "name",
-        "createdAt",
-        "resourceVersion"
-      ],
       "properties": {
-        "createdAt": {
-          "description": "The creation date of the virtualService",
-          "type": "string",
-          "x-go-name": "CreatedAt"
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
         },
-        "gateways": {
+        "spec": {
           "type": "object",
-          "x-go-name": "Gateways"
-        },
-        "hosts": {
-          "type": "object",
-          "x-go-name": "Hosts"
-        },
-        "http": {
-          "type": "object",
-          "x-go-name": "Http"
-        },
-        "name": {
-          "description": "The name of the virtualService",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "resourceVersion": {
-          "description": "The resource version of the virtualService",
-          "type": "string",
-          "x-go-name": "ResourceVersion"
-        },
-        "tcp": {
-          "type": "object",
-          "x-go-name": "Tcp"
-        },
-        "tls": {
-          "type": "object",
-          "x-go-name": "Tls"
+          "properties": {
+            "gateways": {
+              "type": "object",
+              "x-go-name": "Gateways"
+            },
+            "hosts": {
+              "type": "object",
+              "x-go-name": "Hosts"
+            },
+            "http": {
+              "type": "object",
+              "x-go-name": "Http"
+            },
+            "tcp": {
+              "type": "object",
+              "x-go-name": "Tcp"
+            },
+            "tls": {
+              "type": "object",
+              "x-go-name": "Tls"
+            }
+          },
+          "x-go-name": "Spec"
         }
       },
       "x-go-name": "VirtualService",

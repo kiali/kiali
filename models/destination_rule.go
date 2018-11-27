@@ -1,6 +1,8 @@
 package models
 
 import (
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -23,21 +25,12 @@ type DestinationRules struct {
 //
 // swagger:model destinationRule
 type DestinationRule struct {
-	// The name of the destinationRule
-	//
-	// required: true
-	Name string `json:"name"`
-	// The creation date of the destinationRule
-	//
-	// required: true
-	CreatedAt string `json:"createdAt"`
-	// The resource version of the destinationRule
-	//
-	// required: true
-	ResourceVersion string      `json:"resourceVersion"`
-	Host            interface{} `json:"host"`
-	TrafficPolicy   interface{} `json:"trafficPolicy"`
-	Subsets         interface{} `json:"subsets"`
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     struct {
+		Host          interface{} `json:"host"`
+		TrafficPolicy interface{} `json:"trafficPolicy"`
+		Subsets       interface{} `json:"subsets"`
+	} `json:"spec"`
 }
 
 func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject) {
@@ -50,21 +43,19 @@ func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject)
 }
 
 func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
-	dRule.Name = destinationRule.GetObjectMeta().Name
-	dRule.CreatedAt = formatTime(destinationRule.GetObjectMeta().CreationTimestamp.Time)
-	dRule.ResourceVersion = destinationRule.GetObjectMeta().ResourceVersion
-	dRule.Host = destinationRule.GetSpec()["host"]
-	dRule.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
-	dRule.Subsets = destinationRule.GetSpec()["subsets"]
+	dRule.Metadata = destinationRule.GetObjectMeta()
+	dRule.Spec.Host = destinationRule.GetSpec()["host"]
+	dRule.Spec.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]
+	dRule.Spec.Subsets = destinationRule.GetSpec()["subsets"]
 }
 
 func (dRule *DestinationRule) HasCircuitBreaker(namespace string, serviceName string, version string) bool {
-	if host, ok := dRule.Host.(string); ok && kubernetes.FilterByHost(host, serviceName, namespace) {
+	if host, ok := dRule.Spec.Host.(string); ok && kubernetes.FilterByHost(host, serviceName, namespace) {
 		// CB is set at DR level, so it's true for the service and all versions
-		if isCircuitBreakerTrafficPolicy(dRule.TrafficPolicy) {
+		if isCircuitBreakerTrafficPolicy(dRule.Spec.TrafficPolicy) {
 			return true
 		}
-		if subsets, ok := dRule.Subsets.([]interface{}); ok {
+		if subsets, ok := dRule.Spec.Subsets.([]interface{}); ok {
 			cfg := config.Get()
 			for _, subsetInterface := range subsets {
 				if subset, ok := subsetInterface.(map[string]interface{}); ok {
