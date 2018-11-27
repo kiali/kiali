@@ -57,11 +57,13 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
   finally:
     assert command_exec.oc_delete(WORKLOADS_FILE, bookinfo_namespace) == True
 
-    with timeout(seconds=60, error_message='Timed out waiting for extra workloads deletion'):
+    with timeout(seconds=90, error_message='Timed out waiting for extra workloads deletion'):
+      print('Extra workloads added for this test:', EXTRA_WORKLOADS)
       while True:
         workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
         if workload_list != None and workload_list.get('workloads') != None:
           workload_names = set(list(map(lambda workload: workload.get('name'), workload_list.get('workloads'))))
+          print('Still existing workloads:', workload_names)
           if EXTRA_WORKLOADS.intersection(workload_names) == set():
             break
 
