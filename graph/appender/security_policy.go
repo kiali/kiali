@@ -18,10 +18,11 @@ const SecurityPolicyAppenderName = "securityPolicy"
 // The appender currently reports only mutual_tls security although is written in a generic way.
 // Name: securityPolicy
 type SecurityPolicyAppender struct {
-	GraphType    string
-	IncludeIstio bool
-	Namespaces   map[string]graph.NamespaceInfo
-	QueryTime    int64 // unix time in seconds
+	GraphType          string
+	IncludeIstio       bool
+	InjectServiceNodes bool
+	Namespaces         map[string]graph.NamespaceInfo
+	QueryTime          int64 // unix time in seconds
 }
 
 // Name implements Appender
@@ -106,7 +107,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvcName, destSvcNameOk := m["destination_service_namespace"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
@@ -127,9 +128,25 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		destVer := string(lDestVer)
 		csp := string(lCsp)
 
-		sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, "", a.GraphType)
-		destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
-		key := fmt.Sprintf("%s %s", sourceId, destId)
-		securityPolicyMap[key] = csp
+		if a.InjectServiceNodes {
+			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
+				a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName)
+				a.addSecurityPolicy(securityPolicyMap, csp, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName)
+			} else {
+				a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+			}
+		} else {
+			a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+		}
 	}
+}
+
+func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]string, val string, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string) {
+	sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, a.GraphType)
+	destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
+	key := fmt.Sprintf("%s %s", sourceId, destId)
+	fmt.Printf("%s=%v\n", key, val)
+	securityPolicyMap[key] = val
 }

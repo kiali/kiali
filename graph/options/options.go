@@ -228,10 +228,11 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	}
 	if csl == AppenderAll || strings.Contains(csl, appender.SecurityPolicyAppenderName) || strings.Contains(csl, "security_policy") {
 		a := appender.SecurityPolicyAppender{
-			GraphType:    o.GraphType,
-			IncludeIstio: o.IncludeIstio,
-			Namespaces:   o.Namespaces,
-			QueryTime:    o.QueryTime,
+			GraphType:          o.GraphType,
+			IncludeIstio:       o.IncludeIstio,
+			InjectServiceNodes: o.InjectServiceNodes,
+			Namespaces:         o.Namespaces,
+			QueryTime:          o.QueryTime,
 		}
 		appenders = append(appenders, a)
 	}
