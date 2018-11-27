@@ -43,7 +43,7 @@ spec:
     protocol: HTTP
   resolution: STATIC
   endpoints:
-  - address: 192.168.1.19
+  - address: 192.168.1.19 # IMPORTANT! Change this IP address to your own host IP address
     ports:
       http-ext: 9080
 ---
