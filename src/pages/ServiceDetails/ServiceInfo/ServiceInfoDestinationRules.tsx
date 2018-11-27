@@ -127,10 +127,18 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
     return this.props.validations[destinationRule.name];
   }
 
+  overviewLink(destinationRule: DestinationRule) {
+    return (
+      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.name + '&detail=overview'}>
+        {destinationRule.name}
+      </Link>
+    );
+  }
+
   rows() {
     return (this.props.destinationRules || []).map((destinationRule, vsIdx) => ({
       id: vsIdx,
-      name: destinationRule.name,
+      name: this.overviewLink(destinationRule),
       status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
       trafficPolicy: destinationRule.trafficPolicy ? (
         <DetailObject name="" detail={destinationRule.trafficPolicy} />

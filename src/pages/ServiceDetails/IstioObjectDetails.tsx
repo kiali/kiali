@@ -7,6 +7,7 @@ import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import VirtualServiceDetail from './ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
+import DestinationRuleDetail from './ServiceInfo/IstioObjectDetails/DestinationRuleDetail';
 import './ServiceInfo/IstioObjectDetails/IstioObjectDetails.css';
 import { Link } from 'react-router-dom';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
@@ -113,8 +114,16 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     );
   }
 
+  isIstioObjectWithOverview() {
+    return this.isVirtualService() || this.isDestinationRule();
+  }
+
   isVirtualService() {
     return this.typeIstioObject() === 'VirtualService';
+  }
+
+  isDestinationRule() {
+    return this.typeIstioObject() === 'DestinationRule';
   }
 
   typeIstioObject() {
@@ -123,19 +132,32 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     }
     return 'DestinationRule';
   }
-
-  overviewTab() {
+  overviewDetail() {
     const istioObj: VirtualService | DestinationRule = this.props.object as VirtualService | DestinationRule;
-    if (this.isVirtualService()) {
-      return (
-        <TabPane eventKey="overview">
+    switch (this.typeIstioObject()) {
+      case 'VirtualService':
+        return (
           <VirtualServiceDetail
             virtualService={istioObj}
             validations={this.props.validations['virtualservice']}
             namespace={this.props.namespace}
           />
-        </TabPane>
-      );
+        );
+      case 'DestinationRule':
+        return (
+          <DestinationRuleDetail
+            destinationRule={istioObj}
+            validations={this.props.validations['destinationRule']}
+            namespace={this.props.namespace}
+          />
+        );
+      default:
+        return null;
+    }
+  }
+  overviewTab() {
+    if (this.isIstioObjectWithOverview()) {
+      return <TabPane eventKey="overview">{this.overviewDetail()}</TabPane>;
     }
     return null;
   }
@@ -144,7 +166,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
     return (
       <>
         <Nav bsClass="nav nav-tabs nav-tabs-pf">
-          {this.isVirtualService() && (
+          {this.isIstioObjectWithOverview() && (
             <NavItem eventKey="overview">
               <div>Overview</div>
             </NavItem>
@@ -158,7 +180,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
   }
 
   render() {
-    const defaultDetailTab = this.isVirtualService() ? 'overview' : 'yaml';
+    const defaultDetailTab = this.isIstioObjectWithOverview() ? 'overview' : 'yaml';
     return (
       <div className="container-fluid container-cards-pf">
         <div style={{ float: 'right' }}>
