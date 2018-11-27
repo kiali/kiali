@@ -273,6 +273,60 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceTy
 	return err
 }
 
+func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch string) (models.IstioConfigDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
+	defer promtimer.ObserveNow(&err)
+
+	updatedType := resourceType
+	if resourceType == Adapters || resourceType == Templates {
+		updatedType = resourceSubtype
+	}
+
+	var result kubernetes.IstioObject
+	istioConfigDetail := models.IstioConfigDetails{}
+	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.ObjectType = resourceType
+
+	result, err = in.k8s.UpdateIstioObject(api, namespace, updatedType, name, jsonPatch)
+	if err != nil {
+		return istioConfigDetail, err
+	}
+
+	switch resourceType {
+	case Gateways:
+		istioConfigDetail.Gateway = &models.Gateway{}
+		istioConfigDetail.Gateway.Parse(result)
+	case VirtualServices:
+		istioConfigDetail.VirtualService = &models.VirtualService{}
+		istioConfigDetail.VirtualService.Parse(result)
+	case DestinationRules:
+		istioConfigDetail.DestinationRule = &models.DestinationRule{}
+		istioConfigDetail.DestinationRule.Parse(result)
+	case ServiceEntries:
+		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
+		istioConfigDetail.ServiceEntry.Parse(result)
+	case Rules:
+		istioRule := models.CastIstioRule(result)
+		istioConfigDetail.Rule = &istioRule
+	case Adapters:
+		adapter := models.CastIstioAdapter(result)
+		istioConfigDetail.Adapter = &adapter
+	case Templates:
+		template := models.CastIstioTemplate(result)
+		istioConfigDetail.Template = &template
+	case QuotaSpecs:
+		istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
+		istioConfigDetail.QuotaSpec.Parse(result)
+	case QuotaSpecBindings:
+		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
+		istioConfigDetail.QuotaSpecBinding.Parse(result)
+	default:
+		err = fmt.Errorf("Object type not found: %v", resourceType)
+	}
+	return istioConfigDetail, err
+}
+
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {
 	var canUpdate, canDelete bool
 	if api, ok := resourceTypesToAPI[objectType]; ok {

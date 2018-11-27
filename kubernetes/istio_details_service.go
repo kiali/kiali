@@ -2,6 +2,8 @@ package kubernetes
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"sync"
 
@@ -264,6 +266,27 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpecBinding object", namespace, quotaSpecBindingName)
 	}
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
+}
+
+// UpdateIstioObject updates an Istio object from either config api or networking api
+func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
+	log.Infof("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
+	var result runtime.Object
+	var err error
+	bytePatch := []byte(jsonPatch)
+	if api == configGroupVersion.Group {
+		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else {
+		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	}
+	if err != nil {
+		return nil, err
+	}
+	istioObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
+	}
+	return istioObject, err
 }
 
 // GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service

@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigAdapterTemplateDetails serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -40,7 +40,7 @@ type NamespaceParam struct {
 	Name string `json:"namespace"`
 }
 
-// swagger:parameters objectValidations istioConfigDetails istioConfigAdapterTemplateDetails
+// swagger:parameters objectValidations istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
 type ObjectNameParam struct {
 	// The Istio object name.
 	//
@@ -49,7 +49,7 @@ type ObjectNameParam struct {
 	Name string `json:"object"`
 }
 
-// swagger:parameters objectValidations istioConfigDetails istioConfigAdapterTemplateDetails
+// swagger:parameters objectValidations istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
 type ObjectTypeParam struct {
 	// The Istio object type.
 	//
@@ -59,13 +59,12 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
-// swagger:parameters istioConfigAdapterTemplateDetails
+// swagger:parameters istioConfigDetailsSubtype istioConfigDeleteSubtype istioConfigUpdateSubtype
 type ObjectSubtypeParam struct {
 	// The Istio object subtype.
 	//
 	// in: path
 	// required: true
-	// pattern: ^(adapters|templates)$
 	Name string `json:"object_subtype"`
 }
 

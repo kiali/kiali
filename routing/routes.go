@@ -177,7 +177,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigValidations,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigAdapterTemplateDetails
+		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigDetailsSubtype
 		// ---
 		// Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype
 		//
@@ -199,7 +199,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
-		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}
+		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigDeleteSubtype
 		// ---
 		// Endpoint to delete the Istio Config of an Istio object used for templates and adapters
 		//
@@ -209,10 +209,9 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
-		//      200: delete
+		//      200
 		//
 		{
 			"IstioConfigDeleteSubtype",
@@ -221,7 +220,32 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDelete,
 			true,
 		},
-		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object}
+		// swagger:route PATCH /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigUpdateSubtype
+		// ---
+		// Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigDetailsResponse
+		//
+		{
+			"IstioConfigUpdateSubtype",
+			"PATCH",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			handlers.IstioConfigUpdate,
+			true,
+		},
+		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDelete
 		// ---
 		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
 		//
@@ -231,16 +255,40 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
 		//      404: notFoundError
 		//      500: internalError
-		//      200: delete
+		//      200
 		//
 		{
 			"IstioConfigDelete",
 			"DELETE",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
 			handlers.IstioConfigDelete,
+			true,
+		},
+		// swagger:route PATCH /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigUpdate
+		// ---
+		// Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: istioConfigDetailsResponse
+		//
+		{
+			"IstioConfigUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			handlers.IstioConfigUpdate,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services services serviceList

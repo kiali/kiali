@@ -666,3 +666,41 @@ func mockDeleteIstioConfigDetails() IstioConfigService {
 	k8s.On("DeleteIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-delete").Return(nil)
 	return IstioConfigService{k8s: k8s}
 }
+
+func TestUpdateIstioConfigDetails(t *testing.T) {
+	assert := assert.New(t)
+	configService := mockUpdateIstioConfigDetails()
+
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "reviews-to-update", "{}")
+	assert.Equal("test", updatedVirtualService.Namespace.Name)
+	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
+	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Metadata.Name)
+	assert.Nil(err)
+
+	updatedTemplate, err := configService.UpdateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "listchecker-to-update", "{}")
+	assert.Equal("test", updatedTemplate.Namespace.Name)
+	assert.Equal("templates", updatedTemplate.ObjectType)
+	assert.Equal("listchecker-to-update", updatedTemplate.Template.Metadata.Name)
+	assert.Nil(err)
+}
+
+func mockUpdateIstioConfigDetails() IstioConfigService {
+	k8s := new(kubetest.K8SClientMock)
+	var updatedVirtualService, updatedTemplate kubernetes.IstioObject
+
+	updatedVirtualService = &kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "reviews-to-update",
+			Namespace: "test",
+		},
+	}
+	updatedTemplate = &kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "listchecker-to-update",
+			Namespace: "test",
+		},
+	}
+	k8s.On("UpdateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(updatedVirtualService, nil)
+	k8s.On("UpdateIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
+	return IstioConfigService{k8s: k8s}
+}
