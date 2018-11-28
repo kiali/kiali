@@ -9,7 +9,6 @@ import (
 	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/prometheus"
 )
 
 type WorkloadList struct {
@@ -95,14 +94,6 @@ type Workload struct {
 
 	// Services that match workload selector
 	Services Services `json:"services"`
-
-	DestinationServices []DestinationService `json:"destinationServices"`
-}
-
-// DestinationService holds service identifiers used for workload dependencies
-type DestinationService struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
 }
 
 type Workloads []*Workload
@@ -357,14 +348,4 @@ func (workload *Workload) SetPods(pods []v1.Pod) {
 
 func (workload *Workload) SetServices(svcs []v1.Service) {
 	workload.Services.Parse(svcs)
-}
-
-func (workload *Workload) SetDestinationServices(dss []prometheus.Service) {
-	workload.DestinationServices = make([]DestinationService, 0, len(dss))
-	for _, service := range dss {
-		workload.DestinationServices = append(workload.DestinationServices, DestinationService{
-			Name:      service.ServiceName,
-			Namespace: service.Namespace,
-		})
-	}
 }

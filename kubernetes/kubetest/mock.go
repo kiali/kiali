@@ -324,11 +324,3 @@ func FakePodList() []v1.Pod {
 				Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
 	}
 }
-
-func FakeNamespace(name string) *v1.Namespace {
-	return &v1.Namespace{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: name,
-		},
-	}
-}

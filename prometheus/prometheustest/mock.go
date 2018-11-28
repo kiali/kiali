@@ -122,8 +122,3 @@ func (o *PromClientMock) GetSourceWorkloads(namespace string, namespaceCreationT
 	args := o.Called(namespace, namespaceCreationTime, servicename)
 	return args.Get(0).(map[string][]prometheus.Workload), args.Error(1)
 }
-
-func (o *PromClientMock) GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]prometheus.Service, error) {
-	args := o.Called(namespace, namespaceCreationTime, workloadname)
-	return args.Get(0).([]prometheus.Service), args.Error(1)
-}
