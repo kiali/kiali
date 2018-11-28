@@ -25,7 +25,6 @@ type ClientInterface interface {
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
-	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
 }
 
 // Client for Prometheus API.
@@ -42,13 +41,6 @@ type Workload struct {
 	App       string
 	Workload  string
 	Version   string
-}
-
-// Service describes a service with contextual information
-type Service struct {
-	Namespace   string
-	App         string
-	ServiceName string
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -120,42 +112,6 @@ func (in *Client) GetSourceWorkloads(namespace string, namespaceCreationTime tim
 			} else {
 				routes[index] = []Workload{source}
 			}
-		}
-	}
-	return routes, nil
-}
-
-func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error) {
-	reporter := "source"
-	if config.Get().IstioNamespace == namespace {
-		reporter = "destination"
-	}
-
-	queryTime := util.Clock.Now()
-	queryInterval := queryTime.Sub(namespaceCreationTime)
-	groupBy := "(destination_service_namespace, destination_service_name, destination_service)"
-	query := fmt.Sprintf("sum(rate(istio_requests_total{reporter=\"%s\",source_workload=\"%s\",source_workload_namespace=\"%s\"}[%vs])) by %s",
-		reporter, workloadname, namespace, int(queryInterval.Seconds()), groupBy)
-	log.Debugf("GetDestinationServices query: %s", query)
-	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("GetDestinationServices")
-	result, err := in.api.Query(context.Background(), query, queryTime)
-	if err != nil {
-		return nil, err
-	}
-	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
-
-	routes := make([]Service, 0)
-	switch result.Type() {
-	case model.ValVector:
-		matrix := result.(model.Vector)
-		for _, sample := range matrix {
-			metric := sample.Metric
-			destination := Service{
-				App:         string(metric["destination_app"]),
-				ServiceName: string(metric["destination_service_name"]),
-				Namespace:   string(metric["destination_service_namespace"]),
-			}
-			routes = append(routes, destination)
 		}
 	}
 	return routes, nil
