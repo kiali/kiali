@@ -34,7 +34,7 @@ spec:
         - -email-domain=*
         - -upstream=http://localhost:20001
         - -openshift-service-account=kiali
-        - '-openshift-sar={"resource": "namespaces", "verb": "get"}'
+        - '-openshift-sar={"namespace":"istio-system","resource":"services","name":"kiali","verb":"get"}'
         - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
         - -tls-cert=/etc/tls/private/tls.crt
         - -tls-key=/etc/tls/private/tls.key
