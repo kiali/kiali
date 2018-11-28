@@ -129,11 +129,10 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 // can be in any namespace and it will still work).
 // However, an egress service will have its namespace set to "default" in the telemetry.
 func (a DeadNodeAppender) isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo *GlobalInfo) bool {
-	if namespaceInfo.ExternalServices == nil {
-		namespaceInfo.ExternalServices = make(map[string]bool)
+	if globalInfo.ExternalServices == nil {
+		globalInfo.ExternalServices = make(map[string]bool)
 
 		for ns := range a.AccessibleNamespaces {
-			// Currently no other appenders use ServiceEntries, so they are not cached in NamespaceInfo
 			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 				IncludeServiceEntries: true,
 				Namespace:             ns,
@@ -143,13 +142,13 @@ func (a DeadNodeAppender) isExternalService(service string, namespaceInfo *Names
 			for _, entry := range istioCfg.ServiceEntries {
 				if entry.Spec.Hosts != nil && entry.Spec.Location == "MESH_EXTERNAL" {
 					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						namespaceInfo.ExternalServices[host.(string)] = true
+						globalInfo.ExternalServices[host.(string)] = true
 					}
 				}
 			}
 		}
-		log.Tracef("Found [%v] egress service entries", len(namespaceInfo.ExternalServices))
+		log.Tracef("Found [%v] egress service entries", len(globalInfo.ExternalServices))
 	}
 
-	return namespaceInfo.ExternalServices[service]
+	return globalInfo.ExternalServices[service]
 }
