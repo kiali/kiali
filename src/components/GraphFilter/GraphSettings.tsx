@@ -1,30 +1,15 @@
 import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { DurationInSeconds } from '../types/Common';
-import { GraphParamsType, GraphType, NodeParamsType } from '../types/Graph';
-import { EdgeLabelMode } from '../types/GraphFilter';
-import Namespace from '../types/Namespace';
-import { GraphFilterActions } from '../actions/GraphFilterActions';
-import { style } from 'typestyle';
-import { makeNamespacesGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../components/Nav/NavUtils';
-import { GraphDataThunkActions } from '../actions/GraphDataActions';
-import { KialiAppState, GraphFilterState } from '../store/Store';
-import { activeNamespacesSelector, durationSelector } from '../store/Selectors';
+import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { KialiAppState, GraphFilterState } from '../../store/Store';
+import { HistoryManager, URLParams } from '../../app/History';
+import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 
-interface GraphDispatch {
+type ReduxProps = GraphFilterState & {
   // Dispatch methods
-  fetchGraphData: (
-    namespaces: Namespace[],
-    duration: DurationInSeconds,
-    graphType: GraphType,
-    injectServiceNodes: boolean,
-    edgeLabelMode: EdgeLabelMode,
-    showSecurity: boolean,
-    showUnusedNodes: boolean,
-    node?: NodeParamsType
-  ) => void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphMissingSidecars(): void;
   toggleGraphNodeLabels(): void;
@@ -33,15 +18,9 @@ interface GraphDispatch {
   toggleServiceNodes(): void;
   toggleTrafficAnimation(): void;
   toggleUnusedNodes(): void;
-}
+};
 
-// inherit all of our Reducer state section  and Dispatch methods for redux
-type GraphSettingsProps = GraphDispatch &
-  GraphFilterState &
-  GraphParamsType & {
-    activeNamespaces: Namespace[];
-    duration: DurationInSeconds;
-  };
+type GraphSettingsProps = ReduxProps;
 
 interface VisibilityLayersType {
   id: string;
@@ -57,46 +36,22 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
   constructor(props: GraphSettingsProps) {
     super(props);
-    // ensure setting is initialized to match the url
-    if (props.showServiceNodes !== props.injectServiceNodes) {
-      this.props.toggleServiceNodes();
+
+    // Let URL override current redux state at construction time. Update URL with unset params.
+    const urlInjectServiceNodes = ListPagesHelper.getSingleBooleanQueryParam(URLParams.GRAPH_SERVICE_NODES);
+    if (urlInjectServiceNodes !== undefined) {
+      if (urlInjectServiceNodes !== props.showServiceNodes) {
+        props.toggleServiceNodes();
+      }
+    } else {
+      HistoryManager.setParam(URLParams.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
     }
   }
 
   componentDidUpdate(prevProps: GraphSettingsProps) {
-    const serviceNodesChanged = this.props.showServiceNodes !== prevProps.showServiceNodes;
-    if (serviceNodesChanged) {
-      this.handleFilterChangeToUrl({
-        ...this.getGraphParams(),
-        injectServiceNodes: this.props.showServiceNodes
-      });
-    } else if (
-      (this.props.showSecurity && this.props.showSecurity !== prevProps.showSecurity) ||
-      this.props.showUnusedNodes !== prevProps.showUnusedNodes
-    ) {
-      // when turning on security, or toggling unused node, we need to perform a fetch, because we don't pull
-      // security or unused node data by default.
-      this.props.fetchGraphData(
-        this.props.activeNamespaces,
-        this.props.duration,
-        this.props.graphType,
-        this.props.injectServiceNodes,
-        this.props.edgeLabelMode,
-        this.props.showSecurity,
-        this.props.showUnusedNodes,
-        this.props.node
-      );
-    }
+    // ensure redux state and URL are aligned
+    HistoryManager.setParam(URLParams.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
   }
-
-  handleFilterChangeToUrl = (params: GraphParamsType) => {
-    document.body.click(); // close the layover
-    if (params.node) {
-      this.context.router.history.push(makeNodeGraphUrlFromParams(params));
-    } else {
-      this.context.router.history.push(makeNamespacesGraphUrlFromParams(params));
-    }
-  };
 
   render() {
     // map our attributes from redux
@@ -224,22 +179,10 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       </span>
     );
   }
-
-  private getGraphParams: () => GraphParamsType = () => {
-    return {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
-    };
-  };
 }
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
   showNodeLabels: state.graph.filterState.showNodeLabels,
@@ -253,28 +196,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    fetchGraphData: (
-      namespaces: Namespace[],
-      duration: DurationInSeconds,
-      graphType: GraphType,
-      injectServiceNodes: boolean,
-      edgeLabelMode: EdgeLabelMode,
-      showSecurity: boolean,
-      showUnusedNodes: boolean,
-      node?: NodeParamsType
-    ) =>
-      dispatch(
-        GraphDataThunkActions.fetchGraphData(
-          namespaces,
-          duration,
-          graphType,
-          injectServiceNodes,
-          edgeLabelMode,
-          showSecurity,
-          showUnusedNodes,
-          node
-        )
-      ),
     toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
     toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),

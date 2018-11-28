@@ -34,11 +34,13 @@ describe('CytoscapeGraph component test', () => {
         duration={60}
         edgeLabelMode={myEdgeLabelMode}
         elements={GRAPH_DATA[testNamespace].elements}
-        graphLayout={myLayout}
+        layout={myLayout}
         onClick={testClickHandler}
         onReady={testReadyHandler}
         refresh={testClickHandler}
+        refreshInterval={0}
         setActiveNamespaces={testSetHandler}
+        setNode={testSetHandler}
         showCircuitBreakers={false}
         showMissingSidecars={true}
         showNodeLabels={true}
@@ -50,7 +52,6 @@ describe('CytoscapeGraph component test', () => {
         isLoading={false}
         isError={false}
         graphType={GraphType.VERSIONED_APP}
-        injectServiceNodes={false}
       />
     );
     const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);

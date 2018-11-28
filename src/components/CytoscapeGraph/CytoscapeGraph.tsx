@@ -12,34 +12,44 @@ import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { GraphActions, GraphThunkActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import {
+  activeNamespacesSelector,
+  durationSelector,
+  edgeLabelModeSelector,
+  refreshIntervalSelector,
+  graphTypeSelector
+} from '../../store/Selectors';
 import {
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
   CytoscapeMouseInEvent,
   CytoscapeMouseOutEvent,
-  GraphParamsType,
   CytoscapeGlobalScratchNamespace,
   CytoscapeGlobalScratchData,
   NodeParamsType,
-  NodeType
+  NodeType,
+  GraphType
 } from '../../types/Graph';
-import { EdgeLabelMode } from '../../types/GraphFilter';
+import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
 import { authentication } from '../../utils/Authentication';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
-import { makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
+import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import { DurationInSeconds } from '../../types/Common';
+import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { DagreGraph } from './graphs/DagreGraph';
+import { bindActionCreators } from 'redux';
 
-type CytoscapeGraphType = {
+type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
   elements?: any;
   edgeLabelMode: EdgeLabelMode;
-  node?: NodeParamsType; // node for initial selection
+  graphType: GraphType;
+  layout: Layout;
+  node?: NodeParamsType;
+  refreshInterval: PollIntervalInMs;
   showCircuitBreakers: boolean;
   showMissingSidecars: boolean;
   showNodeLabels: boolean;
@@ -52,14 +62,14 @@ type CytoscapeGraphType = {
   onReady: (cytoscapeRef: any) => void;
   refresh: () => void;
   setActiveNamespaces: (namespace: Namespace[]) => void;
+  setNode: (node?: NodeParamsType) => void;
 };
 
-type CytoscapeGraphProps = CytoscapeGraphType &
-  GraphParamsType & {
-    isLoading: boolean;
-    isError: boolean;
-    containerClassName?: string;
-  };
+type CytoscapeGraphProps = ReduxProps & {
+  isLoading: boolean;
+  isError: boolean;
+  containerClassName?: string;
+};
 
 type CytoscapeGraphState = {};
 
@@ -110,7 +120,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
       this.props.elements !== nextProps.elements ||
       this.props.isError !== nextProps.isError ||
-      this.props.graphLayout !== nextProps.graphLayout ||
+      this.props.layout !== nextProps.layout ||
       this.props.node !== nextProps.node ||
       this.props.showCircuitBreakers !== nextProps.showCircuitBreakers ||
       this.props.showMissingSidecars !== nextProps.showMissingSidecars ||
@@ -143,7 +153,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.nodeNeedsRelayout() ||
       this.namespaceNeedsRelayout(prevProps.elements, this.props.elements) ||
       this.elementsNeedRelayout(prevProps.elements, this.props.elements) ||
-      this.props.graphLayout.name !== prevProps.graphLayout.name
+      this.props.layout.name !== prevProps.layout.name
     ) {
       updateLayout = true;
     }
@@ -372,13 +382,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       // Enable labels when doing a relayout, layouts can be told to take into account the labels to avoid
       // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
       this.turnNodeLabelsTo(cy, true);
-      const layoutOptions = LayoutDictionary.getLayout(this.props.graphLayout);
+      const layoutOptions = LayoutDictionary.getLayout(this.props.layout);
       if (cy.nodes('$node > node').length > 0) {
         // if there is any parent node, run the group-compound-layout
         cy.layout({
           ...layoutOptions,
           name: 'group-compound-layout',
-          realLayout: this.props.graphLayout.name,
+          realLayout: this.props.layout.name,
           // Currently we do not support non discrete layouts for the compounds, but this can be supported if needed.
           compoundLayoutOptions: LayoutDictionary.getLayout(DagreGraph.getLayout())
         }).run();
@@ -481,14 +491,20 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (sameNode) {
       return;
     }
-    const graphParamsWithNode: GraphParamsType = {
+    const urlParams: GraphUrlParams = {
+      activeNamespaces: this.props.activeNamespaces,
+      duration: this.props.duration,
       edgeLabelMode: this.props.edgeLabelMode,
+      graphLayout: this.props.layout,
       graphType: this.props.graphType,
-      graphLayout: this.props.graphLayout,
-      injectServiceNodes: this.props.injectServiceNodes,
-      node: targetNode
+      node: targetNode,
+      refreshInterval: this.props.refreshInterval,
+      showServiceNodes: this.props.showServiceNodes
     };
-    this.context.router.history.push(makeNodeGraphUrlFromParams(graphParamsWithNode));
+
+    // To ensure updated components get the updated URL, update the URL first and then the state
+    this.context.router.history.push(makeNodeGraphUrlFromParams(urlParams));
+    this.props.setNode(targetNode);
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {
@@ -631,9 +647,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
+  edgeLabelMode: edgeLabelModeSelector(state),
   elements: state.graph.graphData,
+  graphType: graphTypeSelector(state),
   isError: state.graph.isError,
   isLoading: state.graph.isLoading,
+  layout: state.graph.layout,
+  node: state.graph.node,
+  refreshInterval: refreshIntervalSelector(state),
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
   showNodeLabels: state.graph.filterState.showNodeLabels,
@@ -650,7 +671,8 @@ const mapDispatchToProps = (dispatch: any) => ({
   setActiveNamespaces: (namespaces: Namespace[]) => {
     dispatch(GraphActions.changed());
     dispatch(NamespaceActions.setActiveNamespaces(namespaces));
-  }
+  },
+  setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 
 const CytoscapeGraphContainer = connect(

@@ -1,19 +1,32 @@
 import * as React from 'react';
 import { ButtonGroup, Button, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { KialiAppState } from '../../store/Store';
+
 import { PfColors } from '../Pf/PfColors';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { Layout } from '../../types/GraphFilter';
 import { ColaGraph } from './graphs/ColaGraph';
 import { CoseGraph } from './graphs/CoseGraph';
 import { DagreGraph } from './graphs/DagreGraph';
+import { GraphActions } from '../../actions/GraphActions';
+import { HistoryManager, URLParams } from '../../app/History';
+import { ListPagesHelper } from '../ListPage/ListPagesHelper';
+import * as LayoutDictionary from './graphs/LayoutDictionary';
+import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
-type CytoscapeToolbarProps = {
-  cytoscapeGraphRef: any;
-  isLegendActive: boolean;
-  activeLayout: Layout;
-  onLayoutChange: (layout: Layout) => void;
+type ReduxProps = {
+  layout: Layout;
+  showLegend: boolean;
+
+  setLayout: (layout: Layout) => void;
   toggleLegend: () => void;
+};
+
+type CytoscapeToolbarProps = ReduxProps & {
+  cytoscapeGraphRef: any;
 };
 
 const cytoscapeToolbarStyle = style({
@@ -28,6 +41,24 @@ const cytoscapeToolbarPadStyle = style({ marginLeft: '10px' });
 const ZOOM_STEP = 0.2;
 
 export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps> {
+  constructor(props: CytoscapeToolbarProps) {
+    super(props);
+    // Let URL override current redux state at construction time. Update URL with unset params.
+    const urlLayout = ListPagesHelper.getSingleQueryParam(URLParams.GRAPH_LAYOUT);
+    if (urlLayout) {
+      if (urlLayout !== props.layout.name) {
+        props.setLayout(LayoutDictionary.getLayoutByName(urlLayout));
+      }
+    } else {
+      HistoryManager.setParam(URLParams.GRAPH_LAYOUT, props.layout.name);
+    }
+  }
+
+  componentDidUpdate() {
+    // ensure redux state and URL are aligned
+    HistoryManager.setParam(URLParams.GRAPH_LAYOUT, this.props.layout.name);
+  }
+
   render() {
     return (
       <div className={cytoscapeToolbarStyle}>
@@ -48,30 +79,30 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
         <ButtonGroup id="toolbar_layout_group" className={cytoscapeToolbarPadStyle}>
           <Button
             onClick={() => {
-              this.props.onLayoutChange(DagreGraph.getLayout());
+              this.props.setLayout(DagreGraph.getLayout());
             }}
             title={DagreGraph.getLayout().name}
-            active={this.props.activeLayout.name === DagreGraph.getLayout().name}
+            active={this.props.layout.name === DagreGraph.getLayout().name}
           >
             <div className="fa pficon-infrastructure fa-rotate-270" />
           </Button>
 
           <Button
             onClick={() => {
-              this.props.onLayoutChange(CoseGraph.getLayout());
+              this.props.setLayout(CoseGraph.getLayout());
             }}
             title={CoseGraph.getLayout().name}
-            active={this.props.activeLayout.name === CoseGraph.getLayout().name}
+            active={this.props.layout.name === CoseGraph.getLayout().name}
           >
             <div className="fa pficon-topology" /> 1
           </Button>
 
           <Button
             onClick={() => {
-              this.props.onLayoutChange(ColaGraph.getLayout());
+              this.props.setLayout(ColaGraph.getLayout());
             }}
             title={ColaGraph.getLayout().name}
-            active={this.props.activeLayout.name === ColaGraph.getLayout().name}
+            active={this.props.layout.name === ColaGraph.getLayout().name}
           >
             <div className="fa pficon-topology" /> 2
           </Button>
@@ -80,7 +111,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
         <Button
           id="toolbar_toggle_legend"
           onClick={this.props.toggleLegend}
-          active={this.props.isLegendActive}
+          active={this.props.showLegend}
           className={cytoscapeToolbarPadStyle}
         >
           Legend
@@ -124,3 +155,19 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     }
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  layout: state.graph.layout,
+  showLegend: state.graph.filterState.showLegend
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
+  toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
+});
+
+const CytoscapeToolbarContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(CytoscapeToolbar);
+export default CytoscapeToolbarContainer;

@@ -4,7 +4,7 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 // Test our ActionCreators for proper message format
 describe('GraphFilterActions', () => {
   it('should toggle an edge label ', () => {
-    const action = GraphFilterActions.setGraphEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
+    const action = GraphFilterActions.setEdgelLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
     expect(action.payload).toEqual(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
   });
 

@@ -1,44 +1,56 @@
 import * as React from 'react';
+import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { Breadcrumb, Icon, Button } from 'patternfly-react';
-
+import { style } from 'typestyle';
+import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { GraphParamsType, SummaryData, NodeParamsType, GraphType } from '../../types/Graph';
+import { SummaryData, NodeParamsType, NodeType, GraphType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
-
-import SummaryPanel from './SummaryPanel';
-import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
-import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
-import GraphFilterToolbarContainer from '../../components/GraphFilter/GraphFilterToolbar';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
-import { style } from 'typestyle';
-
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
-
+import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
+import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
+import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
+import GraphFilterContainer from '../../components/GraphFilter/GraphFilter';
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
-import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
-import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
-import { makeNamespacesGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
-
 import StatefulTour from '../../components/Tour/StatefulTour';
-
+import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
+import SummaryPanel from './SummaryPanel';
 import graphHelp from './GraphHelpTour';
+import { arrayEquals } from '../../utils/Common';
 
-type GraphPageProps = GraphParamsType & {
+// GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
+type GraphURLPathProps = {
+  app: string;
+  namespace: string;
+  service: string;
+  version: string;
+  workload: string;
+};
+
+type ReduxProps = {
+  activeNamespaces: Namespace[];
+  duration: DurationInSeconds;
+  edgeLabelMode: EdgeLabelMode;
+  graphData: any;
+  graphTimestamp: string;
+  graphType: GraphType;
   isError: boolean;
   isLoading: boolean;
   isPageVisible: boolean;
   isReady: boolean;
-  graphData: any;
-  graphTimestamp: string;
+  layout: Layout;
+  node?: NodeParamsType;
   pollInterval: PollIntervalInMs;
   showLegend: boolean;
   showSecurity: boolean;
+  showServiceNodes: boolean;
   showUnusedNodes: boolean;
   summaryData: SummaryData | null;
-  // functions
+
   fetchGraphData: (
     namespaces: Namespace[],
     duration: DurationInSeconds,
@@ -49,11 +61,15 @@ type GraphPageProps = GraphParamsType & {
     showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => any;
+  setlayout: (layout: Layout) => void;
+  setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
-  // redux store props (to avoid ts-ignore)
-  activeNamespaces: Namespace[];
-  duration: DurationInSeconds;
 };
+
+export type GraphPageProps = RouteComponentProps<GraphURLPathProps> &
+  ReduxProps & {
+    isReady: boolean;
+  };
 
 type GraphPageState = {
   showHelp: boolean;
@@ -92,14 +108,67 @@ const GraphErrorBoundaryFallback = () => {
 };
 
 export default class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
-  static contextTypes = {
-    router: () => null
-  };
-
   private pollTimeoutRef?: number;
   private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
+
+  static getNodeParamsFromProps(props: RouteComponentProps<GraphURLPathProps>): NodeParamsType | undefined {
+    const app = props.match.params.app;
+    const appOk = app && app !== 'unknown' && app !== 'undefined';
+    const namespace = props.match.params.namespace;
+    const namespaceOk = namespace && namespace !== 'unknown' && namespace !== 'undefined';
+    const service = props.match.params.service;
+    const serviceOk = service && service !== 'unknown' && service !== 'undefined';
+    const workload = props.match.params.workload;
+    const workloadOk = workload && workload !== 'unknown' && workload !== 'undefined';
+    if (!appOk && !namespaceOk && !serviceOk && !workloadOk) {
+      return;
+    }
+
+    let nodeType;
+    let version;
+    if (appOk || workloadOk) {
+      nodeType = appOk ? NodeType.APP : NodeType.WORKLOAD;
+      version = props.match.params.version;
+    } else {
+      nodeType = NodeType.SERVICE;
+      version = '';
+    }
+    const node: NodeParamsType = {
+      app: app,
+      namespace: { name: namespace },
+      nodeType: nodeType,
+      service: service,
+      version: version,
+      workload: workload
+    };
+    return node;
+  }
+
+  static isNodeChanged(prevNode?: NodeParamsType, node?: NodeParamsType): boolean {
+    if (prevNode === node) {
+      return false;
+    }
+    if ((prevNode && !node) || (!prevNode && node)) {
+      return true;
+    }
+    if (prevNode && node) {
+      const nodeAppHasChanged = prevNode.app !== node.app;
+      const nodeServiceHasChanged = prevNode.service !== node.service;
+      const nodeVersionHasChanged = prevNode.version !== node.version;
+      const nodeTypeHasChanged = prevNode.nodeType !== node.nodeType;
+      const nodeWorkloadHasChanged = prevNode.workload !== node.workload;
+      return (
+        nodeAppHasChanged ||
+        nodeServiceHasChanged ||
+        nodeVersionHasChanged ||
+        nodeWorkloadHasChanged ||
+        nodeTypeHasChanged
+      );
+    }
+    return false;
+  }
 
   constructor(props: GraphPageProps) {
     super(props);
@@ -108,10 +177,24 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     this.state = {
       showHelp: false
     };
+
+    // Let URL override current redux state at construction time
+    // Note that state updates will not be posted until until after the first render
+    const urlNode = GraphPage.getNodeParamsFromProps(props);
+    if (GraphPage.isNodeChanged(urlNode, props.node)) {
+      props.setNode(urlNode);
+    }
   }
 
   componentDidMount() {
-    this.scheduleNextPollingInterval(0);
+    // This is a special bookmarking case. If the initial URL is for a node graph then
+    // defer the graph fetch until the first component update, when the node is set.
+    // (note: to avoid direct store access we could parse the URL again, perhaps that
+    // is preferable?  We could also move the logic from the constructor, but that
+    // would break our pattern of redux/url handling in the components).
+    if (!store.getState().graph.node) {
+      this.scheduleNextPollingInterval(0);
+    }
   }
 
   componentWillUnmount() {
@@ -119,49 +202,49 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   }
 
   componentDidUpdate(prevProps: GraphPageProps) {
-    // Show a complete URL for the rendered graph
-    // Note: `history.replace` simply changes the address bar text, not re-navigation
-    const graphParams: GraphParamsType = {
-      node: this.props.node,
-      graphLayout: this.props.graphLayout,
-      edgeLabelMode: this.props.edgeLabelMode,
-      graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes
-    };
-    if (this.props.node) {
-      this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...graphParams }));
-    } else {
-      this.context.router.history.replace(makeNamespacesGraphUrlFromParams({ ...graphParams }));
-    }
-
+    // schedule an immediate graph fetch if needed
     const prevActiveNamespaces = prevProps.activeNamespaces;
     const prevDuration = prevProps.duration;
     const prevGraphType = prevProps.graphType;
-    const prevInjectServiceNodes = prevProps.injectServiceNodes;
     const prevPollInterval = prevProps.pollInterval;
+    const prevShowServiceNodes = prevProps.showServiceNodes;
+    const prevEdgeLabelMode = prevProps.edgeLabelMode;
+    const prevShowSecurity = prevProps.showSecurity;
+    const prevShowUnusedNodes = prevProps.showUnusedNodes;
 
-    const activeNamespaceHasChanged = prevActiveNamespaces !== this.props.activeNamespaces;
-    const durationHasChanged = prevDuration !== this.props.duration;
-    const graphTypeHasChanged = prevGraphType !== this.props.graphType;
-    const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
-    const nodeHasChanged = prevProps.node !== this.props.node;
+    const activeNamespacesChanged = !arrayEquals(
+      prevActiveNamespaces,
+      this.props.activeNamespaces,
+      (n1, n2) => n1.name === n2.name
+    );
+    const durationChanged = prevDuration !== this.props.duration;
+    const edgeLabelModeChanged = prevEdgeLabelMode !== this.props.edgeLabelMode;
+    const graphTypeChanged = prevGraphType !== this.props.graphType;
+    const showServiceNodesChanged = prevShowServiceNodes !== this.props.showServiceNodes;
+    const nodeChanged = GraphPage.isNodeChanged(prevProps.node, this.props.node);
     const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
+    const showSecurityChanged = prevShowSecurity !== this.props.showSecurity;
+    const showUnusedNodesChanged = prevShowUnusedNodes !== this.props.showUnusedNodes;
 
     if (
-      activeNamespaceHasChanged ||
-      durationHasChanged ||
-      graphTypeHasChanged ||
-      injectServiceNodesHasChanged ||
-      nodeHasChanged
+      activeNamespacesChanged ||
+      durationChanged ||
+      (edgeLabelModeChanged && this.props.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
+      graphTypeChanged ||
+      nodeChanged ||
+      (showSecurityChanged && this.props.showSecurity) ||
+      showServiceNodesChanged ||
+      (showUnusedNodesChanged && this.props.showUnusedNodes)
     ) {
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
       this.scheduleNextPollingIntervalFromProps();
     }
+
     if (
-      prevProps.graphLayout.name !== this.props.graphLayout.name ||
+      prevProps.layout.name !== this.props.layout.name ||
       prevProps.graphData !== this.props.graphData ||
-      activeNamespaceHasChanged
+      activeNamespacesChanged
     ) {
       this.errorBoundaryRef.current.cleanError();
     }
@@ -175,16 +258,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     this.scheduleNextPollingInterval(0);
   };
 
-  handleLayoutChange = (layout: Layout) => {
-    const params = this.getGraphParams();
-    // TODO: This should be done via redux
-    if (params.node) {
-      this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...params, graphLayout: layout }));
-    } else {
-      this.context.router.history.replace(makeNamespacesGraphUrlFromParams({ ...params, graphLayout: layout }));
-    }
-  };
-
   toggleHelp = () => {
     if (this.props.showLegend) {
       this.props.toggleLegend();
@@ -195,14 +268,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   };
 
   render() {
-    const graphParams: GraphParamsType = {
-      edgeLabelMode: this.props.edgeLabelMode,
-      graphLayout: this.props.graphLayout,
-      graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes,
-      node: this.props.node
-    };
-
     return (
       <>
         <StatefulTour steps={graphHelp} isOpen={this.state.showHelp} onClose={this.toggleHelp} />
@@ -217,13 +282,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
-            <GraphFilterToolbarContainer
-              isLoading={this.props.isLoading}
-              showSecurity={this.props.showSecurity}
-              showUnusedNodes={this.props.showUnusedNodes}
-              handleRefreshClick={this.handleRefreshClick}
-              {...graphParams}
-            />
+            <GraphFilterContainer isLoading={this.props.isLoading} onRefresh={this.handleRefreshClick} />
           </div>
           <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
             <ErrorBoundary
@@ -232,7 +291,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               <CytoscapeGraphContainer
-                {...graphParams}
                 isLoading={this.props.isLoading}
                 elements={this.props.graphData}
                 refresh={this.handleRefreshClick}
@@ -243,13 +301,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
               Object.keys(this.props.graphData.nodes).length > 0 &&
               !this.props.isError ? (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
-                  <CytoscapeToolbar
-                    cytoscapeGraphRef={this.cytoscapeGraphRef}
-                    isLegendActive={this.props.showLegend}
-                    activeLayout={this.props.graphLayout}
-                    onLayoutChange={this.handleLayoutChange}
-                    toggleLegend={this.props.toggleLegend}
-                  />
+                  <CytoscapeToolbarContainer cytoscapeGraphRef={this.cytoscapeGraphRef} />
                 </div>
               ) : null}
             </ErrorBoundary>
@@ -258,7 +310,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                 data={this.props.summaryData}
                 namespaces={this.props.activeNamespaces}
                 graphType={this.props.graphType}
-                injectServiceNodes={this.props.injectServiceNodes}
+                injectServiceNodes={this.props.showServiceNodes}
                 queryTime={this.props.graphTimestamp}
                 duration={this.props.duration}
                 isPageVisible={this.props.isPageVisible}
@@ -283,7 +335,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       this.props.duration,
       this.props.graphType,
-      this.props.injectServiceNodes,
+      this.props.showServiceNodes,
       this.props.edgeLabelMode,
       this.props.showSecurity,
       this.props.showUnusedNodes,
@@ -341,15 +393,5 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     MessageCenterUtils.add(
       `There was an error when rendering the graph: ${error.message}, please try a different layout`
     );
-  };
-
-  private getGraphParams: () => GraphParamsType = () => {
-    return {
-      edgeLabelMode: this.props.edgeLabelMode,
-      graphLayout: this.props.graphLayout,
-      graphType: this.props.graphType,
-      injectServiceNodes: this.props.injectServiceNodes,
-      node: this.props.node
-    };
   };
 }

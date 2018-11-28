@@ -1,4 +1,4 @@
-import { Layout, EdgeLabelMode } from './GraphFilter';
+import { EdgeLabelMode } from './GraphFilter';
 import Namespace from './Namespace';
 
 // SummaryData will have two fields:
@@ -47,14 +47,6 @@ export interface NodeParamsType {
   service: string;
   version: string;
   workload: string;
-}
-
-export interface GraphParamsType {
-  edgeLabelMode: EdgeLabelMode;
-  graphLayout: Layout;
-  graphType: GraphType;
-  injectServiceNodes: boolean;
-  node?: NodeParamsType;
 }
 
 // This data is stored in the _global scratch area in the cy graph

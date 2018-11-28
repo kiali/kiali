@@ -178,7 +178,7 @@ export const GraphDataThunkActions = {
         );
       }
 
-      // Todo: Remove this when we are finally getting rid of 'all' namespace
+      // TODO: Remove this when we are finally getting rid of 'all' namespace
       if (namespaces.length === 1 && namespaces[0].name === 'all') {
         namespaces = getState().namespaces.activeNamespaces.filter(namespace => namespace.name !== 'all');
       }

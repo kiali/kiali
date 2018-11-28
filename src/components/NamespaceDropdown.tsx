@@ -1,13 +1,18 @@
 import * as React from 'react';
-
-import Namespace from '../types/Namespace';
+import { connect } from 'react-redux';
+import { Dispatch } from 'redux';
+import { KialiAppState } from '../store/Store';
+import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
+import { GraphActions } from '../actions/GraphActions';
+import { NamespaceActions, NamespaceThunkActions } from '../actions/NamespaceAction';
+import Namespace, { namespaceFromString } from '../types/Namespace';
 import ToolbarDropdown from './ToolbarDropdown/ToolbarDropdown';
 
 interface NamespaceListType {
   disabled: boolean;
   activeNamespace: Namespace;
   items: Namespace[];
-  onSelect: (namespace: Namespace) => void;
+  setActiveNamespace: (namespace: Namespace) => void;
   refresh: () => void;
 }
 
@@ -19,10 +24,6 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
   componentDidMount() {
     this.props.refresh();
   }
-
-  handleSelectNamespace = (namespace: string) => {
-    this.props.onSelect({ name: namespace });
-  };
 
   handleToggle = (isOpen: boolean) => isOpen && this.props.refresh();
 
@@ -43,9 +44,35 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         value={this.props.activeNamespace.name}
         label={this.props.activeNamespace.name}
         useName={true}
-        handleSelect={this.handleSelectNamespace}
+        handleSelect={this.props.setActiveNamespace}
         onToggle={this.handleToggle}
       />
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => {
+  return {
+    items: namespaceItemsSelector(state),
+    activeNamespace: activeNamespacesSelector(state)[0]
+  };
+};
+
+const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+  return {
+    refresh: () => {
+      dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
+    },
+    setActiveNamespace: (namespace: string) => {
+      // TODO: This needs to be a single update
+      dispatch(GraphActions.changed());
+      dispatch(NamespaceActions.setActiveNamespaces([namespaceFromString(namespace)]));
+    }
+  };
+};
+
+const NamespaceDropdownContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(NamespaceDropdown);
+export default NamespaceDropdownContainer;

@@ -1,23 +1,38 @@
-import { GraphParamsType, NodeType } from '../../types/Graph';
-import { store } from '../../store/ConfigStore';
-import { activeNamespacesAsStringSelector } from '../../store/Selectors';
+import { NodeType, NodeParamsType, GraphType } from '../../types/Graph';
+import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
+import Namespace from '../../types/Namespace';
+import { URLParams } from '../../app/History';
 
-const buildCommonQueryParams = (params: GraphParamsType): string => {
-  let q = `layout=${params.graphLayout.name}`;
-  q += `&duration=${store.getState().userSettings.duration}`;
-  q += `&edges=${params.edgeLabelMode}`;
-  q += `&graphType=${params.graphType}`;
-  q += `&injectServiceNodes=${params.injectServiceNodes}`;
+export type GraphUrlParams = {
+  activeNamespaces: Namespace[];
+  duration: DurationInSeconds;
+  edgeLabelMode: EdgeLabelMode;
+  graphLayout: Layout;
+  graphType: GraphType;
+  node?: NodeParamsType;
+  refreshInterval: PollIntervalInMs;
+  showServiceNodes: boolean;
+};
+
+const buildCommonQueryParams = (params: GraphUrlParams): string => {
+  let q = `&${URLParams.GRAPH_EDGES}=${params.edgeLabelMode}`;
+  q += `&${URLParams.GRAPH_LAYOUT}=${params.graphLayout.name}`;
+  q += `&${URLParams.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
+  q += `&${URLParams.GRAPH_TYPE}=${params.graphType}`;
+  q += `&${URLParams.DURATION}=${params.duration}`;
+  q += `&${URLParams.POLL_INTERVAL}=${params.refreshInterval}`;
   return q;
 };
 
-export const makeNamespacesGraphUrlFromParams = (params: GraphParamsType): string => {
+export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
+  const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(', ');
   let queryParams = buildCommonQueryParams(params);
-  queryParams += `&namespaces=${activeNamespacesAsStringSelector(store.getState())}`;
+  queryParams += `&${URLParams.NAMESPACES}=${namespaces}`;
   return `/graph/namespaces?` + queryParams;
 };
 
-export const makeNodeGraphUrlFromParams = (params: GraphParamsType): string | undefined => {
+export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string | undefined => {
   const node = params.node;
   if (node) {
     switch (node.nodeType) {

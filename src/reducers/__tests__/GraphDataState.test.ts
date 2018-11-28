@@ -1,18 +1,34 @@
 import graphDataState from '../GraphDataState';
-import graphFilterState from '../GraphFilterState';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphDataActions } from '../../actions/GraphDataActions';
 import { GlobalActions } from '../../actions/GlobalActions';
+import { EdgeLabelMode } from '../../types/GraphFilter';
+import { GraphType } from '../../types/Graph';
+import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(graphDataState(undefined, GlobalActions.nil())).toEqual({
-      filterState: graphFilterState(undefined, GlobalActions.nil()),
+      error: undefined,
       isLoading: false,
       isError: false,
-      error: undefined,
+      filterState: {
+        edgeLabelMode: EdgeLabelMode.HIDE,
+        graphType: GraphType.VERSIONED_APP,
+        showCircuitBreakers: true,
+        showLegend: false,
+        showMissingSidecars: true,
+        showNodeLabels: true,
+        showSecurity: false,
+        showServiceNodes: false,
+        showTrafficAnimation: false,
+        showUnusedNodes: false,
+        showVirtualServices: true
+      },
       graphDataTimestamp: 0,
       graphData: {},
+      layout: DagreGraph.getLayout(),
+      node: undefined,
       sidePanelInfo: null
     });
   });

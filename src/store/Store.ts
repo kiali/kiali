@@ -1,6 +1,8 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
 import { DurationInSeconds, PollIntervalInMs } from '../types/Common';
+import { EdgeLabelMode, Layout } from '../types/GraphFilter';
+import { GraphType, NodeParamsType } from '../types/Graph';
 
 // Store is the Redux Data store
 
@@ -18,16 +20,19 @@ export interface NamespaceState {
 
 // Various pages are described here with their various sections
 export interface GraphFilterState {
+  // dropdown props
+  edgeLabelMode: EdgeLabelMode;
+  graphType: GraphType;
   // Toggle props
-  readonly showCircuitBreakers: boolean;
-  readonly showLegend: boolean;
-  readonly showMissingSidecars: boolean;
-  readonly showNodeLabels: boolean;
-  readonly showSecurity: boolean;
-  readonly showServiceNodes: boolean;
-  readonly showTrafficAnimation: boolean;
-  readonly showUnusedNodes: boolean;
-  readonly showVirtualServices: boolean;
+  showCircuitBreakers: boolean;
+  showLegend: boolean;
+  showMissingSidecars: boolean;
+  showNodeLabels: boolean;
+  showSecurity: boolean;
+  showServiceNodes: boolean;
+  showTrafficAnimation: boolean;
+  showUnusedNodes: boolean;
+  showVirtualServices: boolean;
 }
 
 export interface MessageCenterState {
@@ -45,6 +50,8 @@ export interface GraphState {
   graphDataTimestamp: number;
   graphData: any;
   filterState: GraphFilterState;
+  layout: Layout;
+  node?: NodeParamsType;
   sidePanelInfo: {
     kind: string;
     graphReference: any;

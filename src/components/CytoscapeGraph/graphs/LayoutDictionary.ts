@@ -12,4 +12,7 @@ const LayoutMap = {
 const getLayout = (layout: Layout) =>
   LayoutMap.hasOwnProperty(layout.name) ? LayoutMap[layout.name] : LayoutMap.dagre;
 
-export { getLayout };
+const getLayoutByName = (layoutName: string) =>
+  LayoutMap.hasOwnProperty(layoutName) ? LayoutMap[layoutName] : LayoutMap.dagre;
+
+export { getLayout, getLayoutByName };

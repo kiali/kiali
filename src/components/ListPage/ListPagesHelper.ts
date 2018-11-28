@@ -30,6 +30,11 @@ export namespace ListPagesHelper {
     return p === undefined ? undefined : p[0];
   };
 
+  export const getSingleBooleanQueryParam = (queryName: string): boolean | undefined => {
+    const p = getQueryParam(queryName);
+    return p === undefined ? undefined : p[0] === 'true';
+  };
+
   export const getSingleIntQueryParam = (queryName: string): number | undefined => {
     const p = getQueryParam(queryName);
     return p === undefined ? undefined : Number(p[0]);

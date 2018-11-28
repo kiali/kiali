@@ -20,7 +20,7 @@ import {
 import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
-import { GraphParamsType, NodeParamsType, NodeType } from '../types/Graph';
+import { NodeParamsType, NodeType } from '../types/Graph';
 import { config, ServerConfig } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
 
@@ -308,7 +308,7 @@ export const getGraphElements = (auth: AuthToken, params: any) => {
   return newRequest(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
 };
 
-export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, params: Partial<GraphParamsType>) => {
+export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, params: any) => {
   switch (node.nodeType) {
     case NodeType.APP:
       return newRequest(
