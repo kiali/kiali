@@ -347,12 +347,10 @@ func TestGetWorkloadDestinationServices(t *testing.T) {
 	destServices := []prometheus.Service{
 		{
 			Namespace:   "bookinfo",
-			Service:     "reviews.bookinfo.svc.local.cluster",
 			ServiceName: "reviews",
 			App:         "reviews"},
 		{
 			Namespace:   "bookinfo",
-			Service:     "details.bookinfo.svc.local.cluster",
 			ServiceName: "details",
 			App:         "details"},
 	}

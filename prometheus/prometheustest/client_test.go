@@ -169,13 +169,11 @@ func TestGetDestinationServices(t *testing.T) {
 
 	svc := destinations[0]
 	assert.Equal("reviews", svc.App)
-	assert.Equal("reviews.bookinfo.svc.cluster.local", svc.Service)
 	assert.Equal("reviews", svc.ServiceName)
 	assert.Equal("bookinfo", svc.Namespace)
 
 	svc = destinations[1]
 	assert.Equal("details", svc.App)
-	assert.Equal("details.bookinfo.svc.cluster.local", svc.Service)
 	assert.Equal("details", svc.ServiceName)
 	assert.Equal("bookinfo", svc.Namespace)
 }

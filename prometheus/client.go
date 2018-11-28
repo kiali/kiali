@@ -49,7 +49,6 @@ type Service struct {
 	Namespace   string
 	App         string
 	ServiceName string
-	Service     string
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -138,7 +137,6 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 	query := fmt.Sprintf("sum(rate(istio_requests_total{reporter=\"%s\",source_workload=\"%s\",source_workload_namespace=\"%s\"}[%vs])) by %s",
 		reporter, workloadname, namespace, int(queryInterval.Seconds()), groupBy)
 	log.Debugf("GetDestinationServices query: %s", query)
-	log.Infof("GetDestinationServices query: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("GetDestinationServices")
 	result, err := in.api.Query(context.Background(), query, queryTime)
 	if err != nil {
@@ -154,7 +152,6 @@ func (in *Client) GetDestinationServices(namespace string, namespaceCreationTime
 			metric := sample.Metric
 			destination := Service{
 				App:         string(metric["destination_app"]),
-				Service:     string(metric["destination_service"]),
 				ServiceName: string(metric["destination_service_name"]),
 				Namespace:   string(metric["destination_service_namespace"]),
 			}

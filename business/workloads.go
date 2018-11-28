@@ -76,6 +76,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 			if err2 != nil {
 				log.Errorf("Error fetching details of namespace %s: %s", namespace, err2)
 				errChan <- err2
+				return
 			}
 
 			destService, err2 = in.prom.GetDestinationServices(ns.Name, ns.CreationTimestamp, workloadName)
