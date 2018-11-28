@@ -68,7 +68,7 @@ func mockWorkLoadService() WorkloadService {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
 
-	svc := setupWorkloadService(k8s)
+	svc := setupWorkloadService(k8s, nil)
 	return svc
 }
 
@@ -88,7 +88,8 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().VirtualServices, nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().DestinationRules, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
-	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(fakeNamespace(), nil)
+	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
+	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
 
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
@@ -118,14 +119,6 @@ func getGateway(name string) []kubernetes.IstioObject {
 		data.CreateEmptyGateway(name, map[string]string{
 			"app": "real",
 		}))}
-}
-
-func fakeNamespace() *v1.Namespace {
-	return &v1.Namespace{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "test",
-		},
-	}
 }
 
 func fakeNamespaces() []v1.Namespace {
