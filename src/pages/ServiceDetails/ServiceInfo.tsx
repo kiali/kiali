@@ -15,13 +15,12 @@ import {
 
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
-import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
+import ServiceInfoRoutes from './ServiceInfo/ServiceInfoRoutes';
+import { ServiceDetailsInfo, severityToIconName, SourceWorkload, validationToSeverity } from '../../types/ServiceInfo';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { Validations } from '../../types/IstioObjects';
-import { ServiceInfoRoutes } from '../../components/InfoRoutes/ServiceInfoRoutes';
-import { Route } from '../../components/InfoRoutes/InfoRoutes';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -81,7 +80,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
     let differentDependencies = new Set();
     Object.keys(dependencies).forEach(key => {
-      dependencies[key].forEach((dependency: Route) => {
+      dependencies[key].forEach((dependency: SourceWorkload) => {
         differentDependencies.add(dependency.name);
       });
     });
