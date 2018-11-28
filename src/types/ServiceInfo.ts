@@ -1,7 +1,6 @@
 import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
 import { Pod, Port, ObjectCheck, ObjectValidation, DestinationRules, VirtualServices } from './IstioObjects';
-import { Route } from '../components/InfoRoutes/InfoRoutes';
 
 export interface Endpoints {
   addresses?: EndpointAddress[];
@@ -52,7 +51,7 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
-  dependencies?: { [key: string]: Route[] };
+  dependencies?: { [key: string]: SourceWorkload[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
 }

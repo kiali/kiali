@@ -1,7 +1,6 @@
 import Namespace from './Namespace';
 import { WorkloadHealth } from './Health';
 import { Pod, Service } from './IstioObjects';
-import { Route } from '../components/InfoRoutes/InfoRoutes';
 
 export interface WorkloadId {
   namespace: string;
@@ -21,7 +20,6 @@ export interface Workload {
   availableReplicas: Number;
   pods: Pod[];
   services: Service[];
-  destinationServices: Route[];
 }
 
 export const emptyWorkload: Workload = {
@@ -36,8 +34,7 @@ export const emptyWorkload: Workload = {
   replicas: 0,
   availableReplicas: 0,
   pods: [],
-  services: [],
-  destinationServices: []
+  services: []
 };
 
 export const worloadLink = (ns: string, name: string) => {
