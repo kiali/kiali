@@ -118,12 +118,12 @@ func TestDeadNode(t *testing.T) {
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
 		ExternalServices: map[string]bool{
 			"localhost.local": true,
 			"egress.io":       true},
+	}
+	namespaceInfo := NamespaceInfo{
+		Namespace: "testNamespace",
 	}
 
 	a := DeadNodeAppender{}

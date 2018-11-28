@@ -13,8 +13,9 @@ import (
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type GlobalInfo struct {
-	Business   *business.Layer
-	PromClient *prometheus.Client
+	Business         *business.Layer
+	ExternalServices map[string]bool
+	PromClient       *prometheus.Client
 }
 
 func NewGlobalInfo() *GlobalInfo {
@@ -26,9 +27,8 @@ func NewGlobalInfo() *GlobalInfo {
 // A new instance is generated for each namespace of a single graph and is initially
 // seeded with only Namespace.
 type NamespaceInfo struct {
-	Namespace        string // always provided
-	ExternalServices map[string]bool
-	WorkloadList     *models.WorkloadList
+	Namespace    string // always provided
+	WorkloadList *models.WorkloadList
 }
 
 func NewNamespaceInfo(namespace string) *NamespaceInfo {
