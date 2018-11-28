@@ -1,13 +1,19 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
 import { Link } from 'react-router-dom';
-import { SourceWorkload } from '../../../types/ServiceInfo';
 
-interface ServiceInfoRoutesProps {
-  dependencies?: { [key: string]: SourceWorkload[] };
+export interface Route {
+  name: string;
+  namespace: string;
 }
 
-class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {
+interface ServiceInfoRoutesProps {
+  direction: string;
+  resourceUrl: string;
+  dependencies?: { [key: string]: Route[] };
+}
+
+class InfoRoutes extends React.Component<ServiceInfoRoutesProps> {
   constructor(props: ServiceInfoRoutesProps) {
     super(props);
   }
@@ -20,16 +26,18 @@ class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {
             {Object.keys(this.props.dependencies || {}).map((key, u) => (
               <div className="card-pf-body" key={'dependencies_' + u}>
                 <div className="progress-description">
-                  <strong>To: </strong> {key}
+                  <strong>{this.props.direction}: </strong> {key}
                 </div>
                 <ul style={{ listStyleType: 'none' }}>
                   {(this.props.dependencies ? this.props.dependencies[key] : []).map((dependency, i) => {
                     if (dependency.name !== 'unknown' && dependency.namespace !== 'unknown') {
-                      const to = '/namespaces/' + dependency.namespace + '/workloads/' + dependency.name;
+                      const to = `/namespaces/${dependency.namespace}/${this.props.resourceUrl}/${dependency.name}`;
                       return (
-                        <Link key={key + to} to={to}>
-                          <li key={'dependencies_' + u + '_dependency_' + i}>{dependency.name}</li>
-                        </Link>
+                        <li key={'dependencies_' + u + '_dependency_' + i}>
+                          <Link key={key + to} to={to}>
+                            {dependency.name}
+                          </Link>
+                        </li>
                       );
                     } else {
                       return <li key={'dependencies_' + u + '_dependency_' + i}>{dependency.name}</li>;
@@ -45,4 +53,4 @@ class ServiceInfoRoutes extends React.Component<ServiceInfoRoutesProps> {
   }
 }
 
-export default ServiceInfoRoutes;
+export default InfoRoutes;

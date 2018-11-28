@@ -58,7 +58,7 @@ describe('#ServiceInfo render correctly with data', () => {
       expect(wrapper).toBeDefined();
       expect(wrapper).toMatchSnapshot();
       expect(wrapper.find('ServiceInfoDescription').length === 1).toBeTruthy();
-      expect(wrapper.find('ServiceInfoRoutes').length === 1).toBeFalsy();
+      expect(wrapper.find('InfoRoutes').length === 1).toBeFalsy();
       expect(wrapper.find('ServiceInfoVirtualServices').length === 1).toBeTruthy();
       expect(wrapper.find('ServiceInfoDestinationRules').length === 1).toBeTruthy();
     });
