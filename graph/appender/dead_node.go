@@ -1,8 +1,11 @@
 package appender
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -15,7 +18,9 @@ const DeadNodeAppenderName = "deadNode"
 //   terminal service node and we want to show it even if it has no incoming traffic
 //   for the time period.
 // Name: deadNode
-type DeadNodeAppender struct{}
+type DeadNodeAppender struct {
+	AccessibleNamespaces map[string]time.Time
+}
 
 // Name implements Appender
 func (a DeadNodeAppender) Name() string {
@@ -39,10 +44,10 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *G
 		namespaceInfo.WorkloadList = &workloadList
 	}
 
-	applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
+	a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
 }
 
-func applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
@@ -54,18 +59,12 @@ func applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespa
 				continue
 			}
 
-			// a service node with no outgoing edges may be an egress. if so flag it, don't discard it
-			// (kiali-1526). The flag will be passed to the UI to inhibit links to non-existent detail
-			// pages. An egress service should have a service entry in the current namespace.
-			if n.Namespace == namespaceInfo.Namespace {
-				isEgress, ok := namespaceInfo.ExternalServices[n.Service]
-				if !ok {
-					isEgress = isExternalService(n.Service, namespaceInfo, globalInfo)
-				}
-				if isEgress {
-					n.Metadata["isEgress"] = true
-					continue
-				}
+			// A service node with no outgoing edges may be an egress.
+			// If so flag it, don't discard it (kiali-1526, see also kiali-2014).
+			// The flag will be passed to the UI to inhibit links to non-existent detail pages.
+			if a.isExternalService(n.Service, namespaceInfo, globalInfo) {
+				n.Metadata["isEgress"] = true
+				continue
 			}
 
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
@@ -123,28 +122,33 @@ func applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespa
 	}
 }
 
-// resolveExternalServices queries the cluster API to resolve egress services
+// isExternalService queries the cluster API to resolve egress services
 // by using ServiceEntries resources across all namespaces in the cluster.
-// All ServiceEntries are needed, because Istio does not distinguish where the
-// ServiceEntries are created when routing egress traffic.
-func isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo *GlobalInfo) bool {
+// All ServiceEntries are needed because Istio does not distinguish where the
+// ServiceEntries are created when routing egress traffic (i.e. a ServiceEntry
+// can be in any namespace and it will still work).
+// However, an egress service will have its namespace set to "default" in the telemetry.
+func (a DeadNodeAppender) isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo *GlobalInfo) bool {
 	if namespaceInfo.ExternalServices == nil {
 		namespaceInfo.ExternalServices = make(map[string]bool)
 
-		// Currently no other appenders use ServiceEntries, so they are not cached in NamespaceInfo
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
-			IncludeServiceEntries: true,
-			Namespace:             namespaceInfo.Namespace,
-		})
-		checkError(err)
+		for ns := range a.AccessibleNamespaces {
+			// Currently no other appenders use ServiceEntries, so they are not cached in NamespaceInfo
+			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
+				IncludeServiceEntries: true,
+				Namespace:             ns,
+			})
+			checkError(err)
 
-		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Spec.Hosts != nil && entry.Spec.Location == "MESH_EXTERNAL" {
-				for _, host := range entry.Spec.Hosts.([]interface{}) {
-					namespaceInfo.ExternalServices[host.(string)] = true
+			for _, entry := range istioCfg.ServiceEntries {
+				if entry.Spec.Hosts != nil && entry.Spec.Location == "MESH_EXTERNAL" {
+					for _, host := range entry.Spec.Hosts.([]interface{}) {
+						namespaceInfo.ExternalServices[host.(string)] = true
+					}
 				}
 			}
 		}
+		log.Tracef("Found [%v] egress service entries", len(namespaceInfo.ExternalServices))
 	}
 
 	return namespaceInfo.ExternalServices[service]
