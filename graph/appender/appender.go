@@ -14,8 +14,8 @@ import (
 // is initially empty.
 type GlobalInfo struct {
 	Business         *business.Layer
-	PromClient       *prometheus.Client
 	ExternalServices map[string]bool
+	PromClient       *prometheus.Client
 }
 
 func NewGlobalInfo() *GlobalInfo {
