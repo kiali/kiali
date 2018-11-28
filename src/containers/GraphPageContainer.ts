@@ -8,12 +8,11 @@ import { GraphDataThunkActions } from '../actions/GraphDataActions';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
 import { GraphType, NodeParamsType } from '../types/Graph';
-import { refreshIntervalSelector } from '../store/Selectors';
-import { activeNamespaceSelector, durationSelector } from '../store/Selectors';
+import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../store/Selectors';
 import { DurationInSeconds } from '../types/Common';
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespace: activeNamespaceSelector(state),
+  activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
   graphTimestamp: state.graph.graphDataTimestamp,
   graphData: state.graph.graphData,
@@ -34,7 +33,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: any) => ({
   fetchGraphData: (
-    namespace: Namespace,
+    namespaces: Namespace[],
     duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
@@ -45,7 +44,7 @@ const mapDispatchToProps = (dispatch: any) => ({
   ) =>
     dispatch(
       GraphDataThunkActions.fetchGraphData(
-        namespace,
+        namespaces,
         duration,
         graphType,
         injectServiceNodes,

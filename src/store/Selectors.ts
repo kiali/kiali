@@ -3,12 +3,20 @@ import { KialiAppState } from './Store';
 // These memoized selectors are from Redux Reselect package
 
 // select the proper field from Redux State
-const activeNamespace = (state: KialiAppState) => state.namespaces.activeNamespace;
+const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamespaces;
 
 // Select from the above field(s) and the last function is the formatter
-export const activeNamespaceSelector = createSelector(
-  activeNamespace,
-  namespace => namespace // identity function in this case, but as a Namespace type
+export const activeNamespacesSelector = createSelector(
+  activeNamespaces,
+  namespaces => namespaces // identity function in this case, but as a Namespace[] type
+);
+
+/**
+ * Gets a comma separated list of the namespaces for displaying
+ * @type {OutputSelector<KialiAppState, any, (res: Namespace[]) => any>}
+ */
+export const activeNamespacesAsStringSelector = createSelector(activeNamespaces, namespaces =>
+  namespaces.map(namespace => namespace.name).join(', ')
 );
 
 const namespaceItems = (state: KialiAppState) => state.namespaces.items;

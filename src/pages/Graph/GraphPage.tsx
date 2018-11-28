@@ -20,7 +20,7 @@ import * as MessageCenterUtils from '../../utils/MessageCenter';
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeToolbar } from '../../components/CytoscapeGraph/CytoscapeToolbar';
-import { makeNamespaceGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
+import { makeNamespacesGraphUrlFromParams, makeNodeGraphUrlFromParams } from '../../components/Nav/NavUtils';
 
 import StatefulTour from '../../components/Tour/StatefulTour';
 
@@ -40,7 +40,7 @@ type GraphPageProps = GraphParamsType & {
   summaryData: SummaryData | null;
   // functions
   fetchGraphData: (
-    namespace: Namespace,
+    namespaces: Namespace[],
     duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
@@ -51,7 +51,7 @@ type GraphPageProps = GraphParamsType & {
   ) => any;
   toggleLegend: () => void;
   // redux store props (to avoid ts-ignore)
-  activeNamespace: Namespace;
+  activeNamespaces: Namespace[];
   duration: DurationInSeconds;
 };
 
@@ -131,16 +131,16 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     if (this.props.node) {
       this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...graphParams }));
     } else {
-      this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...graphParams }));
+      this.context.router.history.replace(makeNamespacesGraphUrlFromParams({ ...graphParams }));
     }
 
-    const prevActiveNamespace = prevProps.activeNamespace;
+    const prevActiveNamespaces = prevProps.activeNamespaces;
     const prevDuration = prevProps.duration;
     const prevGraphType = prevProps.graphType;
     const prevInjectServiceNodes = prevProps.injectServiceNodes;
     const prevPollInterval = prevProps.pollInterval;
 
-    const activeNamespaceHasChanged = prevActiveNamespace.name !== this.props.activeNamespace.name;
+    const activeNamespaceHasChanged = prevActiveNamespaces !== this.props.activeNamespaces;
     const durationHasChanged = prevDuration !== this.props.duration;
     const graphTypeHasChanged = prevGraphType !== this.props.graphType;
     const injectServiceNodesHasChanged = prevInjectServiceNodes !== this.props.injectServiceNodes;
@@ -181,7 +181,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     if (params.node) {
       this.context.router.history.replace(makeNodeGraphUrlFromParams({ ...params, graphLayout: layout }));
     } else {
-      this.context.router.history.replace(makeNamespaceGraphUrlFromParams({ ...params, graphLayout: layout }));
+      this.context.router.history.replace(makeNamespacesGraphUrlFromParams({ ...params, graphLayout: layout }));
     }
   };
 
@@ -256,7 +256,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
             {this.props.summaryData ? (
               <SummaryPanel
                 data={this.props.summaryData}
-                namespace={this.props.activeNamespace.name}
+                namespaces={this.props.activeNamespaces}
                 graphType={this.props.graphType}
                 injectServiceNodes={this.props.injectServiceNodes}
                 queryTime={this.props.graphTimestamp}
@@ -280,7 +280,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
 
   private loadGraphDataFromBackend = () => {
     const promise = this.props.fetchGraphData(
-      this.props.node ? this.props.node.namespace : this.props.activeNamespace,
+      this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       this.props.duration,
       this.props.graphType,
       this.props.injectServiceNodes,

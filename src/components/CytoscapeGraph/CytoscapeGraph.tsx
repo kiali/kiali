@@ -12,7 +12,7 @@ import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { GraphActions, GraphThunkActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespaceSelector, durationSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import {
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
@@ -35,7 +35,7 @@ import { DurationInSeconds } from '../../types/Common';
 import { DagreGraph } from './graphs/DagreGraph';
 
 type CytoscapeGraphType = {
-  activeNamespace: Namespace;
+  activeNamespaces: Namespace[];
   duration: DurationInSeconds;
   elements?: any;
   edgeLabelMode: EdgeLabelMode;
@@ -51,7 +51,7 @@ type CytoscapeGraphType = {
   onClick: (event: CytoscapeClickEvent) => void;
   onReady: (cytoscapeRef: any) => void;
   refresh: () => void;
-  setActiveNamespace: (namespace: Namespace) => void;
+  setActiveNamespaces: (namespace: Namespace[]) => void;
 };
 
 type CytoscapeGraphProps = CytoscapeGraphType &
@@ -183,7 +183,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={this.onResize} />
         <EmptyGraphLayout
           elements={this.props.elements}
-          namespace={this.props.activeNamespace.name}
+          namespaces={this.props.activeNamespaces}
           action={this.props.refresh}
           isLoading={this.props.isLoading}
           isError={this.props.isError}
@@ -318,6 +318,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.on('destroy', (evt: any) => {
       this.trafficRenderer.stop();
       this.cy = undefined;
+      this.props.onClick({ summaryType: 'graph', summaryTarget: undefined });
     });
   }
 
@@ -439,7 +440,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     if (target.data('isOutside')) {
       if (!target.data('isInaccessible')) {
-        this.props.setActiveNamespace({ name: target.data('namespace') });
+        this.props.setActiveNamespaces([{ name: target.data('namespace') }]);
       }
       return;
     }
@@ -628,7 +629,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespace: activeNamespaceSelector(state),
+  activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
   elements: state.graph.graphData,
   isError: state.graph.isError,
@@ -646,9 +647,9 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: any) => ({
   onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
   onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
-  setActiveNamespace: (namespace: Namespace) => {
+  setActiveNamespaces: (namespaces: Namespace[]) => {
     dispatch(GraphActions.changed());
-    dispatch(NamespaceActions.setActiveNamespace(namespace));
+    dispatch(NamespaceActions.setActiveNamespaces(namespaces));
   }
 });
 

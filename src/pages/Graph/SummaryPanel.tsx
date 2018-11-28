@@ -24,7 +24,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
         {this.props.data.summaryType === 'graph' ? (
           <SummaryPanelGraph
             data={this.props.data}
-            namespace={this.props.namespace}
+            namespaces={this.props.namespaces}
             graphType={this.props.graphType}
             injectServiceNodes={this.props.injectServiceNodes}
             queryTime={this.props.queryTime}
@@ -36,7 +36,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
         {this.props.data.summaryType === 'group' ? (
           <SummaryPanelGroup
             data={this.props.data}
-            namespace={this.props.namespace}
+            namespaces={this.props.data.summaryTarget.namespaces}
             graphType={this.props.graphType}
             injectServiceNodes={this.props.injectServiceNodes}
             queryTime={this.props.queryTime}
@@ -49,7 +49,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
           <SummaryPanelNode
             data={this.props.data}
             queryTime={this.props.queryTime}
-            namespace={this.props.namespace}
+            namespaces={this.props.data.summaryTarget.namespaces}
             graphType={this.props.graphType}
             injectServiceNodes={this.props.injectServiceNodes}
             duration={this.props.duration}

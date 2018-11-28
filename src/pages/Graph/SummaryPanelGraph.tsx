@@ -44,7 +44,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   componentDidMount() {
-    if (this.props.namespace !== 'all') {
+    if (this.props.namespaces.length === 1) {
       this.updateRpsChart(this.props);
     }
   }
@@ -60,7 +60,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     if (shouldRefreshData(prevProps, this.props)) {
       // TODO (maybe) we omit the rps chart when dealing with multiple namespaces. There is no backend
       // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
-      if (this.props.namespace !== 'all') {
+      if (this.props.namespaces.length === 1) {
         this.updateRpsChart(this.props);
       }
     }
@@ -87,15 +87,16 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const numApps = baseQuery.filter('[nodeType="app"]').size();
     const numEdges = cy.edges().size();
     const trafficRate = getAccumulatedTrafficRate(cy.edges());
-    const namespace = this.props.namespace === 'all' ? undefined : this.props.namespace;
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
-          Namespace:
-          <ListPageLink target={TargetPage.APPLICATIONS} namespace={namespace}>
-            {' ' + this.props.namespace}
-          </ListPageLink>
+          Namespace{this.props.namespaces.length > 1 ? 's' : ''}:
+          {this.props.namespaces.map(namespace => (
+            <ListPageLink key={namespace.name} target={TargetPage.APPLICATIONS} namespace={namespace.name}>
+              {' ' + namespace.name}
+            </ListPageLink>
+          ))}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
         </div>
         <div className="panel-body">
@@ -107,7 +108,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
               rate4xx={trafficRate.rate4xx}
               rate5xx={trafficRate.rate5xx}
             />
-            {this.props.namespace !== 'all' && (
+            {this.props.namespaces.length === 1 && (
               <div>
                 <hr />
                 {this.renderRpsChart()}
@@ -126,7 +127,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       step: props.step,
       rateInterval: props.rateInterval
     };
-    const promise = API.getNamespaceMetrics(authentication(), props.namespace, options);
+    const promise = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
     this.metricsPromise = makeCancelablePromise(promise);
 
     this.metricsPromise.promise

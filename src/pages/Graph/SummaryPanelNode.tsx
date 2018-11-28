@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { renderDestServicesLinks, renderLink, renderTitle } from './SummaryLink';
+import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
 import { Icon } from 'patternfly-react';
 
 import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
@@ -143,7 +143,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       };
     } else if (data.isRoot) {
       comparator = (metric: Metric) => {
-        return metric['destination_service_namespace'] === this.props.namespace;
+        return metric['destination_service_namespace'] === data.namespace;
       };
     }
     let metrics;
@@ -162,7 +162,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
       let useDest = data.nodeType === NodeType.UNKNOWN;
-      useDest = useDest || this.props.namespace === serverConfig().istioNamespace;
+      useDest = useDest || data.namespace === serverConfig().istioNamespace;
       metrics = useDest ? all.dest.metrics : all.source.metrics;
       rcOut = metrics['request_count_out'];
       ecOut = metrics['request_error_count_out'];
@@ -243,7 +243,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {shouldRenderWorkload && (
             <div>
               <strong>Workload: </strong>
-              {renderLink(data, NodeType.WORKLOAD)}
+              <RenderLink data={data} nodeType={NodeType.WORKLOAD} />
             </div>
           )}
           {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}

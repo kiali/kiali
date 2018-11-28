@@ -1,5 +1,6 @@
 import { GraphParamsType, NodeType } from '../../types/Graph';
 import { store } from '../../store/ConfigStore';
+import { activeNamespacesAsStringSelector } from '../../store/Selectors';
 
 const buildCommonQueryParams = (params: GraphParamsType): string => {
   let q = `layout=${params.graphLayout.name}`;
@@ -10,12 +11,9 @@ const buildCommonQueryParams = (params: GraphParamsType): string => {
   return q;
 };
 
-export const makeNamespaceGraphUrlFromParams = (params: GraphParamsType): string => {
-  const namespace = store.getState().namespaces.activeNamespace.name;
+export const makeNamespacesGraphUrlFromParams = (params: GraphParamsType): string => {
   let queryParams = buildCommonQueryParams(params);
-  if (namespace !== 'all') {
-    queryParams += `&namespaces=${namespace}`;
-  }
+  queryParams += `&namespaces=${activeNamespacesAsStringSelector(store.getState())}`;
   return `/graph/namespaces?` + queryParams;
 };
 
@@ -43,7 +41,7 @@ export const makeNodeGraphUrlFromParams = (params: GraphParamsType): string | un
         );
       default:
         console.debug('makeNodeUrl defaulting to makeNamespaceUrl');
-        return makeNamespaceGraphUrlFromParams(params);
+        return makeNamespacesGraphUrlFromParams(params);
     }
   } else {
     // this should never happen but typescript needs this

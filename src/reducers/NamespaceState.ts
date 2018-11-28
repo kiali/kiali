@@ -5,18 +5,28 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
-  activeNamespace: { name: 'all' },
+  activeNamespaces: [{ name: 'all' }],
   isFetching: false,
-  items: ['all'],
+  items: [],
   lastUpdated: undefined
 };
 
 const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: KialiAppAction): NamespaceState => {
   switch (action.type) {
-    case getType(NamespaceActions.setActiveNamespace):
-      return updateState(state, {
-        activeNamespace: { name: action.payload.name }
-      });
+    case getType(NamespaceActions.toggleActiveNamespace):
+      const namespaceIndex = state.activeNamespaces.findIndex(namespace => namespace.name === action.payload.name);
+      if (namespaceIndex === -1) {
+        return updateState(state, {
+          activeNamespaces: [...state.activeNamespaces, { name: action.payload.name }]
+        });
+      } else {
+        const activeNamespaces = [...state.activeNamespaces];
+        activeNamespaces.splice(namespaceIndex, 1);
+        return updateState(state, { activeNamespaces });
+      }
+
+    case getType(NamespaceActions.setActiveNamespaces):
+      return updateState(state, { activeNamespaces: action.payload });
 
     case getType(NamespaceActions.requestStarted):
       return updateState(state, {

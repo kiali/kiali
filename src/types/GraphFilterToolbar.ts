@@ -4,14 +4,14 @@ import { GraphType, GraphParamsType, NodeParamsType } from './Graph';
 import { EdgeLabelMode } from './GraphFilter';
 
 export default interface GraphFilterToolbarType extends GraphParamsType {
-  activeNamespace: Namespace;
+  activeNamespaces: Namespace[];
   duration: DurationInSeconds;
   isLoading: boolean;
   showSecurity: boolean;
   showUnusedNodes: boolean;
   // functions
   fetchGraphData: (
-    namespace: Namespace,
+    namespaces: Namespace[],
     duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,

@@ -10,7 +10,7 @@ export interface GlobalState {
 }
 
 export interface NamespaceState {
-  readonly activeNamespace: Namespace;
+  readonly activeNamespaces: Namespace[];
   readonly items?: string[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;

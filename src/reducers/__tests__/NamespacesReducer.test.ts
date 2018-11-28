@@ -6,22 +6,56 @@ describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
     expect(namespaceState(undefined, GlobalActions.nil())).toEqual({
       isFetching: false,
-      activeNamespace: { name: 'all' },
-      items: ['all'],
+      activeNamespaces: [{ name: 'all' }],
+      items: [],
       lastUpdated: undefined
     });
   });
 
-  it('should handle ACTIVE_NAMESPACE', () => {
+  it('should handle ACTIVE_NAMESPACES', () => {
     const currentState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: [],
       lastUpdated: undefined
     };
-    const requestStartedAction = NamespaceActions.setActiveNamespace({ name: 'istio' });
+    const requestStartedAction = NamespaceActions.setActiveNamespaces([{ name: 'istio' }]);
     const expectedState = {
-      activeNamespace: { name: 'istio' },
+      activeNamespaces: [{ name: 'istio' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined
+    };
+    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+  });
+
+  it('should handle TOGGLE_NAMESPACE to remove a namespace', () => {
+    const currentState = {
+      activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined
+    };
+    const requestStartedAction = NamespaceActions.toggleActiveNamespace({ name: 'my-namespace' });
+    const expectedState = {
+      activeNamespaces: [{ name: 'my-namespace-2' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined
+    };
+    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+  });
+
+  it('should handle TOGGLE_NAMESPACE to add a namespace', () => {
+    const currentState = {
+      activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined
+    };
+    const requestStartedAction = NamespaceActions.toggleActiveNamespace({ name: 'my-namespace-3' });
+    const expectedState = {
+      activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }, { name: 'my-namespace-3' }],
       isFetching: false,
       items: [],
       lastUpdated: undefined
@@ -31,14 +65,14 @@ describe('Namespaces reducer', () => {
 
   it('should handle NAMESPACE_REQUEST_STARTED', () => {
     const currentState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: [],
       lastUpdated: undefined
     };
     const requestStartedAction = NamespaceActions.requestStarted();
     const expectedState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
       items: [],
       lastUpdated: undefined
@@ -48,13 +82,13 @@ describe('Namespaces reducer', () => {
 
   it('should handle NAMESPACE_FAILED', () => {
     const currentState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
       items: []
     };
     const requestStartedAction = NamespaceActions.requestFailed();
     const expectedState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: []
     };
@@ -64,14 +98,14 @@ describe('Namespaces reducer', () => {
   it('should handle NAMESPACE_SUCCESS', () => {
     const currentDate = new Date();
     const currentState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
       items: ['old', 'namespace'],
       lastUpdated: undefined
     };
     const requestStartedAction = NamespaceActions.receiveList(['a', 'b', 'c'], currentDate);
     const expectedState = {
-      activeNamespace: { name: 'all' },
+      activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: ['a', 'b', 'c'],
       lastUpdated: currentDate

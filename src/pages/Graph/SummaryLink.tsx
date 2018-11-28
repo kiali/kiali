@@ -57,16 +57,23 @@ const getLink = (data: NodeData, nodeType?: NodeType) => {
     );
   }
 
-  return displayName;
+  return <span key={key}>{displayName}</span>;
 };
 
-export const renderLink = (data: NodeData, nodeType?: NodeType) => {
-  const link = getLink(data, nodeType);
+type RenderLinkProps = {
+  data: NodeData;
+  nodeType?: NodeType;
+};
+
+export const RenderLink = (props: RenderLinkProps) => {
+  const link = getLink(props.data, props.nodeType);
 
   return (
     <>
       {link}
-      {isInaccessible(data) && <Icon name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />}
+      {isInaccessible(props.data) && (
+        <Icon key="link-icon" name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />
+      )}
     </>
   );
 };
@@ -107,8 +114,8 @@ export const renderDestServicesLinks = (node: any) => {
 
   Object.keys(destServices).forEach(k => {
     serviceNodeData.service = k;
-    links.push(renderLink(serviceNodeData));
-    links.push(', ');
+    links.push(<RenderLink key={k} data={serviceNodeData} />);
+    links.push(<span key={`comma-after-${k}`}>, </span>);
   });
 
   if (links.length > 0) {

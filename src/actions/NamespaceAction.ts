@@ -7,7 +7,8 @@ enum NamespaceActionKeys {
   NAMESPACE_REQUEST_STARTED = 'NAMESPACE_REQUEST_STARTED',
   NAMESPACE_SUCCESS = 'NAMESPACE_SUCCESS',
   NAMESPACE_FAILED = 'NAMESPACE_FAILED',
-  SET_ACTIVE_NAMESPACE = 'SET_ACTIVE_NAMESPACE'
+  TOGGLE_ACTIVE_NAMESPACE = 'TOGGLE_ACTIVE_NAMESPACE',
+  SET_ACTIVE_NAMESPACES = 'SET_ACTIVE_NAMESPACES'
 }
 
 const shouldFetchNamespaces = (state: KialiAppState) => {
@@ -19,7 +20,8 @@ const shouldFetchNamespaces = (state: KialiAppState) => {
 };
 
 export const NamespaceActions = {
-  setActiveNamespace: createStandardAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACE)<Namespace>(),
+  toggleActiveNamespace: createStandardAction(NamespaceActionKeys.TOGGLE_ACTIVE_NAMESPACE)<Namespace>(),
+  setActiveNamespaces: createStandardAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACES)<Namespace[]>(),
   requestStarted: createAction(NamespaceActionKeys.NAMESPACE_REQUEST_STARTED),
   requestFailed: createAction(NamespaceActionKeys.NAMESPACE_FAILED),
   receiveList: createAction(NamespaceActionKeys.NAMESPACE_SUCCESS, resolve => (newList: any, receivedAt: Date) =>

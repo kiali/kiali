@@ -20,8 +20,12 @@ describe('NamespaceActions', () => {
     global.Date = RealDate;
   });
 
-  it('should set active namespace', () => {
-    expect(NamespaceActions.setActiveNamespace({ name: 'istio' }).payload).toEqual({ name: 'istio' });
+  it('should set active namespaces', () => {
+    expect(NamespaceActions.setActiveNamespaces([{ name: 'istio' }]).payload).toEqual([{ name: 'istio' }]);
+  });
+
+  it('should toggle active namespace', () => {
+    expect(NamespaceActions.toggleActiveNamespace({ name: 'istio' }).payload).toEqual({ name: 'istio' });
   });
 
   it('request is success', () => {

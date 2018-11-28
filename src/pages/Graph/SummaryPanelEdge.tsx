@@ -220,7 +220,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         // HTTP
         let useDest = sourceData.nodeType === NodeType.UNKNOWN;
         useDest =
-          useDest || this.props.namespace === serverConfig().istioNamespace || sourceData.nodeType === NodeType.SERVICE;
+          useDest || sourceData.namespace === serverConfig().istioNamespace || sourceData.nodeType === NodeType.SERVICE;
         let reporter = useDest ? response.data.dest : response.data.source;
         let metrics = reporter.metrics;
         const histograms = reporter.histograms;
@@ -268,7 +268,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         );
         // TCP (uses slightly different reporting)
         useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest = useDest || this.props.namespace === serverConfig().istioNamespace;
+        useDest = useDest || sourceData.namespace === serverConfig().istioNamespace;
         reporter = useDest ? response.data.dest : response.data.source;
         metrics = reporter.metrics;
         const tcpSentRates = this.getNodeDataPoints(

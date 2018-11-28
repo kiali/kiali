@@ -13,6 +13,7 @@ import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
+import Namespace from '../types/Namespace';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
@@ -29,7 +30,7 @@ const mapDispatchToProps = (dispatch: any) => {
 
 type EmptyGraphLayoutProps = {
   elements?: any;
-  namespace?: string;
+  namespaces: Namespace[];
   action?: any;
   displayUnusedNodes: () => void;
   isDisplayingUnusedNodes: boolean;
@@ -62,7 +63,33 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       return true;
     }
     // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
-    return !(!nextIsEmpty && this.props.namespace === nextProps.namespace);
+    return !(!nextIsEmpty && this.props.namespaces === nextProps.namespaces);
+  }
+
+  namespacesText() {
+    if (this.props.namespaces && this.props.namespaces.length > 0) {
+      if (this.props.namespaces.length === 1) {
+        return (
+          <>
+            namespace <b>{this.props.namespaces[0].name}</b>
+          </>
+        );
+      } else {
+        const namespacesString =
+          this.props.namespaces
+            .slice(0, -1)
+            .map(namespace => namespace.name)
+            .join(',') +
+          ' and ' +
+          this.props.namespaces[this.props.namespaces.length - 1].name;
+        return (
+          <>
+            namespaces <b>{namespacesString}</b>
+          </>
+        );
+      }
+    }
+    return null;
   }
 
   render() {
@@ -83,6 +110,17 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       );
     }
 
+    if (this.props.namespaces.length === 0) {
+      return (
+        <EmptyState className={emptyStateStyle}>
+          <EmptyStateTitle>No namespace is selected</EmptyStateTitle>
+          <EmptyStateInfo>
+            There is currently no namespace selected, please select one using the Namespace selection button.
+          </EmptyStateInfo>
+        </EmptyState>
+      );
+    }
+
     const isGraphEmpty = !this.props.elements || !this.props.elements.nodes || this.props.elements.nodes.length < 1;
 
     if (isGraphEmpty) {
@@ -90,8 +128,9 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
         <EmptyState className={emptyStateStyle}>
           <EmptyStateTitle>Empty Graph</EmptyStateTitle>
           <EmptyStateInfo>
-            There is currently no graph available for namespace <b>{this.props.namespace}</b>. This could either mean
-            there is no service mesh available for this namespace or the service mesh has yet to see request traffic.
+            There is currently no graph available for {this.namespacesText()}. This could either mean there is no
+            service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
+            the service mesh has yet to see request traffic.
             {this.props.isDisplayingUnusedNodes && (
               <> You are currently displaying 'Unused nodes', send requests to the service mesh and click 'Refresh'.</>
             )}

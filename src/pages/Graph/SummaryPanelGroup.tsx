@@ -6,7 +6,7 @@ import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import { renderLink, renderTitle } from './SummaryLink';
+import { RenderLink, renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
   updateHealth,
@@ -111,7 +111,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span>{[' ', renderTitle(data)]}</span>
+          <span> {renderTitle(data)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
@@ -163,7 +163,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .then(response => {
         // use source metrics for outgoing, except for:
         // - is is the istio namespace
-        let useDest = this.props.namespace === serverConfig().istioNamespace;
+        let useDest = this.props.data.summaryTarget.namespace === serverConfig().istioNamespace;
         let metrics = useDest ? response.data.dest.metrics : response.data.source.metrics;
         const rcOut = metrics['request_count_out'];
         const ecOut = metrics['request_error_count_out'];
@@ -268,11 +268,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       httpCharts = (
         <>
           <RpsChart
+            key="http-inbound-request"
             label="HTTP - Inbound Request Traffic"
             dataRps={this.state.requestCountIn!}
             dataErrors={this.state.errorCountIn}
           />
           <RpsChart
+            key="http-outbound-request"
             label="HTTP - Outbound Request Traffic"
             dataRps={this.state.requestCountOut}
             dataErrors={this.state.errorCountOut}
@@ -286,11 +288,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       tcpCharts = (
         <>
           <TcpChart
+            key="tcp-inbound-request"
             label="TCP - Inbound Traffic"
             receivedRates={this.state.tcpReceivedIn}
             sentRates={this.state.tcpSentIn}
           />
           <TcpChart
+            key="tcp-outbound-request"
             label="TCP - Outbound Traffic"
             receivedRates={this.state.tcpReceivedOut}
             sentRates={this.state.tcpSentOut}
@@ -311,12 +315,12 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   private renderWorkloadList = (group): any[] => {
     let workloadList: any[] = [];
 
-    group.children().forEach(node => {
+    group.children().forEach((node, index) => {
       const data = nodeData(node);
 
       if (data.workload) {
-        workloadList.push(renderLink(data, NodeType.WORKLOAD));
-        workloadList.push(', ');
+        workloadList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.WORKLOAD} />);
+        workloadList.push(<span key={`node-comma-${index}`}>, </span>);
       }
     });
 

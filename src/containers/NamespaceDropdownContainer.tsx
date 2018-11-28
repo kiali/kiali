@@ -6,12 +6,12 @@ import { NamespaceDropdown } from '../components/NamespaceDropdown';
 import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
 import { Dispatch } from 'redux';
-import { activeNamespaceSelector, namespaceItemsSelector } from '../store/Selectors';
+import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
     items: namespaceItemsSelector(state),
-    activeNamespace: activeNamespaceSelector(state)
+    activeNamespace: activeNamespacesSelector(state)[0]
   };
 };
 
@@ -22,7 +22,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => {
     },
     onSelect: (namespace: Namespace) => {
       dispatch(GraphActions.changed());
-      dispatch(NamespaceActions.setActiveNamespace(namespace));
+      dispatch(NamespaceActions.setActiveNamespaces([namespace]));
     }
   };
 };

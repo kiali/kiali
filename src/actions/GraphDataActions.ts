@@ -8,8 +8,11 @@ import { GraphDataActionKeys } from './GraphDataActionKeys';
 import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { serverConfig } from '../config';
+import { PromisesRegistry } from '../utils/CancelablePromises';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
+
+const promiseRegistry = new PromisesRegistry();
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non provided values are taken as "this didn't change", similar as setState does.
@@ -72,6 +75,10 @@ const decorateGraphData = (graphData: any) => {
   return graphData;
 };
 
+const setCurrentRequest = (promise: Promise<any>) => {
+  return promiseRegistry.register('CURRENT_REQUEST', promise);
+};
+
 // synchronous action creators
 export const GraphDataActions = {
   getGraphDataStart: createAction(GraphDataActionKeys.GET_GRAPH_DATA_START),
@@ -92,7 +99,7 @@ export const GraphDataActions = {
 export const GraphDataThunkActions = {
   // action creator that performs the async request
   fetchGraphData: (
-    namespace: Namespace,
+    namespaces: Namespace[],
     duration: DurationInSeconds,
     graphType: GraphType,
     injectServiceNodes: boolean,
@@ -102,6 +109,9 @@ export const GraphDataThunkActions = {
     node?: NodeParamsType
   ) => {
     return (dispatch, getState) => {
+      if (namespaces.length === 0) {
+        return Promise.resolve();
+      }
       dispatch(GraphDataActions.getGraphDataStart());
       let restParams = {
         duration: duration + 's',
@@ -109,7 +119,7 @@ export const GraphDataThunkActions = {
         injectServiceNodes: injectServiceNodes
       };
 
-      if (namespace.name === serverConfig().istioNamespace) {
+      if (namespaces.find(namespace => namespace.name === serverConfig().istioNamespace)) {
         restParams['includeIstio'] = true;
       }
 
@@ -145,7 +155,7 @@ export const GraphDataThunkActions = {
       console.debug('Fetching graph with appenders: ' + appenders);
 
       if (node) {
-        return API.getNodeGraphElements(authenticationToken(getState()), namespace, node, restParams).then(
+        return setCurrentRequest(API.getNodeGraphElements(authenticationToken(getState()), node, restParams)).then(
           response => {
             const responseData: any = response['data'];
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
@@ -154,6 +164,9 @@ export const GraphDataThunkActions = {
           },
           error => {
             let emsg: string;
+            if (error.isCanceled) {
+              return;
+            }
             if (error.response && error.response.data && error.response.data.error) {
               emsg = 'Cannot load the graph: ' + error.response.data.error;
             } else {
@@ -165,10 +178,13 @@ export const GraphDataThunkActions = {
         );
       }
 
-      if (namespace.name !== 'all') {
-        restParams['namespaces'] = namespace.name;
+      // Todo: Remove this when we are finally getting rid of 'all' namespace
+      if (namespaces.length === 1 && namespaces[0].name === 'all') {
+        namespaces = getState().namespaces.activeNamespaces.filter(namespace => namespace.name !== 'all');
       }
-      return API.getGraphElements(authenticationToken(getState()), restParams).then(
+
+      restParams['namespaces'] = namespaces.map(namespace => namespace.name).join(',');
+      return setCurrentRequest(API.getGraphElements(authenticationToken(getState()), restParams)).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
@@ -177,6 +193,9 @@ export const GraphDataThunkActions = {
         },
         error => {
           let emsg: string;
+          if (error.isCanceled) {
+            return;
+          }
           if (error.response && error.response.data && error.response.data.error) {
             emsg = 'Cannot load the graph: ' + error.response.data.error;
           } else {

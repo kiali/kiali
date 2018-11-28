@@ -308,28 +308,29 @@ export const getGraphElements = (auth: AuthToken, params: any) => {
   return newRequest(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
 };
 
-export const getNodeGraphElements = (
-  auth: AuthToken,
-  namespace: Namespace,
-  node: NodeParamsType,
-  params: Partial<GraphParamsType>
-) => {
+export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, params: Partial<GraphParamsType>) => {
   switch (node.nodeType) {
     case NodeType.APP:
       return newRequest(
         HTTP_VERBS.GET,
-        urls.appGraphElements(namespace.name, node.app, node.version),
+        urls.appGraphElements(node.namespace.name, node.app, node.version),
         params,
         {},
         auth
       );
     case NodeType.SERVICE:
-      return newRequest(HTTP_VERBS.GET, urls.serviceGraphElements(namespace.name, node.service), params, {}, auth);
+      return newRequest(HTTP_VERBS.GET, urls.serviceGraphElements(node.namespace.name, node.service), params, {}, auth);
     case NodeType.WORKLOAD:
-      return newRequest(HTTP_VERBS.GET, urls.workloadGraphElements(namespace.name, node.workload), params, {}, auth);
+      return newRequest(
+        HTTP_VERBS.GET,
+        urls.workloadGraphElements(node.namespace.name, node.workload),
+        params,
+        {},
+        auth
+      );
     default:
       // default to namespace graph
-      return getGraphElements(auth, { namespaces: namespace.name, ...params });
+      return getGraphElements(auth, { namespaces: node.namespace.name, ...params });
   }
 };
 

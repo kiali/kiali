@@ -7,12 +7,13 @@ import * as LayoutDictionary from '../../components/CytoscapeGraph/graphs/Layout
 import { config } from '../../config';
 import * as Enum from '../../utils/Enum';
 import { NamespaceActions } from '../../actions/NamespaceAction';
-import Namespace from '../../types/Namespace';
+import Namespace, { namespacesFromString } from '../../types/Namespace';
 import { store } from '../../store/ConfigStore';
 import GraphPageContainer from '../../containers/GraphPageContainer';
 import { DurationInSeconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { GraphActions } from '../../actions/GraphActions';
+import { arrayEquals } from '../../utils/Common';
 
 const URLSearchParams = require('url-search-params');
 
@@ -46,7 +47,7 @@ type GraphURLPathProps = {
 type GraphURLQueryProps = GraphParamsType & {
   graphDuration: DurationInSeconds;
   keepState: boolean;
-  namespaces: Namespace;
+  namespaces: Namespace[];
 };
 
 /**
@@ -87,7 +88,7 @@ export default class GraphRouteHandler extends React.Component<
       ? urlParams.get('injectServiceNodes') === 'true'
       : GraphRouteHandler.graphParamsDefaults.injectServiceNodes;
     const _keepState = urlParams.has('keepState') ? urlParams.get('keepState') === 'true' : false;
-    const _namespaces = urlParams.has('namespaces') ? { name: urlParams.get('namespaces') } : { name: 'all' };
+    const _namespaces = urlParams.has('namespaces') ? namespacesFromString(urlParams.get('namespaces')) : [];
 
     const result = {
       edgeLabelMode: _edgeLabelMode,
@@ -152,7 +153,7 @@ export default class GraphRouteHandler extends React.Component<
       return null;
     }
 
-    const reduxNamespaces = store.getState().namespaces.activeNamespace;
+    const currentNamespaces = store.getState().namespaces.activeNamespaces;
     const reduxDuration = store.getState().userSettings.duration;
 
     const durationHasChanged = nextGraphDuration !== reduxDuration;
@@ -160,7 +161,8 @@ export default class GraphRouteHandler extends React.Component<
     const graphTypeChanged = nextGraphType !== currentState.graphType;
     const injectServiceNodesChanged = nextInjectServiceNodes !== currentState.injectServiceNodes;
     const layoutHasChanged = nextLayout.name !== currentState.graphLayout.name;
-    const namespaceHasChanged = !nextNode && nextNamespaces.name !== reduxNamespaces.name;
+    const namespacesHaveChanged =
+      !nextNode && !arrayEquals(nextNamespaces, currentNamespaces, (n1, n2) => n1.name === n2.name);
     const nodeAppHasChanged = nextNode && currentState.node && nextNode.app !== currentState.node.app;
     const nodeServiceHasChanged = nextNode && currentState.node && nextNode.service !== currentState.node.service;
     const nodeVersionHasChanged = nextNode && currentState.node && nextNode.version !== currentState.node.version;
@@ -179,11 +181,11 @@ export default class GraphRouteHandler extends React.Component<
     if (durationHasChanged) {
       store.dispatch(UserSettingsActions.setDuration(nextGraphDuration));
     }
-    if (namespaceHasChanged) {
-      store.dispatch(NamespaceActions.setActiveNamespace(nextNamespaces));
+    if (namespacesHaveChanged) {
+      store.dispatch(NamespaceActions.setActiveNamespaces(nextNamespaces));
     }
     // if the graph has fundamentally changed then init relevant redux graph state
-    if (graphTypeChanged || injectServiceNodesChanged || namespaceHasChanged || nodeHasChanged) {
+    if (graphTypeChanged || injectServiceNodesChanged || namespacesHaveChanged || nodeHasChanged) {
       store.dispatch(GraphActions.changed());
     }
 
