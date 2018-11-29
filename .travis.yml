@@ -16,7 +16,6 @@ script:
   - yarn prettier --list-different &&
     yarn build:dev &&
     yarn test --forceExit --maxWorkers=4
-  - ./run_itest.sh
 before_deploy:
   - "[ -z \"$TRAVIS_TAG\" ] && yarn set-snapshot-version $TRAVIS_BUILD_NUMBER || true"
 deploy:
