@@ -57,7 +57,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 	}
 }
 
-// isServiceEntry queries the cluster API to resolve service entries
+// getServiceEntry queries the cluster API to resolve service entries
 // across all accessible namespaces in the cluster. All ServiceEntries are needed because
 // Istio does not distinguish where a ServiceEntry is created when routing traffic (i.e.
 // a ServiceEntry can be in any namespace and it will still work).

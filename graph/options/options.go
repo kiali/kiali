@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	AppenderAll               string = "_all_"
 	GroupByApp                string = "app"
 	GroupByNone               string = "none"
 	GroupByVersion            string = "version"
@@ -194,30 +193,54 @@ func (o *Options) GetGraphKind() string {
 }
 
 func parseAppenders(params url.Values, o Options) []appender.Appender {
-	var appenders []appender.Appender
-	csl := AppenderAll
-	_, ok := params["appenders"]
-	if ok {
-		csl = strings.ToLower(params.Get("appenders"))
+	requestedAppenders := make(map[string]bool)
+	allAppenders := false
+	if _, ok := params["appenders"]; ok {
+		for _, requestedAppender := range strings.Split(params.Get("appenders"), ",") {
+			switch strings.TrimSpace(requestedAppender) {
+			case appender.DeadNodeAppenderName:
+				requestedAppenders[appender.DeadNodeAppenderName] = true
+			case appender.ServiceEntryAppenderName:
+				requestedAppenders[appender.ServiceEntryAppenderName] = true
+			case appender.IstioAppenderName:
+				requestedAppenders[appender.IstioAppenderName] = true
+			case appender.ResponseTimeAppenderName:
+				requestedAppenders[appender.ResponseTimeAppenderName] = true
+			case appender.SecurityPolicyAppenderName:
+				requestedAppenders[appender.SecurityPolicyAppenderName] = true
+			case appender.SidecarsCheckAppenderName:
+				requestedAppenders[appender.SidecarsCheckAppenderName] = true
+			case appender.UnusedNodeAppenderName:
+				requestedAppenders[appender.UnusedNodeAppenderName] = true
+			case "":
+				// skip
+			default:
+				checkError(errors.New(fmt.Sprintf("Unexpected appender [%s]", strings.TrimSpace(requestedAppender))))
+			}
+		}
+	} else {
+		allAppenders = true
 	}
 
 	// The appender order is important
-	// Apply any decorating information, run service_entry appender first
+	// To pre-process service nodes run service_entry appender first
 	// To reduce processing, filter dead nodes next
 	// To reduce processing, next run appenders that don't apply to unused services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == AppenderAll || strings.Contains(csl, appender.ServiceEntryAppenderName) || strings.Contains(csl, "service_entry") {
+	var appenders []appender.Appender
+
+	if _, ok := requestedAppenders[appender.ServiceEntryAppenderName]; ok || allAppenders {
 		a := appender.ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.DeadNodeAppenderName) || strings.Contains(csl, "dead_node") {
+	if _, ok := requestedAppenders[appender.DeadNodeAppenderName]; ok || allAppenders {
 		a := appender.DeadNodeAppender{}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.ResponseTimeAppenderName) || strings.Contains(csl, "response_time") {
+	if _, ok := requestedAppenders[appender.ResponseTimeAppenderName]; ok || allAppenders {
 		quantile := appender.DefaultQuantile
 		if _, ok := params["responseTimeQuantile"]; ok {
 			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
@@ -234,7 +257,7 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.SecurityPolicyAppenderName) || strings.Contains(csl, "security_policy") {
+	if _, ok := requestedAppenders[appender.SecurityPolicyAppenderName]; ok || allAppenders {
 		a := appender.SecurityPolicyAppender{
 			GraphType:          o.GraphType,
 			IncludeIstio:       o.IncludeIstio,
@@ -244,18 +267,21 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 		}
 		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.UnusedNodeAppenderName) || strings.Contains(csl, "unused_node") {
+	if _, ok := requestedAppenders[appender.UnusedNodeAppenderName]; ok || allAppenders {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
-		appenders = append(appenders, appender.UnusedNodeAppender{
+		a := appender.UnusedNodeAppender{
 			GraphType:   o.GraphType,
 			IsNodeGraph: hasNodeOptions,
-		})
+		}
+		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.IstioAppenderName) || strings.Contains(csl, "istio") {
-		appenders = append(appenders, appender.IstioAppender{})
+	if _, ok := requestedAppenders[appender.IstioAppenderName]; ok || allAppenders {
+		a := appender.IstioAppender{}
+		appenders = append(appenders, a)
 	}
-	if csl == AppenderAll || strings.Contains(csl, appender.SidecarsCheckAppenderName) || strings.Contains(csl, "sidecars_check") {
-		appenders = append(appenders, appender.SidecarsCheckAppender{})
+	if _, ok := requestedAppenders[appender.SidecarsCheckAppenderName]; ok || allAppenders {
+		a := appender.SidecarsCheckAppender{}
+		appenders = append(appenders, a)
 	}
 
 	return appenders
