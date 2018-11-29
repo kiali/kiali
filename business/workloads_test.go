@@ -20,7 +20,7 @@ import (
 )
 
 func setupWorkloadService(k8s *kubetest.K8SClientMock, prom *prometheustest.PromClientMock) WorkloadService {
-	return WorkloadService{k8s: k8s, prom: prom, ns: NewNamespaceService(k8s)}
+	return WorkloadService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 }
 
 func TestGetWorkloadListFromDeployments(t *testing.T) {

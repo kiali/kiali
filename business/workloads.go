@@ -22,9 +22,9 @@ import (
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	prom prometheus.ClientInterface
-	k8s  kubernetes.IstioClientInterface
-	ns   NamespaceService
+	prom          prometheus.ClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -72,7 +72,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		go func() {
 			defer wg.Done()
 			var err2 error
-			ns, err2 := in.ns.GetNamespace(namespace)
+			ns, err2 := in.businessLayer.Namespace.GetNamespace(namespace)
 			if err2 != nil {
 				log.Errorf("Error fetching details of namespace %s: %s", namespace, err2)
 				errChan <- err2
