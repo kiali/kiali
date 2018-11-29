@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	kversion "k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -80,14 +82,21 @@ func validateVersion(istioReq string, installedVersion string) bool {
 }
 
 func istioVersion() (*ExternalServiceInfo, error) {
+	var (
+		body    []byte
+		err     error
+		product *ExternalServiceInfo
+		resp    *http.Response
+	)
+
 	istioConfig := config.Get().ExternalServices.Istio
-	resp, err := http.Get(istioConfig.UrlServiceVersion)
+	resp, err = http.Get(istioConfig.UrlServiceVersion)
 	if err == nil {
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err = ioutil.ReadAll(resp.Body)
 		if err == nil {
 			rawVersion := string(body)
-			product, err := parseIstioRawVersion(rawVersion)
+			product, err = parseIstioRawVersion(rawVersion)
 			return product, err
 		}
 	}
@@ -209,14 +218,21 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 }
 
 func kubernetesVersion() (*ExternalServiceInfo, error) {
+	var (
+		err           error
+		k8sConfig     *rest.Config
+		k8s           *kube.Clientset
+		serverVersion *kversion.Info
+	)
+
 	product := ExternalServiceInfo{}
-	k8sConfig, err := kubernetes.ConfigClient()
+	k8sConfig, err = kubernetes.ConfigClient()
 	if err == nil {
 		k8sConfig.QPS = config.Get().KubernetesConfig.QPS
 		k8sConfig.Burst = config.Get().KubernetesConfig.Burst
-		k8s, err := kube.NewForConfig(k8sConfig)
+		k8s, err = kube.NewForConfig(k8sConfig)
 		if err == nil {
-			serverVersion, err := k8s.Discovery().ServerVersion()
+			serverVersion, err = k8s.Discovery().ServerVersion()
 			if err == nil {
 				product.Name = "Kubernetes"
 				product.Version = serverVersion.GitVersion
