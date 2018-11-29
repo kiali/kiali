@@ -118,9 +118,6 @@ func TestDeadNode(t *testing.T) {
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
-		ExternalServices: map[string]bool{
-			"localhost.local": true,
-			"egress.io":       true},
 	}
 	namespaceInfo := NamespaceInfo{
 		Namespace: "testNamespace",
@@ -149,11 +146,10 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal(true, isDead)
 
-	// Check that external services are flagged
+	// Check that external services are not removed
 	id, _ = graph.Id("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
-	externalNode, okExternal := trafficMap[id]
+	_, okExternal := trafficMap[id]
 	assert.Equal(true, okExternal)
-	assert.Equal(true, externalNode.Metadata["isEgress"])
 }
 
 func testTrafficMap() map[string]*graph.Node {
@@ -185,6 +181,7 @@ func testTrafficMap() map[string]*graph.Node {
 
 	n9 := graph.NewNode("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
 	n9.Metadata["rate"] = 0.8
+	n9.Metadata["isServiceEntry"] = "MESH_EXTERNAL"
 
 	n10 := graph.NewNode("testNamespace", "", "", "", "egress.not.defined", graph.GraphTypeVersionedApp)
 	n10.Metadata["rate"] = 0.8

@@ -202,14 +202,19 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 	}
 
 	// The appender order is important
-	// To reduce processing, filter dead services first
+	// Apply any decorating information, run service_entry appender first
+	// To reduce processing, filter dead nodes next
 	// To reduce processing, next run appenders that don't apply to unused services
 	// Add orphan (unused) services
 	// Run remaining appenders
-	if csl == AppenderAll || strings.Contains(csl, appender.DeadNodeAppenderName) || strings.Contains(csl, "dead_node") {
-		a := appender.DeadNodeAppender{
+	if csl == AppenderAll || strings.Contains(csl, appender.ServiceEntryAppenderName) || strings.Contains(csl, "service_entry") {
+		a := appender.ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
+		appenders = append(appenders, a)
+	}
+	if csl == AppenderAll || strings.Contains(csl, appender.DeadNodeAppenderName) || strings.Contains(csl, "dead_node") {
+		a := appender.DeadNodeAppender{}
 		appenders = append(appenders, a)
 	}
 	if csl == AppenderAll || strings.Contains(csl, appender.ResponseTimeAppenderName) || strings.Contains(csl, "response_time") {
