@@ -1,10 +1,5 @@
 language: node_js
 dist: trusty
-addons:
-  apt:
-    packages:
-      # This is required to run new chrome on old trusty
-      - libnss3
 node_js:
   - 8
 cache:
@@ -16,7 +11,6 @@ script:
   - yarn prettier --list-different &&
     yarn build:dev &&
     yarn test --forceExit --maxWorkers=4
-  - ./run_itest.sh
 before_deploy:
   - "[ -z \"$TRAVIS_TAG\" ] && yarn set-snapshot-version $TRAVIS_BUILD_NUMBER || true"
 deploy:
