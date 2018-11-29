@@ -25,7 +25,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showMissingSidecars: true,
     showNodeLabels: true,
     showSecurity: false,
-    showServiceNodes: false,
+    showServiceNodes: true,
     showTrafficAnimation: false,
     showUnusedNodes: false,
     showVirtualServices: true
