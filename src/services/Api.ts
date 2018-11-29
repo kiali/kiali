@@ -50,23 +50,14 @@ const basicAuth = (username: string, password: string) => {
   return { username: username, password: password };
 };
 
-const newRequest = <T>(method: HTTP_VERBS, url: string, queryParams: any, data: any, auth?: AuthToken) => {
-  return new Promise<Response<T>>((resolve, reject) => {
-    axios({
-      method: method,
-      url: url,
-      data: data,
-      headers: getHeaders(auth),
-      params: queryParams
-    })
-      .then(response => {
-        resolve(response);
-      })
-      .catch(error => {
-        reject(error);
-      });
+const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any, auth?: AuthToken) =>
+  axios.request<P>({
+    method: method,
+    url: url,
+    data: data,
+    headers: getHeaders(auth),
+    params: queryParams
   });
-};
 
 /** Requests */
 export const login = (username: string, password: string) => {
@@ -90,34 +81,27 @@ export const getStatus = () => {
   return newRequest(HTTP_VERBS.GET, urls.status, {}, {});
 };
 
-export const getNamespaces = (auth: AuthToken): Promise<Response<Namespace[]>> => {
-  return newRequest(HTTP_VERBS.GET, urls.namespaces, {}, {}, auth);
+export const getNamespaces = (auth: AuthToken) => {
+  return newRequest<Namespace[]>(HTTP_VERBS.GET, urls.namespaces, {}, {}, auth);
 };
 
-export const getNamespaceMetrics = (
-  auth: AuthToken,
-  namespace: string,
-  params: any
-): Promise<Response<Readonly<Metrics>>> => {
-  return newRequest(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {}, auth);
+export const getNamespaceMetrics = (auth: AuthToken, namespace: string, params: any) => {
+  return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {}, auth);
 };
 
-export const getIstioConfig = (
-  auth: AuthToken,
-  namespace: string,
-  objects: string[]
-): Promise<Response<IstioConfigList>> => {
+export const getIstioConfig = (auth: AuthToken, namespace: string, objects: string[]) => {
   const params = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
-  return newRequest(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {}, auth);
+  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {}, auth);
 };
 
-export const getIstioConfigDetail = (
-  auth: AuthToken,
-  namespace: string,
-  objectType: string,
-  object: string
-): Promise<Response<IstioConfigDetails>> => {
-  return newRequest(HTTP_VERBS.GET, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
+export const getIstioConfigDetail = (auth: AuthToken, namespace: string, objectType: string, object: string) => {
+  return newRequest<IstioConfigDetails>(
+    HTTP_VERBS.GET,
+    urls.istioConfigDetail(namespace, objectType, object),
+    {},
+    {},
+    auth
+  );
 };
 
 export const getIstioConfigDetailSubtype = (
@@ -126,8 +110,8 @@ export const getIstioConfigDetailSubtype = (
   objectType: string,
   objectSubtype: string,
   object: string
-): Promise<Response<IstioConfigDetails>> => {
-  return newRequest(
+) => {
+  return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
     urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
     {},
@@ -136,13 +120,8 @@ export const getIstioConfigDetailSubtype = (
   );
 };
 
-export const deleteIstioConfigDetail = (
-  auth: AuthToken,
-  namespace: string,
-  objectType: string,
-  object: string
-): Promise<Response<string>> => {
-  return newRequest(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
+export const deleteIstioConfigDetail = (auth: AuthToken, namespace: string, objectType: string, object: string) => {
+  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDetail(namespace, objectType, object), {}, {}, auth);
 };
 
 export const deleteIstioConfigDetailSubtype = (
@@ -151,8 +130,8 @@ export const deleteIstioConfigDetailSubtype = (
   objectType: string,
   objectSubtype: string,
   object: string
-): Promise<Response<string>> => {
-  return newRequest(
+) => {
+  return newRequest<string>(
     HTTP_VERBS.DELETE,
     urls.istioConfigDetailSubtype(namespace, objectType, objectSubtype, object),
     {},
@@ -161,43 +140,28 @@ export const deleteIstioConfigDetailSubtype = (
   );
 };
 
-export const getServices = (auth: AuthToken, namespace: string): Promise<Response<ServiceList>> => {
-  return newRequest(HTTP_VERBS.GET, urls.services(namespace), {}, {}, auth);
+export const getServices = (auth: AuthToken, namespace: string) => {
+  return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), {}, {}, auth);
 };
 
-export const getServiceMetrics = (
-  auth: AuthToken,
-  namespace: string,
-  service: string,
-  params: MetricsOptions
-): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {}, auth);
+export const getServiceMetrics = (auth: AuthToken, namespace: string, service: string, params: MetricsOptions) => {
+  return newRequest<Metrics>(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {}, auth);
 };
 
-export const getApp = (auth: AuthToken, namespace: string, app: string): Promise<Response<App>> => {
-  return newRequest(HTTP_VERBS.GET, urls.app(namespace, app), {}, {}, auth);
+export const getApp = (auth: AuthToken, namespace: string, app: string) => {
+  return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), {}, {}, auth);
 };
 
-export const getApps = (auth: AuthToken, namespace: string): Promise<Response<AppList>> => {
-  return newRequest(HTTP_VERBS.GET, urls.apps(namespace), {}, {}, auth);
+export const getApps = (auth: AuthToken, namespace: string) => {
+  return newRequest<AppList>(HTTP_VERBS.GET, urls.apps(namespace), {}, {}, auth);
 };
 
-export const getAppMetrics = (
-  auth: AuthToken,
-  namespace: string,
-  app: string,
-  params: MetricsOptions
-): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {}, auth);
+export const getAppMetrics = (auth: AuthToken, namespace: string, app: string, params: MetricsOptions) => {
+  return newRequest<Metrics>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {}, auth);
 };
 
-export const getWorkloadMetrics = (
-  auth: AuthToken,
-  namespace: string,
-  workload: string,
-  params: MetricsOptions
-): Promise<Response<Metrics>> => {
-  return newRequest(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {}, auth);
+export const getWorkloadMetrics = (auth: AuthToken, namespace: string, workload: string, params: MetricsOptions) => {
+  return newRequest<Metrics>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {}, auth);
 };
 
 export const getServiceHealth = (
@@ -296,12 +260,12 @@ export const getNamespaceWorkloadHealth = (
   });
 };
 
-export const getGrafanaInfo = (auth: AuthToken): Promise<Response<GrafanaInfo>> => {
-  return newRequest(HTTP_VERBS.GET, urls.grafana, {}, {}, auth);
+export const getGrafanaInfo = (auth: AuthToken) => {
+  return newRequest<GrafanaInfo>(HTTP_VERBS.GET, urls.grafana, {}, {}, auth);
 };
 
-export const getJaegerInfo = (auth: AuthToken): Promise<Response<JaegerInfo>> => {
-  return newRequest(HTTP_VERBS.GET, urls.jaeger, {}, {}, auth);
+export const getJaegerInfo = (auth: AuthToken) => {
+  return newRequest<JaegerInfo>(HTTP_VERBS.GET, urls.jaeger, {}, {}, auth);
 };
 
 export const getGraphElements = (auth: AuthToken, params: any) => {
@@ -334,51 +298,46 @@ export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, para
   }
 };
 
-export const getServerConfig = (auth: AuthToken): Promise<Response<ServerConfig>> => {
-  return newRequest(HTTP_VERBS.GET, urls.serverConfig, {}, {}, auth);
+export const getServerConfig = (auth: AuthToken) => {
+  return newRequest<ServerConfig>(HTTP_VERBS.GET, urls.serverConfig, {}, {}, auth);
 };
 
 export const getServiceDetail = (auth: AuthToken, namespace: string, service: string): Promise<ServiceDetailsInfo> => {
-  return newRequest(HTTP_VERBS.GET, urls.service(namespace, service), {}, {}, auth).then(
-    (r: Response<ServiceDetailsInfo>) => {
-      const info: ServiceDetailsInfo = r.data;
-      info.istioSidecar = info.istioSidecar;
-      if (info.health) {
-        // Default rate interval in backend = 600s
-        info.health = ServiceHealth.fromJson(info.health, 600);
-      }
-      return info;
+  return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), {}, {}, auth).then(r => {
+    const info: ServiceDetailsInfo = r.data;
+    info.istioSidecar = info.istioSidecar;
+    if (info.health) {
+      // Default rate interval in backend = 600s
+      info.health = ServiceHealth.fromJson(info.health, 600);
     }
+    return info;
+  });
+};
+
+export const getServiceValidations = (auth: AuthToken, namespace: string, service: string) => {
+  return newRequest<Validations>(HTTP_VERBS.GET, urls.serviceValidations(namespace, service), {}, {}, auth);
+};
+
+export const getNamespaceValidations = (auth: string, namespace: string) => {
+  return newRequest<NamespaceValidations>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {}, auth);
+};
+
+export const getIstioConfigValidations = (auth: AuthToken, namespace: string, objectType: string, object: string) => {
+  return newRequest<Validations>(
+    HTTP_VERBS.GET,
+    urls.istioConfigValidations(namespace, objectType, object),
+    {},
+    {},
+    auth
   );
 };
 
-export const getServiceValidations = (
-  auth: AuthToken,
-  namespace: string,
-  service: string
-): Promise<Response<Validations>> => {
-  return newRequest(HTTP_VERBS.GET, urls.serviceValidations(namespace, service), {}, {}, auth);
+export const getWorkloads = (auth: AuthToken, namespace: string) => {
+  return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), {}, {}, auth);
 };
 
-export const getNamespaceValidations = (auth: string, namespace: string): Promise<Response<NamespaceValidations>> => {
-  return newRequest(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {}, auth);
-};
-
-export const getIstioConfigValidations = (
-  auth: AuthToken,
-  namespace: string,
-  objectType: string,
-  object: string
-): Promise<Response<Validations>> => {
-  return newRequest(HTTP_VERBS.GET, urls.istioConfigValidations(namespace, objectType, object), {}, {}, auth);
-};
-
-export const getWorkloads = (auth: AuthToken, namespace: string): Promise<Response<WorkloadNamespaceResponse>> => {
-  return newRequest(HTTP_VERBS.GET, urls.workloads(namespace), {}, {}, auth);
-};
-
-export const getWorkload = (auth: AuthToken, namespace: string, name: string): Promise<Response<Workload>> => {
-  return newRequest(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {}, auth);
+export const getWorkload = (auth: AuthToken, namespace: string, name: string) => {
+  return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {}, auth);
 };
 
 export const getErrorMsg = (msg: AuthToken, error: AxiosError) => {

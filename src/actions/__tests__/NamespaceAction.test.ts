@@ -3,7 +3,8 @@ import axiosMockAdapter from 'axios-mock-adapter';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 
-import { NamespaceActions, NamespaceThunkActions } from '../NamespaceAction';
+import { NamespaceActions } from '../NamespaceAction';
+import NamespaceThunkActions from '../NamespaceThunkActions';
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
@@ -31,10 +32,10 @@ describe('NamespaceActions', () => {
   it('request is success', () => {
     const currentDate = new Date();
     const expectedAction = {
-      list: ['a', 'b'],
+      list: [{ name: 'a' }, { name: 'b' }],
       receivedAt: currentDate
     };
-    expect(NamespaceActions.receiveList(['a', 'b'], currentDate).payload).toEqual(expectedAction);
+    expect(NamespaceActions.receiveList([{ name: 'a' }, { name: 'b' }], currentDate).payload).toEqual(expectedAction);
   });
 
   it('should success if api request success', () => {
@@ -42,10 +43,10 @@ describe('NamespaceActions', () => {
     mockDate(currentDate);
     const expectedActions = [
       NamespaceActions.requestStarted(),
-      NamespaceActions.receiveList([{ name: 'all' }, 'a', 'b', 'c'], currentDate)
+      NamespaceActions.receiveList([{ name: 'all' }, { name: 'a' }, { name: 'b' }, { name: 'c' }], currentDate)
     ];
     const axiosMock = new axiosMockAdapter(axios);
-    axiosMock.onGet('/api/namespaces').reply(200, ['a', 'b', 'c']);
+    axiosMock.onGet('/api/namespaces').reply(200, [{ name: 'a' }, { name: 'b' }, { name: 'c' }]);
 
     const store = mockStore({});
     return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces('dummy-token')).then(() => {

@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import ReactResizeDetector from 'react-resize-detector';
 
 import Namespace from '../../types/Namespace';
@@ -9,7 +11,8 @@ import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { GraphActions, GraphThunkActions } from '../../actions/GraphActions';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import {
@@ -39,7 +42,7 @@ import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { DagreGraph } from './graphs/DagreGraph';
-import { bindActionCreators } from 'redux';
+import GraphThunkActions from '../../actions/GraphThunkActions';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -665,7 +668,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showVirtualServices: state.graph.filterState.showVirtualServices
 });
 
-const mapDispatchToProps = (dispatch: any) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
   onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => {

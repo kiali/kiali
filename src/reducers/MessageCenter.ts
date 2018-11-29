@@ -106,7 +106,7 @@ const Messages = (
         return updateState(state, { hidden: true });
       }
       return state;
-    case getType(MessageCenterActions.togleExpandedMessageCenter):
+    case getType(MessageCenterActions.toggleExpandedMessageCenter):
       return updateState(state, { expanded: !state.expanded });
     case getType(MessageCenterActions.toggleGroup): {
       const { groupId } = action.payload;

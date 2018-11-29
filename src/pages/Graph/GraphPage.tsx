@@ -36,7 +36,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
   edgeLabelMode: EdgeLabelMode;
   graphData: any;
-  graphTimestamp: string;
+  graphTimestamp: number;
   graphType: GraphType;
   isError: boolean;
   isLoading: boolean;
@@ -102,7 +102,7 @@ const graphToolbarStyle = style({
 const GraphErrorBoundaryFallback = () => {
   return (
     <div className={cytoscapeGraphContainerStyle}>
-      <EmptyGraphLayoutContainer isError={true} />
+      <EmptyGraphLayoutContainer namespaces={[]} isError={true} />
     </div>
   );
 };
@@ -282,7 +282,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
           </Breadcrumb>
           <div>
             {/* Use empty div to reset the flex, this component doesn't seem to like that. It renders all its contents in the center */}
-            <GraphFilterContainer isLoading={this.props.isLoading} onRefresh={this.handleRefreshClick} />
+            <GraphFilterContainer disabled={this.props.isLoading} onRefresh={this.handleRefreshClick} />
           </div>
           <FlexView grow={true} className={cytoscapeGraphWrapperDivStyle}>
             <ErrorBoundary
@@ -291,8 +291,6 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
               <CytoscapeGraphContainer
-                isLoading={this.props.isLoading}
-                elements={this.props.graphData}
                 refresh={this.handleRefreshClick}
                 containerClassName={cytoscapeGraphContainerStyle}
                 ref={refInstance => this.setCytoscapeGraph(refInstance)}

@@ -2,10 +2,10 @@ import * as React from 'react';
 import { VerticalNav } from 'patternfly-react';
 import { navItems } from '../../routes';
 import RenderPage from './RenderPage';
-import { matchPath } from 'react-router';
+import { matchPath, RouteComponentProps } from 'react-router';
 import _ from 'lodash';
 
-import MessageCenter from '../../containers/MessageCenterContainer';
+import { MessageCenterContainer, MessageCenterTriggerContainer } from '../../containers/MessageCenterContainer';
 import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
 import LoginPage from '../../containers/LoginPageContainer';
@@ -16,8 +16,7 @@ import { KialiLogo } from '../../logos';
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
 
-type PropsType = {
-  location: any;
+type PropsType = RouteComponentProps & {
   authenticated: boolean;
   navCollapsed: boolean;
   checkCredentials: () => void;
@@ -30,7 +29,7 @@ class Navigation extends React.Component<PropsType> {
     router: () => null
   };
 
-  constructor(props: any) {
+  constructor(props: PropsType) {
     super(props);
 
     // handle initial path from the browser
@@ -109,11 +108,11 @@ class Navigation extends React.Component<PropsType> {
             <VerticalNav.Brand iconImg={KialiLogo} />
             <PfSpinnerContainer />
             <VerticalNav.IconBar>
-              <MessageCenter.Trigger />
+              <MessageCenterTriggerContainer />
               <HelpDropdown />
               <UserDropdown />
             </VerticalNav.IconBar>
-            <MessageCenter drawerTitle="Message Center" />
+            <MessageCenterContainer drawerTitle="Message Center" />
           </VerticalNav.Masthead>
           {this.renderMenuItems()}
         </VerticalNav>

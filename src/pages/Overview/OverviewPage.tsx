@@ -31,7 +31,7 @@ import { authentication } from '../../utils/Authentication';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
 import OverviewStatus from './OverviewStatus';
-import OverviewToolbarContainer, { OverviewType } from './OverviewToolbar';
+import OverviewToolbarContainer, { OverviewToolbar, OverviewType } from './OverviewToolbar';
 import NamespaceInfo from './NamespaceInfo';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { SortField } from '../../types/SortFilters';
@@ -87,7 +87,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     super(props);
     this.state = {
       namespaces: [],
-      type: OverviewToolbarContainer.currentOverviewType()
+      type: OverviewToolbar.currentOverviewType()
     };
   }
 
@@ -115,7 +115,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     const rateInterval = ListPagesHelper.currentDuration();
     const isAscending = ListPagesHelper.isCurrentSortAscending();
     const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
-    const type = OverviewToolbarContainer.currentOverviewType();
+    const type = OverviewToolbar.currentOverviewType();
     const promises = namespaces.map(namespace => {
       const healthPromise: Promise<
         NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth

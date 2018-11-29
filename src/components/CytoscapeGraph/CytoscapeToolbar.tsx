@@ -3,6 +3,7 @@ import { ButtonGroup, Button, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
 
 import { PfColors } from '../Pf/PfColors';
@@ -11,6 +12,7 @@ import { Layout } from '../../types/GraphFilter';
 import { ColaGraph } from './graphs/ColaGraph';
 import { CoseGraph } from './graphs/CoseGraph';
 import { DagreGraph } from './graphs/DagreGraph';
+import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { HistoryManager, URLParams } from '../../app/History';
 import { ListPagesHelper } from '../ListPage/ListPagesHelper';
@@ -161,7 +163,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showLegend: state.graph.filterState.showLegend
 });
 
-const mapDispatchToProps = (dispatch: any) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
 });

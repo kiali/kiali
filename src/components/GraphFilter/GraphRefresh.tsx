@@ -2,10 +2,12 @@ import * as React from 'react';
 import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { bindActionCreators } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { KialiAppAction } from '../../actions/KialiAppAction';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
@@ -124,7 +126,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
     setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch)

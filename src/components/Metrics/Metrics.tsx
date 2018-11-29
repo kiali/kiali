@@ -16,6 +16,7 @@ import { authentication } from '../../utils/Authentication';
 
 import HistogramChart from './HistogramChart';
 import MetricChart from './MetricChart';
+import { RouteComponentProps } from 'react-router';
 
 const expandedChartContainerStyle = style({
   height: 'calc(100vh - 248px)'
@@ -48,12 +49,13 @@ type ObjectId = {
   object: string;
 };
 
-type MetricsProps = ObjectId & {
-  isPageVisible?: boolean;
-  grafanaInfo?: GrafanaInfo;
-  objectType: M.MetricsObjectTypes;
-  direction: M.MetricsDirection;
-};
+type MetricsProps = ObjectId &
+  RouteComponentProps<{}> & {
+    isPageVisible?: boolean;
+    grafanaInfo?: GrafanaInfo;
+    objectType: M.MetricsObjectTypes;
+    direction: M.MetricsDirection;
+  };
 
 class Metrics extends React.Component<MetricsProps, MetricsState> {
   static defaultProps = {

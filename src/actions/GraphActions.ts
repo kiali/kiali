@@ -16,17 +16,4 @@ export const GraphActions = {
   showSidePanelInfo: createStandardAction(GraphActionKeys.GRAPH_SIDE_PANEL_SHOW_INFO)<CytoscapeClickEvent>()
 };
 
-export const GraphThunkActions = {
-  graphRendered: (cy: any) => {
-    return dispatch => {
-      dispatch(
-        GraphActions.showSidePanelInfo({
-          summaryType: 'graph',
-          summaryTarget: cy
-        })
-      );
-    };
-  }
-};
-
 export type GraphAction = ActionType<typeof GraphActions>;

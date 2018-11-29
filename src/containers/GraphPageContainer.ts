@@ -1,7 +1,7 @@
 import { RouteComponentProps, withRouter } from 'react-router';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../store/Store';
+import { ThunkDispatch } from 'redux-thunk';
 import {
   activeNamespacesSelector,
   durationSelector,
@@ -9,14 +9,18 @@ import {
   graphTypeSelector,
   edgeLabelModeSelector
 } from '../store/Selectors';
-import { GraphDataThunkActions } from '../actions/GraphDataActions';
+
+import { KialiAppState } from '../store/Store';
+import Namespace from '../types/Namespace';
+import { EdgeLabelMode } from '../types/GraphFilter';
+
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { GraphType, NodeParamsType } from '../types/Graph';
 import { DurationInSeconds } from '../types/Common';
-import Namespace from '../types/Namespace';
-import { EdgeLabelMode } from '../types/GraphFilter';
 import GraphPage from '../pages/Graph/GraphPage';
 import { GraphActions } from '../actions/GraphActions';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import GraphDataThunkActions from '../actions/GraphDataThunkActions';
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
@@ -43,7 +47,7 @@ const mapStateToProps = (state: KialiAppState) => ({
     : null
 });
 
-const mapDispatchToProps = (dispatch: any) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   fetchGraphData: (
     namespaces: Namespace[],
     duration: DurationInSeconds,

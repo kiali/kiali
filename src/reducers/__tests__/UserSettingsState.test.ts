@@ -4,7 +4,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 describe('UserSettingsState reducer', () => {
   it('should return the initial state', () => {
-    expect(UserSettingsState(undefined, GlobalActions.nil())).toEqual({
+    expect(UserSettingsState(undefined, GlobalActions.unknown())).toEqual({
       interface: { navCollapse: false },
       duration: 60,
       refreshInterval: 15000

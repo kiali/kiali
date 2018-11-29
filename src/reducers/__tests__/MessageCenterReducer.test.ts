@@ -16,7 +16,7 @@ describe('MessageCenter reducer', () => {
   });
 
   it('should return the initial state', () => {
-    expect(MessageCenter(undefined, GlobalActions.nil())).toEqual({
+    expect(MessageCenter(undefined, GlobalActions.unknown())).toEqual({
       expanded: false,
       expandedGroupId: 'default',
       groups: [
@@ -404,7 +404,7 @@ describe('MessageCenter reducer', () => {
           hidden: false,
           nextId: 0
         },
-        MessageCenterActions.togleExpandedMessageCenter()
+        MessageCenterActions.toggleExpandedMessageCenter()
       )
     ).toEqual({
       expanded: true,

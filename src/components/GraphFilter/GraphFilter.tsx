@@ -3,7 +3,8 @@ import { Toolbar, FormGroup, Button } from 'patternfly-react';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { bindActionCreators } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
 import { graphTypeSelector, edgeLabelModeSelector, activeNamespacesSelector } from '../../store/Selectors';
@@ -21,6 +22,7 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import Namespace, { namespacesToString, namespacesFromString } from '../../types/Namespace';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphActions } from '../../actions/GraphActions';
+import { KialiAppAction } from '../../actions/KialiAppAction';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -145,7 +147,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
             )}
           </FormGroup>
           <FormGroup className={zeroPaddingLeft}>
-            <GraphSettingsContainer {...this.props} />
+            <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
           </FormGroup>
           <ToolbarDropdown
             id={'graph_filter_edge_labels'}
@@ -198,7 +200,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   node: state.graph.node
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),

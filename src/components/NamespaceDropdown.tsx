@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
+import { KialiAppAction } from '../actions/KialiAppAction';
 import { GraphActions } from '../actions/GraphActions';
-import { NamespaceActions, NamespaceThunkActions } from '../actions/NamespaceAction';
+import { NamespaceActions } from '../actions/NamespaceAction';
+import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import Namespace, { namespaceFromString } from '../types/Namespace';
 import ToolbarDropdown from './ToolbarDropdown/ToolbarDropdown';
 
@@ -12,7 +14,7 @@ interface NamespaceListType {
   disabled: boolean;
   activeNamespace: Namespace;
   items: Namespace[];
-  setActiveNamespace: (namespace: Namespace) => void;
+  setActiveNamespace: (namespace: string) => void;
   refresh: () => void;
 }
 
@@ -53,12 +55,12 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    items: namespaceItemsSelector(state),
+    items: namespaceItemsSelector(state)!,
     activeNamespace: activeNamespacesSelector(state)[0]
   };
 };
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());

@@ -13,7 +13,7 @@ export interface GlobalState {
 
 export interface NamespaceState {
   readonly activeNamespaces: Namespace[];
-  readonly items?: string[];
+  readonly items?: Namespace[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;
 }
@@ -69,7 +69,7 @@ export interface LoginState {
   message: string;
   logged: boolean;
   logging: boolean;
-  sessionTimeOut?: Date;
+  sessionTimeOut?: number;
 }
 
 export interface Component {

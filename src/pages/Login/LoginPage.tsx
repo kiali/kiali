@@ -5,7 +5,6 @@ import { KEY_CODES } from '../../types/Common';
 const kialiTitle = require('../../assets/img/logo-login.svg');
 
 type LoginProps = {
-  user: { username: string; password: string } | undefined;
   logging: boolean;
   error: any;
   message: string;

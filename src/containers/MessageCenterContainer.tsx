@@ -1,10 +1,13 @@
 import { connect } from 'react-redux';
-
-import { MessageCenterActions, MessageCenterThunkActions } from '../actions/MessageCenterActions';
+import { ThunkDispatch } from 'redux-thunk';
+import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageCenter, MessageCenterTrigger } from '../components/MessageCenter';
-import { MessageType } from '../types/MessageCenter';
+import { MessageType, NotificationGroup, NotificationMessage } from '../types/MessageCenter';
+import { KialiAppState } from '../store/Store';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import MessageCenterThunkActions from '../actions/MessageCenterThunkActions';
 
-const mapStateToPropsMessageCenter = state => {
+const mapStateToPropsMessageCenter = (state: KialiAppState) => {
   return {
     groups: state.messageCenter.groups,
     drawerIsHidden: state.messageCenter.hidden,
@@ -13,9 +16,9 @@ const mapStateToPropsMessageCenter = state => {
   };
 };
 
-const mapDispatchToPropsMessageCenter = dispatch => {
+const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    onExpandDrawer: () => dispatch(MessageCenterActions.togleExpandedMessageCenter()),
+    onExpandDrawer: () => dispatch(MessageCenterActions.toggleExpandedMessageCenter()),
     onHideDrawer: () => dispatch(MessageCenterActions.hideMessageCenter()),
     onToggleGroup: group => dispatch(MessageCenterActions.toggleGroup(group.id)),
     onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
@@ -31,12 +34,13 @@ const mapDispatchToPropsMessageCenter = dispatch => {
   };
 };
 
-const mapStateToPropsMessageCenterTrigger = state => {
+const mapStateToPropsMessageCenterTrigger = (state: KialiAppState) => {
   type MessageCenterTriggerPropsToMap = {
     newMessagesCount: number;
     badgeDanger: boolean;
     systemErrorsCount: number;
   };
+
   const dangerousMessageTypes = [MessageType.ERROR, MessageType.WARNING];
   let systemErrorsCount = 0;
 
@@ -46,9 +50,9 @@ const mapStateToPropsMessageCenterTrigger = state => {
   }
 
   return state.messageCenter.groups
-    .reduce((unreadMessages: any[], group) => {
+    .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
       return unreadMessages.concat(
-        group.messages.reduce((unreadMessagesInGroup: any[], message) => {
+        group.messages.reduce((unreadMessagesInGroup: NotificationMessage[], message: NotificationMessage) => {
           if (!message.seen) {
             unreadMessagesInGroup.push(message);
           }
@@ -57,7 +61,7 @@ const mapStateToPropsMessageCenterTrigger = state => {
       );
     }, [])
     .reduce(
-      (propsToMap: MessageCenterTriggerPropsToMap, message) => {
+      (propsToMap: MessageCenterTriggerPropsToMap, message: NotificationMessage) => {
         propsToMap.newMessagesCount++;
         propsToMap.badgeDanger = propsToMap.badgeDanger || dangerousMessageTypes.includes(message.type);
         return propsToMap;
@@ -66,20 +70,19 @@ const mapStateToPropsMessageCenterTrigger = state => {
     );
 };
 
-const mapDispatchToPropsMessageCenterTrigger = dispatch => {
+const mapDispatchToPropsMessageCenterTrigger = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
     toggleSystemErrorsCenter: () => dispatch(MessageCenterThunkActions.toggleSystemErrorsCenter())
   };
 };
 
-const MessageCenterContainer = connect(
+export const MessageCenterContainer = connect(
   mapStateToPropsMessageCenter,
   mapDispatchToPropsMessageCenter
 )(MessageCenter);
-MessageCenterContainer.Trigger = connect(
+
+export const MessageCenterTriggerContainer = connect(
   mapStateToPropsMessageCenterTrigger,
   mapDispatchToPropsMessageCenterTrigger
 )(MessageCenterTrigger);
-
-export default MessageCenterContainer;

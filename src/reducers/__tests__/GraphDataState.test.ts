@@ -8,7 +8,7 @@ import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
-    expect(graphDataState(undefined, GlobalActions.nil())).toEqual({
+    expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
       error: undefined,
       isLoading: false,
       isError: false,

@@ -15,8 +15,4 @@ export const UserSettingsActions = {
   setRefreshInterval: createStandardAction(UserSettingsActionKeys.SET_REFRESH_INTERVAL)<PollIntervalInMs>()
 };
 
-export const UserSettingsThunkActions = {
-  setNavCollapsed: (collapsed: boolean) => dispatch => dispatch(UserSettingsActions.navCollapse(collapsed))
-};
-
 export type UserSettingsAction = ActionType<typeof UserSettingsActions>;

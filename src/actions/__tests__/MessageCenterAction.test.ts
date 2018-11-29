@@ -1,4 +1,5 @@
-import { MessageCenterActions, MessageCenterThunkActions } from '../MessageCenterActions';
+import { MessageCenterActions } from '../MessageCenterActions';
+import MessageCenterThunkActions from '../MessageCenterThunkActions';
 import { MessageType } from '../../types/MessageCenter';
 
 import thunk from 'redux-thunk';

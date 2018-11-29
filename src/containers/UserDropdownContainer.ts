@@ -1,15 +1,18 @@
-import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
-import UserDropdown from '../components/Nav/UserDropdown';
+import { ThunkDispatch } from 'redux-thunk';
 
-import { LoginActions, LoginThunkActions } from '../actions/LoginActions';
+import UserDropdown from '../components/Nav/UserDropdown';
+import { KialiAppState } from '../store/Store';
+import { KialiAppAction } from '../actions/KialiAppAction';
+import { LoginActions } from '../actions/LoginActions';
+import LoginThunkActions from '../actions/LoginThunkActions';
 
 const mapStateToProps = (state: KialiAppState) => ({
   username: state.authentication.username,
   sessionTimeOut: state.authentication.sessionTimeOut
 });
 
-const mapDispatchToProps = (dispatch: any) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   logout: () => dispatch(LoginActions.logoutSuccess()),
   extendSession: () => dispatch(LoginThunkActions.extendSession())
 });

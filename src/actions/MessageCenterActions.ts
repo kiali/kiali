@@ -1,5 +1,5 @@
-import { MessageType } from '../types/MessageCenter';
 import { ActionType, createAction } from 'typesafe-actions';
+import { MessageType } from '../types/MessageCenter';
 
 const DEFAULT_GROUP_ID = 'default';
 const DEFAULT_MESSAGE_TYPE = MessageType.ERROR;
@@ -40,54 +40,7 @@ export const MessageCenterActions = {
   ),
   showMessageCenter: createAction(MessageCenterActionKeys.SHOW),
   hideMessageCenter: createAction(MessageCenterActionKeys.HIDE),
-  togleExpandedMessageCenter: createAction(MessageCenterActionKeys.TOGGLE_EXPAND)
-};
-
-export const MessageCenterThunkActions = {
-  toggleMessageCenter: () => {
-    return (dispatch, getState) => {
-      const state = getState();
-      if (state.messageCenter.hidden) {
-        dispatch(MessageCenterActions.showMessageCenter());
-        dispatch(MessageCenterActions.expandGroup('default'));
-      } else {
-        dispatch(MessageCenterActions.hideMessageCenter());
-      }
-      return Promise.resolve();
-    };
-  },
-  toggleSystemErrorsCenter: () => {
-    return (dispatch, getState) => {
-      const state = getState();
-      if (state.messageCenter.hidden) {
-        dispatch(MessageCenterActions.showMessageCenter());
-        dispatch(MessageCenterActions.expandGroup('systemErrors'));
-      } else {
-        dispatch(MessageCenterActions.hideMessageCenter());
-      }
-      return Promise.resolve();
-    };
-  },
-  markGroupAsRead: (groupId: string) => {
-    return (dispatch, getState) => {
-      const state = getState();
-      const foundGroup = state.messageCenter.groups.find(group => group.id === groupId);
-      if (foundGroup) {
-        dispatch(MessageCenterActions.markAsRead(foundGroup.messages.map(message => message.id)));
-      }
-      return Promise.resolve();
-    };
-  },
-  clearGroup: (groupId: string) => {
-    return (dispatch, getState) => {
-      const state = getState();
-      const foundGroup = state.messageCenter.groups.find(group => group.id === groupId);
-      if (foundGroup) {
-        dispatch(MessageCenterActions.removeMessage(foundGroup.messages.map(message => message.id)));
-      }
-      return Promise.resolve();
-    };
-  }
+  toggleExpandedMessageCenter: createAction(MessageCenterActionKeys.TOGGLE_EXPAND)
 };
 
 export type MessageCenterAction = ActionType<typeof MessageCenterActions>;

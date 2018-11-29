@@ -1,14 +1,17 @@
-import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
+import * as React from 'react';
 import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { GraphFilterActions } from '../../actions/GraphFilterActions';
-import { KialiAppState, GraphFilterState } from '../../store/Store';
+import { Omit } from 'react-router';
 import { HistoryManager, URLParams } from '../../app/History';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import { GraphFilterState, KialiAppState } from '../../store/Store';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
-type ReduxProps = GraphFilterState & {
+type ReduxProps = Omit<GraphFilterState, 'showLegend'> & {
   // Dispatch methods
   toggleGraphCircuitBreakers(): void;
   toggleGraphMissingSidecars(): void;
@@ -194,7 +197,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: any) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),

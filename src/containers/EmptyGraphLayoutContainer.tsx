@@ -13,7 +13,9 @@ import * as _ from 'lodash';
 import { KialiAppState } from '../store/Store';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
+import { KialiAppAction } from '../actions/KialiAppAction';
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
@@ -22,7 +24,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: any) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     displayUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
   };

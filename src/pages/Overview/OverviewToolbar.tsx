@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
 import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
@@ -19,6 +18,8 @@ import { FiltersAndSorts } from './FiltersAndSorts';
 import NamespaceInfo from './NamespaceInfo';
 import { HistoryManager, URLParams } from '../../app/History';
 import RefreshContainer from '../../containers/RefreshContainer';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { ThunkDispatch } from 'redux-thunk';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -49,7 +50,7 @@ type State = {
 
 const DURATIONS = config().toolbar.intervalDuration;
 
-class OverviewToolbar extends React.Component<Props, State> {
+export class OverviewToolbar extends React.Component<Props, State> {
   static currentOverviewType(): OverviewType {
     const otype = ListPagesHelper.getSingleQueryParam(URLParams.OVERVIEW_TYPE);
     if (otype === undefined) {
@@ -159,11 +160,7 @@ class OverviewToolbar extends React.Component<Props, State> {
           />
         </FormGroup>
         <ToolbarRightContent>
-          <RefreshContainer
-            id="overview-refresh"
-            handleRefresh={this.props.onRefresh}
-            pollInterval={this.props.refreshInterval}
-          />
+          <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} />
         </ToolbarRightContent>
       </StatefulFilters>
     );
@@ -175,7 +172,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setDuration: (duration: DurationInSeconds) => {
       dispatch(UserSettingsActions.setDuration(duration));

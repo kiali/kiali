@@ -4,7 +4,7 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 
 describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
-    expect(namespaceState(undefined, GlobalActions.nil())).toEqual({
+    expect(namespaceState(undefined, GlobalActions.unknown())).toEqual({
       isFetching: false,
       activeNamespaces: [{ name: 'all' }],
       items: [],
@@ -100,14 +100,17 @@ describe('Namespaces reducer', () => {
     const currentState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
-      items: ['old', 'namespace'],
+      items: [{ name: 'old' }, { name: 'namespace' }],
       lastUpdated: undefined
     };
-    const requestStartedAction = NamespaceActions.receiveList(['a', 'b', 'c'], currentDate);
+    const requestStartedAction = NamespaceActions.receiveList(
+      [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
+      currentDate
+    );
     const expectedState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
-      items: ['a', 'b', 'c'],
+      items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);

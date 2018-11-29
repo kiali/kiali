@@ -9,7 +9,7 @@ enum GlobalActionKeys {
 }
 
 export const GlobalActions = {
-  nil: createAction('KIALI_NIL'), // helper for testing
+  unknown: createAction('KIALI_UNKNOWN'), // helper for testing
   incrementLoadingCounter: createAction(GlobalActionKeys.INCREMENT_LOADING_COUNTER),
   decrementLoadingCounter: createAction(GlobalActionKeys.DECREMENT_LOADING_COUNTER),
   setPageVisibilityHidden: createAction(GlobalActionKeys.SET_PAGE_VISIBILITY_HIDDEN),

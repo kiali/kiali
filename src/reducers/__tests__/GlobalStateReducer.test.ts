@@ -3,7 +3,7 @@ import { GlobalActions } from '../../actions/GlobalActions';
 
 describe('GlobalState reducer', () => {
   it('should return the initial state', () => {
-    expect(globalState(undefined, GlobalActions.nil())).toEqual({
+    expect(globalState(undefined, GlobalActions.unknown())).toEqual({
       loadingCounter: 0,
       isPageVisible: true
     });
