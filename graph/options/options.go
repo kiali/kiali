@@ -77,36 +77,69 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
-	duration, durationErr := time.ParseDuration(params.Get("duration"))
+	var duration time.Duration
+	var includeIstio bool
+	var injectServiceNodes bool
+	var queryTime int64
+	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
-	includeIstio, includeIstioErr := strconv.ParseBool(params.Get("includeIstio"))
-	injectServiceNodes, injectServiceNodesErr := strconv.ParseBool(params.Get("injectServiceNodes"))
-	namespaces := params.Get("namespaces") // csl of namespaces.
-	queryTime, queryTimeErr := strconv.ParseInt(params.Get("queryTime"), 10, 64)
+	includeIstioString := params.Get("includeIstio")
+	injectServiceNodesString := params.Get("injectServiceNodes")
+	namespaces := params.Get("namespaces") // csl of namespaces
+	queryTimeString := params.Get("queryTime")
 	vendor := params.Get("vendor")
 
-	// Set defaults, if needed.
-	if durationErr != nil {
+	if durationString == "" {
 		duration, _ = time.ParseDuration(defaultDuration)
+	} else {
+		var durationErr error
+		duration, durationErr = time.ParseDuration(durationString)
+		if durationErr != nil {
+			checkError(errors.New(fmt.Sprintf("Invalid duration [%s]", durationString)))
+		}
 	}
-	if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
+	if graphType == "" {
 		graphType = defaultGraphType
+	} else if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
+		checkError(errors.New(fmt.Sprintf("Invalid graphType [%s]", graphType)))
 	}
-	if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
+	if groupBy == "" {
 		groupBy = defaultGroupBy
+	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
+		checkError(errors.New(fmt.Sprintf("Invalid groupBy [%s]", groupBy)))
 	}
-	if includeIstioErr != nil {
+	if includeIstioString == "" {
 		includeIstio = defaultIncludeIstio
+	} else {
+		var includeIstioErr error
+		includeIstio, includeIstioErr = strconv.ParseBool(includeIstioString)
+		if includeIstioErr != nil {
+			checkError(errors.New(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString)))
+		}
 	}
-	if injectServiceNodesErr != nil {
+	if injectServiceNodesString == "" {
 		injectServiceNodes = defaultInjectServiceNodes
+	} else {
+		var injectServiceNodesErr error
+		injectServiceNodes, injectServiceNodesErr = strconv.ParseBool(injectServiceNodesString)
+		if injectServiceNodesErr != nil {
+			checkError(errors.New(fmt.Sprintf("Invalid injectServiceNodes [%s]", injectServiceNodesString)))
+		}
 	}
-	if queryTimeErr != nil {
+	if queryTimeString == "" {
 		queryTime = time.Now().Unix()
+	} else {
+		var queryTimeErr error
+		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
+		if queryTimeErr != nil {
+			checkError(errors.New(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString)))
+		}
 	}
-	if vendor != VendorCytoscape {
+	if vendor == "" {
 		vendor = defaultVendor
+	} else if vendor != VendorCytoscape {
+		checkError(errors.New(fmt.Sprintf("Invalid vendor [%s]", vendor)))
 	}
 
 	// Process namespaces options:
@@ -215,7 +248,7 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 			case "":
 				// skip
 			default:
-				checkError(errors.New(fmt.Sprintf("Unexpected appender [%s]", strings.TrimSpace(requestedAppender))))
+				checkError(errors.New(fmt.Sprintf("Invalid appender [%s]", strings.TrimSpace(requestedAppender))))
 			}
 		}
 	} else {
