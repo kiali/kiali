@@ -9,7 +9,6 @@
 
 # testing
 /coverage
-kiali-browser-test.png
 
 # production
 /build
