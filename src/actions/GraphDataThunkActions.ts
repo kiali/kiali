@@ -52,21 +52,21 @@ const GraphDataThunkActions = {
       }
 
       // Some appenders are expensive so only specify an appender if needed.
-      let appenders: AppenderString = 'dead_node,sidecars_check,istio';
+      let appenders: AppenderString = 'deadNode,sidecarsCheck,serviceEntry,istio';
 
       if (!node && showUnusedNodes) {
-        // note we only use the unused_node appender if this is NOT a drilled-in node graph and
+        // note we only use the unusedNode appender if this is NOT a drilled-in node graph and
         // the user specifically requests to see unused nodes.
-        appenders += ',unused_node';
+        appenders += ',unusedNode';
       }
 
       if (showSecurity) {
-        appenders += ',security_policy';
+        appenders += ',securityPolicy';
       }
 
       switch (edgeLabelMode) {
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE:
-          appenders += ',response_time';
+          appenders += ',responseTime';
           break;
 
         case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND:

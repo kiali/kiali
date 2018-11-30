@@ -231,7 +231,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               <Label name={serverConfig().istioLabels['VersionLabelName']} value={node.data('version')} />
             )}
           </div>
-          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
+          {this.renderBadgeSummary(
+            node.data('hasCB'),
+            node.data('isServiceEntry'),
+            node.data('hasVS'),
+            node.data('hasMissingSC')
+          )}
         </div>
         <div className="panel-body">
           {shouldRenderSvcList && (
@@ -361,25 +366,34 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private renderBadgeSummary = (hasCB: boolean, hasVS: boolean, hasMissingSC: boolean) => {
+  // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
+  private renderBadgeSummary = (hasCB: boolean, isServiceEntry: string, hasVS: boolean, hasMissingSC: boolean) => {
     return (
       <>
         {hasCB && (
           <div>
             <Icon name="bolt" type="fa" style={{ width: '10px' }} />
-            Has Circuit Breaker
+            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
+        {
+          // isServiceEntry !== undefined && (
+          // <div>
+          // <Icon name="services" type="pf" style={{ width: '10px' }} />
+          //  <span style={{ paddingLeft: '4px' }}>Is Service Entry ({isServiceEntry})</span>
+          // </div>
+          // )
+        }
         {hasVS && (
           <div>
             <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
-            Has Virtual Service
+            <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
         {hasMissingSC && (
           <div>
             <Icon name="exclamation" type="fa" style={{ width: '10px' }} />
-            Has Missing Sidecar
+            <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
           </div>
         )}
       </>

@@ -40,12 +40,12 @@ const decorateGraphData = (graphData: any) => {
       hasMissingSC: undefined,
       hasVS: undefined,
       isDead: undefined,
-      isEgress: undefined,
       isGroup: undefined,
       isInaccessible: undefined,
       isMisconfigured: undefined,
       isOutside: undefined,
       isRoot: undefined,
+      isServiceEntry: undefined,
       isUnused: undefined
     }
   };

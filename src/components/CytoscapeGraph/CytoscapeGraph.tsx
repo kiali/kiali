@@ -613,8 +613,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           appHealthPerNamespace.set(namespace, promise);
         }
         this.updateNodeHealth(ele, promise, app);
+        // TODO: If we want to block health checks for service entries, uncomment this (see kiali-2029)
+        // } else if (nodeType === NodeType.SERVICE && !ele.data('isServiceEntry')) {
       } else if (nodeType === NodeType.SERVICE) {
         const service = ele.data('service');
+
         let promise = serviceHealthPerNamespace.get(namespace);
         if (!promise) {
           promise = API.getNamespaceServiceHealth(authentication(), namespace, duration);

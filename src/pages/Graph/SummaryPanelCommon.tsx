@@ -11,17 +11,17 @@ import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 
 export interface NodeData {
-  namespace: string;
   app: string;
-  version: string;
-  workload: string;
-  service: string;
-  nodeType: NodeType;
   hasParent: boolean;
+  isInaccessible: boolean;
   isOutsider: boolean;
   isRoot: boolean;
-  isEgress: boolean;
-  isInaccessible: boolean;
+  isServiceEntry: boolean;
+  namespace: string;
+  nodeType: NodeType;
+  service: string;
+  version: string;
+  workload: string;
 }
 
 export enum NodeMetricType {
@@ -60,17 +60,17 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
 
 export const nodeData = (node: any): NodeData => {
   return {
-    namespace: node.data('namespace'),
     app: node.data('app'),
-    version: node.data('version'),
-    workload: node.data('workload'),
-    nodeType: node.data('nodeType'),
     hasParent: !!node.data('parent'),
-    service: node.data('service'),
+    isInaccessible: node.data('isInaccessible'),
     isOutsider: node.data('isOutsider'),
     isRoot: node.data('isRoot'),
-    isEgress: node.data('isEgress'),
-    isInaccessible: node.data('isInaccessible')
+    isServiceEntry: node.data('isServiceEntry'),
+    namespace: node.data('namespace'),
+    nodeType: node.data('nodeType'),
+    service: node.data('service'),
+    version: node.data('version'),
+    workload: node.data('workload')
   };
 };
 

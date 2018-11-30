@@ -13,7 +13,7 @@ export const nodeTypeToString = (nodeType: string) => {
 };
 
 const isInaccessible = (data: NodeData): boolean => {
-  return data.isInaccessible || data.isEgress;
+  return data.isInaccessible || data.isServiceEntry;
 };
 
 const getLink = (data: NodeData, nodeType?: NodeType) => {
@@ -33,7 +33,7 @@ const getLink = (data: NodeData, nodeType?: NodeType) => {
       displayName = app;
       break;
     case NodeType.SERVICE:
-      if (!data.isEgress) {
+      if (!data.isServiceEntry) {
         link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
         key = `${namespace}.svc.${service}`;
       }
@@ -99,17 +99,17 @@ export const renderDestServicesLinks = (node: any) => {
   }
 
   const serviceNodeData: NodeData = {
-    namespace: data.namespace,
     app: '',
-    version: '',
-    workload: '',
-    nodeType: NodeType.SERVICE,
     hasParent: false,
-    service: '',
+    isInaccessible: data.isInaccessible,
     isOutsider: data.isOutsider,
     isRoot: data.isRoot,
-    isEgress: data.isEgress,
-    isInaccessible: data.isInaccessible
+    isServiceEntry: data.isServiceEntry,
+    namespace: data.namespace,
+    nodeType: NodeType.SERVICE,
+    service: '',
+    version: '',
+    workload: ''
   };
 
   Object.keys(destServices).forEach(k => {
