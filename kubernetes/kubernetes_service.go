@@ -69,7 +69,7 @@ func (in *IstioClient) GetProjects() ([]osv1.Project, error) {
 func (in *IstioClient) IsOpenShift() bool {
 	if in.isOpenShift == nil {
 		isOpenShift := false
-		_, err := in.k8s.RESTClient().Get().AbsPath("/version/openshift").Do().Raw()
+		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/project.openshift.io").Do().Raw()
 		if err == nil {
 			isOpenShift = true
 		}
