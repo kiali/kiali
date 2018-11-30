@@ -108,7 +108,7 @@ export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
   globalState: GlobalState;
-  grafanaInfo?: GrafanaInfo;
+  grafanaInfo: GrafanaInfo | null;
   statusState: StatusState;
   /** Page Settings */
   authentication: LoginState;
