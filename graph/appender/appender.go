@@ -13,9 +13,9 @@ import (
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type GlobalInfo struct {
-	Business         *business.Layer
-	ExternalServices map[string]bool
-	PromClient       *prometheus.Client
+	Business       *business.Layer
+	PromClient     *prometheus.Client
+	ServiceEntries map[string]string
 }
 
 func NewGlobalInfo() *GlobalInfo {

@@ -1,11 +1,8 @@
 package appender
 
 import (
-	"time"
-
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -13,14 +10,10 @@ const DeadNodeAppenderName = "deadNode"
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
 // - nodes for which there is no traffic reported and the related schema is missing
 //   (presumably removed from K8S). (kiali-621)
-// - service nodes for which there is no incoming error traffic and no outgoing
-//   edges (kiali-1326). Kiali-1526 adds an exclusion to this rule. Egress is a special
-//   terminal service node and we want to show it even if it has no incoming traffic
-//   for the time period.
+// - service nodes that are not service entries (kiali-1526) and for which there is no incoming
+//   error traffic and no outgoing edges (kiali-1326).
 // Name: deadNode
-type DeadNodeAppender struct {
-	AccessibleNamespaces map[string]time.Time
-}
+type DeadNodeAppender struct{}
 
 // Name implements Appender
 func (a DeadNodeAppender) Name() string {
@@ -59,11 +52,8 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 				continue
 			}
 
-			// A service node with no outgoing edges may be an egress.
-			// If so flag it, don't discard it (kiali-1526, see also kiali-2014).
-			// The flag will be passed to the UI to inhibit links to non-existent detail pages.
-			if a.isExternalService(n.Service, namespaceInfo, globalInfo) {
-				n.Metadata["isEgress"] = true
+			// A service node that is a service entry is never considered dead
+			if _, ok := n.Metadata["isServiceEntry"]; ok {
 				continue
 			}
 
@@ -120,35 +110,4 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 		}
 		s.Edges = goodEdges
 	}
-}
-
-// isExternalService queries the cluster API to resolve egress services
-// by using ServiceEntries resources across all namespaces in the cluster.
-// All ServiceEntries are needed because Istio does not distinguish where the
-// ServiceEntries are created when routing egress traffic (i.e. a ServiceEntry
-// can be in any namespace and it will still work).
-// However, an egress service will have its namespace set to "default" in the telemetry.
-func (a DeadNodeAppender) isExternalService(service string, namespaceInfo *NamespaceInfo, globalInfo *GlobalInfo) bool {
-	if globalInfo.ExternalServices == nil {
-		globalInfo.ExternalServices = make(map[string]bool)
-
-		for ns := range a.AccessibleNamespaces {
-			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
-				IncludeServiceEntries: true,
-				Namespace:             ns,
-			})
-			checkError(err)
-
-			for _, entry := range istioCfg.ServiceEntries {
-				if entry.Spec.Hosts != nil && entry.Spec.Location == "MESH_EXTERNAL" {
-					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						globalInfo.ExternalServices[host.(string)] = true
-					}
-				}
-			}
-		}
-		log.Tracef("Found [%v] egress service entries", len(globalInfo.ExternalServices))
-	}
-
-	return globalInfo.ExternalServices[service]
 }
