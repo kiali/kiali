@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { Validations } from '../../types/IstioObjects';
-import { Row, Col, Button, Icon, TabContainer, TabContent, TabPane, Nav, NavItem } from 'patternfly-react';
+import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
+import { WorkloadInfoRoutes } from '../../components/InfoRoutes/WorkloadInfoRoutes';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -55,6 +56,8 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     const pods = workload.pods || [];
     const services = workload.services || [];
     const validationChecks = this.validationChecks();
+    const destinationServices = {};
+    destinationServices[workload.name] = workload.destinationServices || [];
 
     const getSeverityIcon: any = (severity: string = 'error') => (
       <span>
@@ -109,6 +112,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                         : undefined}
                     </NavItem>
                     <NavItem eventKey={'services'}>{'Services (' + services.length + ')'}</NavItem>
+                    <NavItem eventKey={'destinationServices'}>
+                      {'Destination Services (' + workload.destinationServices.length + ')'}
+                    </NavItem>
                   </Nav>
                   <TabContent>
                     <TabPane eventKey={'pods'}>
@@ -116,6 +122,11 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                     </TabPane>
                     <TabPane eventKey={'services'}>
                       {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
+                    </TabPane>
+                    <TabPane eventKey={'destinationServices'}>
+                      {workload.destinationServices.length > 0 && (
+                        <WorkloadInfoRoutes dependencies={destinationServices} />
+                      )}
                     </TabPane>
                   </TabContent>
                 </div>
