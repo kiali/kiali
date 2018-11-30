@@ -9,6 +9,8 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
+import Label from '../../components/Label/Label';
+import { serverConfig } from '../../config';
 
 export interface NodeData {
   app: string;
@@ -142,6 +144,20 @@ export const getDatapoints = (
     }
   }
   return graphUtils.toC3Columns(series, title);
+};
+
+export const renderLabels = (data: NodeData) => {
+  const hasNamespace =
+    data.nodeType !== NodeType.UNKNOWN && !(data.nodeType === NodeType.SERVICE && data.isServiceEntry);
+  const hasVersion = hasNamespace && data.version;
+  return (
+    <>
+      <div className="label-collection" style={{ paddingTop: '3px' }}>
+        {hasNamespace && <Label name="namespace" value={data.namespace} />}
+        {hasVersion && <Label name={serverConfig().istioLabels['VersionLabelName']} value={data.version} />}
+      </div>
+    </>
+  );
 };
 
 export const renderNoTraffic = (protocol?: string) => {

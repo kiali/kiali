@@ -13,9 +13,9 @@ import {
   getNodeMetricType,
   renderNoTraffic,
   NodeData,
-  NodeMetricType
+  NodeMetricType,
+  renderLabels
 } from './SummaryPanelCommon';
-import Label from '../../components/Label/Label';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
@@ -95,20 +95,19 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     const HeadingBlock = ({ prefix, node }) => {
       const data = nodeData(node);
-      const { namespace, version } = data;
       return (
         <div className="panel-heading label-collection">
           <strong>{prefix}</strong> {renderTitle(data)}
           <br />
-          {this.renderLabels(namespace, version)}
+          {renderLabels(data)}
         </div>
       );
     };
 
     return (
       <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
-        <HeadingBlock prefix="Source" node={source} />
-        <HeadingBlock prefix="Destination" node={dest} />
+        <HeadingBlock prefix="From" node={source} />
+        <HeadingBlock prefix="To" node={dest} />
         <div className="panel-body">
           {hasHttpTraffic ? (
             <>
@@ -317,13 +316,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   private safeRate = (s: string) => {
     return s === undefined ? 0.0 : Number(s);
   };
-
-  private renderLabels = (ns: string, ver: string) => (
-    <div style={{ paddingTop: '3px' }}>
-      <Label name="namespace" value={ns} />
-      {ver && <Label name={serverConfig().istioLabels['VersionLabelName']} value={ver} />}
-    </div>
-  );
 
   private renderCharts = (edge, hasHttpTraffic, hasTcpTraffic) => {
     if (!this.hasSupportedCharts(edge)) {

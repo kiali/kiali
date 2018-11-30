@@ -54,6 +54,7 @@ export interface NodeParamsType {
 // We can add more props to this scratch data as the need arises.
 export const CytoscapeGlobalScratchNamespace = '_global';
 export type CytoscapeGlobalScratchData = {
+  activeNamespaces: Namespace[];
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   showCircuitBreakers: boolean;

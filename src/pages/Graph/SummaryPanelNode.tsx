@@ -16,10 +16,10 @@ import {
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
+  renderLabels,
   renderNoTraffic
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
-import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
@@ -202,7 +202,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   render() {
     const node = this.props.data.summaryTarget;
     const data: NodeData = nodeData(node);
-    const { namespace, nodeType, workload } = data;
+    const { nodeType, workload } = data;
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(node);
 
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
@@ -225,12 +225,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             )
           )}
           <span> {renderTitle(data)}</span>
-          <div className="label-collection" style={{ paddingTop: '3px' }}>
-            <Label name="namespace" value={namespace} />
-            {node.data('version') && (
-              <Label name={serverConfig().istioLabels['VersionLabelName']} value={node.data('version')} />
-            )}
-          </div>
+          {renderLabels(data)}
           {this.renderBadgeSummary(
             node.data('hasCB'),
             node.data('isServiceEntry'),

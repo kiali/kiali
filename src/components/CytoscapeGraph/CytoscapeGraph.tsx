@@ -358,6 +358,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     const globalScratchData: CytoscapeGlobalScratchData = {
+      activeNamespaces: this.props.activeNamespaces,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
       showCircuitBreakers: this.props.showCircuitBreakers,
@@ -451,10 +452,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
 
+    if (target.data('isInaccessible')) {
+      return;
+    }
     if (target.data('isOutside')) {
-      if (!target.data('isInaccessible')) {
-        this.props.setActiveNamespaces([{ name: target.data('namespace') }]);
-      }
+      this.props.setActiveNamespaces([{ name: target.data('namespace') }]);
       return;
     }
 

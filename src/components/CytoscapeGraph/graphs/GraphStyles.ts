@@ -121,16 +121,14 @@ export class GraphStyles {
     };
 
     const getNodeBackgroundImage = (ele: any): string => {
+      const isInaccessible = ele.data('isInaccessible');
+      if (isInaccessible) {
+        return NodeImageOutLocked;
+      }
       const isOutside = ele.data('isOutside');
       const isGroup = ele.data('isGroup');
-      const isInaccessible = ele.data('isInaccessible');
-
       if (isOutside && !isGroup) {
-        if (isInaccessible) {
-          return NodeImageOutLocked;
-        } else {
-          return NodeImageOut;
-        }
+        return NodeImageOut;
       }
       return 'none';
     };
@@ -146,13 +144,16 @@ export class GraphStyles {
     };
 
     const getNodeLabel = (ele: any): string => {
-      const nodeType = ele.data('nodeType');
-      const namespace = ele.data('namespace');
       const app = ele.data('app');
+      const cyGlobal = getCyGlobalData(ele);
+      const isServiceEntry = ele.data('isServiceEntry') !== undefined;
+      const namespace = ele.data('namespace');
+      const nodeType = ele.data('nodeType');
+      const service = ele.data('service');
       const version = ele.data('version');
       const workload = ele.data('workload');
-      const service = ele.data('service');
-      const cyGlobal = getCyGlobalData(ele);
+      const numNS = cyGlobal.activeNamespaces.length;
+      const isMultiNamespace = numNS > 1 || (numNS === 1 && cyGlobal.activeNamespaces[0].name === 'all');
       let content = '';
 
       if (getCyGlobalData(ele).showNodeLabels) {
@@ -196,7 +197,7 @@ export class GraphStyles {
               content = 'error';
           }
 
-          if (ele.data('isOutside')) {
+          if ((isMultiNamespace || ele.data('isOutside')) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
             content += `\n${namespace}`;
           }
         }

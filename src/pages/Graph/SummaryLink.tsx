@@ -6,7 +6,7 @@ import { nodeData, NodeData } from './SummaryPanelCommon';
 
 export const nodeTypeToString = (nodeType: string) => {
   if (nodeType === NodeType.UNKNOWN) {
-    return 'Service';
+    return 'Traffic Source';
   }
 
   return nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
