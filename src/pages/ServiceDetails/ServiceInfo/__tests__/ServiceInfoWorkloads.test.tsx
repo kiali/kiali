@@ -7,6 +7,7 @@ const workloads: WorkloadOverview[] = [
   {
     name: 'reviews-v2',
     type: 'Deployment',
+    istioSidecar: true,
     resourceVersion: '081020181987',
     createdAt: '2018-03-14T10:17:52Z"',
     labels: { app: 'reviews', version: 'v2' }
@@ -14,6 +15,7 @@ const workloads: WorkloadOverview[] = [
   {
     name: 'reviews-v3',
     type: 'Deployment',
+    istioSidecar: true,
     resourceVersion: '081020181987',
     createdAt: '2018-03-14T10:17:52Z"',
     labels: { app: 'reviews', version: 'v3' }
@@ -21,6 +23,7 @@ const workloads: WorkloadOverview[] = [
   {
     name: 'reviews-v1',
     type: 'Deployment',
+    istioSidecar: true,
     resourceVersion: '081020181987',
     createdAt: '2018-03-14T10:17:52Z"',
     labels: { app: 'reviews', version: 'v1' }

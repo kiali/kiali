@@ -73,6 +73,7 @@ ShallowWrapper {
                 color="red"
                 name="blueprint"
                 text="Missing Sidecar"
+                tooltip={false}
                 type="pf"
               />
             </span>
@@ -137,6 +138,7 @@ ShallowWrapper {
                 color="red"
                 name="blueprint"
                 text="Missing Sidecar"
+                tooltip={false}
                 type="pf"
               />
             </span>
@@ -171,6 +173,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  tooltip={false}
                   type="pf"
                 />
               </span>,
@@ -204,6 +207,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  tooltip={false}
                   type="pf"
                 />,
                 "style": Object {
@@ -219,6 +223,7 @@ ShallowWrapper {
                   "color": "red",
                   "name": "blueprint",
                   "text": "Missing Sidecar",
+                  "tooltip": false,
                   "type": "pf",
                 },
                 "ref": null,
@@ -398,6 +403,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  tooltip={false}
                   type="pf"
                 />
               </span>
@@ -462,6 +468,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  tooltip={false}
                   type="pf"
                 />
               </span>
@@ -496,6 +503,7 @@ ShallowWrapper {
                     color="red"
                     name="blueprint"
                     text="Missing Sidecar"
+                    tooltip={false}
                     type="pf"
                   />
                 </span>,
@@ -529,6 +537,7 @@ ShallowWrapper {
                     color="red"
                     name="blueprint"
                     text="Missing Sidecar"
+                    tooltip={false}
                     type="pf"
                   />,
                   "style": Object {
@@ -544,6 +553,7 @@ ShallowWrapper {
                     "color": "red",
                     "name": "blueprint",
                     "text": "Missing Sidecar",
+                    "tooltip": false,
                     "type": "pf",
                   },
                   "ref": null,
