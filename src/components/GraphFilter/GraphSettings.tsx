@@ -10,6 +10,8 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { GraphFilterState, KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { GraphType } from '../../types/Graph';
+import { PfColors } from '../Pf/PfColors';
 
 type ReduxProps = Omit<GraphFilterState, 'showLegend'> & {
   // Dispatch methods
@@ -27,6 +29,7 @@ type GraphSettingsProps = ReduxProps;
 
 interface VisibilityLayersType {
   id: string;
+  disabled?: boolean;
   labelText: string;
   value: boolean;
   onChange: () => void;
@@ -90,6 +93,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       },
       {
         id: 'filterServiceNodes',
+        disabled: this.props.graphType === GraphType.SERVICE,
         labelText: 'Service Nodes',
         value: showServiceNodes,
         onChange: toggleServiceNodes
@@ -136,12 +140,13 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     ];
 
     const checkboxStyle = style({ marginLeft: 5 });
+    const disabledCheckboxStyle = style({ marginLeft: 5, color: PfColors.Gray });
 
     const displaySettingItems = visibilityLayers.map((item: VisibilityLayersType) => (
       <div id={item.id} key={item.id}>
         <label>
-          <input type="checkbox" checked={item.value} onChange={() => item.onChange()} />
-          <span className={checkboxStyle}>{item.labelText}</span>
+          <input type="checkbox" checked={item.value} onChange={() => item.onChange()} disabled={item.disabled} />
+          <span className={item.disabled ? disabledCheckboxStyle : checkboxStyle}>{item.labelText}</span>
         </label>
       </div>
     ));
