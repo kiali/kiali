@@ -16,12 +16,15 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
 type WorkloadService struct {
-	k8s kubernetes.IstioClientInterface
+	prom          prometheus.ClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -61,11 +64,41 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	}
 
 	if includeServices {
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		errChan := make(chan error, 1)
+		var destService []prometheus.Service
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			ns, err2 := in.businessLayer.Namespace.GetNamespace(namespace)
+			if err2 != nil {
+				log.Errorf("Error fetching details of namespace %s: %s", namespace, err2)
+				errChan <- err2
+				return
+			}
+
+			destService, err2 = in.prom.GetDestinationServices(ns.Name, ns.CreationTimestamp, workloadName)
+			if err2 != nil {
+				log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, workloadName, err2)
+				errChan <- err2
+			}
+		}()
+
 		services, err := in.k8s.GetServices(namespace, workload.Labels)
 		if err != nil {
 			return nil, err
 		}
 		workload.SetServices(services)
+
+		wg.Wait()
+		if len(errChan) != 0 {
+			err = <-errChan
+			return nil, err
+		}
+
+		workload.SetDestinationServices(destService)
 	}
 
 	return workload, nil
