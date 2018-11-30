@@ -11,7 +11,7 @@
 # To create this simulated external ratings-v1 service, you must run a ratings service
 # youself by executing this command:
 #
-#   $ docker run --network=host istio/examples-bookinfo-ratings-v1
+#   $ docker run -t -i --network=host istio/examples-bookinfo-ratings-v1
 #
 # At this point, you have a ratings service running outside of your local cluster bound
 # to your host's IP on port 9080.
