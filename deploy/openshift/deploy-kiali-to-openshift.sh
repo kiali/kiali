@@ -38,7 +38,7 @@ if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"
-export IMAGE_VERSION="${IMAGE_VERSION:-v0.10}"
+export IMAGE_VERSION="${IMAGE_VERSION:-lastrelease}"
 export VERSION_LABEL="${VERSION_LABEL:-$IMAGE_VERSION}"
 export IMAGE_PULL_POLICY_TOKEN="${IMAGE_PULL_POLICY_TOKEN:-imagePullPolicy: Always}"
 export NAMESPACE="${NAMESPACE:-istio-system}"
@@ -64,6 +64,24 @@ else
   echo "ERROR: You do not have 'envsubst' in your PATH. Please install it and retry."
   echo "If you are on MacOS, you can get this by installing the gettext package"
   exit 1
+fi
+
+# If asking for the last release (which is the default), then pick up the latest release.
+# Note that you could ask for "latest" - that would pick up the current image built from master.
+if [ "${IMAGE_VERSION}" == "lastrelease" ]; then
+  version_we_want=$(curl https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
+    grep  "tag_name" | \
+    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  echo "Will use the last Kiali release: $version_we_want"
+  IMAGE_VERSION=${version_we_want}
+  if [ "${VERSION_LABEL}" == "lastrelease" ]; then
+    VERSION_LABEL=${version_we_want}
+  fi
+else
+  if [ "${IMAGE_VERSION}" == "latest" ]; then
+    echo "Will use the latest Kiali image from master branch"
+    VERSION_LABEL="master"
+  fi
 fi
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
