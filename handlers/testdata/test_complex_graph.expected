@@ -41,6 +41,7 @@
           "app": "unknown",
           "version": "unknown",
           "rateOut": "50.00",
+          "isInaccessible": true,
           "isRoot": true
         }
       }
