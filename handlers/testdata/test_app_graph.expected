@@ -106,6 +106,7 @@
           "version": "unknown",
           "rateOut": "50.00",
           "rateTcpSentOut": "400.00",
+          "isInaccessible": true,
           "isRoot": true
         }
       }

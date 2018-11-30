@@ -106,7 +106,7 @@ func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client) gra
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
-	markOutsiders(trafficMap, o)
+	markOutsideOrInaccessible(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
 	if graph.GraphTypeService == o.GraphType {
@@ -151,12 +151,29 @@ func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 	}
 }
 
-func markOutsiders(trafficMap graph.TrafficMap, o options.Options) {
+func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o options.Options) {
 	for _, n := range trafficMap {
-		if isOutside(n, o.Namespaces) {
-			n.Metadata["isOutside"] = true
-			if isInaccessible(n, o.AccessibleNamespaces) {
+		switch n.NodeType {
+		case graph.NodeTypeUnknown:
+			n.Metadata["isInaccessible"] = true
+		case graph.NodeTypeService:
+			if _, ok := n.Metadata["isServiceEntry"]; ok {
 				n.Metadata["isInaccessible"] = true
+			} else {
+				if isOutside(n, o.Namespaces) {
+					n.Metadata["isOutside"] = true
+				}
+			}
+		default:
+			if isOutside(n, o.Namespaces) {
+				n.Metadata["isOutside"] = true
+			}
+		}
+		if isOutsider, ok := n.Metadata["isOutside"]; ok && isOutsider.(bool) {
+			if _, ok2 := n.Metadata["isInaccessible"]; !ok2 {
+				if isInaccessible(n, o.AccessibleNamespaces) {
+					n.Metadata["isInaccessible"] = true
+				}
 			}
 		}
 	}
@@ -682,7 +699,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the traffic generators
-	markOutsiders(trafficMap, o)
+	markOutsideOrInaccessible(trafficMap, o)
 	markTrafficGenerators(trafficMap)
 
 	// Note that this is where we would call reduceToServiceGraph for graphTypeService but
