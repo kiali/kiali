@@ -1,42 +1,13 @@
 = Releasing Kiali UI
 
-This document covers the specifics of releasing Kiali UI, and is meant as a
-guide for Kiali release managers.
+Kiali is released using a Jenkins Pipeline. The main document covering
+the release process can be found
+link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[here].
 
-The main document covering core can be found link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[here].
+Currently, the Pipeline only supports doing _minor_ releases and will
+publish the UI, the backend and the Docker images all together.
 
-== Requirements
-
-You must have write permissions to the public GitHub repository in order to be
-able to push the tags, but that's pretty much it. Most of our release process
-is done automatically by Travis.
-
-This document also uses 1.0.0 as the new version, just as an example.
-
-== Preparing for a new version
-
-After a release, the first step for a new "batch" of modifications is to update
-link:package.json[] with the new version, and creating a PR for it:
-
-[source, diff]
-----
-diff --git a/package.json b/package.json
-index 7f699b1..08bc0a8 100644
---- a/package.json
-+++ b/package.json
-@@ -1,6 +1,6 @@
- {
-   "name": "@kiali/kiali-ui",
--  "version": "0.5.1",
-+  "version": "1.0.0",
-   "bugs": {
-     "url": "https://issues.jboss.org/projects/KIALI/issues/"
-   },
-----
-
-This is to signal to everyone that everything that goes into master from that
-point forward belongs to that version. Note that this is supposed to be the
-same version that is going to be released for the core, so they are in sync.
+== Versioning scheme
 
 The versioning scheme that we are following is similar to
 link:http://semver.org[semver], but not as strict, given both that we are not
@@ -57,49 +28,69 @@ work with core 0.4.X or core 0.6.X.
 Of course, that's a soft limitation, and your mileage may vary. Sometimes it
 might work just fine, we just don't give any guarantees that it will.
 
-== Creating the Tag
+== Running the release process locally
 
-After the work that goes into a new version is done, the next step is to create
-the tag and push it. Everything else will be taken care by Travis.
+If you don't have access to the Jenkins instance or the release process
+through Jenkins doesn't suit your needs, you may want to run the release
+process _locally_.
 
-Note that only tags or branches in the format `v\#.#.#[.Label]` will trigger
-release tag/branch builds.
+This guide covers releasing only kiali-ui.
 
-[source, bash]
-----
-$ git tag v1.0.0 <hash-of-last-commit-of-release>
-$ git push origin v1.0.0
-----
+=== Requirements
 
-== Creating a Hotfix
+You must have write permissions to the kiali-ui public GitHub repository in
+order to be able to push the tags. You will also need an NPM account that
+is able to publish to the NPM @kiali organization.
 
-Sometimes there's the need of adding a hotfix to an already released version.
-That's what the `patch` number on the version is.
+You will need a working dev environment for kiali-ui (git, npm, yarn, etc).
+You will also need the following tools available in your $PATH:
 
-The first step is to create a new patch branch for the major/minor version if it
-does not yet exist. Create the patch branch based on the release tag:
+* https://stedolan.github.io/jq/[jq] - a JSON processor used to update the
+  package.json file
+* https://github.com/fsaintjacques/semver-tool[semver] shell utility - used
+  to update version numbers
+* make - to run the release process
+* curl - because the release process places PRs using the GitHub API
 
-[source, bash]
-----
-$ git checkout -b v1.0 v1.0.0
-$ git push origin v1.0
-----
+If you want the release process to push a PR for you to prepare the code for
+the next release, you will need a GitHub Token for your account.
 
-Then we cherry-pick the commits that we need, or create PRs targeting this
-branch. Note that commits pushed to this branch might need to be mirrored on
-master, else those commits will be lost.
+It's assumed that you are running the release process in your fork of the
+kiali-ui repository.
 
-Don't forget to change `package.json` to bump up the release version. So
-in our example, you would commit a change to the version such that it is
-"1.0.1" in `package.json`.
+=== Making the release
 
-After the fixes have been committed/merged to the new patch branch,
-create a new patch-version tag:
+. Login to NPM using the user with write access to the NPM @kiali organization:
+** `npm login`
+. Checkout the code that you want to release:
+** `git checkout branch_to_release` (usually, you should release "master")
+** Be advised that the release process will commit changes locally
+. The version that is specified in `package.json` file is what will be used to
+  publish to NPM. If needed, modify the version numbers.
+. If you want the release process to create a PR for you to prepare the code
+  for the next version:
+** `export GH_TOKEN={your_github_token}`
+** A branch is always created in your fork of the code. So, if you don't have
+   a token, you can place the PR manually.
+. Run the release process:
+** `make -f Makefile.jenkins release`
 
-[source, bash]
-----
-$ git tag v1.0.1 <hash-of-last-commit-to-v1.0-patch-branch>
-$ git push origin v1.0.1
-----
+=== Available options
 
-And that's it. The new patch release of the UI will be uploaded to the npm repo.
+* If you want to make a "dry-run" of the release:
+** `NPM_DRY_RUN=y make -f Makefile.jenkins release`
+* It's assumed that you are doing a major or a minor release. So, a new 
+  version branch is created in the kiali-ui repository (the branch name
+  is like "vMAJOR.MINOR"). You can omit the creation of this branch:
+** `OMIT_VERSION_BRANCH=y make -f Makefile.jenkins release`
+* The release process bumps the minor part of the version specified in
+  package.json. If this doesn't meet your needs, you can specify what will be the next version, so that the PR is created correctly:
+** `UI_BUMPED_VERSION="major.minor.patch" make -f Makefile.jenkins release`
+* The release process always creates a branch in your fork of the repository with
+  the required changes to prepare the code for the next release. By default, the
+  name of the branch is _prepare_next_version_. If you want to customize the
+  name of the branch:
+** `BUMP_BRANCH_ID={branch_name} make -f Makefile.jenkins release`
+* If your NPM account don't have write privileges to the @kiali organization but
+  you have a token with the required privileges, you can use that token:
+** `NPM_TOKEN="{your_token}" make -f Makefile.jenkins release`
