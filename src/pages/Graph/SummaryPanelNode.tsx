@@ -23,7 +23,7 @@ import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
-import { serverConfig } from '../../config';
+import { serverConfig, ICONS } from '../../config';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -372,27 +372,43 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       <>
         {hasCB && (
           <div>
-            <Icon name="bolt" type="fa" style={{ width: '10px' }} />
+            <Icon
+              name={ICONS().ISTIO.CIRCUIT_BREAKER.name}
+              type={ICONS().ISTIO.CIRCUIT_BREAKER.type}
+              style={{ width: '10px' }}
+            />
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
         {
           // isServiceEntry !== undefined && (
           // <div>
-          // <Icon name="services" type="pf" style={{ width: '10px' }} />
+          // <Icon
+          //   name={ICONS().ISTIO.SERVICEENTRY.name}
+          //   type={ICONS().ISTIO.SERVICEENTRY.type}
+          //   style={{ width: '10px' }}
+          // />
           //  <span style={{ paddingLeft: '4px' }}>Is Service Entry ({isServiceEntry})</span>
           // </div>
           // )
         }
         {hasVS && (
           <div>
-            <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
+            <Icon
+              name={ICONS().ISTIO.VIRTUALSERVICE.name}
+              type={ICONS().ISTIO.VIRTUALSERVICE.type}
+              style={{ width: '10px' }}
+            />
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
         {hasMissingSC && (
           <div>
-            <Icon name="exclamation" type="fa" style={{ width: '10px' }} />
+            <Icon
+              name={ICONS().ISTIO.MISSING_SIDECAR.name}
+              type={ICONS().ISTIO.MISSING_SIDECAR.type}
+              style={{ width: '10px', marginRight: '5px' }}
+            />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
           </div>
         )}

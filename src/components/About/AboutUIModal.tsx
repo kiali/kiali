@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { AboutModal, Icon } from 'patternfly-react';
 import { Component } from '../../store/Store';
-import { config } from '../../config';
-import { KialiLogo } from '../../logos';
+import { config, KialiLogo } from '../../config';
 
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
 const KIALI_CORE_VERSION = 'Kiali core version';

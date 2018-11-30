@@ -11,7 +11,7 @@ import UserDropdown from '../../containers/UserDropdownContainer';
 import LoginPage from '../../containers/LoginPageContainer';
 import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
-import { KialiLogo } from '../../logos';
+import { KialiLogo } from '../../config';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';

@@ -6,7 +6,6 @@ import { AppList, AppListItem } from '../../types/AppList';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import ItemDescription from './ItemDescription';
-import { IstioLogo } from '../../logos';
 
 export namespace AppListClass {
   export const getAppItems = (data: AppList, rateInterval: number): AppListItem[] => {
@@ -31,9 +30,6 @@ export namespace AppListClass {
     let iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
-        <div className="ServiceList-IstioLogo">
-          {object.istioSidecar && <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />}
-        </div>
         <div className="ServiceList-Title">
           {object.name}
           <small>{object.namespace}</small>

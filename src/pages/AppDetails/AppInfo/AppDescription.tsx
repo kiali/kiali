@@ -6,7 +6,6 @@ import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
 import { WorkloadIcon } from '../../../types/Workload';
 import { Link } from 'react-router-dom';
-import { IstioLogo } from '../../../logos';
 
 type AppDescriptionProps = {
   app: App;
@@ -56,9 +55,6 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     let iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
-        <div className="ServiceList-IstioLogo">
-          {workload.istioSidecar && <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />}
-        </div>
         <div className="ServiceList-Title">
           <div className="component-label">Workload</div>
           <Link to={this.workloadLink(namespace, workload.workloadName)}>{workload.workloadName}</Link>

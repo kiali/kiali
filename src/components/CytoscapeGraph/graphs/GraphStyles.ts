@@ -3,6 +3,7 @@ import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 import { COMPOUND_PARENT_NODE_CLASS } from '../Layout/GroupCompoundLayout';
+import { ICONS } from '../../../config';
 
 export const DimClass = 'mousedim';
 
@@ -32,11 +33,11 @@ const NodeColorFillHover = PfColors.Blue50;
 const NodeColorFillHoverDegraded = '#fdf2e5';
 const NodeColorFillHoverFailure = '#ffe6e6';
 const NodeHeight = '10px';
-const NodeIconCB = '\uf0e7 '; // bolt
-const NodeIconMS = '\uf12a '; // exclamation
+const NodeIconCB = ICONS().ISTIO.CIRCUIT_BREAKER.ascii; // bolt
+const NodeIconMS = ICONS().ISTIO.MISSING_SIDECAR.ascii; // exclamation
 // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE
-// const NodeIconSE = '\ue947 '; // pficon-services
-const NodeIconVS = '\uf126 '; // code-branch
+// const NodeIconSE = ICONS().ISTIO.SERVICEENTRY.ascii; // pficon-services
+const NodeIconVS = ICONS().ISTIO.VIRTUALSERVICE.ascii; // code-branch
 const NodeImageOut = require('../../../assets/img/node-out.png');
 const NodeImageOutLocked = require('../../../assets/img/node-out-locked.png');
 const NodeTextOutlineColor = PfColors.White;

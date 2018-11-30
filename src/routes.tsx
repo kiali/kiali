@@ -9,6 +9,7 @@ import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import OverviewPage from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './containers/GraphPageContainer';
+import { ICONS } from './config';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 
 /**
@@ -17,43 +18,43 @@ import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContaine
  */
 const navItems: MenuItem[] = [
   {
-    iconClass: 'fa fa-tachometer',
+    iconClass: ICONS().MENU.OVERVIEW,
     title: 'Overview',
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    iconClass: 'fa pficon-topology',
+    iconClass: ICONS().MENU.GRAPH,
     title: 'Graph',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    iconClass: 'fa pficon-applications',
+    iconClass: ICONS().MENU.APPLICATIONS,
     title: 'Applications',
     to: '/applications',
     pathsActive: [/^\/namespaces\/(.*)\/applications\/(.*)/]
   },
   {
-    iconClass: 'fa pficon-bundle',
+    iconClass: ICONS().MENU.WORKLOADS,
     title: 'Workloads',
     to: '/workloads',
     pathsActive: [/^\/namespaces\/(.*)\/workloads\/(.*)/]
   },
   {
-    iconClass: 'fa pficon-service',
+    iconClass: ICONS().MENU.SERVICES,
     title: 'Services',
     to: '/services',
     pathsActive: [/^\/namespaces\/(.*)\/services\/(.*)/]
   },
   {
-    iconClass: 'fa pficon-template',
+    iconClass: ICONS().MENU.ISTIO_CONFIG,
     title: 'Istio Config',
     to: '/istio',
     pathsActive: [/^\/namespaces\/(.*)\/istio\/(.*)/]
   },
   {
-    iconClass: 'fa fa-paw',
+    iconClass: ICONS().MENU.DISTRIBUTED_TRACING,
     title: 'Distributed Tracing',
     to: '/jaeger'
   }

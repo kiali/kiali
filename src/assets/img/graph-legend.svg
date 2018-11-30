@@ -35,18 +35,18 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="1136"
+     inkscape:window-height="1043"
      id="namedview222"
      showgrid="false"
      showguides="false"
      inkscape:guide-bbox="true"
-     inkscape:zoom="1.1167222"
-     inkscape:cx="475.78193"
-     inkscape:cy="31.347205"
+     inkscape:zoom="2.2334444"
+     inkscape:cx="839.72797"
+     inkscape:cy="35.509668"
      inkscape:window-x="1920"
-     inkscape:window-y="27"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg220"
+     inkscape:current-layer="g1264"
      inkscape:snap-global="false">
     <sodipodi:guide
        position="412.36755,137.90359"
@@ -740,11 +740,6 @@
   <g
      id="g1264"
      transform="translate(1.1775203,4.0296502)">
-    <path
-       inkscape:connector-curvature="0"
-       style="fill:#40199a;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.02097152"
-       d="m 924.47488,62.593754 c 0,0.92509 -0.75274,1.67772 -1.6778,1.67772 -0.9251,0 -1.67772,-0.75263 -1.67772,-1.67772 0,-0.9251 0.75262,-1.67773 1.67772,-1.67773 0.92506,0 1.6778,0.75263 1.6778,1.67773 z m -3.16133,-8.53124 0.28521,5.70425 c 0.0134,0.26787 0.2345,0.47817 0.5027,0.47817 h 1.39128 c 0.2682,0 0.48934,-0.21029 0.50274,-0.47817 l 0.2852,-5.70425 c 0.014,-0.2875 -0.2149,-0.52846 -0.50274,-0.52846 h -1.9617 c -0.28785,0 -0.51706,0.24096 -0.50269,0.52846 z"
-       id="path1214-3" />
     <text
        y="29.019964"
        x="885.79095"
@@ -758,6 +753,46 @@
          y="62.019951"
          id="tspan85-5-5-1">Missing Sidecar</tspan>
     </text>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 919.71406,62.64756 c -0.05,-0.05 -0.075,-0.109 -0.075,-0.175 v -0.753 h -1 v 0.753 c 0,0.344 0.122,0.638 0.369,0.884 0.244,0.244 0.541,0.369 0.884,0.369 h 1.25 v -1 h -1.253 c -0.069,-0.006 -0.125,-0.031 -0.175,-0.078 z"
+       id="path2-3"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 932.27306,56.08456 c -0.244,-0.244 -0.541,-0.369 -0.884,-0.369 h -8.5 c -0.344,0 -0.638,0.122 -0.884,0.369 -0.244,0.244 -0.369,0.541 -0.369,0.884 v 8.503 c 0,0.344 0.122,0.638 0.369,0.884 0.244,0.244 0.541,0.369 0.884,0.369 h 8.503 c 0.344,0 0.638,-0.122 0.884,-0.369 0.244,-0.244 0.369,-0.541 0.369,-0.884 v -8.503 c -0.003,-0.344 -0.125,-0.638 -0.372,-0.884 z m -0.631,9.388 c 0,0.069 -0.025,0.125 -0.075,0.175 -0.05,0.05 -0.109,0.075 -0.175,0.075 h -8.503 c -0.069,0 -0.125,-0.025 -0.175,-0.075 -0.05,-0.05 -0.075,-0.109 -0.075,-0.175 v -8.503 c 0,-0.069 0.025,-0.125 0.075,-0.175 0.05,-0.05 0.109,-0.075 0.175,-0.075 h 8.503 c 0.069,0 0.125,0.025 0.175,0.075 0.05,0.05 0.075,0.109 0.075,0.175 z"
+       id="path4-5"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 918.63906,58.71656 h 1 v 2.016 h -1 z"
+       id="path6-6"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 918.63906,55.71656 h 1 v 2.016 h -1 z"
+       id="path8-2"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 919.63906,53.96956 c 0,-0.069 0.025,-0.125 0.075,-0.175 0.05,-0.05 0.109,-0.075 0.175,-0.075 h 0.756 v -1 h -0.756 c -0.344,0 -0.638,0.122 -0.884,0.369 -0.244,0.244 -0.366,0.537 -0.366,0.881 v 0.762 h 1 z"
+       id="path10"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 921.63306,52.71956 h 2.016 v 1 h -2.016 z"
+       id="path12"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 928.56706,53.79456 c 0.05,0.05 0.075,0.109 0.075,0.175 v 1.25 h 1 v -1.25 c 0,-0.344 -0.122,-0.638 -0.369,-0.884 -0.244,-0.244 -0.541,-0.369 -0.884,-0.369 h -0.759 v 1 h 0.759 c 0.069,0.003 0.128,0.028 0.178,0.078 z"
+       id="path14"
+       style="fill:#40199a;fill-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       d="m 924.63306,52.71956 h 2.016 v 1 h -2.016 z"
+       id="path16"
+       style="fill:#40199a;fill-opacity:1" />
   </g>
   <g
      id="g1269"

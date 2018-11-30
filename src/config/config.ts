@@ -1,5 +1,5 @@
 import deepFreeze from 'deep-freeze';
-import { UNIT_TIME, MILLISECONDS } from './types/Common';
+import { UNIT_TIME, MILLISECONDS } from '../types/Common';
 
 const conf = {
   version: '0.1',

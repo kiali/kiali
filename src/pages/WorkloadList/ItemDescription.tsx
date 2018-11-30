@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Badge, ListViewItem, ListViewIcon } from 'patternfly-react';
-import { IstioLogo } from '../../logos';
 import { WorkloadIcon, WorkloadListItem, worloadLink } from '../../types/Workload';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
@@ -8,6 +7,7 @@ import { WorkloadHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import ErrorRate from './ErrorRate';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
+import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 
 type ItemDescriptionState = {
   health?: WorkloadHealth;
@@ -61,9 +61,6 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
     let iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
-        <div className="ServiceList-IstioLogo">
-          {object.istioSidecar && <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />}
-        </div>
         <div className="ServiceList-Title">
           {object.name}
           <small>{namespace}</small>
@@ -72,7 +69,7 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
       </div>
     );
     const itemDescription = (
-      <table style={{ width: '50em', tableLayout: 'fixed' }}>
+      <table style={{ width: '70em', tableLayout: 'fixed' }}>
         <tbody>
           <tr>
             {this.state.health && (
@@ -86,6 +83,7 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
                 <ErrorRate requestHealth={this.state.health.requests} />
               </td>
             )}
+            <td>{!object.istioSidecar && <MissingSidecar />}</td>
             {object.appLabel || object.versionLabel ? (
               <td>
                 <strong>Label Validation :</strong>

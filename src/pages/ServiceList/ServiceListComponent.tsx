@@ -27,7 +27,6 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
-import { IstioLogo } from '../../logos';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
@@ -198,9 +197,6 @@ class ServiceListComponent extends ListComponent.Component<
             leftContent={<ListViewIcon type="pf" name="service" />}
             heading={
               <div className="ServiceList-Heading">
-                <div className="ServiceList-IstioLogo">
-                  {serviceItem.istioSidecar && <img className="IstioLogo" src={IstioLogo} alt="Istio sidecar" />}
-                </div>
                 <div className="ServiceList-Title">
                   {serviceItem.name}
                   <small>{serviceItem.namespace}</small>

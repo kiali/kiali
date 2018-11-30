@@ -256,6 +256,21 @@ ShallowWrapper {
                   type="fa"
                 />
               </Button>
+            </Col>
+          </Row>
+          <Row
+            bsClass="row"
+            className="row-cards-pf"
+            componentClass="div"
+          >
+            <Col
+              bsClass="col"
+              componentClass="div"
+              lg={12}
+              md={12}
+              sm={12}
+              xs={12}
+            >
               <ServiceInfoDescription
                 createdAt="2018-06-29T16:43:18+02:00"
                 endpoints={
@@ -572,6 +587,21 @@ ShallowWrapper {
                     type="fa"
                   />
                 </Button>
+              </Col>
+            </Row>,
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
                 <ServiceInfoDescription
                   createdAt="2018-06-29T16:43:18+02:00"
                   endpoints={
@@ -882,6 +912,94 @@ ShallowWrapper {
                     type="fa"
                   />
                 </Button>
+              </Col>,
+              "className": "row-cards-pf",
+              "componentClass": "div",
+            },
+            "ref": null,
+            "rendered": Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "col",
+                "children": <Button
+                  active={false}
+                  block={false}
+                  bsClass="btn"
+                  bsStyle="default"
+                  disabled={false}
+                  onClick={[MockFunction]}
+                  style={
+                    Object {
+                      "float": "right",
+                    }
+                  }
+                >
+                  <Icon
+                    name="refresh"
+                    type="fa"
+                  />
+                </Button>,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "active": false,
+                  "block": false,
+                  "bsClass": "btn",
+                  "bsStyle": "default",
+                  "children": <Icon
+                    name="refresh"
+                    type="fa"
+                  />,
+                  "disabled": false,
+                  "onClick": [MockFunction],
+                  "style": Object {
+                    "float": "right",
+                  },
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "function",
+                  "props": Object {
+                    "name": "refresh",
+                    "type": "fa",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "row",
+              "children": <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
                 <ServiceInfoDescription
                   createdAt="2018-06-29T16:43:18+02:00"
                   endpoints={
@@ -979,161 +1097,10 @@ ShallowWrapper {
               "nodeType": "class",
               "props": Object {
                 "bsClass": "col",
-                "children": Array [
-                  <Button
-                    active={false}
-                    block={false}
-                    bsClass="btn"
-                    bsStyle="default"
-                    disabled={false}
-                    onClick={[MockFunction]}
-                    style={
-                      Object {
-                        "float": "right",
-                      }
-                    }
-                  >
-                    <Icon
-                      name="refresh"
-                      type="fa"
-                    />
-                  </Button>,
-                  <ServiceInfoDescription
-                    createdAt="2018-06-29T16:43:18+02:00"
-                    endpoints={
-                      Array [
-                        Object {
-                          "addresses": Array [
-                            Object {
-                              "ip": "172.17.0.20",
-                              "kind": "Pod",
-                              "name": "reviews-v3-5f5bcb6765-hj46f",
-                            },
-                            Object {
-                              "ip": "172.17.0.21",
-                              "kind": "Pod",
-                              "name": "reviews-v2-d896b68c-jnxgm",
-                            },
-                            Object {
-                              "ip": "172.17.0.22",
-                              "kind": "Pod",
-                              "name": "reviews-v1-5d6696bcf7-2sls7",
-                            },
-                          ],
-                          "ports": Array [
-                            Object {
-                              "name": "http",
-                              "port": 9080,
-                              "protocol": "TCP",
-                            },
-                          ],
-                        },
-                      ]
-                    }
-                    health={
-                      Object {
-                        "deploymentStatuses": Array [
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v1",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v2",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v3",
-                            "replicas": 1,
-                          },
-                        ],
-                        "envoy": Object {
-                          "inbound": Object {
-                            "healthy": 1,
-                            "total": 1,
-                          },
-                          "outbound": Object {
-                            "healthy": 3,
-                            "total": 3,
-                          },
-                        },
-                        "requests": Object {
-                          "errorRatio": -1,
-                        },
-                      }
-                    }
-                    ip="172.30.196.248"
-                    istioEnabled={false}
-                    labels={
-                      Object {
-                        "app": "reviews",
-                      }
-                    }
-                    name="reviews"
-                    ports={
-                      Array [
-                        Object {
-                          "name": "http",
-                          "port": 9080,
-                          "protocol": "TCP",
-                        },
-                      ]
-                    }
-                    resourceVersion="2652"
-                    type="ClusterIP"
-                  />,
-                ],
-                "componentClass": "div",
-                "lg": 12,
-                "md": 12,
-                "sm": 12,
-                "xs": 12,
-              },
-              "ref": null,
-              "rendered": Array [
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "active": false,
-                    "block": false,
-                    "bsClass": "btn",
-                    "bsStyle": "default",
-                    "children": <Icon
-                      name="refresh"
-                      type="fa"
-                    />,
-                    "disabled": false,
-                    "onClick": [MockFunction],
-                    "style": Object {
-                      "float": "right",
-                    },
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "function",
-                    "props": Object {
-                      "name": "refresh",
-                      "type": "fa",
-                    },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  "type": [Function],
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "createdAt": "2018-06-29T16:43:18+02:00",
-                    "endpoints": Array [
+                "children": <ServiceInfoDescription
+                  createdAt="2018-06-29T16:43:18+02:00"
+                  endpoints={
+                    Array [
                       Object {
                         "addresses": Array [
                           Object {
@@ -1160,8 +1127,10 @@ ShallowWrapper {
                           },
                         ],
                       },
-                    ],
-                    "health": Object {
+                    ]
+                  }
+                  health={
+                    Object {
                       "deploymentStatuses": Array [
                         Object {
                           "available": 1,
@@ -1192,28 +1161,121 @@ ShallowWrapper {
                       "requests": Object {
                         "errorRatio": -1,
                       },
-                    },
-                    "ip": "172.30.196.248",
-                    "istioEnabled": false,
-                    "labels": Object {
+                    }
+                  }
+                  ip="172.30.196.248"
+                  istioEnabled={false}
+                  labels={
+                    Object {
                       "app": "reviews",
-                    },
-                    "name": "reviews",
-                    "ports": Array [
+                    }
+                  }
+                  name="reviews"
+                  ports={
+                    Array [
                       Object {
                         "name": "http",
                         "port": 9080,
                         "protocol": "TCP",
                       },
+                    ]
+                  }
+                  resourceVersion="2652"
+                  type="ClusterIP"
+                />,
+                "componentClass": "div",
+                "lg": 12,
+                "md": 12,
+                "sm": 12,
+                "xs": 12,
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "createdAt": "2018-06-29T16:43:18+02:00",
+                  "endpoints": Array [
+                    Object {
+                      "addresses": Array [
+                        Object {
+                          "ip": "172.17.0.20",
+                          "kind": "Pod",
+                          "name": "reviews-v3-5f5bcb6765-hj46f",
+                        },
+                        Object {
+                          "ip": "172.17.0.21",
+                          "kind": "Pod",
+                          "name": "reviews-v2-d896b68c-jnxgm",
+                        },
+                        Object {
+                          "ip": "172.17.0.22",
+                          "kind": "Pod",
+                          "name": "reviews-v1-5d6696bcf7-2sls7",
+                        },
+                      ],
+                      "ports": Array [
+                        Object {
+                          "name": "http",
+                          "port": 9080,
+                          "protocol": "TCP",
+                        },
+                      ],
+                    },
+                  ],
+                  "health": Object {
+                    "deploymentStatuses": Array [
+                      Object {
+                        "available": 1,
+                        "name": "reviews-v1",
+                        "replicas": 1,
+                      },
+                      Object {
+                        "available": 1,
+                        "name": "reviews-v2",
+                        "replicas": 1,
+                      },
+                      Object {
+                        "available": 1,
+                        "name": "reviews-v3",
+                        "replicas": 1,
+                      },
                     ],
-                    "resourceVersion": "2652",
-                    "type": "ClusterIP",
+                    "envoy": Object {
+                      "inbound": Object {
+                        "healthy": 1,
+                        "total": 1,
+                      },
+                      "outbound": Object {
+                        "healthy": 3,
+                        "total": 3,
+                      },
+                    },
+                    "requests": Object {
+                      "errorRatio": -1,
+                    },
                   },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
+                  "ip": "172.30.196.248",
+                  "istioEnabled": false,
+                  "labels": Object {
+                    "app": "reviews",
+                  },
+                  "name": "reviews",
+                  "ports": Array [
+                    Object {
+                      "name": "http",
+                      "port": 9080,
+                      "protocol": "TCP",
+                    },
+                  ],
+                  "resourceVersion": "2652",
+                  "type": "ClusterIP",
                 },
-              ],
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
               "type": [Function],
             },
             "type": [Function],
@@ -2523,6 +2585,21 @@ ShallowWrapper {
                     type="fa"
                   />
                 </Button>
+              </Col>
+            </Row>
+            <Row
+              bsClass="row"
+              className="row-cards-pf"
+              componentClass="div"
+            >
+              <Col
+                bsClass="col"
+                componentClass="div"
+                lg={12}
+                md={12}
+                sm={12}
+                xs={12}
+              >
                 <ServiceInfoDescription
                   createdAt="2018-06-29T16:43:18+02:00"
                   endpoints={
@@ -2839,6 +2916,21 @@ ShallowWrapper {
                       type="fa"
                     />
                   </Button>
+                </Col>
+              </Row>,
+              <Row
+                bsClass="row"
+                className="row-cards-pf"
+                componentClass="div"
+              >
+                <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
                   <ServiceInfoDescription
                     createdAt="2018-06-29T16:43:18+02:00"
                     endpoints={
@@ -3149,6 +3241,94 @@ ShallowWrapper {
                       type="fa"
                     />
                   </Button>
+                </Col>,
+                "className": "row-cards-pf",
+                "componentClass": "div",
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": <Button
+                    active={false}
+                    block={false}
+                    bsClass="btn"
+                    bsStyle="default"
+                    disabled={false}
+                    onClick={[MockFunction]}
+                    style={
+                      Object {
+                        "float": "right",
+                      }
+                    }
+                  >
+                    <Icon
+                      name="refresh"
+                      type="fa"
+                    />
+                  </Button>,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "active": false,
+                    "block": false,
+                    "bsClass": "btn",
+                    "bsStyle": "default",
+                    "children": <Icon
+                      name="refresh"
+                      type="fa"
+                    />,
+                    "disabled": false,
+                    "onClick": [MockFunction],
+                    "style": Object {
+                      "float": "right",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "function",
+                    "props": Object {
+                      "name": "refresh",
+                      "type": "fa",
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  "type": [Function],
+                },
+                "type": [Function],
+              },
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "row",
+                "children": <Col
+                  bsClass="col"
+                  componentClass="div"
+                  lg={12}
+                  md={12}
+                  sm={12}
+                  xs={12}
+                >
                   <ServiceInfoDescription
                     createdAt="2018-06-29T16:43:18+02:00"
                     endpoints={
@@ -3246,161 +3426,10 @@ ShallowWrapper {
                 "nodeType": "class",
                 "props": Object {
                   "bsClass": "col",
-                  "children": Array [
-                    <Button
-                      active={false}
-                      block={false}
-                      bsClass="btn"
-                      bsStyle="default"
-                      disabled={false}
-                      onClick={[MockFunction]}
-                      style={
-                        Object {
-                          "float": "right",
-                        }
-                      }
-                    >
-                      <Icon
-                        name="refresh"
-                        type="fa"
-                      />
-                    </Button>,
-                    <ServiceInfoDescription
-                      createdAt="2018-06-29T16:43:18+02:00"
-                      endpoints={
-                        Array [
-                          Object {
-                            "addresses": Array [
-                              Object {
-                                "ip": "172.17.0.20",
-                                "kind": "Pod",
-                                "name": "reviews-v3-5f5bcb6765-hj46f",
-                              },
-                              Object {
-                                "ip": "172.17.0.21",
-                                "kind": "Pod",
-                                "name": "reviews-v2-d896b68c-jnxgm",
-                              },
-                              Object {
-                                "ip": "172.17.0.22",
-                                "kind": "Pod",
-                                "name": "reviews-v1-5d6696bcf7-2sls7",
-                              },
-                            ],
-                            "ports": Array [
-                              Object {
-                                "name": "http",
-                                "port": 9080,
-                                "protocol": "TCP",
-                              },
-                            ],
-                          },
-                        ]
-                      }
-                      health={
-                        Object {
-                          "deploymentStatuses": Array [
-                            Object {
-                              "available": 1,
-                              "name": "reviews-v1",
-                              "replicas": 1,
-                            },
-                            Object {
-                              "available": 1,
-                              "name": "reviews-v2",
-                              "replicas": 1,
-                            },
-                            Object {
-                              "available": 1,
-                              "name": "reviews-v3",
-                              "replicas": 1,
-                            },
-                          ],
-                          "envoy": Object {
-                            "inbound": Object {
-                              "healthy": 1,
-                              "total": 1,
-                            },
-                            "outbound": Object {
-                              "healthy": 3,
-                              "total": 3,
-                            },
-                          },
-                          "requests": Object {
-                            "errorRatio": -1,
-                          },
-                        }
-                      }
-                      ip="172.30.196.248"
-                      istioEnabled={false}
-                      labels={
-                        Object {
-                          "app": "reviews",
-                        }
-                      }
-                      name="reviews"
-                      ports={
-                        Array [
-                          Object {
-                            "name": "http",
-                            "port": 9080,
-                            "protocol": "TCP",
-                          },
-                        ]
-                      }
-                      resourceVersion="2652"
-                      type="ClusterIP"
-                    />,
-                  ],
-                  "componentClass": "div",
-                  "lg": 12,
-                  "md": 12,
-                  "sm": 12,
-                  "xs": 12,
-                },
-                "ref": null,
-                "rendered": Array [
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "active": false,
-                      "block": false,
-                      "bsClass": "btn",
-                      "bsStyle": "default",
-                      "children": <Icon
-                        name="refresh"
-                        type="fa"
-                      />,
-                      "disabled": false,
-                      "onClick": [MockFunction],
-                      "style": Object {
-                        "float": "right",
-                      },
-                    },
-                    "ref": null,
-                    "rendered": Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "function",
-                      "props": Object {
-                        "name": "refresh",
-                        "type": "fa",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": [Function],
-                    },
-                    "type": [Function],
-                  },
-                  Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "createdAt": "2018-06-29T16:43:18+02:00",
-                      "endpoints": Array [
+                  "children": <ServiceInfoDescription
+                    createdAt="2018-06-29T16:43:18+02:00"
+                    endpoints={
+                      Array [
                         Object {
                           "addresses": Array [
                             Object {
@@ -3427,8 +3456,10 @@ ShallowWrapper {
                             },
                           ],
                         },
-                      ],
-                      "health": Object {
+                      ]
+                    }
+                    health={
+                      Object {
                         "deploymentStatuses": Array [
                           Object {
                             "available": 1,
@@ -3459,28 +3490,121 @@ ShallowWrapper {
                         "requests": Object {
                           "errorRatio": -1,
                         },
-                      },
-                      "ip": "172.30.196.248",
-                      "istioEnabled": false,
-                      "labels": Object {
+                      }
+                    }
+                    ip="172.30.196.248"
+                    istioEnabled={false}
+                    labels={
+                      Object {
                         "app": "reviews",
-                      },
-                      "name": "reviews",
-                      "ports": Array [
+                      }
+                    }
+                    name="reviews"
+                    ports={
+                      Array [
                         Object {
                           "name": "http",
                           "port": 9080,
                           "protocol": "TCP",
                         },
+                      ]
+                    }
+                    resourceVersion="2652"
+                    type="ClusterIP"
+                  />,
+                  "componentClass": "div",
+                  "lg": 12,
+                  "md": 12,
+                  "sm": 12,
+                  "xs": 12,
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "createdAt": "2018-06-29T16:43:18+02:00",
+                    "endpoints": Array [
+                      Object {
+                        "addresses": Array [
+                          Object {
+                            "ip": "172.17.0.20",
+                            "kind": "Pod",
+                            "name": "reviews-v3-5f5bcb6765-hj46f",
+                          },
+                          Object {
+                            "ip": "172.17.0.21",
+                            "kind": "Pod",
+                            "name": "reviews-v2-d896b68c-jnxgm",
+                          },
+                          Object {
+                            "ip": "172.17.0.22",
+                            "kind": "Pod",
+                            "name": "reviews-v1-5d6696bcf7-2sls7",
+                          },
+                        ],
+                        "ports": Array [
+                          Object {
+                            "name": "http",
+                            "port": 9080,
+                            "protocol": "TCP",
+                          },
+                        ],
+                      },
+                    ],
+                    "health": Object {
+                      "deploymentStatuses": Array [
+                        Object {
+                          "available": 1,
+                          "name": "reviews-v1",
+                          "replicas": 1,
+                        },
+                        Object {
+                          "available": 1,
+                          "name": "reviews-v2",
+                          "replicas": 1,
+                        },
+                        Object {
+                          "available": 1,
+                          "name": "reviews-v3",
+                          "replicas": 1,
+                        },
                       ],
-                      "resourceVersion": "2652",
-                      "type": "ClusterIP",
+                      "envoy": Object {
+                        "inbound": Object {
+                          "healthy": 1,
+                          "total": 1,
+                        },
+                        "outbound": Object {
+                          "healthy": 3,
+                          "total": 3,
+                        },
+                      },
+                      "requests": Object {
+                        "errorRatio": -1,
+                      },
                     },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
+                    "ip": "172.30.196.248",
+                    "istioEnabled": false,
+                    "labels": Object {
+                      "app": "reviews",
+                    },
+                    "name": "reviews",
+                    "ports": Array [
+                      Object {
+                        "name": "http",
+                        "port": 9080,
+                        "protocol": "TCP",
+                      },
+                    ],
+                    "resourceVersion": "2652",
+                    "type": "ClusterIP",
                   },
-                ],
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
                 "type": [Function],
               },
               "type": [Function],

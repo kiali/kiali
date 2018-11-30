@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ServiceListItem } from '../../types/ServiceList';
 import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
+import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 import ServiceErrorRate from './ServiceErrorRate';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
@@ -48,7 +49,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
 
   render() {
     return this.state.health ? (
-      <table style={{ width: '50em', tableLayout: 'fixed' }}>
+      <table style={{ width: '70em', tableLayout: 'fixed' }}>
         <tbody>
           <tr>
             <td>
@@ -58,6 +59,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
             <td>
               <ServiceErrorRate requestHealth={this.state.health.requests} />
             </td>
+            <td>{!this.props.item.istioSidecar && <MissingSidecar />}</td>
             <td />
           </tr>
         </tbody>

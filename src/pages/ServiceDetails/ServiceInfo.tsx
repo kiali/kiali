@@ -132,6 +132,10 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
               <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
                 <Icon name="refresh" />
               </Button>
+            </Col>
+          </Row>
+          <Row className="row-cards-pf">
+            <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.props.serviceDetails.service.name}
                 createdAt={this.props.serviceDetails.service.createdAt}

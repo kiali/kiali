@@ -62,6 +62,20 @@ ShallowWrapper {
               type="fa"
             />
             Pods
+            <span
+              style={
+                Object {
+                  "marginLeft": "10px",
+                }
+              }
+            >
+              <MissingSidecar
+                color="red"
+                name="blueprint"
+                text="Missing Sidecar"
+                type="pf"
+              />
+            </span>
           </h2>
         </div>,
         <div
@@ -112,6 +126,20 @@ ShallowWrapper {
               type="fa"
             />
             Pods
+            <span
+              style={
+                Object {
+                  "marginLeft": "10px",
+                }
+              }
+            >
+              <MissingSidecar
+                color="red"
+                name="blueprint"
+                text="Missing Sidecar"
+                type="pf"
+              />
+            </span>
           </h2>,
           "className": "card-pf-heading",
         },
@@ -131,8 +159,21 @@ ShallowWrapper {
                 }
                 type="fa"
               />,
-              undefined,
               "Pods",
+              <span
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                  }
+                }
+              >
+                <MissingSidecar
+                  color="red"
+                  name="blueprint"
+                  text="Missing Sidecar"
+                  type="pf"
+                />
+              </span>,
             ],
             "className": "card-pf-title",
           },
@@ -153,8 +194,39 @@ ShallowWrapper {
               "rendered": null,
               "type": [Function],
             },
-            undefined,
             "Pods",
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": <MissingSidecar
+                  color="red"
+                  name="blueprint"
+                  text="Missing Sidecar"
+                  type="pf"
+                />,
+                "style": Object {
+                  "marginLeft": "10px",
+                },
+              },
+              "ref": null,
+              "rendered": Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "function",
+                "props": Object {
+                  "color": "red",
+                  "name": "blueprint",
+                  "text": "Missing Sidecar",
+                  "type": "pf",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              "type": "span",
+            },
           ],
           "type": "h2",
         },
@@ -315,6 +387,20 @@ ShallowWrapper {
                 type="fa"
               />
               Pods
+              <span
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                  }
+                }
+              >
+                <MissingSidecar
+                  color="red"
+                  name="blueprint"
+                  text="Missing Sidecar"
+                  type="pf"
+                />
+              </span>
             </h2>
           </div>,
           <div
@@ -365,6 +451,20 @@ ShallowWrapper {
                 type="fa"
               />
               Pods
+              <span
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                  }
+                }
+              >
+                <MissingSidecar
+                  color="red"
+                  name="blueprint"
+                  text="Missing Sidecar"
+                  type="pf"
+                />
+              </span>
             </h2>,
             "className": "card-pf-heading",
           },
@@ -384,8 +484,21 @@ ShallowWrapper {
                   }
                   type="fa"
                 />,
-                undefined,
                 "Pods",
+                <span
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                    }
+                  }
+                >
+                  <MissingSidecar
+                    color="red"
+                    name="blueprint"
+                    text="Missing Sidecar"
+                    type="pf"
+                  />
+                </span>,
               ],
               "className": "card-pf-title",
             },
@@ -406,8 +519,39 @@ ShallowWrapper {
                 "rendered": null,
                 "type": [Function],
               },
-              undefined,
               "Pods",
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": <MissingSidecar
+                    color="red"
+                    name="blueprint"
+                    text="Missing Sidecar"
+                    type="pf"
+                  />,
+                  "style": Object {
+                    "marginLeft": "10px",
+                  },
+                },
+                "ref": null,
+                "rendered": Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "function",
+                  "props": Object {
+                    "color": "red",
+                    "name": "blueprint",
+                    "text": "Missing Sidecar",
+                    "type": "pf",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                "type": "span",
+              },
             ],
             "type": "h2",
           },

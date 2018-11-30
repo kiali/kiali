@@ -4,6 +4,7 @@ import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndi
 import AppErrorRate from './AppErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
+import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 
 interface Props {
   item: AppListItem;
@@ -48,7 +49,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
 
   render() {
     return this.state.health ? (
-      <table style={{ width: '50em', tableLayout: 'fixed' }}>
+      <table style={{ width: '70em', tableLayout: 'fixed' }}>
         <tbody>
           <tr>
             <td>
@@ -58,6 +59,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
             <td>
               <AppErrorRate requestHealth={this.state.health.requests} />
             </td>
+            <td>{!this.props.item.istioSidecar && <MissingSidecar />}</td>
             <td />
           </tr>
         </tbody>
