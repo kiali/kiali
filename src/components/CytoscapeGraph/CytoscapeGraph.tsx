@@ -193,7 +193,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   render() {
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
-        <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={this.onResize} />
+        <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
         <EmptyGraphLayout
           elements={this.props.elements}
           namespaces={this.props.activeNamespaces}
