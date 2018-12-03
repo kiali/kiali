@@ -17,12 +17,12 @@ import (
 
 type osRouteSupplier func(string, string) (string, error)
 type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
-type dashboardSupplier func(string, string) (string, error)
+type dashboardSupplier func(string, string) ([]byte, int, error)
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	info, code, err := getGrafanaInfo(getService, findDashboardPath)
+	info, code, err := getGrafanaInfo(getService, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -67,11 +67,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	internalURL := fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := dashboardSupplier(internalURL, grafanaConfig.ServiceDashboardPattern)
+	serviceDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.ServiceDashboardPattern, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := dashboardSupplier(internalURL, grafanaConfig.WorkloadDashboardPattern)
+	workloadDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.WorkloadDashboardPattern, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -88,28 +88,50 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func findDashboardPath(url, searchPattern string) (string, error) {
-	resp, err := http.Get(url + "/api/search?query=" + searchPattern)
+func getDashboardPath(url, searchPattern string, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	if code != http.StatusOK {
+		// Get error message
+		var f map[string]string
+		err = json.Unmarshal(body, &f)
+		if err != nil {
+			return "", fmt.Errorf("Unknown error from Grafana (%d)", code)
+		}
+		message, ok := f["message"]
+		if !ok {
+			return "", fmt.Errorf("Unknown error from Grafana (%d)", code)
+		}
+		return "", fmt.Errorf("Error from Grafana (%d): %s", code, message)
+	}
+
+	// Status OK, read dashboards info
+	var dashboards []map[string]interface{}
+	err = json.Unmarshal(body, &dashboards)
 	if err != nil {
 		return "", err
 	}
-	var f interface{}
-	err = json.Unmarshal(body, &f)
-	if err != nil {
-		return "", err
-	}
-	dashboards := f.([]interface{})
 	if len(dashboards) == 0 {
-		return "", fmt.Errorf("No Grafana dashboard found for pattern '%s'", searchPattern)
+		return "", fmt.Errorf("No Grafana dashboard found for search pattern '%s'", searchPattern)
 	}
 	if len(dashboards) > 1 {
 		log.Infof("Several Grafana dashboards found for pattern '%s', picking the first one", searchPattern)
 	}
-	dashPath := dashboards[0].(map[string]interface{})["url"]
+	dashPath, ok := dashboards[0]["url"]
+	if !ok {
+		return "", fmt.Errorf("URL field not found in Grafana dashboard for search pattern '%s'", searchPattern)
+	}
 	return dashPath.(string), nil
+}
+
+func findDashboard(url, searchPattern string) ([]byte, int, error) {
+	resp, err := http.Get(url + "/api/search?query=" + searchPattern)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return body, resp.StatusCode, err
 }
