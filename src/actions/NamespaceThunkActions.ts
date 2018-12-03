@@ -1,5 +1,4 @@
 import { ThunkDispatch } from 'redux-thunk';
-import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
 import * as Api from '../services/Api';
 import { KialiAppAction } from './KialiAppAction';
@@ -20,11 +19,7 @@ const NamespaceThunkActions = {
       return Api.getNamespaces(auth)
         .then(response => response['data'])
         .then(data => {
-          let namespaceList: Namespace[] = [{ name: 'all' }];
-          data.forEach((aNamespace: Namespace) => {
-            namespaceList.push(aNamespace);
-          });
-          dispatch(NamespaceActions.receiveList(namespaceList, new Date()));
+          dispatch(NamespaceActions.receiveList([...data], new Date()));
         })
         .catch(() => dispatch(NamespaceActions.requestFailed()));
     };

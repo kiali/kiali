@@ -102,11 +102,6 @@ const GraphDataThunkActions = {
         );
       }
 
-      // Todo: Remove this when we are finally getting rid of 'all' namespace
-      if (namespaces.length === 1 && namespaces[0].name === 'all') {
-        namespaces = getState().namespaces.activeNamespaces.filter(namespace => namespace.name !== 'all');
-      }
-
       restParams['namespaces'] = namespaces.map(namespace => namespace.name).join(',');
       return setCurrentRequest(API.getGraphElements(authenticationToken(getState()), restParams)).then(
         response => {

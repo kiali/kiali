@@ -100,16 +100,14 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
       }
     } else {
       const activeNamespacesString = namespacesToString(props.activeNamespaces);
-      if ('all' !== activeNamespacesString) {
-        HistoryManager.setParam(URLParams.NAMESPACES, activeNamespacesString);
-      }
+      HistoryManager.setParam(URLParams.NAMESPACES, activeNamespacesString);
     }
   }
 
   componentDidUpdate() {
     // ensure redux state and URL are aligned
     const activeNamespacesString = namespacesToString(this.props.activeNamespaces);
-    if (!this.props.activeNamespaces || activeNamespacesString === 'all') {
+    if (this.props.activeNamespaces.length === 0) {
       HistoryManager.deleteParam(URLParams.NAMESPACES, true);
     } else {
       HistoryManager.setParam(URLParams.NAMESPACES, activeNamespacesString);

@@ -26,9 +26,11 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
 };
 
 export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string => {
-  const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(', ');
   let queryParams = buildCommonQueryParams(params);
-  queryParams += `&${URLParams.NAMESPACES}=${namespaces}`;
+  if (params.activeNamespaces.length > 0) {
+    const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
+    queryParams += `&${URLParams.NAMESPACES}=${namespaces}`;
+  }
   return `/graph/namespaces?` + queryParams;
 };
 

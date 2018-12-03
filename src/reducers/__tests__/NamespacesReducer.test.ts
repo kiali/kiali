@@ -6,7 +6,7 @@ describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
     expect(namespaceState(undefined, GlobalActions.unknown())).toEqual({
       isFetching: false,
-      activeNamespaces: [{ name: 'all' }],
+      activeNamespaces: [],
       items: [],
       lastUpdated: undefined
     });

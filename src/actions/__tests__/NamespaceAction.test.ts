@@ -43,7 +43,7 @@ describe('NamespaceActions', () => {
     mockDate(currentDate);
     const expectedActions = [
       NamespaceActions.requestStarted(),
-      NamespaceActions.receiveList([{ name: 'all' }, { name: 'a' }, { name: 'b' }, { name: 'c' }], currentDate)
+      NamespaceActions.receiveList([{ name: 'a' }, { name: 'b' }, { name: 'c' }], currentDate)
     ];
     const axiosMock = new axiosMockAdapter(axios);
     axiosMock.onGet('/api/namespaces').reply(200, [{ name: 'a' }, { name: 'b' }, { name: 'c' }]);

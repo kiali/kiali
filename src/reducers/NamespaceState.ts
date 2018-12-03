@@ -5,7 +5,7 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
-  activeNamespaces: [{ name: 'all' }],
+  activeNamespaces: [],
   isFetching: false,
   items: [],
   lastUpdated: undefined
