@@ -862,11 +862,11 @@
           },
           {
             "type": "string",
-            "default": "all accessible namespaces",
             "x-go-name": "Name",
-            "description": "Comma-separated list of namespaces to include in the graph.",
+            "description": "Comma-separated list of namespaces to include in the graph. The namespaces must be accessible to the client.",
             "name": "namespaces",
-            "in": "query"
+            "in": "query",
+            "required": true
           },
           {
             "type": "string",
