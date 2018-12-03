@@ -35,8 +35,9 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
             </Col>
             <Col xs={12} sm={10} md={10} lg={10}>
               <p className={'lead'}>
-                Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.<br />Would you like to
-                extend your session for another {extendedTime} minutes?
+                Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
+                <br />
+                Would you like to extend your session for another {extendedTime} minutes?
               </p>
             </Col>
           </Row>

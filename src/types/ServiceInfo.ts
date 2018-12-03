@@ -125,10 +125,10 @@ export const validationToSeverity = (object: ObjectValidation): string => {
   return object && object.valid
     ? 'correct'
     : object && !object.valid && errChecks > 0
-      ? 'error'
-      : object && !object.valid && warnChecks > 0
-        ? 'warning'
-        : 'correct';
+    ? 'error'
+    : object && !object.valid && warnChecks > 0
+    ? 'warning'
+    : 'correct';
 };
 
 export const validationToIconName = (object: ObjectValidation): string => {

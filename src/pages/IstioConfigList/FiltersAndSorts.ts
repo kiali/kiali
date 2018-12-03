@@ -8,8 +8,8 @@ export namespace IstioConfigListFilters {
     return item.type === 'adapter'
       ? item.type + '_' + item.adapter!.adapter
       : item.type === 'template'
-        ? item.type + '_' + item.template!.template
-        : item.type;
+      ? item.type + '_' + item.template!.template
+      : item.type;
   };
   export const sortFields: SortField<IstioConfigItem>[] = [
     {

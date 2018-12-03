@@ -60,7 +60,11 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
         <br />
         {this.state.info.length === 1 && this.state.info[0]}
         {this.state.info.length > 1 && (
-          <ul style={{ padding: 0 }}>{this.state.info.map((line, idx) => <li key={idx}>{line}</li>)}</ul>
+          <ul style={{ padding: 0 }}>
+            {this.state.info.map((line, idx) => (
+              <li key={idx}>{line}</li>
+            ))}
+          </ul>
         )}
       </div>
     );
