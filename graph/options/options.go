@@ -115,35 +115,25 @@ func NewOptions(r *http.Request) Options {
 
 	// If path variable is set then it is the only relevant namespace (it's a node graph)
 	// Else if namespaces query param is set it specifies the relevant namespaces
-	// Else the request is for all [accessible] namespaces
+	// Else error, at least one namespace is required.
 	if namespace != "" {
 		namespaces = namespace
 	}
 
 	if namespaces == "" {
-		for accessibleNamespace, creationTime := range accessibleNamespaces {
-			// The istio-system namespace is only shown when explicitly requested. Note that the
-			// 'includeIstio' option doesn't apply here, that option affects what is done in
-			// non-istio-system namespaces.
-			if accessibleNamespace != NamespaceIstio {
-				namespaceMap[accessibleNamespace] = graph.NamespaceInfo{
-					Name:     accessibleNamespace,
-					Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
-				}
+		checkError(errors.New(fmt.Sprintf("At least one namespace must be specified via the namespaces query parameter.")))
+	}
+
+	for _, namespaceToken := range strings.Split(namespaces, ",") {
+		namespaceToken = strings.TrimSpace(namespaceToken)
+		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
+			namespaceMap[namespaceToken] = graph.NamespaceInfo{
+				Name:     namespaceToken,
+				Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
 			}
-		}
-	} else {
-		for _, namespaceToken := range strings.Split(namespaces, ",") {
-			namespaceToken = strings.TrimSpace(namespaceToken)
-			if creationTime, found := accessibleNamespaces[namespaceToken]; found {
-				namespaceMap[namespaceToken] = graph.NamespaceInfo{
-					Name:     namespaceToken,
-					Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
-				}
-			} else {
-				// TODO: Should this return Forbidden status?
-				checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken)))
-			}
+		} else {
+			// TODO: Should this return Forbidden status?
+			checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken)))
 		}
 	}
 

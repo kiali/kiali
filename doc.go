@@ -144,11 +144,10 @@ type IncludeIstioParam struct {
 
 // swagger:parameters graphNamespaces
 type NamespacesParam struct {
-	// Comma-separated list of namespaces to include in the graph.
+	// Comma-separated list of namespaces to include in the graph. The namespaces must be accessible to the client.
 	//
 	// in: query
-	// required: false
-	// default: all accessible namespaces
+	// required: true
 	Name string `json:"namespaces"`
 }
 
