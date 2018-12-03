@@ -3,17 +3,13 @@ import { GrafanaInfo } from '../store/Store';
 import { GrafanaActions } from '../actions/GrafanaActions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 
-export const INITIAL_GRAFANA_STATE: GrafanaInfo = {
-  url: '',
-  serviceDashboardPath: '',
-  workloadDashboardPath: '',
-  varNamespace: '',
-  varService: '',
-  varWorkload: ''
-};
+export const INITIAL_GRAFANA_STATE: GrafanaInfo | null = null;
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
-const GrafanaState = (state: GrafanaInfo = INITIAL_GRAFANA_STATE, action: KialiAppAction): GrafanaInfo => {
+const GrafanaState = (
+  state: GrafanaInfo | null = INITIAL_GRAFANA_STATE,
+  action: KialiAppAction
+): GrafanaInfo | null => {
   switch (action.type) {
     case getType(GrafanaActions.setinfo):
       return Object.assign({}, INITIAL_GRAFANA_STATE, {
