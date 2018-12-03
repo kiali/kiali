@@ -12,6 +12,10 @@ const GrafanaState = (
 ): GrafanaInfo | null => {
   switch (action.type) {
     case getType(GrafanaActions.setinfo):
+      if (!action.payload) {
+        // Ex: in case of response 204
+        return null;
+      }
       return Object.assign({}, INITIAL_GRAFANA_STATE, {
         url: action.payload.url,
         serviceDashboardPath: action.payload.serviceDashboardPath,
