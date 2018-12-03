@@ -614,7 +614,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
 		// ---
-		// The backing JSON for a versioned app node detail graph.
+		// The backing JSON for a versioned app node detail graph. (supported graphTypes: app | versionedApp)
 		//
 		//     Produces:
 		//     - application/json
@@ -636,7 +636,7 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/graph graphs graphApp
 		// ---
-		// The backing JSON for an app node detail graph.
+		// The backing JSON for an app node detail graph. (supported graphTypes: app | versionedApp)
 		//
 		//     Produces:
 		//     - application/json

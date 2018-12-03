@@ -104,6 +104,10 @@ func NewOptions(r *http.Request) Options {
 	} else if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
 		checkError(errors.New(fmt.Sprintf("Invalid graphType [%s]", graphType)))
 	}
+	// app node graphs require an app graph type
+	if app != "" && graphType != graph.GraphTypeApp && graphType != graph.GraphTypeVersionedApp {
+		checkError(errors.New(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType)))
+	}
 	if groupBy == "" {
 		groupBy = defaultGroupBy
 	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
