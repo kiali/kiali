@@ -17,7 +17,7 @@ func NewRouter() *mux.Router {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
-	rootRouter := mux.NewRouter().StrictSlash(false)
+	rootRouter := mux.NewRouter().StrictSlash(true)
 	appRouter := rootRouter
 
 	// Due to PathPrefix matching behavoir on sub-routers

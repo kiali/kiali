@@ -386,7 +386,7 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceList,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/services/{service}/metrics services serviceMetrics
+		// swagger:route GET /namespaces/{namespace}/services/{service}/metrics services serviceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single service
 		//
@@ -407,7 +407,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/metrics apps appMetrics
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/metrics apps appMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single app
 		//
@@ -428,7 +428,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AppMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/metrics workloads workloadMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single workload
 		//
@@ -449,7 +449,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/services/{service}/health services serviceHealth
+		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth
 		// ---
 		// Get health associated to the given service
 		//
@@ -470,7 +470,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceHealth,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/apps/{app}/health apps appHealth
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/health apps appHealth
 		// ---
 		// Get health associated to the given app
 		//
@@ -491,7 +491,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AppHealth,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/workloads/{workload}/health workloads workloadHealth
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/health workloads workloadHealth
 		// ---
 		// Get health associated to the given workload
 		//
@@ -528,7 +528,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceIstioValidations,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/metrics namespaces namespaceMetrics
+		// swagger:route GET /namespaces/{namespace}/metrics namespaces namespaceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a namespace
 		//
@@ -549,7 +549,7 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceMetrics,
 			true,
 		},
-		// swagger:route GET /api/namespaces/{namespace}/health namespaces namespaceHealth
+		// swagger:route GET /namespaces/{namespace}/health namespaces namespaceHealth
 		// ---
 		// Get health for all objects in the given namespace
 		//

@@ -38,677 +38,6 @@
         }
       }
     },
-    "/api/namespaces/{namespace}/apps/{app}/health": {
-      "get": {
-        "description": "Get health associated to the given app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
-        "operationId": "appHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "App",
-            "description": "The target app",
-            "name": "app",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/appHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/apps/{app}/metrics": {
-      "get": {
-        "description": "Endpoint to fetch metrics to be displayed, related to a single app",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
-        "operationId": "appMetrics",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The app name (label value).",
-            "name": "app",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "true",
-            "x-go-name": "Name",
-            "description": "Flag for fetching histogram average. Default is true.",
-            "name": "avg",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1800",
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "rate",
-            "x-go-name": "Name",
-            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
-            "name": "rateFunc",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1m",
-            "x-go-name": "Name",
-            "description": "Interval used for rate and histogram calculation.",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
-            "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "15",
-            "x-go-name": "Name",
-            "description": "Step between [graph] datapoints, in seconds.",
-            "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Filters metrics by the specified version.",
-            "name": "version",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/metricsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "503": {
-            "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/health": {
-      "get": {
-        "description": "Get health for all objects in the given namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
-        "operationId": "namespaceHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "pattern": "^(app|service|workload)$",
-            "type": "string",
-            "default": "app",
-            "x-go-name": "Type",
-            "description": "The type of health, \"app\", \"service\" or \"workload\".",
-            "name": "type",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/namespaceAppHealthResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/metrics": {
-      "get": {
-        "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
-        "operationId": "namespaceMetrics",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/metricsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "503": {
-            "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/services/{service}/health": {
-      "get": {
-        "description": "Get health associated to the given service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
-        "operationId": "serviceHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Service",
-            "description": "The target service",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/serviceHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/services/{service}/metrics": {
-      "get": {
-        "description": "Endpoint to fetch metrics to be displayed, related to a single service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "services"
-        ],
-        "operationId": "serviceMetrics",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "true",
-            "x-go-name": "Name",
-            "description": "Flag for fetching histogram average. Default is true.",
-            "name": "avg",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1800",
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "rate",
-            "x-go-name": "Name",
-            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
-            "name": "rateFunc",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1m",
-            "x-go-name": "Name",
-            "description": "Interval used for rate and histogram calculation.",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
-            "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "15",
-            "x-go-name": "Name",
-            "description": "Step between [graph] datapoints, in seconds.",
-            "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Filters metrics by the specified version.",
-            "name": "version",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/metricsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "503": {
-            "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/workloads/{workload}/health": {
-      "get": {
-        "description": "Get health associated to the given workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
-        "operationId": "workloadHealth",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Namespace",
-            "description": "The namespace scope",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "10m",
-            "x-go-name": "RateInterval",
-            "description": "The rate interval used for fetching error rate",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "format": "date-time",
-            "description": "The time to use for the prometheus query",
-            "name": "QueryTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Workload",
-            "description": "The target workload",
-            "name": "workload",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/workloadHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/api/namespaces/{namespace}/workloads/{workload}/metrics": {
-      "get": {
-        "description": "Endpoint to fetch metrics to be displayed, related to a single workload",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "workloads"
-        ],
-        "operationId": "workloadMetrics",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The workload name.",
-            "name": "workload",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "true",
-            "x-go-name": "Name",
-            "description": "Flag for fetching histogram average. Default is true.",
-            "name": "avg",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1800",
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "rate",
-            "x-go-name": "Name",
-            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
-            "name": "rateFunc",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1m",
-            "x-go-name": "Name",
-            "description": "Interval used for rate and histogram calculation.",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
-            "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "15",
-            "x-go-name": "Name",
-            "description": "Step between [graph] datapoints, in seconds.",
-            "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Filters metrics by the specified version.",
-            "name": "version",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/metricsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "503": {
-            "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
     "/config": {
       "get": {
         "description": "Endpoint to get the config of Kiali",
@@ -1163,6 +492,258 @@
         }
       }
     },
+    "/namespaces/{namespace}/apps/{app}/health": {
+      "get": {
+        "description": "Get health associated to the given app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "appHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "App",
+            "description": "The target app",
+            "name": "app",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/appHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps/{app}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "appMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/health": {
+      "get": {
+        "description": "Get health for all objects in the given namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "pattern": "^(app|service|workload)$",
+            "type": "string",
+            "default": "app",
+            "x-go-name": "Type",
+            "description": "The type of health, \"app\", \"service\" or \"workload\".",
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceAppHealthResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio": {
       "get": {
         "description": "Endpoint to get the list of Istio Config of a namespace",
@@ -1414,6 +995,43 @@
         }
       }
     },
+    "/namespaces/{namespace}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "namespaceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services": {
       "get": {
         "description": "Endpoint to get the details of a given service",
@@ -1586,6 +1204,66 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/health": {
+      "get": {
+        "description": "Get health associated to the given service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Service",
+            "description": "The target service",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/istio_validations": {
       "get": {
         "description": "Endpoint to get the list of istio object validations for a service",
@@ -1620,6 +1298,137 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/services/{service}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -1792,6 +1601,197 @@
           },
           "500": {
             "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/workloads/{workload}/health": {
+      "get": {
+        "description": "Get health associated to the given workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "workloads"
+        ],
+        "operationId": "workloadHealth",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Namespace",
+            "description": "The namespace scope",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "10m",
+            "x-go-name": "RateInterval",
+            "description": "The rate interval used for fetching error rate",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time to use for the prometheus query",
+            "name": "QueryTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Workload",
+            "description": "The target workload",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/workloadHealthResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/workloads/{workload}/metrics": {
+      "get": {
+        "description": "Endpoint to fetch metrics to be displayed, related to a single workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "workloads"
+        ],
+        "operationId": "workloadMetrics",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The workload name.",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsIn[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
+            "name": "byLabelsOut[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
