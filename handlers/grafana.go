@@ -34,6 +34,10 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
+	if !grafanaConfig.DisplayLink {
+		return nil, http.StatusNoContent, nil
+	}
+
 	// Check if URL is in the configuration
 	if grafanaConfig.URL == "" {
 		return nil, http.StatusNotFound, errors.New("You need to set the Grafana URL configuration.")
@@ -43,10 +47,6 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	_, error := validateURL(grafanaConfig.URL)
 	if error != nil {
 		return nil, http.StatusNotAcceptable, errors.New("You need to set a correct format for Grafana URL in the configuration error: " + error.Error())
-	}
-
-	if !grafanaConfig.DisplayLink {
-		return nil, http.StatusNoContent, nil
 	}
 
 	// Find the in-cluster URL to reach Grafana's REST API
