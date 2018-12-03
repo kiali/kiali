@@ -6,7 +6,7 @@ enum GrafanaActionKeys {
 }
 
 export const GrafanaActions = {
-  setinfo: createStandardAction(GrafanaActionKeys.SET_INFO)<GrafanaInfo>()
+  setinfo: createStandardAction(GrafanaActionKeys.SET_INFO)<GrafanaInfo | null>()
 };
 
 export type GrafanaAction = ActionType<typeof GrafanaActions>;
