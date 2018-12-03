@@ -279,6 +279,19 @@ type VersionParam struct {
 // SWAGGER RESPONSES
 /////////////////////
 
+// NoContent: the response is empty
+// swagger:response noContent
+type NoContent struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 204
+		// default: 204
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // BadRequestError: the client request is incorrect
 //
 // swagger:response badRequestError

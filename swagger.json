@@ -746,16 +746,13 @@
             "$ref": "#/responses/grafanaInfoResponse"
           },
           "204": {
-            "$ref": "#/responses/grafanaInfoResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "406": {
-            "$ref": "#/responses/notAcceptableError"
+            "$ref": "#/responses/noContent"
           },
           "500": {
             "$ref": "#/responses/internalError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
           }
         }
       }
@@ -4059,6 +4056,26 @@
       "description": "Listing all istio validations for object in the namespace",
       "schema": {
         "$ref": "#/definitions/NamespaceValidations"
+      }
+    },
+    "noContent": {
+      "description": "NoContent: the response is empty",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "HTTP status code",
+            "type": "integer",
+            "format": "int32",
+            "default": 204,
+            "x-go-name": "Code",
+            "example": 204
+          },
+          "message": {
+            "type": "string",
+            "x-go-name": "Message"
+          }
+        }
       }
     },
     "notAcceptableError": {
