@@ -1,4 +1,3 @@
-import json
 import tests.conftest as conftest
 
 APPLICATION_TO_VALIDATE = 'productpage'
@@ -6,7 +5,7 @@ APPLICATION_TO_VALIDATE = 'productpage'
 def test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_list = kiali_client.app_list(namespace=bookinfo_namespace)
+    app_list = kiali_client.request(method_name='appList', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
     assert app_list != None
     for app in app_list.get('applications'):
       assert app.get('name') != None and app.get('name') != ''
@@ -18,7 +17,7 @@ def test_application_list_endpoint(kiali_client):
 def test_application_details_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_details = kiali_client.app_details(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
+    app_details = kiali_client.request(method_name='appDetails', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
 
     assert app_details != None
 
@@ -36,7 +35,7 @@ def test_application_details_endpoint(kiali_client):
 def test_application_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_health = kiali_client.app_health(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
+    app_health = kiali_client.request(method_name='appHealth', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
     assert app_health != None
 
     envoy = app_health.get('envoy')[0]
@@ -50,7 +49,7 @@ def test_application_health_endpoint(kiali_client):
 def test_application_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_metrics = kiali_client.app_metrics(namespace=bookinfo_namespace, app=APPLICATION_TO_VALIDATE)
+    app_metrics = kiali_client.request(method_name='appMetrics', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
     assert app_metrics != None
 
     for direction in ['dest', 'source']:
