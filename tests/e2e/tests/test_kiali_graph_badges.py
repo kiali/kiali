@@ -26,58 +26,53 @@ def test_kiali_virtual_service_workload(kiali_client):
 def test_kiali_virtual_service_app(kiali_client):
     assert do_test(kiali_client, APP_PARAMS, conftest.VIRTUAL_SERVICE_FILE, VS_BADGE)
 
-
 def do_test(kiali_client, graph_params, yaml_file, badge):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
     graph_params["namespaces"] = bookinfo_namespace
-    json = kiali_client.graph_namespaces(params=graph_params)
 
-    print("Debug: Start do_test: JSON: {}".format(json))
+    print("Debug: Start do_test: JSON: {}".format(get_graph_json(kiali_client, graph_params)))
 
-    assert badge not in json
-    assert json['graphType'] == graph_params.get('graphType')
-
-    count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
+    count = get_badge_count(kiali_client, graph_params, badge)
 
     try:
       assert command_exec.oc_apply(yaml_file, bookinfo_namespace) == True
 
-      graph = kiali_client.graph_namespaces(params=graph_params)
-      assert graph is not None
-
       try:
-        with timeout(seconds=30, error_message='Timed out waiting for Create'):
+        with timeout(seconds=60, error_message='Timed out waiting for Create'):
           while True:
-              new_count = get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge)
+              new_count = get_badge_count(kiali_client, graph_params, badge)
               if new_count != 0 and new_count >= count:
                   break
 
               time.sleep(1)
       except:
-        print ("Timeout Exception - Nodes: {}".format(kiali_client.graph_namespaces(params=graph_params)["elements"]['nodes']))
+        print ("Timeout Exception - Nodes: {}".format(get_graph_json(kiali_client, graph_params)["elements"]['nodes']))
         raise Exception("Timeout - Waiting for badge: {}".format(badge))
 
     finally:
       assert command_exec.oc_delete(yaml_file, bookinfo_namespace) == True
 
-      with timeout(seconds=30, error_message='Timed out waiting for Delete'):
+      with timeout(seconds=60, error_message='Timed out waiting for Delete'):
           while True:
               # Validate that JSON no longer has Virtual Service
-              if get_badge_count(kiali_client, bookinfo_namespace, graph_params, badge) <= count:
+              if get_badge_count(kiali_client, graph_params, badge) <= count:
                   break
 
               time.sleep(1)
 
     return True
 
-def get_badge_count(kiali_client, namespace, graph_params, badge):
-
-    nodes = kiali_client.graph_namespaces(params=graph_params)["elements"]['nodes']
-    assert nodes is not None
-
+def get_badge_count(kiali_client, graph_params, badge):
     count = 0
-    for node in nodes:
+
+    json = get_graph_json(kiali_client, graph_params)
+    for node in json["elements"]['nodes']:
         if badge in node["data"] and node["data"][badge]:
             count = count + 1
 
     return count
+
+def get_graph_json(kiali_client, graph_params):
+    response = kiali_client.request(method_name='graphNamespaces', params=graph_params)
+    assert response.status_code == 200
+    return response.json()

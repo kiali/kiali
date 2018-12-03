@@ -1,7 +1,6 @@
 import os
 import pytest
 import yaml
-import ssl
 import re
 import requests
 from kiali import KialiClient
@@ -10,14 +9,6 @@ from utils.command_exec import command_exec
 ENV_FILE = './config/env.yaml'
 CIRCUIT_BREAKER_FILE = 'assets/bookinfo-reviews-all-cb.yaml'
 VIRTUAL_SERVICE_FILE = 'assets/bookinfo-ratings-delay.yaml'
-
-@pytest.fixture(scope="session")
-def kiali_json():
-
-    config = __get_environment_config__(ENV_FILE)
-    client = __get_kiali_client__(config)
-
-    return client.graph_namespaces(params={'duration': '1m', 'namespaces': config.get('mesh_bookinfo_namespace')})
 
 @pytest.fixture(scope='session')
 def kiali_client():
@@ -30,11 +21,9 @@ def get_bookinfo_namespace():
 
 def __get_kiali_client__(config):
     if(config.get('kiali_ssl_enabled') is True):
-        context = ssl._create_unverified_context()
-        return KialiClient(host=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), port=443, context=context, scheme='https')
+        return KialiClient(hostname=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'))
     else:
-        return KialiClient(host=config.get('kiali_hostname'),
-                           username=config.get('kiali_username'), password=config.get('kiali_password'))
+        return KialiClient(host=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), auth_type='https')
 
 def __get_environment_config__(env_file):
     with open(env_file) as yamlfile:
