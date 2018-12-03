@@ -892,6 +892,7 @@
     },
     "/namespaces/{namespace}/applications/{app}/graph": {
       "get": {
+        "description": "The backing JSON for an app node detail graph. (supported graphTypes: app | versionedApp)",
         "produces": [
           "application/json"
         ],
@@ -902,7 +903,6 @@
         "tags": [
           "graphs"
         ],
-        "summary": "The backing JSON for an app node detail graph.",
         "operationId": "graphApp",
         "parameters": [
           {
@@ -985,6 +985,7 @@
     },
     "/namespaces/{namespace}/applications/{app}/versions/{version}/graph": {
       "get": {
+        "description": "The backing JSON for a versioned app node detail graph. (supported graphTypes: app | versionedApp)",
         "produces": [
           "application/json"
         ],
@@ -995,7 +996,6 @@
         "tags": [
           "graphs"
         ],
-        "summary": "The backing JSON for a versioned app node detail graph.",
         "operationId": "graphAppVersion",
         "parameters": [
           {
