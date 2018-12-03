@@ -29,8 +29,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 
 	validations, _ := vs.GetNamespaceValidations("test")
 	assert.NotEmpty(validations)
-	assert.True(validations["test"][models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}].Valid)
-	assert.True(validations["test"][models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
+	assert.True(validations["test"][models.IstioValidationKey{"virtualservice", "product-vs"}].Valid)
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {

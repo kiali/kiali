@@ -33,7 +33,17 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := NoServiceChecker{
-		Namespace:    "test",
+		Namespace: "test",
+		WorkloadList: data.CreateWorkloadList("test",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
+		),
 		IstioDetails: fakeIstioDetails(),
 		Services:     fakeServiceDetails([]string{"reviews", "details", "product", "customer"}),
 	}.Check()
@@ -54,7 +64,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	validations := NoServiceChecker{
 		Namespace:    "test",
 		IstioDetails: fakeIstioDetails(),
-		Services:     fakeServiceDetails([]string{"reviews", "details", "product"}),
+		WorkloadList: data.CreateWorkloadList("test",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+		),
+		Services: fakeServiceDetails([]string{"reviews", "details", "product"}),
 	}.Check()
 
 	assert.NotEmpty(validations)
@@ -63,10 +81,18 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
-	assert.Equal("Host doesn't have a valid service", customerDr.Checks[0].Message)
+	assert.Equal("This host has no matching workloads", customerDr.Checks[0].Message)
 
 	validations = NoServiceChecker{
-		Namespace:    "test",
+		Namespace: "test",
+		WorkloadList: data.CreateWorkloadList("test",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
+		),
 		IstioDetails: fakeIstioDetails(),
 		Services:     fakeServiceDetails([]string{"reviews", "details", "customer"}),
 	}.Check()
@@ -82,7 +108,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
-		Namespace:    "test",
+		Namespace: "test",
+		WorkloadList: data.CreateWorkloadList("test",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
+		),
 		IstioDetails: fakeIstioDetails(),
 		Services:     fakeServiceDetails([]string{"reviews", "product", "customer"}),
 	}.Check()
@@ -91,7 +125,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
 
 	validations = NoServiceChecker{
-		Namespace:    "test",
+		Namespace: "test",
+		WorkloadList: data.CreateWorkloadList("test",
+			data.CreateWorkloadListItem("productv1", appVersionLabel("product", "v1")),
+			data.CreateWorkloadListItem("productv2", appVersionLabel("product", "v2")),
+			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+			data.CreateWorkloadListItem("detailsv2", appVersionLabel("details", "v2")),
+			data.CreateWorkloadListItem("customerv1", appVersionLabel("customer", "v1")),
+			data.CreateWorkloadListItem("customerv2", appVersionLabel("customer", "v2")),
+		),
 		IstioDetails: fakeIstioDetails(),
 		Services:     fakeServiceDetails([]string{"details", "product", "customer"}),
 	}.Check()
@@ -150,4 +192,11 @@ func fakeServiceDetails(services []string) []v1.Service {
 		})
 	}
 	return items
+}
+
+func appVersionLabel(app, version string) map[string]string {
+	return map[string]string{
+		"app":     app,
+		"version": version,
+	}
 }

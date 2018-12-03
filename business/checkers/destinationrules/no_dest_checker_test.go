@@ -9,12 +9,21 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
+func appVersionLabel(app, version string) map[string]string {
+	return map[string]string{
+		"app":     app,
+		"version": version,
+	}
+}
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NoDestinationChecker{
-		Namespace:       "test-namespace",
-		Services:        getServices([]string{"reviews", "other"}),
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
@@ -30,16 +39,19 @@ func TestNoValidHost(t *testing.T) {
 
 	// reviews is not part of service names
 	validations, valid := NoDestinationChecker{
-		Namespace:       "test-namespace",
-		Services:        getServices([]string{"details", "other"}),
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
+			data.CreateWorkloadListItem("otherv1", appVersionLabel("other", "v1")),
+		),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
-	assert.Equal("Host doesn't have a valid service", validations[0].Message)
-	assert.Equal("spec/host", validations[0].Path)
+	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
+	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
 func TestNoMatchingSubset(t *testing.T) {
@@ -48,21 +60,20 @@ func TestNoMatchingSubset(t *testing.T) {
 
 	assert := assert.New(t)
 
-	services := getServices([]string{"reviews"})
-	services["reviews"] = []string{"v1"}
-
 	// reviews does not have v2 in known services
 	validations, valid := NoDestinationChecker{
-		Namespace:       "test-namespace",
-		Services:        services,
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+		),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
-	assert.Equal("This subset is not found from the host", validations[0].Message)
-	assert.Equal("spec/subsets[0]/version", validations[0].Path)
+	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
+	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
 func getServices(services []string) map[string][]string {
