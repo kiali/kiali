@@ -4,6 +4,7 @@ metadata:
   name: monitoringdashboards.monitoring.kiali.io
   labels:
     app: kiali
+    version: ${VERSION_LABEL}
 spec:
   group: monitoring.kiali.io
   names:

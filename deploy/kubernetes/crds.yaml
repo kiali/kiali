@@ -6,6 +6,7 @@ metadata:
     "helm.sh/hook": crd-install
   labels:
     app: kiali
+    version: ${VERSION_LABEL}
 spec:
   group: monitoring.kiali.io
   names:
