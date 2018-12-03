@@ -13,7 +13,6 @@ import (
 func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.DisplayLink = false
-	conf.ExternalServices.Grafana.URL = "https://grafana.url/"
 	config.Set(conf)
 	info, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
@@ -57,5 +56,5 @@ func TestGetGrafanaInfoNoExternalIP(t *testing.T) {
 		return "/dash", nil
 	})
 	assert.NotNil(t, err)
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusServiceUnavailable, code)
 }

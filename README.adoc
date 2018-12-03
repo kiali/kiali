@@ -392,7 +392,7 @@ external_services:
 ----
 
 |`GRAFANA_DISPLAY_LINK`
-|When true, a link to Grafana will be displayed for more metrics.
+|When `true`, a link to Grafana will be displayed for more dashboards. (default is `true`)
 [source,yaml]
 ----
 external_services:
@@ -401,7 +401,7 @@ external_services:
 ----
 
 |`GRAFANA_URL`
-|The URL to the Grafana service. When not set, Kiali throw an error when the user try request to Grafana (/api/grafana).
+|The URL to the Grafana service. When not set, Kiali will report an error as it cannot generate links to Grafana. To avoid this error, either set a valid URL (it must be accessible from user browser), or turn off `GRAFANA_DISPLAY_LINK` options.
 [source,yaml]
 ----
 external_services:
@@ -410,7 +410,7 @@ external_services:
 ----
 
 |`GRAFANA_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Grafana service. This configuration is ignored if `GRAFANA_URL` is set. (default is `istio-system`)
+|The Kubernetes namespace that holds the Grafana service. (default is `istio-system`)
 [source,yaml]
 ----
 external_services:
@@ -419,7 +419,7 @@ external_services:
 ----
 
 |`GRAFANA_SERVICE`
-|The OpenShift route name or the Kubernetes service name for Grafana. This configuration is ignored if `GRAFANA_URL` is set. (default is `grafana`)
+|The Kubernetes service name for Grafana. (default is `grafana`)
 [source,yaml]
 ----
 external_services:

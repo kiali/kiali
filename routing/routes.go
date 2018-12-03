@@ -707,11 +707,10 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      404: notFoundError
-		//      406: notAcceptableError
 		//      500: internalError
+		//      503: serviceUnavailableError
 		//      200: grafanaInfoResponse
-		//      204: grafanaInfoResponse
+		//      204: noContent
 		//
 		{
 			"GrafanaURL",

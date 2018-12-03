@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -34,28 +35,31 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
+	if !grafanaConfig.DisplayLink {
+		return nil, http.StatusNoContent, nil
+	}
+
 	// Check if URL is in the configuration
 	if grafanaConfig.URL == "" {
-		return nil, http.StatusNotFound, errors.New("You need to set the Grafana URL configuration.")
+		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
 	}
 
 	// Check if URL is valid
-	_, error := validateURL(grafanaConfig.URL)
-	if error != nil {
-		return nil, http.StatusNotAcceptable, errors.New("You need to set a correct format for Grafana URL in the configuration error: " + error.Error())
-	}
-
-	if !grafanaConfig.DisplayLink {
-		return nil, http.StatusNoContent, nil
+	_, err := validateURL(grafanaConfig.URL)
+	if err != nil {
+		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL in Kiali configuration: " + err.Error())
 	}
 
 	// Find the in-cluster URL to reach Grafana's REST API
 	spec, err := serviceSupplier(grafanaConfig.ServiceNamespace, grafanaConfig.Service)
 	if err != nil {
+		if k8serr.IsNotFound(err) {
+			return nil, http.StatusServiceUnavailable, err
+		}
 		return nil, http.StatusInternalServerError, err
 	}
 	if len(spec.Ports) == 0 {
-		return nil, http.StatusInternalServerError, errors.New("No port found for Grafana service, cannot access in-cluster service")
+		return nil, http.StatusServiceUnavailable, errors.New("No port found for Grafana service, cannot access in-cluster service")
 	}
 	if len(spec.Ports) > 1 {
 		log.Warning("Several ports found for Grafana service, picking the first one")
