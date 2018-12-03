@@ -10,6 +10,7 @@ ShallowWrapper {
       Array [
         Object {
           "createdAt": "2018-03-14T10:17:52Z\\"",
+          "istioSidecar": true,
           "labels": Object {
             "app": "reviews",
             "version": "v2",
@@ -20,6 +21,7 @@ ShallowWrapper {
         },
         Object {
           "createdAt": "2018-03-14T10:17:52Z\\"",
+          "istioSidecar": true,
           "labels": Object {
             "app": "reviews",
             "version": "v3",
@@ -30,6 +32,7 @@ ShallowWrapper {
         },
         Object {
           "createdAt": "2018-03-14T10:17:52Z\\"",
+          "istioSidecar": true,
           "labels": Object {
             "app": "reviews",
             "version": "v1",
@@ -265,12 +268,14 @@ ShallowWrapper {
                       value="v2"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v2"
-                  >
-                    reviews-v2
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v2"
+                    >
+                      reviews-v2
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -291,12 +296,14 @@ ShallowWrapper {
                       value="v3"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v3"
-                  >
-                    reviews-v3
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v3"
+                    >
+                      reviews-v3
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -317,12 +324,14 @@ ShallowWrapper {
                       value="v1"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v1"
-                  >
-                    reviews-v1
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v1"
+                    >
+                      reviews-v1
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -546,12 +555,14 @@ ShallowWrapper {
                       value="v2"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v2"
-                  >
-                    reviews-v2
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v2"
+                    >
+                      reviews-v2
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -572,12 +583,14 @@ ShallowWrapper {
                       value="v3"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v3"
-                  >
-                    reviews-v3
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v3"
+                    >
+                      reviews-v3
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -598,12 +611,14 @@ ShallowWrapper {
                       value="v1"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v1"
-                  >
-                    reviews-v1
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v1"
+                    >
+                      reviews-v1
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -740,12 +755,14 @@ ShallowWrapper {
                         value="v2"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v2"
-                    >
-                      reviews-v2
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v2"
+                      >
+                        reviews-v2
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -766,12 +783,14 @@ ShallowWrapper {
                         value="v3"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v3"
-                    >
-                      reviews-v3
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v3"
+                      >
+                        reviews-v3
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -792,12 +811,14 @@ ShallowWrapper {
                         value="v1"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v1"
-                    >
-                      reviews-v1
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v1"
+                      >
+                        reviews-v1
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1017,12 +1038,14 @@ ShallowWrapper {
                       value="v2"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v2"
-                  >
-                    reviews-v2
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v2"
+                    >
+                      reviews-v2
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -1043,12 +1066,14 @@ ShallowWrapper {
                       value="v3"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v3"
-                  >
-                    reviews-v3
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v3"
+                    >
+                      reviews-v3
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -1069,12 +1094,14 @@ ShallowWrapper {
                       value="v1"
                     />
                   </div>,
-                  "name": <Link
-                    replace={false}
-                    to="/namespaces/ns/workloads/reviews-v1"
-                  >
-                    reviews-v1
-                  </Link>,
+                  "name": <span>
+                    <Link
+                      replace={false}
+                      to="/namespaces/ns/workloads/reviews-v1"
+                    >
+                      reviews-v1
+                    </Link>
+                  </span>,
                   "resourceVersion": "081020181987",
                   "type": "Deployment",
                 },
@@ -1308,12 +1335,14 @@ ShallowWrapper {
                         value="v2"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v2"
-                    >
-                      reviews-v2
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v2"
+                      >
+                        reviews-v2
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1334,12 +1363,14 @@ ShallowWrapper {
                         value="v3"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v3"
-                    >
-                      reviews-v3
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v3"
+                      >
+                        reviews-v3
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1360,12 +1391,14 @@ ShallowWrapper {
                         value="v1"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v1"
-                    >
-                      reviews-v1
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v1"
+                      >
+                        reviews-v1
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1589,12 +1622,14 @@ ShallowWrapper {
                         value="v2"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v2"
-                    >
-                      reviews-v2
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v2"
+                      >
+                        reviews-v2
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1615,12 +1650,14 @@ ShallowWrapper {
                         value="v3"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v3"
-                    >
-                      reviews-v3
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v3"
+                      >
+                        reviews-v3
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1641,12 +1678,14 @@ ShallowWrapper {
                         value="v1"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v1"
-                    >
-                      reviews-v1
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v1"
+                      >
+                        reviews-v1
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -1783,12 +1822,14 @@ ShallowWrapper {
                           value="v2"
                         />
                       </div>,
-                      "name": <Link
-                        replace={false}
-                        to="/namespaces/ns/workloads/reviews-v2"
-                      >
-                        reviews-v2
-                      </Link>,
+                      "name": <span>
+                        <Link
+                          replace={false}
+                          to="/namespaces/ns/workloads/reviews-v2"
+                        >
+                          reviews-v2
+                        </Link>
+                      </span>,
                       "resourceVersion": "081020181987",
                       "type": "Deployment",
                     },
@@ -1809,12 +1850,14 @@ ShallowWrapper {
                           value="v3"
                         />
                       </div>,
-                      "name": <Link
-                        replace={false}
-                        to="/namespaces/ns/workloads/reviews-v3"
-                      >
-                        reviews-v3
-                      </Link>,
+                      "name": <span>
+                        <Link
+                          replace={false}
+                          to="/namespaces/ns/workloads/reviews-v3"
+                        >
+                          reviews-v3
+                        </Link>
+                      </span>,
                       "resourceVersion": "081020181987",
                       "type": "Deployment",
                     },
@@ -1835,12 +1878,14 @@ ShallowWrapper {
                           value="v1"
                         />
                       </div>,
-                      "name": <Link
-                        replace={false}
-                        to="/namespaces/ns/workloads/reviews-v1"
-                      >
-                        reviews-v1
-                      </Link>,
+                      "name": <span>
+                        <Link
+                          replace={false}
+                          to="/namespaces/ns/workloads/reviews-v1"
+                        >
+                          reviews-v1
+                        </Link>
+                      </span>,
                       "resourceVersion": "081020181987",
                       "type": "Deployment",
                     },
@@ -2060,12 +2105,14 @@ ShallowWrapper {
                         value="v2"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v2"
-                    >
-                      reviews-v2
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v2"
+                      >
+                        reviews-v2
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -2086,12 +2133,14 @@ ShallowWrapper {
                         value="v3"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v3"
-                    >
-                      reviews-v3
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v3"
+                      >
+                        reviews-v3
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },
@@ -2112,12 +2161,14 @@ ShallowWrapper {
                         value="v1"
                       />
                     </div>,
-                    "name": <Link
-                      replace={false}
-                      to="/namespaces/ns/workloads/reviews-v1"
-                    >
-                      reviews-v1
-                    </Link>,
+                    "name": <span>
+                      <Link
+                        replace={false}
+                        to="/namespaces/ns/workloads/reviews-v1"
+                      >
+                        reviews-v1
+                      </Link>
+                    </span>,
                     "resourceVersion": "081020181987",
                     "type": "Deployment",
                   },

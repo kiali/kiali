@@ -17,6 +17,7 @@ interface EndpointAddress {
 export interface WorkloadOverview {
   name: string;
   type: string;
+  istioSidecar: boolean;
   labels?: { [key: string]: string };
   resourceVersion: string;
   createdAt: string;

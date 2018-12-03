@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { Col, Row, Table } from 'patternfly-react';
-import { WorkloadOverview } from '../../../types/ServiceInfo';
-import Label from '../../../components/Label/Label';
-import LocalTime from '../../../components/Time/LocalTime';
 import { Link } from 'react-router-dom';
 import * as resolve from 'table-resolver';
+
+import { WorkloadOverview } from '../../../types/ServiceInfo';
+
+import Label from '../../../components/Label/Label';
+import LocalTime from '../../../components/Time/LocalTime';
+import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
 
 interface ServiceInfoWorkloadProps {
   workloads?: WorkloadOverview[];
@@ -79,12 +82,15 @@ class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
 
   overviewLink(workload: WorkloadOverview) {
     return (
-      <Link
-        to={`/namespaces/${this.props.namespace}/workloads/${workload.name}`}
-        key={'ServiceWorkloadItem_' + this.props.namespace + '_' + workload.name}
-      >
-        {workload.name}
-      </Link>
+      <span>
+        <Link
+          to={`/namespaces/${this.props.namespace}/workloads/${workload.name}`}
+          key={'ServiceWorkloadItem_' + this.props.namespace + '_' + workload.name}
+        >
+          {workload.name}
+        </Link>
+        {!workload.istioSidecar && <MissingSidecar tooltip={true} style={{ marginLeft: '10px' }} />}
+      </span>
     );
   }
 
