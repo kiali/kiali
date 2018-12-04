@@ -4,7 +4,6 @@ import time
 from utils.command_exec import command_exec
 from utils.timeout import timeout
 
-WORKLOADS_FILE = 'assets/bookinfo-workloads.yaml'
 WORKLOAD_TO_VALIDATE = 'details-v1'
 WORKLOAD_TYPE = 'Deployment'
 BOOKINFO_WORKLOADS_COUNT = 6
@@ -29,7 +28,7 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
 
   try:
     # Add extra workloads that will be tested
-    assert command_exec.oc_apply(WORKLOADS_FILE, bookinfo_namespace) == True
+    assert command_exec.oc_apply(conftest.WORKLOADS_FILE, bookinfo_namespace) == True
 
     with timeout(seconds=90, error_message='Timed out waiting for extra workloads creation'):
       while True:
@@ -55,7 +54,7 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
         assert workload.get('type') == workloadType
 
   finally:
-    assert command_exec.oc_delete(WORKLOADS_FILE, bookinfo_namespace) == True
+    assert command_exec.oc_delete(conftest.WORKLOADS_FILE, bookinfo_namespace) == True
 
     with timeout(seconds=90, error_message='Timed out waiting for extra workloads deletion'):
       print('Extra workloads added for this test:', EXTRA_WORKLOADS)
