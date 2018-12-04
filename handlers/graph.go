@@ -216,21 +216,17 @@ func markTrafficGenerators(trafficMap graph.TrafficMap) {
 }
 
 // reduceToServicGraph compresses a [service-injected workload] graph by removing
-// the workload nodes such that, with exception of root nodes, the resulting graph has edges
-// only from and to service nodes.
+// the workload nodes such that, with exception of non-service root nodes, the resulting
+// graph has edges only from and to service nodes.
 func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 	reducedTrafficMap := graph.NewTrafficMap()
 
 	for id, n := range trafficMap {
-		isRoot := false
-		if val, ok := n.Metadata["isRoot"]; ok {
-			isRoot = val.(bool)
-		}
-		if isRoot {
-			reducedTrafficMap[id] = n
-			continue
-		}
 		if n.NodeType != graph.NodeTypeService {
+			// if node isRoot then keep it to better understand traffic flow
+			if val, ok := n.Metadata["isRoot"]; ok && val.(bool) {
+				reducedTrafficMap[id] = n
+			}
 			continue
 		}
 
