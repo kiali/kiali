@@ -1,8 +1,9 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/models"
 	"testing"
+
+	"github.com/kiali/kiali/models"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -74,10 +75,10 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
 
 	assert.Equal(5, len(trafficMap))
-	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	id, _ := graph.Id(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", a.GraphType)
 	unknown, ok := trafficMap[id]
 	assert.Equal(true, ok)
-	assert.Equal(graph.UnknownWorkload, unknown.Workload)
+	assert.Equal(graph.Unknown, unknown.Workload)
 	assert.Equal(1, len(unknown.Edges))
 
 	e := unknown.Edges[0]
@@ -129,10 +130,10 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
 
 	assert.Equal(5, len(trafficMap))
-	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	id, _ := graph.Id(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", a.GraphType)
 	unknown, ok := trafficMap[id]
 	assert.Equal(true, ok)
-	assert.Equal(graph.UnknownWorkload, unknown.Workload)
+	assert.Equal(graph.Unknown, unknown.Workload)
 	assert.Equal(1, len(unknown.Edges))
 
 	customer := unknown.Edges[0].Dest
@@ -192,7 +193,7 @@ func mockWorkloads() []models.WorkloadListItem {
 func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	unknown := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", a.GraphType)
 	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
 	trafficMap[unknown.ID] = &unknown
 	trafficMap[customer.ID] = &customer
@@ -207,7 +208,7 @@ func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 func (a *UnusedNodeAppender) v1Traffic() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	unknown := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", a.GraphType)
+	unknown := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", a.GraphType)
 	customer := graph.NewNode("testNamespace", "customer-v1", "customer", "v1", "customer", a.GraphType)
 	preference := graph.NewNode("testNamespace", "preference-v1", "preference", "v1", "preference", a.GraphType)
 	recommendation := graph.NewNode("testNamespace", "recommendation-v1", "recommendation", "v1", "recommendation", a.GraphType)

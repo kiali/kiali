@@ -149,7 +149,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", "workload-1", graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeWorkload)
+	node := graph.NewNode("testing", "workload-1", graph.Unknown, graph.Unknown, "", graph.GraphTypeWorkload)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -158,7 +158,7 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 func buildAppTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", graph.UnknownWorkload, "myTest", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testing", graph.Unknown, "myTest", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -167,7 +167,7 @@ func buildAppTrafficMap() graph.TrafficMap {
 func buildServiceTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "svc", graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testing", graph.Unknown, graph.Unknown, graph.Unknown, "svc", graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap

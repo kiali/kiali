@@ -67,8 +67,8 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 	versionLabel := cfg.IstioLabels.VersionLabelName
 	for _, w := range workloads {
 		labels := w.Labels
-		app := graph.UnknownApp
-		version := graph.UnknownVersion
+		app := graph.Unknown
+		version := graph.Unknown
 		if v, ok := labels[appLabel]; ok {
 			app = v
 		}
@@ -99,7 +99,7 @@ func addUnusedNodeToTrafficMap(trafficMap graph.TrafficMap, unusedNode *graph.No
 }
 
 func findAndAddSibling(parent, unusedNode *graph.Node) {
-	if unusedNode.App == graph.UnknownApp {
+	if unusedNode.App == graph.Unknown {
 		return
 	}
 

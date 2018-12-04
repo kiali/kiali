@@ -110,13 +110,13 @@ func TestDeadNode(t *testing.T) {
 	trafficMap := testTrafficMap()
 
 	assert.Equal(12, len(trafficMap))
-	unknownId, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	unknownId, _ := graph.Id(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
 	unknownNode, found := trafficMap[unknownId]
 	assert.Equal(true, found)
-	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
+	assert.Equal(graph.Unknown, unknownNode.Workload)
 	assert.Equal(10, len(unknownNode.Edges))
 
-	ingressId, _ := graph.Id("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	ingressNode, found := trafficMap[ingressId]
 	assert.Equal(true, found)
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
@@ -165,9 +165,9 @@ func TestDeadNode(t *testing.T) {
 func testTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0 := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	n0 := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
 
-	n00 := graph.NewNode("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	n00 := graph.NewNode("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	n00.Metadata["rateOut"] = 4.8
 
 	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", "testPodsWithTraffic", graph.GraphTypeVersionedApp)

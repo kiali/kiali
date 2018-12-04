@@ -17,11 +17,7 @@ const (
 	NodeTypeUnknown       string = "unknown" // The special "unknown" traffic gen node
 	NodeTypeWorkload      string = "workload"
 	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
-	UnknownApp            string = "unknown"
-	UnknownNamespace      string = "unknown"
-	UnknownService        string = "unknown"
-	UnknownVersion        string = "unknown"
-	UnknownWorkload       string = "unknown"
+	Unknown               string = "unknown"             // Istio unknown label value
 )
 
 type Node struct {
@@ -66,10 +62,10 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 	case NodeTypeWorkload:
 		// maintain the app+version labeling if it is set, it can be useful
 		// for identifying destination rules, providing links, and grouping
-		if app == UnknownApp {
+		if app == Unknown {
 			app = ""
 		}
-		if version == UnknownVersion {
+		if version == Unknown {
 			version = ""
 		}
 		service = ""
@@ -121,7 +117,7 @@ func NewTrafficMap() TrafficMap {
 
 func Id(namespace, workload, app, version, service, graphType string) (id, nodeType string) {
 	// first, check for the special-case "unknown" source node
-	if UnknownNamespace == namespace && UnknownWorkload == workload && UnknownApp == app && "" == service {
+	if Unknown == namespace && Unknown == workload && Unknown == app && "" == service {
 		return fmt.Sprintf("unknown_source"), NodeTypeUnknown
 	}
 
@@ -129,13 +125,13 @@ func Id(namespace, workload, app, version, service, graphType string) (id, nodeT
 	// request to an unknown path. In this case the namespace may or may not be unknown.
 	// Every other field is unknown. Allow one unknown service per namespace to help reflect these
 	// bad destinations in the graph,  it may help diagnose a problem.
-	if UnknownWorkload == workload && UnknownApp == app && UnknownService == service {
+	if Unknown == workload && Unknown == app && Unknown == service {
 		return fmt.Sprintf("svc_%s_unknown", namespace), NodeTypeService
 	}
 
-	workloadOk := workload != "" && workload != UnknownWorkload
-	appOk := app != "" && app != UnknownApp
-	serviceOk := service != "" && service != UnknownService
+	workloadOk := IsOK(workload)
+	appOk := IsOK(app)
+	serviceOk := IsOK(service)
 
 	if !workloadOk && !appOk && !serviceOk {
 		panic(fmt.Sprintf("Failed ID gen: namespace=[%s] workload=[%s] app=[%s] version=[%s] service=[%s] graphType=[%s]", namespace, workload, app, version, service, graphType))
@@ -154,7 +150,7 @@ func Id(namespace, workload, app, version, service, graphType string) (id, nodeT
 	}
 
 	// handle app and versionedApp graphs
-	versionOk := version != "" && version != UnknownVersion
+	versionOk := IsOK(version)
 	if appOk {
 		// For a versionedApp graph use workload as the Id, if available. It allows us some protection
 		// against labeling anti-patterns. It won't be there in a few cases like:
