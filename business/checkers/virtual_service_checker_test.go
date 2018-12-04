@@ -54,7 +54,7 @@ func TestVirtualServiceMultipleCheck(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
 	assert.Equal(validation.ObjectType, "virtualservice")
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
 
@@ -99,7 +99,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
 	assert.Equal(validation.ObjectType, "virtualservice")
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
 
