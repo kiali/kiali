@@ -10,6 +10,26 @@ import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import Namespace from '../types/Namespace';
 import { style } from 'typestyle';
+import { PfColors } from './Pf/PfColors';
+
+const namespaceButtonStyle = style({
+  color: PfColors.Black,
+  outline: 'none',
+  $nest: {
+    '&:hover': {
+      textDecoration: 'none',
+      color: PfColors.Black,
+      outline: 'none',
+      boxShadow: 'none'
+    },
+    '&:focus': {
+      textDecoration: 'none',
+      color: PfColors.Black,
+      outline: 'none',
+      boxShadow: 'none'
+    }
+  }
+});
 
 interface NamespaceListType {
   disabled: boolean;
@@ -37,9 +57,9 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
     if (this.props.activeNamespaces.length === 0) {
       return 'Select a namespace';
     } else if (this.props.activeNamespaces.length === 1) {
-      return this.props.activeNamespaces[0].name;
+      return `Namespace: ${this.props.activeNamespaces[0].name}`;
     } else {
-      return `${this.props.activeNamespaces.length} namespaces`;
+      return `Namespaces: ${this.props.activeNamespaces.length} namespaces`;
     }
   }
 
@@ -88,7 +108,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         trigger={['click']}
         rootClose={true}
       >
-        <Button id="graph_settings">
+        <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="graph_settings">
           {this.namespaceButtonText()} <Icon name="angle-down" />
         </Button>
       </OverlayTrigger>

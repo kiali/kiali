@@ -11,6 +11,7 @@ import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './containers/GraphPageContainer';
 import { ICONS } from './config';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
+import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 /**
  * Return array of objects that describe vertical menu
@@ -130,4 +131,11 @@ const pathRoutes: Path[] = [
   }
 ];
 
-export { defaultRoute, navItems, pathRoutes };
+const secondaryMastheadRoutes: Path[] = [
+  {
+    path: '/graph',
+    component: DefaultSecondaryMasthead
+  }
+];
+
+export { defaultRoute, navItems, pathRoutes, secondaryMastheadRoutes };

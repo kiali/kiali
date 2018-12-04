@@ -17,7 +17,6 @@ import GraphRefreshContainer from './GraphRefresh';
 import GraphSettingsContainer from './GraphSettings';
 import { HistoryManager, URLParams } from '../../app/History';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import NamespaceDropdownContainer from '../../components/NamespaceDropdown';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import Namespace, { namespacesToString, namespacesFromString } from '../../types/Namespace';
 import { NamespaceActions } from '../../actions/NamespaceAction';
@@ -133,15 +132,10 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
       <>
         <Toolbar>
           <FormGroup className={zeroPaddingLeft}>
-            {this.props.node ? (
+            {this.props.node && (
               <Button className={namespaceStyle} onClick={this.handleNamespaceReturn}>
                 Back to Full Graph...
               </Button>
-            ) : (
-              <>
-                <label className={namespaceStyle}>Namespace</label>
-                <NamespaceDropdownContainer disabled={this.props.disabled} />
-              </>
             )}
           </FormGroup>
           <FormGroup className={zeroPaddingLeft}>
