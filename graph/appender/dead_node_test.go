@@ -109,12 +109,18 @@ func TestDeadNode(t *testing.T) {
 	businessLayer := setupWorkloads()
 	trafficMap := testTrafficMap()
 
-	assert.Equal(11, len(trafficMap))
-	id, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
-	unknownNode, found := trafficMap[id]
+	assert.Equal(12, len(trafficMap))
+	unknownId, _ := graph.Id(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	unknownNode, found := trafficMap[unknownId]
 	assert.Equal(true, found)
 	assert.Equal(graph.UnknownWorkload, unknownNode.Workload)
 	assert.Equal(10, len(unknownNode.Edges))
+
+	ingressId, _ := graph.Id("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingressNode, found := trafficMap[ingressId]
+	assert.Equal(true, found)
+	assert.Equal("istio-ingressgateway", ingressNode.Workload)
+	assert.Equal(10, len(ingressNode.Edges))
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -127,19 +133,23 @@ func TestDeadNode(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	assert.Equal(9, len(trafficMap))
-	unknownNode, found = trafficMap[id]
+
+	unknownNode, found = trafficMap[unknownId]
+	assert.Equal(false, found)
+
+	ingressNode, found = trafficMap[ingressId]
 	assert.Equal(true, found)
-	assert.Equal(8, len(unknownNode.Edges))
+	assert.Equal(8, len(ingressNode.Edges))
 
-	assert.Equal("testPodsWithTraffic-v1", unknownNode.Edges[0].Dest.Workload)
-	assert.Equal("testPodsNoTraffic-v1", unknownNode.Edges[1].Dest.Workload)
-	assert.Equal("testNoPodsWithTraffic-v1", unknownNode.Edges[2].Dest.Workload)
-	assert.Equal("testNoPodsNoTraffic-v1", unknownNode.Edges[3].Dest.Workload)
-	assert.Equal("testNoDeploymentWithTraffic-v1", unknownNode.Edges[4].Dest.Workload)
-	assert.Equal("testNodeWithTcpSentTraffic-v1", unknownNode.Edges[5].Dest.Workload)
-	assert.Equal("testNodeWithTcpSentOutTraffic-v1", unknownNode.Edges[6].Dest.Workload)
+	assert.Equal("testPodsWithTraffic-v1", ingressNode.Edges[0].Dest.Workload)
+	assert.Equal("testPodsNoTraffic-v1", ingressNode.Edges[1].Dest.Workload)
+	assert.Equal("testNoPodsWithTraffic-v1", ingressNode.Edges[2].Dest.Workload)
+	assert.Equal("testNoPodsNoTraffic-v1", ingressNode.Edges[3].Dest.Workload)
+	assert.Equal("testNoDeploymentWithTraffic-v1", ingressNode.Edges[4].Dest.Workload)
+	assert.Equal("testNodeWithTcpSentTraffic-v1", ingressNode.Edges[5].Dest.Workload)
+	assert.Equal("testNodeWithTcpSentOutTraffic-v1", ingressNode.Edges[6].Dest.Workload)
 
-	id, _ = graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
+	id, _ := graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
 	noPodsNoTraffic, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
@@ -156,7 +166,9 @@ func testTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
 	n0 := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
-	n0.Metadata["rateOut"] = 2.4
+
+	n00 := graph.NewNode("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	n00.Metadata["rateOut"] = 4.8
 
 	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", "testPodsWithTraffic", graph.GraphTypeVersionedApp)
 	n1.Metadata["rate"] = 0.8
@@ -187,6 +199,7 @@ func testTrafficMap() map[string]*graph.Node {
 	n10.Metadata["rate"] = 0.8
 
 	trafficMap[n0.ID] = &n0
+	trafficMap[n00.ID] = &n00
 	trafficMap[n1.ID] = &n1
 	trafficMap[n2.ID] = &n2
 	trafficMap[n3.ID] = &n3
@@ -199,33 +212,43 @@ func testTrafficMap() map[string]*graph.Node {
 	trafficMap[n10.ID] = &n10
 
 	e := n0.AddEdge(&n1)
+	e = n00.AddEdge(&n1)
 	e.Metadata["rate"] = 0.8
 
 	e = n0.AddEdge(&n2)
-	e.Metadata["rate"] = 0.0
+	e = n00.AddEdge(&n2)
+	e.Metadata["rate"] = 0.8
 
 	e = n0.AddEdge(&n3)
+	e = n00.AddEdge(&n3)
 	e.Metadata["rate"] = 0.8
 
 	e = n0.AddEdge(&n4)
+	e = n00.AddEdge(&n4)
 	e.Metadata["rate"] = 0.0
 
 	e = n0.AddEdge(&n5)
+	e = n00.AddEdge(&n5)
 	e.Metadata["rate"] = 0.8
 
 	e = n0.AddEdge(&n6)
+	e = n00.AddEdge(&n6)
 	e.Metadata["rate"] = 0.0
 
 	e = n0.AddEdge(&n7)
+	e = n00.AddEdge(&n7)
 	e.Metadata["tcpSentRate"] = 74.1
 
 	e = n0.AddEdge(&n8)
+	e = n00.AddEdge(&n8)
 	e.Metadata["tcpSentRate"] = 74.1
 
 	e = n0.AddEdge(&n9)
+	e = n00.AddEdge(&n9)
 	e.Metadata["rate"] = 0.8
 
 	e = n0.AddEdge(&n10)
+	e = n00.AddEdge(&n10)
 	e.Metadata["rate"] = 0.8
 
 	return trafficMap

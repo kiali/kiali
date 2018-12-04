@@ -10,6 +10,7 @@ const DeadNodeAppenderName = "deadNode"
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
 // - nodes for which there is no traffic reported and the related schema is missing
 //   (presumably removed from K8S). (kiali-621)
+//   - this includes "unknown"
 // - service nodes that are not service entries (kiali-1526) and for which there is no incoming
 //   error traffic and no outgoing edges (kiali-1326).
 // Name: deadNode
@@ -44,8 +45,6 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
-		case graph.NodeTypeUnknown:
-			continue
 		case graph.NodeTypeService:
 			// a service node with outgoing edges is never considered dead (or egress)
 			if len(n.Edges) > 0 {
@@ -79,12 +78,12 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
 				continue
 			}
-			// a node w/o a valid workload is a versionless app node and can't be dead
-			if n.Workload == "" || n.Workload == graph.UnknownWorkload {
+			// a non-unknown node without a workload can't be dead (because by definition it does not have a backing workload)
+			if n.NodeType != graph.NodeTypeUnknown && (n.Workload == "" || n.Workload == graph.UnknownVersion) {
 				continue
 			}
 
-			// Remove if backing workload is not defined, flag if there are no pods
+			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
 			if workload, found := getWorkload(n.Workload, namespaceInfo.WorkloadList); !found {
 				delete(trafficMap, id)
 				numRemoved++

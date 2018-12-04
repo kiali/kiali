@@ -36,6 +36,10 @@ func NewNamespaceInfo(namespace string) *NamespaceInfo {
 }
 
 func getWorkload(workloadName string, workloadList *models.WorkloadList) (*models.WorkloadListItem, bool) {
+	if workloadName == "" || workloadName == graph.UnknownWorkload {
+		return nil, false
+	}
+
 	for _, workload := range workloadList.Workloads {
 		if workload.Name == workloadName {
 			return &workload, true
