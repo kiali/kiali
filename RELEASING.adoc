@@ -4,9 +4,6 @@ Kiali is released using a Jenkins Pipeline. The main document covering
 the release process can be found
 link:https://github.com/kiali/kiali/blob/master/RELEASING.adoc[here].
 
-Currently, the Pipeline only supports doing _minor_ releases and will
-publish the UI, the backend and the Docker images all together.
-
 == Versioning scheme
 
 The versioning scheme that we are following is similar to
@@ -64,29 +61,38 @@ kiali-ui repository.
 ** `npm login`
 . Checkout the code that you want to release:
 ** `git checkout branch_to_release` (usually, you should release "master")
-** Be advised that the release process will commit changes locally
+** Be advised that the release process will commit changes locally.
 . The version that is specified in `package.json` file is what will be used to
   publish to NPM. If needed, modify the version numbers.
 . If you want the release process to create a PR for you to prepare the code
   for the next version:
 ** `export GH_TOKEN={your_github_token}`
-** A branch is always created in your fork of the code. So, if you don't have
-   a token, you can place the PR manually.
+** A branch is created in your fork of the code for minor and major releases.
+   If you don't have a token, you can place a PR manually.
 . Run the release process:
 ** `make -f Makefile.jenkins release`
+
+By default, it's assumed that you are doing a minor or a major release.
+If want to do a snapshot release, you can run the release process specifying
+the RELEASE_TYPE variable:
+
+* `RELEASE_TYPE="snapshot.X" make -f Makefile.jenkins release`
+
+The process will append snapshot suffixes where needed (you don't need to append the snapshot suffix in the `package.json` file).
 
 === Available options
 
 * If you want to make a "dry-run" of the release:
 ** `NPM_DRY_RUN=y make -f Makefile.jenkins release`
-* It's assumed that you are doing a major or a minor release. So, a new 
-  version branch is created in the kiali-ui repository (the branch name
-  is like "vMAJOR.MINOR"). You can omit the creation of this branch:
+* If you run the release process in _major_ or _minor_ mode, a new version
+  branch is created in the kiali-ui repository (the branch name is like "vMAJOR.MINOR"). You can omit the creation of this branch:
 ** `OMIT_VERSION_BRANCH=y make -f Makefile.jenkins release`
-* The release process bumps the minor part of the version specified in
-  package.json. If this doesn't meet your needs, you can specify what will be the next version, so that the PR is created correctly:
+* If you run the release process in _major_ or _minor_ mode, the release
+  process bumps the minor part of the version specified in package.json.
+  If this doesn't meet your needs, you can specify what will be the next version, so that the PR is created correctly:
 ** `UI_BUMPED_VERSION="major.minor.patch" make -f Makefile.jenkins release`
-* The release process always creates a branch in your fork of the repository with
+* If you run the release process in _major_ or _minor_ mode, the release
+  process creates a branch in your fork of the repository with
   the required changes to prepare the code for the next release. By default, the
   name of the branch is _prepare_next_version_. If you want to customize the
   name of the branch:
