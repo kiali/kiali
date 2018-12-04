@@ -30,7 +30,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 	if globalInfo.Business == nil {
 		var err error
 		globalInfo.Business, err = business.Get()
-		checkError(err)
+		graph.CheckError(err)
 	}
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
@@ -44,7 +44,7 @@ func addBadging(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceIn
 		IncludeVirtualServices:  true,
 		Namespace:               namespaceInfo.Namespace,
 	})
-	checkError(err)
+	graph.CheckError(err)
 
 	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, istioCfg)
 	applyVirtualServices(trafficMap, namespaceInfo.Namespace, istioCfg)

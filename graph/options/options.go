@@ -169,8 +169,7 @@ func NewOptions(r *http.Request) Options {
 				Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
 			}
 		} else {
-			// TODO: Should this return Forbidden status?
-			checkError(errors.New(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken)))
+			graph.Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
 		}
 	}
 

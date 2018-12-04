@@ -2,7 +2,6 @@ package appender
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,12 +14,6 @@ import (
 
 // package-private util functions (used by multiple files)
 
-func checkError(err error) {
-	if err != nil {
-		panic(err.Error)
-	}
-}
-
 func promQuery(query string, queryTime time.Time, api v1.API, a Appender) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -31,14 +24,14 @@ func promQuery(query string, queryTime time.Time, api v1.API, a Appender) model.
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Appender-" + a.Name())
 	value, err := api.Query(ctx, query, queryTime)
-	checkError(err)
+	graph.CheckError(err)
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector
 		return value.(model.Vector)
 	default:
-		checkError(errors.New(fmt.Sprintf("No handling for type %v!\n", t)))
+		graph.Error(fmt.Sprintf("No handling for type %v!\n", t))
 	}
 
 	return nil

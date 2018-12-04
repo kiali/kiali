@@ -33,7 +33,6 @@ package handlers
 //
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -58,7 +57,7 @@ func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
 	client, err := prometheus.NewClient()
-	checkError(err)
+	graph.CheckError(err)
 
 	graphNamespaces(w, r, client)
 }
@@ -82,7 +81,7 @@ func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client) gra
 	switch o.Vendor {
 	case "cytoscape":
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%s] not supported", o.Vendor)))
+		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
 	}
 
 	log.Debugf("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
@@ -272,7 +271,7 @@ func addServiceGraphTraffic(target, source *graph.Edge) {
 	case "tcp":
 		addToMetadataValue(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
 	default:
-		checkError(errors.New(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target)))
+		graph.Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
 	}
 	// hande any appender-based edge data
 	// - responseTime is not a counter, set an average, not a total
@@ -283,7 +282,7 @@ func addServiceGraphTraffic(target, source *graph.Edge) {
 
 func checkNodeType(expected string, n *graph.Node) {
 	if expected != n.NodeType {
-		checkError(errors.New(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n)))
+		graph.Error(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n))
 	}
 }
 
@@ -659,7 +658,7 @@ func GraphNode(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
 	client, err := prometheus.NewClient()
-	checkError(err)
+	graph.CheckError(err)
 
 	graphNode(w, r, client)
 }
@@ -670,10 +669,10 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	switch o.Vendor {
 	case "cytoscape":
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%s] not supported", o.Vendor)))
+		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
 	}
 	if len(o.Namespaces) != 1 {
-		checkError(errors.New(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace")))
+		graph.Error(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace"))
 	}
 
 	// time how long it takes to generate this graph
@@ -773,7 +772,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 	default:
-		checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
+		graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 	}
 	inVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
@@ -809,7 +808,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	case graph.NodeTypeService:
 		query = ""
 	default:
-		checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
+		graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 	}
 	outVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
@@ -861,7 +860,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
 		default:
-			checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
+			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
 		outIstioVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMapHttp(trafficMap, &outIstioVector, o)
@@ -905,7 +904,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			tcpGroupBy)
 	default:
-		checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
+		graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 	}
 	tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
@@ -938,7 +937,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	case graph.NodeTypeService:
 		query = ""
 	default:
-		checkError(errors.New(fmt.Sprintf("NodeType [%s] not supported", n.NodeType)))
+		graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 	}
 	tcpOutVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 
@@ -959,7 +958,7 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 	case "cytoscape":
 		vendorConfig = cytoscape.NewConfig(trafficMap, o.VendorOptions)
 	default:
-		checkError(errors.New(fmt.Sprintf("Vendor [%s] not supported", o.Vendor)))
+		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
 	}
 
 	log.Debugf("Done generating config for [%s] service graph.", o.Vendor)
@@ -980,26 +979,21 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, err := api.Query(ctx, query, queryTime)
-	checkError(err)
+	graph.CheckError(err)
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 
 	switch t := value.Type(); t {
 	case model.ValVector: // Instant Vector
 		return value.(model.Vector)
 	default:
-		checkError(errors.New(fmt.Sprintf("No handling for type %v!\n", t)))
+		graph.Error(fmt.Sprintf("No handling for type %v!\n", t))
 	}
 
 	return nil
 }
 
-func checkError(err error) {
-	if err != nil {
-		panic(err.Error)
-	}
-}
-
 func handlePanic(w http.ResponseWriter) {
+	code := http.StatusInternalServerError
 	if r := recover(); r != nil {
 		var message string
 		switch r.(type) {
@@ -1009,11 +1003,14 @@ func handlePanic(w http.ResponseWriter) {
 			message = r.(error).Error()
 		case func() string:
 			message = r.(func() string)()
+		case graph.Response:
+			message = r.(graph.Response).Message
+			code = r.(graph.Response).Code
 		default:
 			message = fmt.Sprintf("%v", r)
 		}
 		log.Errorf("%s: %s", message, debug.Stack())
-		RespondWithError(w, http.StatusInternalServerError, message)
+		RespondWithError(w, code, message)
 	}
 }
 
