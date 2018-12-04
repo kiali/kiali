@@ -1,6 +1,11 @@
 properties([
   disableConcurrentBuilds(),
   parameters([
+    string(name: 'RELEASE_TYPE',
+      defaultValue: 'auto',
+      trim: true,
+      description: 'Valid values are: auto, minor, snapshot.0, snapshot.1. When "auto" is ' +
+                    'specified, the type of the release will be determined based on the current date.'),
     string(name: 'BACKEND_RELEASING_BRANCH',
       defaultValue: 'refs/heads/master',
       trim: true,
@@ -82,10 +87,19 @@ node('kiali-build') {
       sh "cd ${uiDir}; git config user.name 'kiali-bot'"
     }
 
+    // Determine release type if "auto" was specified
+    def releaseType = "${RELEASE_TYPE}"
+    if ( releaseType == "auto" ) {
+      releaseType = sh(
+        returnStdout: true,
+        script: "${backendDir}/deploy/jenkins-ci/bin/determine-release-type.sh").trim()
+    }
+
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
             "BACKEND_FORK_URI=${backendForkUri}",
-            "UI_FORK_URI=${uiForkUri}"
+            "UI_FORK_URI=${uiForkUri}",
+            "RELEASE_TYPE=${releaseType}"
     ]) {
       parallel backend: {
         withEnv(["GOPATH=${env.WORKSPACE}"]) {
@@ -98,7 +112,7 @@ node('kiali-build') {
         }
       }, ui: {
         stage('Build UI') {
-          sh "make -f ${uiMakefile} -C ${uiDir} ui-build"
+          sh "make -f ${uiMakefile} -C ${uiDir} ui-fix-version ui-build"
         }
         stage('Test UI') {
           sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
