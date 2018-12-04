@@ -8,7 +8,7 @@ import (
 const DeadNodeAppenderName = "deadNode"
 
 // DeadNodeAppender is responsible for removing from the graph unwanted nodes:
-// - nodes for which there is no traffic reported and the related schema is missing
+// - nodes for which there is no traffic reported and a backing workload that can't be found
 //   (presumably removed from K8S). (kiali-621)
 //   - this includes "unknown"
 // - service nodes that are not service entries (kiali-1526) and for which there is no incoming
@@ -78,7 +78,8 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
 				continue
 			}
-			// a non-unknown node without a workload can't be dead (because by definition it does not have a backing workload)
+			// Nodes without a backing workload are assumed not dead because their workload clearly can't be missing
+			// - note: unknown is not saved by this rule (kiali-2078)
 			if n.NodeType != graph.NodeTypeUnknown && (n.Workload == "" || n.Workload == graph.UnknownVersion) {
 				continue
 			}
