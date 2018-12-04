@@ -78,8 +78,9 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
 				continue
 			}
-			// Nodes without a backing workload are assumed not dead because their workload clearly can't be missing
-			// - note: unknown is not saved by this rule (kiali-2078)
+			// There are some node types that are never associated with backing workloads (such as versionless app nodes).
+			// Nodes of those types are never dead because their workload clearly can't be missing (they don't have workloads).
+			// - note: unknown is not saved by this rule (kiali-2078) - i.e. unknown nodes can be declared dead
 			if n.NodeType != graph.NodeTypeUnknown && (n.Workload == "" || n.Workload == graph.UnknownVersion) {
 				continue
 			}
