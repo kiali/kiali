@@ -111,22 +111,21 @@ class NotificationGroupWrapper extends React.PureComponent<NotificationGroupWrap
                 <NotificationWrapper key={message.id} message={message} onClick={this.props.onNotificationClick} />
               ))}
             </PfNotificationDrawer.PanelBody>
-            {group.showActions &&
-              group.messages.length > 0 && (
-                <PfNotificationDrawer.PanelAction>
-                  <PfNotificationDrawer.PanelActionLink className="drawer-pf-action-link">
-                    <Button bsStyle="link" onClick={() => this.props.onMarkGroupAsRead(group)}>
-                      Mark All Read
-                    </Button>
-                  </PfNotificationDrawer.PanelActionLink>
-                  <PfNotificationDrawer.PanelActionLink data-toggle="clear-all">
-                    <Button bsStyle="link" onClick={() => this.props.onClearGroup(group)}>
-                      <Icon type="pf" name="close" />
-                      Clear All
-                    </Button>
-                  </PfNotificationDrawer.PanelActionLink>
-                </PfNotificationDrawer.PanelAction>
-              )}
+            {group.showActions && group.messages.length > 0 && (
+              <PfNotificationDrawer.PanelAction>
+                <PfNotificationDrawer.PanelActionLink className="drawer-pf-action-link">
+                  <Button bsStyle="link" onClick={() => this.props.onMarkGroupAsRead(group)}>
+                    Mark All Read
+                  </Button>
+                </PfNotificationDrawer.PanelActionLink>
+                <PfNotificationDrawer.PanelActionLink data-toggle="clear-all">
+                  <Button bsStyle="link" onClick={() => this.props.onClearGroup(group)}>
+                    <Icon type="pf" name="close" />
+                    Clear All
+                  </Button>
+                </PfNotificationDrawer.PanelActionLink>
+              </PfNotificationDrawer.PanelAction>
+            )}
           </PfNotificationDrawer.PanelCollapse>
         </Collapse>
       </PfNotificationDrawer.Panel>

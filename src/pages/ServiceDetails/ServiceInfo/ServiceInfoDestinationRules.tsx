@@ -177,7 +177,9 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
               <span style={{ paddingRight: '10px', paddingTop: '3px' }}>{subset.name}</span>{' '}
             </Col>
             <Col xs={4}>
-              {Object.keys(subset.labels).map((key, _) => <Label key={key} name={key} value={subset.labels[key]} />)}
+              {Object.keys(subset.labels).map((key, _) => (
+                <Label key={key} name={key} value={subset.labels[key]} />
+              ))}
             </Col>
             <Col xs={4}>
               <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />

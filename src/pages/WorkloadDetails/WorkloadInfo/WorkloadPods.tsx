@@ -154,7 +154,9 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
   renderLabels(labels: { [key: string]: string }, u: Number) {
     return (
       <div key="labels" className="label-collection">
-        {Object.keys(labels).map((key, i) => <Label key={'pod_' + u + '_' + i} name={key} value={labels[key]} />)}
+        {Object.keys(labels).map((key, i) => (
+          <Label key={'pod_' + u + '_' + i} name={key} value={labels[key]} />
+        ))}
       </div>
     );
   }

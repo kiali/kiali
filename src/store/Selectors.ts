@@ -15,8 +15,9 @@ export const activeNamespacesSelector = createSelector(
  * Gets a comma separated list of the namespaces for displaying
  * @type {OutputSelector<KialiAppState, any, (res: Namespace[]) => any>}
  */
-export const activeNamespacesAsStringSelector = createSelector(activeNamespaces, namespaces =>
-  namespaces.map(namespace => namespace.name).join(', ')
+export const activeNamespacesAsStringSelector = createSelector(
+  activeNamespaces,
+  namespaces => namespaces.map(namespace => namespace.name).join(', ')
 );
 
 const duration = (state: KialiAppState) => state.userSettings.duration;

@@ -153,7 +153,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <span style={{ float: 'right' }}>
         <Button onClick={this.fetchIstioObjectDetails}>
           <Icon name="refresh" />
-        </Button>&nbsp;
+        </Button>
+        &nbsp;
         <IstioActionDropdown
           objectName={this.props.match.params.object}
           canDelete={canDelete}

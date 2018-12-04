@@ -204,8 +204,7 @@
     {
       "name": "reviews-v1",
       "templateAnnotations": {
-        "sidecar.istio.io/status":
-          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+        "sidecar.istio.io/status": "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
       },
       "labels": {
         "app": "reviews",
@@ -230,8 +229,7 @@
     {
       "name": "reviews-v2",
       "templateAnnotations": {
-        "sidecar.istio.io/status":
-          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+        "sidecar.istio.io/status": "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
       },
       "labels": {
         "app": "reviews",
@@ -256,8 +254,7 @@
     {
       "name": "reviews-v3",
       "templateAnnotations": {
-        "sidecar.istio.io/status":
-          "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
+        "sidecar.istio.io/status": "{\"version\":\"ead37a825b2e46228909b05014a7c281345a42a86033d92bf5c12b4f1cb2d9f4\",\"initContainers\":[\"istio-init\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"],\"imagePullSecrets\":null}"
       },
       "labels": {
         "app": "reviews",

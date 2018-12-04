@@ -221,30 +221,29 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             {this.renderInput()}
           </Filter>
           {this.props.children}
-          {activeFilters &&
-            activeFilters.length > 0 && (
-              <Toolbar.Results>
-                <Filter.ActiveLabel>{'Active Filters:'}</Filter.ActiveLabel>
-                <Filter.List>
-                  {activeFilters.map((item, index) => {
-                    return (
-                      <Filter.Item key={index} onRemove={this.removeFilter} filterData={item}>
-                        {item.category + ': ' + item.value}
-                      </Filter.Item>
-                    );
-                  })}
-                </Filter.List>
-                <a
-                  href="#"
-                  onClick={e => {
-                    e.preventDefault();
-                    this.clearFilters();
-                  }}
-                >
-                  Clear All Filters
-                </a>
-              </Toolbar.Results>
-            )}
+          {activeFilters && activeFilters.length > 0 && (
+            <Toolbar.Results>
+              <Filter.ActiveLabel>{'Active Filters:'}</Filter.ActiveLabel>
+              <Filter.List>
+                {activeFilters.map((item, index) => {
+                  return (
+                    <Filter.Item key={index} onRemove={this.removeFilter} filterData={item}>
+                      {item.category + ': ' + item.value}
+                    </Filter.Item>
+                  );
+                })}
+              </Filter.List>
+              <a
+                href="#"
+                onClick={e => {
+                  e.preventDefault();
+                  this.clearFilters();
+                }}
+              >
+                Clear All Filters
+              </a>
+            </Toolbar.Results>
+          )}
         </Toolbar>
       </div>
     );
