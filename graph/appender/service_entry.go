@@ -31,7 +31,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	var err error
 	if globalInfo.Business == nil {
 		globalInfo.Business, err = business.Get()
-		checkError(err)
+		graph.CheckError(err)
 	}
 
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
@@ -70,7 +70,7 @@ func (a ServiceEntryAppender) getServiceEntry(service string, globalInfo *Global
 				IncludeServiceEntries: true,
 				Namespace:             ns,
 			})
-			checkError(err)
+			graph.CheckError(err)
 
 			for _, entry := range istioCfg.ServiceEntries {
 				if entry.Spec.Hosts != nil && (entry.Spec.Location == "MESH_EXTERNAL" || entry.Spec.Location == "MESH_INTERNAL") {

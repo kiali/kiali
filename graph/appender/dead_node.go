@@ -29,11 +29,11 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *G
 	var err error
 	if globalInfo.Business == nil {
 		globalInfo.Business, err = business.Get()
-		checkError(err)
+		graph.CheckError(err)
 	}
 	if namespaceInfo.WorkloadList == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-		checkError(err)
+		graph.CheckError(err)
 		namespaceInfo.WorkloadList = &workloadList
 	}
 

@@ -44,7 +44,7 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	if globalInfo.PromClient == nil {
 		var err error
 		globalInfo.PromClient, err = prometheus.NewClient()
-		checkError(err)
+		graph.CheckError(err)
 	}
 
 	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)

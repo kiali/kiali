@@ -27,11 +27,11 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 	if globalInfo.Business == nil {
 		var err error
 		globalInfo.Business, err = business.Get()
-		checkError(err)
+		graph.CheckError(err)
 	}
 	if namespaceInfo.WorkloadList == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
-		checkError(err)
+		graph.CheckError(err)
 		namespaceInfo.WorkloadList = &workloadList
 	}
 
