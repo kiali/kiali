@@ -9,7 +9,7 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
-import { MetricsObjectTypes, MetricsDirection } from '../../types/Metrics';
+import { MetricsObjectTypes } from '../../types/Metrics';
 
 type AppDetailsState = {
   app: App;
@@ -128,7 +128,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
                   objectType={MetricsObjectTypes.APP}
-                  direction={MetricsDirection.INBOUND}
+                  direction={'inbound'}
                 />
               </TabPane>
               <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
@@ -136,7 +136,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
                   objectType={MetricsObjectTypes.APP}
-                  direction={MetricsDirection.OUTBOUND}
+                  direction={'outbound'}
                 />
               </TabPane>
             </TabContent>

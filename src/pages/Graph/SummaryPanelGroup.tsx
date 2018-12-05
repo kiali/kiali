@@ -22,6 +22,7 @@ import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config';
+import { Reporter } from 'src/types/MetricsOptions';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -45,7 +46,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     overflowY: 'auto' as 'auto'
   };
 
-  private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -155,26 +156,27 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
 
     const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
+    const reporter: Reporter =
+      this.props.data.summaryTarget.namespace === serverConfig().istioNamespace ? 'destination' : 'source';
 
-    const promise = getNodeMetrics(nodeMetricType, target, props, filters);
-    this.metricsPromise = makeCancelablePromise(promise);
+    const promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter);
+    // use dest metrics for incoming
+    const promiseIn = getNodeMetrics(nodeMetricType, target, props, filters, 'inbound', 'destination');
+    this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
 
     this.metricsPromise.promise
-      .then(response => {
-        // use source metrics for outgoing, except for:
-        // - is is the istio namespace
-        let useDest = this.props.data.summaryTarget.namespace === serverConfig().istioNamespace;
-        let metrics = useDest ? response.data.dest.metrics : response.data.source.metrics;
-        const rcOut = metrics['request_count_out'];
-        const ecOut = metrics['request_error_count_out'];
-        const tcpSentOut = metrics['tcp_sent_out'];
-        const tcpReceivedOut = metrics['tcp_received_out'];
+      .then(responses => {
+        const metricsOut = responses[0].data.metrics;
+        const metricsIn = responses[1].data.metrics;
+        const rcOut = metricsOut['request_count'];
+        const ecOut = metricsOut['request_error_count'];
+        const tcpSentOut = metricsOut['tcp_sent'];
+        const tcpReceivedOut = metricsOut['tcp_received'];
         // use dest metrics for incoming
-        metrics = response.data.dest.metrics;
-        const rcIn = metrics['request_count_in'];
-        const ecIn = metrics['request_error_count_in'];
-        const tcpSentIn = metrics['tcp_sent_in'];
-        const tcpReceivedIn = metrics['tcp_received_in'];
+        const rcIn = metricsIn['request_count'];
+        const ecIn = metricsIn['request_error_count'];
+        const tcpSentIn = metricsIn['tcp_sent'];
+        const tcpReceivedIn = metricsIn['tcp_received'];
         this.setState({
           loading: false,
           requestCountIn: graphUtils.toC3Columns(rcIn.matrix, 'RPS'),

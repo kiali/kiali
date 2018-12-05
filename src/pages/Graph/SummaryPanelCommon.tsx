@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
-import MetricsOptions from '../../types/MetricsOptions';
+import MetricsOptions, { Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import * as M from '../../types/Metrics';
@@ -96,9 +96,10 @@ export const getNodeMetrics = (
   node: any,
   props: SummaryPanelPropType,
   filters: Array<string>,
+  direction: Direction,
+  reporter: Reporter,
   quantiles?: Array<string>,
-  byLabelsIn?: Array<string>,
-  byLabelsOut?: Array<string>
+  byLabels?: Array<string>
 ): Promise<Response<M.Metrics>> => {
   const data = nodeData(node);
   const options: MetricsOptions = {
@@ -108,8 +109,9 @@ export const getNodeMetrics = (
     rateInterval: props.rateInterval,
     filters: filters,
     quantiles: quantiles,
-    byLabelsIn: byLabelsIn,
-    byLabelsOut: byLabelsOut
+    byLabels: byLabels,
+    direction: direction,
+    reporter: reporter
   };
 
   switch (nodeMetricType) {
@@ -122,6 +124,26 @@ export const getNodeMetrics = (
     default:
       return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
   }
+};
+
+export const mergeMetricsResponses = (promises: Promise<Response<M.Metrics>>[]): Promise<Response<M.Metrics>> => {
+  return Promise.all(promises).then(responses => {
+    const metrics: M.Metrics = {
+      metrics: {},
+      histograms: {}
+    };
+    responses.forEach(r => {
+      Object.keys(r.data.metrics).forEach(k => {
+        metrics.metrics[k] = r.data.metrics[k];
+      });
+      Object.keys(r.data.histograms).forEach(k => {
+        metrics.histograms[k] = r.data.histograms[k];
+      });
+    });
+    return {
+      data: metrics
+    };
+  });
 };
 
 export const getDatapoints = (

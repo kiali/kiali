@@ -14,7 +14,8 @@ import {
   renderNoTraffic,
   NodeData,
   NodeMetricType,
-  renderLabels
+  renderLabels,
+  mergeMetricsResponses
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -207,78 +208,108 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       return;
     }
 
-    const filters = ['request_count', 'request_duration', 'request_error_count', 'tcp_sent', 'tcp_received'];
     const quantiles = ['0.5', '0.95', '0.99'];
     const byLabelsIn = this.getByLabelsIn(sourceMetricType, destMetricType);
 
-    const promise = getNodeMetrics(destMetricType, edge.target(), props, filters, quantiles, byLabelsIn);
-    this.metricsPromise = makeCancelablePromise(promise);
+    const useDest = sourceData.nodeType === NodeType.UNKNOWN || sourceData.namespace === serverConfig().istioNamespace;
+
+    if (!useDest && sourceData.nodeType === NodeType.SERVICE) {
+      // Special case where we must differenciate HTTP metrics from TCP (uses slightly different reporting)
+      const filtersHTTP = ['request_count', 'request_duration', 'request_error_count'];
+      const promiseHTTP = getNodeMetrics(
+        destMetricType,
+        edge.target(),
+        props,
+        filtersHTTP,
+        'inbound',
+        'destination',
+        quantiles,
+        byLabelsIn
+      );
+      const filtersTCP = ['tcp_sent', 'tcp_received'];
+      const promiseTCP = getNodeMetrics(
+        destMetricType,
+        edge.target(),
+        props,
+        filtersTCP,
+        'inbound',
+        'source',
+        quantiles,
+        byLabelsIn
+      );
+      this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
+    } else {
+      const filters = ['request_count', 'request_duration', 'request_error_count', 'tcp_sent', 'tcp_received'];
+      const promise = getNodeMetrics(
+        destMetricType,
+        edge.target(),
+        props,
+        filters,
+        'inbound',
+        useDest ? 'destination' : 'source',
+        quantiles,
+        byLabelsIn
+      );
+      this.metricsPromise = makeCancelablePromise(promise);
+    }
 
     this.metricsPromise.promise
       .then(response => {
         // HTTP
-        let useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest =
-          useDest || sourceData.namespace === serverConfig().istioNamespace || sourceData.nodeType === NodeType.SERVICE;
-        let reporter = useDest ? response.data.dest : response.data.source;
-        let metrics = reporter.metrics;
-        const histograms = reporter.histograms;
+        let metrics = response.data.metrics;
+        const histograms = response.data.histograms;
         const reqRates = this.getNodeDataPoints(
-          metrics['request_count_in'],
+          metrics['request_count'],
           'RPS',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const errRates = this.getNodeDataPoints(
-          metrics['request_error_count_in'],
+          metrics['request_error_count'],
           'Error',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rtAvg = this.getNodeDataPoints(
-          histograms['request_duration_in']['avg'],
+          histograms['request_duration']['avg'],
           'Average',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rtMed = this.getNodeDataPoints(
-          histograms['request_duration_in']['0.5'],
+          histograms['request_duration']['0.5'],
           'Median',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rt95 = this.getNodeDataPoints(
-          histograms['request_duration_in']['0.95'],
+          histograms['request_duration']['0.95'],
           '95th',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const rt99 = this.getNodeDataPoints(
-          histograms['request_duration_in']['0.99'],
+          histograms['request_duration']['0.99'],
           '99th',
           sourceMetricType,
           destMetricType,
           sourceData
         );
-        // TCP (uses slightly different reporting)
-        useDest = sourceData.nodeType === NodeType.UNKNOWN;
-        useDest = useDest || sourceData.namespace === serverConfig().istioNamespace;
-        reporter = useDest ? response.data.dest : response.data.source;
-        metrics = reporter.metrics;
+        // TCP
         const tcpSentRates = this.getNodeDataPoints(
-          metrics['tcp_sent_in'],
+          metrics['tcp_sent'],
           'Sent',
           sourceMetricType,
           destMetricType,
           sourceData
         );
         const tcpReceivedRates = this.getNodeDataPoints(
-          metrics['tcp_received_in'],
+          metrics['tcp_received'],
           'Received',
           sourceMetricType,
           destMetricType,

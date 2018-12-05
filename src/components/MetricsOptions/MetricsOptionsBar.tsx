@@ -6,20 +6,17 @@ import RefreshContainer from '../../containers/RefreshContainer';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import history, { URLParams, HistoryManager } from '../../app/History';
 import { config } from '../../config';
-import MetricsOptions from '../../types/MetricsOptions';
+import MetricsOptions, { Reporter, Direction } from '../../types/MetricsOptions';
 import { DurationInSeconds } from '../../types/Common';
-import { MetricsDirection } from '../../types/Metrics';
 
 import { MetricsSettings, Quantiles, MetricsSettingsDropdown } from './MetricsSettings';
 import { MetricsLabels as L } from './MetricsLabels';
 
 export interface MetricsOptionsBarProps {
   onOptionsChanged: (opts: MetricsOptions) => void;
-  onReporterChanged: (reporter: string) => void;
   onRefresh: () => void;
   onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
-  metricReporter: string;
-  direction: MetricsDirection;
+  direction: Direction;
   labelValues: Map<L.LabelName, L.LabelValues>;
 }
 
@@ -36,6 +33,7 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
   private metricsSettings: MetricsSettings;
   private duration: DurationInSeconds;
   private pollInterval: number;
+  private reporter: Reporter;
   private shouldReportOptions: boolean;
 
   static initialPollInterval = (urlParams: URLSearchParams): number => {
@@ -54,6 +52,14 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
     }
     d = sessionStorage.getItem(URLParams.DURATION);
     return d !== null ? Number(d) : MetricsOptionsBar.DefaultDuration;
+  };
+
+  static initialReporter = (urlParams: URLSearchParams, direction: Direction): string => {
+    const reporterParam = urlParams.get(URLParams.REPORTER);
+    if (reporterParam != null) {
+      return reporterParam;
+    }
+    return direction === 'inbound' ? 'destination' : 'source';
   };
 
   static initialMetricsSettings = (urlParams: URLSearchParams): MetricsSettings => {
@@ -104,25 +110,22 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
 
   reportOptions() {
     // State-to-options converter (removes unnecessary properties)
-    let labelsIn: L.PromLabel[] = [];
-    let labelsOut: L.PromLabel[] = [];
-    if (this.props.direction === MetricsDirection.INBOUND) {
-      labelsIn = this.metricsSettings.activeLabels.map(lbl => L.INBOUND_LABELS.get(lbl)!);
-    } else {
-      labelsOut = this.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
-    }
+    const labels: L.PromLabel[] =
+      this.props.direction === 'inbound'
+        ? this.metricsSettings.activeLabels.map(lbl => L.INBOUND_LABELS.get(lbl)!)
+        : this.metricsSettings.activeLabels.map(lbl => L.OUTBOUND_LABELS.get(lbl)!);
     this.props.onOptionsChanged({
       duration: this.duration,
-      byLabelsIn: labelsIn,
-      byLabelsOut: labelsOut,
+      byLabels: labels,
       avg: this.metricsSettings.showAverage,
-      quantiles: this.metricsSettings.showQuantiles
+      quantiles: this.metricsSettings.showQuantiles,
+      reporter: this.reporter,
+      direction: this.props.direction
     });
   }
 
   onReporterChanged = (reporter: string) => {
     HistoryManager.setParam(URLParams.REPORTER, reporter);
-    this.props.onReporterChanged(reporter);
   };
 
   onMetricsSettingsChanged = (settings: MetricsSettings) => {
@@ -153,8 +156,8 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
             disabled={false}
             handleSelect={this.onReporterChanged}
             nameDropdown={'Reported from'}
-            value={this.props.metricReporter}
-            initialLabel={MetricsOptionsBar.ReporterOptions[this.props.metricReporter]}
+            value={this.reporter}
+            initialLabel={MetricsOptionsBar.ReporterOptions[this.reporter]}
             options={MetricsOptionsBar.ReporterOptions}
           />
         </FormGroup>
@@ -179,15 +182,18 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
     const pollInterval = MetricsOptionsBar.initialPollInterval(urlParams);
     const duration = MetricsOptionsBar.initialDuration(urlParams);
     const metricsSettings = MetricsOptionsBar.initialMetricsSettings(urlParams);
+    const reporter = MetricsOptionsBar.initialReporter(urlParams, this.props.direction) as Reporter;
 
     this.shouldReportOptions =
       pollInterval !== this.pollInterval ||
       duration !== this.duration ||
-      !isEqual(metricsSettings)(this.metricsSettings);
+      !isEqual(metricsSettings)(this.metricsSettings) ||
+      reporter !== this.reporter;
 
     this.pollInterval = pollInterval;
     this.metricsSettings = metricsSettings;
     this.duration = duration;
+    this.reporter = reporter;
   };
 }
 

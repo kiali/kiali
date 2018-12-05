@@ -1,6 +1,7 @@
 import * as API from '../Api';
 import { AxiosError } from 'axios';
 import { authentication } from '../../utils/Authentication';
+import MetricsOptions from 'src/types/MetricsOptions';
 
 describe('#GetErrorMessage', () => {
   const errormsg = 'Error sample';
@@ -78,7 +79,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getNamespaceMetrics', () => {
-    const result = API.getNamespaceMetrics(authentication(), 'istio-system', {});
+    const result = API.getNamespaceMetrics(authentication(), 'istio-system', {} as MetricsOptions);
     evaluatePromise(result);
   });
 
@@ -88,7 +89,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getAppMetrics', () => {
-    const result = API.getAppMetrics(authentication(), 'istio-system', 'book-info', {});
+    const result = API.getAppMetrics(authentication(), 'istio-system', 'book-info', {} as MetricsOptions);
     evaluatePromise(result);
   });
 

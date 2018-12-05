@@ -5,7 +5,7 @@ import { MemoryRouter, Route } from 'react-router';
 
 import Metrics from '../Metrics';
 import * as API from '../../../services/Api';
-import { MetricsDirection, MetricsObjectTypes } from '../../../types/Metrics';
+import { MetricsObjectTypes } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
 
 window['SVGPathElement'] = a => a;
@@ -29,11 +29,11 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
 };
 
 const mockServiceMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getServiceMetrics', { source: metrics, dest: metrics });
+  return mockAPIToPromise('getServiceMetrics', metrics);
 };
 
 const mockWorkloadMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getWorkloadMetrics', { source: metrics, dest: metrics });
+  return mockAPIToPromise('getWorkloadMetrics', metrics);
 };
 
 const mockGrafanaInfo = (info: any): Promise<any> => {
@@ -110,7 +110,7 @@ describe('Metrics for a service', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -149,7 +149,7 @@ describe('Metrics for a service', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -170,12 +170,12 @@ describe('Metrics for a service', () => {
     const allMocksDone = [
       mockServiceMetrics({
         metrics: {
-          request_count_in: createMetric('m1')
+          request_count: createMetric('m1')
         },
         histograms: {
-          request_size_in: createHistogram('m3'),
-          request_duration_in: createHistogram('m5'),
-          response_size_in: createHistogram('m7')
+          request_size: createHistogram('m3'),
+          request_duration: createHistogram('m5'),
+          response_size: createHistogram('m7')
         }
       })
         .then(() => {
@@ -195,7 +195,7 @@ describe('Metrics for a service', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -233,7 +233,7 @@ describe('Inbound Metrics for a workload', () => {
               namespace="ns"
               object="svc"
               objectType={MetricsObjectTypes.WORKLOAD}
-              direction={MetricsDirection.INBOUND}
+              direction={'inbound'}
               grafanaInfo={{
                 url: 'http://172.30.139.113:3000',
                 serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -271,7 +271,7 @@ describe('Inbound Metrics for a workload', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -292,12 +292,12 @@ describe('Inbound Metrics for a workload', () => {
     const allMocksDone = [
       mockWorkloadMetrics({
         metrics: {
-          request_count_in: createMetric('m1')
+          request_count: createMetric('m1')
         },
         histograms: {
-          request_size_in: createHistogram('m3'),
-          request_duration_in: createHistogram('m5'),
-          response_size_in: createHistogram('m7')
+          request_size: createHistogram('m3'),
+          request_duration: createHistogram('m5'),
+          response_size: createHistogram('m7')
         }
       })
         .then(() => {
@@ -317,7 +317,7 @@ describe('Inbound Metrics for a workload', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -356,7 +356,7 @@ describe('Outbound Metrics for a workload', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -395,7 +395,7 @@ describe('Outbound Metrics for a workload', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
-                direction={MetricsDirection.INBOUND}
+                direction={'inbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
@@ -416,12 +416,12 @@ describe('Outbound Metrics for a workload', () => {
     const allMocksDone = [
       mockWorkloadMetrics({
         metrics: {
-          request_count_out: createMetric('m1')
+          request_count: createMetric('m1')
         },
         histograms: {
-          request_size_out: createHistogram('m3'),
-          request_duration_out: createHistogram('m5'),
-          response_size_out: createHistogram('m7')
+          request_size: createHistogram('m3'),
+          request_duration: createHistogram('m5'),
+          response_size: createHistogram('m7')
         }
       })
         .then(() => {
@@ -441,7 +441,7 @@ describe('Outbound Metrics for a workload', () => {
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
-                direction={MetricsDirection.OUTBOUND}
+                direction={'outbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',

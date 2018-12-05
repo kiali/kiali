@@ -87,8 +87,8 @@ export const getNamespaceMetrics = (namespace: string, params: any) => {
   return Promise.resolve({
     data: {
       metrics: {
-        request_count_in: { matrix: [] },
-        request_error_count_in: { matrix: [] }
+        request_count: { matrix: [] },
+        request_error_count: { matrix: [] }
       }
     }
   });

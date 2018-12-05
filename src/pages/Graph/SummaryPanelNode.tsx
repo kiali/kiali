@@ -24,6 +24,7 @@ import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { serverConfig, ICONS } from '../../config';
+import { Reporter } from 'src/types/MetricsOptions';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -47,7 +48,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     overflowY: 'auto' as 'auto'
   };
 
-  private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -108,16 +109,40 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
 
     const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
-    // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
-    // comparator in getNodeDatapoints).
-    let byLabelsIn = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
-    let byLabelsOut = data.isRoot ? ['destination_service_namespace'] : undefined;
-
-    const promise = getNodeMetrics(nodeMetricType, target, props, filters, undefined, byLabelsIn, byLabelsOut);
-    this.metricsPromise = makeCancelablePromise(promise);
+    let promiseOut: Promise<Response<Metrics>>, promiseIn: Promise<Response<Metrics>>;
+    // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
+    // service node (because they don't have "real" outgoing edges).
+    if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
+      // use source metrics for outgoing, except for:
+      // - unknown nodes (no source telemetry)
+      // - istio namespace nodes (no source telemetry)
+      const reporter: Reporter =
+        data.nodeType === NodeType.UNKNOWN || data.namespace === serverConfig().istioNamespace
+          ? 'destination'
+          : 'source';
+      const byLabels = data.isRoot ? ['destination_service_namespace'] : undefined;
+      promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter, undefined, byLabels);
+    } else {
+      promiseOut = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+    }
+    // set incoming unless it is a root (because they have no incoming edges)
+    if (!data.isRoot) {
+      // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
+      const reporter: Reporter =
+        data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
+          ? 'destination'
+          : 'source';
+      // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
+      // comparator in getNodeDatapoints).
+      const byLabels = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
+      promiseIn = getNodeMetrics(nodeMetricType, target, props, filters, 'inbound', reporter, undefined, byLabels);
+    } else {
+      promiseIn = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+    }
+    this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
     this.metricsPromise.promise
-      .then(response => {
-        this.showRequestCountMetrics(response.data, data, nodeMetricType);
+      .then(responses => {
+        this.showRequestCountMetrics(responses[0].data, responses[1].data, data, nodeMetricType);
       })
       .catch(error => {
         if (error.isCanceled) {
@@ -135,7 +160,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true, metricsLoadError: null });
   }
 
-  showRequestCountMetrics(all: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
+  showRequestCountMetrics(outbound: Metrics, inbound: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
     let comparator;
     if (this.isSpecialServiceDest(nodeMetricType)) {
       comparator = (metric: Metric) => {
@@ -146,46 +171,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         return metric['destination_service_namespace'] === data.namespace;
       };
     }
-    let metrics;
-    let rcOut;
-    let ecOut;
-    let tcpSentOut;
-    let tcpReceivedOut;
-    let rcIn;
-    let ecIn;
-    let tcpSentIn;
-    let tcpReceivedIn;
-    // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
-    // service node (because they don't have "real" outgoing edges).
-    if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
-      // use source metrics for outgoing, except for:
-      // - unknown nodes (no source telemetry)
-      // - istio namespace nodes (no source telemetry)
-      let useDest = data.nodeType === NodeType.UNKNOWN;
-      useDest = useDest || data.namespace === serverConfig().istioNamespace;
-      metrics = useDest ? all.dest.metrics : all.source.metrics;
-      rcOut = metrics['request_count_out'];
-      ecOut = metrics['request_error_count_out'];
-
-      // These will be empty if destination metrics are being used. That's fine
-      // it's not possible to report TCP metrics, because there is no TCP telemetry (either
-      // in source nor destination) in the cases where dest. metrics are used.
-      tcpSentOut = metrics['tcp_sent_out'];
-      tcpReceivedOut = metrics['tcp_received_out'];
-    }
-    // set incoming unless it is a root (because they have no incoming edges)
-    if (!data.isRoot) {
-      // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
-      const useSource = data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace;
-      metrics = useSource ? all.source.metrics : all.dest.metrics;
-      rcIn = metrics['request_count_in'];
-      ecIn = metrics['request_error_count_in'];
-
-      // For TCP, always use source side metrics. There is not enough data in
-      // destination reporter to correctly resolve the source of the traffic.
-      tcpSentIn = all.source.metrics['tcp_sent_in'];
-      tcpReceivedIn = all.source.metrics['tcp_received_in'];
-    }
+    const rcOut = outbound.metrics['request_count'];
+    const ecOut = outbound.metrics['request_error_count'];
+    const tcpSentOut = outbound.metrics['tcp_sent'];
+    const tcpReceivedOut = outbound.metrics['tcp_received'];
+    const rcIn = inbound.metrics['request_count'];
+    const ecIn = inbound.metrics['request_error_count'];
+    const tcpSentIn = inbound.metrics['tcp_sent'];
+    const tcpReceivedIn = inbound.metrics['tcp_received'];
     this.setState({
       loading: false,
       requestCountOut: getDatapoints(rcOut, 'RPS', comparator),

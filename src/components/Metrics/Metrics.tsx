@@ -1,22 +1,23 @@
 import * as React from 'react';
+import { RouteComponentProps } from 'react-router';
 import { Link } from 'react-router-dom';
-import { Alert, Icon } from 'patternfly-react';
+import { Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import assign from 'lodash/fp/assign';
 
-import history, { HistoryManager, URLParams } from '../../app/History';
+import history from '../../app/History';
 import MetricsOptionsBar from '../MetricsOptions/MetricsOptionsBar';
 import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import * as API from '../../services/Api';
 import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { GrafanaInfo } from '../../store/Store';
 import * as M from '../../types/Metrics';
-import MetricsOptions from '../../types/MetricsOptions';
+import MetricsOptions, { Direction } from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
+import * as MessageCenter from '../../utils/MessageCenter';
 
 import HistogramChart from './HistogramChart';
 import MetricChart from './MetricChart';
-import { RouteComponentProps } from 'react-router';
 
 const expandedChartContainerStyle = style({
   height: 'calc(100vh - 248px)'
@@ -31,15 +32,12 @@ type ChartDefinition = {
   name: string;
   unit: string;
   component: any;
-  sourceMetrics?: M.MetricGroup | M.Histogram;
-  destMetrics?: M.MetricGroup | M.Histogram;
+  metrics?: M.MetricGroup | M.Histogram;
 };
 
 type ChartDefinitions = { [key: string]: ChartDefinition };
 
 type MetricsState = {
-  alertDetails?: string;
-  metricReporter: string;
   chartDefs: ChartDefinitions;
   labelValues: Map<L.LabelName, L.LabelValues>;
 };
@@ -54,7 +52,7 @@ type MetricsProps = ObjectId &
     isPageVisible?: boolean;
     grafanaInfo?: GrafanaInfo;
     objectType: M.MetricsObjectTypes;
-    direction: M.MetricsDirection;
+    direction: Direction;
   };
 
 class Metrics extends React.Component<MetricsProps, MetricsState> {
@@ -71,56 +69,30 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
   constructor(props: MetricsProps) {
     super(props);
 
-    let metricReporter = 'source';
-
-    const metricReporterParam = HistoryManager.getParam(URLParams.REPORTER);
-    if (metricReporterParam != null) {
-      metricReporter = metricReporterParam;
-    } else if (this.props.direction === M.MetricsDirection.INBOUND) {
-      metricReporter = 'destination';
-    }
-
     this.state = {
-      metricReporter: metricReporter,
       chartDefs: this.getChartsDef(),
       labelValues: new Map()
     };
   }
 
   getChartsDef(): ChartDefinitions {
-    let inboundCharts = {
-      request_count_in: { name: 'Request volume', unit: 'ops', component: MetricChart },
-      request_duration_in: { name: 'Request duration', unit: 's', component: HistogramChart },
-      request_size_in: { name: 'Request size', unit: 'B', component: HistogramChart },
-      response_size_in: { name: 'Response size', unit: 'B', component: HistogramChart },
-      tcp_received_in: { name: 'TCP received', unit: 'bps', component: MetricChart },
-      tcp_sent_in: { name: 'TCP sent', unit: 'bps', component: MetricChart }
+    return {
+      request_count: { name: 'Request volume', unit: 'ops', component: MetricChart },
+      request_duration: { name: 'Request duration', unit: 's', component: HistogramChart },
+      request_size: { name: 'Request size', unit: 'B', component: HistogramChart },
+      response_size: { name: 'Response size', unit: 'B', component: HistogramChart },
+      tcp_received: { name: 'TCP received', unit: 'bps', component: MetricChart },
+      tcp_sent: { name: 'TCP sent', unit: 'bps', component: MetricChart }
     };
-    let charts: ChartDefinitions = inboundCharts;
-
-    if (this.props.direction === M.MetricsDirection.OUTBOUND) {
-      charts = {
-        request_count_out: { name: 'Request volume', unit: 'ops', component: MetricChart },
-        request_duration_out: { name: 'Request duration', unit: 's', component: HistogramChart },
-        request_size_out: { name: 'Request size', unit: 'B', component: HistogramChart },
-        response_size_out: { name: 'Response size', unit: 'B', component: HistogramChart },
-        tcp_received_out: { name: 'TCP received', unit: 'bps', component: MetricChart },
-        tcp_sent_out: { name: 'TCP sent', unit: 'bps', component: MetricChart }
-      };
-    }
-
-    return charts;
   }
 
   fillChartsMetrics(charts: ChartDefinitions, metricsData: M.Metrics) {
     Object.keys(charts).forEach(k => {
       const chart = charts[k];
       if (Metrics.isHistogram(chart)) {
-        chart.sourceMetrics = metricsData.source.histograms[k];
-        chart.destMetrics = metricsData.dest.histograms[k];
+        chart.metrics = metricsData.histograms[k];
       } else {
-        chart.sourceMetrics = metricsData.source.metrics[k];
-        chart.destMetrics = metricsData.dest.metrics[k];
+        chart.metrics = metricsData.metrics[k];
       }
     });
   }
@@ -141,14 +113,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     this.fetchMetrics();
   };
 
-  onReporterChanged = (reporter: string) => {
-    const labelValues = this.extractLabelValues(this.state.chartDefs, reporter);
-    this.setState({
-      metricReporter: reporter,
-      labelValues: labelValues
-    });
-  };
-
   fetchMetrics = () => {
     let promise: Promise<API.Response<M.Metrics>>;
     switch (this.props.objectType) {
@@ -167,31 +131,26 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
       .then(response => {
         const chartDefs = this.getChartsDef();
         this.fillChartsMetrics(chartDefs, response.data);
-        const labelValues = this.extractLabelValues(chartDefs, this.state.metricReporter);
+        const labelValues = this.extractLabelValues(chartDefs);
         this.setState({
           chartDefs: chartDefs,
           labelValues: labelValues
         });
       })
       .catch(error => {
-        this.setState({ alertDetails: API.getErrorMsg('Cannot fetch metrics.', error) });
+        MessageCenter.add(API.getErrorMsg('Cannot fetch metrics', error));
         console.error(error);
       });
   };
 
-  extractLabelValues(chartDefs: ChartDefinitions, reporter: string): Map<L.LabelName, L.LabelValues> {
+  extractLabelValues(chartDefs: ChartDefinitions): Map<L.LabelName, L.LabelValues> {
     // Find all labels on all series
     const labelsWithValues: Map<L.LabelName, L.LabelValues> = new Map();
-    const labelGroups =
-      this.props.direction === M.MetricsDirection.OUTBOUND ? L.REVERSE_OUTBOUND_LABELS : L.REVERSE_INBOUND_LABELS;
-    const chartMetrics =
-      reporter === 'source'
-        ? (chartDef: ChartDefinition) => chartDef.sourceMetrics
-        : (chartDef: ChartDefinition) => chartDef.destMetrics;
+    const labelGroups = this.props.direction === 'outbound' ? L.REVERSE_OUTBOUND_LABELS : L.REVERSE_INBOUND_LABELS;
     for (let name in chartDefs) {
       if (chartDefs.hasOwnProperty(name)) {
         const chartDef = chartDefs[name];
-        const metrics = chartMetrics(chartDef);
+        const metrics = chartDef.metrics;
         if (metrics) {
           if (Metrics.isHistogram(chartDef)) {
             Object.keys(metrics).forEach(stat => {
@@ -241,8 +200,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     return '';
   }
 
-  dismissAlert = () => this.setState({ alertDetails: undefined });
-
   onLabelsFiltersChanged = (label: L.LabelName, value: string, checked: boolean) => {
     let newLabels = new Map();
     this.state.labelValues.forEach((val, key) => {
@@ -275,13 +232,10 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
             </Link>
           </h3>
         )}
-        {this.state.alertDetails && <Alert onDismiss={this.dismissAlert}>{this.state.alertDetails}</Alert>}
         <MetricsOptionsBar
           onOptionsChanged={this.onOptionsChanged}
-          onReporterChanged={this.onReporterChanged}
           onRefresh={this.fetchMetrics}
           onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-          metricReporter={this.state.metricReporter}
           direction={this.props.direction}
           labelValues={this.state.labelValues}
         />
@@ -319,7 +273,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
 
   private convertAsPromLabels(labels: Map<L.LabelName, L.LabelValues>): Map<L.PromLabel, L.LabelValues> {
     const promLabels = new Map<L.PromLabel, L.LabelValues>();
-    const labelGroups = this.props.direction === M.MetricsDirection.OUTBOUND ? L.OUTBOUND_LABELS : L.INBOUND_LABELS;
+    const labelGroups = this.props.direction === 'outbound' ? L.OUTBOUND_LABELS : L.INBOUND_LABELS;
     labels.forEach((val, k) => {
       const promName = labelGroups.get(k);
       if (promName) {
@@ -333,12 +287,12 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
     if (!chart) {
       return undefined;
     }
-    const data = this.state.metricReporter === 'destination' ? chart.destMetrics : chart.sourceMetrics;
+    const data = chart.metrics;
     if (!data) {
       return undefined;
     }
     const props: any = {
-      key: chartKey + this.state.metricReporter,
+      key: chartKey,
       chartName: chart.name,
       labelValues: this.convertAsPromLabels(this.state.labelValues),
       unit: chart.unit
