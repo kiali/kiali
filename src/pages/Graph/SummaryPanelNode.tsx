@@ -112,6 +112,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     let promiseOut: Promise<Response<Metrics>>, promiseIn: Promise<Response<Metrics>>;
     // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
     // service node (because they don't have "real" outgoing edges).
+
     if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
       const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
       // use source metrics for outgoing, except for:
@@ -313,9 +314,19 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   private renderSparklines = node => {
+    if (NodeType.UNKNOWN === node.data('nodeType')) {
+      return (
+        <>
+          <div>
+            <Icon type="pf" name="info" /> Sparkline charts not supported for unknown node. Use edge for details.
+          </div>
+        </>
+      );
+    }
     if (this.state.loading && !this.state.requestCountIn) {
       return <strong>Loading charts...</strong>;
-    } else if (this.state.metricsLoadError) {
+    }
+    if (this.state.metricsLoadError) {
       return (
         <div>
           <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
