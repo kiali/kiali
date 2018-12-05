@@ -20,10 +20,10 @@ if [ "$VERSION" = "local" ]; then
   # If there is a version.txt file, use it (required for continuous delivery)
   if [ ! -f "$DIR/_output/docker/console/version.txt" ]; then
     # If jq command is available, don't do a trip to the web
-    if  ! type "jq" > /dev/null ; then
-      echo "$(npm -C $CONSOLE_DIR view $CONSOLE_DIR version)-local-$(git -C $CONSOLE_DIR rev-parse HEAD)" > $DIR/_output/docker/console/version.txt
+    if  ! type "jq" > /dev/null 2>&1 ; then
+      echo "$(npm -C $CONSOLE_DIR view $CONSOLE_DIR version)-local-$(cd $CONSOLE_DIR; git rev-parse HEAD)" > $DIR/_output/docker/console/version.txt
     else
-      echo "$(jq -r '.version' $CONSOLE_DIR/package.json)-local-$(git -C $CONSOLE_DIR rev-parse HEAD)" > $DIR/_output/docker/console/version.txt
+      echo "$(jq -r '.version' $CONSOLE_DIR/package.json)-local-$(cd $CONSOLE_DIR; git rev-parse HEAD)" > $DIR/_output/docker/console/version.txt
     fi
   fi
 else
