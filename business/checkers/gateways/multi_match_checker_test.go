@@ -59,7 +59,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	assert.Equal(2, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 }
 
 func TestWildCardMatchingHost(t *testing.T) {
@@ -95,7 +95,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 	assert.Equal(3, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 
 }
 
@@ -126,5 +126,5 @@ func TestTwoWildCardsMatching(t *testing.T) {
 	assert.Equal(2, len(validations))
 	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
 	assert.True(ok)
-	assert.False(validation.Valid)
+	assert.True(validation.Valid)
 }

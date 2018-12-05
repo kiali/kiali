@@ -69,7 +69,7 @@ func addError(validations models.IstioValidations, gatewayRuleName string, serve
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
 		ObjectType: GatewayCheckerType,
-		Valid:      false,
+		Valid:      true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
