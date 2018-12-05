@@ -52,7 +52,12 @@ spec:
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"
+        - name: kiali-cert
+          mountPath: "/kiali-cert"
       volumes:
       - name: kiali-configuration
         configMap:
           name: kiali
+      - name: kiali-cert
+        secret:
+          secretName: istio.kiali
