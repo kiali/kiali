@@ -45,6 +45,7 @@ const (
 	EnvGrafanaVarNamespace             = "GRAFANA_VAR_NAMESPACE"
 	EnvGrafanaVarService               = "GRAFANA_VAR_SERVICE"
 	EnvGrafanaVarWorkload              = "GRAFANA_VAR_WORKLOAD"
+	EnvGrafanaAPIKey                   = "GRAFANA_API_KEY"
 
 	EnvJaegerURL = "JAEGER_URL"
 
@@ -91,6 +92,7 @@ type GrafanaConfig struct {
 	VarNamespace             string `yaml:"var_namespace"`
 	VarService               string `yaml:"var_service"`
 	VarWorkload              string `yaml:"var_workload"`
+	APIKey                   string `yaml:"api_key"`
 }
 
 // JaegerConfig describes configuration used for jaeger links
@@ -192,6 +194,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Grafana.VarNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaVarNamespace, "var-namespace"))
 	c.ExternalServices.Grafana.VarService = strings.TrimSpace(getDefaultString(EnvGrafanaVarService, "var-service"))
 	c.ExternalServices.Grafana.VarWorkload = strings.TrimSpace(getDefaultString(EnvGrafanaVarWorkload, "var-workload"))
+	c.ExternalServices.Grafana.APIKey = strings.TrimSpace(getDefaultString(EnvGrafanaAPIKey, ""))
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
