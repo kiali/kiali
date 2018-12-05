@@ -4,7 +4,6 @@ import time
 from utils.command_exec import command_exec
 from utils.timeout import timeout
 
-WORKLOADS_FILE = 'assets/bookinfo-workloads.yaml'
 WORKLOAD_TO_VALIDATE = 'details-v1'
 WORKLOAD_TYPE = 'Deployment'
 BOOKINFO_WORKLOADS_COUNT = 6
@@ -14,7 +13,7 @@ EXTRA_WORKLOADS = set(['details-v2', 'reviews-v4', 'reviews-v5','reviews-v6'])
 def test_workload_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
+    workload_list = kiali_client.request(method_name='workloadList', path={'namespace': bookinfo_namespace}).json()
     assert workload_list != None
     for workload in workload_list.get('workloads'):
       assert workload != None
@@ -29,11 +28,11 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
 
   try:
     # Add extra workloads that will be tested
-    assert command_exec.oc_apply(WORKLOADS_FILE, bookinfo_namespace) == True
+    assert command_exec.oc_apply(conftest.WORKLOADS_FILE, bookinfo_namespace) == True
 
-    with timeout(seconds=30, error_message='Timed out waiting for extra workloads creation'):
+    with timeout(seconds=90, error_message='Timed out waiting for extra workloads creation'):
       while True:
-        workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
+        workload_list = kiali_client.request(method_name='workloadList', path={'namespace': bookinfo_namespace}).json()
         if workload_list != None and workload_list.get('workloads') != None:
           workload_names = set(list(map(lambda workload: workload.get('name'), workload_list.get('workloads'))))
           if EXTRA_WORKLOADS.issubset(workload_names):
@@ -55,12 +54,12 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
         assert workload.get('type') == workloadType
 
   finally:
-    assert command_exec.oc_delete(WORKLOADS_FILE, bookinfo_namespace) == True
+    assert command_exec.oc_delete(conftest.WORKLOADS_FILE, bookinfo_namespace) == True
 
     with timeout(seconds=90, error_message='Timed out waiting for extra workloads deletion'):
       print('Extra workloads added for this test:', EXTRA_WORKLOADS)
       while True:
-        workload_list = kiali_client.workload_list(namespace=bookinfo_namespace)
+        workload_list = kiali_client.request(method_name='workloadList', path={'namespace': bookinfo_namespace}).json()
         if workload_list != None and workload_list.get('workloads') != None:
           workload_names = set(list(map(lambda workload: workload.get('name'), workload_list.get('workloads'))))
           print('Still existing workloads:', workload_names)
@@ -72,7 +71,7 @@ def test_diversity_in_workload_list_endpoint(kiali_client):
 def test_workload_details(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    workload = kiali_client.workload_details(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
+    workload = kiali_client.request(method_name='workloadDetails', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE}).json()
     assert workload != None
     assert WORKLOAD_TO_VALIDATE in workload.get('name')
     assert WORKLOAD_TYPE in workload.get('type')
@@ -83,7 +82,7 @@ def test_workload_details(kiali_client):
 def test_workload_metrics(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    workload = kiali_client.workload_metrics(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
+    workload = kiali_client.request(method_name='workloadMetrics', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE}).json()
     for direction in ['dest', 'source']:
       assert workload != None
 
@@ -108,17 +107,8 @@ def test_workload_metrics(kiali_client):
 def test_workload_health(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    workload = kiali_client.workload_health(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
+    workload = kiali_client.request(method_name='workloadHealth', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE}).json()
     assert workload != None
     assert WORKLOAD_TO_VALIDATE in workload.get('workloadStatus').get('name')
     assert 'requests' in workload
 
-def _test_workload_istio_validations(kiali_client):
-    bookinfo_namespace = conftest.get_bookinfo_namespace()
-
-    workload = kiali_client.workload_istio_validations(namespace=bookinfo_namespace, workload=WORKLOAD_TO_VALIDATE)
-    assert workload != None
-    wp = workload.get('pod')
-    assert wp != None
-    assert WORKLOAD_TO_VALIDATE in wp.get(list(wp.keys())[0]).get('name')
-    assert wp.get(list(wp.keys())[0]).get('valid') == True

@@ -3,34 +3,30 @@ from utils.timeout import timeout
 from utils.command_exec import command_exec
 import time
 
+PARAMS = {'graphType':'versionedApp', 'duration':'60s', 'injectServiceNodes':'false', 'edges':'trafficRatePerSecond'}
+
 def test_kiali_reduced_cluster_permissins(kiali_client):
+    bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    assert command_exec().oc_delete_kiali_permissions_from_cluster()
-    with timeout(seconds=30, error_message='Timed out waiting for denial of Graph access'):
-        while True:
-            access = None
-            try:
-                kiali_client.graph_namespaces(params={'duration': '1m', 'namespaces': 'bookinfo'})
-            except:
-                # Will reach there if the graph is NOT accessable
-                access = False
+    try:
+        assert command_exec().oc_remove_cluster_role_rom_user_kiali()
+        with timeout(seconds=60, error_message='Timed out waiting for denial of Graph access'):
+            while True:
+                text = get_graph_json(kiali_client, bookinfo_namespace)
+                if "is not accessible" in text:
+                    break
 
-            if access == False:
-                break
+                time.sleep(1)
+    finally:
+        assert command_exec().oc_add_cluster_role_to_user_kiali()
+        with timeout(seconds=60, error_message='Timed out waiting for Graph access'):
+            while True:
+                text = get_graph_json(kiali_client, bookinfo_namespace)
+                if "is not accessible" not in text and bookinfo_namespace in text:
+                    break
 
-            time.sleep(1)
+                time.sleep(1)
 
-    assert command_exec().oc_add_kaili_permissions_to_cluster()
-    with timeout(seconds=30, error_message='Timed out waiting for Graph access'):
-        while True:
-            access = True
-            try:
-                # Will reach there if the graph is NOT accessable
-                kiali_client.graph_namespaces(params={'duration': '1m', 'namespaces': 'bookinfo'})
-            except:
-                access = False
-
-            if access:
-                break
-
-            time.sleep(1)
+def get_graph_json(kiali_client, bookinfo_namespace):
+    PARAMS['namespaces'] = bookinfo_namespace
+    return kiali_client.request(method_name='graphNamespaces', params=PARAMS).text

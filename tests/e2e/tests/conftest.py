@@ -1,23 +1,18 @@
 import os
 import pytest
 import yaml
-import ssl
 import re
 import requests
 from kiali import KialiClient
 from utils.command_exec import command_exec
+from pkg_resources import resource_string
 
-ENV_FILE = './config/env.yaml'
-CIRCUIT_BREAKER_FILE = 'assets/bookinfo-reviews-all-cb.yaml'
-VIRTUAL_SERVICE_FILE = 'assets/bookinfo-ratings-delay.yaml'
+ENV_FILE = '../config/env.yaml'
+ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../assets')
+CIRCUIT_BREAKER_FILE = ASSETS_PATH + '/bookinfo-reviews-all-cb.yaml'
+VIRTUAL_SERVICE_FILE = ASSETS_PATH + '/bookinfo-ratings-delay.yaml'
+WORKLOADS_FILE = ASSETS_PATH  + '/bookinfo-workloads.yaml'
 
-@pytest.fixture(scope="session")
-def kiali_json():
-
-    config = __get_environment_config__(ENV_FILE)
-    client = __get_kiali_client__(config)
-
-    return client.graph_namespaces(params={'duration': '1m', 'namespaces': config.get('mesh_bookinfo_namespace')})
 
 @pytest.fixture(scope='session')
 def kiali_client():
@@ -29,27 +24,30 @@ def get_bookinfo_namespace():
     return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
 
 def __get_kiali_client__(config):
-    if(config.get('kiali_ssl_enabled') is True):
-        context = ssl._create_unverified_context()
-        return KialiClient(host=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), port=443, context=context, scheme='https')
+    if(config.get('kiali_scheme') == 'https'):
+       return KialiClient(hostname=config.get('kiali_hostname'), auth_type=config.get(
+        'kiali_auth_method'),
+                       username=config.get('kiali_username'), password=config.get('kiali_password'), verify=config.get(
+            'kiali_verify_ssl_certificate'), swagger_address=config.get('kiali_swagger_address'), custom_base_path=config.get('kiali_custom_base_context'))
     else:
-        return KialiClient(host=config.get('kiali_hostname'),
-                           username=config.get('kiali_username'), password=config.get('kiali_password'))
+        return KialiClient(hostname=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), 
+        auth_type=config.get('kiali_auth_method'), swagger_address=config.get('kiali_swagger_address'), custom_base_path=config.get('kiali_custom_base_context'))
 
 def __get_environment_config__(env_file):
-    with open(env_file) as yamlfile:
-        config = yaml.load(yamlfile)
+    yamlfile = resource_string(__name__, env_file)
+    config = yaml.load(yamlfile)
     return config
+
 
 def __remove_assets():
   print('Cleanning up: ')
   namespace = get_bookinfo_namespace()
   file_count = 0
-  for root, dirs, files in os.walk('./assets'):
+  for root, dirs, files in os.walk(ASSETS_PATH):
     file_count = len(files)
 
     for name in files:
-      command_exec.oc_delete('./assets/' + name, namespace)
+      command_exec.oc_delete(ASSETS_PATH + name, namespace)
 
   print('Assets deleted: {}'.format(file_count))
 
