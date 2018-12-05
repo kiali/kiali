@@ -130,7 +130,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
-  private getByLabelsIn = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
+  private getByLabels = (sourceMetricType: NodeMetricType, destMetricType: NodeMetricType) => {
     let sourceLabel: string;
     switch (sourceMetricType) {
       case NodeMetricType.APP:
@@ -209,50 +209,44 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
 
     const quantiles = ['0.5', '0.95', '0.99'];
-    const byLabelsIn = this.getByLabelsIn(sourceMetricType, destMetricType);
+    const byLabels = this.getByLabels(sourceMetricType, destMetricType);
 
-    const useDest = sourceData.nodeType === NodeType.UNKNOWN || sourceData.namespace === serverConfig().istioNamespace;
+    const reporterHTTP =
+      sourceData.nodeType === NodeType.UNKNOWN ||
+      sourceData.namespace === serverConfig().istioNamespace ||
+      sourceData.nodeType === NodeType.SERVICE
+        ? 'destination'
+        : 'source';
+    const filtersHTTP = ['request_count', 'request_duration', 'request_error_count'];
+    const promiseHTTP = getNodeMetrics(
+      destMetricType,
+      edge.target(),
+      props,
+      filtersHTTP,
+      'inbound',
+      reporterHTTP,
+      quantiles,
+      byLabels
+    );
 
-    if (!useDest && sourceData.nodeType === NodeType.SERVICE) {
-      // Special case where we must differenciate HTTP metrics from TCP (uses slightly different reporting)
-      const filtersHTTP = ['request_count', 'request_duration', 'request_error_count'];
-      const promiseHTTP = getNodeMetrics(
-        destMetricType,
-        edge.target(),
-        props,
-        filtersHTTP,
-        'inbound',
-        'destination',
-        quantiles,
-        byLabelsIn
-      );
-      const filtersTCP = ['tcp_sent', 'tcp_received'];
-      const promiseTCP = getNodeMetrics(
-        destMetricType,
-        edge.target(),
-        props,
-        filtersTCP,
-        'inbound',
-        'source',
-        quantiles,
-        byLabelsIn
-      );
-      this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
-    } else {
-      const filters = ['request_count', 'request_duration', 'request_error_count', 'tcp_sent', 'tcp_received'];
-      const promise = getNodeMetrics(
-        destMetricType,
-        edge.target(),
-        props,
-        filters,
-        'inbound',
-        useDest ? 'destination' : 'source',
-        quantiles,
-        byLabelsIn
-      );
-      this.metricsPromise = makeCancelablePromise(promise);
-    }
+    // TCP uses slightly different reporting
+    const reporterTCP =
+      sourceData.nodeType === NodeType.UNKNOWN || sourceData.namespace === serverConfig().istioNamespace
+        ? 'destination'
+        : 'source';
+    const filtersTCP = ['tcp_sent', 'tcp_received'];
+    const promiseTCP = getNodeMetrics(
+      destMetricType,
+      edge.target(),
+      props,
+      filtersTCP,
+      'inbound',
+      reporterTCP,
+      quantiles,
+      byLabels
+    );
 
+    this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
     this.metricsPromise.promise
       .then(response => {
         // HTTP

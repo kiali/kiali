@@ -172,7 +172,6 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         const ecOut = metricsOut['request_error_count'];
         const tcpSentOut = metricsOut['tcp_sent'];
         const tcpReceivedOut = metricsOut['tcp_received'];
-        // use dest metrics for incoming
         const rcIn = metricsIn['request_count'];
         const ecIn = metricsIn['request_error_count'];
         const tcpSentIn = metricsIn['tcp_sent'];

@@ -17,7 +17,8 @@ import {
   getNodeMetrics,
   getNodeMetricType,
   renderLabels,
-  renderNoTraffic
+  renderNoTraffic,
+  mergeMetricsResponses
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import { Health } from '../../types/Health';
@@ -108,11 +109,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return;
     }
 
-    const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
     let promiseOut: Promise<Response<Metrics>>, promiseIn: Promise<Response<Metrics>>;
     // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
     // service node (because they don't have "real" outgoing edges).
     if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
+      const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
       // use source metrics for outgoing, except for:
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
@@ -127,6 +128,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
     // set incoming unless it is a root (because they have no incoming edges)
     if (!data.isRoot) {
+      const filtersHTTP = ['request_count', 'request_error_count'];
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter =
         data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
@@ -135,7 +137,28 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
       const byLabels = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
-      promiseIn = getNodeMetrics(nodeMetricType, target, props, filters, 'inbound', reporter, undefined, byLabels);
+      const promiseHTTP = getNodeMetrics(
+        nodeMetricType,
+        target,
+        props,
+        filtersHTTP,
+        'inbound',
+        reporter,
+        undefined,
+        byLabels
+      );
+      const filtersTCP = ['tcp_sent', 'tcp_received'];
+      const promiseTCP = getNodeMetrics(
+        nodeMetricType,
+        target,
+        props,
+        filtersTCP,
+        'inbound',
+        'source',
+        undefined,
+        byLabels
+      );
+      promiseIn = mergeMetricsResponses([promiseHTTP, promiseTCP]);
     } else {
       promiseIn = Promise.resolve({ data: { metrics: {}, histograms: {} } });
     }

@@ -136,10 +136,17 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       reporter: 'destination'
     };
     const promiseHTTP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
-    options.filters = ['tcp_sent', 'tcp_received'];
     // TCP metrics are only available for reporter="source"
-    options.reporter = 'source';
-    const promiseTCP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
+    const optionsTCP: MetricsOptions = {
+      filters: ['tcp_sent', 'tcp_received'],
+      queryTime: props.queryTime,
+      duration: props.duration,
+      step: props.step,
+      rateInterval: props.rateInterval,
+      direction: 'inbound',
+      reporter: 'source'
+    };
+    const promiseTCP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, optionsTCP);
     this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
 
     this.metricsPromise.promise
