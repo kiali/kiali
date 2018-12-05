@@ -191,7 +191,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       };
     } else if (data.isRoot) {
       comparator = (metric: Metric) => {
-        return metric['destination_service_namespace'] === data.namespace;
+        return this.isActiveNamespace(metric['destination_service_namespace']);
       };
     }
     const rcOut = outbound.metrics['request_count'];
@@ -214,6 +214,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       tcpReceivedIn: getDatapoints(tcpReceivedIn, 'Received', comparator)
     });
   }
+
+  isActiveNamespace = (namespace: string): boolean => {
+    if (!namespace) {
+      return false;
+    }
+    for (const ns of this.props.namespaces) {
+      if (ns.name === namespace) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   render() {
     const node = this.props.data.summaryTarget;

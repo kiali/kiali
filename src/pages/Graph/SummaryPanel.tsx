@@ -49,7 +49,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
           <SummaryPanelNode
             data={this.props.data}
             queryTime={this.props.queryTime}
-            namespaces={this.props.data.summaryTarget.namespaces}
+            namespaces={this.props.namespaces}
             graphType={this.props.graphType}
             injectServiceNodes={this.props.injectServiceNodes}
             duration={this.props.duration}
