@@ -30,6 +30,14 @@ ensure_minikube_is_running() {
   fi
 }
 
+get_gateway_url() {
+  INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+  SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+  INGRESS_HOST=$(minikube ip)
+  GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
+  GATEWAY_URL_SECURE=$INGRESS_HOST:$SECURE_INGRESS_PORT
+}
+
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -73,6 +81,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="bookinfo"
       shift
       ;;
+    gwurl)
+      _CMD="gwurl"
+      shift
+      ;;
     -v|--verbose)
       _VERBOSE=true
       shift
@@ -96,6 +108,7 @@ The command must be either:
   ingress:   enables access to the Kubernetes ingress URL within minikube
   istio:     installs Istio into the minikube cluster
   bookinfo:  installs Istio's bookinfo demo (make sure Istio is installed first)
+  gwurl:     displays the Ingress Gateway URL
 HELPMSG
       exit 1
       ;;
@@ -154,6 +167,19 @@ elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
   echo 'Installing Bookinfo'
   ./istio/install-bookinfo-demo.sh --mongo -tg -c kubectl
+  get_gateway_url
+  echo 'To access the Bookinfo application, access this URL:'
+  echo "http://${GATEWAY_URL}/productpage"
+  echo 'To push requests into the Bookinfo application, execute this command:'
+  echo "watch -n 1 curl -o /dev/null -s -w '%{http_code}' http://${GATEWAY_URL}/productpage"
+
+elif [ "$_CMD" = "gwurl" ]; then
+  ensure_minikube_is_running
+  get_gateway_url
+  echo 'The Gateway URL is:'
+  echo "${GATEWAY_URL}"
+  echo 'The secure Gateway URL is:'
+  echo "${GATEWAY_URL_SECURE}"
 
 elif [ "$_CMD" = "docker" ]; then
   ensure_minikube_is_running

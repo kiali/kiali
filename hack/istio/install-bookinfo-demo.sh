@@ -169,9 +169,22 @@ fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
-  INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n istio-system)
-  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}"  envsubst | oc apply -n ${NAMESPACE} -f -
-  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | oc apply -n ${NAMESPACE} -f -
+  if [[ "$CLIENT_EXE" = *"oc" ]]; then
+    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n istio-system)
+    echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
+  else
+    # for now, we only support minikube k8s environments
+    if minikube status > /dev/null 2>&1 ; then
+      INGRESS_HOST=$(minikube ip)
+      INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+      INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+      echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+    fi
+  fi
 
-
+  if [ "${INGRESS_ROUTE}" != "" ] ; then
+    # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
+    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}"  envsubst | $CLIENT_EXE create -n ${NAMESPACE} -f -
+    curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | $CLIENT_EXE create --validate=false -n ${NAMESPACE} -f -
+  fi
 fi
