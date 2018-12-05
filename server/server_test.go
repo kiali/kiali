@@ -120,7 +120,7 @@ func TestSecureComm(t *testing.T) {
 	noCredentials := &security.Credentials{}
 
 	// wait for our test http server to come up
-	checkHTTPReady(httpClient, serverURL)
+	checkHTTPReady(httpClient, serverURL+"/status")
 
 	// TEST WITH AN AUTHORIZED USER
 
