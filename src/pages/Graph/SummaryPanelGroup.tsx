@@ -231,8 +231,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderHttpRates = group => {
-    const incoming = getAccumulatedTrafficRate(group.children());
-    const outgoing = getAccumulatedTrafficRate(group.children().edgesTo('*'));
+    const nonServiceChildren = group.children('[nodeType != "service"]');
+    const incoming = getAccumulatedTrafficRate(nonServiceChildren);
+    const outgoing = getAccumulatedTrafficRate(nonServiceChildren.edgesTo('*'));
 
     return (
       <>
