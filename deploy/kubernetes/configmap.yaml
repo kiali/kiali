@@ -10,7 +10,7 @@ data:
     istio_namespace: ${ISTIO_NAMESPACE}
     server:
       port: 20001
-      web_root: /
+      web_root: /kiali
     external_services:
       jaeger:
         url: ${JAEGER_URL}
