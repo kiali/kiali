@@ -19,7 +19,7 @@ import (
 func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode := graph.NewNode("testNamespace", graph.UnknownWorkload, "ratings", "", "ratings", graph.GraphTypeVersionedApp)
+	appNode := graph.NewNode("testNamespace", graph.Unknown, "ratings", "", "ratings", graph.GraphTypeVersionedApp)
 	appNode.Metadata["destServices"] = map[string]bool{"ratings": true}
 	trafficMap[appNode.ID] = &appNode
 
@@ -31,10 +31,10 @@ func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, 
 	appNodeV2.Metadata["destServices"] = map[string]bool{"ratings": true}
 	trafficMap[appNodeV2.ID] = &appNodeV2
 
-	serviceNode := graph.NewNode("testNamespace", graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "ratings", graph.GraphTypeVersionedApp)
+	serviceNode := graph.NewNode("testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, "ratings", graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = &serviceNode
 
-	workloadNode := graph.NewNode("testNamespace", "ratings-v1", graph.UnknownApp, graph.UnknownVersion, "ratings", graph.GraphTypeWorkload)
+	workloadNode := graph.NewNode("testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, "ratings", graph.GraphTypeWorkload)
 	workloadNode.Metadata["destServices"] = map[string]bool{"ratings": true}
 	trafficMap[workloadNode.ID] = &workloadNode
 

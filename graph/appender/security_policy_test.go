@@ -21,7 +21,7 @@ func TestSecurityPolicy(t *testing.T) {
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
 		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.UnknownVersion),
+		"source_version":                model.LabelValue(graph.Unknown),
 		"destination_service_namespace": "bookinfo",
 		"destination_service_name":      "productpage",
 		"destination_workload":          "productpage-v1",
@@ -42,7 +42,7 @@ func TestSecurityPolicy(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -87,7 +87,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
 		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.UnknownVersion),
+		"source_version":                model.LabelValue(graph.Unknown),
 		"destination_service_namespace": "bookinfo",
 		"destination_service_name":      "productpage",
 		"destination_workload":          "productpage-v1",
@@ -108,7 +108,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTrafficWithServiceNodes()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -148,7 +148,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 }
 
 func securityPolicyTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
@@ -160,7 +160,7 @@ func securityPolicyTestTraffic() graph.TrafficMap {
 }
 
 func securityPolicyTestTrafficWithServiceNodes() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	productpagesvc := graph.NewNode("bookinfo", "", "", "", "productpage", graph.GraphTypeVersionedApp)
 	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()

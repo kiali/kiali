@@ -179,7 +179,7 @@ func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o options.Options) {
 }
 
 func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
-	if n.Namespace == graph.UnknownNamespace {
+	if n.Namespace == graph.Unknown {
 		return false
 	}
 	for _, ns := range namespaces {
@@ -532,7 +532,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcNameOk = destSvcName != "" && destSvcName != graph.UnknownService
+			destSvcNameOk = graph.IsOK(destSvcName)
 			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.GraphType)
 			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addTcpTraffic(trafficMap, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)
@@ -729,7 +729,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 	case graph.NodeTypeApp:
-		if n.Version != "" && n.Version != graph.UnknownVersion {
+		if graph.IsOK(n.Version) {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s",destination_app="%s",destination_version="%s",response_code=~"%s"} [%vs])) by (%s)`,
 				httpMetric,
 				namespace,
@@ -783,7 +783,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 	case graph.NodeTypeApp:
-		if n.Version != "" && n.Version != graph.UnknownVersion {
+		if graph.IsOK(n.Version) {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s",source_version="%s",response_code=~"%s"} [%vs])) by (%s)`,
 				httpMetric,
 				namespace,
@@ -827,7 +827,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 				int(interval.Seconds()), // range duration for the query
 				groupBy)
 		case graph.NodeTypeApp:
-			if n.Version != "" && n.Version != graph.UnknownVersion {
+			if graph.IsOK(n.Version) {
 				query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%s",source_app="%s",source_version="%s",destination_service_namespace="%s",response_code=~"%s"} [%vs])) by (%s)`,
 					httpMetric,
 					namespace,
@@ -875,7 +875,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			tcpGroupBy)
 	case graph.NodeTypeApp:
-		if n.Version != "" && n.Version != graph.UnknownVersion {
+		if graph.IsOK(n.Version) {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_app="%s",destination_version="%s"} [%vs])) by (%s)`,
 				tcpMetric,
 				namespace,
@@ -914,7 +914,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 			int(interval.Seconds()), // range duration for the query
 			tcpGroupBy)
 	case graph.NodeTypeApp:
-		if n.Version != "" && n.Version != graph.UnknownVersion {
+		if graph.IsOK(n.Version) {
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s",source_app="%s",source_version="%s"} [%vs])) by (%s)`,
 				tcpMetric,
 				namespace,

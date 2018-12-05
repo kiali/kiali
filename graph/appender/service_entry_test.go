@@ -82,7 +82,7 @@ func TestServiceEntry(t *testing.T) {
 func serviceEntriesTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0 := graph.NewNode(graph.UnknownNamespace, graph.UnknownWorkload, graph.UnknownApp, graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	n0 := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
 
 	n1 := graph.NewNode("testNamespace", "", "", "", "NotServiceEntry", graph.GraphTypeVersionedApp)
 

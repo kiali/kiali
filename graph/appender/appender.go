@@ -36,7 +36,7 @@ func NewNamespaceInfo(namespace string) *NamespaceInfo {
 }
 
 func getWorkload(workloadName string, workloadList *models.WorkloadList) (*models.WorkloadListItem, bool) {
-	if workloadName == "" || workloadName == graph.UnknownWorkload {
+	if workloadName == "" || workloadName == graph.Unknown {
 		return nil, false
 	}
 
@@ -54,7 +54,7 @@ func getAppWorkloads(app, version string, workloadList *models.WorkloadList) []m
 	versionLabel := cfg.IstioLabels.VersionLabelName
 
 	result := []models.WorkloadListItem{}
-	versionOk := version != "" && version != graph.UnknownVersion
+	versionOk := graph.IsOK(version)
 	for _, workload := range workloadList.Workloads {
 		if appVal, ok := workload.Labels[appLabel]; ok && app == appVal {
 			if !versionOk {

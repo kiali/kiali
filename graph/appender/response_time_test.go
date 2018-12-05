@@ -21,7 +21,7 @@ func TestResponseTime(t *testing.T) {
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
 		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.UnknownVersion),
+		"source_version":                model.LabelValue(graph.Unknown),
 		"destination_service_namespace": "bookinfo",
 		"destination_service_name":      "productpage",
 		"destination_workload":          "productpage-v1",
@@ -97,7 +97,7 @@ func TestResponseTime(t *testing.T) {
 	mockQuery(api, q2, &v2)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -164,7 +164,7 @@ func TestResponseTime(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.UnknownVersion, "", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
 	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
 	reviewsV1 := graph.NewNode("bookinfo", "reviews-v1", "reviews", "v1", "reviews", graph.GraphTypeVersionedApp)
 	reviewsV2 := graph.NewNode("bookinfo", "reviews-v2", "reviews", "v2", "reviews", graph.GraphTypeVersionedApp)

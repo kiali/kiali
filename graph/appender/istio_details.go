@@ -60,7 +60,7 @@ NODES:
 
 		// Note, Because DestinationRules are applied to services we limit CB badges to service nodes and app nodes.
 		// Whether we should add to workload nodes is debatable, we could add it later if needed.
-		versionOk := n.Version != "" && n.Version != graph.UnknownVersion
+		versionOk := graph.IsOK(n.Version)
 		switch {
 		case n.NodeType == graph.NodeTypeService:
 			for _, destinationRule := range istioCfg.DestinationRules.Items {
