@@ -17,7 +17,7 @@ import (
 
 type osRouteSupplier func(string, string) (string, error)
 type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
-type dashboardSupplier func(string, string) ([]byte, int, error)
+type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
@@ -67,11 +67,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	internalURL := fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.ServiceDashboardPattern, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.ServiceDashboardPattern, grafanaConfig.APIKey, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.WorkloadDashboardPattern, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.WorkloadDashboardPattern, grafanaConfig.APIKey, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -88,8 +88,8 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url, searchPattern string, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern)
+func getDashboardPath(url, searchPattern, apiKey string, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern, apiKey)
 	if err != nil {
 		return "", err
 	}
@@ -126,8 +126,15 @@ func getDashboardPath(url, searchPattern string, dashboardSupplier dashboardSupp
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern string) ([]byte, int, error) {
-	resp, err := http.Get(url + "/api/search?query=" + searchPattern)
+func findDashboard(url, searchPattern, apiKey string) ([]byte, int, error) {
+	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	if apiKey != "" {
+		req.Header.Add("Authorization", "Bearer "+apiKey)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
