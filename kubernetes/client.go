@@ -15,6 +15,7 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -209,47 +210,36 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	}
 
 	// Istio needs another type as it queries a different K8S API.
-	istioConfig := rest.Config{
-		Host:    config.Host,
-		APIPath: "/apis",
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &configGroupVersion,
-			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
-			ContentType:          runtime.ContentTypeJSON,
-		},
-		BearerToken:     config.BearerToken,
-		TLSClientConfig: config.TLSClientConfig,
-		QPS:             config.QPS,
-		Burst:           config.Burst,
-	}
-
-	istioConfigApi, err := rest.RESTClientFor(&istioConfig)
-	client.istioConfigApi = istioConfigApi
+	istioConfigAPI, err := newClientForAPI(config, configGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
-	istioNetworking := rest.Config{
-		Host:    config.Host,
-		APIPath: "/apis",
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &networkingGroupVersion,
-			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)},
-			ContentType:          runtime.ContentTypeJSON,
-		},
-		BearerToken:     config.BearerToken,
-		TLSClientConfig: config.TLSClientConfig,
-		QPS:             config.QPS,
-		Burst:           config.Burst,
-	}
-
-	istioNetworkingApi, err := rest.RESTClientFor(&istioNetworking)
-	client.istioNetworkingApi = istioNetworkingApi
+	istioNetworkingAPI, err := newClientForAPI(config, networkingGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
+	client.istioConfigApi = istioConfigAPI
+	client.istioNetworkingApi = istioNetworkingAPI
 	return &client, nil
+}
+
+func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, scheme *runtime.Scheme) (*rest.RESTClient, error) {
+	cfg := rest.Config{
+		Host:    fromCfg.Host,
+		APIPath: "/apis",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion:         &groupVersion,
+			NegotiatedSerializer: serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)},
+			ContentType:          runtime.ContentTypeJSON,
+		},
+		BearerToken:     fromCfg.BearerToken,
+		TLSClientConfig: fromCfg.TLSClientConfig,
+		QPS:             fromCfg.QPS,
+		Burst:           fromCfg.Burst,
+	}
+	return rest.RESTClientFor(&cfg)
 }
 
 func (in *IstioClient) Stop() {
