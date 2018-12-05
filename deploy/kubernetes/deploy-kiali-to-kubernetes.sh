@@ -111,7 +111,7 @@ YAML_DIR=${YAML_DIR:-$(dirname $(readlink -f "$0"))}
 # Now deploy all the Kiali components to kubernetes
 # If we are missing one or more of the yaml files, download them
 echo "Deploying Kiali to kubernetes project ${NAMESPACE}"
-for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress
+for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
 do
   yaml_file="${yaml}.yaml"
   yaml_path="${YAML_DIR}/${yaml}.yaml"
