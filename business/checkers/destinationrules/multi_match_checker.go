@@ -114,7 +114,7 @@ func checkCollisions(validations models.IstioValidations, destinationRulesName s
 func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
 	for _, destinationRuleName := range destinationRuleNames {
 		key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
-		checks := models.BuildCheck("More than one DestinationRules for same host subset combination",
+		checks := models.BuildCheck("More than one DestinationRules for the same host subset combination",
 			"warning", "spec/host")
 		rrValidation := &models.IstioValidation{
 			Name:       destinationRuleName,
