@@ -11,8 +11,9 @@
 #   (at this point, you can install Kiali into your Kubernetes environment)
 #   dashboard - shows the Kubernetes GUI console
 #   ingress - shows the Ingress URL which can get you to the Kiali GUI
-#   down - shuts down the Kubernetes cluster, you can start it up again.
-#   delete - if you don't want your cluster anymore, this deletes it.
+#   bookinfo - installs bookinfo demo into your cluster
+#   down - shuts down the Kubernetes cluster, you can start it up again
+#   delete - if you don't want your cluster anymore, this deletes it
 #
 ##############################################################################
 
@@ -68,6 +69,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="istio"
       shift
       ;;
+    bookinfo)
+      _CMD="bookinfo"
+      shift
+      ;;
     -v|--verbose)
       _VERBOSE=true
       shift
@@ -90,6 +95,7 @@ The command must be either:
   dashboard: enables access to the Kubernetes GUI within minikube
   ingress:   enables access to the Kubernetes ingress URL within minikube
   istio:     installs Istio into the minikube cluster
+  bookinfo:  installs Istio's bookinfo demo (make sure Istio is installed first)
 HELPMSG
       exit 1
       ;;
@@ -143,6 +149,11 @@ elif [ "$_CMD" = "istio" ]; then
   ensure_minikube_is_running
   echo 'Installing Istio'
   ./istio/install-istio-kiali-via-helm.sh -c kubectl
+
+elif [ "$_CMD" = "bookinfo" ]; then
+  ensure_minikube_is_running
+  echo 'Installing Bookinfo'
+  ./istio/install-bookinfo-demo.sh --mongo -tg -c kubectl
 
 elif [ "$_CMD" = "docker" ]; then
   ensure_minikube_is_running
