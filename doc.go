@@ -177,23 +177,23 @@ type AvgParam struct {
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
-type ByLabelsInParam struct {
-	// List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).
+type ByLabelsParam struct {
+	// List of labels to use for grouping metrics (via Prometheus 'by' clause).
 	//
 	// in: query
 	// required: false
 	// default: []
-	Name string `json:"byLabelsIn[]"`
+	Name string `json:"byLabels[]"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
-type ByLabelsOutParam struct {
-	// List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).
+type DirectionParam struct {
+	// Traffic direction: 'inbound' or 'outbound'.
 	//
 	// in: query
 	// required: false
-	// default: []
-	Name string `json:"byLabelsOut[]"`
+	// default: outbound
+	Name string `json:"direction"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
@@ -248,10 +248,11 @@ type RateIntervalParam struct {
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
 type ReporterParam struct {
-	// Istio telemetry reporter: 'source' or 'destination'
+	// Istio telemetry reporter: 'source' or 'destination'.
 	//
 	// in: query
 	// required: false
+	// default: source
 	Name string `json:"reporter"`
 }
 

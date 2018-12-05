@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"io/ioutil"
-	"k8s.io/api/apps/v1beta2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,9 +11,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/api/apps/v1beta2"
+	batch_v1 "k8s.io/api/batch/v1"
+	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -22,10 +26,6 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	osappsv1 "github.com/openshift/api/apps/v1"
-	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 func TestAppMetricsDefault(t *testing.T) {
@@ -45,7 +45,6 @@ func TestAppMetricsDefault(t *testing.T) {
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		assert.NotContains(t, query, "histogram_quantile")
-		assert.Contains(t, query, " by (reporter)")
 		atomic.AddUint32(&gaugeSentinel, 1)
 		assert.Equal(t, 15*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
@@ -79,8 +78,7 @@ func TestAppMetricsWithParams(t *testing.T) {
 	q.Add("step", "2")
 	q.Add("queryTime", "1523364075")
 	q.Add("duration", "1000")
-	q.Add("byLabelsIn[]", "response_code")
-	q.Add("byLabelsOut[]", "response_code")
+	q.Add("byLabels[]", "response_code")
 	q.Add("quantiles[]", "0.5")
 	q.Add("quantiles[]", "0.95")
 	q.Add("filters[]", "request_count")
@@ -99,11 +97,11 @@ func TestAppMetricsWithParams(t *testing.T) {
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
-			assert.Contains(t, query, " by (le,reporter,response_code)")
+			assert.Contains(t, query, " by (le,response_code)")
 			assert.Contains(t, query, "istio_request_bytes")
 			atomic.AddUint32(&histogramSentinel, 1)
 		} else {
-			assert.Contains(t, query, " by (reporter,response_code)")
+			assert.Contains(t, query, " by (response_code)")
 			atomic.AddUint32(&gaugeSentinel, 1)
 		}
 		assert.Equal(t, 2*time.Second, r.Step)

@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -28,13 +27,13 @@ type MetricsQuery struct {
 	Filters      []string
 	Quantiles    []string
 	Avg          bool
-	ByLabelsIn   []string
-	ByLabelsOut  []string
+	ByLabels     []string
 	Namespace    string
 	App          string
 	Workload     string
 	Service      string
-	Reporter     string // source | destination, defaults to both if not provided
+	Direction    string // outbound | inbound
+	Reporter     string // source | destination, defaults to source if not provided
 }
 
 // FillDefaults fills the struct with default parameters
@@ -45,16 +44,12 @@ func (q *MetricsQuery) FillDefaults() {
 	q.RateInterval = "1m"
 	q.RateFunc = "rate"
 	q.Avg = true
+	q.Reporter = "source"
+	q.Direction = "outbound"
 }
 
-// Metrics contains all simple metrics and histograms data for both source and destination telemetry
+// Metrics contains all simple metrics and histograms data
 type Metrics struct {
-	Source ReporterMetrics `json:"source"`
-	Dest   ReporterMetrics `json:"dest"`
-}
-
-// ReporterMetrics contains all simple metrics and histograms data for one reporter's telemetry
-type ReporterMetrics struct {
 	Metrics    map[string]*Metric   `json:"metrics"`
 	Histograms map[string]Histogram `json:"histograms"`
 }
@@ -166,48 +161,17 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 }
 
 func getMetrics(api v1.API, q *MetricsQuery) Metrics {
-	labelsIn, labelsErrorIn, _ := buildLabelStrings(q, true)
-	// discriminate results by source and dest telemetry
-	q.ByLabelsIn = append([]string{"reporter"}, q.ByLabelsIn...)
-	groupingIn := strings.Join(q.ByLabelsIn, ",")
-	inboundMetrics := fetchAllMetrics(api, q, labelsIn, labelsErrorIn, groupingIn, "_in")
-	if q.Service != "" {
-		// If a service is set, stop now; we'll only have inbound metrics
-		return inboundMetrics
-	}
-
-	labelsOut, labelsErrorOut, _ := buildLabelStrings(q, false)
-	// discriminate results by source and dest telemetry
-	q.ByLabelsOut = append([]string{"reporter"}, q.ByLabelsOut...)
-	groupingOut := strings.Join(q.ByLabelsOut, ",")
-	metrics := fetchAllMetrics(api, q, labelsOut, labelsErrorOut, groupingOut, "_out")
-
-	// Merge in a single object
-	for key, obj := range inboundMetrics.Source.Metrics {
-		metrics.Source.Metrics[key] = obj
-	}
-	for key, obj := range inboundMetrics.Source.Histograms {
-		metrics.Source.Histograms[key] = obj
-	}
-	for key, obj := range inboundMetrics.Dest.Metrics {
-		metrics.Dest.Metrics[key] = obj
-	}
-	for key, obj := range inboundMetrics.Dest.Histograms {
-		metrics.Dest.Histograms[key] = obj
-	}
+	labels, labelsError := buildLabelStrings(q)
+	grouping := strings.Join(q.ByLabels, ",")
+	metrics := fetchAllMetrics(api, q, labels, labelsError, grouping)
 	return metrics
 }
 
-func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string, string) {
-	labels := []string{}
-	reporter := ""
-
-	if q.Reporter == "destination" {
-		labels = append(labels, `reporter="destination"`)
-		reporter = "destination"
-	} else if q.Reporter == "source" {
-		labels = append(labels, `reporter="source"`)
-		reporter = "source"
+func buildLabelStrings(q *MetricsQuery) (string, string) {
+	labels := []string{fmt.Sprintf(`reporter="%s"`, q.Reporter)}
+	ref := "destination"
+	if q.Direction == "outbound" {
+		ref = "source"
 	}
 
 	if q.Service != "" {
@@ -216,20 +180,14 @@ func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string, string)
 		if q.Namespace != "" {
 			labels = append(labels, fmt.Sprintf(`destination_service_namespace="%s"`, q.Namespace))
 		}
-	} else {
-		referential := "source"
-		if isInbound {
-			referential = "destination"
-		}
-		if q.Workload != "" {
-			labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, referential, q.Workload))
-		}
-		if q.App != "" {
-			labels = append(labels, fmt.Sprintf(`%s_app="%s"`, referential, q.App))
-		}
-		if q.Namespace != "" {
-			labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, referential, q.Namespace))
-		}
+	} else if q.Namespace != "" {
+		labels = append(labels, fmt.Sprintf(`%s_workload_namespace="%s"`, ref, q.Namespace))
+	}
+	if q.Workload != "" {
+		labels = append(labels, fmt.Sprintf(`%s_workload="%s"`, ref, q.Workload))
+	}
+	if q.App != "" {
+		labels = append(labels, fmt.Sprintf(`%s_app="%s"`, ref, q.App))
 	}
 
 	full := "{" + strings.Join(labels, ",") + "}"
@@ -237,10 +195,10 @@ func buildLabelStrings(q *MetricsQuery, isInbound bool) (string, string, string)
 	labels = append(labels, `response_code=~"[5|4].*"`)
 	errors := "{" + strings.Join(labels, ",") + "}"
 
-	return full, errors, reporter
+	return full, errors
 }
 
-func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping, suffix string) Metrics {
+func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping string) Metrics {
 	var wg sync.WaitGroup
 	fetchRate := func(p8sFamilyName string, metric **Metric, lbl string) {
 		defer wg.Done()
@@ -288,83 +246,21 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping,
 	wg.Wait()
 
 	// Return results as two maps per reporter
-	sourceMetrics := make(map[string]*Metric)
-	sourceHistograms := make(map[string]Histogram)
-	destMetrics := make(map[string]*Metric)
-	destHistograms := make(map[string]Histogram)
+	metrics := make(map[string]*Metric)
+	histograms := make(map[string]Histogram)
 	for _, result := range results {
 		if result != nil {
 			if result.definition.isHisto {
-				source, dest := splitHistoTelemetry(result.histo)
-				sourceHistograms[result.definition.name+suffix] = source
-				destHistograms[result.definition.name+suffix] = dest
+				histograms[result.definition.name] = result.histo
 			} else {
-				source, dest := splitMetricTelemetry(result.metric)
-				sourceMetrics[result.definition.name+suffix] = source
-				destMetrics[result.definition.name+suffix] = dest
+				metrics[result.definition.name] = result.metric
 			}
 		}
 	}
 	return Metrics{
-		Source: ReporterMetrics{
-			Metrics:    sourceMetrics,
-			Histograms: sourceHistograms},
-		Dest: ReporterMetrics{
-			Metrics:    destMetrics,
-			Histograms: destHistograms},
+		Metrics:    metrics,
+		Histograms: histograms,
 	}
-}
-
-func splitMetricTelemetry(metric *Metric) (source, dest *Metric) {
-	source = &Metric{
-		Matrix: []*model.SampleStream{},
-		err:    metric.err,
-	}
-	dest = &Metric{
-		Matrix: []*model.SampleStream{},
-		err:    metric.err,
-	}
-	for _, s := range metric.Matrix {
-		switch s.Metric["reporter"] {
-		case "source":
-			source.Matrix = append(source.Matrix, s)
-		case "destination":
-			dest.Matrix = append(dest.Matrix, s)
-		default:
-			log.Warningf("Discarding metric with reporter=[%s]", s.Metric["reporter"])
-		}
-	}
-	return source, dest
-}
-
-func splitHistoTelemetry(histo Histogram) (source, dest Histogram) {
-	source = make(Histogram)
-	dest = make(Histogram)
-	for stat, metric := range histo {
-		sourceMetric := &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    metric.err}
-
-		destMetric := &Metric{
-			Matrix: []*model.SampleStream{},
-			err:    metric.err}
-
-		for _, s := range metric.Matrix {
-			switch s.Metric["reporter"] {
-			case "source":
-				sourceMetric.Matrix = append(sourceMetric.Matrix, s)
-			case "destination":
-				destMetric.Matrix = append(destMetric.Matrix, s)
-			default:
-				log.Warningf("Discarding histo '%s' with reporter=[%s]", stat, s.Metric["reporter"])
-			}
-		}
-
-		source[stat] = sourceMetric
-		dest[stat] = destMetric
-	}
-
-	return source, dest
 }
 
 func fetchRateRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) *Metric {
