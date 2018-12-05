@@ -3,11 +3,11 @@ package appender
 import (
 	"testing"
 
-	"github.com/kiali/kiali/models"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/stretchr/testify/assert"
+	"github.com/kiali/kiali/models"
 )
 
 func TestNonTrafficScenario(t *testing.T) {
