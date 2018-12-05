@@ -88,8 +88,8 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url, searchPattern, apiKey string, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern, apiKey)
+func getDashboardPath(url, searchPattern, APIKey string, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern, APIKey)
 	if err != nil {
 		return "", err
 	}
@@ -126,13 +126,13 @@ func getDashboardPath(url, searchPattern, apiKey string, dashboardSupplier dashb
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern, apiKey string) ([]byte, int, error) {
+func findDashboard(url, searchPattern, APIKey string) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
 	if err != nil {
 		return nil, 0, err
 	}
-	if apiKey != "" {
-		req.Header.Add("Authorization", "Bearer "+apiKey)
+	if APIKey != "" {
+		req.Header.Add("Authorization", "Bearer "+APIKey)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
