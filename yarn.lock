@@ -2600,10 +2600,10 @@ cytoscape-canvas@3.0.1:
   resolved "https://registry.yarnpkg.com/cytoscape-canvas/-/cytoscape-canvas-3.0.1.tgz#7d963be51e6e5f3f2482b05d22562c8ee941d125"
   integrity sha512-R1nCLnJHGTR5fWEpNQQBPyoigdnfhnk1lOHegzmzz1Kg6yxzVf0hfdRAMa0wPAhtC4kkgyoViiIfZ/zyCqMhEQ==
 
-cytoscape-cola@2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/cytoscape-cola/-/cytoscape-cola-2.2.3.tgz#96c50e7230f0056324089bdae3996a17d82f7dd9"
-  integrity sha512-AIHrwU+QOe5k24rF/jMgSusxpJBJqnvF8mjgaPqSrTrJyR8VULgBrNWRjWsV+tRr0l8bU+yRHF4b1UHHA5k2OA==
+cytoscape-cola@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/cytoscape-cola/-/cytoscape-cola-2.3.0.tgz#24104eaab46e0a88dfeedb02199610450525208d"
+  integrity sha512-xblxlCH8JXGLdH6XMUBJY3xBUJuL1rLy8bLMGvqkvoPHSbBfV+/klMWoqwervVKWOmFHPwUdihtxy8stG4RM5g==
   dependencies:
     webcola "^3.3.6"
 
@@ -2612,17 +2612,17 @@ cytoscape-cose-bilkent@4.0.0:
   resolved "https://registry.yarnpkg.com/cytoscape-cose-bilkent/-/cytoscape-cose-bilkent-4.0.0.tgz#5f0afbe5c55a7a026442b756ca388ce77c262967"
   integrity sha1-Xwr75cVaegJkQrdWyjiM53wmKWc=
 
-cytoscape-dagre@2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/cytoscape-dagre/-/cytoscape-dagre-2.2.1.tgz#22d59b1127b3a65e129c4a9c0b2934d2f54f644d"
-  integrity sha512-8HK1lCCRi5Jxt4spMTksYy/lZTCidu7FX2jovGbC2GCGum0Qd4HInOkn5ofMVdpWYE7FmynSbZDlDfbNtnglwA==
+cytoscape-dagre@2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/cytoscape-dagre/-/cytoscape-dagre-2.2.2.tgz#5f32a85c0ba835f167efee531df9e89ac58ff411"
+  integrity sha512-zsg36qNwua/L2stJSWkcbSDcvW3E6VZf6KRe6aLnQJxuXuz89tMqI5EVYVKEcNBgzTEzFMFv0PE3T0nD4m6VDw==
   dependencies:
-    dagre "^0.7.4"
+    dagre "^0.8.2"
 
-cytoscape@3.2.16:
-  version "3.2.16"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.16.tgz#341027f066d0c63b4eae25e9b87e86b657371323"
-  integrity sha512-tpnTkoi5+YpUHgp/LI9oIfi1VkzZ/LKHdV4TcBd50qkkhWS2phcGIJbCdK3BL4fGsNDlAecKpRxs12Hl3yMGog==
+cytoscape@3.2.22:
+  version "3.2.22"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.2.22.tgz#5a46c88c760cc733ea8c66dd348e4da08e5956b5"
+  integrity sha512-0eHGQWuE6UTTZ0T3L/p1gYBfAkq/+PAFJWq79PL2qDexPSLnbYi6JivSid31TLIRwxe29MW6TPqZZ6ynMXPK8A==
   dependencies:
     heap "^0.2.6"
     lodash.debounce "^4.0.8"
@@ -2667,13 +2667,13 @@ d@1:
   dependencies:
     es5-ext "^0.10.9"
 
-dagre@^0.7.4:
-  version "0.7.4"
-  resolved "https://registry.yarnpkg.com/dagre/-/dagre-0.7.4.tgz#de72f0e74a550ce11ce638f0a136fed712398022"
-  integrity sha1-3nLw50pVDOEc5jjwoTb+1xI5gCI=
+dagre@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/dagre/-/dagre-0.8.2.tgz#755b79f4d5499d63cf74c3368fb08add93eceafe"
+  integrity sha512-TEOOGZOkCOgCG7AoUIq64sJ3d21SMv8tyoqteLpX+UsUsS9Qw8iap4hhogXY4oB3r0bbZuAjO0atAilgCmsE0Q==
   dependencies:
-    graphlib "^1.0.5"
-    lodash "^3.10.0"
+    graphlib "^2.1.5"
+    lodash "^4.17.4"
 
 dashdash@^1.12.0:
   version "1.14.1"
@@ -4119,12 +4119,12 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.1.9:
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
   integrity sha1-Dovf5NHduIVNZOBOp8AOKgJuVlg=
 
-graphlib@^1.0.5:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/graphlib/-/graphlib-1.0.7.tgz#0cab2df0ffe6abe070b2625bfa1edb6ec967b8b1"
-  integrity sha1-DKst8P/mq+BwsmJb+h7bbslnuLE=
+graphlib@^2.1.5:
+  version "2.1.5"
+  resolved "https://registry.yarnpkg.com/graphlib/-/graphlib-2.1.5.tgz#6afe1afcc5148555ec799e499056795bd6938c87"
+  integrity sha512-XvtbqCcw+EM5SqQrIetIKKD+uZVNQtDPD1goIg7K73RuRZtVI5rYMdcCVSHm/AS1sCBZ7vt0p5WgXouucHQaOA==
   dependencies:
-    lodash "^3.10.0"
+    lodash "^4.11.1"
 
 growly@^1.3.0:
   version "1.3.0"
@@ -5809,15 +5809,10 @@ lodash.uniq@^4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
   integrity sha1-0CJTc662Uq3BvILklFM5qEJ1R3M=
 
-lodash@4.17.11, "lodash@>=3.5 <5", lodash@^4.0.0, lodash@^4.13.1, lodash@^4.15.0, lodash@^4.17.10, lodash@^4.17.2, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.3.0, lodash@~4.17.10:
+lodash@4.17.11, "lodash@>=3.5 <5", lodash@^4.0.0, lodash@^4.11.1, lodash@^4.13.1, lodash@^4.15.0, lodash@^4.17.10, lodash@^4.17.2, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.3.0, lodash@~4.17.10:
   version "4.17.11"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
-
-lodash@^3.10.0:
-  version "3.10.1"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
-  integrity sha1-W/Rejkm6QYnhfUgnid/RW9FAt7Y=
 
 loglevel@^1.4.1:
   version "1.6.1"
