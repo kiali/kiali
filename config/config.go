@@ -153,7 +153,7 @@ type Config struct {
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
-	Api              ApiConfig         `yaml:"api,omitempty"`
+	API              ApiConfig         `yaml:"api,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -166,7 +166,7 @@ func NewConfig() (c *Config) {
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
-	c.Api.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
+	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
@@ -212,7 +212,7 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
 
 	trimmedExclusionPatterns := []string{}
-	for _, entry := range c.Api.Namespaces.Exclude {
+	for _, entry := range c.API.Namespaces.Exclude {
 		exclusionPattern := strings.TrimSpace(entry)
 		if _, err := regexp.Compile(exclusionPattern); err != nil {
 			log.Errorf("Invalid namespace exclude entry, [%s] is not a valid regex pattern: %v", exclusionPattern, err)
@@ -220,7 +220,7 @@ func NewConfig() (c *Config) {
 			trimmedExclusionPatterns = append(trimmedExclusionPatterns, strings.TrimSpace(exclusionPattern))
 		}
 	}
-	c.Api.Namespaces.Exclude = trimmedExclusionPatterns
+	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
 	return
 }

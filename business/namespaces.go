@@ -58,7 +58,7 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 	}
 
 	result := namespaces
-	excludes := config.Get().Api.Namespaces.Exclude
+	excludes := config.Get().API.Namespaces.Exclude
 	if len(excludes) > 0 {
 		result = []models.Namespace{}
 	NAMESPACES:
