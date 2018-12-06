@@ -16,6 +16,14 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
 
+RELEASE_TYPE ?= 'minor'
+ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
+  IS_SNAPSHOT ?= y
+  OMIT_VERSION_BRANCH ?= y
+else
+  IS_SNAPSHOT ?= n
+endif
+
 # JENKINS_URL is an environment variable that is set when this
 # Makefile is run under a Jenkins Pipeline. If we are in Jenkins, let's
 # set CONSOLE_VERSION to "local"; else, use "latest"
@@ -37,7 +45,11 @@ all:
 	$(error You must explicitly specify a target)
 
 backend-build-release:
+ifneq ($(IS_SNAPSHOT),y)
 	sed -i -r 's/^VERSION \?= (.*)-SNAPSHOT/VERSION \?= \1/' Makefile
+else
+	sed -i -r 's/^VERSION \?= (.*)-SNAPSHOT/VERSION \?= \1-$(RELEASE_TYPE)/' Makefile
+endif
 	$(MAKE) clean build
 
 backend-test:
@@ -46,7 +58,8 @@ backend-test:
 backend-push-docker:
 ifdef DOCKER_USER
 ifdef DOCKER_PASSWORD
-	docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
+	@echo "Logging in to DockerHub..."
+	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
 endif
 endif
 	DOCKER_VERSION="v$(BACKEND_VERSION)" \
@@ -65,16 +78,21 @@ ifndef OMIT_VERSION_BRANCH
 endif
 
 backend-create-pr-next-version:
+ifneq ($(IS_SNAPSHOT),y)
 	sed -i "s/^CONSOLE_VERSION ?=.*/CONSOLE_VERSION ?= latest/" Makefile
 	sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$(BACKEND_BUMPED_VERSION)-SNAPSHOT/" Makefile
 	git add Makefile
 	git commit -m "Prepare for next version"
 	git push $(BACKEND_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
 ifdef GH_TOKEN
-	curl -H "Authorization: token $(GH_TOKEN)" \
+	@echo "Creating PR to prepare for next version..."
+	@curl -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
 	  -d '{"title": "Prepare for next version", "head": "kiali-bot:$(BUMP_BRANCH_ID)", "base": "master"}' \
 	  -X POST $(BACKEND_PULL_URI)
+endif
+else
+	@echo "Skipping creating PR, because snapshot release was done."
 endif
 
 release: backend-build-release backend-test backend-push-docker \
