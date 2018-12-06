@@ -166,7 +166,7 @@ func NewConfig() (c *Config) {
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
-	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*")
+	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
