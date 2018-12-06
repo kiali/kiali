@@ -133,8 +133,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter =
         data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
-          ? 'destination'
-          : 'source';
+          ? 'source'
+          : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
       const byLabels = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
