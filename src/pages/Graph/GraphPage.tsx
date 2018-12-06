@@ -232,9 +232,9 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
       (edgeLabelModeChanged && this.props.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
       graphTypeChanged ||
       nodeChanged ||
-      (showSecurityChanged && this.props.showSecurity) ||
+      showSecurityChanged ||
       showServiceNodesChanged ||
-      (showUnusedNodesChanged && this.props.showUnusedNodes)
+      showUnusedNodesChanged
     ) {
       this.scheduleNextPollingInterval(0);
     } else if (pollIntervalChanged) {
