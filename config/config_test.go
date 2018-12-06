@@ -44,10 +44,11 @@ func TestDefaults(t *testing.T) {
 	if len(conf.Api.Namespaces.Exclude) != 3 {
 		t.Error("Api namespace exclude default setting is wrong")
 	} else {
-		// our default exclusion list: istio-operator,kube.*,openshift.*
+		// our default exclusion list: istio-operator,kube.*,openshift.*,ibm.*
 		if conf.Api.Namespaces.Exclude[0] != "istio-operator" ||
 			conf.Api.Namespaces.Exclude[1] != "kube.*" ||
-			conf.Api.Namespaces.Exclude[2] != "openshift.*" {
+			conf.Api.Namespaces.Exclude[2] != "openshift.*" ||
+			conf.Api.Namespaces.Exclude[3] != "ibm.*" {
 			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.Api.Namespaces.Exclude)
 		}
 	}
