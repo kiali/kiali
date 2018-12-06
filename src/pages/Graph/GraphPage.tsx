@@ -79,7 +79,8 @@ const NUMBER_OF_DATAPOINTS = 30;
 
 const containerStyle = style({
   minHeight: '350px',
-  height: 'calc(100vh - 60px)' // View height minus top bar height
+  // TODO: try flexbox to remove this calc
+  height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
