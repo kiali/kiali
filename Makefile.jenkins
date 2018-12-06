@@ -13,18 +13,43 @@ UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.0$$//')
 
 BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
-
 NPM_DRY_RUN ?= n
+
+RELEASE_TYPE ?= 'minor'
+ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
+  IS_SNAPSHOT ?= y
+  OMIT_VERSION_BRANCH ?= y
+else
+  IS_SNAPSHOT ?= n
+endif
+
 
 .PHONY: all ui-bump-minor-version ui-build ui-test ui-npm-publish
 .PHONY: ui-push-version-tag ui-create-pr-next-version release
+.PHONY: ui-fix-version ui-check-clean-workspace
 
 all:
 	$(error You must explicitly specify a target)
 
+ui-check-clean-workspace:
+	@output=$$(git status --porcelain) && [ -z "$$output" ] || \
+	  (echo 'Your working path must be clean. Please, commit your changes or reset your working path.' && exit 1)
+
 ui-bump-minor-version:
+ifneq ($(IS_SNAPSHOT),y)
 	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.bumped
 	mv package.json.bumped package.json
+else
+	@echo "Skipping version bump, because snapshot release is being done."
+endif
+
+ui-fix-version:
+ifeq ($(IS_SNAPSHOT),y)
+	jq -r '.version |= "$(UI_VERSION)-$(RELEASE_TYPE)"' package.json > package.json.typed
+	mv package.json.typed package.json
+else
+	@echo "Skip setting snapshot version suffix."
+endif
 
 ui-build:
 	rm -fr build/*
@@ -38,7 +63,7 @@ ui-test:
 
 ui-npm-publish:
 ifdef NPM_TOKEN
-	echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
+	@echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
 endif
 ifeq ($(NPM_DRY_RUN), y)
 	npm publish --dry-run
@@ -50,20 +75,30 @@ ifdef NPM_TOKEN
 endif
 
 ui-push-version-tag:
+ifeq ($(IS_SNAPSHOT),y)
+	git add package.json
+	git commit -m "Release $(UI_VERSION)"
+endif
 	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(UI_VERSION)
 ifndef OMIT_VERSION_BRANCH
 	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/v$(UI_VERSION_BRANCH)
 endif
 
 ui-create-pr-next-version: ui-bump-minor-version
+ifneq ($(IS_SNAPSHOT),y)
 	git add package.json
 	git commit -m "Prepare for next version"
 	git push $(UI_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
 ifdef GH_TOKEN
-	curl -s -H "Authorization: token $(GH_TOKEN)" \
+	@echo "Creating PR to prepare for next version..."
+	@curl -s -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
 	  -d '{"title": "Prepare for next version", "head": "kiali-bot:$(BUMP_BRANCH_ID)", "base": "master"}' \
 	  -X POST $(UI_PULL_URI)
 endif
+else
+	@echo "Skipping creating PR, because snapshot release was done."
+endif
 
-release: ui-build ui-test ui-npm-publish ui-push-version-tag ui-create-pr-next-version
+release: ui-check-clean-workspace ui-fix-version ui-build ui-test
+release: ui-npm-publish ui-push-version-tag ui-create-pr-next-version
