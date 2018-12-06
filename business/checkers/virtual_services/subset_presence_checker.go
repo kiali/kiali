@@ -70,7 +70,6 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 				}
 
 				if !checker.subsetPresent(host, subset) {
-					valid = false
 					path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination", protocol, routeIdx, destWeightIdx)
 					validation := models.BuildCheck("Subset not found", "warning", path)
 					validations = append(validations, &validation)

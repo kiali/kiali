@@ -89,7 +89,7 @@ func TestSubsetsNotFound(t *testing.T) {
 			destinationList, fakeWrongSubsets(protocol)}.Check()
 
 		// There are no pods no deployments
-		assert.False(valid)
+		assert.True(valid)
 		assert.NotEmpty(validations)
 		assert.Len(validations, 2)
 		assert.Equal(validations[0].Message, "Subset not found")
@@ -188,7 +188,7 @@ func TestWrongDestinationRule(t *testing.T) {
 		validations, valid := SubsetPresenceChecker{"bookinfo",
 			destinationList, fakeCorrectVersions(protocol)}.Check()
 
-		assert.False(valid)
+		assert.True(valid)
 		assert.NotEmpty(validations)
 		assert.Len(validations, 2)
 		assert.Equal(validations[0].Message, "Subset not found")
