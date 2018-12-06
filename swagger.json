@@ -595,16 +595,16 @@
             "type": "string",
             "default": "[]",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
             "in": "query"
           },
           {
             "type": "string",
-            "default": "[]",
+            "default": "outbound",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
             "in": "query"
           },
           {
@@ -649,8 +649,9 @@
           },
           {
             "type": "string",
+            "default": "source",
             "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
             "in": "query"
           },
@@ -1345,16 +1346,16 @@
             "type": "string",
             "default": "[]",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
             "in": "query"
           },
           {
             "type": "string",
-            "default": "[]",
+            "default": "outbound",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
             "in": "query"
           },
           {
@@ -1399,8 +1400,9 @@
           },
           {
             "type": "string",
+            "default": "source",
             "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
             "in": "query"
           },
@@ -1708,16 +1710,16 @@
             "type": "string",
             "default": "[]",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping inbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsIn[]",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
             "in": "query"
           },
           {
             "type": "string",
-            "default": "[]",
+            "default": "outbound",
             "x-go-name": "Name",
-            "description": "List of labels to use for grouping outbound metrics (via Prometheus 'by' clause).",
-            "name": "byLabelsOut[]",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
             "in": "query"
           },
           {
@@ -1762,8 +1764,9 @@
           },
           {
             "type": "string",
+            "default": "source",
             "x-go-name": "Name",
-            "description": "Istio telemetry reporter: 'source' or 'destination'",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
             "in": "query"
           },
@@ -2466,14 +2469,22 @@
       "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "Metrics": {
-      "description": "Metrics contains all simple metrics and histograms data for both source and destination telemetry",
+      "description": "Metrics contains all simple metrics and histograms data",
       "type": "object",
       "properties": {
-        "dest": {
-          "$ref": "#/definitions/ReporterMetrics"
+        "histograms": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Histogram"
+          },
+          "x-go-name": "Histograms"
         },
-        "source": {
-          "$ref": "#/definitions/ReporterMetrics"
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Metric"
+          },
+          "x-go-name": "Metrics"
         }
       },
       "x-go-package": "github.com/kiali/kiali/prometheus"
@@ -2917,27 +2928,6 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "ReporterMetrics": {
-      "description": "ReporterMetrics contains all simple metrics and histograms data for one reporter's telemetry",
-      "type": "object",
-      "properties": {
-        "histograms": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/Histogram"
-          },
-          "x-go-name": "Histograms"
-        },
-        "metrics": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/Metric"
-          },
-          "x-go-name": "Metrics"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/prometheus"
     },
     "RequestHealth": {
       "description": "RequestHealth holds several stats about recent request errors",

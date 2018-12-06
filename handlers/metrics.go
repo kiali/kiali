@@ -77,12 +77,14 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, name
 			return errors.New("Bad request, cannot parse query parameter 'avg'")
 		}
 	}
-	if lblsin, ok := queryParams["byLabelsIn[]"]; ok && len(lblsin) > 0 {
-		q.ByLabelsIn = lblsin
+	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
+		q.ByLabels = lbls
 	}
-	if lblsout, ok := queryParams["byLabelsOut[]"]; ok && len(lblsout) > 0 {
-		q.ByLabelsOut = lblsout
+	dir := queryParams.Get("direction")
+	if dir != "" {
+		q.Direction = dir
 	}
+	q.Reporter = queryParams.Get("reporter")
 
 	// If needed, adjust interval -- Make sure query won't fetch data before the namespace creation
 	intervalStartTime, err := util.GetStartTimeForRateInterval(q.End, q.RateInterval)

@@ -42,7 +42,6 @@ func TestServiceMetricsDefault(t *testing.T) {
 		assert.Contains(t, query, "destination_service_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		assert.NotContains(t, query, "histogram_quantile")
-		assert.Contains(t, query, " by (reporter)")
 		atomic.AddUint32(&gaugeSentinel, 1)
 		assert.Equal(t, 15*time.Second, r.Step)
 		assert.WithinDuration(t, now, r.End, delta)
@@ -75,8 +74,7 @@ func TestServiceMetricsWithParams(t *testing.T) {
 	q.Add("step", "2")
 	q.Add("queryTime", "1523364075")
 	q.Add("duration", "1000")
-	q.Add("byLabelsIn[]", "response_code")
-	q.Add("byLabelsOut[]", "response_code")
+	q.Add("byLabels[]", "response_code")
 	q.Add("quantiles[]", "0.5")
 	q.Add("quantiles[]", "0.95")
 	q.Add("filters[]", "request_count")
@@ -97,11 +95,11 @@ func TestServiceMetricsWithParams(t *testing.T) {
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {
 			// Histogram specific queries
-			assert.Contains(t, query, " by (le,reporter,response_code)")
+			assert.Contains(t, query, " by (le,response_code)")
 			assert.Contains(t, query, "istio_request_bytes")
 			atomic.AddUint32(&histogramSentinel, 1)
 		} else {
-			assert.Contains(t, query, " by (reporter,response_code)")
+			assert.Contains(t, query, " by (response_code)")
 			atomic.AddUint32(&gaugeSentinel, 1)
 		}
 		assert.Equal(t, 2*time.Second, r.Step)

@@ -22,8 +22,7 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("step", "10")
 	q.Add("queryTime", "1523364061") // 2018-04-10T12:41:01
 	q.Add("duration", "1000")        // Makes start = 2018-04-10T12:24:21
-	q.Add("byLabelsIn[]", "response_code")
-	q.Add("byLabelsOut[]", "response_code")
+	q.Add("byLabels[]", "response_code")
 	q.Add("filters[]", "request_count")
 	q.Add("filters[]", "request_size")
 	req.URL.RawQuery = q.Encode()
@@ -37,8 +36,7 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	assert.Equal(t, "5h", mq.RateInterval)
 	assert.Equal(t, "irate", mq.RateFunc)
 	assert.Equal(t, 10*time.Second, mq.Step)
-	assert.Equal(t, []string{"response_code"}, mq.ByLabelsIn)
-	assert.Equal(t, []string{"response_code"}, mq.ByLabelsOut)
+	assert.Equal(t, []string{"response_code"}, mq.ByLabels)
 	assert.Equal(t, []string{"request_count", "request_size"}, mq.Filters)
 
 	// Check that start date is normalized for step
