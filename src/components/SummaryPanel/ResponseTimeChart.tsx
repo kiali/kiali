@@ -17,7 +17,6 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
   }
 
   thereIsTrafficData = () => {
-    console.log(this.props.rtAvg);
     return this.props.rtAvg && this.props.rtAvg.length > 1 && this.props.rtAvg[0].length > 1;
   };
 
