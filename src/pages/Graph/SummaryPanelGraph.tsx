@@ -7,10 +7,11 @@ import * as API from '../../services/Api';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
-import { shouldRefreshData, getDatapoints } from './SummaryPanelCommon';
+import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import MetricsOptions from 'src/types/MetricsOptions';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -125,25 +126,35 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   private updateRpsChart = (props: SummaryPanelPropType) => {
-    const options = {
+    const options: MetricsOptions = {
+      filters: ['request_count', 'request_error_count'],
       queryTime: props.queryTime,
       duration: props.duration,
       step: props.step,
-      rateInterval: props.rateInterval
+      rateInterval: props.rateInterval,
+      direction: 'inbound',
+      reporter: 'destination'
     };
-    const promise = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
-    this.metricsPromise = makeCancelablePromise(promise);
+    const promiseHTTP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
+    // TCP metrics are only available for reporter="source"
+    const optionsTCP: MetricsOptions = {
+      filters: ['tcp_sent', 'tcp_received'],
+      queryTime: props.queryTime,
+      duration: props.duration,
+      step: props.step,
+      rateInterval: props.rateInterval,
+      direction: 'inbound',
+      reporter: 'source'
+    };
+    const promiseTCP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, optionsTCP);
+    this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
 
     this.metricsPromise.promise
       .then(response => {
-        let metrics = response.data.dest.metrics;
-        const reqRates = getDatapoints(metrics['request_count_in'], 'RPS');
-        const errRates = getDatapoints(metrics['request_error_count_in'], 'Error');
-
-        // TCP metrics are only available for reporter="source"
-        metrics = response.data.source.metrics;
-        const tcpSent = getDatapoints(metrics['tcp_sent_in'], 'Sent');
-        const tcpReceived = getDatapoints(metrics['tcp_received_in'], 'Received');
+        const reqRates = getDatapoints(response.data.metrics['request_count'], 'RPS');
+        const errRates = getDatapoints(response.data.metrics['request_error_count'], 'Error');
+        const tcpSent = getDatapoints(response.data.metrics['tcp_sent'], 'Sent');
+        const tcpReceived = getDatapoints(response.data.metrics['tcp_received'], 'Received');
 
         this.setState({
           loading: false,

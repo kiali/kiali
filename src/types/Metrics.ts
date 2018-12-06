@@ -1,9 +1,4 @@
 export interface Metrics {
-  source: ReporterMetrics;
-  dest: ReporterMetrics;
-}
-
-export interface ReporterMetrics {
   metrics: { [key: string]: MetricGroup };
   histograms: { [key: string]: Histogram };
 }
@@ -26,11 +21,6 @@ export interface TimeSeries {
 
 // First is timestamp, second is value
 export type Datapoint = [number, number];
-
-export enum MetricsDirection {
-  INBOUND,
-  OUTBOUND
-}
 
 export enum MetricsObjectTypes {
   SERVICE,

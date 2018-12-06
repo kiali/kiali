@@ -2,7 +2,6 @@ import * as React from 'react';
 import { mount, shallow } from 'enzyme';
 import { Provider } from 'react-redux';
 import MetricsOptionsBar from '../MetricsOptionsBar';
-import { MetricsDirection } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
 
 const optionsChanged = jest.fn();
@@ -14,10 +13,8 @@ describe('MetricsOptionsBar', () => {
         <MetricsOptionsBar
           onOptionsChanged={jest.fn()}
           onRefresh={jest.fn()}
-          onReporterChanged={jest.fn()}
           onLabelsFiltersChanged={jest.fn()}
-          metricReporter={'destination'}
-          direction={MetricsDirection.INBOUND}
+          direction={'inbound'}
           labelValues={new Map()}
         />
       </Provider>
@@ -31,10 +28,8 @@ describe('MetricsOptionsBar', () => {
         <MetricsOptionsBar
           onOptionsChanged={optionsChanged}
           onRefresh={jest.fn()}
-          onReporterChanged={jest.fn()}
           onLabelsFiltersChanged={jest.fn()}
-          metricReporter={'destination'}
-          direction={MetricsDirection.INBOUND}
+          direction={'inbound'}
           labelValues={new Map()}
         />
       </Provider>

@@ -12,7 +12,7 @@ import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
 import { TargetPage, ListPageLink } from '../../components/ListPage/ListPageLink';
-import { MetricsObjectTypes, MetricsDirection } from '../../types/Metrics';
+import { MetricsObjectTypes } from '../../types/Metrics';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -268,7 +268,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                     namespace={this.props.match.params.namespace}
                     object={this.props.match.params.service}
                     objectType={MetricsObjectTypes.SERVICE}
-                    direction={MetricsDirection.INBOUND}
+                    direction={'inbound'}
                   />
                 </TabPane>
               </TabContent>
