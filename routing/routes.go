@@ -497,9 +497,9 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} customMetrics
+		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceMetrics
 		// ---
-		// Endpoint to fetch custom metrics to be displayed in a dashboard, based on the provided template
+		// Endpoint to fetch dashboard to be displayed, related to a single service
 		//
 		//     Produces:
 		//     - application/json
@@ -509,13 +509,76 @@ func NewRoutes() (r *Routes) {
 		// responses:
 		//      400: badRequestError
 		//      503: serviceUnavailableError
-		//      200: metricsResponse
+		//      200: dashboardResponse
 		//
 		{
-			"CustomMetrics",
+			"ServiceDashboard",
 			"GET",
-			"/api/namespaces/{namespace}/apps/{app}/cstmetrics/{template}",
-			handlers.CustomMetrics,
+			"/api/namespaces/{namespace}/services/{service}/dashboard",
+			handlers.ServiceDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appMetrics
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a single app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"AppDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/dashboard",
+			handlers.AppDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadMetrics
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a single workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"WorkloadDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
+			handlers.WorkloadDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} customDashboard
+		// ---
+		// Endpoint to fetch custom dashboard to be displayed, based on the provided template
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"CustomDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/cstdashboard/{template}",
+			handlers.CustomDashboard,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth

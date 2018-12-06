@@ -13,7 +13,7 @@ import (
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion customMetrics
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion customDashboard
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customMetrics
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -77,7 +77,7 @@ type ServiceParam struct {
 	Name string `json:"service"`
 }
 
-// swagger:parameters customMetrics
+// swagger:parameters customDashboard
 type TemplateParam struct {
 	// The dashboard template name.
 	//
@@ -174,7 +174,7 @@ type QueryTimeParam struct {
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type AvgParam struct {
 	// Flag for fetching histogram average. Default is true.
 	//
@@ -184,7 +184,7 @@ type AvgParam struct {
 	Name string `json:"avg"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type ByLabelsParam struct {
 	// List of labels to use for grouping metrics (via Prometheus 'by' clause).
 	//
@@ -204,7 +204,7 @@ type DirectionParam struct {
 	Name string `json:"direction"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type DurationParam struct {
 	// Duration of the query period, in seconds.
 	//
@@ -224,7 +224,7 @@ type FiltersParam struct {
 	Name string `json:"filters[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type QuantilesParam struct {
 	// List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].
 	//
@@ -234,7 +234,7 @@ type QuantilesParam struct {
 	Name string `json:"quantiles[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type RateFuncParam struct {
 	// Prometheus function used to calculate rate: 'rate' or 'irate'.
 	//
@@ -244,7 +244,7 @@ type RateFuncParam struct {
 	Name string `json:"rateFunc"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type RateIntervalParam struct {
 	// Interval used for rate and histogram calculation.
 	//
@@ -264,7 +264,7 @@ type ReporterParam struct {
 	Name string `json:"reporter"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type StepParam struct {
 	// Step between [graph] datapoints, in seconds.
 	//
@@ -274,7 +274,7 @@ type StepParam struct {
 	Name string `json:"step"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
 type VersionParam struct {
 	// Filters metrics by the specified version.
 	//
@@ -475,11 +475,18 @@ type WorkloadDetailsResponse struct {
 	Body models.Workload
 }
 
-// Listing all the information related to a service
+// Metrics response model
 // swagger:response metricsResponse
 type MetricsResponse struct {
 	// in:body
 	Body prometheus.Metrics
+}
+
+// Dashboard response model
+// swagger:response dashboardResponse
+type DashboardResponse struct {
+	// in:body
+	Body models.MonitoringDashboard
 }
 
 // IstioConfig details of an specific Istio Object

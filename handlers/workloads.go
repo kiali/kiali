@@ -86,3 +86,31 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
+
+// WorkloadDashboard is the API handler to fetch Istio dashboard, related to a single workload
+func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	workload := vars["workload"]
+
+	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	if prom == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, Workload: workload}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	svc := business.NewDashboardsService(nil, prom)
+	dashboard, err := svc.GetIstioDashboard(params)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, dashboard)
+}

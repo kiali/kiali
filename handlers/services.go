@@ -126,3 +126,31 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 
 	RespondWithJSON(w, http.StatusOK, service)
 }
+
+// ServiceDashboard is the API handler to fetch Istio dashboard, related to a single service
+func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	service := vars["service"]
+
+	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	if prom == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+
+	params := prometheus.IstioMetricsQuery{Namespace: namespace, Service: service}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	svc := business.NewDashboardsService(nil, prom)
+	dashboard, err := svc.GetIstioDashboard(params)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, dashboard)
+}

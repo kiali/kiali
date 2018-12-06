@@ -28,6 +28,7 @@ type ClientInterface interface {
 	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
 	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
+	GetMetrics(query *IstioMetricsQuery) Metrics
 }
 
 // Client for Prometheus API.
