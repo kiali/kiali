@@ -34,7 +34,7 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 	}
 
 	addBadging(trafficMap, globalInfo, namespaceInfo)
-	addLabels(trafficMap, globalInfo, namespaceInfo)
+	addLabels(trafficMap, globalInfo)
 }
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
@@ -116,14 +116,19 @@ NODES:
 }
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
-func addLabels(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+// TODO: For efficiency we may want to consider pulling all namespace service definitions in one call (the call does not
+//       exist at this writing).  As written we pull each service individually, which can be a fair number of round
+//       trips when services are injected (as they are by default). Note also that currently we do query for
+//       outsider service nodes.  That may be a security problem f the outside namespace is inaccessible to the user. If
+//       that becomes an issue we can limit to accessible namespaces or only to the NamespaceInfo namespace.
+func addLabels(trafficMap graph.TrafficMap, globalInfo *GlobalInfo) {
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
 		if n.NodeType == graph.NodeTypeService && n.App == "" {
-			service, err := globalInfo.Business.Svc.GetServiceDefinition(namespaceInfo.Namespace, n.Service)
+			service, err := globalInfo.Business.Svc.GetServiceDefinition(n.Namespace, n.Service)
 			if err != nil {
-				log.Debugf("Error fetching service definition, may not apply app label correctly for namespace=%s svc=%s: %s", namespaceInfo.Namespace, n.Service, err.Error())
+				log.Debugf("Error fetching service definition, may not apply app label correctly for namespace=%s svc=%s: %s", n.Namespace, n.Service, err.Error())
 				if service == nil {
 					continue
 				}
