@@ -41,14 +41,14 @@ func TestDefaults(t *testing.T) {
 		t.Error("server CORS default setting is wrong")
 	}
 
-	if len(conf.Api.Namespaces.Exclude) != 3 {
+	if len(conf.API.Namespaces.Exclude) != 3 {
 		t.Error("Api namespace exclude default setting is wrong")
 	} else {
 		// our default exclusion list: istio-operator,kube.*,openshift.*
-		if conf.Api.Namespaces.Exclude[0] != "istio-operator" ||
-			conf.Api.Namespaces.Exclude[1] != "kube.*" ||
-			conf.Api.Namespaces.Exclude[2] != "openshift.*" {
-			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.Api.Namespaces.Exclude)
+		if conf.API.Namespaces.Exclude[0] != "istio-operator" ||
+			conf.API.Namespaces.Exclude[1] != "kube.*" ||
+			conf.API.Namespaces.Exclude[2] != "openshift.*" {
+			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.API.Namespaces.Exclude)
 		}
 	}
 }
@@ -78,7 +78,7 @@ func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
 
 func TestMarshalUnmarshalApiConfig(t *testing.T) {
 	testConf := Config{
-		Api: ApiConfig{
+		API: ApiConfig{
 			Namespaces: ApiNamespacesConfig{
 				Exclude: []string{"istio-operator", "kube.*"},
 			},
@@ -96,8 +96,8 @@ func TestMarshalUnmarshalApiConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to unmarshal: %v", err)
 	}
-	if len(conf.Api.Namespaces.Exclude) != 2 {
-		t.Errorf("Failed to unmarshal Api:\n%+v", conf.Api)
+	if len(conf.API.Namespaces.Exclude) != 2 {
+		t.Errorf("Failed to unmarshal Api:\n%+v", conf.API)
 	}
 }
 
