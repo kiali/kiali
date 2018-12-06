@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -63,42 +61,28 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
 func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
-	getWorkloadMetrics(w, r, prometheus.NewClient, func() (kubernetes.IstioClientInterface, error) {
-		return kubernetes.NewClient()
-	})
+	getWorkloadMetrics(w, r, defaultPromClientSupplier, defaultK8SClientSupplier)
 }
 
 // getWorkloadMetrics (mock-friendly version)
-func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promClientSupplier func() (*prometheus.Client, error), k8sClientSupplier func() (kubernetes.IstioClientInterface, error)) {
+func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
 
-	k8s, err := k8sClientSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
-		return
-	}
-	prometheusClient, err := promClientSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return
-	}
-
-	namespaceInfo := checkNamespaceAccess(w, k8s, prometheusClient, namespace)
-	if namespaceInfo == nil {
+	prom, _, namespaceInfo := initClientsForMetrics(w, promSupplier, k8sSupplier, namespace)
+	if prom == nil {
+		// any returned value nil means error & response already written
 		return
 	}
 
 	params := prometheus.MetricsQuery{Namespace: namespace, Workload: workload}
-	err = extractMetricsQueryParams(r, &params, namespaceInfo)
+	err := extractMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	metrics := prometheusClient.GetMetrics(&params)
+	metrics := prom.GetMetrics(&params)
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
