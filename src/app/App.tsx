@@ -85,13 +85,15 @@ class App extends React.Component {
     loadRcueCssIfNeeded();
     const Sidebar = withRouter(NavigationContainer);
     return (
-      <Provider store={store}>
-        <PersistGate loading={<Loading />} persistor={persistor}>
-          <Router history={history}>
-            <Sidebar />
-          </Router>
-        </PersistGate>
-      </Provider>
+      <React.StrictMode>
+        <Provider store={store}>
+          <PersistGate loading={<Loading />} persistor={persistor}>
+            <Router history={history}>
+              <Sidebar />
+            </Router>
+          </PersistGate>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }
