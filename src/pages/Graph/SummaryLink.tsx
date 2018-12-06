@@ -72,7 +72,7 @@ export const RenderLink = (props: RenderLinkProps) => {
     <>
       {link}
       {isInaccessible(props.data) && (
-        <Icon key="link-icon" name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />
+        <Icon key="link-icon" name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />
       )}
     </>
   );
@@ -84,7 +84,7 @@ export const renderTitle = (data: NodeData) => {
   return (
     <>
       <strong>{nodeTypeToString(data.nodeType)}:</strong> {link}{' '}
-      {isInaccessible(data) && <Icon name="private" type="pf" style={{ 'padding-left': '2px', width: '10px' }} />}
+      {isInaccessible(data) && <Icon name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />}
     </>
   );
 };

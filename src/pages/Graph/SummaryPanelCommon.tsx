@@ -79,7 +79,6 @@ export const nodeData = (node: any): NodeData => {
 export const getNodeMetricType = (data: NodeData) => {
   switch (data.nodeType) {
     case NodeType.WORKLOAD:
-    case NodeType.UNKNOWN:
       return NodeMetricType.WORKLOAD;
     case NodeType.APP:
       // treat versioned app like a workload to narrow to the specific version

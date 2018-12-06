@@ -112,6 +112,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     let promiseOut: Promise<Response<Metrics>>, promiseIn: Promise<Response<Metrics>>;
     // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
     // service node (because they don't have "real" outgoing edges).
+
     if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
       const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
       // use source metrics for outgoing, except for:
@@ -132,8 +133,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter =
         data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
-          ? 'destination'
-          : 'source';
+          ? 'source'
+          : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
       const byLabels = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
@@ -191,7 +192,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       };
     } else if (data.isRoot) {
       comparator = (metric: Metric) => {
-        return metric['destination_service_namespace'] === data.namespace;
+        return this.isActiveNamespace(metric['destination_service_namespace']);
       };
     }
     const rcOut = outbound.metrics['request_count'];
@@ -214,6 +215,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       tcpReceivedIn: getDatapoints(tcpReceivedIn, 'Received', comparator)
     });
   }
+
+  isActiveNamespace = (namespace: string): boolean => {
+    if (!namespace) {
+      return false;
+    }
+    for (const ns of this.props.namespaces) {
+      if (ns.name === namespace) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   render() {
     const node = this.props.data.summaryTarget;
@@ -301,9 +314,19 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   private renderSparklines = node => {
+    if (NodeType.UNKNOWN === node.data('nodeType')) {
+      return (
+        <>
+          <div>
+            <Icon type="pf" name="info" /> Sparkline charts not supported for unknown node. Use edge for details.
+          </div>
+        </>
+      );
+    }
     if (this.state.loading && !this.state.requestCountIn) {
       return <strong>Loading charts...</strong>;
-    } else if (this.state.metricsLoadError) {
+    }
+    if (this.state.metricsLoadError) {
       return (
         <div>
           <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
