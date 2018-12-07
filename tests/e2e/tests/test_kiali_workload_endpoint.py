@@ -10,6 +10,8 @@ BOOKINFO_WORKLOADS_COUNT = 6
 EXTRA_WORKLOAD_COUNT = 4
 EXTRA_WORKLOADS = set(['details-v2', 'reviews-v4', 'reviews-v5','reviews-v6'])
 
+METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
+
 def test_workload_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
@@ -23,7 +25,7 @@ def test_workload_list_endpoint(kiali_client):
           assert workload.get('versionLabel') == True
       assert workload.get('appLabel') == True
 
-def test_diversity_in_workload_list_endpoint(kiali_client):
+def __test_diversity_in_workload_list_endpoint(kiali_client):
   bookinfo_namespace = conftest.get_bookinfo_namespace()
 
   try:
@@ -82,27 +84,20 @@ def test_workload_details(kiali_client):
 def test_workload_metrics(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    workload = kiali_client.request(method_name='workloadMetrics', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE}).json()
-    for direction in ['dest', 'source']:
-      assert workload != None
+    workload = kiali_client.request(method_name='workloadMetrics', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE},
+                                    params=METRICS_PARAMS).response.json()
 
-      metrics = workload.get(direction).get('metrics')
-      assert 'request_count_in' in metrics
-      assert 'request_count_out' in metrics
-      assert 'request_error_count_in' in metrics
-      assert 'request_error_count_out' in metrics
-      assert 'tcp_received_in' in metrics
-      assert 'tcp_received_out' in metrics
-      assert 'tcp_sent_in' in metrics
-      assert 'tcp_sent_out' in metrics
+    assert workload != None
 
-      histograms = workload.get(direction).get('histograms')
-      assert 'request_duration_in' in histograms
-      assert 'request_duration_out' in histograms
-      assert 'request_size_in' in histograms
-      assert 'request_size_out' in histograms
-      assert 'response_size_in' in histograms
-      assert 'response_size_out' in histograms
+    metrics = workload.get('metrics')
+    assert 'request_count' in metrics
+    assert 'tcp_received' in metrics
+    assert 'tcp_sent' in metrics
+
+    histograms = workload.get('histograms')
+    assert 'request_duration' in histograms
+    assert 'request_size' in histograms
+    assert 'response_size' in histograms
 
 def test_workload_health(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()

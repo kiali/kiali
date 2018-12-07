@@ -1,6 +1,7 @@
 import tests.conftest as conftest
 
 APPLICATION_TO_VALIDATE = 'productpage'
+METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
 
 def test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
@@ -49,24 +50,17 @@ def test_application_health_endpoint(kiali_client):
 def test_application_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    app_metrics = kiali_client.request(method_name='appMetrics', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}).json()
+    response = kiali_client.request(method_name='appMetrics', path={'namespace': bookinfo_namespace, 'app': APPLICATION_TO_VALIDATE}, params=METRICS_PARAMS)
+    app_metrics = response.json()
     assert app_metrics != None
 
-    for direction in ['dest', 'source']:
-      metrics = app_metrics.get(direction).get('metrics')
-      assert 'request_count_in' in metrics
-      assert 'request_count_out' in metrics
-      assert 'request_error_count_in' in metrics
-      assert 'request_error_count_out' in metrics
-      assert 'tcp_received_in' in metrics
-      assert 'tcp_received_out' in metrics
-      assert 'tcp_sent_in' in metrics
-      assert 'tcp_sent_out' in metrics
+    metrics = app_metrics.get('metrics')
+    assert 'request_count' in metrics
+    assert 'request_error_count' in metrics
+    assert 'tcp_received' in metrics
+    assert 'tcp_sent' in metrics
 
-      histograms = app_metrics.get(direction).get('histograms')
-      assert 'request_duration_in' in histograms
-      assert 'request_duration_out' in histograms
-      assert 'request_size_in' in histograms
-      assert 'request_size_out' in histograms
-      assert 'response_size_in' in histograms
-      assert 'response_size_out' in histograms
+    histograms = app_metrics.get('histograms')
+    assert 'request_duration' in histograms
+    assert 'request_size' in histograms
+    assert 'response_size' in histograms
