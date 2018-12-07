@@ -3,8 +3,6 @@ import tests.conftest as conftest
 APPLICATION_TO_VALIDATE = 'productpage'
 METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
 
-METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
-
 def test_application_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
