@@ -10,6 +10,8 @@ SERVICE_TO_VALIDATE = 'reviews'
 VIRTUAL_SERVICE_FILE = 'assets/bookinfo-reviews-80-20.yaml'
 DESTINATION_RULE_FILE = 'assets/bookinfo-destination-rule-reviews.yaml'
 
+METRICS_PARAMS = {"direction": "outbound", "reporter": "destination"}
+
 def test_service_list_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
@@ -156,20 +158,19 @@ def __test_service_detail_with_destination_rule(kiali_client):
 def test_service_metrics_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
-    for direction in ['dest', 'source']:
-      assert service != None
+    service = kiali_client.request(method_name='serviceMetrics', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params=METRICS_PARAMS).json()
+    assert service != None
 
-      metrics = service.get(direction).get('metrics')
-      assert 'request_count_in' in metrics
-      assert 'request_error_count_in' in metrics
-      assert 'tcp_received_in' in metrics
-      assert 'tcp_sent_in' in metrics
+    metrics = service.get('metrics')
+    assert 'request_count' in metrics
+    assert 'request_error_count' in metrics
+    assert 'tcp_received' in metrics
+    assert 'tcp_sent' in metrics
 
-      histograms = service.get(direction).get('histograms')
-      assert 'request_duration_in' in histograms
-      assert 'request_size_in' in histograms
-      assert 'response_size_in' in histograms
+    histograms = service.get('histograms')
+    assert 'request_duration' in histograms
+    assert 'request_size' in histograms
+    assert 'response_size' in histograms
 
 def test_service_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
