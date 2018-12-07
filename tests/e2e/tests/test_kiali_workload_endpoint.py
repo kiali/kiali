@@ -85,7 +85,7 @@ def test_workload_metrics(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     workload = kiali_client.request(method_name='workloadMetrics', path={'namespace': bookinfo_namespace, 'workload': WORKLOAD_TO_VALIDATE},
-                                    params=METRICS_PARAMS).response.json()
+                                    params=METRICS_PARAMS).json()
 
     assert workload != None
 
