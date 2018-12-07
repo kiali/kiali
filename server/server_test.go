@@ -302,7 +302,7 @@ func (conf *httpClientConfig) buildHTTPClient() (*http.Client, error) {
 	// make our own copy of TLS config
 	tlsConfig := &tls.Config{}
 	if conf.TLSConfig != nil {
-		*tlsConfig = *conf.TLSConfig
+		tlsConfig = conf.TLSConfig
 	}
 
 	if conf.Identity != nil && conf.Identity.CertFile != "" {
@@ -316,7 +316,7 @@ func (conf *httpClientConfig) buildHTTPClient() (*http.Client, error) {
 	// make our own copy of HTTP transport
 	transport := &http.Transport{}
 	if conf.HTTPTransport != nil {
-		*transport = *conf.HTTPTransport
+		transport = conf.HTTPTransport
 	}
 
 	// make sure the transport has some things we know we need

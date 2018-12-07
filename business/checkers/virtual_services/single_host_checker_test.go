@@ -258,11 +258,11 @@ func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
 	assert := assert.New(t)
 	assert.Empty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{"virtualservice", "virtual-1"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "virtual-1"}]
 	assert.False(ok)
 	assert.Nil(validation)
 
-	validation, ok = validations[models.IstioValidationKey{"virtualservice", "virtual-2"}]
+	validation, ok = validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "virtual-2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -270,7 +270,7 @@ func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
 func noObjectValidationTest(t *testing.T, validations models.IstioValidations, name string) {
 	assert := assert.New(t)
 
-	validation, ok := validations[models.IstioValidationKey{"virtualservice", name}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: name}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -279,7 +279,7 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	assert := assert.New(t)
 	assert.NotEmpty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{"virtualservice", serviceName}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: serviceName}]
 	assert.True(ok)
 
 	assert.True(validation.Valid)

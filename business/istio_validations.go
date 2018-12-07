@@ -60,7 +60,7 @@ func (in *IstioValidationsService) GetServiceValidations(namespace, service stri
 	istioDetails.VirtualServices = vs
 	istioDetails.Gateways = gws
 	objectCheckers := []ObjectChecker{
-		checkers.VirtualServiceChecker{namespace, drs, vs},
+		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: drs, VirtualServices: vs},
 		checkers.DestinationRulesChecker{DestinationRules: drs},
 		checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads},
 		gwChecker,
@@ -112,8 +112,8 @@ func (in *IstioValidationsService) GetNamespaceValidations(namespace string) (mo
 	}
 
 	objectCheckers := []ObjectChecker{
-		checkers.VirtualServiceChecker{namespace, istioDetails.DestinationRules,
-			istioDetails.VirtualServices},
+		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules,
+			VirtualServices: istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: istioDetails, Services: services, WorkloadList: workloads},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules},
 		gwChecker,

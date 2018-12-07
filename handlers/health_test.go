@@ -1,16 +1,17 @@
 package handlers
 
 import (
-	"github.com/kiali/kiali/config"
 	"io/ioutil"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/kiali/kiali/config"
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/apps/v1beta2"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
@@ -228,7 +229,7 @@ func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SCl
 
 func setupMockData(k8s *kubetest.K8SClientMock) {
 	clockTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
-	util.Clock = util.ClockMock{clockTime}
+	util.Clock = util.ClockMock{Time: clockTime}
 
 	k8s.On("GetProject", "ns").Return(
 		&osv1.Project{

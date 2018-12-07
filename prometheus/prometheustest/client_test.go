@@ -94,7 +94,7 @@ func TestGetSourceWorkloads(t *testing.T) {
 		return
 	}
 	mockQuery(api, "delta(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}[50s])", &vector)
-	clock := util.ClockMock{time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
+	clock := util.ClockMock{Time: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
 	util.Clock = clock
 
 	sources, err := client.GetSourceWorkloads("istio-system", clock.Time.Add(-time.Second*50), "productpage")
@@ -150,7 +150,7 @@ func TestGetDestinationServices(t *testing.T) {
 	}
 
 	mockQuery(api, "sum(rate(istio_requests_total{reporter=\"source\",source_workload=\"productpage-v1\",source_workload_namespace=\"bookinfo\"}[50s])) by (destination_service_namespace, destination_service_name, destination_service)", &vector)
-	clock := util.ClockMock{time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
+	clock := util.ClockMock{Time: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
 	util.Clock = clock
 
 	destinations, err := client.GetDestinationServices("bookinfo", clock.Time.Add(-time.Second*50), "productpage-v1")

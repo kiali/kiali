@@ -28,7 +28,7 @@ func TestCorrectGateways(t *testing.T) {
 	}.Check()
 
 	assert.Empty(validations)
-	_, ok := validations[models.IstioValidationKey{"gateway", "validgateway"}]
+	_, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "validgateway"}]
 	assert.False(ok)
 }
 
@@ -57,7 +57,7 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -93,7 +93,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(3, len(validations))
-	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -124,7 +124,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{"gateway", "stillvalid"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }

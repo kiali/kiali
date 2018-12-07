@@ -10,7 +10,9 @@ import (
 	"github.com/kiali/kiali/util/intutil"
 )
 
-type RouteChecker struct{ kubernetes.IstioObject }
+type RouteChecker struct {
+	Route kubernetes.IstioObject
+}
 
 // Check returns both an array of IstioCheck and a boolean indicating if the current route rule is valid.
 // The array of IstioChecks contains the result of running the following validations:
@@ -35,7 +37,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 	validations := make([]*models.IstioCheck, 0)
 	weightSum, weightCount, valid := 0, 0, true
 
-	http := route.GetSpec()[kind]
+	http := route.Route.GetSpec()[kind]
 	if http == nil {
 		return validations, valid
 	}
