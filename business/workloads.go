@@ -101,6 +101,8 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		workload.SetDestinationServices(destService)
 	}
 
+	in.fillCustomDashboardRefs(namespace, workload)
+
 	return workload, nil
 }
 
@@ -988,4 +990,24 @@ func controllerPriority(type1, type2 string) string {
 	} else {
 		return type2
 	}
+}
+
+// fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this workload and add them to the model
+func (in *WorkloadService) fillCustomDashboardRefs(namespace string, workload *models.Workload) {
+	uniqueRefs := make(map[string]string)
+	for _, pod := range workload.Pods {
+		for _, ref := range pod.CustomDashboards {
+			if ref != "" {
+				uniqueRefs[ref] = ref
+			}
+		}
+	}
+	mon, err := kubernetes.NewKialiMonitoringClient()
+	if err != nil {
+		// Do not fail the whole query, just log & return
+		log.Error("Cannot initialize Kiali Monitoring Client")
+		return
+	}
+	dash := NewDashboardsService(mon, in.prom)
+	workload.CustomDashboards = dash.getTitlesFromTemplates(namespace, uniqueRefs)
 }

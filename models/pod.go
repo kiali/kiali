@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 
 	"k8s.io/api/core/v1"
 
@@ -22,6 +23,7 @@ type Pod struct {
 	Status              string            `json:"status"`
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
+	CustomDashboards    []string          `json:"-"` // not used in the UI but needed to build app and workload models
 }
 
 // Reference holds some information on the pod creator
@@ -88,6 +90,10 @@ func (pod *Pod) Parse(p *v1.Pod) {
 				pod.IstioContainers = append(pod.IstioContainers, &container)
 			}
 		}
+	}
+	// Check for custom dashboards annotation
+	if rawDashboards, ok := p.Annotations["kiali.io/dashboards"]; ok {
+		pod.CustomDashboards = strings.Split(strings.TrimSpace(rawDashboards), ",")
 	}
 	pod.Status = string(p.Status.Phase)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]

@@ -54,4 +54,7 @@ type App struct {
 	// List of service names linked with an application
 	// required: true
 	ServiceNames []string `json:"serviceNames"`
+
+	// Custom dashboard ids and titles
+	CustomDashboards []DashboardRef `json:"customDashboards"`
 }
