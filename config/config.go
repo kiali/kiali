@@ -21,12 +21,13 @@ const (
 	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
-	EnvPrometheusServiceURL   = "PROMETHEUS_SERVICE_URL"
-	EnvInCluster              = "IN_CLUSTER"
-	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
-	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
-	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
-	EnvApiNamespacesExclude   = "API_NAMESPACES_EXCLUDE"
+	EnvPrometheusServiceURL       = "PROMETHEUS_SERVICE_URL"
+	EnvPrometheusCustomMetricsURL = "PROMETHEUS_CUSTOM_METRICS_URL"
+	EnvInCluster                  = "IN_CLUSTER"
+	EnvIstioIdentityDomain        = "ISTIO_IDENTITY_DOMAIN"
+	EnvIstioSidecarAnnotation     = "ISTIO_SIDECAR_ANNOTATION"
+	EnvIstioUrlServiceVersion     = "ISTIO_URL_SERVICE_VERSION"
+	EnvApiNamespacesExclude       = "API_NAMESPACES_EXCLUDE"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -107,10 +108,11 @@ type IstioConfig struct {
 
 // ExternalServices holds configurations for other systems that Kiali depends on
 type ExternalServices struct {
-	Istio                IstioConfig   `yaml:"istio,omitempty"`
-	PrometheusServiceURL string        `yaml:"prometheus_service_url,omitempty"`
-	Grafana              GrafanaConfig `yaml:"grafana,omitempty"`
-	Jaeger               JaegerConfig  `yaml:"jaeger,omitempty"`
+	Istio                      IstioConfig   `yaml:"istio,omitempty"`
+	PrometheusServiceURL       string        `yaml:"prometheus_service_url,omitempty"`
+	PrometheusCustomMetricsURL string        `yaml:"prometheus_custom_metrics_url,omitempty"`
+	Grafana                    GrafanaConfig `yaml:"grafana,omitempty"`
+	Jaeger                     JaegerConfig  `yaml:"jaeger,omitempty"`
 }
 
 // LoginToken holds config used in token-based authentication
@@ -181,6 +183,7 @@ func NewConfig() (c *Config) {
 
 	// Prometheus configuration
 	c.ExternalServices.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))
+	c.ExternalServices.PrometheusCustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.PrometheusServiceURL))
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
