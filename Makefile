@@ -296,3 +296,12 @@ k8s-undeploy: .k8s-validate
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
 	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}
+
+## gometalinter-install. Installs gometalinter
+gometalinter-install:
+	go get -u github.com/alecthomas/gometalinter
+	gometalinter --install
+
+## lint. Runs gometalinter
+lint:
+	gometalinter --disable-all --tests  --vendor ./...
