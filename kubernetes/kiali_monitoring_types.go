@@ -19,10 +19,11 @@ type MonitoringDashboardSpec struct {
 }
 
 type MonitoringDashboardChart struct {
-	Name         string
-	Unit         string
-	Spans        int
-	MetricName   string
+	Name       string
+	Unit       string
+	Spans      int
+	MetricName string
+	// MetricType is either "counter" or "histogram"
 	MetricType   string
 	Aggregations []MonitoringDashboardAggregation
 }

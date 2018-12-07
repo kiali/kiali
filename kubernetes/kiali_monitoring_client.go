@@ -7,9 +7,15 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// KialiMonitoringInterface for mocks (only mocked function are necessary here)
+type KialiMonitoringInterface interface {
+	GetDashboard(namespace string, name string) (*MonitoringDashboard, error)
+}
+
 // KialiMonitoringClient is the client struct for Kiali Monitoring API over Kubernetes
 // API to get MonitoringDashboards
 type KialiMonitoringClient struct {
+	KialiMonitoringInterface
 	client *rest.RESTClient
 }
 
