@@ -364,6 +364,14 @@ external_services:
   prometheus_service_url: VALUE
 ----
 
+|`PROMETHEUS_CUSTOM_METRICS_URL`
+|The URL used to query the Prometheus Server for building the runtime metrics dashboards. It must be accessible from Kiali pod. (default is `PROMETHEUS_SERVICE_URL`)
+[source,yaml]
+----
+external_services:
+  prometheus_custom_metrics_url: VALUE
+----
+
 |`ISTIO_SIDECAR_ANNOTATION`
 |The annotation used by Istio in Pods. (default is `sidecar.istio.io/status`)
 [source,yaml]

@@ -9,9 +9,11 @@ func TestEnvVar(t *testing.T) {
 	defer os.Setenv(EnvServerAddress, os.Getenv(EnvServerAddress))
 	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
 	defer os.Setenv(EnvServerCORSAllowAll, os.Getenv(EnvServerCORSAllowAll))
+	defer os.Setenv(EnvPrometheusCustomMetricsURL, os.Getenv(EnvPrometheusCustomMetricsURL))
 	os.Setenv(EnvServerAddress, "test-address")
 	os.Setenv(EnvServerPort, "12345")
 	os.Setenv(EnvServerCORSAllowAll, "true")
+	os.Setenv(EnvPrometheusCustomMetricsURL, "test-address")
 
 	conf := NewConfig()
 
@@ -21,8 +23,38 @@ func TestEnvVar(t *testing.T) {
 	if conf.Server.Port != 12345 {
 		t.Error("server port is wrong")
 	}
+	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+		t.Error("prometheus dashboard url is wrong")
+	}
 	if !conf.Server.CORSAllowAll {
 		t.Error("server CORS setting is wrong")
+	}
+}
+
+func TestPrometheusDashboardUrlFallback(t *testing.T) {
+	defer os.Setenv(EnvPrometheusServiceURL, os.Getenv(EnvPrometheusServiceURL))
+	defer os.Setenv(EnvPrometheusCustomMetricsURL, os.Getenv(EnvPrometheusCustomMetricsURL))
+
+	os.Setenv(EnvPrometheusServiceURL, "test-address")
+
+	conf := NewConfig()
+
+	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+		t.Error("prometheus service url is wrong")
+	}
+	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+		t.Error("prometheus dashboard url is not taking main prometheus url")
+	}
+
+	os.Setenv(EnvPrometheusCustomMetricsURL, "second-test-address")
+
+	conf = NewConfig()
+
+	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+		t.Error("prometheus service url is wrong")
+	}
+	if conf.ExternalServices.PrometheusCustomMetricsURL != "second-test-address" {
+		t.Error("prometheus dashboard url is not taking main prometheus url")
 	}
 }
 
