@@ -13,7 +13,7 @@ import (
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion customDashboard
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard customDashboard
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard
+// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -68,7 +68,7 @@ type ObjectSubtypeParam struct {
 	Name string `json:"object_subtype"`
 }
 
-// swagger:parameters serviceValidations serviceDetails serviceMetrics graphService
+// swagger:parameters serviceValidations serviceDetails serviceMetrics graphService serviceDashboard
 type ServiceParam struct {
 	// The service name.
 	//
@@ -86,7 +86,7 @@ type TemplateParam struct {
 	Name string `json:"template"`
 }
 
-// swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload
+// swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload workloadDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
@@ -174,7 +174,7 @@ type QueryTimeParam struct {
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type AvgParam struct {
 	// Flag for fetching histogram average. Default is true.
 	//
@@ -184,7 +184,7 @@ type AvgParam struct {
 	Name string `json:"avg"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type ByLabelsParam struct {
 	// List of labels to use for grouping metrics (via Prometheus 'by' clause).
 	//
@@ -194,7 +194,7 @@ type ByLabelsParam struct {
 	Name string `json:"byLabels[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type DirectionParam struct {
 	// Traffic direction: 'inbound' or 'outbound'.
 	//
@@ -204,7 +204,7 @@ type DirectionParam struct {
 	Name string `json:"direction"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type DurationParam struct {
 	// Duration of the query period, in seconds.
 	//
@@ -224,7 +224,7 @@ type FiltersParam struct {
 	Name string `json:"filters[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type QuantilesParam struct {
 	// List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].
 	//
@@ -234,7 +234,7 @@ type QuantilesParam struct {
 	Name string `json:"quantiles[]"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type RateFuncParam struct {
 	// Prometheus function used to calculate rate: 'rate' or 'irate'.
 	//
@@ -244,7 +244,7 @@ type RateFuncParam struct {
 	Name string `json:"rateFunc"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type RateIntervalParam struct {
 	// Interval used for rate and histogram calculation.
 	//
@@ -254,7 +254,7 @@ type RateIntervalParam struct {
 	Name string `json:"rateInterval"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type ReporterParam struct {
 	// Istio telemetry reporter: 'source' or 'destination'.
 	//
@@ -264,7 +264,7 @@ type ReporterParam struct {
 	Name string `json:"reporter"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type StepParam struct {
 	// Step between [graph] datapoints, in seconds.
 	//

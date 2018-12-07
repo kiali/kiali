@@ -22,9 +22,18 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 	}
 	dir := queryParams.Get("direction")
 	if dir != "" {
+		if dir != "inbound" && dir != "outbound" {
+			return errors.New("Bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
+		}
 		q.Direction = dir
 	}
-	q.Reporter = queryParams.Get("reporter")
+	reporter := queryParams.Get("reporter")
+	if reporter != "" {
+		if reporter != "source" && reporter != "destination" {
+			return errors.New("Bad request, query parameter 'reporter' must be either 'source' or 'destination'")
+		}
+		q.Reporter = reporter
+	}
 	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
 }
 
@@ -96,20 +105,6 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 	}
 	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
 		q.ByLabels = lbls
-	}
-	dir := queryParams.Get("direction")
-	if dir != "" {
-		if dir != "inbound" && dir != "outbound" {
-			return errors.New("Bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
-		}
-		q.Direction = dir
-	}
-	reporter := queryParams.Get("reporter")
-	if reporter != "" {
-		if reporter != "source" && reporter != "destination" {
-			return errors.New("Bad request, query parameter 'reporter' must be either 'source' or 'destination'")
-		}
-		q.Reporter = reporter
 	}
 
 	// If needed, adjust interval -- Make sure query won't fetch data before the namespace creation

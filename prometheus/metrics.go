@@ -160,17 +160,17 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 	type resultHolder struct {
 		metric     *Metric
 		histo      Histogram
-		definition IstioMetric
+		definition istioMetric
 	}
-	maxResults := len(IstioMetrics)
+	maxResults := len(istioMetrics)
 	results := make([]*resultHolder, maxResults, maxResults)
 
-	for i, istioMetric := range IstioMetrics {
+	for i, istioMetric := range istioMetrics {
 		// if filters is empty, fetch all anyway
 		doFetch := len(q.Filters) == 0
 		if !doFetch {
 			for _, filter := range q.Filters {
-				if filter == istioMetric.KialiName {
+				if filter == istioMetric.kialiName {
 					doFetch = true
 					break
 				}
@@ -180,11 +180,11 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 			wg.Add(1)
 			result := resultHolder{definition: istioMetric}
 			results[i] = &result
-			if istioMetric.IsHisto {
-				go fetchHisto(istioMetric.IstioName, &result.histo)
+			if istioMetric.isHisto {
+				go fetchHisto(istioMetric.istioName, &result.histo)
 			} else {
 				labelsToUse := istioMetric.labelsToUse(labels, labelsError)
-				go fetchRate(istioMetric.IstioName, &result.metric, labelsToUse)
+				go fetchRate(istioMetric.istioName, &result.metric, labelsToUse)
 			}
 		}
 	}
@@ -195,10 +195,10 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 	histograms := make(map[string]Histogram)
 	for _, result := range results {
 		if result != nil {
-			if result.definition.IsHisto {
-				histograms[result.definition.KialiName] = result.histo
+			if result.definition.isHisto {
+				histograms[result.definition.kialiName] = result.histo
 			} else {
-				metrics[result.definition.KialiName] = result.metric
+				metrics[result.definition.kialiName] = result.metric
 			}
 		}
 	}

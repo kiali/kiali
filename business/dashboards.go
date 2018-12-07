@@ -49,7 +49,7 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 		go func(idx int, chart kubernetes.MonitoringDashboardChart) {
 			defer wg.Done()
 			filledCharts[idx] = models.ConvertChart(chart)
-			if chart.MetricType == "counter" {
+			if chart.MetricType == kubernetes.Counter {
 				filledCharts[idx].CounterRate = in.prom.FetchRateRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			} else {
 				filledCharts[idx].Histogram = in.prom.FetchHistogramRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)

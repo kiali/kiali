@@ -497,7 +497,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceMetrics
+		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single service
 		//
@@ -518,7 +518,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appMetrics
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single app
 		//
@@ -539,7 +539,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AppDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadMetrics
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single workload
 		//
@@ -560,7 +560,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} customDashboard
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} apps customDashboard
 		// ---
 		// Endpoint to fetch custom dashboard to be displayed, based on the provided template
 		//

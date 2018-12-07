@@ -1,53 +1,53 @@
 package prometheus
 
-type IstioMetric struct {
-	KialiName      string
-	IstioName      string
-	IsHisto        bool
-	UseErrorLabels bool
+type istioMetric struct {
+	kialiName      string
+	istioName      string
+	isHisto        bool
+	useErrorLabels bool
 }
 
-var IstioMetrics = []IstioMetric{
-	IstioMetric{
-		KialiName: "request_count",
-		IstioName: "istio_requests_total",
-		IsHisto:   false,
+var istioMetrics = []istioMetric{
+	istioMetric{
+		kialiName: "request_count",
+		istioName: "istio_requests_total",
+		isHisto:   false,
 	},
-	IstioMetric{
-		KialiName:      "request_error_count",
-		IstioName:      "istio_requests_total",
-		IsHisto:        false,
-		UseErrorLabels: true,
+	istioMetric{
+		kialiName:      "request_error_count",
+		istioName:      "istio_requests_total",
+		isHisto:        false,
+		useErrorLabels: true,
 	},
-	IstioMetric{
-		KialiName: "request_duration",
-		IstioName: "istio_request_duration_seconds",
-		IsHisto:   true,
+	istioMetric{
+		kialiName: "request_duration",
+		istioName: "istio_request_duration_seconds",
+		isHisto:   true,
 	},
-	IstioMetric{
-		KialiName: "request_size",
-		IstioName: "istio_request_bytes",
-		IsHisto:   true,
+	istioMetric{
+		kialiName: "request_size",
+		istioName: "istio_request_bytes",
+		isHisto:   true,
 	},
-	IstioMetric{
-		KialiName: "response_size",
-		IstioName: "istio_response_bytes",
-		IsHisto:   true,
+	istioMetric{
+		kialiName: "response_size",
+		istioName: "istio_response_bytes",
+		isHisto:   true,
 	},
-	IstioMetric{
-		KialiName: "tcp_received",
-		IstioName: "istio_tcp_received_bytes_total",
-		IsHisto:   false,
+	istioMetric{
+		kialiName: "tcp_received",
+		istioName: "istio_tcp_received_bytes_total",
+		isHisto:   false,
 	},
-	IstioMetric{
-		KialiName: "tcp_sent",
-		IstioName: "istio_tcp_sent_bytes_total",
-		IsHisto:   false,
+	istioMetric{
+		kialiName: "tcp_sent",
+		istioName: "istio_tcp_sent_bytes_total",
+		isHisto:   false,
 	},
 }
 
-func (in *IstioMetric) labelsToUse(labels, labelsError string) string {
-	if in.UseErrorLabels {
+func (in *istioMetric) labelsToUse(labels, labelsError string) string {
+	if in.useErrorLabels {
 		return labelsError
 	}
 	return labels
