@@ -35,7 +35,7 @@ get_gateway_url() {
     INGRESS_PORT="<port>"
   else
     jsonpath="{.spec.ports[?(@.name==\"$1\")].nodePort}"
-    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=''${jsonpath})''
+    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=${jsonpath})
   fi
 
   INGRESS_HOST=$(minikube ip)
