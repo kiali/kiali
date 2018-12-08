@@ -60,4 +60,4 @@ spec:
           name: kiali
       - name: kiali-cert
         secret:
-          secretName: istio.kiali
+          secretName: istio.kiali-service-account
