@@ -9,5 +9,5 @@ roleRef:
   name: kiali
 subjects:
 - kind: ServiceAccount
-  name: kiali
+  name: kiali-service-account
   namespace: ${NAMESPACE}

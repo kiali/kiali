@@ -23,7 +23,7 @@ spec:
         maxAvailable: 1
       type: RollingUpdate
     spec:
-      serviceAccount: kiali
+      serviceAccount: kiali-service-account
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         ${IMAGE_PULL_POLICY_TOKEN}

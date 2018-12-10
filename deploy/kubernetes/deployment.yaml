@@ -23,7 +23,7 @@ spec:
         app: kiali
         version: ${VERSION_LABEL}
     spec:
-      serviceAccount: kiali
+      serviceAccount: kiali-service-account
       containers:
       - image: ${IMAGE_NAME}:${IMAGE_VERSION}
         ${IMAGE_PULL_POLICY_TOKEN}
