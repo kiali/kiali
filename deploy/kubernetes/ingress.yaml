@@ -1,6 +1,8 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/secure-backends: "true"
   name: kiali
   labels:
     app: kiali

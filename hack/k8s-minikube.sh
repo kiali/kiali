@@ -31,11 +31,15 @@ ensure_minikube_is_running() {
 }
 
 get_gateway_url() {
-  INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
-  SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+  if [ "$1" == "" ] ; then
+    INGRESS_PORT="<port>"
+  else
+    jsonpath="{.spec.ports[?(@.name==\"$1\")].nodePort}"
+    INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=${jsonpath})
+  fi
+
   INGRESS_HOST=$(minikube ip)
-  GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
-  GATEWAY_URL_SECURE=$INGRESS_HOST:$SECURE_INGRESS_PORT
+  GATEWAY_URL=$INGRESS_HOST:${INGRESS_PORT:-?}
 }
 
 # Change to the directory where this script is and set our env
@@ -83,6 +87,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     gwurl)
       _CMD="gwurl"
+      if [ "$2" != "" ]; then
+        _CMD_OPT="$2"
+        shift
+      fi
       shift
       ;;
     -v|--verbose)
@@ -99,16 +107,16 @@ Valid options:
       Enable logging of debug messages from this script.
 
 The command must be either:
-  up:        starts the minikube cluster
-  down:      stops the minikube cluster
-  status:    gets the status of the minikube cluster
-  delete:    completely removes the minikube cluster VM destroying all state
-  docker:    information on the minikube docker environment
-  dashboard: enables access to the Kubernetes GUI within minikube
-  ingress:   enables access to the Kubernetes ingress URL within minikube
-  istio:     installs Istio into the minikube cluster
-  bookinfo:  installs Istio's bookinfo demo (make sure Istio is installed first)
-  gwurl:     displays the Ingress Gateway URL
+  up:                starts the minikube cluster
+  down:              stops the minikube cluster
+  status:            gets the status of the minikube cluster
+  delete:            completely removes the minikube cluster VM destroying all state
+  docker:            information on the minikube docker environment
+  dashboard:         enables access to the Kubernetes GUI within minikube
+  ingress:           enables access to the Kubernetes ingress URL within minikube
+  istio:             installs Istio into the minikube cluster
+  bookinfo:          installs Istio's bookinfo demo (make sure Istio is installed first)
+  gwurl [port name]: displays the Ingress Gateway URL - if port name is given, the gateway port is also shown.
 HELPMSG
       exit 1
       ;;
@@ -167,7 +175,7 @@ elif [ "$_CMD" = "bookinfo" ]; then
   ensure_minikube_is_running
   echo 'Installing Bookinfo'
   ./istio/install-bookinfo-demo.sh --mongo -tg -c kubectl
-  get_gateway_url
+  get_gateway_url http2
   echo 'To access the Bookinfo application, access this URL:'
   echo "http://${GATEWAY_URL}/productpage"
   echo 'To push requests into the Bookinfo application, execute this command:'
@@ -175,11 +183,9 @@ elif [ "$_CMD" = "bookinfo" ]; then
 
 elif [ "$_CMD" = "gwurl" ]; then
   ensure_minikube_is_running
-  get_gateway_url
+  get_gateway_url $_CMD_OPT
   echo 'The Gateway URL is:'
   echo "${GATEWAY_URL}"
-  echo 'The secure Gateway URL is:'
-  echo "${GATEWAY_URL_SECURE}"
 
 elif [ "$_CMD" = "docker" ]; then
   ensure_minikube_is_running

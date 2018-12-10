@@ -10,9 +10,12 @@ data:
     istio_namespace: ${ISTIO_NAMESPACE}
     server:
       port: 20001
-      web_root: /
+      web_root: /kiali
     external_services:
       jaeger:
         url: ${JAEGER_URL}
       grafana:
         url: ${GRAFANA_URL}
+    identity:
+      cert_file: /kiali-cert/cert-chain.pem
+      private_key_file: /kiali-cert/key.pem
