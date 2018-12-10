@@ -558,16 +558,7 @@ kubernetes_config:
 
 === Jaeger
 
-To configure the Jaeger Service you need to expose the service and set the URL parameter in the config.yaml
-
-[source,yaml]
-----
-external_services:
-  jaeger:
-    url: https://jaeger-query-istio-system.127.0.0.1.nip.io
-----
-
-If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **kiali-configmap.yaml** the value of the jaeger > url
+If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **configmap.yaml** the value of the jaeger > url
 [source,yaml]
 ----
 apiVersion: v1
@@ -581,7 +572,6 @@ data:
   config.yaml: |
     server:
       port: 20001
-      static_content_root_directory: /opt/kiali/console
     external_services:
       jaeger:
         url: http://jaeger-query-istio-system.127.0.0.1.nip.io
@@ -590,16 +580,7 @@ data:
 ----
 === Grafana
 
-To configure the Grafana Service you need to expose the service and set the URL parameter in the config.yaml
-
-[source,yaml]
-----
-
-external_services:
-  grafana:
-    url: http://grafana-istio-system.127.0.0.1.nip.io
-----
-If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **kiali-configmap.yaml** the value of the grafana > url
+If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **configmap.yaml** the value of the grafana > url
 [source,yaml]
 ----
 apiVersion: v1
@@ -613,7 +594,6 @@ data:
   config.yaml: |
     server:
       port: 20001
-      static_content_root_directory: /opt/kiali/console
     external_services:
       jaeger:
         url: http://jaeger-query-istio-system.127.0.0.1.nip.io
@@ -678,65 +658,47 @@ CONSOLE_VERSION=local CONSOLE_LOCAL_DIR=/my/git/repo make docker-build
 ----
 
 === Disabling SSL
+
 In the provided OpenShift templates, SSL is turned on by default. If you want to turn it off, you should:
-* Remove the "tls: termination: reencrypt" option in Kiali route
-* Remove the "identity" block, with certificate paths, in Kiali Config Map.
-* Optionnally you can also remove the annotation "service.alpha.openshift.io/serving-cert-secret-name", and the related volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
+
+* Remove the "tls: termination: reencrypt" option from the Kiali route
+
+* Remove the "identity" block, with certificate paths, from the Kiali Config Map.
+
+* Optionally you can also remove the annotation "service.alpha.openshift.io/serving-cert-secret-name", and the related volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
+
+In the provided Kubernetes templates, SSL is turned on by default. If you want to turn it off, you should:
+
+* Remove the "identity" block, with certificate paths, from the Kiali Config Map.
+
+* Optionally you can also remove the volume that is declared and mounted in Kiali Deployment (the name of the volume and mount are both "kiali-cert". If you don't remove these, they will just be ignored.
 
 === Running Kiali with commands
 
-==== Download the files and configure
 [NOTE]
 Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
 
 [NOTE]
-The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
-
-===== Get the kiali-configmap.yaml
-[source,bash]
-----
-$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-configmap.yaml | \
-VERSION_LABEL=master envsubst > kiali-configmap.yaml
-----
-If you need to set the JAEGER and GRAFANA services set the URL configuration.
-[source,bash]
-----
-$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-configmap.yaml | \
-VERSION_LABEL=master JAEGER_URL=http://jaeger-query-istio-system.127.0.0.1.nip.io GRAFANA_URL=http://grafana-istio-system.127.0.0.1.nip.io envsubst > kiali-configmap.yaml
-----
-
-===== Get the kiali-secrets.yaml
-[source,bash]
-----
-$ curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali-secrets.yaml | \
-VERSION_LABEL=master envsubst > kiali-secrets.yaml
-----
-
-===== Get the kiali.yaml
-[source,bash]
-----
-curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/kubernetes/kiali.yaml | \
-IMAGE_NAME=kiali/kiali \
-IMAGE_VERSION=latest \
-NAMESPACE=istio-system \
-VERSION_LABEL=master \
-VERBOSE_MODE=4 envsubst > kiali.yaml
-----
+The installation scripts obtained by curl below can be customized with environment variables. Read the installation scripts for details on what environment variables are used.
 
 ==== Running in Openshift
+
+[NOTE]
+The following assumes that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
+
 [source,bash]
 ----
-oc create -f kiali-configmap.yaml -n istio-system
-oc create -f kiali-secrets.yaml -n istio-system
-oc create -f kiali.yaml -n istio-system
+curl -L http://git.io/getLatestKiali | sh
 ----
 
-==== Running in kubernetes
+==== Running in Kubernetes
+
+[NOTE]
+The following assumes `kubectl` command is available in the user's PATH.
+
 [source,bash]
 ----
-kubectl create -f kiali-configmap.yaml -n istio-system
-kubectl create -f kiali-secrets.yaml -n istio-system
-kubectl create -f kiali.yaml -n istio-system
+curl -L http://git.io/getLatestKialiKubernetes | sh
 ----
 
 == Contributing
@@ -757,10 +719,6 @@ If you do not have a JIRA account, you can also https://github.com/kiali/kiali/i
 
 When you are looking for issues to get started, you can use this https://issues.jboss.org/issues/?filter=12336706[JIRA query for good first issues].
 If you pick one from the list, please let us know by the above mentioned means.
-
-
-
-
 
 === Code Style Guide
 
