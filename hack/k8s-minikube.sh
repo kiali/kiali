@@ -42,6 +42,16 @@ get_gateway_url() {
   GATEWAY_URL=$INGRESS_HOST:${INGRESS_PORT:-?}
 }
 
+print_all_gateway_urls() {
+  echo "Gateway URLs for all known ports are:"
+  allnames=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath={.spec.ports['*'].name})
+  for n in ${allnames}
+  do
+    get_gateway_url ${n}
+    echo ${n}: ${GATEWAY_URL}
+  done
+}
+
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -107,16 +117,18 @@ Valid options:
       Enable logging of debug messages from this script.
 
 The command must be either:
-  up:                starts the minikube cluster
-  down:              stops the minikube cluster
-  status:            gets the status of the minikube cluster
-  delete:            completely removes the minikube cluster VM destroying all state
-  docker:            information on the minikube docker environment
-  dashboard:         enables access to the Kubernetes GUI within minikube
-  ingress:           enables access to the Kubernetes ingress URL within minikube
-  istio:             installs Istio into the minikube cluster
-  bookinfo:          installs Istio's bookinfo demo (make sure Istio is installed first)
-  gwurl [port name]: displays the Ingress Gateway URL - if port name is given, the gateway port is also shown.
+  up:        starts the minikube cluster
+  down:      stops the minikube cluster
+  status:    gets the status of the minikube cluster
+  delete:    completely removes the minikube cluster VM destroying all state
+  docker:    information on the minikube docker environment
+  dashboard: enables access to the Kubernetes GUI within minikube
+  ingress:   enables access to the Kubernetes ingress URL within minikube
+  istio:     installs Istio into the minikube cluster
+  bookinfo:  installs Istio's bookinfo demo (make sure Istio is installed first)
+  gwurl [<portName>|'all']:
+             displays the Ingress Gateway URL. If a port name is given, the gateway port is also shown.
+             If the port name is "all" then all the URLs for all known ports are shown.
 HELPMSG
       exit 1
       ;;
@@ -183,9 +195,13 @@ elif [ "$_CMD" = "bookinfo" ]; then
 
 elif [ "$_CMD" = "gwurl" ]; then
   ensure_minikube_is_running
-  get_gateway_url $_CMD_OPT
-  echo 'The Gateway URL is:'
-  echo "${GATEWAY_URL}"
+  if [ "$_CMD_OPT" == "all" ]; then
+    print_all_gateway_urls
+  else
+    get_gateway_url $_CMD_OPT
+    echo 'The Gateway URL is:'
+    echo "${GATEWAY_URL}"
+  fi
 
 elif [ "$_CMD" = "docker" ]; then
   ensure_minikube_is_running
