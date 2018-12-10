@@ -35,7 +35,7 @@ def __get_kiali_client__(config):
 
 def __get_environment_config__(env_file):
     yamlfile = resource_string(__name__, env_file)
-    config = yaml.load(yamlfile)
+    config = yaml.safe_load(yamlfile)
     return config
 
 
@@ -58,7 +58,7 @@ def get_istio_clusterrole_file():
       yaml_content = re.sub("chart: {{.+}}", "version: 0.10 ", yaml_content)
       yaml_content = re.sub("heritage: {{.+}}\n", "", yaml_content)
       yaml_content = re.sub("release: {{.+}}", "", yaml_content)
-      return yaml.load(yaml_content)
+      return yaml.safe_load(yaml_content)
 
 
 def get_kiali_clusterrole_file(file_type):
@@ -70,5 +70,5 @@ def get_kiali_clusterrole_file(file_type):
 
 
     yaml_content = re.sub("\${VERSION_LABEL}", "0.10", yaml_content)
-    return yaml.load(yaml_content)
+    return yaml.safe_load(yaml_content)
 
