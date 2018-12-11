@@ -38,7 +38,11 @@ class OverviewStatus extends React.Component<Props, {}> {
         rootClose={true}
       >
         <AggregateStatusNotification>
-          <ListPageLink target={this.props.targetPage} namespace={this.props.namespace} health={this.props.status.name}>
+          <ListPageLink
+            target={this.props.targetPage}
+            namespaces={[{ name: this.props.namespace }]}
+            health={this.props.status.name}
+          >
             <Icon type="pf" name={this.props.status.icon} />
             {length}
           </ListPageLink>

@@ -83,7 +83,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
           <ListPageLink target={TargetPage.APPLICATIONS}>Applications</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.APPLICATIONS} namespace={this.props.match.params.namespace}>
+          <ListPageLink target={TargetPage.APPLICATIONS} namespaces={[{ name: this.props.match.params.namespace }]}>
             Namespace: {this.props.match.params.namespace}
           </ListPageLink>
         </Breadcrumb.Item>

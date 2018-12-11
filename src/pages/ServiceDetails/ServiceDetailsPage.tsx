@@ -180,7 +180,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           <ListPageLink target={TargetPage.SERVICES}>Services</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.SERVICES} namespace={this.props.match.params.namespace}>
+          <ListPageLink target={TargetPage.SERVICES} namespaces={[{ name: this.props.match.params.namespace }]}>
             Namespace: {this.props.match.params.namespace}
           </ListPageLink>
         </Breadcrumb.Item>
