@@ -1005,7 +1005,9 @@ func handlePanic(w http.ResponseWriter) {
 		default:
 			message = fmt.Sprintf("%v", r)
 		}
-		log.Errorf("%s: %s", message, debug.Stack())
+		if code == http.StatusInternalServerError {
+			log.Errorf("%s: %s", message, debug.Stack())
+		}
 		RespondWithError(w, code, message)
 	}
 }
