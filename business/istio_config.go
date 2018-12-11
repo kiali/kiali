@@ -328,7 +328,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 }
 
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {
-	var canUpdate, canDelete bool
+	var canPatch, canUpdate, canDelete bool
 	if api, ok := resourceTypesToAPI[objectType]; ok {
 		// objectType will always match the api used in adapters/templates
 		// but if objectSubtype is present it should be used as resourceType
@@ -341,7 +341,9 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
 					switch ssar.Spec.ResourceAttributes.Verb {
-					case "patch", "update":
+					case "patch":
+						canPatch = ssar.Status.Allowed
+					case "update":
 						canUpdate = ssar.Status.Allowed
 					case "delete":
 						canDelete = ssar.Status.Allowed
@@ -352,5 +354,5 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
-	return canUpdate, canDelete
+	return canUpdate || canPatch, canDelete
 }
