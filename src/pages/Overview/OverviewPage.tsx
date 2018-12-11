@@ -204,7 +204,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                         <Link to={`/graph/namespaces?namespaces=` + encodedNsName}>{ns.name}</Link>
                       </CardTitle>
                       <CardBody>
-                        <ListPageLink target={targetPage} namespace={ns.name}>
+                        <ListPageLink target={targetPage} namespaces={[{ name: ns.name }]}>
                           {nbItems === 1 ? oneItemText : nbItems + pluralText}
                         </ListPageLink>
                         <AggregateStatusNotifications>
@@ -243,13 +243,25 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                           <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">
                             <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </Link>
-                          <ListPageLink target={TargetPage.APPLICATIONS} namespace={ns.name} title="Applications list">
+                          <ListPageLink
+                            target={TargetPage.APPLICATIONS}
+                            namespaces={[{ name: ns.name }]}
+                            title="Applications list"
+                          >
                             <Icon type="pf" name="applications" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
-                          <ListPageLink target={TargetPage.WORKLOADS} namespace={ns.name} title="Workloads list">
+                          <ListPageLink
+                            target={TargetPage.WORKLOADS}
+                            namespaces={[{ name: ns.name }]}
+                            title="Workloads list"
+                          >
                             <Icon type="pf" name="bundle" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
-                          <ListPageLink target={TargetPage.SERVICES} namespace={ns.name} title="Services list">
+                          <ListPageLink
+                            target={TargetPage.SERVICES}
+                            namespaces={[{ name: ns.name }]}
+                            title="Services list"
+                          >
                             <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
                           </ListPageLink>
                         </div>

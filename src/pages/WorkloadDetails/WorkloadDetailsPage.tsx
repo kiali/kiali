@@ -137,7 +137,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           <ListPageLink target={TargetPage.WORKLOADS}>Workloads</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.WORKLOADS} namespace={this.props.match.params.namespace}>
+          <ListPageLink target={TargetPage.WORKLOADS} namespaces={[{ name: this.props.match.params.namespace }]}>
             Namespace: {this.props.match.params.namespace}
           </ListPageLink>
         </Breadcrumb.Item>

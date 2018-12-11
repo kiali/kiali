@@ -112,7 +112,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     deletePromise
       .then(r => {
         // Back to list page
-        ListPageLink.navigateTo(TargetPage.ISTIO, this.props.match.params.namespace);
+        ListPageLink.navigateTo(TargetPage.ISTIO, [{ name: this.props.match.params.namespace }]);
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not delete IstioConfig details.', error));
@@ -171,14 +171,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           <ListPageLink target={TargetPage.ISTIO}>Istio Config</ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.ISTIO} namespace={this.props.match.params.namespace}>
+          <ListPageLink target={TargetPage.ISTIO} namespaces={[{ name: this.props.match.params.namespace }]}>
             Namespace: {this.props.match.params.namespace}
           </ListPageLink>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
           <ListPageLink
             target={TargetPage.ISTIO}
-            namespace={this.props.match.params.namespace}
+            namespaces={[{ name: this.props.match.params.namespace }]}
             onClick={this.updateTypeFilter}
           >
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
