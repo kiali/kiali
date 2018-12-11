@@ -1007,18 +1007,19 @@ ShallowWrapper {
     disabled={false}
     handleSelect={[MockFunction]}
     id="metrics_filter_poll_interval"
-    initialLabel="15 sec"
+    initialLabel="Every 15 sec"
     initialValue={15000}
     nameDropdown="metrics_filter_poll_interval"
     options={
       Object {
         "0": "Pause",
-        "10000": "10 sec",
-        "15000": "15 sec",
-        "30000": "30 sec",
-        "300000": "5 min",
-        "5000": "5 sec",
-        "60000": "1 min",
+        "10000": "Every 10 sec",
+        "15000": "Every 15 sec",
+        "30000": "Every 30 sec",
+        "300000": "Every 5 min",
+        "5000": "Every 5 sec",
+        "60000": "Every 1 min",
+        "900000": "Every 15 min",
       }
     }
   />,
@@ -1051,7 +1052,7 @@ ShallowWrapper {
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
           onToggle={[Function]}
-          title="15 sec"
+          title="Every 15 sec"
         >
           <MenuItem
             active={false}
@@ -1071,7 +1072,7 @@ ShallowWrapper {
             eventKey="5000"
             header={false}
           >
-            5 sec
+            Every 5 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -1081,7 +1082,7 @@ ShallowWrapper {
             eventKey="10000"
             header={false}
           >
-            10 sec
+            Every 10 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -1091,7 +1092,7 @@ ShallowWrapper {
             eventKey="15000"
             header={false}
           >
-            15 sec
+            Every 15 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -1101,7 +1102,7 @@ ShallowWrapper {
             eventKey="30000"
             header={false}
           >
-            30 sec
+            Every 30 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -1111,7 +1112,7 @@ ShallowWrapper {
             eventKey="60000"
             header={false}
           >
-            1 min
+            Every 1 min
           </MenuItem>
           <MenuItem
             active={false}
@@ -1121,7 +1122,17 @@ ShallowWrapper {
             eventKey="300000"
             header={false}
           >
-            5 min
+            Every 5 min
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="900000"
+            header={false}
+          >
+            Every 15 min
           </MenuItem>
         </DropdownButton>,
       ],
@@ -1167,7 +1178,7 @@ ShallowWrapper {
               eventKey="5000"
               header={false}
             >
-              5 sec
+              Every 5 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -1177,7 +1188,7 @@ ShallowWrapper {
               eventKey="10000"
               header={false}
             >
-              10 sec
+              Every 10 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -1187,7 +1198,7 @@ ShallowWrapper {
               eventKey="15000"
               header={false}
             >
-              15 sec
+              Every 15 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -1197,7 +1208,7 @@ ShallowWrapper {
               eventKey="30000"
               header={false}
             >
-              30 sec
+              Every 30 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -1207,7 +1218,7 @@ ShallowWrapper {
               eventKey="60000"
               header={false}
             >
-              1 min
+              Every 1 min
             </MenuItem>,
             <MenuItem
               active={false}
@@ -1217,14 +1228,24 @@ ShallowWrapper {
               eventKey="300000"
               header={false}
             >
-              5 min
+              Every 5 min
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="900000"
+              header={false}
+            >
+              Every 15 min
             </MenuItem>,
           ],
           "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
           "onToggle": [Function],
-          "title": "15 sec",
+          "title": "Every 15 sec",
         },
         "ref": null,
         "rendered": Array [
@@ -1252,14 +1273,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "5 sec",
+              "children": "Every 5 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "5000",
               "header": false,
             },
             "ref": null,
-            "rendered": "5 sec",
+            "rendered": "Every 5 sec",
             "type": [Function],
           },
           Object {
@@ -1269,14 +1290,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "10 sec",
+              "children": "Every 10 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "10000",
               "header": false,
             },
             "ref": null,
-            "rendered": "10 sec",
+            "rendered": "Every 10 sec",
             "type": [Function],
           },
           Object {
@@ -1286,14 +1307,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "15 sec",
+              "children": "Every 15 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "15000",
               "header": false,
             },
             "ref": null,
-            "rendered": "15 sec",
+            "rendered": "Every 15 sec",
             "type": [Function],
           },
           Object {
@@ -1303,14 +1324,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "30 sec",
+              "children": "Every 30 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "30000",
               "header": false,
             },
             "ref": null,
-            "rendered": "30 sec",
+            "rendered": "Every 30 sec",
             "type": [Function],
           },
           Object {
@@ -1320,14 +1341,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "1 min",
+              "children": "Every 1 min",
               "disabled": false,
               "divider": false,
               "eventKey": "60000",
               "header": false,
             },
             "ref": null,
-            "rendered": "1 min",
+            "rendered": "Every 1 min",
             "type": [Function],
           },
           Object {
@@ -1337,14 +1358,31 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "5 min",
+              "children": "Every 5 min",
               "disabled": false,
               "divider": false,
               "eventKey": "300000",
               "header": false,
             },
             "ref": null,
-            "rendered": "5 min",
+            "rendered": "Every 5 min",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "900000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Every 15 min",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "900000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Every 15 min",
             "type": [Function],
           },
         ],
@@ -1375,7 +1413,7 @@ ShallowWrapper {
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
             onToggle={[Function]}
-            title="15 sec"
+            title="Every 15 sec"
           >
             <MenuItem
               active={false}
@@ -1395,7 +1433,7 @@ ShallowWrapper {
               eventKey="5000"
               header={false}
             >
-              5 sec
+              Every 5 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -1405,7 +1443,7 @@ ShallowWrapper {
               eventKey="10000"
               header={false}
             >
-              10 sec
+              Every 10 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -1415,7 +1453,7 @@ ShallowWrapper {
               eventKey="15000"
               header={false}
             >
-              15 sec
+              Every 15 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -1425,7 +1463,7 @@ ShallowWrapper {
               eventKey="30000"
               header={false}
             >
-              30 sec
+              Every 30 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -1435,7 +1473,7 @@ ShallowWrapper {
               eventKey="60000"
               header={false}
             >
-              1 min
+              Every 1 min
             </MenuItem>
             <MenuItem
               active={false}
@@ -1445,7 +1483,17 @@ ShallowWrapper {
               eventKey="300000"
               header={false}
             >
-              5 min
+              Every 5 min
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="900000"
+              header={false}
+            >
+              Every 15 min
             </MenuItem>
           </DropdownButton>,
         ],
@@ -1491,7 +1539,7 @@ ShallowWrapper {
                 eventKey="5000"
                 header={false}
               >
-                5 sec
+                Every 5 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -1501,7 +1549,7 @@ ShallowWrapper {
                 eventKey="10000"
                 header={false}
               >
-                10 sec
+                Every 10 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -1511,7 +1559,7 @@ ShallowWrapper {
                 eventKey="15000"
                 header={false}
               >
-                15 sec
+                Every 15 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -1521,7 +1569,7 @@ ShallowWrapper {
                 eventKey="30000"
                 header={false}
               >
-                30 sec
+                Every 30 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -1531,7 +1579,7 @@ ShallowWrapper {
                 eventKey="60000"
                 header={false}
               >
-                1 min
+                Every 1 min
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -1541,14 +1589,24 @@ ShallowWrapper {
                 eventKey="300000"
                 header={false}
               >
-                5 min
+                Every 5 min
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="900000"
+                header={false}
+              >
+                Every 15 min
               </MenuItem>,
             ],
             "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
             "onToggle": [Function],
-            "title": "15 sec",
+            "title": "Every 15 sec",
           },
           "ref": null,
           "rendered": Array [
@@ -1576,14 +1634,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "5 sec",
+                "children": "Every 5 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "5000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "5 sec",
+              "rendered": "Every 5 sec",
               "type": [Function],
             },
             Object {
@@ -1593,14 +1651,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "10 sec",
+                "children": "Every 10 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "10000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "10 sec",
+              "rendered": "Every 10 sec",
               "type": [Function],
             },
             Object {
@@ -1610,14 +1668,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "15 sec",
+                "children": "Every 15 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "15000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "15 sec",
+              "rendered": "Every 15 sec",
               "type": [Function],
             },
             Object {
@@ -1627,14 +1685,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "30 sec",
+                "children": "Every 30 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "30000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "30 sec",
+              "rendered": "Every 30 sec",
               "type": [Function],
             },
             Object {
@@ -1644,14 +1702,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "1 min",
+                "children": "Every 1 min",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "60000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "1 min",
+              "rendered": "Every 1 min",
               "type": [Function],
             },
             Object {
@@ -1661,14 +1719,31 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "5 min",
+                "children": "Every 5 min",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "300000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "5 min",
+              "rendered": "Every 5 min",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "900000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Every 15 min",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "900000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Every 15 min",
               "type": [Function],
             },
           ],
@@ -3104,17 +3179,18 @@ ShallowWrapper {
     disabled={false}
     handleSelect={[MockFunction]}
     id="metrics_filter_poll_interval"
-    label="15 sec"
+    label="Every 15 sec"
     nameDropdown="metrics_filter_poll_interval"
     options={
       Object {
         "0": "Pause",
-        "10000": "10 sec",
-        "15000": "15 sec",
-        "30000": "30 sec",
-        "300000": "5 min",
-        "5000": "5 sec",
-        "60000": "1 min",
+        "10000": "Every 10 sec",
+        "15000": "Every 15 sec",
+        "30000": "Every 30 sec",
+        "300000": "Every 5 min",
+        "5000": "Every 5 sec",
+        "60000": "Every 1 min",
+        "900000": "Every 15 min",
       }
     }
     value={15000}
@@ -3148,7 +3224,7 @@ ShallowWrapper {
           id="metrics_filter_poll_interval"
           onSelect={[Function]}
           onToggle={[Function]}
-          title="15 sec"
+          title="Every 15 sec"
         >
           <MenuItem
             active={false}
@@ -3168,7 +3244,7 @@ ShallowWrapper {
             eventKey="5000"
             header={false}
           >
-            5 sec
+            Every 5 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -3178,7 +3254,7 @@ ShallowWrapper {
             eventKey="10000"
             header={false}
           >
-            10 sec
+            Every 10 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -3188,7 +3264,7 @@ ShallowWrapper {
             eventKey="15000"
             header={false}
           >
-            15 sec
+            Every 15 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -3198,7 +3274,7 @@ ShallowWrapper {
             eventKey="30000"
             header={false}
           >
-            30 sec
+            Every 30 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -3208,7 +3284,7 @@ ShallowWrapper {
             eventKey="60000"
             header={false}
           >
-            1 min
+            Every 1 min
           </MenuItem>
           <MenuItem
             active={false}
@@ -3218,7 +3294,17 @@ ShallowWrapper {
             eventKey="300000"
             header={false}
           >
-            5 min
+            Every 5 min
+          </MenuItem>
+          <MenuItem
+            active={false}
+            bsClass="dropdown"
+            disabled={false}
+            divider={false}
+            eventKey="900000"
+            header={false}
+          >
+            Every 15 min
           </MenuItem>
         </DropdownButton>,
       ],
@@ -3264,7 +3350,7 @@ ShallowWrapper {
               eventKey="5000"
               header={false}
             >
-              5 sec
+              Every 5 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -3274,7 +3360,7 @@ ShallowWrapper {
               eventKey="10000"
               header={false}
             >
-              10 sec
+              Every 10 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -3284,7 +3370,7 @@ ShallowWrapper {
               eventKey="15000"
               header={false}
             >
-              15 sec
+              Every 15 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -3294,7 +3380,7 @@ ShallowWrapper {
               eventKey="30000"
               header={false}
             >
-              30 sec
+              Every 30 sec
             </MenuItem>,
             <MenuItem
               active={false}
@@ -3304,7 +3390,7 @@ ShallowWrapper {
               eventKey="60000"
               header={false}
             >
-              1 min
+              Every 1 min
             </MenuItem>,
             <MenuItem
               active={false}
@@ -3314,14 +3400,24 @@ ShallowWrapper {
               eventKey="300000"
               header={false}
             >
-              5 min
+              Every 5 min
+            </MenuItem>,
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="900000"
+              header={false}
+            >
+              Every 15 min
             </MenuItem>,
           ],
           "disabled": false,
           "id": "metrics_filter_poll_interval",
           "onSelect": [Function],
           "onToggle": [Function],
-          "title": "15 sec",
+          "title": "Every 15 sec",
         },
         "ref": null,
         "rendered": Array [
@@ -3349,14 +3445,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "5 sec",
+              "children": "Every 5 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "5000",
               "header": false,
             },
             "ref": null,
-            "rendered": "5 sec",
+            "rendered": "Every 5 sec",
             "type": [Function],
           },
           Object {
@@ -3366,14 +3462,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "10 sec",
+              "children": "Every 10 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "10000",
               "header": false,
             },
             "ref": null,
-            "rendered": "10 sec",
+            "rendered": "Every 10 sec",
             "type": [Function],
           },
           Object {
@@ -3383,14 +3479,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "15 sec",
+              "children": "Every 15 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "15000",
               "header": false,
             },
             "ref": null,
-            "rendered": "15 sec",
+            "rendered": "Every 15 sec",
             "type": [Function],
           },
           Object {
@@ -3400,14 +3496,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "30 sec",
+              "children": "Every 30 sec",
               "disabled": false,
               "divider": false,
               "eventKey": "30000",
               "header": false,
             },
             "ref": null,
-            "rendered": "30 sec",
+            "rendered": "Every 30 sec",
             "type": [Function],
           },
           Object {
@@ -3417,14 +3513,14 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "1 min",
+              "children": "Every 1 min",
               "disabled": false,
               "divider": false,
               "eventKey": "60000",
               "header": false,
             },
             "ref": null,
-            "rendered": "1 min",
+            "rendered": "Every 1 min",
             "type": [Function],
           },
           Object {
@@ -3434,14 +3530,31 @@ ShallowWrapper {
             "props": Object {
               "active": false,
               "bsClass": "dropdown",
-              "children": "5 min",
+              "children": "Every 5 min",
               "disabled": false,
               "divider": false,
               "eventKey": "300000",
               "header": false,
             },
             "ref": null,
-            "rendered": "5 min",
+            "rendered": "Every 5 min",
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": "900000",
+            "nodeType": "class",
+            "props": Object {
+              "active": false,
+              "bsClass": "dropdown",
+              "children": "Every 15 min",
+              "disabled": false,
+              "divider": false,
+              "eventKey": "900000",
+              "header": false,
+            },
+            "ref": null,
+            "rendered": "Every 15 min",
             "type": [Function],
           },
         ],
@@ -3472,7 +3585,7 @@ ShallowWrapper {
             id="metrics_filter_poll_interval"
             onSelect={[Function]}
             onToggle={[Function]}
-            title="15 sec"
+            title="Every 15 sec"
           >
             <MenuItem
               active={false}
@@ -3492,7 +3605,7 @@ ShallowWrapper {
               eventKey="5000"
               header={false}
             >
-              5 sec
+              Every 5 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -3502,7 +3615,7 @@ ShallowWrapper {
               eventKey="10000"
               header={false}
             >
-              10 sec
+              Every 10 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -3512,7 +3625,7 @@ ShallowWrapper {
               eventKey="15000"
               header={false}
             >
-              15 sec
+              Every 15 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -3522,7 +3635,7 @@ ShallowWrapper {
               eventKey="30000"
               header={false}
             >
-              30 sec
+              Every 30 sec
             </MenuItem>
             <MenuItem
               active={false}
@@ -3532,7 +3645,7 @@ ShallowWrapper {
               eventKey="60000"
               header={false}
             >
-              1 min
+              Every 1 min
             </MenuItem>
             <MenuItem
               active={false}
@@ -3542,7 +3655,17 @@ ShallowWrapper {
               eventKey="300000"
               header={false}
             >
-              5 min
+              Every 5 min
+            </MenuItem>
+            <MenuItem
+              active={false}
+              bsClass="dropdown"
+              disabled={false}
+              divider={false}
+              eventKey="900000"
+              header={false}
+            >
+              Every 15 min
             </MenuItem>
           </DropdownButton>,
         ],
@@ -3588,7 +3711,7 @@ ShallowWrapper {
                 eventKey="5000"
                 header={false}
               >
-                5 sec
+                Every 5 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -3598,7 +3721,7 @@ ShallowWrapper {
                 eventKey="10000"
                 header={false}
               >
-                10 sec
+                Every 10 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -3608,7 +3731,7 @@ ShallowWrapper {
                 eventKey="15000"
                 header={false}
               >
-                15 sec
+                Every 15 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -3618,7 +3741,7 @@ ShallowWrapper {
                 eventKey="30000"
                 header={false}
               >
-                30 sec
+                Every 30 sec
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -3628,7 +3751,7 @@ ShallowWrapper {
                 eventKey="60000"
                 header={false}
               >
-                1 min
+                Every 1 min
               </MenuItem>,
               <MenuItem
                 active={false}
@@ -3638,14 +3761,24 @@ ShallowWrapper {
                 eventKey="300000"
                 header={false}
               >
-                5 min
+                Every 5 min
+              </MenuItem>,
+              <MenuItem
+                active={false}
+                bsClass="dropdown"
+                disabled={false}
+                divider={false}
+                eventKey="900000"
+                header={false}
+              >
+                Every 15 min
               </MenuItem>,
             ],
             "disabled": false,
             "id": "metrics_filter_poll_interval",
             "onSelect": [Function],
             "onToggle": [Function],
-            "title": "15 sec",
+            "title": "Every 15 sec",
           },
           "ref": null,
           "rendered": Array [
@@ -3673,14 +3806,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "5 sec",
+                "children": "Every 5 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "5000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "5 sec",
+              "rendered": "Every 5 sec",
               "type": [Function],
             },
             Object {
@@ -3690,14 +3823,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "10 sec",
+                "children": "Every 10 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "10000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "10 sec",
+              "rendered": "Every 10 sec",
               "type": [Function],
             },
             Object {
@@ -3707,14 +3840,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "15 sec",
+                "children": "Every 15 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "15000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "15 sec",
+              "rendered": "Every 15 sec",
               "type": [Function],
             },
             Object {
@@ -3724,14 +3857,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "30 sec",
+                "children": "Every 30 sec",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "30000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "30 sec",
+              "rendered": "Every 30 sec",
               "type": [Function],
             },
             Object {
@@ -3741,14 +3874,14 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "1 min",
+                "children": "Every 1 min",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "60000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "1 min",
+              "rendered": "Every 1 min",
               "type": [Function],
             },
             Object {
@@ -3758,14 +3891,31 @@ ShallowWrapper {
               "props": Object {
                 "active": false,
                 "bsClass": "dropdown",
-                "children": "5 min",
+                "children": "Every 5 min",
                 "disabled": false,
                 "divider": false,
                 "eventKey": "300000",
                 "header": false,
               },
               "ref": null,
-              "rendered": "5 min",
+              "rendered": "Every 5 min",
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": "900000",
+              "nodeType": "class",
+              "props": Object {
+                "active": false,
+                "bsClass": "dropdown",
+                "children": "Every 15 min",
+                "disabled": false,
+                "divider": false,
+                "eventKey": "900000",
+                "header": false,
+              },
+              "ref": null,
+              "rendered": "Every 15 min",
               "type": [Function],
             },
           ],

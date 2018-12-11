@@ -17,6 +17,7 @@ ShallowWrapper {
   >
     <MetricsOptionsBar
       direction="inbound"
+      grafanaLink="http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard"
       labelValues={Map {}}
       onLabelsFiltersChanged={[MockFunction]}
       onOptionsChanged={[MockFunction]}
@@ -37,6 +38,7 @@ ShallowWrapper {
     "nodeType": "class",
     "props": Object {
       "direction": "inbound",
+      "grafanaLink": "http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard",
       "labelValues": Map {},
       "onLabelsFiltersChanged": [MockFunction],
       "onOptionsChanged": [MockFunction],
@@ -53,6 +55,7 @@ ShallowWrapper {
       "nodeType": "class",
       "props": Object {
         "direction": "inbound",
+        "grafanaLink": "http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard",
         "labelValues": Map {},
         "onLabelsFiltersChanged": [MockFunction],
         "onOptionsChanged": [MockFunction],

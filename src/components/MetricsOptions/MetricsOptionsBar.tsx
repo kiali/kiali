@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import { Toolbar, ToolbarRightContent, FormGroup, Icon } from 'patternfly-react';
 import isEqual from 'lodash/fp/isEqual';
 
 import RefreshContainer from '../../containers/RefreshContainer';
@@ -18,6 +18,7 @@ export interface MetricsOptionsBarProps {
   onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
   direction: Direction;
   labelValues: Map<L.LabelName, L.LabelValues>;
+  grafanaLink: string;
 }
 
 export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
@@ -161,17 +162,24 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
             options={MetricsOptionsBar.ReporterOptions}
           />
         </FormGroup>
-        <ToolbarDropdown
-          id={'metrics_filter_interval_duration'}
-          disabled={false}
-          handleSelect={this.onDurationChanged}
-          nameDropdown={'Displaying'}
-          initialValue={this.duration}
-          initialLabel={String(MetricsOptionsBar.Durations[this.duration])}
-          options={MetricsOptionsBar.Durations}
-        />
+        {this.props.grafanaLink && (
+          <FormGroup style={{ borderRight: 'none' }}>
+            <a id={'grafana_link'} href={this.props.grafanaLink} target="_blank">
+              View in Grafana <Icon type={'fa'} name={'external-link'} />
+            </a>
+          </FormGroup>
+        )}
         <ToolbarRightContent>
-          <RefreshContainer id="metrics-refresh" handleRefresh={this.props.onRefresh} />
+          <ToolbarDropdown
+            id={'metrics_filter_interval_duration'}
+            disabled={false}
+            handleSelect={this.onDurationChanged}
+            nameDropdown={'Fetching'}
+            initialValue={this.duration}
+            initialLabel={String(MetricsOptionsBar.Durations[this.duration])}
+            options={MetricsOptionsBar.Durations}
+          />
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />
         </ToolbarRightContent>
       </Toolbar>
     );

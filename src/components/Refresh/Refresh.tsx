@@ -7,6 +7,7 @@ import { PollIntervalInMs } from '../../types/Common';
 type ComponentProps = {
   id: string;
   handleRefresh: () => void;
+  hideLabel?: boolean;
 };
 
 type ReduxProps = {
@@ -54,9 +55,10 @@ class Refresh extends React.Component<Props, State> {
 
   render() {
     if (this.props.refreshInterval !== undefined) {
+      const { hideLabel } = this.props;
       return (
         <>
-          <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>
+          {!hideLabel && <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>}
           <DropdownButton id={this.props.id} title={POLL_INTERVALS[this.props.refreshInterval]}>
             {Object.keys(POLL_INTERVALS).map(strKey => {
               const key = Number(strKey);

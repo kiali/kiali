@@ -35,12 +35,13 @@ const conf = {
     /** Options in refresh */
     pollInterval: {
       0: 'Pause',
-      5000: '5 sec',
-      10000: '10 sec',
-      15000: '15 sec',
-      30000: '30 sec',
-      60000: '1 min',
-      300000: '5 min'
+      5000: 'Every 5 sec',
+      10000: 'Every 10 sec',
+      15000: 'Every 15 sec',
+      30000: 'Every 30 sec',
+      60000: 'Every 1 min',
+      300000: 'Every 5 min',
+      900000: 'Every 15 min'
     },
     /** Graphs layouts types */
     graphLayouts: {

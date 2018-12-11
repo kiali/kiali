@@ -70,17 +70,6 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
     HistoryManager.setParam(URLParams.POLL_INTERVAL, String(this.props.refreshInterval));
   }
 
-  formatRefreshText = (key, isTitle: boolean = false): string => {
-    // Ensure that we have an integer (for comparisons).
-    key = Number(key);
-
-    if (isTitle) {
-      return key !== 0 ? `Every ${GraphRefresh.POLL_INTERVAL_LIST[key]}` : 'Paused';
-    } else {
-      return key !== 0 ? `Every ${GraphRefresh.POLL_INTERVAL_LIST[key]}` : GraphRefresh.POLL_INTERVAL_LIST[key];
-    }
-  };
-
   render() {
     return (
       <>
@@ -95,7 +84,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
         />
         <DropdownButton
           id="graph_refresh_dropdown"
-          title={this.formatRefreshText(this.props.refreshInterval, true)}
+          title={GraphRefresh.POLL_INTERVAL_LIST[this.props.refreshInterval]}
           disabled={this.props.disabled}
         >
           {Object.keys(GraphRefresh.POLL_INTERVAL_LIST).map((key: any) => {
@@ -106,7 +95,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
                 active={Number(key) === this.props.refreshInterval}
                 onSelect={value => this.props.setRefreshInterval(Number(value))}
               >
-                {this.formatRefreshText(key)}
+                {GraphRefresh.POLL_INTERVAL_LIST[key]}
               </MenuItem>
             );
           })}

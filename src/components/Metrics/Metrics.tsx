@@ -238,6 +238,7 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
           onLabelsFiltersChanged={this.onLabelsFiltersChanged}
           direction={this.props.direction}
           labelValues={this.state.labelValues}
+          grafanaLink={this.getGrafanaLink()}
         />
         {expandedChart ? this.renderExpandedChart(expandedChart) : this.renderMetrics()}
       </div>
@@ -254,13 +255,6 @@ class Metrics extends React.Component<MetricsProps, MetricsState> {
               <div className="card-pf-body">{Object.keys(charts).map(key => this.renderChart(key, charts[key]))}</div>
             </div>
           </div>
-          {this.props.grafanaInfo && (
-            <span id="grafana-link">
-              <a href={this.getGrafanaLink()} target="_blank">
-                View in Grafana
-              </a>
-            </span>
-          )}
         </div>
       </div>
     );

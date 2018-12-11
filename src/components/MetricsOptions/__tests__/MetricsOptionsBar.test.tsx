@@ -16,6 +16,7 @@ describe('MetricsOptionsBar', () => {
           onLabelsFiltersChanged={jest.fn()}
           direction={'inbound'}
           labelValues={new Map()}
+          grafanaLink={'http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard'}
         />
       </Provider>
     );
@@ -31,6 +32,7 @@ describe('MetricsOptionsBar', () => {
           onLabelsFiltersChanged={jest.fn()}
           direction={'inbound'}
           labelValues={new Map()}
+          grafanaLink={''}
         />
       </Provider>
     );
@@ -43,5 +45,21 @@ describe('MetricsOptionsBar', () => {
     elt.simulate('click');
     wrapper.setProps({}); // Force re-render
     expect(optionsChanged).toHaveBeenCalledTimes(2);
+  });
+
+  it('Has a Grafana link', () => {
+    let wrapper = mount(
+      <Provider store={store}>
+        <MetricsOptionsBar
+          onOptionsChanged={jest.fn()}
+          onRefresh={jest.fn()}
+          onLabelsFiltersChanged={jest.fn()}
+          direction={'inbound'}
+          labelValues={new Map()}
+          grafanaLink={'http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard'}
+        />
+      </Provider>
+    );
+    expect(wrapper.find('#grafana_link')).toHaveLength(1);
   });
 });

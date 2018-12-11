@@ -22,7 +22,9 @@ const performLogin = (
   API.login(loginUser, loginPass).then(
     token => {
       dispatch(LoginActions.loginSuccess(token['data'], loginUser));
+      const auth = `Bearer ${token['data']['token']}`;
       dispatch(HelpDropdownThunkActions.refresh());
+      dispatch(GrafanaThunkActions.getInfo(auth));
     },
     error => {
       if (anonymous) {
