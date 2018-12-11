@@ -94,7 +94,7 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 }
 
 func buildDashboardSupplier(jSon interface{}, code int) dashboardSupplier {
-	return func(_, _ string, _ *grafanaCredentials) ([]byte, int, error) {
+	return func(_, _ string, _ string) ([]byte, int, error) {
 		bytes, err := json.Marshal(jSon)
 		return bytes, code, err
 	}

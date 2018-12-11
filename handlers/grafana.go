@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,13 +18,7 @@ import (
 
 type osRouteSupplier func(string, string) (string, error)
 type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
-type dashboardSupplier func(string, string, *grafanaCredentials) ([]byte, int, error)
-
-type grafanaCredentials struct {
-	grafanaAPIKey   string
-	grafanaUsername string
-	grafanaPassword string
-}
+type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
@@ -72,7 +67,10 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	}
 	internalURL := fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
 
-	credentials := getGrafanaCredentials(grafanaConfig)
+	credentials, err := buildAuthHeader(grafanaConfig)
+	if err != nil {
+		log.Warning("Failed to build auth header token: " + err.Error())
+	}
 
 	// Call Grafana REST API to get dashboard urls
 	serviceDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
@@ -96,7 +94,7 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url string, searchPattern string, credentials *grafanaCredentials, dashboardSupplier dashboardSupplier) (string, error) {
+func getDashboardPath(url string, searchPattern string, credentials string, dashboardSupplier dashboardSupplier) (string, error) {
 	body, code, err := dashboardSupplier(url, searchPattern, credentials)
 	if err != nil {
 		return "", err
@@ -134,18 +132,13 @@ func getDashboardPath(url string, searchPattern string, credentials *grafanaCred
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern string, credentials *grafanaCredentials) ([]byte, int, error) {
+func findDashboard(url, searchPattern string, credentials string) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
 	if err != nil {
 		return nil, 0, err
 	}
-	if credentials.grafanaAPIKey != "" {
-		req.Header.Add("Authorization", "Bearer "+credentials.grafanaAPIKey)
-	} else if credentials.grafanaUsername != "" {
-		if credentials.grafanaPassword == "" {
-			return nil, 0, fmt.Errorf("Grafana username set but no Grafana password provided")
-		}
-		req.SetBasicAuth(credentials.grafanaUsername, credentials.grafanaPassword)
+	if credentials != "" {
+		req.Header.Add("Authorization", credentials)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -156,12 +149,16 @@ func findDashboard(url, searchPattern string, credentials *grafanaCredentials) (
 	return body, resp.StatusCode, err
 }
 
-func getGrafanaCredentials(grafanaConfig config.GrafanaConfig) *grafanaCredentials {
-	gc := new(grafanaCredentials)
-
-	gc.grafanaAPIKey = grafanaConfig.APIKey
-	gc.grafanaUsername = grafanaConfig.Username
-	gc.grafanaPassword = grafanaConfig.Password
-
-	return gc
+func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
+	var credHeader string
+	if grafanaConfig.APIKey != "" {
+		credHeader = "Bearer " + grafanaConfig.APIKey
+	} else if grafanaConfig.Username != "" {
+		if grafanaConfig.Password == "" {
+			return "", fmt.Errorf("Grafana username set but no Grafana password provided")
+		}
+		basicAuth := base64.StdEncoding.EncodeToString([]byte(grafanaConfig.Username + ":" + grafanaConfig.Password))
+		credHeader = "Bearer " + basicAuth
+	}
+	return credHeader, nil
 }
