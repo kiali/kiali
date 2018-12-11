@@ -38,7 +38,7 @@ def evaluate_response(kiali_client, method_name, path=None, params=None, status_
     assert response.json() is not None
 
 
-def test_swagger_coverage():
+def __test_swagger_coverage():
     difference_set = set(swagger_method_list) - set(tested_method_list)
     if len(difference_set) > 0:
         pytest.fail('Missing {0} Api Methods to Validate:'.format(str(len(difference_set))) + str(difference_set))
@@ -103,7 +103,7 @@ def test_object_validations(kiali_client):
     evaluate_response(kiali_client, method_name='objectValidations', path={'namespace': 'istio-system', 'object_type': 'rules', 'object': 'promtcp'})
 
 
-def test_istio_config_adapter_template_details(kiali_client):
+def __test_istio_config_adapter_template_details(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigAdapterTemplateDetails', path={'namespace': 'istio-system', 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
 
 def test_service_list(kiali_client):
