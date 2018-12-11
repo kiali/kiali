@@ -14,6 +14,11 @@ func Error(message string) {
 	Panic(message, http.StatusInternalServerError)
 }
 
+// BadRequest panics with BadRequest and the provided message
+func BadRequest(message string) {
+	Panic(message, http.StatusBadRequest)
+}
+
 // Forbidden panics with Forbidden and the provided message
 func Forbidden(message string) {
 	Panic(message, http.StatusForbidden)

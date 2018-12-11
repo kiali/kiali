@@ -2,7 +2,6 @@
 package options
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -96,22 +95,22 @@ func NewOptions(r *http.Request) Options {
 		var durationErr error
 		duration, durationErr = time.ParseDuration(durationString)
 		if durationErr != nil {
-			checkError(errors.New(fmt.Sprintf("Invalid duration [%s]", durationString)))
+			graph.BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
 		}
 	}
 	if graphType == "" {
 		graphType = defaultGraphType
 	} else if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
-		checkError(errors.New(fmt.Sprintf("Invalid graphType [%s]", graphType)))
+		graph.BadRequest(fmt.Sprintf("Invalid graphType [%s]", graphType))
 	}
 	// app node graphs require an app graph type
 	if app != "" && graphType != graph.GraphTypeApp && graphType != graph.GraphTypeVersionedApp {
-		checkError(errors.New(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType)))
+		graph.BadRequest(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType))
 	}
 	if groupBy == "" {
 		groupBy = defaultGroupBy
 	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
-		checkError(errors.New(fmt.Sprintf("Invalid groupBy [%s]", groupBy)))
+		graph.BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
 	}
 	if includeIstioString == "" {
 		includeIstio = defaultIncludeIstio
@@ -119,7 +118,7 @@ func NewOptions(r *http.Request) Options {
 		var includeIstioErr error
 		includeIstio, includeIstioErr = strconv.ParseBool(includeIstioString)
 		if includeIstioErr != nil {
-			checkError(errors.New(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString)))
+			graph.BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
 		}
 	}
 	if injectServiceNodesString == "" {
@@ -128,7 +127,7 @@ func NewOptions(r *http.Request) Options {
 		var injectServiceNodesErr error
 		injectServiceNodes, injectServiceNodesErr = strconv.ParseBool(injectServiceNodesString)
 		if injectServiceNodesErr != nil {
-			checkError(errors.New(fmt.Sprintf("Invalid injectServiceNodes [%s]", injectServiceNodesString)))
+			graph.BadRequest(fmt.Sprintf("Invalid injectServiceNodes [%s]", injectServiceNodesString))
 		}
 	}
 	if queryTimeString == "" {
@@ -137,13 +136,13 @@ func NewOptions(r *http.Request) Options {
 		var queryTimeErr error
 		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
 		if queryTimeErr != nil {
-			checkError(errors.New(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString)))
+			graph.BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
 		}
 	}
 	if vendor == "" {
 		vendor = defaultVendor
 	} else if vendor != VendorCytoscape {
-		checkError(errors.New(fmt.Sprintf("Invalid vendor [%s]", vendor)))
+		graph.BadRequest(fmt.Sprintf("Invalid vendor [%s]", vendor))
 	}
 
 	// Process namespaces options:
@@ -158,7 +157,7 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	if namespaces == "" {
-		checkError(errors.New(fmt.Sprintf("At least one namespace must be specified via the namespaces query parameter.")))
+		graph.BadRequest(fmt.Sprintf("At least one namespace must be specified via the namespaces query parameter."))
 	}
 
 	for _, namespaceToken := range strings.Split(namespaces, ",") {
@@ -241,7 +240,7 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 			case "":
 				// skip
 			default:
-				checkError(errors.New(fmt.Sprintf("Invalid appender [%s]", strings.TrimSpace(requestedAppender))))
+				graph.BadRequest(fmt.Sprintf("Invalid appender [%s]", strings.TrimSpace(requestedAppender)))
 			}
 		}
 	} else {
@@ -320,10 +319,10 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 func getAccessibleNamespaces() map[string]time.Time {
 	// Get the namespaces
 	business, err := business.Get()
-	checkError(err)
+	graph.CheckError(err)
 
 	namespaces, err := business.Namespace.GetNamespaces()
-	checkError(err)
+	graph.CheckError(err)
 
 	// Create a map to store the namespaces
 	namespaceMap := make(map[string]time.Time)
@@ -332,12 +331,6 @@ func getAccessibleNamespaces() map[string]time.Time {
 	}
 
 	return namespaceMap
-}
-
-func checkError(err error) {
-	if err != nil {
-		panic(err.Error)
-	}
 }
 
 // resolveNamespaceDuration determines if, given queryTime, the requestedRange won't lead to
