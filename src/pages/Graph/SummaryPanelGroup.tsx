@@ -206,7 +206,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private renderVersionBadges = () => {
     return this.props.data.summaryTarget
-      .children()
+      .children('node[version]')
       .toArray()
       .map((c, i) => (
         <Label
@@ -231,7 +231,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderHttpRates = group => {
-    const nonServiceChildren = group.children('[nodeType != "service"]');
+    const nonServiceChildren = group.children('node[nodeType != "' + NodeType.SERVICE + '"]');
     const incoming = getAccumulatedTrafficRate(nonServiceChildren);
     const outgoing = getAccumulatedTrafficRate(nonServiceChildren.edgesTo('*'));
 
@@ -317,13 +317,10 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   private renderWorkloadList = (group): any[] => {
     let workloadList: any[] = [];
 
-    group.children().forEach((node, index) => {
+    group.children('node[workload]').forEach((node, index) => {
       const data = nodeData(node);
-
-      if (data.workload) {
-        workloadList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.WORKLOAD} />);
-        workloadList.push(<span key={`node-comma-${index}`}>, </span>);
-      }
+      workloadList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.WORKLOAD} />);
+      workloadList.push(<span key={`node-comma-${index}`}>, </span>);
     });
 
     if (workloadList.length > 0) {
