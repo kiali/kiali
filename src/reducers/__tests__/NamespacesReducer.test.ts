@@ -100,7 +100,7 @@ describe('Namespaces reducer', () => {
     const currentState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
-      items: [{ name: 'old' }, { name: 'namespace' }],
+      items: [{ name: 'old' }, { name: 'my-namespace' }],
       lastUpdated: undefined
     };
     const requestStartedAction = NamespaceActions.receiveList(
@@ -108,7 +108,7 @@ describe('Namespaces reducer', () => {
       currentDate
     );
     const expectedState = {
-      activeNamespaces: [{ name: 'my-namespace' }],
+      activeNamespaces: [],
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate
