@@ -1,7 +1,7 @@
 import os
 from subprocess import PIPE, Popen
 
-KIALI_ACCOUNT_NAME = 'kiali'
+KIALI_ACCOUNT_NAME = 'kiali-service-account'
 
 class command_exec():
 
@@ -18,7 +18,7 @@ class command_exec():
   def oc_remove_cluster_role_rom_user_kiali(self):
       cmd = 'oc adm policy remove-cluster-role-from-user kiali system:serviceaccount:istio-system:{}'.format(KIALI_ACCOUNT_NAME)
       stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
-      if 'cluster role \"{}\" removed'.format(KIALI_ACCOUNT_NAME) in stdout.decode():
+      if 'cluster role \"kiali\" removed' in stdout.decode():
           return True
       else:
           print("Error remove-cluster-role-from-user for \"{}\": {}".format(KIALI_ACCOUNT_NAME, stderr.decode()))
@@ -27,7 +27,7 @@ class command_exec():
   def oc_add_cluster_role_to_user_kiali(self):
       cmd = 'oc adm policy add-cluster-role-to-user kiali system:serviceaccount:istio-system:{}'.format(KIALI_ACCOUNT_NAME)
       stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
-      if 'cluster role \"{}\" added'.format(KIALI_ACCOUNT_NAME) in stdout.decode():
+      if 'cluster role \"kiali\" added'.format(KIALI_ACCOUNT_NAME) in stdout.decode():
           return True
       else:
           print("Error add-cluster-role-to-user for \"{}\": {}".format(KIALI_ACCOUNT_NAME, stderr.decode()))
