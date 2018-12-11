@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -194,6 +195,47 @@ func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, istioConfigValidations)
+}
+
+func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	objectType := params["object_type"]
+	objectSubtype := params["object_subtype"]
+	object := params["object"]
+
+	api := business.GetIstioAPI(objectType)
+	if api == "" {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+		return
+	}
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+	}
+	jsonPatch := string(body)
+	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, jsonPatch)
+
+	if errors.IsNotFound(err) {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		return
+	} else if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 }
 
 func checkObjectType(objectType string) bool {

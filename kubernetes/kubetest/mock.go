@@ -238,6 +238,11 @@ func (o *K8SClientMock) IsOpenShift() bool {
 func (o *K8SClientMock) Stop() {
 }
 
+func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {
+	args := o.Called(api, namespace, resourceType, name, jsonPatch)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 // Fake methods doesn't need an entry point
 
 func FakeService() *v1.Service {

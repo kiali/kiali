@@ -75,6 +75,7 @@ type IstioClientInterface interface {
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
 	Stop()
+	UpdateIstioObject(api, namespace, resourteType, name, jsonPatch string) (IstioObject, error)
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs

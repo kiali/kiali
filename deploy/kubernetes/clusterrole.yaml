@@ -60,6 +60,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - watch
 - apiGroups: ["networking.istio.io"]
   resources:
@@ -71,6 +72,7 @@ rules:
   - delete
   - get
   - list
+  - patch
   - watch
 - apiGroups: ["monitoring.kiali.io"]
   resources:
