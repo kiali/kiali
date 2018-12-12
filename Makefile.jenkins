@@ -3,30 +3,61 @@
 # It can also be used to run the release process without Jenkins. Read the
 # RELEASING.adoc file for more information.
 
+RELEASE_TYPE ?= 'minor'
+
 UI_GITHUB_URI ?= git@github.com:kiali/kiali-ui.git
-UI_FORK_URI ?= $(shell git config --get remote.origin.url)
 UI_PULL_URI ?= https://api.github.com/repos/kiali/kiali-ui/pulls
+UI_MAIN_BRANCH ?= master
+
+KIALI_BOT_USER ?= kiali-bot
+UI_FORK_URI ?= $(shell git config --get remote.origin.url)
 
 UI_VERSION ?= $(shell jq -r '.version' package.json)
-UI_BUMPED_VERSION ?= $(shell semver bump minor $(UI_VERSION))
-UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.0$$//')
+UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.[[:digit:]]\+$$//')
 
+# BUILD_TAG is an environment variable from Jenkins
 BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 NPM_DRY_RUN ?= n
 
-RELEASE_TYPE ?= 'minor'
-ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
-  IS_SNAPSHOT ?= y
-  OMIT_VERSION_BRANCH ?= y
-else
-  IS_SNAPSHOT ?= n
+# Only for "minors" the version currently stored in package.json
+# is the version to publish. All other kind of releases require
+# to modify the version string before building and publishing.
+ifneq ($(RELEASE_TYPE),minor)
+  UPDATE_VERSION_BEFORE_BUILD = y
 endif
 
+# For "major" and "minor" releases, the "master" branch must be
+# updated to be prepared for the next major/minor release.
+# WARN: process for "major" releases is not tested yet
+ifeq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
+  UPDATE_VERSION_POST_BUILD = y
+endif
 
-.PHONY: all ui-bump-minor-version ui-build ui-test ui-npm-publish
-.PHONY: ui-push-version-tag ui-create-pr-next-version release
+# For "major" and "minor" releases, a vX.Y branch must be
+# created, in prevention of a possible patch release. For
+# "patch" releases, the (assumed) already existent version
+# branch should be updated in preparation/prevention for
+# the next patch release. Other release types should not
+# create/update the version branch.
+ifneq ($(findstring $(RELEASE_TYPE),major minor patch),$(RELEASE_TYPE))
+  OMIT_VERSION_BRANCH ?= y
+endif
+
+# Determine if an end-of-week snapshot is being released and
+# set the "bumped version" accordingly.
+ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
+  UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
+else
+  UI_BUMPED_VERSION ?= $(shell semver bump $(RELEASE_TYPE) $(UI_VERSION))
+endif
+
+# Start definition of the recipes
+
+.PHONY: all ui-build ui-test ui-npm-publish
+.PHONY: ui-push-version-tag ui-prepare-next-version release
 .PHONY: ui-fix-version ui-check-clean-workspace
+.PHONY: ui-prepare-next-patch-version ui-prepare-master-next-version
 
 all:
 	$(error You must explicitly specify a target)
@@ -35,20 +66,14 @@ ui-check-clean-workspace:
 	@output=$$(git status --porcelain) && [ -z "$$output" ] || \
 	  (echo 'Your working path must be clean. Please, commit your changes or reset your working path.' && exit 1)
 
-ui-bump-minor-version:
-ifneq ($(IS_SNAPSHOT),y)
-	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.bumped
-	mv package.json.bumped package.json
-else
-	@echo "Skipping version bump, because snapshot release is being done."
-endif
-
 ui-fix-version:
-ifeq ($(IS_SNAPSHOT),y)
-	jq -r '.version |= "$(UI_VERSION)-$(RELEASE_TYPE)"' package.json > package.json.typed
+	# (Not implemented yet) For "edge snapshots": yarn set-snapshot-version $(git rev-parse --short HEAD)
+ifeq ($(UPDATE_VERSION_BEFORE_BUILD),y)
+	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.typed
 	mv package.json.typed package.json
+	@echo "Version string updated before building (from -> to): $(UI_VERSION) -> $(UI_BUMPED_VERSION)"
 else
-	@echo "Skip setting snapshot version suffix."
+	@echo "Version string NOT updated. The version to publish will be: $(UI_VERSION)"
 endif
 
 ui-build:
@@ -56,7 +81,6 @@ ui-build:
 	CI=true yarn --frozen-lockfile --non-interactive
 	CI=true yarn build:dev
 	echo '$(UI_VERSION)' > build/version.txt
-	# (Not implemented yet) For snapshots: yarn set-snapshot-version $(git rev-parse --short HEAD)
 
 ui-test:
 	CI=true yarn test --maxWorkers=4
@@ -75,30 +99,62 @@ ifdef NPM_TOKEN
 endif
 
 ui-push-version-tag:
-ifeq ($(IS_SNAPSHOT),y)
+ifeq ($(UPDATE_VERSION_BEFORE_BUILD),y)
+	# If the version string was updated before publishing, the updated
+	# version string must be present in the git tag.
 	git add package.json
-	git commit -m "Release $(UI_VERSION)"
+	git commit --no-verify -m "Release $(UI_VERSION)"
 endif
 	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(UI_VERSION)
-ifndef OMIT_VERSION_BRANCH
-	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/v$(UI_VERSION_BRANCH)
-endif
 
-ui-create-pr-next-version: ui-bump-minor-version
-ifneq ($(IS_SNAPSHOT),y)
-	git add package.json
-	git commit -m "Prepare for next version"
-	git push $(UI_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
+ui-prepare-next-patch-version:
+ifndef OMIT_VERSION_BRANCH
+	# First, try to push directly to the vX.Y branch
+	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/v$(UI_VERSION_BRANCH) || touch pr_needed.txt
+
+	# If push to vX.Y branch fails, create a PR
+	[ ! -f pr_needed.txt ] || git push $(UI_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
 ifdef GH_TOKEN
-	@echo "Creating PR to prepare for next version..."
-	@curl -s -H "Authorization: token $(GH_TOKEN)" \
+	@[ ! -f pr_needed.txt ] || echo "Creating PR to prepare for next version..."
+	@[ ! -f pr_needed.txt ] || curl -s -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
-	  -d '{"title": "Prepare for next version", "head": "kiali-bot:$(BUMP_BRANCH_ID)", "base": "master"}' \
+	  -d '{"title": "Prepare for next version", "body": "I could not update v$(UI_VERSION_BRANCH) branch. Please, merge.", "head": "$(KIALI_BOT_USER):$(BUMP_BRANCH_ID)", "base": "v$(UI_VERSION_BRANCH)"}' \
 	  -X POST $(UI_PULL_URI)
 endif
+	# Clean-up
+	rm -f pr_needed.txt
 else
-	@echo "Skipping creating PR, because snapshot release was done."
+	@echo "Creation or update of the version branch $(UI_VERSION_BRANCH) is omitted."
 endif
 
+ui-prepare-master-next-version:
+ifeq ($(UPDATE_VERSION_POST_BUILD),y)
+	# Update version string
+	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.bumped
+	mv package.json.bumped package.json
+	@echo "Post-build version string update (from -> to): $(UI_VERSION) -> $(UI_BUMPED_VERSION)"
+	# Commit changes to git
+	git add package.json
+	git commit --no-verify -m "Prepare for next version: $(UI_BUMPED_VERSION)"
+
+	# First, try to push directly to master
+	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/heads/$(UI_MAIN_BRANCH) || touch pr_needed.txt
+	# If push to master fails, create a PR
+	[ ! -f pr_needed.txt ] || git push $(UI_FORK_URI) $$(git rev-parse HEAD):refs/heads/$(BUMP_BRANCH_ID)
+ifdef GH_TOKEN
+	@[ ! -f pr_needed.txt ] || echo "Creating PR to prepare for next version..."
+	@[ ! -f pr_needed.txt ] || curl -s -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"title": "Prepare for next version", "body": "I could not update $(UI_MAIN_BRANCH) branch. Please, merge.", "head": "$(KIALI_BOT_USER):$(BUMP_BRANCH_ID)", "base": "$(UI_MAIN_BRANCH)"}' \
+	  -X POST $(UI_PULL_URI)
+endif
+	# Clean-up
+	rm -f pr_needed.txt
+else # if UPDATE_VERSION_POST_BUILD
+	@echo "Skipping preparing repository for next version..."
+endif
+
+ui-prepare-next-version: ui-prepare-next-patch-version ui-prepare-master-next-version
+
 release: ui-check-clean-workspace ui-fix-version ui-build ui-test
-release: ui-npm-publish ui-push-version-tag ui-create-pr-next-version
+release: ui-npm-publish ui-push-version-tag ui-prepare-next-version
