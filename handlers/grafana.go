@@ -158,7 +158,7 @@ func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
 			return "", fmt.Errorf("Grafana username set but no Grafana password provided")
 		}
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(grafanaConfig.Username + ":" + grafanaConfig.Password))
-		credHeader = "Bearer " + basicAuth
+		credHeader = "Basic " + basicAuth
 	}
 	return credHeader, nil
 }
