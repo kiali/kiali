@@ -60,19 +60,19 @@ func ConvertAggregations(from kubernetes.MonitoringDashboardSpec) []Aggregation 
 
 func buildIstioAggregations(local, remote string) []Aggregation {
 	return []Aggregation{
-		Aggregation{
+		{
 			Label:       fmt.Sprintf("%s_version", local),
 			DisplayName: "Local version",
 		},
-		Aggregation{
+		{
 			Label:       fmt.Sprintf("%s_app", remote),
 			DisplayName: "Remote app",
 		},
-		Aggregation{
+		{
 			Label:       fmt.Sprintf("%s_version", remote),
 			DisplayName: "Remote version",
 		},
-		Aggregation{
+		{
 			Label:       "response_code",
 			DisplayName: "Response code",
 		},

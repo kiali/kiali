@@ -24,9 +24,11 @@ func NewDashboardsService(mon kubernetes.KialiMonitoringInterface, prom promethe
 
 // GetDashboard returns a dashboard filled-in with target data
 func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, template string) (*models.MonitoringDashboard, error) {
+	// There is an override mechanism with dashboards: default dashboards can be provided in Kiali namespace,
+	// and can be overriden in app namespace.
+	// So we look for the one in app namespace first, and only if not found fallback to the one in istio-system.
 	dashboard, err := in.mon.GetDashboard(params.Namespace, template)
 	if err != nil {
-		// Dashboard might be in Kiali namespace
 		cfg := config.Get()
 		dashboard, err = in.mon.GetDashboard(cfg.IstioNamespace, template)
 		if err != nil {
@@ -71,7 +73,7 @@ type istioChart struct {
 }
 
 var istioCharts = []istioChart{
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "Request volume",
 			Unit:  "ops",
@@ -79,7 +81,7 @@ var istioCharts = []istioChart{
 		},
 		refName: "request_count",
 	},
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "Request duration",
 			Unit:  "s",
@@ -87,7 +89,7 @@ var istioCharts = []istioChart{
 		},
 		refName: "request_duration",
 	},
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "Request size",
 			Unit:  "B",
@@ -95,7 +97,7 @@ var istioCharts = []istioChart{
 		},
 		refName: "request_size",
 	},
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "Response size",
 			Unit:  "B",
@@ -103,7 +105,7 @@ var istioCharts = []istioChart{
 		},
 		refName: "response_size",
 	},
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "TCP received",
 			Unit:  "bps",
@@ -111,7 +113,7 @@ var istioCharts = []istioChart{
 		},
 		refName: "tcp_received",
 	},
-	istioChart{
+	{
 		Chart: models.Chart{
 			Name:  "TCP sent",
 			Unit:  "bps",

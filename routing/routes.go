@@ -560,7 +560,7 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps/{app}/cstmetrics/{template} apps customDashboard
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/customdashboard/{template} apps customDashboard
 		// ---
 		// Endpoint to fetch custom dashboard to be displayed, based on the provided template
 		//
@@ -577,7 +577,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"CustomDashboard",
 			"GET",
-			"/api/namespaces/{namespace}/apps/{app}/cstdashboard/{template}",
+			"/api/namespaces/{namespace}/apps/{app}/customdashboard/{template}",
 			handlers.CustomDashboard,
 			true,
 		},

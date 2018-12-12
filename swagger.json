@@ -492,7 +492,7 @@
         }
       }
     },
-    "/namespaces/{namespace}/apps/{app}/cstmetrics/{template}": {
+    "/namespaces/{namespace}/apps/{app}/customdashboard/{template}": {
       "get": {
         "description": "Endpoint to fetch custom dashboard to be displayed, based on the provided template",
         "produces": [
