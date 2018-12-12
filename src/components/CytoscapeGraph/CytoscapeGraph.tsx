@@ -676,10 +676,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
   onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
   onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
-  setActiveNamespaces: (namespaces: Namespace[]) => {
-    dispatch(GraphActions.changed());
-    dispatch(NamespaceActions.setActiveNamespaces(namespaces));
-  },
+  setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 

@@ -4,7 +4,6 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
-import { GraphActions } from '../actions/GraphActions';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
@@ -129,12 +128,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
     },
     toggleNamespace: (namespace: Namespace) => {
-      // TODO: This needs to be a single update
-      dispatch(GraphActions.changed());
       dispatch(NamespaceActions.toggleActiveNamespace(namespace));
     },
     clearAll: () => {
-      dispatch(GraphActions.changed());
       dispatch(NamespaceActions.setActiveNamespaces([]));
     }
   };
