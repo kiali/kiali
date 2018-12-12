@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DestinationRule, Validations, VirtualService } from '../../types/IstioObjects';
 import { Col, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
-import { AceValidations, parseAceValidations } from '../../types/AceValidations';
+import { AceValidations, parseKialiValidations } from '../../types/AceValidations';
 import AceEditor, { AceOptions } from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
@@ -67,7 +67,7 @@ export default class IstioObjectDetails extends React.Component<IstioObjectDetai
   aceValidations() {
     if (!this.state.validationsParsed) {
       this.setState({
-        aceValidations: parseAceValidations(this.yamlEditor(), this.props.validations),
+        aceValidations: parseKialiValidations(this.yamlEditor(), this.props.validations),
         validationsParsed: true
       });
     }

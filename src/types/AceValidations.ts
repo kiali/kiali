@@ -221,8 +221,8 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
   return { marker: marker, annotation: annotation };
 };
 
-export const parseAceValidations = (yaml: string, validations?: Validations): AceValidations => {
-  const aceValidations: AceValidations = {
+export const parseKialiValidations = (yaml: string, validations?: Validations): AceValidations => {
+  let aceValidations: AceValidations = {
     markers: [],
     annotations: []
   };
