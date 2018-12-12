@@ -417,6 +417,33 @@ external_services:
     url: VALUE
 ----
 
+|`GRAFANA_API_KEY`
+|API key to access Grafana. API key only requires `viewer` permissions.
+[source,yaml]
+----
+external_services:
+  grafana:
+    api_key: VALUE
+----
+
+|`GRAFANA_USERNAME`
+|Username to be used when making requests to Grafana. User only requires `viewer` permissions. Requires `GRAFANA_PASSWORD`.
+[source,yaml]
+----
+external_services:
+  grafana:
+    username: VALUE
+----
+
+|`GRAFANA_PASSWORD`
+|Password to be used when making requests to Grafana. User only requires `viewer` permissions. Has no effect without `GRAFANA_USERNAME`.
+[source,yaml]
+----
+external_services:
+  grafana:
+    password: VALUE
+----
+
 |`GRAFANA_SERVICE_NAMESPACE`
 |The Kubernetes namespace that holds the Grafana service. (default is `istio-system`)
 [source,yaml]

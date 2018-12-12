@@ -46,6 +46,9 @@ const (
 	EnvGrafanaVarNamespace             = "GRAFANA_VAR_NAMESPACE"
 	EnvGrafanaVarService               = "GRAFANA_VAR_SERVICE"
 	EnvGrafanaVarWorkload              = "GRAFANA_VAR_WORKLOAD"
+	EnvGrafanaAPIKey                   = "GRAFANA_API_KEY"
+	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
+	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
 	EnvJaegerURL = "JAEGER_URL"
 
@@ -92,6 +95,9 @@ type GrafanaConfig struct {
 	VarNamespace             string `yaml:"var_namespace"`
 	VarService               string `yaml:"var_service"`
 	VarWorkload              string `yaml:"var_workload"`
+	APIKey                   string `yaml:"api_key"`
+	Username                 string `yaml:"username"`
+	Password                 string `yaml:"password"`
 }
 
 // JaegerConfig describes configuration used for jaeger links
@@ -195,6 +201,12 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Grafana.VarNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaVarNamespace, "var-namespace"))
 	c.ExternalServices.Grafana.VarService = strings.TrimSpace(getDefaultString(EnvGrafanaVarService, "var-service"))
 	c.ExternalServices.Grafana.VarWorkload = strings.TrimSpace(getDefaultString(EnvGrafanaVarWorkload, "var-workload"))
+	c.ExternalServices.Grafana.APIKey = strings.TrimSpace(getDefaultString(EnvGrafanaAPIKey, ""))
+	c.ExternalServices.Grafana.Username = strings.TrimSpace(getDefaultString(EnvGrafanaUsername, ""))
+	c.ExternalServices.Grafana.Password = strings.TrimSpace(getDefaultString(EnvGrafanaPassword, ""))
+	if c.ExternalServices.Grafana.Username != "" && c.ExternalServices.Grafana.Password == "" {
+		log.Error("Grafana username (\"GRAFANA_USERNAME\") requires that Grafana password (\"GRAFANA_PASSWORD\") is set.")
+	}
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
