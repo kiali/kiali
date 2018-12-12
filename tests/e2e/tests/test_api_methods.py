@@ -14,7 +14,7 @@ def before_all_tests(kiali_client):
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth', 'serviceValidations',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
-                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigAdapterTemplateDetails']
+                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigDetailsSubtype']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -103,8 +103,9 @@ def test_object_validations(kiali_client):
     evaluate_response(kiali_client, method_name='objectValidations', path={'namespace': 'istio-system', 'object_type': 'rules', 'object': 'promtcp'})
 
 
-def __test_istio_config_adapter_template_details(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigAdapterTemplateDetails', path={'namespace': 'istio-system', 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
+
+def test_istio_config_details_subtype(kiali_client):
+    evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': 'istio-system', 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
 
 def test_service_list(kiali_client):
     evaluate_response(kiali_client, method_name='serviceList', path={'namespace': 'istio-system'})
@@ -185,19 +186,19 @@ def test_graph_app_and_graph_app_version(kiali_client):
     for method_name in ['graphApp', 'graphAppVersion']:
 
         # Default Request (It is expected because the graphType is set to Workload as default it will fail for default case)
-        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=500)
+        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=400)
 
         # Workload (also equals to Default)
-        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=500,
+        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=400,
                         params=GRAPH_APP_PARAMS_WORKLOAD)
 
         # Service
-        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=500,
+        evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=400,
                         params=GRAPH_APP_PARAMS_SERVICE)
 
         # Invalid Value
         evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH,
-                        params=GRAPH_APP_PARAMS_NOT_VALID, status_code_expected=500)
+                        params=GRAPH_APP_PARAMS_NOT_VALID, status_code_expected=400)
 
         # App Graph
         evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=200,
