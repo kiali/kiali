@@ -61,6 +61,7 @@ type ReduxProps = {
     showUnusedNodes: boolean,
     node?: NodeParamsType
   ) => any;
+  graphChanged: () => void;
   setlayout: (layout: Layout) => void;
   setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
@@ -202,55 +203,42 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     this.removePollingIntervalTimer();
   }
 
-  componentDidUpdate(prevProps: GraphPageProps) {
+  componentDidUpdate(prev: GraphPageProps) {
     // schedule an immediate graph fetch if needed
-    const prevActiveNamespaces = prevProps.activeNamespaces;
-    const prevDuration = prevProps.duration;
-    const prevGraphType = prevProps.graphType;
-    const prevPollInterval = prevProps.pollInterval;
-    const prevShowServiceNodes = prevProps.showServiceNodes;
-    const prevEdgeLabelMode = prevProps.edgeLabelMode;
-    const prevShowSecurity = prevProps.showSecurity;
-    const prevShowUnusedNodes = prevProps.showUnusedNodes;
+    const curr = this.props;
 
     const activeNamespacesChanged = !arrayEquals(
-      prevActiveNamespaces,
-      this.props.activeNamespaces,
+      prev.activeNamespaces,
+      curr.activeNamespaces,
       (n1, n2) => n1.name === n2.name
     );
-    const durationChanged = prevDuration !== this.props.duration;
-    const edgeLabelModeChanged = prevEdgeLabelMode !== this.props.edgeLabelMode;
-    const graphTypeChanged = prevGraphType !== this.props.graphType;
-    const showServiceNodesChanged = prevShowServiceNodes !== this.props.showServiceNodes;
-    const nodeChanged = GraphPage.isNodeChanged(prevProps.node, this.props.node);
-    const pollIntervalChanged = prevPollInterval !== this.props.pollInterval;
-    const showSecurityChanged = prevShowSecurity !== this.props.showSecurity;
-    const showUnusedNodesChanged = prevShowUnusedNodes !== this.props.showUnusedNodes;
+
+    // Ensure we initialize the graph when there is a change to activeNamespaces.
+    if (activeNamespacesChanged) {
+      this.props.graphChanged();
+    }
 
     if (
       activeNamespacesChanged ||
-      durationChanged ||
-      (edgeLabelModeChanged && this.props.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
-      graphTypeChanged ||
-      nodeChanged ||
-      showSecurityChanged ||
-      showServiceNodesChanged ||
-      showUnusedNodesChanged
+      prev.duration !== curr.duration ||
+      (prev.edgeLabelMode !== curr.edgeLabelMode &&
+        curr.edgeLabelMode === EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) ||
+      prev.graphType !== curr.graphType ||
+      prev.showServiceNodes !== curr.showServiceNodes ||
+      prev.showSecurity !== curr.showSecurity ||
+      prev.showUnusedNodes !== curr.showUnusedNodes ||
+      GraphPage.isNodeChanged(prev.node, curr.node)
     ) {
       this.scheduleNextPollingInterval(0);
-    } else if (pollIntervalChanged) {
+    } else if (prev.pollInterval !== curr.pollInterval) {
       this.scheduleNextPollingIntervalFromProps();
     }
 
-    if (
-      prevProps.layout.name !== this.props.layout.name ||
-      prevProps.graphData !== this.props.graphData ||
-      activeNamespacesChanged
-    ) {
+    if (prev.layout.name !== curr.layout.name || prev.graphData !== curr.graphData || activeNamespacesChanged) {
       this.errorBoundaryRef.current.cleanError();
     }
 
-    if (this.props.showLegend && this.state.showHelp) {
+    if (curr.showLegend && this.state.showHelp) {
       this.setState({ showHelp: false });
     }
   }

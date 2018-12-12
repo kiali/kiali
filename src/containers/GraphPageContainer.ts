@@ -70,6 +70,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
         node
       )
     ),
+  graphChanged: bindActionCreators(GraphActions.changed, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
 });

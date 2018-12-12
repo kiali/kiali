@@ -36,8 +36,10 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: Kia
     case getType(NamespaceActions.receiveList):
       const names = action.payload.list.map(ns => ns.name);
       const validActive = state.activeNamespaces.filter(an => names.includes(an.name));
-      const updatedActive =
-        state.activeNamespaces.length !== validActive.length ? { activeNamespaces: validActive } : {};
+      let updatedActive = {};
+      if (state.activeNamespaces.length !== validActive.length) {
+        updatedActive = { activeNamespaces: validActive };
+      }
       return updateState(state, {
         isFetching: false,
         items: action.payload.list,
