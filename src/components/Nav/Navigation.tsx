@@ -12,6 +12,7 @@ import LoginPage from '../../containers/LoginPageContainer';
 import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import { KialiLogo } from '../../config';
+import { isKioskMode } from '../../utils/SearchParamUtils';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
@@ -39,6 +40,9 @@ class Navigation extends React.Component<PropsType> {
   setDocLayout = () => {
     if (document.documentElement) {
       document.documentElement.className = this.props.authenticated ? 'layout-pf layout-pf-fixed' : 'login-pf';
+      if (isKioskMode()) {
+        document.documentElement.className += ' kiosk';
+      }
     }
   };
 

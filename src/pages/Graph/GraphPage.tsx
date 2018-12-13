@@ -21,6 +21,7 @@ import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContaine
 import SummaryPanel from './SummaryPanel';
 import graphHelp from './GraphHelpTour';
 import { arrayEquals } from '../../utils/Common';
+import { isKioskMode } from '../../utils/SearchParamUtils';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -82,6 +83,11 @@ const containerStyle = style({
   minHeight: '350px',
   // TODO: try flexbox to remove this calc
   height: 'calc(100vh - 113px)' // View height minus top bar height minus secondary masthead
+});
+
+const kioskContainerStyle = style({
+  minHeight: '350px',
+  height: 'calc(100vh - 10px)' // View height minus top bar height
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
@@ -257,10 +263,14 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
   };
 
   render() {
+    let conStyle = containerStyle;
+    if (isKioskMode()) {
+      conStyle = kioskContainerStyle;
+    }
     return (
       <>
         <StatefulTour steps={graphHelp} isOpen={this.state.showHelp} onClose={this.toggleHelp} />
-        <FlexView className={containerStyle} column={true}>
+        <FlexView className={conStyle} column={true}>
           <Breadcrumb title={true}>
             <Breadcrumb.Item active={true}>
               Graph{' '}

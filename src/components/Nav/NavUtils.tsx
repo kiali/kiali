@@ -3,6 +3,7 @@ import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
 import { URLParams } from '../../app/History';
+import { isKioskMode } from '../../utils/SearchParamUtils';
 
 export type GraphUrlParams = {
   activeNamespaces: Namespace[];
@@ -30,6 +31,9 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
     queryParams += `&${URLParams.NAMESPACES}=${namespaces}`;
+  }
+  if (isKioskMode()) {
+    queryParams += '&kiosk=true';
   }
   return `/graph/namespaces?` + queryParams;
 };

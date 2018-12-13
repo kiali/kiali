@@ -114,3 +114,19 @@ a:focus {
   border-top: 2px solid #438fdd;
 }
 
+html.kiosk.layout-pf.layout-pf-fixed nav.navbar.navbar-pf-vertical {
+  display: none;
+}
+
+html.kiosk.layout-pf.layout-pf-fixed div.nav-pf-vertical.nav-pf-vertical-with-sub-menus.nav-pf-persistent-secondary {
+  display: none;
+}
+
+html.kiosk.layout-pf.layout-pf-fixed > body{
+  padding-top: 0px;
+}
+
+html.kiosk.layout-pf.layout-pf-fixed  div.container-fluid.container-pf-nav-pf-vertical{
+  margin-left: 0px;
+}
+
