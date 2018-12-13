@@ -492,6 +492,239 @@
         }
       }
     },
+    "/namespaces/{namespace}/apps/{app}/customdashboard/{template}": {
+      "get": {
+        "description": "Endpoint to fetch custom dashboard to be displayed, based on the provided template",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "customDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The dashboard template name.",
+            "name": "template",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/apps/{app}/dashboard": {
+      "get": {
+        "description": "Endpoint to fetch dashboard to be displayed, related to a single app",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "apps"
+        ],
+        "operationId": "appDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "source",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/apps/{app}/health": {
       "get": {
         "description": "Get health associated to the given app",
@@ -1341,6 +1574,123 @@
         }
       }
     },
+    "/namespaces/{namespace}/services/{service}/dashboard": {
+      "get": {
+        "description": "Endpoint to fetch dashboard to be displayed, related to a single service",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "operationId": "serviceDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "source",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/services/{service}/graph": {
       "get": {
         "produces": [
@@ -1743,6 +2093,123 @@
         }
       }
     },
+    "/namespaces/{namespace}/workloads/{workload}/dashboard": {
+      "get": {
+        "description": "Endpoint to fetch dashboard to be displayed, related to a single workload",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "workloads"
+        ],
+        "operationId": "workloadDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The workload name.",
+            "name": "workload",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "source",
+            "x-go-name": "Name",
+            "description": "Istio telemetry reporter: 'source' or 'destination'.",
+            "name": "reporter",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/workloads/{workload}/graph": {
       "get": {
         "produces": [
@@ -2105,6 +2572,21 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Aggregation": {
+      "description": "Aggregation is the model representing label's allowed aggregation, transformed from aggregation in MonitoringDashboard k8s resource",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "x-go-name": "DisplayName"
+        },
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "App": {
       "type": "object",
       "required": [
@@ -2214,6 +2696,32 @@
       "description": "CauseType is a machine readable value providing more detail about what\noccurred in a status response. An operation may have multiple causes for a\nstatus (whether Failure or Success).",
       "type": "string",
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
+    },
+    "Chart": {
+      "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
+      "type": "object",
+      "properties": {
+        "counterRate": {
+          "$ref": "#/definitions/Metric"
+        },
+        "histogram": {
+          "$ref": "#/definitions/Histogram"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "spans": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Spans"
+        },
+        "unit": {
+          "type": "string",
+          "x-go-name": "Unit"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Config": {
       "type": "object",
@@ -2717,6 +3225,31 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
+    "MonitoringDashboard": {
+      "description": "MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource",
+      "type": "object",
+      "properties": {
+        "aggregations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Aggregation"
+          },
+          "x-go-name": "Aggregations"
+        },
+        "charts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Chart"
+          },
+          "x-go-name": "Charts"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "NameIstioValidation": {
       "description": "List of validations grouped by object name",
@@ -4200,6 +4733,12 @@
         }
       }
     },
+    "dashboardResponse": {
+      "description": "Dashboard response model",
+      "schema": {
+        "$ref": "#/definitions/MonitoringDashboard"
+      }
+    },
     "grafanaInfoResponse": {
       "description": "Return all the descriptor data related to Grafana",
       "schema": {
@@ -4251,7 +4790,7 @@
       }
     },
     "metricsResponse": {
-      "description": "Listing all the information related to a service",
+      "description": "Metrics response model",
       "schema": {
         "$ref": "#/definitions/Metrics"
       }

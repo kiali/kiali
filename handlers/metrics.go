@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -13,9 +14,37 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, namespaceInfo *models.Namespace) error {
+func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
+	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
+		q.Filters = filters
+	}
+	dir := queryParams.Get("direction")
+	if dir != "" {
+		if dir != "inbound" && dir != "outbound" {
+			return errors.New("Bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
+		}
+		q.Direction = dir
+	}
+	reporter := queryParams.Get("reporter")
+	if reporter != "" {
+		if reporter != "source" && reporter != "destination" {
+			return errors.New("Bad request, query parameter 'reporter' must be either 'source' or 'destination'")
+		}
+		q.Reporter = reporter
+	}
+	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
+}
+
+func extractCustomMetricsQueryParams(r *http.Request, q *prometheus.CustomMetricsQuery, namespaceInfo *models.Namespace) error {
+	q.FillDefaults()
+	queryParams := r.URL.Query()
+	q.Version = queryParams.Get("version")
+	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
+}
+
+func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMetricsQuery, namespaceInfo *models.Namespace) error {
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		// Only first is taken into consideration
 		q.RateInterval = rateIntervals[0]
@@ -53,9 +82,6 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, name
 			return errors.New("Bad request, cannot parse query parameter 'step'")
 		}
 	}
-	if filters, ok := queryParams["filters[]"]; ok && len(filters) > 0 {
-		q.Filters = filters
-	}
 	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
 		for _, quantile := range quantiles {
 			f, err := strconv.ParseFloat(quantile, 64)
@@ -80,20 +106,6 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, name
 	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
 		q.ByLabels = lbls
 	}
-	dir := queryParams.Get("direction")
-	if dir != "" {
-		if dir != "inbound" && dir != "outbound" {
-			return errors.New("Bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
-		}
-		q.Direction = dir
-	}
-	reporter := queryParams.Get("reporter")
-	if reporter != "" {
-		if reporter != "source" && reporter != "destination" {
-			return errors.New("Bad request, query parameter 'reporter' must be either 'source' or 'destination'")
-		}
-		q.Reporter = reporter
-	}
 
 	// If needed, adjust interval -- Make sure query won't fetch data before the namespace creation
 	intervalStartTime, err := util.GetStartTimeForRateInterval(q.End, q.RateInterval)
@@ -117,7 +129,7 @@ func extractMetricsQueryParams(r *http.Request, q *prometheus.MetricsQuery, name
 			// This means that the query range does not fall in the range
 			// of life of the namespace. So, there are no metrics to query.
 			log.Debugf("[extractMetricsQueryParams] Query end time = %v; not querying metrics.", q.End)
-			return errors.New("after checks, query start time is after end time")
+			return errors.New("After checks, query start time is after end time")
 		}
 	}
 

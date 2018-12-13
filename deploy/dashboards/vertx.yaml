@@ -13,7 +13,15 @@ spec:
       aggregations:
         - label: "path"
           displayName: "Path"
-    - name: "Request count rate"
+    - name: "Client response time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_http_client_responseTime_seconds"
+      metricType: "histogram"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+    - name: "Server request count rate"
       unit: "ops"
       spans: 6
       metricName: "vertx_http_server_requestCount_total"

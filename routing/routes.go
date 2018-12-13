@@ -497,6 +497,90 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadMetrics,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a single service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"ServiceDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/dashboard",
+			handlers.ServiceDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appDashboard
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a single app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"AppDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/dashboard",
+			handlers.AppDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadDashboard
+		// ---
+		// Endpoint to fetch dashboard to be displayed, related to a single workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"WorkloadDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
+			handlers.WorkloadDashboard,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/customdashboard/{template} apps customDashboard
+		// ---
+		// Endpoint to fetch custom dashboard to be displayed, based on the provided template
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: dashboardResponse
+		//
+		{
+			"CustomDashboard",
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/customdashboard/{template}",
+			handlers.CustomDashboard,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth
 		// ---
 		// Get health associated to the given service

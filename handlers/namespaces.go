@@ -71,8 +71,8 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	params := prometheus.MetricsQuery{Namespace: namespace}
-	err := extractMetricsQueryParams(r, &params, namespaceInfo)
+	params := prometheus.IstioMetricsQuery{Namespace: namespace}
+	err := extractIstioMetricsQueryParams(r, &params, namespaceInfo)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return

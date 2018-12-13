@@ -127,3 +127,18 @@ func (o *PromClientMock) GetDestinationServices(namespace string, namespaceCreat
 	args := o.Called(namespace, namespaceCreationTime, workloadname)
 	return args.Get(0).([]prometheus.Service), args.Error(1)
 }
+
+func (o *PromClientMock) FetchRateRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+	args := o.Called(metricName, labels, grouping, q)
+	return args.Get(0).(*prometheus.Metric)
+}
+
+func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) prometheus.Histogram {
+	args := o.Called(metricName, labels, grouping, q)
+	return args.Get(0).(prometheus.Histogram)
+}
+
+func (o *PromClientMock) GetMetrics(query *prometheus.IstioMetricsQuery) prometheus.Metrics {
+	args := o.Called(query)
+	return args.Get(0).(prometheus.Metrics)
+}

@@ -12,68 +12,13 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
-
-// MetricsQuery holds query parameters for a typical metrics query
-type MetricsQuery struct {
-	v1.Range
-	RateInterval string
-	RateFunc     string
-	Filters      []string
-	Quantiles    []string
-	Avg          bool
-	ByLabels     []string
-	Namespace    string
-	App          string
-	Workload     string
-	Service      string
-	Direction    string // outbound | inbound
-	Reporter     string // source | destination, defaults to source if not provided
-}
-
-// FillDefaults fills the struct with default parameters
-func (q *MetricsQuery) FillDefaults() {
-	q.End = time.Now()
-	q.Start = q.End.Add(-30 * time.Minute)
-	q.Step = 15 * time.Second
-	q.RateInterval = "1m"
-	q.RateFunc = "rate"
-	q.Avg = true
-	q.Reporter = "source"
-	q.Direction = "outbound"
-}
-
-// Metrics contains all simple metrics and histograms data
-type Metrics struct {
-	Metrics    map[string]*Metric   `json:"metrics"`
-	Histograms map[string]Histogram `json:"histograms"`
-}
-
-// Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)
-type Metric struct {
-	Matrix model.Matrix `json:"matrix"`
-	err    error
-}
-
-// Histogram contains Metric objects for several histogram-kind statistics
-type Histogram = map[string]*Metric
-
-// EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic
-type EnvoyServiceHealth struct {
-	Inbound  EnvoyRatio `json:"inbound"`
-	Outbound EnvoyRatio `json:"outbound"`
-}
-
-// EnvoyRatio is the number of healthy members versus total members
-type EnvoyRatio struct {
-	Healthy int `json:"healthy"`
-	Total   int `json:"total"`
-}
 
 func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) (EnvoyServiceHealth, error) {
 	ret := EnvoyServiceHealth{}
@@ -160,14 +105,14 @@ func getServiceHealth(api v1.API, namespace, servicename string, ports []int32) 
 	return ret, err
 }
 
-func getMetrics(api v1.API, q *MetricsQuery) Metrics {
+func getMetrics(api v1.API, q *IstioMetricsQuery) Metrics {
 	labels, labelsError := buildLabelStrings(q)
 	grouping := strings.Join(q.ByLabels, ",")
 	metrics := fetchAllMetrics(api, q, labels, labelsError, grouping)
 	return metrics
 }
 
-func buildLabelStrings(q *MetricsQuery) (string, string) {
+func buildLabelStrings(q *IstioMetricsQuery) (string, string) {
 	labels := []string{fmt.Sprintf(`reporter="%s"`, q.Reporter)}
 	ref := "destination"
 	if q.Direction == "outbound" {
@@ -198,34 +143,34 @@ func buildLabelStrings(q *MetricsQuery) (string, string) {
 	return full, errors
 }
 
-func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping string) Metrics {
+func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grouping string) Metrics {
 	var wg sync.WaitGroup
 	fetchRate := func(p8sFamilyName string, metric **Metric, lbl string) {
 		defer wg.Done()
-		m := fetchRateRange(api, p8sFamilyName, lbl, grouping, q)
+		m := fetchRateRange(api, p8sFamilyName, lbl, grouping, &q.BaseMetricsQuery)
 		*metric = m
 	}
 
 	fetchHisto := func(p8sFamilyName string, histo *Histogram) {
 		defer wg.Done()
-		h := fetchHistogramRange(api, p8sFamilyName, labels, grouping, q)
+		h := fetchHistogramRange(api, p8sFamilyName, labels, grouping, &q.BaseMetricsQuery)
 		*histo = h
 	}
 
 	type resultHolder struct {
 		metric     *Metric
 		histo      Histogram
-		definition kialiMetric
+		definition istioMetric
 	}
-	maxResults := len(kialiMetrics)
+	maxResults := len(istioMetrics)
 	results := make([]*resultHolder, maxResults, maxResults)
 
-	for i, kialiMetric := range kialiMetrics {
+	for i, istioMetric := range istioMetrics {
 		// if filters is empty, fetch all anyway
 		doFetch := len(q.Filters) == 0
 		if !doFetch {
 			for _, filter := range q.Filters {
-				if filter == kialiMetric.name {
+				if filter == istioMetric.kialiName {
 					doFetch = true
 					break
 				}
@@ -233,13 +178,13 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping 
 		}
 		if doFetch {
 			wg.Add(1)
-			result := resultHolder{definition: kialiMetric}
+			result := resultHolder{definition: istioMetric}
 			results[i] = &result
-			if kialiMetric.isHisto {
-				go fetchHisto(kialiMetric.istioName, &result.histo)
+			if istioMetric.isHisto {
+				go fetchHisto(istioMetric.istioName, &result.histo)
 			} else {
-				labelsToUse := kialiMetric.labelsToUse(labels, labelsError)
-				go fetchRate(kialiMetric.istioName, &result.metric, labelsToUse)
+				labelsToUse := istioMetric.labelsToUse(labels, labelsError)
+				go fetchRate(istioMetric.istioName, &result.metric, labelsToUse)
 			}
 		}
 	}
@@ -251,9 +196,9 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping 
 	for _, result := range results {
 		if result != nil {
 			if result.definition.isHisto {
-				histograms[result.definition.name] = result.histo
+				histograms[result.definition.kialiName] = result.histo
 			} else {
-				metrics[result.definition.name] = result.metric
+				metrics[result.definition.kialiName] = result.metric
 			}
 		}
 	}
@@ -263,7 +208,7 @@ func fetchAllMetrics(api v1.API, q *MetricsQuery, labels, labelsError, grouping 
 	}
 }
 
-func fetchRateRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) *Metric {
+func fetchRateRange(api v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
@@ -274,7 +219,7 @@ func fetchRateRange(api v1.API, metricName string, labels string, grouping strin
 	return fetchRange(api, query, q.Range)
 }
 
-func fetchHistogramRange(api v1.API, metricName string, labels string, grouping string, q *MetricsQuery) Histogram {
+func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) Histogram {
 	histogram := make(Histogram)
 
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
@@ -289,6 +234,7 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 		query := fmt.Sprintf(
 			"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, q.RateInterval, groupingAvg,
 			metricName, labels, q.RateInterval, groupingAvg)
+		log.Infof("Query: %s\n", query)
 		histogram["avg"] = fetchRange(api, query, q.Range)
 	}
 
@@ -301,6 +247,7 @@ func fetchHistogramRange(api v1.API, metricName string, labels string, grouping 
 		query := fmt.Sprintf(
 			"round(histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", quantile, metricName, labels, q.RateInterval, groupingQuantile)
 		histogram[quantile] = fetchRange(api, query, q.Range)
+		log.Infof("Query: %s\n", query)
 	}
 
 	return histogram
