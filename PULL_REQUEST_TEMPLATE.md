@@ -16,3 +16,7 @@ _Describe the changes if appropriate. E.g. a new link, a change on what a click 
 ** Screenshot **
 
 Add a screenshot of the UI after your changes.
+
+** Documentation **
+
+Please provide an update to documentation if appropriate. For configuration options, consider sending a PR to https://github.com/kiali/kiali/blob/master/README.adoc
