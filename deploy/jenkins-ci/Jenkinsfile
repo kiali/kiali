@@ -140,6 +140,18 @@ node('kiali-build') {
           }
         }
       }
+
+     stage('Post Msg Bus Notification') {
+       when { environment name: 'RELEASE_TYPE', value: 'minor'}
+         steps {
+           build(job: 'kiali-release-notifier',
+             parameters: [
+               [$class: 'StringParameterValue', value: "${params.RELEASE_TYPE}", name: 'RELEASE_TYPE'],
+               [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
+               [$class: 'StringParameterValue', value: "${params.DOCKER_TAG}", name: 'DOCKER_TAG']
+             ], wait: false
+           )
+         }
     }
   } finally {
     cleanWs()
