@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList serviceValidations namespaceValidations objectValidations workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters istioConfigList  workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -40,7 +40,7 @@ type NamespaceParam struct {
 	Name string `json:"namespace"`
 }
 
-// swagger:parameters objectValidations istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
+// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
 type ObjectNameParam struct {
 	// The Istio object name.
 	//
@@ -49,7 +49,7 @@ type ObjectNameParam struct {
 	Name string `json:"object"`
 }
 
-// swagger:parameters objectValidations istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
+// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
 type ObjectTypeParam struct {
 	// The Istio object type.
 	//
@@ -68,7 +68,7 @@ type ObjectSubtypeParam struct {
 	Name string `json:"object_subtype"`
 }
 
-// swagger:parameters serviceValidations serviceDetails serviceMetrics graphService serviceDashboard
+// swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard
 type ServiceParam struct {
 	// The service name.
 	//
@@ -398,20 +398,6 @@ type IstioConfigResponse struct {
 	Body models.IstioConfigList
 }
 
-// Listing all istio validations for object in the namespace
-// swagger:response namespaceValidationsResponse
-type NamespaceValidationResponse struct {
-	// in:body
-	Body NamespaceValidations
-}
-
-// Listing all istio validations for object in the namespace
-// swagger:response typeValidationsResponse
-type ServiceValidationResponse struct {
-	// in:body
-	Body TypedIstioValidations
-}
-
 // Listing all services in the namespace
 // swagger:response serviceListResponse
 type ServiceListResponse struct {
@@ -527,10 +513,6 @@ type JaegerInfoResponse struct {
 //////////////////
 // SWAGGER MODELS
 //////////////////
-
-// List of validations grouped by namespace
-// swagger:model
-type NamespaceValidations map[string]TypedIstioValidations
 
 // List of validations grouped by object type
 // swagger:model

@@ -81,6 +81,22 @@ func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations
 	return fiv
 }
 
+// FilterByTypes takes an input as ObjectTypes, transforms to singular types and filters the validations
+func (iv IstioValidations) FilterByTypes(objectTypes []string) IstioValidations {
+	types := make(map[string]bool, len(objectTypes))
+	for _, objectType := range objectTypes {
+		types[ObjectTypeSingular[objectType]] = true
+	}
+	fiv := IstioValidations{}
+	for k, v := range iv {
+		if _, found := types[k.ObjectType]; found {
+			fiv[k] = v
+		}
+	}
+
+	return fiv
+}
+
 func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioValidations {
 	for key, validation := range validations {
 		v, ok := iv[key]

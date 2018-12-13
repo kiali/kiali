@@ -4,11 +4,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -17,9 +19,19 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	query := r.URL.Query()
 	objects := ""
+	parsedTypes := make([]string, 0)
 	if _, ok := query["objects"]; ok {
 		objects = strings.ToLower(query.Get("objects"))
+		if len(objects) > 0 {
+			parsedTypes = strings.Split(objects, ",")
+		}
 	}
+
+	includeValidations := false
+	if _, found := query["validate"]; found {
+		includeValidations = true
+	}
+
 	criteria := parseCriteria(namespace, objects)
 
 	// Get business layer
@@ -29,7 +41,33 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var istioConfigValidations models.IstioValidations
+
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
+			defer wg.Done()
+			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
+			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
+			if errValidations != nil && err == nil {
+				*err = errValidations
+			} else {
+				if len(parsedTypes) > 0 {
+					istioConfigValidationResults = istioConfigValidationResults.FilterByTypes(parsedTypes)
+				}
+				*istioConfigValidations = istioConfigValidationResults
+			}
+		}(namespace, &istioConfigValidations, &err)
+	}
+
 	istioConfig, err := business.IstioConfig.GetIstioConfigList(criteria)
+	if includeValidations {
+		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
+		wg.Wait()
+		istioConfig.IstioValidations = istioConfigValidations
+	}
+
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -104,6 +142,12 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	objectSubtype := params["object_subtype"]
 	object := params["object"]
 
+	includeValidations := false
+	query := r.URL.Query()
+	if _, found := query["validate"]; found {
+		includeValidations = true
+	}
+
 	if !checkObjectType(objectType) {
 		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
 		return
@@ -116,7 +160,32 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var istioConfigValidations models.IstioValidations
+
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func(istioConfigValidations *models.IstioValidations, err *error) {
+			defer wg.Done()
+			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(namespace, objectType, object)
+			if errValidations != nil && err == nil {
+				*err = errValidations
+			} else {
+				*istioConfigValidations = istioConfigValidationResults
+			}
+		}(&istioConfigValidations, &err)
+	}
+
 	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(namespace, objectType, objectSubtype, object)
+
+	if includeValidations && err == nil {
+		wg.Wait()
+
+		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Name: object}]; found {
+			istioConfigDetails.IstioValidation = validation
+		}
+	}
+
 	if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, err.Error())
 		return
@@ -162,39 +231,6 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithJSON(w, http.StatusOK, "Deleted")
 	}
 	return
-}
-
-func IstioConfigValidations(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	namespace := params["namespace"]
-	objectType := params["object_type"]
-	object := params["object"]
-
-	if !checkObjectType(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
-		return
-	}
-
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	istioConfigValidations, err := business.Validations.GetIstioObjectValidations(namespace, objectType, object)
-	if errors.IsNotFound(err) {
-		RespondWithError(w, http.StatusNotFound, err.Error())
-		return
-	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
-		return
-	} else if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, istioConfigValidations)
 }
 
 func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {

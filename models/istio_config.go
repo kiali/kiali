@@ -19,6 +19,7 @@ type IstioConfigList struct {
 	Templates         IstioTemplates    `json:"templates"`
 	QuotaSpecs        QuotaSpecs        `json:"quotaSpecs"`
 	QuotaSpecBindings QuotaSpecBindings `json:"quotaSpecBindings"`
+	IstioValidations  IstioValidations  `json:"validations"`
 }
 
 type IstioConfigDetails struct {
@@ -34,6 +35,7 @@ type IstioConfigDetails struct {
 	QuotaSpec        *QuotaSpec          `json:"quotaSpec"`
 	QuotaSpecBinding *QuotaSpecBinding   `json:"quotaSpecBinding"`
 	Permissions      ResourcePermissions `json:"permissions"`
+	IstioValidation  *IstioValidation    `json:"validation"`
 }
 
 // ResourcePermissions holds permission flags for an object type

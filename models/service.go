@@ -1,7 +1,7 @@
 package models
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
@@ -36,6 +36,7 @@ type ServiceDetails struct {
 	Dependencies     map[string][]SourceWorkload `json:"dependencies"`
 	Workloads        WorkloadOverviews           `json:"workloads"`
 	Health           ServiceHealth               `json:"health"`
+	Validations      IstioValidations            `json:"validations"`
 }
 
 type Services []*Service

@@ -1364,100 +1364,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations": {
-      "get": {
-        "description": "Endpoint to get the list of istio object validations for a service",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "objectValidations",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/typeValidationsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/istio_validations": {
-      "get": {
-        "description": "Endpoint to get the list of istio object validations for a namespace",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "namespaces"
-        ],
-        "operationId": "namespaceValidations",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/namespaceValidationsResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/metrics": {
       "get": {
         "description": "Endpoint to fetch metrics to be displayed, related to a namespace",
@@ -1834,44 +1740,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/serviceHealthResponse"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/services/{service}/istio_validations": {
-      "get": {
-        "description": "Endpoint to get the list of istio object validations for a service",
-        "tags": [
-          "services"
-        ],
-        "operationId": "serviceValidations",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/typeValidationsResponse"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -3065,6 +2933,9 @@
         "template": {
           "$ref": "#/definitions/istioTemplate"
         },
+        "validation": {
+          "$ref": "#/definitions/IstioValidation"
+        },
         "virtualService": {
           "$ref": "#/definitions/virtualService"
         }
@@ -3105,6 +2976,9 @@
         },
         "templates": {
           "$ref": "#/definitions/istioTemplates"
+        },
+        "validations": {
+          "$ref": "#/definitions/IstioValidations"
         },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
@@ -3148,6 +3022,10 @@
           "example": false
         }
       },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "IstioValidations": {
+      "title": "IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "JaegerInfo": {
@@ -3225,14 +3103,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "NameIstioValidation": {
-      "description": "List of validations grouped by object name",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/IstioValidation"
-      },
-      "x-go-package": "github.com/kiali/kiali"
-    },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",
       "type": "object",
@@ -3240,14 +3110,6 @@
         "$ref": "#/definitions/AppHealth"
       },
       "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "NamespaceValidations": {
-      "description": "List of validations grouped by namespace",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/TypedIstioValidations"
-      },
-      "x-go-package": "github.com/kiali/kiali"
     },
     "NodeData": {
       "type": "object",
@@ -3813,6 +3675,9 @@
         "service": {
           "$ref": "#/definitions/Service"
         },
+        "validations": {
+          "$ref": "#/definitions/IstioValidations"
+        },
         "virtualServices": {
           "$ref": "#/definitions/virtualServices"
         },
@@ -4129,14 +3994,6 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/config"
-    },
-    "TypedIstioValidations": {
-      "description": "List of validations grouped by object type",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/NameIstioValidation"
-      },
-      "x-go-package": "github.com/kiali/kiali"
     },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
@@ -4796,12 +4653,6 @@
         }
       }
     },
-    "namespaceValidationsResponse": {
-      "description": "Listing all istio validations for object in the namespace",
-      "schema": {
-        "$ref": "#/definitions/NamespaceValidations"
-      }
-    },
     "noContent": {
       "description": "NoContent: the response is empty",
       "schema": {
@@ -4910,12 +4761,6 @@
       "description": "HTTP status code 200 and tokenGenerated model in data",
       "schema": {
         "$ref": "#/definitions/TokenGenerated"
-      }
-    },
-    "typeValidationsResponse": {
-      "description": "Listing all istio validations for object in the namespace",
-      "schema": {
-        "$ref": "#/definitions/TypedIstioValidations"
       }
     },
     "workloadDetails": {

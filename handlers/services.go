@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
@@ -61,33 +63,6 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-// ServiceIstioValidations is the API handler to get istio validations of a single service that returns
-// an IstioValidation object which contains for each object type
-// one validation per each detected object in the current cluster that have an error/warning in its configuration.
-func ServiceIstioValidations(w http.ResponseWriter, r *http.Request) {
-	// Get business layer
-	business, err := business.Get()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
-		return
-	}
-
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	service := vars["service"]
-
-	istioValidations, err := business.Validations.GetServiceValidations(namespace, service)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, "Error checking istio object consistency: "+err.Error())
-		}
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, istioValidations)
-}
-
 // ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
@@ -104,15 +79,43 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		rateInterval = rateIntervals[0]
 	}
 
+	includeValidations := false
+	if _, found := queryParams["validate"]; found {
+		includeValidations = true
+	}
+
 	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
 	queryTime := util.Clock.Now()
-	rateInterval, err = adjustRateInterval(business, params["namespace"], rateInterval, queryTime)
+	rateInterval, err = adjustRateInterval(business, namespace, rateInterval, queryTime)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
 		return
 	}
 
-	service, err := business.Svc.GetService(params["namespace"], params["service"], rateInterval, queryTime)
+	var istioConfigValidations models.IstioValidations
+
+	wg := sync.WaitGroup{}
+	if includeValidations {
+		wg.Add(1)
+		go func(istioConfigValidations *models.IstioValidations, err *error) {
+			defer wg.Done()
+			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, service)
+			if errValidations != nil && err == nil {
+				*err = errValidations
+			} else {
+				*istioConfigValidations = istioConfigValidationResults
+			}
+		}(&istioConfigValidations, &err)
+	}
+
+	serviceDetails, err := business.Svc.GetService(namespace, service, rateInterval, queryTime)
+	if includeValidations && err == nil {
+		wg.Wait()
+		serviceDetails.Validations = istioConfigValidations
+	}
+
 	if err != nil {
 		if errors.IsNotFound(err) {
 			RespondWithError(w, http.StatusNotFound, err.Error())
@@ -124,7 +127,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, service)
+	RespondWithJSON(w, http.StatusOK, serviceDetails)
 }
 
 // ServiceDashboard is the API handler to fetch Istio dashboard, related to a single service
