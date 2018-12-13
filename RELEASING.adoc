@@ -1,14 +1,25 @@
 = Releasing Kiali
 
-Kiali is released using a Jenkins Pipeline. If you need to release
-a new version of Kiali, please ask to a member of the QE team to
-trigger the release for you. Alternatively, ask the QE team for
-access to the Jenkins instance and trigger the release by yourself.
+Kiali is released weekly on Fridays: a minor release every three weeks,
+and snapshots on the other weeks. A Jenkins instance is used to
+automate the releases.
 
-Currently, the Pipeline supports only _minor_ and _snapshot (end-of-week)_
-releases and will release the back-end and the front-end together. If
-you need to do a patch or a major release, you'll need to
-<<run-locally,run the release process locally in your machine>>.
+If you need to make an extraordinary release, please ask
+to a member of the QE team to trigger the release for you.
+Alternatively, ask the QE team for access to the Jenkins instance
+and trigger the release by yourself.
+
+If you don't have access to Jenkins, or want to test the release locally,
+<<run-locally,you can run it on your machine>>.
+
+Currently, the Pipeline supports only _minor_, _snapshot (end-of-week)_
+and patch releases. _Minor_ and _snapshot_ releases will release the
+back-end and the front-end together. _Patch_ releases have the
+option to omit releasing the UI and, instead, use the latest UI in
+the final package.
+
+Support for _major_ releases through Jenkins is available, but
+has not been tested yet.
 
 Edge-snapshots (or snapshots after merged PRs) are handled by Travis.
 
@@ -44,7 +55,7 @@ these actions manually after the release process finishes successfully.
 
 === Updating JIRA issues
 
-Edit all issues in `Ready to Release` state with `Fix-Version`:
+Edit all issues in `Awaiting Release` state with `Fix-Version`:
 
 * Use this query https://issues.jboss.org/issues/?filter=12336798
 * Use Tools>Bulk Change>All XX issue(s)
@@ -114,9 +125,9 @@ The Pipeline performs the following actions to do the release:
 ** A docker image integrating the back-end and the front-end is built
    and pushed to DockerHub
 ** Tags for the new releases are created
-** If a minor release was done:
-*** Minor version branches are created named of the form _vX.Y_
-*** PRs are created to prepare _master_ branches for the next version
+** If a _minor_ release was done, _master_ branches are prepared for the
+    next version and a version branches named of the form _vX.Y_ are created
+** If a _patch_ release was done, _vX.Y_ branches are prepared for the next version
 
 == [[run-locally]]Running the release process locally
 
@@ -139,8 +150,8 @@ You will also need the following tools available in your $PATH:
 * https://www.npmjs.com/[npm] - to download and package kiali-ui
 * curl - because the release process places PRs using the GitHub API
 
-If you want the release process to push a PR for you to prepare the code for
-the next release, you will need a GitHub Token for your account.
+If the release process can't update the kiali repositories,
+a PR is automatically created if you provide a GitHub Token for your account.
 
 It's assumed that you are running the release process in you fork of the
 https://github.com/kiali/kiali[kiali/kiali GitHub repository].
@@ -150,20 +161,17 @@ https://github.com/kiali/kiali[kiali/kiali GitHub repository].
 . Make a release of the front-end, if needed
 ** Please, follow the https://github.com/kiali/kiali-ui/blob/master/RELEASING.adoc[releasing guide for the front-end]
 ** You can omit this step if there is no need to release the front-end. Kiali
-   will be released using the latest version of the front-end.
+   will be released using the specified version of the front-end.
 . Login to DockerHub
 ** `docker login docker.io`
 . Checkout the code that you want to release:
 ** `git checkout branch_to_release` (usually, you should release "master")
 ** Be advised that the release process will commit changes locally.
-. The version that is specified in `VERSION` variable of the main Makefile
-  is what will be used for the release. If needed, modify the version numbers. The
-  `-SNAPSHOT` fragment will be removed.
-. If you want the release process to create a PR for you, to prepare the code for
-  the next version:
+. The release process may need to create a PR to prepare the code for the next
+  version. A GitHub token is required to create the PR:
 ** `export GH_TOKEN={your_github_token}`
-** A branch is created in your fork of the code for minor and major releases.
-   If you don’t have a token, you can place a PR manually.
+** Optional: If a token is not provided, a branch is created in your
+   fork of the code, if needed. Then, you can place the PR manually.
 . Run the release process:
 ** `CONSOLE_VERSION="{ui-version}" make -f deploy/jenkins-ci/Makefile release`
 
@@ -171,33 +179,38 @@ In the last step, you can omit the CONSOLE_VERSION variable. However, it is
 _**very** highly_ recommended that you specify the version of the UI to package.
 If you released kiali-ui (step 1), you should specify the version you just released.
 Else, you should specify whatever version you need packaged. If you don't specify
-a kiali-ui version, the latest version that was published in NPM will be used, which is not necessarily the latest _released_ version (most likely it will be a snapshot).
+a kiali-ui version, the console version specified in the main `Makefile`
+will be downloaded from NPM and packaged in the release. If the main `Makefile`
+specifies `latest` as the cosole version, the latest version *published* in NPM
+will be used, which is not necessarily the latest _released_ version
+(most likely it will be a snapshot).
 
-By default, it's assumed that you are doing a _minor_ or a _major_ release.
-If want to do a snapshot release, you can run the release process specifying
-the RELEASE_TYPE variable:
+By default, it's assumed that you are doing a _minor_ release.
+If want to do another type of release, you can run the release process specifying
+the RELEASE_TYPE variable. Valid values are "major", "minor", "patch" and
+"snapshot._X_". For example:
 
-* `RELEASE_TYPE="snapshot.X" make -f deploy/jenkins-ci/Makefile release`
+* `RELEASE_TYPE="snapshot.1" make -f deploy/jenkins-ci/Makefile release`
 
-The process will append snapshot suffixes where needed (you don't need to change
-the snapshot suffix in the `Makefile`).
+*Note*: The process will adjust the version string as needed, according to
+the type of release. Please, don't try to adjust the version string (i.e.
+don't change the version in the `Makefile`).
+
+*Note*: The release process has not been tested for `RELEASE_TYPE=major` yet.
 
 === Available options
 
 * The generated Docker image is published to kiali/kiali DockerHub repository.
   If you want to publish to another repository:
 ** `DOCKER_NAME="{repository}" make -f deploy/jenkins-ci/Makefile release``
-* If you run the release process in _major_ or _minor_ mode, a new version
-  branch is created in the kiali repository (the branch name is like
+* In _major_, _minor_ or _patch_ mode, the release process updates or creates
+  a version branch in the kiali-ui repository (the branch name is like
   "vMAJOR.MINOR"). You can omit the creation of this branch:
 ** `OMIT_VERSION_BRANCH=y make -f deploy/jenkins-ci/Makefile release`
-* If you run the release process in _major_ or _minor_ mode, the release process
-  bumps the minor part of the version specified in the Makefile. If this doesn't
-  meet your needs, you can specify what will be the next version, so that the PR
-  is created correctly:
-** `BACKEND_BUMPED_VERSION="major.minor.patch" make -f deploy/jenkins-ci/Makefile release`
-* If you run the release process in _major_ or _minor_ mode, the release process
-  creates a branch in your repository with the required changes to prepare the
-  code for the next release. By default, the name of the branch is
-  _prepare_next_version_. If you want to customize the name of the branch:
+* In _major_, _minor_ or _patch_ mode, the release
+  process may create a branch in your fork of the repository with
+  the required changes to prepare the code for the next release. The branch is
+  created if it isn't possible to push to the kiali-ui repository. By default,
+  the name of the branch is _prepare_next_version_. If you want to customize the
+  name of the branch:
 ** `BUMP_BRANCH_ID={branch_name} make -f deploy/jenkins-ci/Makefile release`
