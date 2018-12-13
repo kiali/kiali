@@ -1,6 +1,8 @@
 import { Annotation, Marker } from 'react-ace';
 import { ObjectCheck, ObjectValidation, Validations } from './IstioObjects';
 
+export const jsYaml = require('js-yaml');
+
 export interface AceValidations {
   markers: Array<Marker>;
   annotations: Array<Annotation>;
@@ -221,23 +223,52 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
   return { marker: marker, annotation: annotation };
 };
 
-export const parseKialiValidations = (yaml: string, validations?: Validations): AceValidations => {
+export const parseKialiValidations = (yamlInput: string, kialiValidations?: Validations): AceValidations => {
   let aceValidations: AceValidations = {
     markers: [],
     annotations: []
   };
 
-  if (!validations || yaml.length === 0 || Object.keys(validations).length === 0) {
+  if (!kialiValidations || yamlInput.length === 0 || Object.keys(kialiValidations).length === 0) {
     return aceValidations;
   }
 
-  const objectValidations = getObjectValidations(validations);
+  const objectValidations = getObjectValidations(kialiValidations);
   objectValidations.forEach(objectValidation => {
     objectValidation.checks.forEach(check => {
-      const aceCheck = parseCheck(yaml, check);
+      let aceCheck = parseCheck(yamlInput, check);
       aceValidations.markers.push(aceCheck.marker);
       aceValidations.annotations.push(aceCheck.annotation);
     });
   });
   return aceValidations;
+};
+
+export const parseYamlValidations = (yamlInput: string): AceValidations => {
+  let parsedValidations: AceValidations = {
+    markers: [],
+    annotations: []
+  };
+  try {
+    jsYaml.safeLoadAll(yamlInput);
+  } catch (e) {
+    let row = e.mark && e.mark.line ? e.mark.line : 0;
+    let col = e.mark && e.mark.column ? e.mark.column : 0;
+    let message = e.message ? e.message : '';
+    parsedValidations.markers.push({
+      startRow: row,
+      startCol: 0,
+      endRow: row + 1,
+      endCol: 0,
+      className: 'istio-validation-error',
+      type: 'error'
+    });
+    parsedValidations.annotations.push({
+      row: row,
+      column: col,
+      type: 'error',
+      text: message
+    });
+  }
+  return parsedValidations;
 };

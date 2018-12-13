@@ -12,13 +12,11 @@ import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { Validations } from '../../types/IstioObjects';
-import { AceValidations, parseKialiValidations } from '../../types/AceValidations';
+import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
-
-const yaml = require('js-yaml');
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -142,7 +140,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   onUpdate = () => {
-    yaml.safeLoadAll(this.state.yamlModified, (doc: string) => {
+    jsYaml.safeLoadAll(this.state.yamlModified, (doc: string) => {
       const jsonPatch = JSON.stringify(doc);
       const updatePromise = this.props.match.params.objectSubtype
         ? API.updateIstioConfigDetailSubtype(
@@ -168,41 +166,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     });
   };
 
-  parseYaml = (yamlInput: string): AceValidations => {
-    let parsedValidations: AceValidations = {
-      markers: [],
-      annotations: []
-    };
-    try {
-      yaml.safeLoadAll(yamlInput);
-    } catch (e) {
-      let row = e.mark && e.mark.line ? e.mark.line : 0;
-      let col = e.mark && e.mark.column ? e.mark.column : 0;
-      let message = e.message ? e.message : '';
-      parsedValidations.markers.push({
-        startRow: row,
-        startCol: 0,
-        endRow: row + 1,
-        endCol: 0,
-        className: 'istio-validation-error',
-        type: 'error'
-      });
-      parsedValidations.annotations.push({
-        row: row,
-        column: col,
-        type: 'error',
-        text: message
-      });
-    }
-    return parsedValidations;
-  };
-
   onEditorChange = (value: string) => {
     this.setState({
       isModified: true,
       yamlModified: value,
       istioValidations: {},
-      yamlValidations: this.parseYaml(value)
+      yamlValidations: parseYamlValidations(value)
     });
   };
 
@@ -246,7 +215,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.quotaSpecBinding;
       }
     }
-    return istioObject ? yaml.safeDump(istioObject, safeDumpOptions) : '';
+    return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
   renderEditor = (yamlSource: string) => {
