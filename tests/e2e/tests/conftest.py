@@ -17,8 +17,8 @@ WORKLOADS_FILE = ASSETS_PATH  + '/bookinfo-workloads.yaml'
 @pytest.fixture(scope='session')
 def kiali_client():
     config = __get_environment_config__(ENV_FILE)
-    yield __get_kiali_client__(config)
     __remove_assets()
+    yield __get_kiali_client__(config)
 
 def get_bookinfo_namespace():
     return __get_environment_config__(ENV_FILE).get('mesh_bookinfo_namespace')
@@ -40,14 +40,14 @@ def __get_environment_config__(env_file):
 
 
 def __remove_assets():
-  print('Cleanning up: ')
+  print('Cleanning up (Note: ignore messages: "Error from server (NotFound))": ')
   namespace = get_bookinfo_namespace()
   file_count = 0
   for root, dirs, files in os.walk(ASSETS_PATH):
     file_count = len(files)
 
     for name in files:
-      command_exec.oc_delete(ASSETS_PATH + name, namespace)
+      command_exec.oc_delete(ASSETS_PATH + "/" + name, namespace)
 
   print('Assets deleted: {}'.format(file_count))
 
