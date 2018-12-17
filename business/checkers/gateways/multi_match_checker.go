@@ -20,7 +20,7 @@ const (
 )
 
 type Host struct {
-	Port            uint32
+	Port            int
 	Hostname        string
 	ServerIndex     int
 	HostIndex       int
@@ -82,12 +82,12 @@ func addError(validations models.IstioValidations, gatewayRuleName string, serve
 }
 
 func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
-	var port uint32
+	var port int
 	if portDef, found := serverDef["port"]; found {
 		if ports, ok := portDef.(map[string]interface{}); ok {
 			if numberDef, found := ports["number"]; found {
-				if portNumber, ok := numberDef.(uint32); ok {
-					port = portNumber
+				if portNumber, ok := numberDef.(int64); ok {
+					port = int(portNumber)
 				}
 			}
 		}
