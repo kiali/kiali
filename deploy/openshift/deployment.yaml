@@ -34,8 +34,6 @@ spec:
         - -email-domain=*
         - -upstream=http://localhost:20001
         - -openshift-service-account=kiali-service-account
-        - '-openshift-sar={"namespace":"istio-system","resource":"services","name":"kiali","verb":"get"}'
-        - '-openshift-delegate-urls={"/": {"resource": "namespaces", "verb": "get"}}'
         - -tls-cert=/etc/tls/private/tls.crt
         - -tls-key=/etc/tls/private/tls.key
         - -client-secret-file=/var/run/secrets/kubernetes.io/serviceaccount/token
@@ -44,6 +42,7 @@ spec:
         - -cookie-secret=kiali-16bytes-1234
         - -skip-provider-button
         - -pass-access-token
+        - "-scope=role:cluster-admin:istio-system"
         ${AUTH_BYPASS}
         ports:
         - containerPort: 20002
