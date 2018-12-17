@@ -43,7 +43,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtual_services.SingleHostChecker{in.Namespace, in.VirtualServices},
+		virtual_services.SingleHostChecker{Namespace: in.Namespace, VirtualServices: in.VirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -66,8 +66,8 @@ func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject)
 	}
 
 	enabledCheckers := []Checker{
-		virtual_services.RouteChecker{virtualService},
-		virtual_services.SubsetPresenceChecker{in.Namespace, in.DestinationRules, virtualService},
+		virtual_services.RouteChecker{Route: virtualService},
+		virtual_services.SubsetPresenceChecker{Namespace: in.Namespace, DestinationRules: in.DestinationRules, VirtualService: virtualService},
 	}
 
 	for _, checker := range enabledCheckers {

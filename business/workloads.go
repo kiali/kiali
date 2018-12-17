@@ -34,7 +34,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 	defer promtimer.ObserveNow(&err)
 
 	workloadList := &models.WorkloadList{
-		Namespace: models.Namespace{namespace, time.Time{}},
+		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
 	ws, err := fetchWorkloads(in.k8s, namespace, "")

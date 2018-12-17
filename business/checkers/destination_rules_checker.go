@@ -14,7 +14,7 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{in.DestinationRules},
+		destinationrules.MultiMatchChecker{DestinationRules: in.DestinationRules},
 	}
 
 	for _, checker := range enabledDRCheckers {

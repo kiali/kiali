@@ -26,7 +26,7 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.IstioValidationKey{"destinationrule", "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -48,7 +48,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{"destinationrule", "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -71,7 +71,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok := validations[models.IstioValidationKey{"destinationrule", "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -87,7 +87,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok = validations[models.IstioValidationKey{"destinationrule", "rule1"}]
+	validation, ok = validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule1"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -153,7 +153,7 @@ func TestReviewsExample(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok := validations[models.IstioValidationKey{"destinationrule", "reviews3"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "reviews3"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)

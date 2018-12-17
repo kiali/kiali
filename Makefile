@@ -296,3 +296,18 @@ k8s-undeploy: .k8s-validate
 k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
 	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}
+
+## gometalinter-install. Installs gometalinter
+gometalinter-install:
+	go get -u github.com/alecthomas/gometalinter
+	gometalinter --install
+
+## lint. Runs gometalinter
+lint:
+	gometalinter --disable-all  --enable=vet --tests  --vendor ./...
+
+## lint-all. Runs gometalinter with items from good to have list but does not run during travis
+lint-all:
+	gometalinter --disable-all --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
+	--enable=ineffassign --enable=unconvert --enable=goimports -enable=gosimple --enable=staticcheck \
+	--enable=nakedret --tests  --vendor ./...
