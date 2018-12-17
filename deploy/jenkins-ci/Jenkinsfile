@@ -147,7 +147,7 @@ node('kiali-build') {
        if ( releaseType == "minor" ) {
            build(job: 'kiali-release-notifier',
              parameters: [
-               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
+               [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
                [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
                [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG']
              ], wait: false
