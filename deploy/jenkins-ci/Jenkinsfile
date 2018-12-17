@@ -52,6 +52,7 @@ node('kiali-build') {
   def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
   def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
+  def dockerTag = ""
 
   try {
     cleanWs()
@@ -129,6 +130,7 @@ node('kiali-build') {
       stage('Release Kiali to DockerHub') {
         withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
           sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
+          dockerTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
         }
       }
 
@@ -142,16 +144,16 @@ node('kiali-build') {
       }
 
      stage('Post Msg Bus Notification') {
-       when { environment name: 'RELEASE_TYPE', value: 'minor'}
-         steps {
+       if ( releaseType == "minor" ) {
            build(job: 'kiali-release-notifier',
              parameters: [
-               [$class: 'StringParameterValue', value: "${params.RELEASE_TYPE}", name: 'RELEASE_TYPE'],
+               [$class: 'StringParameterValue', value: releaseType, name: 'RELEASE_TYPE'],
                [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
-               [$class: 'StringParameterValue', value: "${params.DOCKER_TAG}", name: 'DOCKER_TAG']
+               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG']
              ], wait: false
            )
-         }
+       }
+     }
     }
   } finally {
     cleanWs()
