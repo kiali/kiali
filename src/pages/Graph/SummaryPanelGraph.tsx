@@ -90,10 +90,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
         <div className="panel-heading">
-          Namespace{this.props.namespaces.length > 1 ? 's' : ''}:
-          {this.props.namespaces.map(namespace => (
-            <>{' ' + namespace.name}</>
-          ))}
+          <strong>Namespace{this.props.namespaces.length > 1 ? 's' : ''}: </strong>
+          {this.props.namespaces.map(namespace => namespace.name).join(', ')}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
         </div>
         <div className="panel-body">
@@ -180,30 +178,37 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private renderTopologySummary = (numSvc: number, numWorkloads: number, numApps: number, numEdges: number) => (
     <div>
+      <ListPageLink key="appsLink" target={TargetPage.APPLICATIONS} namespaces={this.props.namespaces}>
+        {' applications'}
+      </ListPageLink>
+      <ListPageLink key="servicesLink" target={TargetPage.SERVICES} namespaces={this.props.namespaces}>
+        {', services'}
+      </ListPageLink>
+      <ListPageLink key="workloadsLink" target={TargetPage.WORKLOADS} namespaces={this.props.namespaces}>
+        {', workloads'}
+      </ListPageLink>
+      <br />
+      <br />
+      <strong>Current Graph:</strong>
+      <br />
       {numApps > 0 && (
         <>
           <Icon name="applications" type="pf" style={{ padding: '0 1em' }} />
-          <ListPageLink key="appsLink" target={TargetPage.APPLICATIONS} namespaces={this.props.namespaces}>
-            {numApps.toString()} {numApps === 1 ? 'app' : 'apps'}
-          </ListPageLink>
+          {numApps.toString()} {numApps === 1 ? 'app' : 'apps'}
           <br />
         </>
       )}
       {numSvc > 0 && (
         <>
           <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
-          <ListPageLink key="servicesLink" target={TargetPage.SERVICES} namespaces={this.props.namespaces}>
-            {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-          </ListPageLink>
+          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
           <br />
         </>
       )}
       {numWorkloads > 0 && (
         <>
           <Icon name="bundle" type="pf" style={{ padding: '0 1em' }} />
-          <ListPageLink key="workloadsLink" target={TargetPage.WORKLOADS} namespaces={this.props.namespaces}>
-            {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-          </ListPageLink>
+          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
           <br />
         </>
       )}
