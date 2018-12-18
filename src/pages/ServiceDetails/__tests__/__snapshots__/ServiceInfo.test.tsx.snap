@@ -445,7 +445,6 @@ ShallowWrapper {
                       message="One of the Virtual Services associated to this service has an invalid format"
                     >
                       <ServiceInfoVirtualServices
-                        editorLink="/namespaces/istio-system/services/reviews"
                         validations={undefined}
                         virtualServices={
                           Array [
@@ -520,7 +519,6 @@ ShallowWrapper {
                             },
                           ]
                         }
-                        editorLink="/namespaces/istio-system/services/reviews"
                         validations={
                           Object {
                             "reviews": Object {
@@ -782,7 +780,6 @@ ShallowWrapper {
                         message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={undefined}
                           virtualServices={
                             Array [
@@ -857,7 +854,6 @@ ShallowWrapper {
                               },
                             ]
                           }
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={
                             Object {
                               "reviews": Object {
@@ -1379,7 +1375,6 @@ ShallowWrapper {
                         message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={undefined}
                           virtualServices={
                             Array [
@@ -1454,7 +1449,6 @@ ShallowWrapper {
                               },
                             ]
                           }
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={
                             Object {
                               "reviews": Object {
@@ -1566,7 +1560,6 @@ ShallowWrapper {
                         message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={undefined}
                           virtualServices={
                             Array [
@@ -1641,7 +1634,6 @@ ShallowWrapper {
                               },
                             ]
                           }
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={
                             Object {
                               "reviews": Object {
@@ -1750,7 +1742,6 @@ ShallowWrapper {
                         message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={undefined}
                           virtualServices={
                             Array [
@@ -1825,7 +1816,6 @@ ShallowWrapper {
                               },
                             ]
                           }
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={
                             Object {
                               "reviews": Object {
@@ -1929,7 +1919,6 @@ ShallowWrapper {
                           message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={undefined}
                             virtualServices={
                               Array [
@@ -2004,7 +1993,6 @@ ShallowWrapper {
                                 },
                               ]
                             }
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={
                               Object {
                                 "reviews": Object {
@@ -2219,7 +2207,6 @@ ShallowWrapper {
                             message="One of the Virtual Services associated to this service has an invalid format"
                           >
                             <ServiceInfoVirtualServices
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={undefined}
                               virtualServices={
                                 Array [
@@ -2294,7 +2281,6 @@ ShallowWrapper {
                                   },
                                 ]
                               }
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={
                                 Object {
                                   "reviews": Object {
@@ -2359,7 +2345,6 @@ ShallowWrapper {
                           "nodeType": "class",
                           "props": Object {
                             "children": <ServiceInfoVirtualServices
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={undefined}
                               virtualServices={
                                 Array [
@@ -2402,7 +2387,6 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "editorLink": "/namespaces/istio-system/services/reviews",
                               "validations": undefined,
                               "virtualServices": Array [
                                 Object {
@@ -2480,7 +2464,6 @@ ShallowWrapper {
                                   },
                                 ]
                               }
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={
                                 Object {
                                   "reviews": Object {
@@ -2546,7 +2529,6 @@ ShallowWrapper {
                                   },
                                 },
                               ],
-                              "editorLink": "/namespaces/istio-system/services/reviews",
                               "validations": Object {
                                 "reviews": Object {
                                   "checks": Array [
@@ -2823,7 +2805,6 @@ ShallowWrapper {
                         message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={undefined}
                           virtualServices={
                             Array [
@@ -2898,7 +2879,6 @@ ShallowWrapper {
                               },
                             ]
                           }
-                          editorLink="/namespaces/istio-system/services/reviews"
                           validations={
                             Object {
                               "reviews": Object {
@@ -3160,7 +3140,6 @@ ShallowWrapper {
                           message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={undefined}
                             virtualServices={
                               Array [
@@ -3235,7 +3214,6 @@ ShallowWrapper {
                                 },
                               ]
                             }
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={
                               Object {
                                 "reviews": Object {
@@ -3757,7 +3735,6 @@ ShallowWrapper {
                           message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={undefined}
                             virtualServices={
                               Array [
@@ -3832,7 +3809,6 @@ ShallowWrapper {
                                 },
                               ]
                             }
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={
                               Object {
                                 "reviews": Object {
@@ -3944,7 +3920,6 @@ ShallowWrapper {
                           message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={undefined}
                             virtualServices={
                               Array [
@@ -4019,7 +3994,6 @@ ShallowWrapper {
                                 },
                               ]
                             }
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={
                               Object {
                                 "reviews": Object {
@@ -4128,7 +4102,6 @@ ShallowWrapper {
                           message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={undefined}
                             virtualServices={
                               Array [
@@ -4203,7 +4176,6 @@ ShallowWrapper {
                                 },
                               ]
                             }
-                            editorLink="/namespaces/istio-system/services/reviews"
                             validations={
                               Object {
                                 "reviews": Object {
@@ -4307,7 +4279,6 @@ ShallowWrapper {
                             message="One of the Virtual Services associated to this service has an invalid format"
                           >
                             <ServiceInfoVirtualServices
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={undefined}
                               virtualServices={
                                 Array [
@@ -4382,7 +4353,6 @@ ShallowWrapper {
                                   },
                                 ]
                               }
-                              editorLink="/namespaces/istio-system/services/reviews"
                               validations={
                                 Object {
                                   "reviews": Object {
@@ -4597,7 +4567,6 @@ ShallowWrapper {
                               message="One of the Virtual Services associated to this service has an invalid format"
                             >
                               <ServiceInfoVirtualServices
-                                editorLink="/namespaces/istio-system/services/reviews"
                                 validations={undefined}
                                 virtualServices={
                                   Array [
@@ -4672,7 +4641,6 @@ ShallowWrapper {
                                     },
                                   ]
                                 }
-                                editorLink="/namespaces/istio-system/services/reviews"
                                 validations={
                                   Object {
                                     "reviews": Object {
@@ -4737,7 +4705,6 @@ ShallowWrapper {
                             "nodeType": "class",
                             "props": Object {
                               "children": <ServiceInfoVirtualServices
-                                editorLink="/namespaces/istio-system/services/reviews"
                                 validations={undefined}
                                 virtualServices={
                                   Array [
@@ -4780,7 +4747,6 @@ ShallowWrapper {
                               "key": undefined,
                               "nodeType": "class",
                               "props": Object {
-                                "editorLink": "/namespaces/istio-system/services/reviews",
                                 "validations": undefined,
                                 "virtualServices": Array [
                                   Object {
@@ -4858,7 +4824,6 @@ ShallowWrapper {
                                     },
                                   ]
                                 }
-                                editorLink="/namespaces/istio-system/services/reviews"
                                 validations={
                                   Object {
                                     "reviews": Object {
@@ -4924,7 +4889,6 @@ ShallowWrapper {
                                     },
                                   },
                                 ],
-                                "editorLink": "/namespaces/istio-system/services/reviews",
                                 "validations": Object {
                                   "reviews": Object {
                                     "checks": Array [
