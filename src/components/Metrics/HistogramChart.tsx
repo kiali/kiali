@@ -1,13 +1,12 @@
-import { Histogram } from '../../types/Metrics';
+import { Histogram, AllPromLabelsValues } from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
-import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
 import MetricsChartBase from './MetricsChartBase';
 
 interface HistogramChartProps {
   histogram: Histogram;
   chartName: string;
   unit: string;
-  labelValues: Map<L.PromLabel, L.LabelValues>;
+  labelValues: AllPromLabelsValues;
   onExpandRequested?: () => void;
 }
 

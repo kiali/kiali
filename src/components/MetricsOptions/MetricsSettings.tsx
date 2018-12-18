@@ -1,21 +1,21 @@
 import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
-import { MetricsLabels as L } from './MetricsLabels';
+import { LabelDisplayName, AllLabelsValues } from '../../types/Metrics';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
 const allQuantiles: Quantiles[] = ['0.5', '0.95', '0.99', '0.999'];
 
 export interface MetricsSettings {
-  activeLabels: L.LabelName[];
+  activeLabels: LabelDisplayName[];
   showAverage: boolean;
   showQuantiles: Quantiles[];
 }
 
 interface Props extends MetricsSettings {
   onChanged: (state: MetricsSettings) => void;
-  onLabelsFiltersChanged: (label: L.LabelName, value: string, checked: boolean) => void;
-  labelValues: Map<L.LabelName, L.LabelValues>;
+  onLabelsFiltersChanged: (label: LabelDisplayName, value: string, checked: boolean) => void;
+  labelValues: AllLabelsValues;
 }
 
 export class MetricsSettingsDropdown extends React.Component<Props> {
@@ -23,7 +23,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
     super(props);
   }
 
-  onGroupingChanged = (label: L.LabelName, checked: boolean) => {
+  onGroupingChanged = (label: LabelDisplayName, checked: boolean) => {
     const newLabels = checked
       ? [label].concat(this.props.activeLabels)
       : this.props.activeLabels.filter(g => label !== g);
@@ -59,32 +59,32 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
     const checkboxStyle = style({ marginLeft: 5 });
     const secondLevelStyle = style({ marginLeft: 14 });
 
-    const displayGroupingLabels = L.ALL_NAMES.map((g, idx) => {
-      const checked = this.props.activeLabels.includes(g);
-      const labels = this.props.labelValues.get(g);
-      const labelsHTML = labels
-        ? Object.keys(labels).map(val => (
-            <div key={'groupings_' + idx + '_' + val} className={secondLevelStyle}>
+    const displayGroupingLabels: any[] = [];
+    this.props.labelValues.forEach((values, name) => {
+      const checked = this.props.activeLabels.includes(name);
+      const labelsHTML = values
+        ? Object.keys(values).map(val => (
+            <div key={'groupings_' + name + '_' + val} className={secondLevelStyle}>
               <label>
                 <input
                   type="checkbox"
-                  checked={labels[val]}
-                  onChange={event => this.props.onLabelsFiltersChanged(g, val, event.target.checked)}
+                  checked={values[val]}
+                  onChange={event => this.props.onLabelsFiltersChanged(name, val, event.target.checked)}
                 />
                 <span className={checkboxStyle}>{val}</span>
               </label>
             </div>
           ))
         : null;
-      return (
-        <div key={'groupings_' + idx}>
+      displayGroupingLabels.push(
+        <div key={'groupings_' + name}>
           <label>
             <input
               type="checkbox"
               checked={checked}
-              onChange={event => this.onGroupingChanged(g, event.target.checked)}
+              onChange={event => this.onGroupingChanged(name, event.target.checked)}
             />
-            <span className={checkboxStyle}>{g}</span>
+            <span className={checkboxStyle}>{name}</span>
           </label>
           {checked && labelsHTML}
         </div>

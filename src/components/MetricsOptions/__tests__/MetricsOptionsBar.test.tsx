@@ -14,8 +14,8 @@ describe('MetricsOptionsBar', () => {
           onOptionsChanged={jest.fn()}
           onRefresh={jest.fn()}
           onLabelsFiltersChanged={jest.fn()}
-          direction={'inbound'}
           labelValues={new Map()}
+          aggregations={[]}
           grafanaLink={'http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard'}
         />
       </Provider>
@@ -30,9 +30,8 @@ describe('MetricsOptionsBar', () => {
           onOptionsChanged={optionsChanged}
           onRefresh={jest.fn()}
           onLabelsFiltersChanged={jest.fn()}
-          direction={'inbound'}
           labelValues={new Map()}
-          grafanaLink={''}
+          aggregations={[]}
         />
       </Provider>
     );
@@ -54,8 +53,8 @@ describe('MetricsOptionsBar', () => {
           onOptionsChanged={jest.fn()}
           onRefresh={jest.fn()}
           onLabelsFiltersChanged={jest.fn()}
-          direction={'inbound'}
           labelValues={new Map()}
+          aggregations={[]}
           grafanaLink={'http://grafana-istio-system.127.0.0.1.nip.io/d/UbsSZTDik/istio-workload-dashboard'}
         />
       </Provider>

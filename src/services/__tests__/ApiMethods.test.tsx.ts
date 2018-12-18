@@ -1,7 +1,7 @@
 import * as API from '../Api';
 import { AxiosError } from 'axios';
 import { authentication } from '../../utils/Authentication';
-import MetricsOptions from 'src/types/MetricsOptions';
+import { MetricsOptions } from '../../types/MetricsOptions';
 
 describe('#GetErrorMessage', () => {
   const errormsg = 'Error sample';

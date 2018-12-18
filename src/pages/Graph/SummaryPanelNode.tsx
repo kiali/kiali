@@ -31,8 +31,8 @@ import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndi
 import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
+import { Reporter } from '../../types/MetricsOptions';
 import { serverConfig, ICONS } from '../../config';
-import { Reporter } from 'src/types/MetricsOptions';
 
 type SummaryPanelStateType = {
   loading: boolean;

@@ -3,9 +3,9 @@ import { mount, shallow, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
 
-import Metrics from '../Metrics';
+import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
-import { MetricsObjectTypes } from '../../../types/Metrics';
+import { MetricsObjectTypes, MonitoringDashboard, Chart } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
 
 window['SVGPathElement'] = a => a;
@@ -28,62 +28,77 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
   });
 };
 
-const mockServiceMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getServiceMetrics', metrics);
+const mockServiceDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
+  return mockAPIToPromise('getServiceDashboard', dashboard);
 };
 
-const mockWorkloadMetrics = (metrics: any): Promise<void> => {
-  return mockAPIToPromise('getWorkloadMetrics', metrics);
+const mockWorkloadDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
+  return mockAPIToPromise('getWorkloadDashboard', dashboard);
 };
 
 const mockGrafanaInfo = (info: any): Promise<any> => {
   return mockAPIToPromise('getGrafanaInfo', info);
 };
 
-const createMetric = (name: string) => {
+const createMetricChart = (name: string): Chart => {
   return {
-    matrix: [
-      {
-        metric: { __name__: name },
-        values: [[1111, 5], [2222, 10]]
-      }
-    ]
+    name: name,
+    unit: 'B',
+    spans: 12,
+    counterRate: {
+      matrix: [
+        {
+          metric: { __name__: name },
+          values: [[1111, 5], [2222, 10]],
+          name: ''
+        }
+      ]
+    }
   };
 };
 
-const createHistogram = (name: string) => {
+const createHistogramChart = (name: string): Chart => {
   return {
-    average: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 10], [2222, 11]]
-        }
-      ]
-    },
-    median: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 20], [2222, 21]]
-        }
-      ]
-    },
-    percentile95: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 30], [2222, 31]]
-        }
-      ]
-    },
-    percentile99: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 40], [2222, 41]]
-        }
-      ]
+    name: name,
+    unit: 'B',
+    spans: 12,
+    histogram: {
+      average: {
+        matrix: [
+          {
+            metric: { __name__: name },
+            values: [[1111, 10], [2222, 11]],
+            name: name
+          }
+        ]
+      },
+      median: {
+        matrix: [
+          {
+            metric: { __name__: name },
+            values: [[1111, 20], [2222, 21]],
+            name: name
+          }
+        ]
+      },
+      percentile95: {
+        matrix: [
+          {
+            metric: { __name__: name },
+            values: [[1111, 30], [2222, 31]],
+            name: name
+          }
+        ]
+      },
+      percentile99: {
+        matrix: [
+          {
+            metric: { __name__: name },
+            values: [[1111, 40], [2222, 41]],
+            name: name
+          }
+        ]
+      }
     }
   };
 };
@@ -105,7 +120,7 @@ describe('Metrics for a service', () => {
         <MemoryRouter>
           <Route
             render={props => (
-              <Metrics
+              <IstioMetrics
                 {...props}
                 namespace="ns"
                 object="svc"
@@ -130,11 +145,11 @@ describe('Metrics for a service', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
-      mockServiceMetrics({ metrics: {}, histograms: {} })
+      mockServiceDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('.card-pf-body')).toHaveLength(1);
-          mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
+          expect(mounted!.find('.card-pf')).toHaveLength(1);
+          mounted!.find('.card-pf').forEach(pfCard => expect(pfCard.children().length === 0));
         })
         .catch(err => done.fail(err))
     ];
@@ -144,7 +159,7 @@ describe('Metrics for a service', () => {
         <MemoryRouter>
           <Route
             render={props => (
-              <Metrics
+              <IstioMetrics
                 {...props}
                 namespace="ns"
                 object="svc"
@@ -168,15 +183,15 @@ describe('Metrics for a service', () => {
 
   it('mounts and loads full metrics', done => {
     const allMocksDone = [
-      mockServiceMetrics({
-        metrics: {
-          request_count: createMetric('m1')
-        },
-        histograms: {
-          request_size: createHistogram('m3'),
-          request_duration: createHistogram('m5'),
-          response_size: createHistogram('m7')
-        }
+      mockServiceDashboard({
+        title: 'foo',
+        aggregations: [],
+        charts: [
+          createMetricChart('m1'),
+          createHistogramChart('m3'),
+          createHistogramChart('m5'),
+          createHistogramChart('m7')
+        ]
       })
         .then(() => {
           mounted!.update();
@@ -190,7 +205,7 @@ describe('Metrics for a service', () => {
         <MemoryRouter>
           <Route
             render={props => (
-              <Metrics
+              <IstioMetrics
                 {...props}
                 namespace="ns"
                 object="svc"
@@ -228,7 +243,7 @@ describe('Inbound Metrics for a workload', () => {
       <Provider store={store}>
         <Route
           render={props => (
-            <Metrics
+            <IstioMetrics
               {...props}
               namespace="ns"
               object="svc"
@@ -252,11 +267,11 @@ describe('Inbound Metrics for a workload', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
-      mockWorkloadMetrics({ metrics: {}, histograms: {} })
+      mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('.card-pf-body')).toHaveLength(1);
-          mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
+          expect(mounted!.find('.card-pf')).toHaveLength(1);
+          mounted!.find('.card-pf').forEach(pfCard => expect(pfCard.children().length === 0));
         })
         .catch(err => done.fail(err))
     ];
@@ -266,7 +281,7 @@ describe('Inbound Metrics for a workload', () => {
         <MemoryRouter>
           <Route
             render={props => (
-              <Metrics
+              <IstioMetrics
                 {...props}
                 namespace="ns"
                 object="svc"
@@ -290,15 +305,15 @@ describe('Inbound Metrics for a workload', () => {
 
   it('mounts and loads full metrics', done => {
     const allMocksDone = [
-      mockWorkloadMetrics({
-        metrics: {
-          request_count: createMetric('m1')
-        },
-        histograms: {
-          request_size: createHistogram('m3'),
-          request_duration: createHistogram('m5'),
-          response_size: createHistogram('m7')
-        }
+      mockWorkloadDashboard({
+        title: 'foo',
+        aggregations: [],
+        charts: [
+          createMetricChart('m1'),
+          createHistogramChart('m3'),
+          createHistogramChart('m5'),
+          createHistogramChart('m7')
+        ]
       })
         .then(() => {
           mounted!.update();
@@ -312,136 +327,12 @@ describe('Inbound Metrics for a workload', () => {
         <MemoryRouter>
           <Route
             render={props => (
-              <Metrics
+              <IstioMetrics
                 {...props}
                 namespace="ns"
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
-                }}
-              />
-            )}
-          />
-        </MemoryRouter>
-      </Provider>
-    );
-  }, 10000); // Increase timeout for this test
-});
-
-describe('Outbound Metrics for a workload', () => {
-  beforeEach(() => {
-    mounted = null;
-  });
-  afterEach(() => {
-    if (mounted) {
-      mounted.unmount();
-    }
-  });
-
-  it('renders initial layout', () => {
-    const wrapper = shallow(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Route
-            render={props => (
-              <Metrics
-                {...props}
-                namespace="ns"
-                object="svc"
-                objectType={MetricsObjectTypes.WORKLOAD}
-                direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
-                }}
-              />
-            )}
-          />
-        </MemoryRouter>
-      </Provider>
-    );
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('mounts and loads empty metrics', done => {
-    const allMocksDone = [
-      mockWorkloadMetrics({ metrics: {}, histograms: {} })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('.card-pf-body')).toHaveLength(1);
-          mounted!.find('.card-pf-body').forEach(pfCard => expect(pfCard.children().length === 0));
-        })
-        .catch(err => done.fail(err))
-    ];
-    Promise.all(allMocksDone).then(() => done());
-    mounted = mount(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Route
-            render={props => (
-              <Metrics
-                {...props}
-                namespace="ns"
-                object="svc"
-                objectType={MetricsObjectTypes.WORKLOAD}
-                direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
-                }}
-              />
-            )}
-          />
-        </MemoryRouter>
-      </Provider>
-    );
-  });
-
-  it('mounts and loads full metrics', done => {
-    const allMocksDone = [
-      mockWorkloadMetrics({
-        metrics: {
-          request_count: createMetric('m1')
-        },
-        histograms: {
-          request_size: createHistogram('m3'),
-          request_duration: createHistogram('m5'),
-          response_size: createHistogram('m7')
-        }
-      })
-        .then(() => {
-          mounted!.update();
-          expect(mounted!.find('LineChart')).toHaveLength(4);
-        })
-        .catch(err => done.fail(err))
-    ];
-    Promise.all(allMocksDone).then(() => done());
-    mounted = mount(
-      <Provider store={store}>
-        <MemoryRouter>
-          <Route
-            render={props => (
-              <Metrics
-                {...props}
-                namespace="ns"
-                object="svc"
-                objectType={MetricsObjectTypes.WORKLOAD}
-                direction={'outbound'}
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',

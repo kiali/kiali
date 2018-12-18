@@ -20,9 +20,9 @@ import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
+import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config';
-import { Reporter } from 'src/types/MetricsOptions';
 
 type SummaryPanelGroupState = {
   loading: boolean;

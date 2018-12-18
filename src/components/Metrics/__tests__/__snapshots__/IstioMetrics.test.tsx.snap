@@ -165,6 +165,7 @@ ShallowWrapper {
   },
 }
 `;
+<<<<<<< HEAD:src/components/Metrics/__tests__/__snapshots__/Metrics.test.tsx.snap
 
 exports[`Outbound Metrics for a workload renders initial layout 1`] = `
 ShallowWrapper {
@@ -261,3 +262,5 @@ ShallowWrapper {
   },
 }
 `;
+=======
+>>>>>>> KIALI-1978 Part 1: Refactor metrics for new dashboards model:src/components/Metrics/__tests__/__snapshots__/IstioMetrics.test.tsx.snap

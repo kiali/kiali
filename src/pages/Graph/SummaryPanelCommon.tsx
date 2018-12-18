@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
-import MetricsOptions, { Reporter, Direction } from '../../types/MetricsOptions';
+import { MetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import { authentication } from '../../utils/Authentication';
 import * as M from '../../types/Metrics';

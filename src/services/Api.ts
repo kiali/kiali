@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import Namespace from '../types/Namespace';
-import MetricsOptions from '../types/MetricsOptions';
-import { Metrics } from '../types/Metrics';
+import { CustomMetricsOptions, MetricsOptions } from '../types/MetricsOptions';
+import { MonitoringDashboard, Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
@@ -86,7 +86,7 @@ export const getNamespaces = (auth: AuthToken) => {
   return newRequest<Namespace[]>(HTTP_VERBS.GET, urls.namespaces, {}, {}, auth);
 };
 
-export const getNamespaceMetrics = (auth: AuthToken, namespace: string, params: any) => {
+export const getNamespaceMetrics = (auth: AuthToken, namespace: string, params: MetricsOptions) => {
   return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {}, auth);
 };
 
@@ -149,6 +149,10 @@ export const getServiceMetrics = (auth: AuthToken, namespace: string, service: s
   return newRequest<Metrics>(HTTP_VERBS.GET, urls.serviceMetrics(namespace, service), params, {}, auth);
 };
 
+export const getServiceDashboard = (auth: AuthToken, namespace: string, service: string, params: MetricsOptions) => {
+  return newRequest<MonitoringDashboard>(HTTP_VERBS.GET, urls.serviceDashboard(namespace, service), params, {}, auth);
+};
+
 export const getApp = (auth: AuthToken, namespace: string, app: string) => {
   return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), {}, {}, auth);
 };
@@ -161,8 +165,26 @@ export const getAppMetrics = (auth: AuthToken, namespace: string, app: string, p
   return newRequest<Metrics>(HTTP_VERBS.GET, urls.appMetrics(namespace, app), params, {}, auth);
 };
 
+export const getAppDashboard = (auth: AuthToken, namespace: string, app: string, params: MetricsOptions) => {
+  return newRequest<MonitoringDashboard>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), params, {}, auth);
+};
+
 export const getWorkloadMetrics = (auth: AuthToken, namespace: string, workload: string, params: MetricsOptions) => {
   return newRequest<Metrics>(HTTP_VERBS.GET, urls.workloadMetrics(namespace, workload), params, {}, auth);
+};
+
+export const getWorkloadDashboard = (auth: AuthToken, namespace: string, workload: string, params: MetricsOptions) => {
+  return newRequest<MonitoringDashboard>(HTTP_VERBS.GET, urls.workloadDashboard(namespace, workload), params, {}, auth);
+};
+
+export const getCustomDashboard = (
+  auth: AuthToken,
+  ns: string,
+  app: string,
+  tpl: string,
+  params: CustomMetricsOptions
+) => {
+  return newRequest<MonitoringDashboard>(HTTP_VERBS.GET, urls.customDashboard(ns, app, tpl), params, {}, auth);
 };
 
 export const getServiceHealth = (
