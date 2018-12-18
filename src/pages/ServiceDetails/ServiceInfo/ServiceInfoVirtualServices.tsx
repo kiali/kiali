@@ -2,13 +2,12 @@ import * as React from 'react';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import { Link } from 'react-router-dom';
-import { EditorLink } from '../../../types/ServiceInfo';
 import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
 
-interface ServiceInfoVirtualServicesProps extends EditorLink {
+interface ServiceInfoVirtualServicesProps {
   virtualServices?: VirtualService[];
   validations: { [key: string]: ObjectValidation };
 }
@@ -92,7 +91,15 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
 
   overviewLink(virtualService: VirtualService) {
     return (
-      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.metadata.name + '&detail=overview'}>
+      <Link
+        to={
+          '/namespaces/' +
+          virtualService.metadata.namespace +
+          '/istio/virtualservices/' +
+          virtualService.metadata.name +
+          '?list=overview'
+        }
+      >
         {virtualService.metadata.name}
       </Link>
     );
@@ -100,7 +107,15 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
 
   yamlLink(virtualService: VirtualService) {
     return (
-      <Link to={this.props.editorLink + '?virtualservice=' + virtualService.metadata.name + '&detail=yaml'}>
+      <Link
+        to={
+          '/namespaces/' +
+          virtualService.metadata.namespace +
+          '/istio/virtualservices/' +
+          virtualService.metadata.name +
+          '?list=yaml'
+        }
+      >
         View YAML
       </Link>
     );

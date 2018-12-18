@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { Breadcrumb, Button, Col, Icon, Row } from 'patternfly-react';
+import { Breadcrumb, Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
-import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
+import {
+  aceOptions,
+  IstioConfigDetails,
+  IstioConfigId,
+  ParsedSearch,
+  safeDumpOptions
+} from '../../types/IstioConfigDetails';
 import { dicIstioType } from '../../types/IstioConfigList';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
@@ -11,12 +17,14 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
-import { Validations } from '../../types/IstioObjects';
+import { DestinationRule, Validations, VirtualService } from '../../types/IstioObjects';
 import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
+import VirtualServiceDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
+import DestinationRuleDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/DestinationRuleDetail';
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -235,11 +243,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
           <Col>
-            {this.renderRightToolbar()}
-            <h1>
-              {this.props.match.params.objectType + ': ' + this.props.match.params.object}
-              {this.state.isModified ? ' * ' : undefined}
-            </h1>
             <AceEditor
               ref={this.aceEditorRef}
               mode="yaml"
@@ -262,10 +265,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   renderActionButtons = () => {
+    // User won't save if file has yaml errors
+    let yamlErrors = this.state.yamlValidations && this.state.yamlValidations.markers.length > 0 ? true : false;
     return (
       <IstioActionButtons
         objectName={this.props.match.params.object}
-        canUpdate={this.canUpdate() && this.state.isModified}
+        canUpdate={this.canUpdate() && this.state.isModified && !yamlErrors}
         onCancel={this.backToList}
         onUpdate={this.onUpdate}
       />
@@ -316,15 +321,116 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
+  // Not all Istio types have components to render an overview tab
+  hasOverview = (): boolean => {
+    return (
+      this.props.match.params.objectType === 'virtualservices' ||
+      this.props.match.params.objectType === 'destinationrules'
+    );
+  };
+
+  renderOverview = (): any => {
+    if (this.state.istioObjectDetails && this.state.istioValidations) {
+      if (this.state.istioObjectDetails.virtualService) {
+        return (
+          <VirtualServiceDetail
+            virtualService={this.state.istioObjectDetails.virtualService}
+            validations={this.state.istioValidations['virtualservice']}
+            namespace={this.state.istioObjectDetails.namespace.name}
+          />
+        );
+      }
+      if (this.state.istioObjectDetails.destinationRule) {
+        return (
+          <DestinationRuleDetail
+            destinationRule={this.state.istioObjectDetails.destinationRule}
+            validations={this.state.istioValidations['destinationrule']}
+            namespace={this.state.istioObjectDetails.namespace.name}
+          />
+        );
+      }
+    } else {
+      // In theory it shouldn't enter here
+      return <div>{this.props.match.params.object} has not been loaded</div>;
+    }
+  };
+
+  renderTabs = (): any => {
+    return (
+      <TabContainer
+        id="basic-tabs"
+        activeKey={this.activeTab('list', this.hasOverview() ? 'overview' : 'yaml')}
+        onSelect={this.tabSelectHandler('list')}
+      >
+        <div>
+          <Nav bsClass="nav nav-tabs nav-tabs-pf">
+            {this.hasOverview() ? (
+              <NavItem eventKey="overview">
+                <div>Overview</div>
+              </NavItem>
+            ) : null}
+            <NavItem eventKey="yaml">
+              <div>YAML {this.state.isModified ? ' * ' : undefined}</div>
+            </NavItem>
+          </Nav>
+          <TabContent>
+            {this.hasOverview() ? (
+              <TabPane eventKey="overview" mountOnEnter={true} unmountOnExit={true}>
+                {this.renderOverview()}
+              </TabPane>
+            ) : null}
+            <TabPane eventKey="yaml">{this.renderEditor(this.fetchYaml())}</TabPane>
+          </TabContent>
+        </div>
+      </TabContainer>
+    );
+  };
+
   render() {
     return (
       <>
         {this.renderBreadcrumbs()}
-        {this.renderEditor(this.fetchYaml())}
+        {this.renderRightToolbar()}
+        {this.renderTabs()}
         <Prompt when={this.state.isModified} message="You have unsaved changes, are you sure you want to leave?" />
       </>
     );
   }
+
+  private activeTab = (tabNameParam: string, whenEmpty: string) => {
+    return new URLSearchParams(this.props.location.search).get(tabNameParam) || whenEmpty;
+  };
+
+  // Helper method to extract search urls with format
+  // ?list=overview or ?list=yaml
+  private parseSearch = (): ParsedSearch => {
+    let parsed: ParsedSearch = {};
+    if (this.props.location.search) {
+      let firstParams = this.props.location.search
+        .split('&')[0]
+        .replace('?', '')
+        .split('=');
+      parsed.type = firstParams[0];
+      parsed.name = firstParams[1];
+    }
+    return {};
+  };
+
+  private tabSelectHandler = (tabNameParam: string) => {
+    return (tabKey?: string) => {
+      if (!tabKey) {
+        return;
+      }
+
+      const urlParams = new URLSearchParams('');
+      const parsedSearch = this.parseSearch();
+      if (parsedSearch.type && parsedSearch.name) {
+        urlParams.set(parsedSearch.type, parsedSearch.name);
+      }
+      urlParams.set(tabNameParam, tabKey);
+      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+    };
+  };
 }
 
 export default IstioConfigDetailsPage;

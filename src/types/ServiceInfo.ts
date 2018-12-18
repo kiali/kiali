@@ -150,7 +150,3 @@ export const checkForPath = (object: ObjectValidation, path: string): ObjectChec
 export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
   return checkForPath(object, '');
 };
-
-export interface EditorLink {
-  editorLink: string;
-}
