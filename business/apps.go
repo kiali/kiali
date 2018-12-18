@@ -11,12 +11,14 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
 type AppService struct {
-	k8s kubernetes.IstioClientInterface
+	prom prometheus.ClientInterface
+	k8s  kubernetes.IstioClientInterface
 }
 
 // Temporal map of Workloads group by app label
@@ -100,6 +102,9 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 	for i, svc := range appDetails.Services {
 		(*appInstance).ServiceNames[i] = svc.Name
 	}
+
+	in.fillCustomDashboardRefs(namespace, appInstance, appDetails)
+
 	return *appInstance, nil
 }
 
@@ -191,4 +196,26 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 	}
 
 	return castAppDetails(services, ws), nil
+}
+
+// fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
+func (in *AppService) fillCustomDashboardRefs(namespace string, app *models.App, details *appDetails) {
+	uniqueRefs := make(map[string]string)
+	for _, workload := range details.Workloads {
+		for _, pod := range workload.Pods {
+			for _, ref := range pod.CustomDashboards {
+				if ref != "" {
+					uniqueRefs[ref] = ref
+				}
+			}
+		}
+	}
+	mon, err := kubernetes.NewKialiMonitoringClient()
+	if err != nil {
+		// Do not fail the whole query, just log & return
+		log.Error("Cannot initialize Kiali Monitoring Client")
+		return
+	}
+	dash := NewDashboardsService(mon, in.prom)
+	app.CustomDashboards = dash.getTitlesFromTemplates(namespace, uniqueRefs)
 }

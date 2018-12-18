@@ -86,3 +86,9 @@ func PrepareIstioDashboard(direction, local, remote string) MonitoringDashboard 
 		Aggregations: buildIstioAggregations(local, remote),
 	}
 }
+
+// DashboardRef holds template name and title for a custom dashboard
+type DashboardRef struct {
+	Template string `json:"template"`
+	Title    string `json:"title"`
+}

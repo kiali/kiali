@@ -97,6 +97,9 @@ type Workload struct {
 	Services Services `json:"services"`
 
 	DestinationServices []DestinationService `json:"destinationServices"`
+
+	// Custom dashboard ids and titles
+	CustomDashboards []DashboardRef `json:"customDashboards"`
 }
 
 // DestinationService holds service identifiers used for workload dependencies

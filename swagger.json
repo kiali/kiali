@@ -2596,6 +2596,14 @@
         "serviceNames"
       ],
       "properties": {
+        "customDashboards": {
+          "description": "Custom dashboard ids and titles",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardRef"
+          },
+          "x-go-name": "CustomDashboards"
+        },
         "name": {
           "description": "Name of the application",
           "type": "string",
@@ -2752,6 +2760,21 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "DashboardRef": {
+      "description": "DashboardRef holds template name and title for a custom dashboard",
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string",
+          "x-go-name": "Template"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3550,6 +3573,13 @@
           },
           "x-go-name": "CreatedBy"
         },
+        "customDashboards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "CustomDashboards"
+        },
         "istioContainers": {
           "type": "array",
           "items": {
@@ -4200,6 +4230,14 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "customDashboards": {
+          "description": "Custom dashboard ids and titles",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardRef"
+          },
+          "x-go-name": "CustomDashboards"
         },
         "destinationServices": {
           "type": "array",
