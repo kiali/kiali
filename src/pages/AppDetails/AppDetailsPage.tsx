@@ -10,6 +10,7 @@ import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 
 type AppDetailsState = {
   app: App;
@@ -28,7 +29,8 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         namespace: { name: '' },
         name: '',
         workloads: [],
-        serviceNames: []
+        serviceNames: [],
+        customDashboards: []
       }
     };
     this.fetchApp();
@@ -111,6 +113,13 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
               <NavItem eventKey="out_metrics">
                 <div>Outbound Metrics</div>
               </NavItem>
+              {this.state.app.customDashboards.map(dashboard => {
+                return (
+                  <NavItem key={dashboard.template} eventKey={dashboard.template}>
+                    <div>{dashboard.title}</div>
+                  </NavItem>
+                );
+              })}
             </Nav>
             <TabContent>
               <TabPane eventKey="info">
@@ -139,6 +148,22 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   direction={'outbound'}
                 />
               </TabPane>
+              {this.state.app.customDashboards.map(dashboard => {
+                return (
+                  <TabPane
+                    key={dashboard.template}
+                    eventKey={dashboard.template}
+                    mountOnEnter={true}
+                    unmountOnExit={true}
+                  >
+                    <CustomMetricsContainer
+                      namespace={this.props.match.params.namespace}
+                      app={this.props.match.params.app}
+                      template={dashboard.template}
+                    />
+                  </TabPane>
+                );
+              })}
             </TabContent>
           </div>
         </TabContainer>

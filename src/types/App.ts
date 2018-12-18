@@ -1,4 +1,5 @@
 import Namespace from './Namespace';
+import { DashboardRef } from './Workload';
 
 export interface AppId {
   namespace: string;
@@ -15,4 +16,5 @@ export interface App {
   name: string;
   workloads: AppWorkload[];
   serviceNames: string[];
+  customDashboards: DashboardRef[];
 }
