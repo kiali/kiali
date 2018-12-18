@@ -12,7 +12,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
@@ -228,12 +228,23 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                    "reviews",
 		"source_version":                "v2",
 		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "ratings",
+		"destination_workload":          "ratings-v1",
+		"destination_app":               "ratings",
+		"destination_version":           "v1",
+		"response_code":                 "500"}
+	q2m10 := model.Metric{
+		"source_workload_namespace":     "bookinfo",
+		"source_workload":               "reviews-v2",
+		"source_app":                    "reviews",
+		"source_version":                "v2",
+		"destination_service_namespace": "bookinfo",
 		"destination_service_name":      "reviews",
 		"destination_workload":          "reviews-v2",
 		"destination_app":               "reviews",
 		"destination_version":           "v2",
 		"response_code":                 "200"}
-	q2m10 := model.Metric{
+	q2m11 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
 		"source_app":                    "reviews",
@@ -244,7 +255,18 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_app":               "ratings",
 		"destination_version":           "v1",
 		"response_code":                 "200"}
-	q2m11 := model.Metric{
+	q2m12 := model.Metric{
+		"source_workload_namespace":     "bookinfo",
+		"source_workload":               "reviews-v3",
+		"source_app":                    "reviews",
+		"source_version":                "v3",
+		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "ratings",
+		"destination_workload":          "ratings-v1",
+		"destination_app":               "ratings",
+		"destination_version":           "v1",
+		"response_code":                 "500"}
+	q2m13 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
 		"source_app":                    "reviews",
@@ -255,7 +277,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_app":               "reviews",
 		"destination_version":           "v3",
 		"response_code":                 "200"}
-	q2m12 := model.Metric{
+	q2m14 := model.Metric{
 		"source_workload_namespace":     "bookinfo",
 		"source_workload":               "reviews-v3",
 		"source_app":                    "reviews",
@@ -297,7 +319,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Value:  20},
 		&model.Sample{
 			Metric: q2m9,
-			Value:  20},
+			Value:  10},
 		&model.Sample{
 			Metric: q2m10,
 			Value:  20},
@@ -306,6 +328,12 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Value:  20},
 		&model.Sample{
 			Metric: q2m12,
+			Value:  10},
+		&model.Sample{
+			Metric: q2m13,
+			Value:  20},
+		&model.Sample{
+			Metric: q2m14,
 			Value:  20}}
 
 	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`

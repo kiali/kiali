@@ -264,6 +264,15 @@ func addServiceGraphTraffic(target, source *graph.Edge) {
 	switch protocol {
 	case "http":
 		addToMetadataValue(target.Metadata, "rate", source.Metadata["rate"].(float64))
+		if val, ok := source.Metadata["rate3xx"]; ok {
+			addToMetadataValue(target.Metadata, "rate3xx", val.(float64))
+		}
+		if val, ok := source.Metadata["rate4xx"]; ok {
+			addToMetadataValue(target.Metadata, "rate4xx", val.(float64))
+		}
+		if val, ok := source.Metadata["rate5xx"]; ok {
+			addToMetadataValue(target.Metadata, "rate5xx", val.(float64))
+		}
 	case "tcp":
 		addToMetadataValue(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
 	default:

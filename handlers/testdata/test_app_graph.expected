@@ -56,7 +56,8 @@
           "destServices": {
             "ratings": true
           },
-          "rate": "40.00"
+          "rate": "60.00",
+          "rate5XX": "20.00"
         }
       },
       {
@@ -69,7 +70,7 @@
             "reviews": true
           },
           "rate": "100.00",
-          "rateOut": "100.00"
+          "rateOut": "120.00"
         }
       },
       {
@@ -174,7 +175,7 @@
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "37ddc91db761d432f3fff1943802cad7",
           "rate": "40.00",
-          "percentRate": "40.00"
+          "percentRate": "33.33"
         }
       },
       {
@@ -183,7 +184,7 @@
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "66bce9783dc2dbb5fecb178b0108484e",
           "rate": "20.00",
-          "percentRate": "20.00"
+          "percentRate": "16.67"
         }
       },
       {
@@ -191,8 +192,10 @@
           "id": "a553e38605904d17c50ab1d0db84f113",
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "c219903556c3afdb05eda7e610aba628",
-          "rate": "40.00",
-          "percentRate": "40.00"
+          "rate": "60.00",
+          "rate5XX": "20.00",
+          "percentErr": "33.33",
+          "percentRate": "50.00"
         }
       },
       {
