@@ -4,7 +4,7 @@ properties([
     string(name: 'RELEASE_TYPE',
       defaultValue: 'auto',
       trim: true,
-      description: 'Valid values are: auto, minor, snapshot.0, snapshot.1. When "auto" is ' +
+      description: 'Valid values are: auto, minor, snapshot.0, snapshot.1. When "auto" is\n' +
                     'specified, the type of the release will be determined based on the current date.'),
     string(name: 'BACKEND_RELEASING_BRANCH',
       defaultValue: 'refs/heads/master',
@@ -34,17 +34,23 @@ properties([
       name: 'BACKEND_PULL_URI',
       defaultValue: 'https://api.github.com/repos/kiali/kiali/pulls',
       trim: true,
-      description: 'The URL of the GitHub API to use to create pull requests for the back-end (changes to prepare for next version)'),
+      description: 'The URL of the GitHub API to use to create pull requests for the\nback-end (changes to prepare for next version)'),
     string(
       name: 'UI_PULL_URI',
       defaultValue: 'https://api.github.com/repos/kiali/kiali-ui/pulls',
       trim: true,
-      description: 'The URL of the GitHub API to use to create pull requests for the UI (changes to prepare for next version)'),
+      description: 'The URL of the GitHub API to use to create pull requests for the\nUI (changes to prepare for next version)'),
     string(
       name: 'NPM_DRY_RUN',
       defaultValue: 'n',
       trim: true,
-      description: 'Set to "y" if you want to make a "dry run" of the front-end release process')
+      description: 'Set to "y" if you want to make a "dry run" of the front-end release process'),
+    string(
+      name: 'SKIP_UI_RELEASE',
+      defaultValue: 'n',
+      trim: true,
+      description: "Set to 'y' if you don't want to release the UI. The UI release can be omitted \n" +
+                   "only if RELEASE_TYPE=patch")
   ])
 ])
 
@@ -52,6 +58,7 @@ node('kiali-build') {
   def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
   def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
+  def buildUi = params.RELEASE_TYPE != "patch" || params.SKIP_UI_RELEASE != "y"
   def dockerTag = ""
 
   try {
@@ -69,27 +76,30 @@ node('kiali-build') {
           credentialsId: 'kiali-bot-gh-ssh',
           url: params.BACKEND_GITHUB_URI]]
       ])
-      checkout([
-        $class: 'GitSCM',
-        branches: [[name: params.UI_RELEASING_BRANCH]],
-        doGenerateSubmoduleConfigurations: false,
-        extensions: [
-          [$class: 'RelativeTargetDirectory', relativeTargetDir: uiDir]
-        ],
-        submoduleCfg: [],
-        userRemoteConfigs: [[
-          credentialsId: 'kiali-bot-gh-ssh',
-          url: params.UI_GITHUB_URI]]
-      ])
+      if ( buildUi ) {
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: params.UI_RELEASING_BRANCH]],
+          doGenerateSubmoduleConfigurations: false,
+          extensions: [
+            [$class: 'RelativeTargetDirectory', relativeTargetDir: uiDir]
+          ],
+          submoduleCfg: [],
+          userRemoteConfigs: [[
+            credentialsId: 'kiali-bot-gh-ssh',
+            url: params.UI_GITHUB_URI]]
+        ])
+
+        sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
+        sh "cd ${uiDir}; git config user.name 'kiali-bot'"
+      }
 
       sh "cd ${backendDir}; git config user.email 'kiali-dev@googlegroups.com'"
       sh "cd ${backendDir}; git config user.name 'kiali-bot'"
-      sh "cd ${uiDir}; git config user.email 'kiali-dev@googlegroups.com'"
-      sh "cd ${uiDir}; git config user.name 'kiali-bot'"
     }
 
     // Determine release type if "auto" was specified
-    def releaseType = "${RELEASE_TYPE}"
+    def releaseType = "${params.RELEASE_TYPE}"
     if ( releaseType == "auto" ) {
       releaseType = sh(
         returnStdout: true,
@@ -113,17 +123,23 @@ node('kiali-build') {
         }
       }, ui: {
         stage('Build UI') {
-          sh "make -f ${uiMakefile} -C ${uiDir} ui-fix-version ui-build"
+          if ( buildUi ) {
+            sh "make -f ${uiMakefile} -C ${uiDir} ui-fix-version ui-build"
+          }
         }
         stage('Test UI') {
-          sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
+          if ( buildUi ) {
+            sh "make -f ${uiMakefile} -C ${uiDir} ui-test"
+          }
         }
       },
       failFast: true
 
       stage('Release kiali-ui to NPM') {
-        withCredentials([string(credentialsId: 'kiali-npm', variable: 'NPM_TOKEN')]) {
-          sh "make -f ${uiMakefile} -C ${uiDir} ui-npm-publish"
+        if ( buildUi ) {
+          withCredentials([string(credentialsId: 'kiali-npm', variable: 'NPM_TOKEN')]) {
+            sh "make -f ${uiMakefile} -C ${uiDir} ui-npm-publish"
+          }
         }
       }
 
@@ -137,8 +153,10 @@ node('kiali-build') {
       stage('Create tags and push to Git') {
         withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
           sshagent(['kiali-bot-gh-ssh']) {
-            sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-create-pr-next-version"
-            sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-create-pr-next-version"
+            sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
+            if ( buildUi ) {
+              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
+            }
           }
         }
       }
