@@ -23,7 +23,7 @@ type Pod struct {
 	Status              string            `json:"status"`
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
-	CustomDashboards    []string          `json:"-"` // not used in the UI but needed to build app and workload models
+	CustomDashboards    []string          `json:"customDashboards"`
 }
 
 // Reference holds some information on the pod creator

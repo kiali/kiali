@@ -3573,6 +3573,13 @@
           },
           "x-go-name": "CreatedBy"
         },
+        "customDashboards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "CustomDashboards"
+        },
         "istioContainers": {
           "type": "array",
           "items": {
