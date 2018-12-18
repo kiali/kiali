@@ -31,11 +31,13 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
 
   render() {
     const uiVersion =
-      process.env.REACT_APP_GIT_HASH === ''
+      process.env.REACT_APP_GIT_HASH === '' ||
+      process.env.REACT_APP_GIT_HASH === 'unknown'
         ? process.env.REACT_APP_VERSION
         : `${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`;
     const coreVersion =
-      this.props.status[KIALI_CORE_COMMIT_HASH] === ''
+      this.props.status[KIALI_CORE_COMMIT_HASH] === '' ||
+      this.props.status[KIALI_CORE_COMMIT_HASH] === 'unknown'
         ? this.props.status[KIALI_CORE_VERSION]
         : `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`;
 
