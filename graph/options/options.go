@@ -46,20 +46,19 @@ type NodeOptions struct {
 
 // VendorOptions are those that are supplied to the vendor-specific generators.
 type VendorOptions struct {
+	Duration  time.Duration
 	GraphType string
 	GroupBy   string
-	Timestamp int64
+	QueryTime int64 // unix time in seconds
 }
 
 // Options are all supported graph generation options.
 type Options struct {
 	AccessibleNamespaces map[string]time.Time
 	Appenders            []appender.Appender
-	Duration             time.Duration
 	IncludeIstio         bool // include istio-system services. Ignored for istio-system ns. Default false.
 	InjectServiceNodes   bool // inject destination service nodes between source and destination nodes.
 	Namespaces           map[string]graph.NamespaceInfo
-	QueryTime            int64 // unix time in seconds
 	Vendor               string
 	NodeOptions
 	VendorOptions
@@ -179,11 +178,9 @@ func NewOptions(r *http.Request) Options {
 
 	options := Options{
 		AccessibleNamespaces: accessibleNamespaces,
-		Duration:             duration,
 		IncludeIstio:         includeIstio,
 		InjectServiceNodes:   injectServiceNodes,
 		Namespaces:           namespaceMap,
-		QueryTime:            queryTime,
 		Vendor:               vendor,
 		NodeOptions: NodeOptions{
 			App:       app,
@@ -193,9 +190,10 @@ func NewOptions(r *http.Request) Options {
 			Workload:  workload,
 		},
 		VendorOptions: VendorOptions{
+			Duration:  duration,
 			GraphType: graphType,
 			GroupBy:   groupBy,
-			Timestamp: queryTime,
+			QueryTime: queryTime,
 		},
 	}
 
