@@ -17,7 +17,7 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
-import { DestinationRule, Validations, VirtualService } from '../../types/IstioObjects';
+import { Validations } from '../../types/IstioObjects';
 import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
