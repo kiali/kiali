@@ -26,6 +26,7 @@ describe('GraphDataState', () => {
         showVirtualServices: true
       },
       graphDataTimestamp: 0,
+      graphDataDuration: 0,
       graphData: {},
       layout: DagreGraph.getLayout(),
       node: undefined,
@@ -42,13 +43,18 @@ describe('GraphDataState', () => {
   });
 
   it('should handle GET_GRAPH_DATA_SUCCESS', () => {
-    const action = GraphDataActions.getGraphDataSuccess(100, []);
+    const action = GraphDataActions.getGraphDataSuccess(100, 10, []);
     const updatedState = graphDataState(undefined, action);
 
     expect(updatedState.isLoading).toBeFalsy();
     expect(updatedState.isError).toBeFalsy();
     expect(updatedState.error).toBeUndefined();
-    expect(updatedState).toMatchObject({ isLoading: false, graphDataTimestamp: 100, graphData: [] });
+    expect(updatedState).toMatchObject({
+      isLoading: false,
+      graphDataTimestamp: 100,
+      graphDataDuration: 10,
+      graphData: []
+    });
   });
 
   it('should handle GET_GRAPH_DATA_FAILURE', () => {

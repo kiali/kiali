@@ -12,6 +12,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   isLoading: false,
   isError: false,
   error: undefined,
+  graphDataDuration: 0,
   graphDataTimestamp: 0,
   graphData: {},
   layout: DagreGraph.getLayout(),
@@ -46,6 +47,7 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
     case getType(GraphDataActions.getGraphDataSuccess):
       newState.isLoading = false;
       newState.isError = false;
+      newState.graphDataDuration = action.payload.graphDuration;
       newState.graphDataTimestamp = action.payload.timestamp;
       newState.graphData = action.payload.graphData;
       break;
@@ -59,8 +61,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       break;
     case getType(GraphActions.setNode):
       newState.node = action.payload;
-      // Init graph on node change
+      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
       break;
@@ -72,6 +75,7 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       break;
     case getType(GraphActions.changed):
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
       break;
@@ -81,8 +85,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       break;
     case getType(GraphFilterActions.setGraphType):
       newState.filterState.graphType = action.payload;
-      // Init graph on graphType change
+      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
       break;
@@ -106,8 +111,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       break;
     case getType(GraphFilterActions.toggleServiceNodes):
       newState.filterState.showServiceNodes = !state.filterState.showServiceNodes;
-      // Init graph on serviceNodeschange
+      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on serviceNodeschange)
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
       break;

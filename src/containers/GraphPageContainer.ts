@@ -27,6 +27,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
   graphData: state.graph.graphData,
+  graphDuration: state.graph.graphDataDuration,
   graphTimestamp: state.graph.graphDataTimestamp,
   graphType: graphTypeSelector(state),
   isError: state.graph.isError,

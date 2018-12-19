@@ -73,9 +73,10 @@ export const GraphDataActions = {
   getGraphDataStart: createAction(GraphDataActionKeys.GET_GRAPH_DATA_START),
   getGraphDataSuccess: createAction(
     GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
-    resolve => (timestamp: number, graphData: any) =>
+    resolve => (timestamp: number, graphDuration: number, graphData: any) =>
       resolve({
         timestamp: timestamp,
+        graphDuration: graphDuration,
         graphData: decorateGraphData(graphData)
       })
   ),

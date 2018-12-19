@@ -84,7 +84,8 @@ const GraphDataThunkActions = {
             const responseData: any = response['data'];
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
             const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-            dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphData));
+            const graphDuration = responseData && responseData.duration ? responseData.duration : 0;
+            dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphDuration, graphData));
           },
           error => {
             let emsg: string;
@@ -108,7 +109,8 @@ const GraphDataThunkActions = {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
-          dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphData));
+          const graphDuration = responseData && responseData.duration ? responseData.duration : 0;
+          dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphDuration, graphData));
         },
         error => {
           let emsg: string;
