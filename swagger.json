@@ -2734,6 +2734,11 @@
     "Config": {
       "type": "object",
       "properties": {
+        "duration": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Duration"
+        },
         "elements": {
           "$ref": "#/definitions/Elements"
         },
