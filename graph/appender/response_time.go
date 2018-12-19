@@ -188,5 +188,23 @@ func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64
 	sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, a.GraphType)
 	destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
 	key := fmt.Sprintf("%s %s", sourceId, destId)
-	responseTimeMap[key] += val
+
+	// response time is not a counter, we need to keep a running average if an edge is being aggregated
+	averageResponseTime(responseTimeMap, key, val)
+}
+
+func averageResponseTime(responseTimeMap map[string]float64, key string, val float64) {
+	total := val
+	count := 1.0
+	keyTotal := key + "_total"
+	keyCount := key + "_count"
+	if prevTotal, ok := responseTimeMap[keyTotal]; ok {
+		total += prevTotal
+	}
+	if prevCount, ok := responseTimeMap[keyCount]; ok {
+		count += prevCount
+	}
+	responseTimeMap[keyTotal] = total
+	responseTimeMap[keyCount] = count
+	responseTimeMap[key] = total / count
 }
