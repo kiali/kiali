@@ -124,6 +124,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
             <>
               <VirtualServiceRoute
                 name={virtualService.metadata.name}
+                namespace={virtualService.metadata.namespace || ''}
                 kind="HTTP"
                 routes={virtualService.spec.http}
                 validations={this.props.validations}
@@ -136,6 +137,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
             <>
               <VirtualServiceRoute
                 name={virtualService.metadata.name}
+                namespace={virtualService.metadata.namespace || ''}
                 kind="TCP"
                 routes={virtualService.spec.tcp}
                 validations={this.props.validations}
@@ -148,6 +150,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
             <>
               <VirtualServiceRoute
                 name={virtualService.metadata.name}
+                namespace={virtualService.metadata.namespace || ''}
                 kind="TLS"
                 routes={virtualService.spec.tls}
                 validations={this.props.validations}

@@ -12,9 +12,11 @@ import {
 import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
 import DetailObject from '../../../../components/Details/DetailObject';
 import { PfColors } from '../../../../components/Pf/PfColors';
+import { Link } from 'react-router-dom';
 
 interface VirtualServiceRouteProps {
   name: string;
+  namespace: string;
   kind: string;
   routes: any[];
   validations: { [key: string]: ObjectValidation };
@@ -146,12 +148,16 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   rows(route: any, routeIndex: number) {
-    return (route.route || []).map((routeItem, destinationIndex) => ({
-      id: destinationIndex,
-      status: { value: this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex) },
-      weight: { value: routeItem.weight ? routeItem.weight : '-' },
-      destination: this.destinationFrom(routeItem, destinationIndex)
-    }));
+    return (route.route || []).map((routeItem, destinationIndex) => {
+      let statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
+      let isValid = statusFrom === '' ? true : false;
+      return {
+        id: destinationIndex,
+        status: { value: statusFrom },
+        weight: { value: routeItem.weight ? routeItem.weight : '-' },
+        destination: this.destinationFrom(routeItem, destinationIndex, isValid)
+      };
+    });
   }
 
   validation(): ObjectValidation {
@@ -195,10 +201,27 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     }
   }
 
-  destinationFrom(destinationWeight: DestinationWeight, i: number) {
+  serviceLink(namespace: string, host: string, isValid: boolean): any {
+    if (!host) {
+      return '-';
+    }
+    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
+    if (host.indexOf('.') > -1 || !isValid) {
+      return host;
+    } else {
+      return (
+        <Link to={'/namespaces/' + namespace + '/services/' + host}>
+          {host + ' '}
+          <Icon type="pf" name="service" />
+        </Link>
+      );
+    }
+  }
+
+  destinationFrom(destinationWeight: DestinationWeight, i: number, isValid: boolean) {
     const destination = destinationWeight.destination;
     return {
-      host: destination.host || '-',
+      host: this.serviceLink(this.props.namespace, destination.host, isValid),
       subset: destination.subset || '-',
       port: destination.port ? destination.port.number || '-' : '-'
     };

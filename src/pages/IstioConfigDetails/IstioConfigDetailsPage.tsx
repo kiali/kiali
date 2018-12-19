@@ -125,6 +125,15 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.update;
   };
 
+  onCancel = () => {
+    if (this.hasOverview()) {
+      this.props.history.push(this.props.location.pathname + '?list=overview');
+      this.onRefresh();
+    } else {
+      this.backToList();
+    }
+  };
+
   onDelete = () => {
     const deletePromise = this.props.match.params.objectSubtype
       ? API.deleteIstioConfigDetailSubtype(
@@ -271,7 +280,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       <IstioActionButtons
         objectName={this.props.match.params.object}
         canUpdate={this.canUpdate() && this.state.isModified && !yamlErrors}
-        onCancel={this.backToList}
+        onCancel={this.onCancel}
         onUpdate={this.onUpdate}
       />
     );
