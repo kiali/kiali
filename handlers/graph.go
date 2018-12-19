@@ -482,10 +482,10 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
 	}
 
+	// note, we don't track 2xx because it's not used downstream and can be easily
+	// calculated: 2xx = (rate - 3xx - 4xx - 5xx)
 	var ck string
 	switch {
-	case strings.HasPrefix(string(code), "2"):
-		ck = "rate2xx"
 	case strings.HasPrefix(string(code), "3"):
 		ck = "rate3xx"
 	case strings.HasPrefix(string(code), "4"):
@@ -493,12 +493,15 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 	case strings.HasPrefix(string(code), "5"):
 		ck = "rate5xx"
 	}
-	addToMetadataValue(edge.Metadata, ck, val)
-	addToMetadataValue(edge.Metadata, "rate", val)
-
 	addToMetadataValue(source.Metadata, "rateOut", val)
-	addToMetadataValue(dest.Metadata, ck, val)
+
+	addToMetadataValue(edge.Metadata, "rate", val)
 	addToMetadataValue(dest.Metadata, "rate", val)
+
+	if ck != "" {
+		addToMetadataValue(edge.Metadata, ck, val)
+		addToMetadataValue(dest.Metadata, ck, val)
+	}
 
 	return source, dest
 }
