@@ -133,7 +133,7 @@ const pathRoutes: Path[] = [
 
 const secondaryMastheadRoutes: Path[] = [
   {
-    path: '/graph',
+    path: '/graph/namespaces',
     component: DefaultSecondaryMasthead
   }
 ];
