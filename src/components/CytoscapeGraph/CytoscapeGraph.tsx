@@ -43,6 +43,7 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { DagreGraph } from './graphs/DagreGraph';
 import GraphThunkActions from '../../actions/GraphThunkActions';
+import * as MessageCenterUtils from '../../utils/MessageCenter';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -453,6 +454,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     if (target.data('isInaccessible')) {
+      return;
+    }
+    if (target.data('hasMissingSC')) {
+      MessageCenterUtils.add(
+        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`
+      );
       return;
     }
     if (target.data('isOutside')) {
