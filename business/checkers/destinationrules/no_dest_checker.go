@@ -61,11 +61,15 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[string]string) bool {
 	for _, wl := range n.WorkloadList.Workloads {
 		if service == wl.Labels["app"] {
+			valid := true
 			for k, v := range labels {
 				wlv, found := wl.Labels[k]
 				if !found || wlv != v {
+					valid = false
 					break
 				}
+			}
+			if valid {
 				return true
 			}
 		}

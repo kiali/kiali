@@ -64,9 +64,43 @@ func TestNoMatchingSubset(t *testing.T) {
 	validations, valid := NoDestinationChecker{
 		Namespace: "test-namespace",
 		WorkloadList: data.CreateWorkloadList("test-namespace",
-			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
 		),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Equal("error", validations[0].Severity)
+	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
+	assert.Equal("spec/subsets[0]", validations[0].Path)
+}
+
+func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.AddSubsetToDestinationRule(map[string]interface{}{
+		"name": "reviewsv2",
+		"labels": map[string]interface{}{
+			"version": "v2",
+		}},
+		data.AddSubsetToDestinationRule(map[string]interface{}{
+			"name": "reviewsv1",
+			"labels": map[string]interface{}{
+				"version": "v1",
+				"seek":    "notfound",
+			}}, data.CreateEmptyDestinationRule("test-namespace", "name", "reviews")))
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviews", appVersionLabel("reviews", "v2")),
+		),
+		DestinationRule: dr,
 	}.Check()
 
 	assert.False(valid)
