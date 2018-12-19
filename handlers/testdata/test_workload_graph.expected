@@ -64,7 +64,8 @@
           "destServices": {
             "ratings": true
           },
-          "rate": "40.00"
+          "rate": "60.00",
+          "rate5XX": "20.00"
         }
       },
       {
@@ -93,7 +94,7 @@
             "reviews": true
           },
           "rate": "40.00",
-          "rateOut": "40.00"
+          "rateOut": "50.00"
         }
       },
       {
@@ -108,7 +109,7 @@
             "reviews": true
           },
           "rate": "40.00",
-          "rateOut": "60.00"
+          "rateOut": "70.00"
         }
       },
       {
@@ -220,7 +221,7 @@
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "2075586d4defa2622017ea76b7c582c0",
           "rate": "20.00",
-          "percentRate": "33.33"
+          "percentRate": "28.57"
         }
       },
       {
@@ -228,8 +229,10 @@
           "id": "fa1db53921ef4a16b273c5260df63c2d",
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "5fd49fef66081810598406b0686500ae",
-          "rate": "20.00",
-          "percentRate": "33.33"
+          "rate": "30.00",
+          "rate5XX": "10.00",
+          "percentErr": "33.33",
+          "percentRate": "42.86"
         }
       },
       {
@@ -238,7 +241,7 @@
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "731126638001dfa2b6cbeb3b326b6678",
           "rate": "20.00",
-          "percentRate": "33.33"
+          "percentRate": "28.57"
         }
       },
       {
@@ -246,8 +249,10 @@
           "id": "0b356bd23faa1d1f26b3edeb4bbf0502",
           "source": "9e97011b2086f59a90626cfd5cf23fbf",
           "target": "5fd49fef66081810598406b0686500ae",
-          "rate": "20.00",
-          "percentRate": "50.00"
+          "rate": "30.00",
+          "rate5XX": "10.00",
+          "percentErr": "33.33",
+          "percentRate": "60.00"
         }
       },
       {
@@ -256,7 +261,7 @@
           "source": "9e97011b2086f59a90626cfd5cf23fbf",
           "target": "9e97011b2086f59a90626cfd5cf23fbf",
           "rate": "20.00",
-          "percentRate": "50.00"
+          "percentRate": "40.00"
         }
       },
       {

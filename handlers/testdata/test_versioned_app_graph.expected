@@ -73,7 +73,8 @@
           "destServices": {
             "ratings": true
           },
-          "rate": "40.00"
+          "rate": "60.00",
+          "rate5XX": "20.00"
         }
       },
       {
@@ -104,7 +105,7 @@
             "reviews": true
           },
           "rate": "40.00",
-          "rateOut": "40.00"
+          "rateOut": "50.00"
         }
       },
       {
@@ -120,7 +121,7 @@
             "reviews": true
           },
           "rate": "40.00",
-          "rateOut": "60.00"
+          "rateOut": "70.00"
         }
       },
       {
@@ -173,8 +174,10 @@
           "id": "ddf45549de5e603dee9a0cd9c83f9cfb",
           "source": "5cb6f79f37cb95cf40ea6fb23779b0e6",
           "target": "08d6a5dd6e290fbc42e259053b86a762",
-          "rate": "20.00",
-          "percentRate": "50.00"
+          "rate": "30.00",
+          "rate5XX": "10.00",
+          "percentErr": "33.33",
+          "percentRate": "60.00"
         }
       },
       {
@@ -183,7 +186,7 @@
           "source": "5cb6f79f37cb95cf40ea6fb23779b0e6",
           "target": "5cb6f79f37cb95cf40ea6fb23779b0e6",
           "rate": "20.00",
-          "percentRate": "50.00"
+          "percentRate": "40.00"
         }
       },
       {
@@ -280,8 +283,10 @@
           "id": "4fe76972070982cc0fe01b5d42836ca1",
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "08d6a5dd6e290fbc42e259053b86a762",
-          "rate": "20.00",
-          "percentRate": "33.33"
+          "rate": "30.00",
+          "rate5XX": "10.00",
+          "percentErr": "33.33",
+          "percentRate": "42.86"
         }
       },
       {
@@ -290,7 +295,7 @@
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "87100ff76f5122d56e8aa75d018b5d67",
           "rate": "20.00",
-          "percentRate": "33.33"
+          "percentRate": "28.57"
         }
       },
       {
@@ -299,7 +304,7 @@
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "dd4c5162b7f38a52e7f984766f88d807",
           "rate": "20.00",
-          "percentRate": "33.33"
+          "percentRate": "28.57"
         }
       }
     ]
