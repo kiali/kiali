@@ -32,7 +32,7 @@ const TIMER_TIME_BETWEEN_DOTS_MAX = 1000;
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
-const SPEED_RESPONSE_TIME_MAX = 10;
+const SPEED_RESPONSE_TIME_MAX = 10000;
 
 // Speed to travel trough an edge
 const SPEED_RATE_MIN = 0.1;
