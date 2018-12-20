@@ -31,11 +31,20 @@ reloads any changes to the browser for rapid development.
 * `build`: Production build output
 * `public`: Home of index.html
 * `src`: Source and test code
+* `src/actions`:  Redux actions
 * `src/app`: React top level component
 * `src/assets`: Images and other assets
-* `src/components`: Stateless components (pure functions)
+* `src/config`: Configuration
+* `src/containers`: [.line-through]#Redux connected containers# _Deprecated_
+* `src/components`: React Components
+* `src/fonts`:  Fonts
+* `src/images`:  Patternfly Images
 * `src/pages`: Top level pages and nested components
-* `src/types`: Shared model
+* `src/reducers`: Redux reducers
+* `src/services`: Api services
+* `src/store`:  Redux store definitions
+* `src/types`: Typescript definitions for all kinds of types
+* `src/utils`: Various Utilities
 
 == Developing
 
@@ -78,7 +87,7 @@ WARNING: The proxy will only serve requests without the text/html accept header,
 using the browser directly won't work.
 
 === Styling
-PatternFly is the main UI components framework. It defines style based on SASS preprocessor.
+https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
 All Patternfly build assets are copied to `src`.
 Any React component may have its related SCSS file (such as `App.scss` - this one includes all PatternFly Sass along with
 PatternFly React Sass extensions).
