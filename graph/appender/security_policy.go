@@ -75,7 +75,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
-	// create map to quickly look up responseTime
+	// create map to quickly look up securityPolicy
 	securityPolicyMap := make(map[string]string)
 	a.populateSecurityPolicyMap(securityPolicyMap, &outVector)
 	a.populateSecurityPolicyMap(securityPolicyMap, &inVector)

@@ -2,6 +2,7 @@ package appender
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -132,8 +133,8 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 }
 
 func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]float64) {
-	for _, s := range trafficMap {
-		for _, e := range s.Edges {
+	for _, n := range trafficMap {
+		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			e.Metadata["responseTime"] = responseTimeMap[key]
 		}
@@ -167,7 +168,14 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		val := float64(s.Value)
+		// to best preserve precision convert from secs to millis now, otherwise the
+		// thousandths place is dropped downstream.
+		val := float64(s.Value) * 1000.0
+
+		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it
+		if math.IsNaN(val) {
+			continue
+		}
 
 		if a.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
