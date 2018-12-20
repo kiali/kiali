@@ -30,7 +30,7 @@ func TestResponseTime(t *testing.T) {
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
-			Value:  10.0}}
+			Value:  0.010}}
 
 	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version)),0.001)`
 	q2m0 := model.Metric{
@@ -76,16 +76,16 @@ func TestResponseTime(t *testing.T) {
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
-			Value:  20.0},
+			Value:  0.020},
 		&model.Sample{
 			Metric: q2m1,
-			Value:  20.0},
+			Value:  0.020},
 		&model.Sample{
 			Metric: q2m2,
-			Value:  30.0},
+			Value:  0.030},
 		&model.Sample{
 			Metric: q2m3,
-			Value:  30.0}}
+			Value:  0.030}}
 
 	client, api, err := setupMocked()
 	if err != nil {

@@ -35,12 +35,12 @@ type NodeData struct {
 	Version         string          `json:"version,omitempty"`
 	Service         string          `json:"service,omitempty"`         // requested service for NodeTypeService
 	DestServices    map[string]bool `json:"destServices,omitempty"`    // requested services for [dest] node
-	Rate            string          `json:"rate,omitempty"`            // edge aggregate
+	Rate            string          `json:"rate,omitempty"`            // edge aggregate, http is in requests per second
 	Rate3xx         string          `json:"rate3XX,omitempty"`         // edge aggregate
 	Rate4xx         string          `json:"rate4XX,omitempty"`         // edge aggregate
 	Rate5xx         string          `json:"rate5XX,omitempty"`         // edge aggregate
 	RateOut         string          `json:"rateOut,omitempty"`         // edge aggregate
-	RateTcpSent     string          `json:"rateTcpSent,omitempty"`     // edge aggregate
+	RateTcpSent     string          `json:"rateTcpSent,omitempty"`     // edge aggregate, // tcp is in bytes per second
 	RateTcpSentOut  string          `json:"rateTcpSentOut,omitempty"`  // edge aggregate
 	HasCB           bool            `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
 	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
@@ -62,16 +62,16 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Rate         string `json:"rate,omitempty"`
+	Rate         string `json:"rate,omitempty"` // http is in requests per second
 	Rate3xx      string `json:"rate3XX,omitempty"`
 	Rate4xx      string `json:"rate4XX,omitempty"`
 	Rate5xx      string `json:"rate5XX,omitempty"`
 	PercentErr   string `json:"percentErr,omitempty"`
-	PercentRate  string `json:"percentRate,omitempty"` // percent of total parent requests
-	ResponseTime string `json:"responseTime,omitempty"`
-	IsMTLS       bool   `json:"isMTLS,omitempty"`   // true (mutual TLS connection) | false
-	IsUnused     bool   `json:"isUnused,omitempty"` // true | false
-	TcpSentRate  string `json:"tcpSentRate,omitempty"`
+	PercentRate  string `json:"percentRate,omitempty"`  // percent of total parent requests
+	ResponseTime string `json:"responseTime,omitempty"` // in millis
+	IsMTLS       bool   `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
+	IsUnused     bool   `json:"isUnused,omitempty"`     // true | false
+	TcpSentRate  string `json:"tcpSentRate,omitempty"`  // tcp is in bytes per sec
 }
 
 type NodeWrapper struct {
@@ -332,7 +332,7 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 
 		if val, ok := e.Metadata["responseTime"]; ok {
 			responseTime := val.(float64)
-			ed.ResponseTime = fmt.Sprintf("%.2f", responseTime)
+			ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
 		}
 
 		percentRate := rate / getRate(e.Source.Metadata, "rateOut") * 100.0
