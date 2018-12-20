@@ -5,15 +5,15 @@ import { style } from 'typestyle';
 
 type RpsChartTypeProp = {
   label: string;
-  dataRps: [string, number][];
-  dataErrors: [string, number][];
+  dataRps: [string | number][];
+  dataErrors: [string | number][];
   hide?: boolean;
 };
 
 type TcpChartTypeProp = {
   label: string;
-  sentRates: [string, number][];
-  receivedRates: [string, number][];
+  sentRates: [string | number][];
+  receivedRates: [string | number][];
   hide?: boolean;
 };
 
@@ -63,7 +63,7 @@ const thereIsTrafficData = seriesData => {
   );
 };
 
-const renderSparkline = (series: [string, number][], colors: PfColors[], yTickFormat?: (val: number) => string) => {
+const renderSparkline = (series: [string | number][], colors: PfColors[], yTickFormat?: (val: number) => string) => {
   const chartData = {
     x: 'x',
     columns: series,

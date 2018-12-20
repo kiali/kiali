@@ -149,7 +149,7 @@ export const getDatapoints = (
   mg: M.MetricGroup,
   title: string,
   comparator?: (metric: Metric) => boolean
-): [string, number][] => {
+): [string | number][] => {
   let series: M.TimeSeries[] = [];
   if (mg && mg.matrix) {
     const tsa: M.TimeSeries[] = mg.matrix;

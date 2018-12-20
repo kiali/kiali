@@ -26,14 +26,14 @@ import { Reporter } from 'src/types/MetricsOptions';
 
 type SummaryPanelGroupState = {
   loading: boolean;
-  requestCountIn: [string, number][] | null;
-  requestCountOut: [string, number][];
-  errorCountIn: [string, number][];
-  errorCountOut: [string, number][];
-  tcpSentIn: [string, number][];
-  tcpSentOut: [string, number][];
-  tcpReceivedIn: [string, number][];
-  tcpReceivedOut: [string, number][];
+  requestCountIn: [string | number][] | null;
+  requestCountOut: [string | number][];
+  errorCountIn: [string | number][];
+  errorCountOut: [string | number][];
+  tcpSentIn: [string | number][];
+  tcpSentOut: [string | number][];
+  tcpReceivedIn: [string | number][];
+  tcpReceivedOut: [string | number][];
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;

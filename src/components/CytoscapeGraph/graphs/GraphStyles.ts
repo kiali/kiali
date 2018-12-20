@@ -100,7 +100,7 @@ export class GraphStyles {
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
           const responseTime = ele.data('responseTime') ? Number(ele.data('responseTime')) : 0;
           if (responseTime > 0) {
-            content = responseTime < 1.0 ? (responseTime * 1000).toFixed(0) + 'ms' : responseTime.toFixed(2) + 's';
+            content = responseTime < 1000.0 ? responseTime.toFixed(0) + 'ms' : (responseTime / 1000.0).toFixed(2) + 's';
           }
           break;
         }

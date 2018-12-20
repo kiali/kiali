@@ -24,14 +24,14 @@ import { serverConfig } from '../../config';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
-  reqRates: [string, number][] | null;
-  errRates: [string, number][];
-  rtAvg: [string, number][];
-  rtMed: [string, number][];
-  rt95: [string, number][];
-  rt99: [string, number][];
-  tcpSent: [string, number][];
-  tcpReceived: [string, number][];
+  reqRates: [string | number][] | null;
+  errRates: [string | number][];
+  rtAvg: [string | number][];
+  rtMed: [string | number][];
+  rt95: [string | number][];
+  rt99: [string | number][];
+  tcpSent: [string | number][];
+  tcpReceived: [string | number][];
   metricsLoadError: string | null;
 };
 

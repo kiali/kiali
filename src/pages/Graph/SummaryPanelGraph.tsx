@@ -15,10 +15,10 @@ import MetricsOptions from 'src/types/MetricsOptions';
 
 type SummaryPanelGraphState = {
   loading: boolean;
-  reqRates: [string, number][] | null;
-  errRates: [string, number][];
-  tcpSent: [string, number][];
-  tcpReceived: [string, number][];
+  reqRates: [string | number][] | null;
+  errRates: [string | number][];
+  tcpSent: [string | number][];
+  tcpReceived: [string | number][];
   metricsLoadError: string | null;
 };
 
