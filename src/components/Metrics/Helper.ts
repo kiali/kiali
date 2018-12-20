@@ -9,6 +9,11 @@ import {
   AllPromLabelsValues,
   TimeSeries
 } from '../../types/Metrics';
+import { BaseMetricsOptions } from '../../types/MetricsOptions';
+import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
+import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { DurationInSeconds } from '../../types/Common';
+import { computePrometheusQueryInterval } from '../../services/Prometheus';
 
 namespace MetricsHelper {
   export const extractLabelValuesOnSeries = (
@@ -89,6 +94,39 @@ namespace MetricsHelper {
       }
     });
     return promLabels;
+  };
+
+  export const settingsToOptions = (
+    settings: MetricsSettings,
+    opts: BaseMetricsOptions,
+    aggregations?: Aggregation[]
+  ) => {
+    opts.avg = settings.showAverage;
+    opts.quantiles = settings.showQuantiles;
+    opts.byLabels = [];
+    if (aggregations) {
+      settings.activeLabels.forEach(lbl => {
+        const agg = aggregations.find(a => a.displayName === lbl);
+        if (agg) {
+          opts.byLabels!.push(agg.label);
+        }
+      });
+    }
+  };
+
+  export const initMetricsSettings = (opts: BaseMetricsOptions, aggregations?: Aggregation[]) => {
+    settingsToOptions(MetricsSettingsDropdown.initialMetricsSettings(), opts, aggregations);
+  };
+
+  export const durationToOptions = (duration: DurationInSeconds, opts: BaseMetricsOptions) => {
+    opts.duration = duration;
+    const intervalOpts = computePrometheusQueryInterval(duration);
+    opts.step = intervalOpts.step;
+    opts.rateInterval = intervalOpts.rateInterval;
+  };
+
+  export const initDuration = (opts: BaseMetricsOptions) => {
+    durationToOptions(MetricsDuration.initialDuration(), opts);
   };
 }
 

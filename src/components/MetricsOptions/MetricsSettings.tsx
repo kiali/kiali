@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
+import isEqual from 'lodash/fp/isEqual';
+
+import history, { URLParams } from '../../app/History';
 import { LabelDisplayName, AllLabelsValues } from '../../types/Metrics';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
@@ -12,56 +15,89 @@ export interface MetricsSettings {
   showQuantiles: Quantiles[];
 }
 
-interface Props extends MetricsSettings {
+interface Props {
   onChanged: (state: MetricsSettings) => void;
   onLabelsFiltersChanged: (label: LabelDisplayName, value: string, checked: boolean) => void;
   labelValues: AllLabelsValues;
 }
 
 export class MetricsSettingsDropdown extends React.Component<Props> {
+  private shouldReportOptions: boolean;
+  private settings: MetricsSettings;
+
+  static initialMetricsSettings = (): MetricsSettings => {
+    const urlParams = new URLSearchParams(history.location.search);
+    const settings: MetricsSettings = {
+      showAverage: true,
+      showQuantiles: ['0.5', '0.95', '0.99'],
+      activeLabels: []
+    };
+    const avg = urlParams.get(URLParams.SHOW_AVERAGE);
+    if (avg !== null) {
+      settings.showAverage = avg === 'true';
+    }
+    const quantiles = urlParams.get(URLParams.QUANTILES);
+    if (quantiles !== null) {
+      if (quantiles.trim().length !== 0) {
+        settings.showQuantiles = quantiles.split(' ').map(val => val.trim() as Quantiles);
+      } else {
+        settings.showQuantiles = [];
+      }
+    }
+    const byLabels = urlParams.getAll(URLParams.BY_LABELS);
+    if (byLabels.length !== 0) {
+      settings.activeLabels = byLabels as LabelDisplayName[];
+    }
+    return settings;
+  };
+
   constructor(props: Props) {
     super(props);
   }
 
+  componentDidUpdate() {
+    if (this.shouldReportOptions) {
+      this.shouldReportOptions = false;
+      this.props.onChanged(this.settings);
+    }
+  }
+
   onGroupingChanged = (label: LabelDisplayName, checked: boolean) => {
     const newLabels = checked
-      ? [label].concat(this.props.activeLabels)
-      : this.props.activeLabels.filter(g => label !== g);
+      ? [label].concat(this.settings.activeLabels)
+      : this.settings.activeLabels.filter(g => label !== g);
 
-    this.props.onChanged({
-      showAverage: this.props.showAverage,
-      showQuantiles: this.props.showQuantiles,
-      activeLabels: newLabels
-    });
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.delete(URLParams.BY_LABELS);
+    newLabels.forEach(lbl => urlParams.append(URLParams.BY_LABELS, lbl));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
   onHistogramAverageChanged = (checked: boolean) => {
-    this.props.onChanged({
-      showAverage: checked,
-      showQuantiles: this.props.showQuantiles,
-      activeLabels: this.props.activeLabels
-    });
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParams.SHOW_AVERAGE, String(checked));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
   onHistogramOptionsChanged = (quantile: Quantiles, checked: boolean) => {
     const newQuantiles = checked
-      ? [quantile].concat(this.props.showQuantiles)
-      : this.props.showQuantiles.filter(q => quantile !== q);
+      ? [quantile].concat(this.settings.showQuantiles)
+      : this.settings.showQuantiles.filter(q => quantile !== q);
 
-    this.props.onChanged({
-      showAverage: this.props.showAverage,
-      showQuantiles: newQuantiles,
-      activeLabels: this.props.activeLabels
-    });
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParams.QUANTILES, newQuantiles.join(' '));
+    history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
   render() {
+    this.processUrlParams();
+
     const checkboxStyle = style({ marginLeft: 5 });
     const secondLevelStyle = style({ marginLeft: 14 });
 
     const displayGroupingLabels: any[] = [];
     this.props.labelValues.forEach((values, name) => {
-      const checked = this.props.activeLabels.includes(name);
+      const checked = this.settings.activeLabels.includes(name);
       const labelsHTML = values
         ? Object.keys(values).map(val => (
             <div key={'groupings_' + name + '_' + val} className={secondLevelStyle}>
@@ -98,7 +134,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
         <label>
           <input
             type="checkbox"
-            checked={this.props.showAverage}
+            checked={this.settings.showAverage}
             onChange={event => this.onHistogramAverageChanged(event.target.checked)}
           />
           <span className={checkboxStyle}>Average</span>
@@ -106,7 +142,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
       </div>
     )].concat(
       allQuantiles.map((o, idx) => {
-        const checked = this.props.showQuantiles.includes(o);
+        const checked = this.settings.showQuantiles.includes(o);
         return (
           <div key={'histo_' + idx}>
             <label>
@@ -144,5 +180,11 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
         </Button>
       </OverlayTrigger>
     );
+  }
+
+  processUrlParams() {
+    const metricsSettings = MetricsSettingsDropdown.initialMetricsSettings();
+    this.shouldReportOptions = !isEqual(metricsSettings)(this.settings);
+    this.settings = metricsSettings;
   }
 }

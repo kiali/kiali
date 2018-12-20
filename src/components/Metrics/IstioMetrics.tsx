@@ -1,17 +1,21 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
+import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 
-import IstioMetricsOptionsBar from '../MetricsOptions/IstioMetricsOptionsBar';
+import RefreshContainer from '../../containers/RefreshContainer';
 import * as API from '../../services/Api';
-import { computePrometheusQueryInterval } from '../../services/Prometheus';
 import { GrafanaInfo } from '../../store/Store';
+import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
-import { Direction, MetricsOptions } from '../../types/MetricsOptions';
+import { Direction, MetricsOptions, Reporter } from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
+import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
+import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import MetricsReporter from '../MetricsOptions/MetricsReporter';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -37,22 +41,31 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   };
 
   options: MetricsOptions;
+  grafanaLink: string | undefined;
 
   constructor(props: IstioMetricsProps) {
     super(props);
 
+    this.options = this.initOptions();
+    this.grafanaLink = this.getGrafanaLink();
     this.state = {
       labelValues: new Map()
     };
   }
 
-  onOptionsChanged = (options: MetricsOptions) => {
-    this.options = options;
-    const intervalOpts = computePrometheusQueryInterval(options.duration!);
-    options.step = intervalOpts.step;
-    options.rateInterval = intervalOpts.rateInterval;
+  initOptions(): MetricsOptions {
+    const options: MetricsOptions = {
+      reporter: MetricsReporter.initialReporter(this.props.direction),
+      direction: this.props.direction
+    };
+    MetricsHelper.initMetricsSettings(options);
+    MetricsHelper.initDuration(options);
+    return options;
+  }
+
+  componentDidMount() {
     this.fetchMetrics();
-  };
+  }
 
   fetchMetrics = () => {
     let promise: Promise<API.Response<M.MonitoringDashboard>>;
@@ -102,9 +115,24 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     return undefined;
   }
 
+  onMetricsSettingsChanged = (settings: MetricsSettings) => {
+    MetricsHelper.settingsToOptions(settings, this.options, this.state.dashboard && this.state.dashboard.aggregations);
+    this.fetchMetrics();
+  };
+
   onLabelsFiltersChanged = (label: M.LabelDisplayName, value: string, checked: boolean) => {
     const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
     this.setState({ labelValues: newValues });
+  };
+
+  onDurationChanged = (duration: DurationInSeconds) => {
+    MetricsHelper.durationToOptions(duration, this.options);
+    this.fetchMetrics();
+  };
+
+  onReporterChanged = (reporter: Reporter) => {
+    this.options.reporter = reporter;
+    this.fetchMetrics();
   };
 
   render() {
@@ -129,15 +157,29 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 
   renderOptionsBar() {
     return (
-      <IstioMetricsOptionsBar
-        onOptionsChanged={this.onOptionsChanged}
-        onRefresh={this.fetchMetrics}
-        onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-        direction={this.props.direction}
-        labelValues={this.state.labelValues}
-        aggregations={this.state.dashboard ? this.state.dashboard.aggregations : []}
-        grafanaLink={this.getGrafanaLink()}
-      />
+      <Toolbar>
+        <FormGroup>
+          <MetricsSettingsDropdown
+            onChanged={this.onMetricsSettingsChanged}
+            onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+            labelValues={this.state.labelValues}
+          />
+        </FormGroup>
+        <FormGroup>
+          <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
+        </FormGroup>
+        {this.grafanaLink && (
+          <FormGroup style={{ borderRight: 'none' }}>
+            <a id={'grafana_link'} href={this.grafanaLink} target="_blank" rel="noopener noreferrer">
+              View in Grafana <Icon type={'fa'} name={'external-link'} />
+            </a>
+          </FormGroup>
+        )}
+        <ToolbarRightContent>
+          <MetricsDuration onChanged={this.onDurationChanged} />
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
+        </ToolbarRightContent>
+      </Toolbar>
     );
   }
 }

@@ -1,18 +1,21 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
+import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 
-import { KialiAppState } from '../../store/Store';
-import MetricsOptionsBar from '../MetricsOptions/MetricsOptionsBar';
+import RefreshContainer from '../../containers/RefreshContainer';
 import * as API from '../../services/Api';
-import { computePrometheusQueryInterval } from '../../services/Prometheus';
+import { KialiAppState } from '../../store/Store';
+import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
-import { BaseMetricsOptions, CustomMetricsOptions } from '../../types/MetricsOptions';
+import { CustomMetricsOptions } from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
+import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
+import MetricsDuration from '../MetricsOptions/MetricsDuration';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -32,24 +35,29 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     isPageVisible: true
   };
 
-  options: BaseMetricsOptions;
+  options: CustomMetricsOptions;
 
   constructor(props: CustomMetricsProps) {
     super(props);
 
+    this.options = this.initOptions();
     this.state = {
       labelValues: new Map()
     };
   }
 
-  onOptionsChanged = (options: BaseMetricsOptions) => {
-    this.options = options;
-    const intervalOpts = computePrometheusQueryInterval(options.duration!);
-    options.step = intervalOpts.step;
-    options.rateInterval = intervalOpts.rateInterval;
-    (options as CustomMetricsOptions).version = this.props.version;
+  initOptions(): CustomMetricsOptions {
+    const options: CustomMetricsOptions = {
+      version: this.props.version
+    };
+    MetricsHelper.initMetricsSettings(options);
+    MetricsHelper.initDuration(options);
+    return options;
+  }
+
+  componentDidMount() {
     this.fetchMetrics();
-  };
+  }
 
   fetchMetrics = () => {
     API.getCustomDashboard(authentication(), this.props.namespace, this.props.app, this.props.template, this.options)
@@ -66,9 +74,19 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
       });
   };
 
+  onMetricsSettingsChanged = (settings: MetricsSettings) => {
+    MetricsHelper.settingsToOptions(settings, this.options, this.state.dashboard && this.state.dashboard.aggregations);
+    this.fetchMetrics();
+  };
+
   onLabelsFiltersChanged = (label: M.LabelDisplayName, value: string, checked: boolean) => {
     const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
     this.setState({ labelValues: newValues });
+  };
+
+  onDurationChanged = (duration: DurationInSeconds) => {
+    MetricsHelper.durationToOptions(duration, this.options);
+    this.fetchMetrics();
   };
 
   render() {
@@ -93,13 +111,19 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
 
   renderOptionsBar() {
     return (
-      <MetricsOptionsBar
-        onOptionsChanged={this.onOptionsChanged}
-        onRefresh={this.fetchMetrics}
-        onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-        labelValues={this.state.labelValues}
-        aggregations={this.state.dashboard ? this.state.dashboard.aggregations : []}
-      />
+      <Toolbar>
+        <FormGroup>
+          <MetricsSettingsDropdown
+            onChanged={this.onMetricsSettingsChanged}
+            onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+            labelValues={this.state.labelValues}
+          />
+        </FormGroup>
+        <ToolbarRightContent>
+          <MetricsDuration onChanged={this.onDurationChanged} />
+          <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
+        </ToolbarRightContent>
+      </Toolbar>
     );
   }
 }
