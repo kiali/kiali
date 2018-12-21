@@ -20,17 +20,17 @@
 
 # The credentials can be specified either as already base64 encoded, or in plain text.
 # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
-if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
+if [ "${KIALI_USERNAME_BASE64}" = "" ]; then
   KIALI_USERNAME="${KIALI_USERNAME=admin}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_USERNAME" == "" ]; then
+  if [ "$KIALI_USERNAME" = "" ]; then
     KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
   fi
   KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
 fi
 
-if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
+if [ "${KIALI_PASSPHRASE_BASE64}" = "" ]; then
   KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_PASSPHRASE" == "" ]; then
+  if [ "$KIALI_PASSPHRASE" = "" ]; then
     KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
     echo
   fi
@@ -68,17 +68,17 @@ fi
 
 # If asking for the last release (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
-if [ "${IMAGE_VERSION}" == "lastrelease" ]; then
+if [ "${IMAGE_VERSION}" = "lastrelease" ]; then
   version_we_want=$(curl https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
     grep  "tag_name" | \
     sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
   echo "Will use the last Kiali release: $version_we_want"
   IMAGE_VERSION=${version_we_want}
-  if [ "${VERSION_LABEL}" == "lastrelease" ]; then
+  if [ "${VERSION_LABEL}" = "lastrelease" ]; then
     VERSION_LABEL=${version_we_want}
   fi
 else
-  if [ "${IMAGE_VERSION}" == "latest" ]; then
+  if [ "${IMAGE_VERSION}" = "latest" ]; then
     echo "Will use the latest Kiali image from master branch"
     VERSION_LABEL="master"
   fi
