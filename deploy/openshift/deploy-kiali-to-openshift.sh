@@ -106,7 +106,7 @@ get_downloader() {
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.
 
-YAML_DIR=${YAML_DIR:-$(dirname $(readlink -f "$0"))}
+YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 
 # Now deploy all the Kiali components to OpenShift
 # If we are missing one or more of the yaml files, download them
