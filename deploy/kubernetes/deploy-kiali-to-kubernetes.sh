@@ -92,13 +92,13 @@ fi
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${IMAGE_VERSION}" == "lastrelease" ]; then
   get_downloader
-  version_we_want=$(${downloader} https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
+  kiali_version_we_want=$(${downloader} https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
     grep  "tag_name" | \
     sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-  echo "Will use the last Kiali release: $version_we_want"
-  IMAGE_VERSION=${version_we_want}
+  echo "Will use the last Kiali release: $kiali_version_we_want"
+  IMAGE_VERSION=${kiali_version_we_want}
   if [ "${VERSION_LABEL}" == "lastrelease" ]; then
-    VERSION_LABEL=${version_we_want}
+    VERSION_LABEL=${kiali_version_we_want}
   fi
 else
   if [ "${IMAGE_VERSION}" == "latest" ]; then
