@@ -18,6 +18,28 @@
 # is installed and in your PATH.
 ##############################################################################
 
+# Determine what tool to use to download files. This supports environments that have either wget or curl.
+# After return, $downloader will be a command to stream a URL's content to stdout.
+get_downloader() {
+  if [ ! "$downloader" ] ; then
+    # Use wget command if available, otherwise try curl
+    if which wget > /dev/null 2>&1 ; then
+      downloader="wget -q -O -"
+    fi
+    if [ ! "$downloader" ] ; then
+      if which curl > /dev/null 2>&1 ; then
+        downloader="curl -s"
+      fi
+    fi
+    if [ ! "$downloader" ] ; then
+      echo "ERROR: You must install either curl or wget to allow downloading"
+      exit 1
+    else
+      echo "Using downloader: $downloader"
+    fi
+  fi
+}
+
 # The credentials can be specified either as already base64 encoded, or in plain text.
 # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
 if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
@@ -69,7 +91,8 @@ fi
 # If asking for the last release (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${IMAGE_VERSION}" == "lastrelease" ]; then
-  version_we_want=$(curl https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
+  get_downloader
+  version_we_want=$(${downloader} https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
     grep  "tag_name" | \
     sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
   echo "Will use the last Kiali release: $version_we_want"
@@ -83,25 +106,6 @@ else
     VERSION_LABEL="master"
   fi
 fi
-
-# Determine what tool to use to download files. This supports environments that have either wget or curl.
-get_downloader() {
-  if [ ! "$downloader" ] ; then
-    # Use wget command if available, otherwise try curl
-    if which wget > /dev/null ; then
-      downloader="wget -q -O -"
-    fi
-    if [ ! "$downloader" ] ; then
-      if which curl > /dev/null ; then
-        downloader="curl -s"
-      fi
-    fi
-    if [ ! "$downloader" ] ; then
-      echo "ERROR: You must install either curl or wget to allow downloading"
-      exit 1
-    fi
-  fi
-}
 
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.
