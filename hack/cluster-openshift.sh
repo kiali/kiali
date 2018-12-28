@@ -24,6 +24,23 @@ debug() {
   fi
 }
 
+get_downloader() {
+  # Use wget command if available, otherwise try curl
+  if which wget > /dev/null ; then
+    DOWNLOADER="wget -O"
+  fi
+  if [ ! "$DOWNLOADER" ] ; then
+    if which curl > /dev/null ; then
+      DOWNLOADER="curl -L -o"
+    fi
+  fi
+  if [ ! "$DOWNLOADER" ] ; then
+    echo "ERROR: You must install either curl or wget to allow downloading"
+    exit 1
+  fi
+  debug "Downloader command to be used: ${DOWNLOADER}"
+}
+
 # Change to the directory where this script is and set our env
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -248,7 +265,7 @@ WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
 # If you set KIALI_ENABLED=true, then the istiooc command will install a version of Kiali for you.
 # If that is set to false, the other KIALI_ environment variables will be ignored.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
-KIALI_VERSION="${KIALI_VERSION:-v0.10.1}"
+KIALI_VERSION="${KIALI_VERSION:-lastrelease}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSPHRASE="${KIALI_PASSPHRASE:-admin}"
 
@@ -262,6 +279,20 @@ if groups ${USER} | grep >/dev/null 2>&1 '\bdocker\b'; then
   DOCKER_SUDO=
 else
   DOCKER_SUDO=sudo
+fi
+
+# If latest Kiali release is to be installed, figure out which version that is
+if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
+  get_downloader
+  eval ${DOWNLOADER} /tmp/kiali-release-latest.json https://api.github.com/repos/kiali/kiali/releases/latest
+  KIALI_VERSION=$(cat /tmp/kiali-release-latest.json |\
+    grep  "tag_name" | \
+    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  if [ "${KIALI_VERSION}" == "" ]; then
+    echo "ERROR: Cannot determine the latest Kiali version to install"
+    exit 1
+  fi
+  echo "The latest Kiali release is: ${KIALI_VERSION}"
 fi
 
 # Determine where to get the binary executable and its full path and how to execute it.
@@ -347,32 +378,19 @@ if [[ -f "${MAISTRA_ISTIO_OC_EXE_PATH}" ]]; then
     exit 1
   fi
 else
-   echo "Downloading binary to ${MAISTRA_ISTIO_OC_EXE_PATH}"
+  echo "Downloading binary to ${MAISTRA_ISTIO_OC_EXE_PATH}"
 
-   # Use wget command if available, otherwise try curl
-   if which wget > /dev/null ; then
-     DOWNLOADER="wget -O"
-   fi
-   if [ ! "$DOWNLOADER" ] ; then
-     if which curl > /dev/null ; then
-       DOWNLOADER="curl -L -o"
-     fi
-   fi
-   if [ ! "$DOWNLOADER" ] ; then
-     echo "ERROR: You must install either curl or wget to allow downloading"
-     exit 1
-   fi
-
-   eval ${DOWNLOADER} ${MAISTRA_ISTIO_OC_EXE_PATH} ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}
-   if [ "$?" != "0" ]; then
-     echo "===== WARNING ====="
-     echo "Could not download the client binary for the version you want."
-     echo "Make sure this is valid: ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}"
-     echo "===== WARNING ====="
-     rm ${MAISTRA_ISTIO_OC_EXE_PATH}
-     exit 1
-   fi
-   chmod +x ${MAISTRA_ISTIO_OC_EXE_PATH}
+  get_downloader
+  eval ${DOWNLOADER} ${MAISTRA_ISTIO_OC_EXE_PATH} ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}
+  if [ "$?" != "0" ]; then
+    echo "===== WARNING ====="
+    echo "Could not download the client binary for the version you want."
+    echo "Make sure this is valid: ${MAISTRA_ISTIO_OC_DOWNLOAD_LOCATION}"
+    echo "===== WARNING ====="
+    rm ${MAISTRA_ISTIO_OC_EXE_PATH}
+    exit 1
+  fi
+  chmod +x ${MAISTRA_ISTIO_OC_EXE_PATH}
 fi
 
 debug "oc command that will be used: ${MAISTRA_ISTIO_OC_COMMAND}"
@@ -503,13 +521,13 @@ if [ "$_CMD" = "up" ]; then
     echo "Deleting any previously existing Kiali..."
     ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
     echo "Deploying Kiali..."
-    # TODO - instead of master in the URL, it should be literally ${VERSION_LABEL} - do this when we release 0.11
-    # TODO - instead of master for the value of VERSION_LABEL, it should be ${KIALI_VERSION} - do it when 0.11 is released
-    curl https://raw.githubusercontent.com/kiali/kiali/master/deploy/openshift/deploy-kiali-to-openshift.sh | \
-    VERSION_LABEL=master \
+    get_downloader
+    eval ${DOWNLOADER} /tmp/deploy-kiali-to-openshift.sh https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/deploy-kiali-to-openshift.sh
+    chmod +x /tmp/deploy-kiali-to-openshift.sh
+    VERSION_LABEL=${KIALI_VERSION} \
     IMAGE_VERSION=${KIALI_VERSION}  \
     KIALI_USERNAME=${KIALI_USERNAME}  \
-    KIALI_PASSPHRASE=${KIALI_PASSPHRASE} sh
+    KIALI_PASSPHRASE=${KIALI_PASSPHRASE} /tmp/deploy-kiali-to-openshift.sh
   fi
 
 elif [ "$_CMD" = "down" ];then
