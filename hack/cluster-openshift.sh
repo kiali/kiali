@@ -289,7 +289,7 @@ if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
     grep  "tag_name" | \
     sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
   if [ "${KIALI_VERSION}" == "" ]; then
-    echo "ERROR: Cannot determine the latest Kiali version to install"
+    echo "ERROR: Cannot determine the latest Kiali version to install. Set KIALI_VERSION env var to the version you want."
     exit 1
   fi
   echo "The latest Kiali release is: ${KIALI_VERSION}"
