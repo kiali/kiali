@@ -126,6 +126,10 @@ export default class GroupCompoundLayout {
 
       // We expect a discrete layout here
       const compoundLayout = targetElements.layout(compoundLayoutOptions);
+      compoundLayout.on('layoutstart layoutready layoutstop', evt => {
+        // Avoid to propagate any local layout events up to cy, this would yield a global operation when not all nodes are ready.
+        return false;
+      });
       compoundLayout.run();
 
       const boundingBox = targetElements.boundingBox();
