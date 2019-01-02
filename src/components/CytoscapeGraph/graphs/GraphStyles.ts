@@ -226,7 +226,7 @@ export class GraphStyles {
         case NodeType.APP:
           return 'square';
         case NodeType.SERVICE:
-          return 'triangle';
+          return ele.data('isServiceEntry') ? 'tag' : 'triangle';
         case NodeType.UNKNOWN:
           return 'diamond';
         case NodeType.WORKLOAD:

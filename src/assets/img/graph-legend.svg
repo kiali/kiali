@@ -12,7 +12,7 @@
    version="1.1"
    id="svg220"
    sodipodi:docname="graph-legend.svg"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)">
   <metadata
      id="metadata224">
     <rdf:RDF>
@@ -35,18 +35,18 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="1043"
+     inkscape:window-height="1116"
      id="namedview222"
      showgrid="false"
      showguides="false"
      inkscape:guide-bbox="true"
      inkscape:zoom="2.2334444"
-     inkscape:cx="839.72797"
+     inkscape:cx="228.26328"
      inkscape:cy="35.509668"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g1264"
+     inkscape:current-layer="g421"
      inkscape:snap-global="false">
     <sodipodi:guide
        position="412.36755,137.90359"
@@ -432,12 +432,6 @@
        id="tspan95">Workload</tspan>
   </text>
   <circle
-     id="Oval-5"
-     cx="25.901903"
-     cy="47.750866"
-     r="12.5"
-     style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1" />
-  <circle
      style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1"
      r="12.5"
      cy="47.993626"
@@ -485,12 +479,21 @@
          y="86.658684"
          x="45.879292">Source</tspan>
     </text>
+    <text
+       id="text1105-4"
+       y="121.59705"
+       x="44.219482"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:OpenSans, 'Open Sans';-inkscape-font-specification:'OpenSans, Open Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
+       line-spacing="18"
+       font-weight="normal"
+       font-size="12">
+      <tspan
+         sodipodi:role="line"
+         id="tspan407"
+         x="44.219482"
+         y="121.59705">Entry</tspan>
+    </text>
   </g>
-  <polygon
-     id="polygon117"
-     points="12.5,0 25,12.5 12.5,25 0,12.5 "
-     style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1"
-     transform="translate(13.640598,76.591794)" />
   <text
      id="Node-Shapes"
      font-size="15"
@@ -944,6 +947,47 @@
          points="17,29 23,23 29,29 23,35 "
          id="Polygon-9"
          transform="matrix(0.56467605,0,0,0.56467605,757.1337,41.673856)" />
+    </g>
+  </g>
+  <g
+     id="g1164-8"
+     transform="translate(-100.58743,47.451852)">
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:OpenSans, 'Open Sans';-inkscape-font-specification:'OpenSans, Open Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#030303;fill-rule:evenodd;stroke:none;stroke-width:1"
+       line-spacing="18"
+       font-weight="normal"
+       font-size="12"
+       id="Service-7"
+       x="145.52643"
+       y="75.508934">
+      <tspan
+         sodipodi:role="line"
+         id="tspan385"
+         x="145.52643"
+         y="75.508934">Service</tspan>
+    </text>
+  </g>
+  <g
+     id="g416">
+    <g
+       id="g421">
+      <circle
+         id="Oval-5"
+         cx="25.901903"
+         cy="47.750866"
+         r="12.5"
+         style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1" />
+      <polygon
+         id="polygon117"
+         points="12.5,0 25,12.5 12.5,25 0,12.5 "
+         style="fill:#ffffff;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1"
+         transform="translate(13.640598,76.591794)" />
+      <path
+         style="fill:none;stroke:#8b8d8f;stroke-width:1.0193181px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 14.345758,135.82667 v -0.91373 c 0,0 0,0.32031 -0.267643,-11.91256 -0.05201,-2.37671 -0.114104,-5.2273 -0.188274,-8.64616 h 13.677504 l 10.030168,10.96466 -10.030168,10.50779 z"
+         id="path411"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ccsccccc" />
     </g>
   </g>
 </svg>

@@ -4,16 +4,18 @@ import { Icon } from 'patternfly-react';
 import { NodeType } from '../../types/Graph';
 import { nodeData, NodeData } from './SummaryPanelCommon';
 
-export const nodeTypeToString = (nodeType: string) => {
-  if (nodeType === NodeType.UNKNOWN) {
+const getTitle = (data: NodeData) => {
+  if (data.nodeType === NodeType.UNKNOWN) {
     return 'Traffic Source';
   }
-
-  return nodeType.charAt(0).toUpperCase() + nodeType.slice(1);
+  if (data.nodeType === NodeType.SERVICE && data.isServiceEntry !== undefined) {
+    return data.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry';
+  }
+  return data.nodeType.charAt(0).toUpperCase() + data.nodeType.slice(1);
 };
 
 const isInaccessible = (data: NodeData): boolean => {
-  return data.isInaccessible || data.isServiceEntry;
+  return data.isInaccessible || data.isServiceEntry !== undefined;
 };
 
 const getLink = (data: NodeData, nodeType?: NodeType) => {
@@ -83,7 +85,7 @@ export const renderTitle = (data: NodeData) => {
 
   return (
     <>
-      <strong>{nodeTypeToString(data.nodeType)}:</strong> {link}{' '}
+      <strong>{getTitle(data)}:</strong> {link}{' '}
       {isInaccessible(data) && <Icon name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />}
     </>
   );

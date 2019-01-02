@@ -18,7 +18,7 @@ export interface NodeData {
   isInaccessible: boolean;
   isOutsider: boolean;
   isRoot: boolean;
-  isServiceEntry: boolean;
+  isServiceEntry: string | undefined;
   namespace: string;
   nodeType: NodeType;
   service: string;
