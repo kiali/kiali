@@ -4,8 +4,7 @@ const icons = {
   ISTIO: {
     MISSING_SIDECAR: { type: 'pf', name: 'blueprint', ascii: '\ue915 ', color: 'red' },
     VIRTUALSERVICE: { type: 'fa', name: 'code-fork', ascii: '\uf126 ' },
-    CIRCUIT_BREAKER: { type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
-    SERVICEENTRY: { type: 'pf', name: 'services', ascii: '\ue947' }
+    CIRCUIT_BREAKER: { type: 'fa', name: 'bolt', ascii: '\uf0e7 ' }
   },
   MENU: {
     OVERVIEW: 'fa fa-tachometer',

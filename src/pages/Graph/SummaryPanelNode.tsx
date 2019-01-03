@@ -255,12 +255,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           )}
           <span> {renderTitle(data)}</span>
           {renderLabels(data)}
-          {this.renderBadgeSummary(
-            node.data('hasCB'),
-            node.data('isServiceEntry'),
-            node.data('hasVS'),
-            node.data('hasMissingSC')
-          )}
+          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
         </div>
         <div className="panel-body">
           {shouldRenderSvcList && (
@@ -401,7 +396,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
-  private renderBadgeSummary = (hasCB: boolean, isServiceEntry: string, hasVS: boolean, hasMissingSC: boolean) => {
+  private renderBadgeSummary = (hasCB: boolean, hasVS: boolean, hasMissingSC: boolean) => {
     return (
       <>
         {hasCB && (
@@ -414,18 +409,6 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
-        {
-          // isServiceEntry !== undefined && (
-          // <div>
-          // <Icon
-          //   name={ICONS().ISTIO.SERVICEENTRY.name}
-          //   type={ICONS().ISTIO.SERVICEENTRY.type}
-          //   style={{ width: '10px' }}
-          // />
-          //  <span style={{ paddingLeft: '4px' }}>Is Service Entry ({isServiceEntry})</span>
-          // </div>
-          // )
-        }
         {hasVS && (
           <div>
             <Icon
