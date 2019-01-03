@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
@@ -38,7 +38,7 @@ func NewRouter() *mux.Router {
 		var handlerFunction http.Handler = route.HandlerFunc
 		handlerFunction = metricHandler(handlerFunction, route)
 		if route.Authenticated {
-			handlerFunction = config.AuthenticationHandler(handlerFunction)
+			handlerFunction = handlers.AuthenticationHandler(handlerFunction)
 		}
 		appRouter.
 			Methods(route.Method).

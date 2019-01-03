@@ -66,6 +66,53 @@ func NewRoutes() (r *Routes) {
 			handlers.GetToken,
 			true,
 		},
+		// swagger:route GET /auth/info OAuthInfo
+		// ---
+		// Endpoint to get the info (login path and so on) for OAuth on Openshift
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      404: notFoundError
+		//      500: internalError
+		//      200: info
+		{
+			"AuthenticationInfo",
+			"GET",
+			"/api/auth/info",
+			handlers.AuthenticationInfo,
+			false,
+		},
+		// swagger:route POST /auth/openshift-token OAuthInfo
+		// ---
+		// Endpoint to check if a token from Openshift is working correctly
+		//
+		//     Consumes:
+		//     - application/json
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      default: genericError
+		//      500: internalError
+		//      200: info
+		{
+			"OpenshiftCheckToken",
+			"POST",
+			"/api/auth/openshift-token",
+			handlers.OauthCheck,
+			false,
+		},
 		// swagger:route GET /status getStatus
 		// ---
 		// Endpoint to get the status of Kiali
