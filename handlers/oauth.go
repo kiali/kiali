@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -17,9 +19,9 @@ type OpenshiftUser struct {
 }
 
 type UserResponse struct {
-	ExpiresIn string `json:"expiresIn"`
-	Token     string `json:"token"`
 	Username  string `json:"username"`
+	Token     string `json:"token"`
+	ExpiresOn string `json:"expiresOn"`
 }
 
 // Checks if the token is working correctly.
@@ -39,13 +41,17 @@ func OauthCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := r.Form.Get("accessToken")
-	expiresIn := r.Form.Get("expiresIn")
+	token := r.Form.Get("access_token")
+	expiresIn := r.Form.Get("expires_in")
 
-	if token == "" || expiresIn == "" {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Token is empty.")
+	expiresInNumber, err := strconv.Atoi(expiresIn)
+
+	if token == "" || expiresIn == "" || err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, "Token is empty or invalid.")
 		return
 	}
+
+	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber)).String()
 
 	business, err := business.Get()
 	err = business.OpenshiftOAuth.ValidateToken(token)
@@ -63,8 +69,8 @@ func OauthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSONIndent(w, http.StatusOK, UserResponse{
-		ExpiresIn: expiresIn,
-		Token:     token,
 		Username:  user.Metadata.Name,
+		Token:     token,
+		ExpiresOn: expiresOn,
 	})
 }

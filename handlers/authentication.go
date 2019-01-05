@@ -95,7 +95,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.AuthorizationEndpoint = metadata.AuthorizationEndpoint
-
-		RespondWithJSON(w, http.StatusOK, response)
 	}
+
+	RespondWithJSON(w, http.StatusOK, response)
 }
