@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 
 	kube "k8s.io/client-go/kubernetes"
@@ -37,6 +38,19 @@ type OAuthUserMetadata struct {
 	Name string `json:"name"`
 }
 
+type OAuthRoute struct {
+	Spec OAuthRouteSpec `json:"spec"`
+}
+
+type OAuthRouteSpec struct {
+	Host string             `json:"host"`
+	TLS  *OAuthRouteTLSSpec `json:"tls,omitempty"`
+}
+
+type OAuthRouteTLSSpec struct {
+	Termination string `json:"termination"`
+}
+
 const serverPrefix = "https://openshift.default.svc/"
 
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
@@ -61,12 +75,11 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 		return nil, message
 	}
 
-	// TODO: Get me from the Openshift API
-	redirectURL := "https://kiali-istio-system.10.7.0.11.nip.io"
+	redirectURL, err := getKialiRoutePath()
 
 	metadata = &OAuthMetadata{}
 
-	metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali", url.QueryEscape(redirectURL), "token")
+	metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali", url.QueryEscape(*redirectURL), "token")
 
 	return metadata, nil
 }
@@ -111,6 +124,37 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	}
 
 	return user, nil
+}
+
+func getKialiRoutePath() (*string, error) {
+	var route *OAuthRoute
+	var protocol string
+
+	namespace := config.Get().IstioNamespace
+
+	conf, err := kubernetes.ConfigClient()
+
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+	}
+
+	response, err := request("GET", fmt.Sprintf("oapi/v1/namespaces/%s/routes/kiali", namespace), &conf.BearerToken)
+
+	err = json.Unmarshal(response, &route)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+	}
+
+	if route.Spec.TLS == nil {
+		protocol = "http://"
+	} else {
+		protocol = "https://"
+	}
+
+	url := strings.Join([]string{protocol, route.Spec.Host}, "")
+
+	return &url, nil
 }
 
 func request(method string, url string, auth *string) ([]byte, error) {

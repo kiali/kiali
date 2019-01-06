@@ -39,6 +39,7 @@ rules:
   resources:
   - cronjobs
   - jobs
+  - routes
   verbs:
   - get
   - list
