@@ -33,6 +33,7 @@ BACKEND_VERSION_BRANCH ?= $(shell semver bump release $(BACKEND_VERSION) | sed '
 
 BACKEND_GITHUB_URI ?= git@github.com:kiali/kiali.git
 BACKEND_PULL_URI ?= https://api.github.com/repos/kiali/kiali/pulls
+BACKEND_RELEASE_URI = $(subst pulls,releases,$(BACKEND_PULL_URI))
 BACKEND_MAIN_BRANCH ?= master
 
 KIALI_BOT_USER ?= kiali-bot
@@ -109,6 +110,11 @@ endif
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
 	  make docker-build docker-push
+ifneq ($(IS_SNAPSHOT),y)
+	docker tag "$(DOCKER_NAME):v$(BACKEND_VERSION)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+endif
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION)"
 
 backend-push-version-tag:
@@ -116,6 +122,20 @@ backend-push-version-tag:
 	git add Makefile
 	git commit -m "Release $(BACKEND_VERSION)"
 	git push $(BACKEND_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(BACKEND_VERSION)
+ifdef GH_TOKEN
+	@echo "Creating GitHub release..."
+ifeq ($(IS_SNAPSHOT),y)
+	@curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)", "prerelease": true}' \
+	  -X POST $(BACKEND_RELEASE_URI)
+else
+	@curl -H "Authorization: token $(GH_TOKEN)" \
+	  -H "Content-Type: application/json" \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)"}' \
+	  -X POST $(BACKEND_RELEASE_URI)
+endif
+endif
 
 backend-prepare-next-patch-version:
 ifndef OMIT_VERSION_BRANCH
