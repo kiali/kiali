@@ -73,6 +73,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Credentials.Username = authorizedUsername
 	conf.Server.Credentials.Password = authorizedPassword
+	conf.Auth.Strategy = "login"
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/token"
