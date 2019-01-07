@@ -16,10 +16,6 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
-# External Services Configuration
-JAEGER_URL ?= http://jaeger-query-istio-system.127.0.0.1.nip.io
-GRAFANA_URL ?= http://grafana-istio-system.127.0.0.1.nip.io
-
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
@@ -249,8 +245,14 @@ docker-push:
 	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc))
 	@${OC} get project ${NAMESPACE} > /dev/null
 
+.openshift-find-addons: .openshift-validate
+	@$(eval JAEGER_URL ?= $(shell echo http://$$(${OC} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}'):80))
+	@echo "Found Jaeger at: ${JAEGER_URL}"
+	@$(eval GRAFANA_URL ?= $(shell echo http://$$(${OC} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}'):3000))
+	@echo "Found Grafana at: ${GRAFANA_URL}"
+
 ## openshift-deploy: Deploy docker image in Openshift project.
-openshift-deploy: openshift-undeploy
+openshift-deploy: openshift-undeploy .openshift-find-addons
 	IMAGE_NAME="${DOCKER_NAME}" \
 IMAGE_VERSION="${DOCKER_VERSION}" \
 IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
@@ -275,8 +277,14 @@ openshift-reload-image: .openshift-validate
 	@$(eval KUBECTL ?= $(shell which kubectl))
 	@${KUBECTL} get namespace ${NAMESPACE} > /dev/null
 
+.k8s-find-addons: .k8s-validate
+	@$(eval JAEGER_URL ?= $(shell echo http://$$(${KUBECTL} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}'):80))
+	@echo "Found Jaeger at: ${JAEGER_URL}"
+	@$(eval GRAFANA_URL ?= $(shell echo http://$$(${KUBECTL} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}'):3000))
+	@echo "Found Grafana at: ${GRAFANA_URL}"
+
 ## k8s-deploy: Deploy docker image in Kubernetes namespace.
-k8s-deploy: k8s-undeploy
+k8s-deploy: k8s-undeploy .k8s-find-addons
 	IMAGE_NAME="${DOCKER_NAME}" \
 IMAGE_VERSION="${DOCKER_VERSION}" \
 IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
