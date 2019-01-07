@@ -59,23 +59,23 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
 			// Incoming non-error traffic can not raise the dead because it is caused by an
 			// edge case (pod life-cycle change) that we don't want to see.
-			rate4xx, hasRate4xx := n.Metadata["rate4xx"]
-			rate5xx, hasRate5xx := n.Metadata["rate5xx"]
-			if (!hasRate4xx || rate4xx.(float64) == 0) && (!hasRate5xx || rate5xx.(float64) == 0) {
+			httpIn4xx, hasHttpIn4xx := n.Metadata["httpIn4xx"]
+			httpIn5xx, hasHttpIn5xx := n.Metadata["httpIn5xx"]
+			if (!hasHttpIn4xx || httpIn4xx.(float64) == 0) && (!hasHttpIn5xx || httpIn5xx.(float64) == 0) {
 				delete(trafficMap, id)
 				numRemoved++
 			}
 		default:
 			// a node with HTTP traffic is not dead, skip
-			rate, hasRate := n.Metadata["rate"]
-			rateOut, hasRateOut := n.Metadata["rateOut"]
-			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
+			httpIn, hasHttpIn := n.Metadata["httpIn"]
+			httpOut, hasHttpOut := n.Metadata["httpOut"]
+			if (hasHttpIn && httpIn.(float64) > 0) || (hasHttpOut && httpOut.(float64) > 0) {
 				continue
 			}
 			// a node with TCP Sent traffic is not dead, skip
-			rate, hasRate = n.Metadata["tcpSentRate"]
-			rateOut, hasRateOut = n.Metadata["tcpSentRateOut"]
-			if (hasRate && rate.(float64) > 0) || (hasRateOut && rateOut.(float64) > 0) {
+			httpIn, hasHttpIn = n.Metadata["tcpIn"]
+			httpOut, hasHttpOut = n.Metadata["tcpOut"]
+			if (hasHttpIn && httpIn.(float64) > 0) || (hasHttpOut && httpOut.(float64) > 0) {
 				continue
 			}
 			// There are some node types that are never associated with backing workloads (such as versionless app nodes).

@@ -13,7 +13,7 @@
           "destServices": {
             "pricing": true
           },
-          "rate": "20.00",
+          "httpIn": "20.00",
           "isInaccessible": true,
           "isOutside": true
         }
@@ -27,10 +27,10 @@
           "destServices": {
             "details": true
           },
-          "rate": "80.00",
-          "rate3XX": "20.00",
-          "rate4XX": "20.00",
-          "rate5XX": "20.00"
+          "httpIn": "80.00",
+          "httpIn3XX": "20.00",
+          "httpIn4XX": "20.00",
+          "httpIn5XX": "20.00"
         }
       },
       {
@@ -42,9 +42,9 @@
           "destServices": {
             "productpage": true
           },
-          "rate": "170.00",
-          "rateOut": "160.00",
-          "rateTcpSentOut": "31.00"
+          "httpIn": "170.00",
+          "httpOut": "160.00",
+          "tcpOut": "31.00"
         }
       },
       {
@@ -56,8 +56,8 @@
           "destServices": {
             "ratings": true
           },
-          "rate": "60.00",
-          "rate5XX": "20.00"
+          "httpIn": "60.00",
+          "httpIn5XX": "20.00"
         }
       },
       {
@@ -69,8 +69,8 @@
           "destServices": {
             "reviews": true
           },
-          "rate": "100.00",
-          "rateOut": "120.00"
+          "httpIn": "100.00",
+          "httpOut": "120.00"
         }
       },
       {
@@ -82,7 +82,7 @@
           "destServices": {
             "tcp": true
           },
-          "rateTcpSent": "581.00"
+          "tcpIn": "581.00"
         }
       },
       {
@@ -91,8 +91,8 @@
           "nodeType": "app",
           "namespace": "istio-system",
           "app": "ingressgateway",
-          "rateOut": "100.00",
-          "rateTcpSentOut": "150.00",
+          "httpOut": "100.00",
+          "tcpOut": "150.00",
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
@@ -106,8 +106,8 @@
           "workload": "unknown",
           "app": "unknown",
           "version": "unknown",
-          "rateOut": "50.00",
-          "rateTcpSentOut": "400.00",
+          "httpOut": "50.00",
+          "tcpOut": "400.00",
           "isInaccessible": true,
           "isRoot": true
         }
@@ -119,7 +119,7 @@
           "id": "2c8bf7e7efb0982b18c76d507200a8b7",
           "source": "19950ddefadd370bf5434953c1944c80",
           "target": "2c22af42b0c750749399ed2838c56054",
-          "rate": "100.00"
+          "http": "100.00"
         }
       },
       {
@@ -127,7 +127,7 @@
           "id": "18fa6836a929941e8deabad5fa1cae62",
           "source": "19950ddefadd370bf5434953c1944c80",
           "target": "4ee8019fc0454770a401b89d427277bf",
-          "tcpSentRate": "150.00"
+          "tcp": "150.00"
         }
       },
       {
@@ -135,8 +135,8 @@
           "id": "e9ffbf24e385c93dfa124d81e2ac33a7",
           "source": "2c22af42b0c750749399ed2838c56054",
           "target": "2c22af42b0c750749399ed2838c56054",
-          "rate": "20.00",
-          "percentRate": "12.50"
+          "http": "20.00",
+          "httpPercentReq": "12.5"
         }
       },
       {
@@ -144,8 +144,8 @@
           "id": "ff5217a9064e30e4fb875256dab56037",
           "source": "2c22af42b0c750749399ed2838c56054",
           "target": "37ddc91db761d432f3fff1943802cad7",
-          "rate": "60.00",
-          "percentRate": "37.50"
+          "http": "60.00",
+          "httpPercentReq": "37.5"
         }
       },
       {
@@ -153,7 +153,7 @@
           "id": "16a0c4225bbdbd471e6e7b8fd438733d",
           "source": "2c22af42b0c750749399ed2838c56054",
           "target": "4ee8019fc0454770a401b89d427277bf",
-          "tcpSentRate": "31.00"
+          "tcp": "31.00"
         }
       },
       {
@@ -161,12 +161,12 @@
           "id": "89fa162a49acca6ff974afd30aab2ff0",
           "source": "2c22af42b0c750749399ed2838c56054",
           "target": "6cdb3cf3ee9a17772f13b295368e112a",
-          "rate": "80.00",
-          "rate3XX": "20.00",
-          "rate4XX": "20.00",
-          "rate5XX": "20.00",
-          "percentErr": "50.00",
-          "percentRate": "50.00"
+          "http": "80.00",
+          "http3XX": "20.00",
+          "http4XX": "20.00",
+          "http5XX": "20.00",
+          "httpPercentErr": "50.0",
+          "httpPercentReq": "50.0"
         }
       },
       {
@@ -174,8 +174,8 @@
           "id": "4aaf7cb151db415f3ba4918be2296c38",
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "37ddc91db761d432f3fff1943802cad7",
-          "rate": "40.00",
-          "percentRate": "33.33"
+          "http": "40.00",
+          "httpPercentReq": "33.3"
         }
       },
       {
@@ -183,8 +183,8 @@
           "id": "edb2cdfc2a757d260aa847d55e9eadde",
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "66bce9783dc2dbb5fecb178b0108484e",
-          "rate": "20.00",
-          "percentRate": "16.67"
+          "http": "20.00",
+          "httpPercentReq": "16.7"
         }
       },
       {
@@ -192,10 +192,10 @@
           "id": "a553e38605904d17c50ab1d0db84f113",
           "source": "37ddc91db761d432f3fff1943802cad7",
           "target": "c219903556c3afdb05eda7e610aba628",
-          "rate": "60.00",
-          "rate5XX": "20.00",
-          "percentErr": "33.33",
-          "percentRate": "50.00"
+          "http": "60.00",
+          "http5XX": "20.00",
+          "httpPercentErr": "33.3",
+          "httpPercentReq": "50.0"
         }
       },
       {
@@ -203,7 +203,7 @@
           "id": "efe83e483ada36899c34ef66a7974d31",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "2c22af42b0c750749399ed2838c56054",
-          "rate": "50.00"
+          "http": "50.00"
         }
       },
       {
@@ -211,7 +211,7 @@
           "id": "d4fc7bd6594937fa94402fcfcc9f3a95",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "4ee8019fc0454770a401b89d427277bf",
-          "tcpSentRate": "400.00"
+          "tcp": "400.00"
         }
       }
     ]

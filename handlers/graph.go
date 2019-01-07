@@ -263,18 +263,18 @@ func addServiceGraphTraffic(target, source *graph.Edge) {
 	protocol := target.Metadata["protocol"]
 	switch protocol {
 	case "http":
-		addToMetadataValue(target.Metadata, "rate", source.Metadata["rate"].(float64))
-		if val, ok := source.Metadata["rate3xx"]; ok {
-			addToMetadataValue(target.Metadata, "rate3xx", val.(float64))
+		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
+		if val, ok := source.Metadata["http3xx"]; ok {
+			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
 		}
-		if val, ok := source.Metadata["rate4xx"]; ok {
-			addToMetadataValue(target.Metadata, "rate4xx", val.(float64))
+		if val, ok := source.Metadata["http4xx"]; ok {
+			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
 		}
-		if val, ok := source.Metadata["rate5xx"]; ok {
-			addToMetadataValue(target.Metadata, "rate5xx", val.(float64))
+		if val, ok := source.Metadata["http5xx"]; ok {
+			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
 		}
 	case "tcp":
-		addToMetadataValue(target.Metadata, "tcpSentRate", source.Metadata["tcpSentRate"].(float64))
+		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
 	default:
 		graph.Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
 	}
@@ -482,25 +482,22 @@ func addHttpTraffic(trafficMap graph.TrafficMap, val float64, code, sourceWlNs, 
 		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
 	}
 
+	addToMetadataValue(source.Metadata, "httpOut", val)
+	addToMetadataValue(dest.Metadata, "httpIn", val)
+	addToMetadataValue(edge.Metadata, "http", val)
+
 	// note, we don't track 2xx because it's not used downstream and can be easily
 	// calculated: 2xx = (rate - 3xx - 4xx - 5xx)
-	var ck string
 	switch {
 	case strings.HasPrefix(string(code), "3"):
-		ck = "rate3xx"
+		addToMetadataValue(dest.Metadata, "httpIn3xx", val)
+		addToMetadataValue(edge.Metadata, "http3xx", val)
 	case strings.HasPrefix(string(code), "4"):
-		ck = "rate4xx"
+		addToMetadataValue(dest.Metadata, "httpIn4xx", val)
+		addToMetadataValue(edge.Metadata, "http4xx", val)
 	case strings.HasPrefix(string(code), "5"):
-		ck = "rate5xx"
-	}
-	addToMetadataValue(source.Metadata, "rateOut", val)
-
-	addToMetadataValue(edge.Metadata, "rate", val)
-	addToMetadataValue(dest.Metadata, "rate", val)
-
-	if ck != "" {
-		addToMetadataValue(edge.Metadata, ck, val)
-		addToMetadataValue(dest.Metadata, ck, val)
+		addToMetadataValue(dest.Metadata, "httpIn5xx", val)
+		addToMetadataValue(edge.Metadata, "http5xx", val)
 	}
 
 	return source, dest
@@ -586,9 +583,9 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceWlNs, sourceW
 		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
 	}
 
-	addToMetadataValue(edge.Metadata, "tcpSentRate", val)
-	addToMetadataValue(source.Metadata, "tcpSentRateOut", val)
-	addToMetadataValue(dest.Metadata, "tcpSentRate", val)
+	addToMetadataValue(source.Metadata, "tcpOut", val)
+	addToMetadataValue(dest.Metadata, "tcpIn", val)
+	addToMetadataValue(edge.Metadata, "tcp", val)
 
 	return source, dest
 }

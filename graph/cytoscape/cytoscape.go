@@ -35,13 +35,13 @@ type NodeData struct {
 	Version         string          `json:"version,omitempty"`
 	Service         string          `json:"service,omitempty"`         // requested service for NodeTypeService
 	DestServices    map[string]bool `json:"destServices,omitempty"`    // requested services for [dest] node
-	Rate            string          `json:"rate,omitempty"`            // edge aggregate, http is in requests per second
-	Rate3xx         string          `json:"rate3XX,omitempty"`         // edge aggregate
-	Rate4xx         string          `json:"rate4XX,omitempty"`         // edge aggregate
-	Rate5xx         string          `json:"rate5XX,omitempty"`         // edge aggregate
-	RateOut         string          `json:"rateOut,omitempty"`         // edge aggregate
-	RateTcpSent     string          `json:"rateTcpSent,omitempty"`     // edge aggregate, // tcp is in bytes per second
-	RateTcpSentOut  string          `json:"rateTcpSentOut,omitempty"`  // edge aggregate
+	HttpIn          string          `json:"httpIn,omitempty"`          // incoming edge aggregate, requests per second, 2 digit precision
+	HttpIn3xx       string          `json:"httpIn3XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
+	HttpIn4xx       string          `json:"httpIn4XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
+	HttpIn5xx       string          `json:"httpIn5XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
+	HttpOut         string          `json:"httpOut,omitempty"`         // outgoing edge aggregate, requests per second, 2 digit precision
+	TcpIn           string          `json:"tcpIn,omitempty"`           // incoming edge aggregate, bytes per second, 2 digit precision
+	TcpOut          string          `json:"tcpOut,omitempty"`          // outgoing edge aggregate, bytes per second, 2 digit precision
 	HasCB           bool            `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
 	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
 	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
@@ -62,16 +62,16 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Rate         string `json:"rate,omitempty"` // http is in requests per second
-	Rate3xx      string `json:"rate3XX,omitempty"`
-	Rate4xx      string `json:"rate4XX,omitempty"`
-	Rate5xx      string `json:"rate5XX,omitempty"`
-	PercentErr   string `json:"percentErr,omitempty"`
-	PercentRate  string `json:"percentRate,omitempty"`  // percent of total parent requests
-	ResponseTime string `json:"responseTime,omitempty"` // in millis
-	IsMTLS       bool   `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
-	IsUnused     bool   `json:"isUnused,omitempty"`     // true | false
-	TcpSentRate  string `json:"tcpSentRate,omitempty"`  // tcp is in bytes per sec
+	Http           string `json:"http,omitempty"`           // requests per second, 2 digit precision
+	Http3xx        string `json:"http3XX,omitempty"`        // requests per second, 2 digit precision
+	Http4xx        string `json:"http4XX,omitempty"`        // requests per second, 2 digit precision
+	Http5xx        string `json:"http5XX,omitempty"`        // requests per second, 2 digit precision
+	HttpPercentErr string `json:"httpPercentErr,omitempty"` // percent of error responses, 1 digit precision
+	HttpPercentReq string `json:"httpPercentReq,omitempty"` // percent of total parent requests, 1 digit precision
+	ResponseTime   string `json:"responseTime,omitempty"`   // in millis
+	IsMTLS         bool   `json:"isMTLS,omitempty"`         // true (mutual TLS connection) | false
+	IsUnused       bool   `json:"isUnused,omitempty"`       // true | false
+	Tcp            string `json:"tcp,omitempty"`            // bytes per second, 2 digit precision
 }
 
 type NodeWrapper struct {
@@ -262,40 +262,40 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 }
 
 func addNodeTelemetry(s *graph.Node, nd *NodeData) {
-	rate := getRate(s.Metadata, "rate")
+	httpIn := getRate(s.Metadata, "httpIn")
 
-	if rate > 0.0 {
-		nd.Rate = fmt.Sprintf("%.2f", rate)
+	if httpIn > 0.0 {
+		nd.HttpIn = fmt.Sprintf("%.2f", httpIn)
 
-		rate3xx := getRate(s.Metadata, "rate3xx")
-		rate4xx := getRate(s.Metadata, "rate4xx")
-		rate5xx := getRate(s.Metadata, "rate5xx")
+		httpIn3xx := getRate(s.Metadata, "httpIn3xx")
+		httpIn4xx := getRate(s.Metadata, "httpIn4xx")
+		httpIn5xx := getRate(s.Metadata, "httpIn5xx")
 
-		if rate3xx > 0.0 {
-			nd.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
+		if httpIn3xx > 0.0 {
+			nd.HttpIn3xx = fmt.Sprintf("%.2f", httpIn3xx)
 		}
-		if rate4xx > 0.0 {
-			nd.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
+		if httpIn4xx > 0.0 {
+			nd.HttpIn4xx = fmt.Sprintf("%.2f", httpIn4xx)
 		}
-		if rate5xx > 0.0 {
-			nd.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
+		if httpIn5xx > 0.0 {
+			nd.HttpIn5xx = fmt.Sprintf("%.2f", httpIn5xx)
 		}
 	}
 
-	rateOut := getRate(s.Metadata, "rateOut")
+	httpOut := getRate(s.Metadata, "httpOut")
 
-	if rateOut > 0.0 {
-		nd.RateOut = fmt.Sprintf("%.2f", rateOut)
+	if httpOut > 0.0 {
+		nd.HttpOut = fmt.Sprintf("%.2f", httpOut)
 	}
 
-	tcpSent := getRate(s.Metadata, "tcpSentRate")
-	tcpSentOut := getRate(s.Metadata, "tcpSentRateOut")
+	tcpIn := getRate(s.Metadata, "tcpIn")
+	tcpOut := getRate(s.Metadata, "tcpOut")
 
-	if tcpSent > 0.0 {
-		nd.RateTcpSent = fmt.Sprintf("%.2f", tcpSent)
+	if tcpIn > 0.0 {
+		nd.TcpIn = fmt.Sprintf("%.2f", tcpIn)
 	}
-	if tcpSentOut > 0.0 {
-		nd.RateTcpSentOut = fmt.Sprintf("%.2f", tcpSentOut)
+	if tcpOut > 0.0 {
+		nd.TcpOut = fmt.Sprintf("%.2f", tcpOut)
 	}
 }
 
@@ -307,27 +307,27 @@ func getRate(md map[string]interface{}, k string) float64 {
 }
 
 func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
-	rate := getRate(e.Metadata, "rate")
+	http := getRate(e.Metadata, "http")
 
-	if rate > 0.0 {
-		rate3xx := getRate(e.Metadata, "rate3xx")
-		rate4xx := getRate(e.Metadata, "rate4xx")
-		rate5xx := getRate(e.Metadata, "rate5xx")
-		rateErr := rate4xx + rate5xx
-		percentErr := rateErr / rate * 100.0
+	if http > 0.0 {
+		http3xx := getRate(e.Metadata, "http3xx")
+		http4xx := getRate(e.Metadata, "http4xx")
+		http5xx := getRate(e.Metadata, "http5xx")
+		httpErr := http4xx + http5xx
+		httpPercentErr := httpErr / http * 100.0
 
-		ed.Rate = fmt.Sprintf("%.2f", rate)
-		if rate3xx > 0.0 {
-			ed.Rate3xx = fmt.Sprintf("%.2f", rate3xx)
+		ed.Http = fmt.Sprintf("%.2f", http)
+		if http3xx > 0.0 {
+			ed.Http3xx = fmt.Sprintf("%.2f", http3xx)
 		}
-		if rate4xx > 0.0 {
-			ed.Rate4xx = fmt.Sprintf("%.2f", rate4xx)
+		if http4xx > 0.0 {
+			ed.Http4xx = fmt.Sprintf("%.2f", http4xx)
 		}
-		if rate5xx > 0.0 {
-			ed.Rate5xx = fmt.Sprintf("%.2f", rate5xx)
+		if http5xx > 0.0 {
+			ed.Http5xx = fmt.Sprintf("%.2f", http5xx)
 		}
-		if percentErr > 0.0 {
-			ed.PercentErr = fmt.Sprintf("%.2f", percentErr)
+		if httpPercentErr > 0.0 {
+			ed.HttpPercentErr = fmt.Sprintf("%.1f", httpPercentErr)
 		}
 
 		if val, ok := e.Metadata["responseTime"]; ok {
@@ -335,9 +335,9 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 			ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
 		}
 
-		percentRate := rate / getRate(e.Source.Metadata, "rateOut") * 100.0
-		if percentRate < 100.0 {
-			ed.PercentRate = fmt.Sprintf("%.2f", percentRate)
+		httpPercentReq := http / getRate(e.Source.Metadata, "httpOut") * 100.0
+		if httpPercentReq < 100.0 {
+			ed.HttpPercentReq = fmt.Sprintf("%.1f", httpPercentReq)
 		}
 	} else {
 		if val, ok := e.Source.Metadata["isUnused"]; ok {
@@ -349,9 +349,9 @@ func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
 		ed.IsMTLS = val.(bool)
 	}
 
-	tcpSentRate := getRate(e.Metadata, "tcpSentRate")
-	if tcpSentRate > 0.0 {
-		ed.TcpSentRate = fmt.Sprintf("%.2f", tcpSentRate)
+	tcp := getRate(e.Metadata, "tcp")
+	if tcp > 0.0 {
+		ed.Tcp = fmt.Sprintf("%.2f", tcp)
 	}
 }
 
