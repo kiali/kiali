@@ -7,6 +7,7 @@ import {
   TrafficPointRenderer,
   Diamond
 } from './TrafficPointRenderer';
+import { EDGE_HTTP, EDGE_TCP } from '../../../utils/TrafficRate';
 
 const TCP_SETTINGS = {
   baseSpeed: 0.5,
@@ -397,9 +398,9 @@ export default class TrafficRenderer {
   }
 
   private getTrafficEdgeType(edge: any) {
-    if (edge.data('rate') !== undefined) {
+    if (edge.data(EDGE_HTTP.RATE) !== undefined) {
       return TrafficEdgeType.HTTP;
-    } else if (edge.data('tcpSentRate') !== undefined) {
+    } else if (edge.data(EDGE_TCP.RATE) !== undefined) {
       return TrafficEdgeType.TCP;
     }
     return TrafficEdgeType.NONE;
@@ -439,11 +440,11 @@ export default class TrafficRenderer {
     }
 
     if (trafficEdge.getType() === TrafficEdgeType.HTTP) {
-      const timer = this.timerFromRate(edge.data('rate'));
+      const timer = this.timerFromRate(edge.data(EDGE_TCP.RATE));
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
       const speed = this.speedFromResponseTime(edge.data('responseTime')) * edgeLengthFactor;
-      const errorRate = edge.data('percentErr') === undefined ? 0 : edge.data('percentErr') / 100;
+      const errorRate = edge.data('httpPercentErr') === undefined ? 0 : edge.data('httpPercentErr') / 100;
       trafficEdge.setSpeed(speed);
       trafficEdge.setTimer(timer);
       trafficEdge.setEdge(edge);
@@ -451,7 +452,7 @@ export default class TrafficRenderer {
     } else if (trafficEdge.getType() === TrafficEdgeType.TCP) {
       trafficEdge.setSpeed(TCP_SETTINGS.baseSpeed * edgeLengthFactor);
       trafficEdge.setErrorRate(TCP_SETTINGS.errorRate);
-      trafficEdge.setTimer(this.timerFromTcpSentRate(edge.data('tcpSentRate'))); // 150 - 500
+      trafficEdge.setTimer(this.timerFromTcpSentRate(edge.data(EDGE_TCP.RATE))); // 150 - 500
       trafficEdge.setEdge(edge);
     }
   }

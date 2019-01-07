@@ -21,6 +21,7 @@ import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config';
+import { EDGE_HTTP, EDGE_TCP } from '../../utils/TrafficRate';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -87,10 +88,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const edge = this.props.data.summaryTarget;
     const source = edge.source();
     const dest = edge.target();
-    const rate = this.safeRate(edge.data('rate'));
-    const rate3xx = this.safeRate(edge.data('rate3XX'));
-    const rate4xx = this.safeRate(edge.data('rate4XX'));
-    const rate5xx = this.safeRate(edge.data('rate5XX'));
+    const http = this.safeRate(edge.data(EDGE_HTTP.RATE));
+    const http3xx = this.safeRate(edge.data(EDGE_HTTP.RATE3XX));
+    const http4xx = this.safeRate(edge.data(EDGE_HTTP.RATE4XX));
+    const http5xx = this.safeRate(edge.data(EDGE_HTTP.RATE5XX));
     const hasHttpTraffic = this.hasHttpMetrics(edge);
     const hasTcpTraffic = this.hasTcpMetrics(edge);
 
@@ -114,10 +115,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             <>
               <RateTable
                 title="HTTP Traffic (requests per second):"
-                rate={rate}
-                rate3xx={rate3xx}
-                rate4xx={rate4xx}
-                rate5xx={rate5xx}
+                rate={http}
+                rate3xx={http3xx}
+                rate4xx={http4xx}
+                rate5xx={http5xx}
               />
               <hr />
             </>
@@ -423,10 +424,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   }
 
   private hasHttpMetrics = (edge): boolean => {
-    return edge.data('rate') ? true : false;
+    return edge.data(EDGE_HTTP.RATE) ? true : false;
   };
 
   private hasTcpMetrics = (edge): boolean => {
-    return edge.data('tcpSentRate') ? true : false;
+    return edge.data(EDGE_TCP.RATE) ? true : false;
   };
 }

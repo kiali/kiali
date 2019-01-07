@@ -2,7 +2,14 @@ import * as React from 'react';
 import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
 import { Icon } from 'patternfly-react';
 
-import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
+import {
+  getTrafficRate,
+  getAccumulatedTrafficRate,
+  NODE_HTTP_IN,
+  NODE_HTTP_OUT,
+  NODE_TCP_IN,
+  NODE_TCP_OUT
+} from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -444,14 +451,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   private hasHttpTraffic = (node): boolean => {
-    if (node.data('rate') || node.data('rateOut')) {
+    if (node.data(NODE_HTTP_IN.RATE) || node.data(NODE_HTTP_OUT.RATE)) {
       return true;
     }
     return false;
   };
 
   private hasTcpTraffic = (node): boolean => {
-    if (node.data('rateTcpSent') || node.data('rateTcpSentOut')) {
+    if (node.data(NODE_TCP_IN.RATE) || node.data(NODE_TCP_OUT.RATE)) {
       return true;
     }
     return false;

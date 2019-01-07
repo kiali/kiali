@@ -334,7 +334,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     if (
       group
         .children()
-        .filter('[rate],[rateOut]')
+        .filter('[httpIn],[httpOut]')
         .size() > 0
     ) {
       return true;
@@ -346,7 +346,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     if (
       group
         .children()
-        .filter('[rateTcpSent],[rateTcpSentOut]')
+        .filter('[tcpIn],[tcpOut]')
         .size() > 0
     ) {
       return true;

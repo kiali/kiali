@@ -13,32 +13,28 @@ enum GraphDataActionKeys {
 const decorateGraphData = (graphData: any) => {
   const elementsDefaults = {
     edges: {
-      rate: undefined,
-      rate3XX: undefined,
-      rate4XX: undefined,
-      rate5XX: undefined,
-      percentErr: undefined,
-      percentRate: undefined,
-      responseTime: undefined,
+      http: undefined,
+      http3XX: undefined,
+      http4XX: undefined,
+      http5XX: undefined,
+      httpPercentErr: undefined,
+      httpPercentReq: undefined,
       isMTLS: undefined,
       isUnused: undefined,
-      tcpSentRate: undefined
+      responseTime: undefined,
+      tcp: undefined
     },
     nodes: {
       app: undefined,
-      service: undefined,
-      version: undefined,
-      workload: undefined,
       destServices: undefined,
-      rate: undefined,
-      rate3XX: undefined,
-      rate4XX: undefined,
-      rate5XX: undefined,
-      rateTcpSent: undefined,
-      rateTcpSentOut: undefined,
       hasCB: undefined,
       hasMissingSC: undefined,
       hasVS: undefined,
+      httpIn: undefined,
+      httpIn3XX: undefined,
+      httpIn4XX: undefined,
+      httpIn5XX: undefined,
+      httpOut: undefined,
       isDead: undefined,
       isGroup: undefined,
       isInaccessible: undefined,
@@ -46,7 +42,12 @@ const decorateGraphData = (graphData: any) => {
       isOutside: undefined,
       isRoot: undefined,
       isServiceEntry: undefined,
-      isUnused: undefined
+      isUnused: undefined,
+      service: undefined,
+      tcpIn: undefined,
+      tcpOut: undefined,
+      version: undefined,
+      workload: undefined
     }
   };
   if (graphData) {

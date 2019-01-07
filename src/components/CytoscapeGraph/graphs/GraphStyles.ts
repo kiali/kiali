@@ -4,6 +4,7 @@ import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 import { COMPOUND_PARENT_NODE_CLASS } from '../Layout/GroupCompoundLayout';
 import { ICONS } from '../../../config';
+import { EDGE_HTTP, EDGE_TCP } from '../../../utils/TrafficRate';
 
 export const DimClass = 'mousedim';
 
@@ -61,12 +62,12 @@ export class GraphStyles {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
-    const getEdgeColor = (ele: any): string => {
-      const rate = ele.data('rate') ? Number(ele.data('rate')) : 0;
-      if (rate === 0 || ele.data('isUnused')) {
+    const getHttpEdgeColor = (ele: any): string => {
+      const http = ele.data(EDGE_HTTP.RATE) ? Number(ele.data(EDGE_HTTP.RATE)) : 0;
+      if (http === 0 || ele.data('isUnused')) {
         return EdgeColorDead;
       }
-      const pErr = ele.data('percentErr') ? Number(ele.data('percentErr')) : 0;
+      const pErr = ele.data('httpPercentErr') ? Number(ele.data('httpPercentErr')) : 0;
       if (pErr > REQUESTS_THRESHOLDS.failure) {
         return EdgeColorFailure;
       }
@@ -83,16 +84,16 @@ export class GraphStyles {
 
       switch (edgeLabelMode) {
         case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND: {
-          if (ele.data('rate')) {
-            const rate = Number(ele.data('rate'));
-            if (rate > 0) {
-              const pErr = ele.data('percentErr') ? Number(ele.data('percentErr')) : 0;
-              content = pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+          if (ele.data(EDGE_HTTP.RATE)) {
+            const http = Number(ele.data(EDGE_HTTP.RATE));
+            if (http > 0) {
+              const httpPercentErr = ele.data('httpPercentErr') ? Number(ele.data('httpPercentErr')) : 0;
+              content = httpPercentErr > 0 ? http.toFixed(2) + ', ' + httpPercentErr.toFixed(1) + '%' : http.toFixed(2);
             }
-          } else if (ele.data('tcpSentRate')) {
-            const rate = Number(ele.data('tcpSentRate'));
-            if (rate > 0) {
-              content = `${rate.toFixed(2)}`;
+          } else if (ele.data(EDGE_TCP.RATE)) {
+            const tcp = Number(ele.data(EDGE_TCP.RATE));
+            if (tcp > 0) {
+              content = `${tcp.toFixed(2)}`;
             }
           }
           break;
@@ -105,8 +106,8 @@ export class GraphStyles {
           break;
         }
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
-          const percentRate = ele.data('percentRate') ? Number(ele.data('percentRate')) : 0;
-          content = percentRate > 0 ? percentRate.toFixed(0) + '%' : '';
+          const httpPercentReq = ele.data('httpPercentReq') ? Number(ele.data('httpPercentReq')) : 0;
+          content = httpPercentReq > 0 ? httpPercentReq.toFixed(1) + '%' : '';
           break;
         }
         default:
@@ -335,14 +336,14 @@ export class GraphStyles {
             return getEdgeLabel(ele);
           },
           'line-color': (ele: any) => {
-            return getEdgeColor(ele);
+            return getHttpEdgeColor(ele);
           },
           'line-style': (ele: any) => {
             return ele.data('isUnused') ? 'dotted' : 'solid';
           },
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: any) => {
-            return getEdgeColor(ele);
+            return getHttpEdgeColor(ele);
           },
           'text-outline-color': EdgeTextOutlineColor,
           'text-outline-width': EdgeTextOutlineWidth,
@@ -356,7 +357,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: 'edge[tcpSentRate]',
+        selector: 'edge[tcp]',
         css: {
           'target-arrow-shape': 'triangle-cross',
           'line-color': PfColors.Blue600,
