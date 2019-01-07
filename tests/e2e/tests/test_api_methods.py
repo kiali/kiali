@@ -14,7 +14,8 @@ def before_all_tests(kiali_client):
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth', 'serviceValidations',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
-                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigDetailsSubtype']
+                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigDetailsSubtype',
+                          'serviceDashboard', 'workloadDashboard', 'appDashboard']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -207,3 +208,52 @@ def test_graph_app_and_graph_app_version(kiali_client):
         # Versioned App Graph
         evaluate_response(kiali_client, method_name=method_name, path=GRAPH_APP_PATH, status_code_expected=200,
                         params=GRAPH_APP_PARAMS_VERSION)
+
+
+def test_service_dashboard(kiali_client):
+    SERVICE_DASHBOARD_PATH = {'namespace': 'bookinfo', 'service': 'details'}
+    evaluate_response(kiali_client, method_name='serviceDashboard', path=SERVICE_DASHBOARD_PATH)
+
+def test_workload_dashboard(kiali_client):
+    WORKLOAD_DASHBOARD_PATH = {'namespace': 'bookinfo', 'workload':'details-v1'}
+    evaluate_response(kiali_client, method_name='workloadDashboard', path=WORKLOAD_DASHBOARD_PATH)
+
+def test_app_dashboard(kiali_client):
+    APP_DASHBOARD_PATH = {'namespace': 'bookinfo', 'app':'ratings'}
+    evaluate_response(kiali_client, method_name='appDashboard', path=APP_DASHBOARD_PATH)
+
+def test_negative_400(kiali_client):
+
+    INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'invalid', 'object': 'promtcp'}
+    INVALID_PARAMS_GRAPHNAMESPACES = {'namespaces': 'bookinfo', 'graphType': 'versionedApp', 'duration': 'invalid'}
+
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=400)
+    evaluate_response(kiali_client, method_name='graphNamespaces', path=INVALID_PARAMS_GRAPHNAMESPACES, status_code_expected=400)
+
+
+def test_negative_404(kiali_client):
+    INVALID_PARAMS_SERVICEDETAILS = {'namespace': 'istio-system', 'service': 'invalid'}
+    INVALID_PARAMS_WORKLOADDETAILS = {'namespace': 'invalid', 'workload': 'details-v1'}
+    INVALID_PARAMS_APPDETAILS = {'namespace': 'invalid', 'app': 'ratings'}
+    INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'rules', 'object': 'promtcp'}
+    INVALID_PARAMS_SERVICEHEALTH = {'namespace': 'istio-system', 'service': 'invalid'}
+    INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'bookinfo', 'workload': 'invalid'}
+
+    evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='workloadDetails', path=INVALID_PARAMS_WORKLOADDETAILS, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='appDetails', path=INVALID_PARAMS_APPDETAILS, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=404)
+
+
+def test_negative_500(kiali_client):    
+    INVALID_PARAMS_SERVICEDETAILS = {'namespace': 'invalid', 'service': 'kiali'}
+    INVALID_PARAMS_SERVICEHEALTH = {'namespace': 'invalid', 'service': 'kiali'}
+    INVALID_PARAMS_APPHEALTH = {'namespace': 'invalid', 'app': 'kiali'}
+    INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'invalid', 'workload': 'details-v1'}
+
+    evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=500)
+    evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=500)
+    evaluate_response(kiali_client, method_name='appHealth', path=INVALID_PARAMS_APPHEALTH, status_code_expected=500)
+    evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=500)
