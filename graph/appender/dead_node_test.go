@@ -10,7 +10,7 @@ import (
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
@@ -168,35 +168,35 @@ func testTrafficMap() map[string]*graph.Node {
 	n0 := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
 
 	n00 := graph.NewNode("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
-	n00.Metadata["rateOut"] = 4.8
+	n00.Metadata["httpOut"] = 4.8
 
 	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", "testPodsWithTraffic", graph.GraphTypeVersionedApp)
-	n1.Metadata["rate"] = 0.8
+	n1.Metadata["httpIn"] = 0.8
 
 	n2 := graph.NewNode("testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", "testPodsNoTraffic", graph.GraphTypeVersionedApp)
 
 	n3 := graph.NewNode("testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", "testNoPodsWithTraffic", graph.GraphTypeVersionedApp)
-	n3.Metadata["rate"] = 0.8
+	n3.Metadata["httpIn"] = 0.8
 
 	n4 := graph.NewNode("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
 
 	n5 := graph.NewNode("testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", "testNoDeploymentWithTraffic", graph.GraphTypeVersionedApp)
-	n5.Metadata["rate"] = 0.8
+	n5.Metadata["httpIn"] = 0.8
 
 	n6 := graph.NewNode("testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", "testNoDeploymentNoTraffic", graph.GraphTypeVersionedApp)
 
 	n7 := graph.NewNode("testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", "testNodeWithTcpSentTraffic", graph.GraphTypeVersionedApp)
-	n7.Metadata["tcpSentRate"] = 74.1
+	n7.Metadata["tcpIn"] = 74.1
 
 	n8 := graph.NewNode("testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", "testNodeWithTcpSentOutTraffic", graph.GraphTypeVersionedApp)
-	n8.Metadata["tcpSentRateOut"] = 74.1
+	n8.Metadata["tcpOut"] = 74.1
 
 	n9 := graph.NewNode("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
-	n9.Metadata["rate"] = 0.8
+	n9.Metadata["httpIn"] = 0.8
 	n9.Metadata["isServiceEntry"] = "MESH_EXTERNAL"
 
 	n10 := graph.NewNode("testNamespace", "", "", "", "egress.not.defined", graph.GraphTypeVersionedApp)
-	n10.Metadata["rate"] = 0.8
+	n10.Metadata["httpIn"] = 0.8
 
 	trafficMap[n0.ID] = &n0
 	trafficMap[n00.ID] = &n00
@@ -213,43 +213,43 @@ func testTrafficMap() map[string]*graph.Node {
 
 	e := n0.AddEdge(&n1)
 	e = n00.AddEdge(&n1)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	e = n0.AddEdge(&n2)
 	e = n00.AddEdge(&n2)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	e = n0.AddEdge(&n3)
 	e = n00.AddEdge(&n3)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	e = n0.AddEdge(&n4)
 	e = n00.AddEdge(&n4)
-	e.Metadata["rate"] = 0.0
+	e.Metadata["httpIn"] = 0.0
 
 	e = n0.AddEdge(&n5)
 	e = n00.AddEdge(&n5)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	e = n0.AddEdge(&n6)
 	e = n00.AddEdge(&n6)
-	e.Metadata["rate"] = 0.0
+	e.Metadata["httpIn"] = 0.0
 
 	e = n0.AddEdge(&n7)
 	e = n00.AddEdge(&n7)
-	e.Metadata["tcpSentRate"] = 74.1
+	e.Metadata["tcpIn"] = 74.1
 
 	e = n0.AddEdge(&n8)
 	e = n00.AddEdge(&n8)
-	e.Metadata["tcpSentRate"] = 74.1
+	e.Metadata["tcpIn"] = 74.1
 
 	e = n0.AddEdge(&n9)
 	e = n00.AddEdge(&n9)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	e = n0.AddEdge(&n10)
 	e = n00.AddEdge(&n10)
-	e.Metadata["rate"] = 0.8
+	e.Metadata["httpIn"] = 0.8
 
 	return trafficMap
 }

@@ -82,7 +82,7 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	assert.Equal(1, len(unknown.Edges))
 
 	e := unknown.Edges[0]
-	assert.Equal(float64(0.8), e.Metadata["rate"])
+	assert.Equal(float64(0.8), e.Metadata["httpIn"])
 	n := e.Dest
 	assert.Equal("customer-v1", n.Workload)
 	assert.Equal("customer", n.App)
@@ -140,7 +140,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("customer-v1", customer.Workload)
 	assert.Equal("customer", customer.App)
 	assert.Equal("v1", customer.Version)
-	assert.Equal(float64(0.8), unknown.Edges[0].Metadata["rate"])
+	assert.Equal(float64(0.8), unknown.Edges[0].Metadata["http"])
 	assert.Equal(nil, customer.Metadata["isUnused"])
 	assert.Equal(1, len(customer.Edges))
 
@@ -149,7 +149,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("preference-v1", preference.Workload)
 	assert.Equal("preference", preference.App)
 	assert.Equal("v1", preference.Version)
-	assert.Equal(float64(0.8), e.Metadata["rate"])
+	assert.Equal(float64(0.8), e.Metadata["http"])
 	assert.Equal(nil, preference.Metadata["isUnused"])
 	assert.Equal(2, len(preference.Edges))
 
@@ -158,7 +158,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("recommendation-v1", recommendationV1.Workload)
 	assert.Equal("recommendation", recommendationV1.App)
 	assert.Equal("v1", recommendationV1.Version)
-	assert.Equal(float64(0.8), e.Metadata["rate"])
+	assert.Equal(float64(0.8), e.Metadata["http"])
 	assert.Equal(nil, recommendationV1.Metadata["isUnused"])
 
 	e = preference.Edges[1]
@@ -198,9 +198,9 @@ func (a *UnusedNodeAppender) oneNodeTraffic() map[string]*graph.Node {
 	trafficMap[unknown.ID] = &unknown
 	trafficMap[customer.ID] = &customer
 	edge := unknown.AddEdge(&customer)
-	edge.Metadata["rate"] = 0.8
-	unknown.Metadata["rateOut"] = 0.8
-	customer.Metadata["rateIn"] = 0.8
+	edge.Metadata["httpIn"] = 0.8
+	unknown.Metadata["httpOut"] = 0.8
+	customer.Metadata["httpIn"] = 0.8
 
 	return trafficMap
 }
@@ -218,19 +218,19 @@ func (a *UnusedNodeAppender) v1Traffic() map[string]*graph.Node {
 	trafficMap[recommendation.ID] = &recommendation
 
 	edge := unknown.AddEdge(&customer)
-	edge.Metadata["rate"] = 0.8
-	unknown.Metadata["rateOut"] = 0.8
-	customer.Metadata["rateIn"] = 0.8
+	edge.Metadata["http"] = 0.8
+	unknown.Metadata["httpOut"] = 0.8
+	customer.Metadata["httpIn"] = 0.8
 
 	edge = customer.AddEdge(&preference)
-	edge.Metadata["rate"] = 0.8
-	customer.Metadata["rateOut"] = 0.8
-	preference.Metadata["rateIn"] = 0.8
+	edge.Metadata["http"] = 0.8
+	customer.Metadata["httpOut"] = 0.8
+	preference.Metadata["httpIn"] = 0.8
 
 	edge = preference.AddEdge(&recommendation)
-	edge.Metadata["rate"] = 0.8
-	preference.Metadata["rateOut"] = 0.8
-	recommendation.Metadata["rateIn"] = 0.8
+	edge.Metadata["http"] = 0.8
+	preference.Metadata["httpOut"] = 0.8
+	recommendation.Metadata["httpIn"] = 0.8
 
 	return trafficMap
 }
