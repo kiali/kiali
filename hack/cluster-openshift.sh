@@ -137,6 +137,10 @@ while [[ $# -gt 0 ]]; do
       WAIT_FOR_ISTIO=false
       shift
       ;;
+    -nj|--no-jaeger)
+	REMOVE_JAEGER=true
+	shift
+	;;
     -h|--help)
       cat <<HELPMSG
 
@@ -192,6 +196,10 @@ Valid options:
       will not start until after all Istio components are up and running. Thus this option
       is ignored when --kiali-enabled is true.
       This will also be ignored when --istio-enabled is false.
+      Used only for the 'up' command.
+  -nj|--no-jaeger
+      When specified, this script will remove Jaeger and Elasticsearch installations from the
+      cluster after start-up.
       Used only for the 'up' command.
   -p|--persistence-dir <dir>
       When set, OpenShift will persist data to this directory.
@@ -528,6 +536,13 @@ if [ "$_CMD" = "up" ]; then
     IMAGE_VERSION=${KIALI_VERSION}  \
     KIALI_USERNAME=${KIALI_USERNAME}  \
     KIALI_PASSPHRASE=${KIALI_PASSPHRASE} /tmp/deploy-kiali-to-openshift.sh
+  fi
+
+  if [ "${REMOVE_JAEGER}" == "true" ]; then
+      echo "Removing Jaeger from cluster..."
+      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=jaeger -n istio-system
+      echo "Removing Elasticsearch from cluster..."
+      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
   fi
 
 elif [ "$_CMD" = "down" ];then
