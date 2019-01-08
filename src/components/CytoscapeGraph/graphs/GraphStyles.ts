@@ -177,30 +177,32 @@ export class GraphStyles {
               content = '';
           }
         } else {
+          let contentArray: string[] = [];
+          if ((isMultiNamespace || ele.data('isOutside')) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
+            contentArray.push(namespace);
+          }
           switch (nodeType) {
             case NodeType.APP:
               if (cyGlobal.graphType === GraphType.APP || ele.data('isGroup') || version === 'unknown') {
-                content = app;
+                contentArray.unshift(app);
               } else {
-                content = app + `\n${version}`;
+                contentArray.unshift(app);
+                contentArray.push(version);
               }
               break;
             case NodeType.SERVICE:
-              content = service;
+              contentArray.unshift(service);
               break;
             case NodeType.UNKNOWN:
-              content = 'unknown';
+              contentArray.unshift('unknown');
               break;
             case NodeType.WORKLOAD:
-              content = workload;
+              contentArray.unshift(workload);
               break;
             default:
-              content = 'error';
+              contentArray.unshift('error');
           }
-
-          if ((isMultiNamespace || ele.data('isOutside')) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
-            content += `\n${namespace}`;
-          }
+          content = contentArray.join('\n');
         }
       }
 
