@@ -3,6 +3,7 @@ package destinationrules
 import (
 	"strconv"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -59,8 +60,9 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[string]string) bool {
+	appLabel := config.Get().IstioLabels.AppLabelName
 	for _, wl := range n.WorkloadList.Workloads {
-		if service == wl.Labels["app"] {
+		if service == wl.Labels[appLabel] {
 			valid := true
 			for k, v := range labels {
 				wlv, found := wl.Labels[k]
@@ -78,8 +80,9 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[str
 }
 
 func (n NoDestinationChecker) hasMatchingService(service string) bool {
+	appLabel := config.Get().IstioLabels.AppLabelName
 	for _, wl := range n.WorkloadList.Workloads {
-		if service == wl.Labels["app"] {
+		if service == wl.Labels[appLabel] {
 			return true
 		}
 	}

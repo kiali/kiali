@@ -2,10 +2,11 @@ package kubernetes
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"strings"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -287,69 +288,6 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
 	}
 	return istioObject, err
-}
-
-// GetDestinationRulesSubsets returns an array of subset names where a specific version is defined for a given service
-func GetDestinationRulesSubsets(destinationRules []IstioObject, serviceName, version string) []string {
-	cfg := config.Get()
-	foundSubsets := make([]string, 0)
-	for _, destinationRule := range destinationRules {
-		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-			if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
-				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-					if dSubsets, ok := subsets.([]interface{}); ok {
-						for _, subset := range dSubsets {
-							if innerSubset, ok := subset.(map[string]interface{}); ok {
-								subsetName := innerSubset["name"]
-								if labels, ok := innerSubset["labels"]; ok {
-									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok && versionValue == version {
-											foundSubsets = append(foundSubsets, subsetName.(string))
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return foundSubsets
-}
-
-// ValidateDestinationRulesSubsets compares availableVersions to the ones found in the subsets definitions and returns indexes of those that were not found
-func ValidateDestinationRulesSubsets(destinationRules []IstioObject, serviceName string, availableVersions []string) []int {
-	cfg := config.Get()
-	missingSubsets := make([]int, 0)
-	for _, destinationRule := range destinationRules {
-		if dHost, ok := destinationRule.GetSpec()["host"]; ok {
-			if host, ok := dHost.(string); ok && FilterByHost(host, serviceName, destinationRule.GetObjectMeta().Namespace) {
-				if subsets, ok := destinationRule.GetSpec()["subsets"]; ok {
-					if dSubsets, ok := subsets.([]interface{}); ok {
-					subSetScan:
-						for i, subset := range dSubsets {
-							if innerSubset, ok := subset.(map[string]interface{}); ok {
-								if labels, ok := innerSubset["labels"]; ok {
-									if dLabels, ok := labels.(map[string]interface{}); ok {
-										if versionValue, ok := dLabels[cfg.IstioLabels.VersionLabelName]; ok {
-											for _, v := range availableVersions {
-												if v == versionValue {
-													continue subSetScan
-												}
-											}
-											missingSubsets = append(missingSubsets, i)
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return missingSubsets
 }
 
 func FilterByHost(host, serviceName, namespace string) bool {
