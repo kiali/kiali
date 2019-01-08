@@ -17,7 +17,7 @@ func NewRouter() *mux.Router {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
-	rootRouter := mux.NewRouter().StrictSlash(true)
+	rootRouter := mux.NewRouter().StrictSlash(false)
 	appRouter := rootRouter
 
 	// Due to PathPrefix matching behavoir on sub-routers
@@ -27,8 +27,10 @@ func NewRouter() *mux.Router {
 		rootRouter.HandleFunc(webRoot, func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 		})
-		appRouter = rootRouter.PathPrefix(conf.Server.WebRoot).Subrouter().StrictSlash(true)
+		appRouter = rootRouter.PathPrefix(conf.Server.WebRoot).Subrouter()
 	}
+
+	appRouter = appRouter.StrictSlash(true)
 
 	// Build our API server routes and install them.
 	apiRoutes := NewRoutes()
