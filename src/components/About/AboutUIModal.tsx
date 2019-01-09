@@ -66,7 +66,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config().about && config().about.website) {
       return (
         <div>
-          <a href={config().about.website.url} target="_blank">
+          <a href={config().about.website.url} target="_blank" rel="noopener noreferrer">
             <Icon
               name={config().about.website.iconName}
               type={config().about.website.iconType}
@@ -86,7 +86,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config().about && config().about.project) {
       return (
         <div>
-          <a href={config().about.project.url} target="_blank">
+          <a href={config().about.project.url} target="_blank" rel="noopener noreferrer">
             <Icon
               name={config().about.project.iconName}
               type={config().about.project.iconType}

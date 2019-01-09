@@ -305,7 +305,6 @@ export const getServerConfig = (auth: AuthToken) => {
 export const getServiceDetail = (auth: AuthToken, namespace: string, service: string): Promise<ServiceDetailsInfo> => {
   return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), {}, {}, auth).then(r => {
     const info: ServiceDetailsInfo = r.data;
-    info.istioSidecar = info.istioSidecar;
     if (info.health) {
       // Default rate interval in backend = 600s
       info.health = ServiceHealth.fromJson(info.health, 600);
