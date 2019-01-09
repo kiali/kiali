@@ -212,10 +212,11 @@ func fetchRateRange(api v1.API, metricName, labels, grouping string, q *BaseMetr
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
-		query = fmt.Sprintf("round(sum(%s(%s%s[%s])), 0.001)", q.RateFunc, metricName, labels, q.RateInterval)
+		query = fmt.Sprintf("sum(%s(%s%s[%s]))", q.RateFunc, metricName, labels, q.RateInterval)
 	} else {
-		query = fmt.Sprintf("round(sum(%s(%s%s[%s])) by (%s), 0.001)", q.RateFunc, metricName, labels, q.RateInterval, grouping)
+		query = fmt.Sprintf("sum(%s(%s%s[%s])) by (%s)", q.RateFunc, metricName, labels, q.RateInterval, grouping)
 	}
+	query = roundSignificant(query, 0.001)
 	return fetchRange(api, query, q.Range)
 }
 
@@ -231,9 +232,9 @@ func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *Bas
 		}
 		// Average
 		// Example: sum(rate(my_histogram_sum{foo=bar}[5m])) by (baz) / sum(rate(my_histogram_count{foo=bar}[5m])) by (baz)
-		query := fmt.Sprintf(
-			"round(sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s, 0.001)", metricName, labels, q.RateInterval, groupingAvg,
-			metricName, labels, q.RateInterval, groupingAvg)
+		query := fmt.Sprintf("sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s",
+			metricName, labels, q.RateInterval, groupingAvg, metricName, labels, q.RateInterval, groupingAvg)
+		query = roundSignificant(query, 0.001)
 		log.Infof("Query: %s\n", query)
 		histogram["avg"] = fetchRange(api, query, q.Range)
 	}
@@ -244,8 +245,9 @@ func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *Bas
 	}
 	for _, quantile := range q.Quantiles {
 		// Example: round(histogram_quantile(0.5, sum(rate(my_histogram_bucket{foo=bar}[5m])) by (le,baz)), 0.001)
-		query := fmt.Sprintf(
-			"round(histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s)), 0.001)", quantile, metricName, labels, q.RateInterval, groupingQuantile)
+		query := fmt.Sprintf("histogram_quantile(%s, sum(rate(%s_bucket%s[%s])) by (le%s))",
+			quantile, metricName, labels, q.RateInterval, groupingQuantile)
+		query = roundSignificant(query, 0.001)
 		histogram[quantile] = fetchRange(api, query, q.Range)
 		log.Infof("Query: %s\n", query)
 	}
@@ -346,4 +348,9 @@ func getRequestRatesForLabel(api v1.API, time time.Time, labels, ratesInterval s
 	}
 	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
 	return result.(model.Vector), nil
+}
+
+// roundSignificant will output promQL that performs rounding only if the resulting value is significant, that is, higher than the requested precision
+func roundSignificant(innerQuery string, precision float64) string {
+	return fmt.Sprintf("round(%s, %f) > %f or %s", innerQuery, precision, precision, innerQuery)
 }

@@ -1,6 +1,7 @@
 package prometheustest
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -178,6 +179,10 @@ func TestGetDestinationServices(t *testing.T) {
 	assert.Equal("bookinfo", svc.Namespace)
 }
 
+func round(q string) string {
+	return fmt.Sprintf("round(%s, 0.001000) > 0.001000 or %s", q, q)
+}
+
 func TestGetServiceMetrics(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
@@ -199,10 +204,10 @@ func TestGetServiceMetrics(t *testing.T) {
 		Step:  q.Step,
 	}
 
-	mockWithRange(api, expectedRange, "round(sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 2.5)
-	mockWithRange(api, expectedRange, "round(sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 4.5)
-	mockWithRange(api, expectedRange, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 11)
-	mockWithRange(api, expectedRange, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m])), 0.001)", 13)
+	mockWithRange(api, expectedRange, round("sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]))"), 2.5)
+	mockWithRange(api, expectedRange, round("sum(rate(istio_requests_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m]))"), 4.5)
+	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]))"), 11)
+	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]))"), 13)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
@@ -242,10 +247,10 @@ func TestGetAppMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)", 10)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)", 12)
+	mockRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"), 1.5)
+	mockRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\",response_code=~\"[5|4].*\"}[5m]))"), 3.5)
+	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"), 10)
+	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.6)
@@ -293,7 +298,7 @@ func TestGetFilteredAppMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)", 1.5)
+	mockRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"), 1.5)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
@@ -318,7 +323,7 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(irate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[1m])), 0.001)", 1.5)
+	mockRange(api, round("sum(irate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[1m]))"), 1.5)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
 		App:       "productpage",
@@ -368,7 +373,7 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 		return
 	}
 	// Mock everything to return empty data
-	mockEmptyRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m])), 0.001)")
+	mockEmptyRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"))
 	mockEmptyHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]")
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
@@ -420,10 +425,10 @@ func TestGetNamespaceMetrics(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 1.5)
-	mockRange(api, "round(sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m])), 0.001)", 3.5)
-	mockRange(api, "round(sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 10)
-	mockRange(api, "round(sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m])), 0.001)", 12)
+	mockRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]))"), 1.5)
+	mockRange(api, round("sum(rate(istio_requests_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",response_code=~\"[5|4].*\"}[5m]))"), 3.5)
+	mockRange(api, round("sum(rate(istio_tcp_received_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]))"), 10)
+	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
@@ -635,21 +640,21 @@ func mockEmptyRange(api *PromAPIMock, query string) {
 }
 
 func mockHistogram(api *PromAPIMock, baseName string, suffix string, retAvg model.SampleValue, retMed model.SampleValue, ret95 model.SampleValue, ret99 model.SampleValue) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le)), 0.001)"
-	mockRange(api, "round(histogram_quantile(0.5, "+histMetric, retMed)
-	mockRange(api, "round(histogram_quantile(0.95, "+histMetric, ret95)
-	mockRange(api, "round(histogram_quantile(0.99, "+histMetric, ret99)
-	mockRange(api, "round(histogram_quantile(0.999, "+histMetric, ret99)
-	mockRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+")), 0.001)", retAvg)
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
+	mockRange(api, round("histogram_quantile(0.5, "+histMetric), retMed)
+	mockRange(api, round("histogram_quantile(0.95, "+histMetric), ret95)
+	mockRange(api, round("histogram_quantile(0.99, "+histMetric), ret99)
+	mockRange(api, round("histogram_quantile(0.999, "+histMetric), ret99)
+	mockRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"), retAvg)
 }
 
 func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
-	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le)), 0.001)"
-	mockEmptyRange(api, "round(histogram_quantile(0.5, "+histMetric)
-	mockEmptyRange(api, "round(histogram_quantile(0.95, "+histMetric)
-	mockEmptyRange(api, "round(histogram_quantile(0.99, "+histMetric)
-	mockEmptyRange(api, "round(histogram_quantile(0.999, "+histMetric)
-	mockEmptyRange(api, "round(sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+")), 0.001)")
+	histMetric := "sum(rate(" + baseName + "_bucket" + suffix + ")) by (le))"
+	mockEmptyRange(api, round("histogram_quantile(0.5, "+histMetric))
+	mockEmptyRange(api, round("histogram_quantile(0.95, "+histMetric))
+	mockEmptyRange(api, round("histogram_quantile(0.99, "+histMetric))
+	mockEmptyRange(api, round("histogram_quantile(0.999, "+histMetric))
+	mockEmptyRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"))
 }
 
 func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
