@@ -12,6 +12,7 @@ import {
   Icon,
   Row
 } from 'patternfly-react';
+import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
@@ -42,6 +43,9 @@ type State = {
 };
 
 interface OverviewProps {}
+const cardGridStyle = style({
+  width: '100%'
+});
 
 class OverviewPage extends React.Component<OverviewProps, State> {
   private static summarizeHealthFilters() {
@@ -192,7 +196,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         </Breadcrumb>
         <OverviewToolbarContainer onRefresh={this.load} onError={ListPagesHelper.handleError} sort={this.sort} />
         <div className="cards-pf">
-          <CardGrid matchHeight={true}>
+          <CardGrid matchHeight={true} className={cardGridStyle}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
               {this.state.namespaces.map(ns => {
                 const nbItems = ns.inError.length + ns.inWarning.length + ns.inSuccess.length + ns.notAvailable.length;
