@@ -26,7 +26,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   }
 
   globalStatus(rule: DestinationRule) {
-    let validation = this.validation(rule);
+    const validation = this.validation(rule);
     if (!validation) {
       return '';
     }
@@ -37,7 +37,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
     let message = checks.map(check => check.message).join(',');
 
     if (!message.length) {
-      if (validation && !validation.valid) {
+      if (!validation.valid) {
         message = 'Not all checks passed!';
       }
     }

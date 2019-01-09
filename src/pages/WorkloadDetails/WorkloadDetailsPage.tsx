@@ -117,7 +117,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   renderBreadcrumbs = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     const to = this.workloadPageURL();
-    let tab = 'Info';
+    let tab: string;
     switch (urlParams.get('tab')) {
       case 'info':
         tab = 'Info';

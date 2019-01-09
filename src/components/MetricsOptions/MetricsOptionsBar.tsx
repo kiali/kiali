@@ -164,7 +164,7 @@ export class MetricsOptionsBar extends React.Component<MetricsOptionsBarProps> {
         </FormGroup>
         {this.props.grafanaLink && (
           <FormGroup style={{ borderRight: 'none' }}>
-            <a id={'grafana_link'} href={this.props.grafanaLink} target="_blank">
+            <a id={'grafana_link'} href={this.props.grafanaLink} target="_blank" rel="noopener noreferrer">
               View in Grafana <Icon type={'fa'} name={'external-link'} />
             </a>
           </FormGroup>
