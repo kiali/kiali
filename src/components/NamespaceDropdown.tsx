@@ -107,7 +107,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         trigger={['click']}
         rootClose={true}
       >
-        <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="graph_settings">
+        <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="namespace-selector">
           {this.namespaceButtonText()} <Icon name="angle-down" />
         </Button>
       </OverlayTrigger>
