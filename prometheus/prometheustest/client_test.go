@@ -334,33 +334,6 @@ func TestGetAppMetricsInstantRates(t *testing.T) {
 	assert.NotNil(t, rqCountOut)
 }
 
-func TestGetServiceHealth(t *testing.T) {
-	client, api, err := setupMocked()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	mockSingle(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", 0)
-	mockSingle(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
-	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", 0)
-	mockSingle(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", 1)
-	mockSingle(api, "envoy_cluster_inbound_8080__productpage_istio_system_svc_cluster_local_membership_healthy", 1)
-	mockSingle(api, "envoy_cluster_inbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 2)
-	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_healthy", 3)
-	mockSingle(api, "envoy_cluster_outbound_8080__productpage_istio_system_svc_cluster_local_membership_total", 4)
-	health, err := client.GetServiceHealth("istio-system", "productpage", []int32{9080, 8080})
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	// Check health
-	assert.Equal(t, 1, health.Inbound.Healthy)
-	assert.Equal(t, 3, health.Inbound.Total)
-	assert.Equal(t, 3, health.Outbound.Healthy)
-	assert.Equal(t, 5, health.Outbound.Total)
-}
-
 func TestGetAppMetricsUnavailable(t *testing.T) {
 	client, api, err := setupMocked()
 	if err != nil {
@@ -393,25 +366,6 @@ func TestGetAppMetricsUnavailable(t *testing.T) {
 	assert.Empty(t, rqSizeIn["0.5"].Matrix[0].Values)
 	assert.Empty(t, rqSizeIn["0.95"].Matrix[0].Values)
 	assert.Empty(t, rqSizeIn["0.99"].Matrix[0].Values)
-}
-
-func TestGetServiceHealthUnavailable(t *testing.T) {
-	client, api, err := setupMocked()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	// Mock everything to return empty data
-	mockQuery(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", &model.Vector{})
-	mockQuery(api, "envoy_cluster_inbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
-	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_healthy", &model.Vector{})
-	mockQuery(api, "envoy_cluster_outbound_9080__productpage_istio_system_svc_cluster_local_membership_total", &model.Vector{})
-	h, err := client.GetServiceHealth("istio-system", "productpage", []int32{9080})
-
-	// Check health unavailable
-	assert.Nil(t, err)
-	assert.Equal(t, 0, h.Inbound.Total)
-	assert.Equal(t, 0, h.Outbound.Total)
 }
 
 func TestGetNamespaceMetrics(t *testing.T) {
