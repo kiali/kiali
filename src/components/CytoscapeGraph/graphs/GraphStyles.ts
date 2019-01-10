@@ -37,8 +37,8 @@ const NodeHeight = '10px';
 const NodeIconCB = ICONS().ISTIO.CIRCUIT_BREAKER.ascii; // bolt
 const NodeIconMS = ICONS().ISTIO.MISSING_SIDECAR.ascii; // exclamation
 const NodeIconVS = ICONS().ISTIO.VIRTUALSERVICE.ascii; // code-branch
-const NodeImageOut = require('../../../assets/img/node-out.png');
-const NodeImageOutLocked = require('../../../assets/img/node-out-locked.png');
+const NodeImageTopology = require('../../../assets/img/node-background-topology.png');
+const NodeImageKey = require('../../../assets/img/node-background-key.png');
 const NodeTextOutlineColor = PfColors.White;
 const NodeTextOutlineWidth = '1px';
 const NodeTextColor = PfColors.Black;
@@ -123,12 +123,12 @@ export class GraphStyles {
       const isInaccessible = ele.data('isInaccessible');
       const isServiceEntry = ele.data('isServiceEntry');
       if (isInaccessible && !isServiceEntry) {
-        return NodeImageOutLocked;
+        return NodeImageKey;
       }
       const isOutside = ele.data('isOutside');
       const isGroup = ele.data('isGroup');
       if (isOutside && !isGroup) {
-        return NodeImageOut;
+        return NodeImageTopology;
       }
       return 'none';
     };
