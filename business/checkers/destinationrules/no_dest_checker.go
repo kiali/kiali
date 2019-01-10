@@ -3,13 +3,14 @@ package destinationrules
 import (
 	"strconv"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoDestinationChecker struct {
 	Namespace       string
-	Services        map[string][]string
+	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
 }
 
@@ -21,19 +22,36 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := FormatHostnameForPrefixSearch(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
-			if versions, found := n.Services[fqdn.Service]; found {
-				if hasSubsets(n.DestinationRule) {
-					indexes := kubernetes.ValidateDestinationRulesSubsets([]kubernetes.IstioObject{n.DestinationRule}, fqdn.Service, versions)
-					for _, i := range indexes {
-						validation := models.BuildCheck("This subset is not found from the host", "error", "spec/subsets["+strconv.Itoa(i)+"]/version")
-						validations = append(validations, &validation)
-						valid = false
+			if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
+				if dSubsets, ok := subsets.([]interface{}); ok {
+					// Check that each subset has a matching workload somewhere..
+					for i, subset := range dSubsets {
+						if innerSubset, ok := subset.(map[string]interface{}); ok {
+							if labels, ok := innerSubset["labels"]; ok {
+								if dLabels, ok := labels.(map[string]interface{}); ok {
+									stringLabels := make(map[string]string, len(dLabels))
+									for k, v := range dLabels {
+										if s, ok := v.(string); ok {
+											stringLabels[k] = s
+										}
+									}
+									if !n.hasMatchingWorkload(fqdn.Service, stringLabels) {
+										validation := models.BuildCheck("This subset's labels are not found from any matching host", "error", "spec/subsets["+strconv.Itoa(i)+"]")
+										validations = append(validations, &validation)
+										valid = false
+									}
+								}
+							}
+						}
 					}
+
 				}
 			} else {
-				validation := models.BuildCheck("Host doesn't have a valid service", "error", "spec/host")
-				validations = append(validations, &validation)
-				valid = false
+				if !n.hasMatchingService(fqdn.Service) {
+					validation := models.BuildCheck("This host has no matching workloads", "error", "spec/host")
+					validations = append(validations, &validation)
+					valid = false
+				}
 			}
 		}
 	}
@@ -41,12 +59,31 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, valid
 }
 
-func hasSubsets(dr kubernetes.IstioObject) bool {
-	if subsets, ok := dr.GetSpec()["subsets"]; ok {
-		if subsetsSI, ok := subsets.([]interface{}); ok {
-			if len(subsetsSI) > 0 {
+func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[string]string) bool {
+	appLabel := config.Get().IstioLabels.AppLabelName
+	for _, wl := range n.WorkloadList.Workloads {
+		if service == wl.Labels[appLabel] {
+			valid := true
+			for k, v := range labels {
+				wlv, found := wl.Labels[k]
+				if !found || wlv != v {
+					valid = false
+					break
+				}
+			}
+			if valid {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+func (n NoDestinationChecker) hasMatchingService(service string) bool {
+	appLabel := config.Get().IstioLabels.AppLabelName
+	for _, wl := range n.WorkloadList.Workloads {
+		if service == wl.Labels[appLabel] {
+			return true
 		}
 	}
 	return false

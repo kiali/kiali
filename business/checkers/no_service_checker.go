@@ -22,7 +22,6 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
-	services := getServices(in.Services, in.WorkloadList)
 	serviceNames := getServiceNames(in.Services)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
 	gatewayNames := kubernetes.GatewayNames(in.IstioDetails.Gateways)
@@ -32,7 +31,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames))
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, services))
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList))
 	}
 
 	return validations
@@ -76,10 +75,10 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 	return vsvalidations
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, services map[string][]string) models.IstioValidations {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList) models.IstioValidations {
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
-		Services:        services,
+		WorkloadList:    workloads,
 		DestinationRule: destinationRule,
 	}.Check()
 
@@ -93,22 +92,6 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 		Valid:      valid,
 	}
 	return drvalidations
-}
-
-func getServices(services []v1.Service, workloads models.WorkloadList) map[string][]string {
-	serviceMap := make(map[string][]string, len(services))
-	for _, item := range services {
-		serviceMap[item.Name] = []string{}
-	}
-	for _, wl := range workloads.Workloads {
-		if wl.AppLabel && wl.VersionLabel {
-			if versionList, found := serviceMap[wl.Labels["app"]]; found {
-				versionList = append(versionList, wl.Labels["version"])
-				serviceMap[wl.Labels["app"]] = versionList
-			}
-		}
-	}
-	return serviceMap
 }
 
 func getServiceNames(services []v1.Service) []string {
