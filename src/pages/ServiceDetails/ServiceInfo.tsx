@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { style } from 'typestyle';
 import {
   Button,
   Col,
@@ -42,6 +43,9 @@ interface ValidationChecks {
 }
 
 const tabName = 'list';
+const tabIconStyle = style({
+  fontSize: '0.9em',
+});
 
 class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
@@ -96,7 +100,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const destinationRules = this.props.serviceDetails.destinationRules || [];
     const validationChecks = this.validationChecks();
     const getSeverityIcon: any = (severity: string = 'error') => (
-      <span>
+      <span className={tabIconStyle}>
         {' '}
         <Icon type="pf" name={severityToIconName(severity)} />
       </span>

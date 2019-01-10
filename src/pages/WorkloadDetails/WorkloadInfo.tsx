@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { style } from 'typestyle';
 import { Validations } from '../../types/IstioObjects';
 import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
@@ -27,6 +28,9 @@ interface ValidationChecks {
 type WorkloadInfoState = {};
 
 const tabName = 'list';
+const tabIconStyle = style({
+  fontSize: '0.9em',
+});
 
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   constructor(props: WorkloadInfoProps) {
@@ -60,7 +64,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     destinationServices[workload.name] = workload.destinationServices || [];
 
     const getSeverityIcon: any = (severity: string = 'error') => (
-      <span>
+      <span className={tabIconStyle}>
         {' '}
         <Icon type="pf" name={severityToIconName(severity)} />
       </span>
