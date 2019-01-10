@@ -9,7 +9,6 @@ import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'pa
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
-import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
@@ -196,10 +195,6 @@ class WorkloadListComponent extends ListComponent.Component<
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <RateIntervalToolbarItem
-            rateIntervalSelected={this.state.rateInterval}
-            onRateIntervalChanged={this.rateIntervalChangedHandler}
-          />
           <ToolbarRightContent>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />

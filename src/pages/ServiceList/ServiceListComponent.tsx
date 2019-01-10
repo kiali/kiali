@@ -18,7 +18,6 @@ import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { authentication } from '../../utils/Authentication';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import RateIntervalToolbarItem from './RateIntervalToolbarItem';
 import ItemDescription from './ItemDescription';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { ServiceListFilters } from './FiltersAndSorts';
@@ -225,10 +224,6 @@ class ServiceListComponent extends ListComponent.Component<
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <RateIntervalToolbarItem
-            rateIntervalSelected={this.state.rateInterval}
-            onRateIntervalChanged={this.rateIntervalChangedHandler}
-          />
           <ToolbarRightContent>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
