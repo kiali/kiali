@@ -3,11 +3,12 @@ import { EditorLink } from '../../../types/ServiceInfo';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import LocalTime from '../../../components/Time/LocalTime';
-import Label from '../../../components/Label/Label';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
 import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
 import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
+import Labels from '../../../components/Label/Labels';
+import { safeRender } from '../../../utils/SafeRender';
 
 interface ServiceInfoDestinationRulesProps extends EditorLink {
   destinationRules?: DestinationRule[];
@@ -138,24 +139,26 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   }
 
   rows() {
-    return (this.props.destinationRules || []).map((destinationRule, vsIdx) => ({
-      id: vsIdx,
-      name: this.overviewLink(destinationRule),
-      status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
-      trafficPolicy: destinationRule.spec.trafficPolicy ? (
-        <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
-      ) : (
-        'None'
-      ),
-      subsets:
-        destinationRule.spec.subsets && destinationRule.spec.subsets.length > 0
-          ? this.generateSubsets(destinationRule.spec.subsets)
-          : 'None',
-      host: destinationRule.spec.host ? <DetailObject name="" detail={destinationRule.spec.host} /> : undefined,
-      createdAt: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />,
-      resourceVersion: destinationRule.metadata.resourceVersion,
-      actions: this.yamlLink(destinationRule)
-    }));
+    return (this.props.destinationRules || []).map((destinationRule, vsIdx) => {
+      return {
+        id: vsIdx,
+        name: this.overviewLink(destinationRule),
+        status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
+        trafficPolicy: destinationRule.spec.trafficPolicy ? (
+          <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
+        ) : (
+          'None'
+        ),
+        subsets:
+          destinationRule.spec.subsets && destinationRule.spec.subsets.length > 0
+            ? this.generateSubsets(destinationRule.spec.subsets)
+            : 'None',
+        host: destinationRule.spec.host ? <DetailObject name="" detail={destinationRule.spec.host} /> : undefined,
+        createdAt: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />,
+        resourceVersion: destinationRule.metadata.resourceVersion,
+        actions: this.yamlLink(destinationRule)
+      };
+    });
   }
 
   generateKey() {
@@ -168,26 +171,21 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   }
 
   generateSubsets(subsets: Subset[]) {
-    let childrenList: any = [];
-    subsets.map(subset => {
-      childrenList.push(
-        <li key={this.generateKey() + '_k' + subset.name} style={{ marginBottom: '13px' }}>
-          <Row>
-            <Col xs={3}>
-              <span style={{ paddingRight: '10px', paddingTop: '3px' }}>{subset.name}</span>{' '}
-            </Col>
-            <Col xs={4}>
-              {Object.keys(subset.labels).map((key, _) => (
-                <Label key={key} name={key} value={subset.labels[key]} />
-              ))}
-            </Col>
-            <Col xs={4}>
-              <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
-            </Col>
-          </Row>
-        </li>
-      );
-    });
+    const childrenList = subsets.map(subset => (
+      <li key={this.generateKey() + '_k' + subset.name} style={{ marginBottom: '13px' }}>
+        <Row>
+          <Col xs={3}>
+            <span style={{ paddingRight: '10px', paddingTop: '3px' }}>{safeRender(subset.name)}</span>{' '}
+          </Col>
+          <Col xs={4}>
+            <Labels labels={subset.labels} />
+          </Col>
+          <Col xs={4}>
+            <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
+          </Col>
+        </Row>
+      </li>
+    ));
     return <ul style={{ listStyleType: 'none', paddingLeft: '0px' }}>{childrenList}</ul>;
   }
 

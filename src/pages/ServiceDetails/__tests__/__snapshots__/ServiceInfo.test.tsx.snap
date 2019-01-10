@@ -429,17 +429,20 @@ ShallowWrapper {
                     mountOnEnter={false}
                     unmountOnExit={false}
                   >
-                    <TabPane
-                      bsClass="tab-pane"
+                    <WithErrorBoundary
+                      component={[Function]}
                       eventKey="workloads"
+                      message="One of the Workloads associated to this service has an invalid format"
                     />
-                    <TabPane
-                      bsClass="tab-pane"
+                    <WithErrorBoundary
+                      component={[Function]}
                       eventKey="sources"
+                      message="One of the Sources associated to this service has an invalid format"
                     />
-                    <TabPane
-                      bsClass="tab-pane"
+                    <WithErrorBoundary
+                      component={[Function]}
                       eventKey="virtualservices"
+                      message="One of the Virtual Services associated to this service has an invalid format"
                     >
                       <ServiceInfoVirtualServices
                         editorLink="/namespaces/istio-system/services/reviews"
@@ -475,10 +478,11 @@ ShallowWrapper {
                           ]
                         }
                       />
-                    </TabPane>
-                    <TabPane
-                      bsClass="tab-pane"
+                    </WithErrorBoundary>
+                    <WithErrorBoundary
+                      component={[Function]}
                       eventKey="destinationrules"
+                      message="One of the Destination Rules associated to this service has an invalid format"
                     >
                       <ServiceInfoDestinationRules
                         destinationRules={
@@ -539,7 +543,7 @@ ShallowWrapper {
                           }
                         }
                       />
-                    </TabPane>
+                    </WithErrorBoundary>
                   </TabContent>
                 </div>
               </Uncontrolled(TabContainer)>
@@ -762,17 +766,20 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="workloads"
+                        message="One of the Workloads associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="sources"
+                        message="One of the Sources associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="virtualservices"
+                        message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -808,10 +815,11 @@ ShallowWrapper {
                             ]
                           }
                         />
-                      </TabPane>
-                      <TabPane
-                        bsClass="tab-pane"
+                      </WithErrorBoundary>
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="destinationrules"
+                        message="One of the Destination Rules associated to this service has an invalid format"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -872,7 +880,7 @@ ShallowWrapper {
                             }
                           }
                         />
-                      </TabPane>
+                      </WithErrorBoundary>
                     </TabContent>
                   </div>
                 </Uncontrolled(TabContainer)>
@@ -1355,17 +1363,20 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="workloads"
+                        message="One of the Workloads associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="sources"
+                        message="One of the Sources associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="virtualservices"
+                        message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -1401,10 +1412,11 @@ ShallowWrapper {
                             ]
                           }
                         />
-                      </TabPane>
-                      <TabPane
-                        bsClass="tab-pane"
+                      </WithErrorBoundary>
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="destinationrules"
+                        message="One of the Destination Rules associated to this service has an invalid format"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1465,7 +1477,7 @@ ShallowWrapper {
                             }
                           }
                         />
-                      </TabPane>
+                      </WithErrorBoundary>
                     </TabContent>
                   </div>
                 </Uncontrolled(TabContainer)>
@@ -1538,17 +1550,20 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="workloads"
+                        message="One of the Workloads associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="sources"
+                        message="One of the Sources associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="virtualservices"
+                        message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -1584,10 +1599,11 @@ ShallowWrapper {
                             ]
                           }
                         />
-                      </TabPane>
-                      <TabPane
-                        bsClass="tab-pane"
+                      </WithErrorBoundary>
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="destinationrules"
+                        message="One of the Destination Rules associated to this service has an invalid format"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1648,7 +1664,7 @@ ShallowWrapper {
                             }
                           }
                         />
-                      </TabPane>
+                      </WithErrorBoundary>
                     </TabContent>
                   </div>
                 </Uncontrolled(TabContainer)>,
@@ -1718,17 +1734,20 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="workloads"
+                        message="One of the Workloads associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="sources"
+                        message="One of the Sources associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="virtualservices"
+                        message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -1764,10 +1783,11 @@ ShallowWrapper {
                             ]
                           }
                         />
-                      </TabPane>
-                      <TabPane
-                        bsClass="tab-pane"
+                      </WithErrorBoundary>
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="destinationrules"
+                        message="One of the Destination Rules associated to this service has an invalid format"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -1828,7 +1848,7 @@ ShallowWrapper {
                             }
                           }
                         />
-                      </TabPane>
+                      </WithErrorBoundary>
                     </TabContent>
                   </div>,
                   "id": "service-tabs",
@@ -1893,17 +1913,20 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="workloads"
+                          message="One of the Workloads associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="sources"
+                          message="One of the Sources associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="virtualservices"
+                          message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -1939,10 +1962,11 @@ ShallowWrapper {
                               ]
                             }
                           />
-                        </TabPane>
-                        <TabPane
-                          bsClass="tab-pane"
+                        </WithErrorBoundary>
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="destinationrules"
+                          message="One of the Destination Rules associated to this service has an invalid format"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -2003,7 +2027,7 @@ ShallowWrapper {
                               }
                             }
                           />
-                        </TabPane>
+                        </WithErrorBoundary>
                       </TabContent>,
                     ],
                   },
@@ -2179,17 +2203,20 @@ ShallowWrapper {
                         "animation": true,
                         "bsClass": "tab",
                         "children": Array [
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="workloads"
+                            message="One of the Workloads associated to this service has an invalid format"
                           />,
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="sources"
+                            message="One of the Sources associated to this service has an invalid format"
                           />,
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="virtualservices"
+                            message="One of the Virtual Services associated to this service has an invalid format"
                           >
                             <ServiceInfoVirtualServices
                               editorLink="/namespaces/istio-system/services/reviews"
@@ -2225,10 +2252,11 @@ ShallowWrapper {
                                 ]
                               }
                             />
-                          </TabPane>,
-                          <TabPane
-                            bsClass="tab-pane"
+                          </WithErrorBoundary>,
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="destinationrules"
+                            message="One of the Destination Rules associated to this service has an invalid format"
                           >
                             <ServiceInfoDestinationRules
                               destinationRules={
@@ -2289,7 +2317,7 @@ ShallowWrapper {
                                 }
                               }
                             />
-                          </TabPane>,
+                          </WithErrorBoundary>,
                         ],
                         "componentClass": "div",
                         "mountOnEnter": false,
@@ -2302,9 +2330,10 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "bsClass": "tab-pane",
                             "children": false,
+                            "component": [Function],
                             "eventKey": "workloads",
+                            "message": "One of the Workloads associated to this service has an invalid format",
                           },
                           "ref": null,
                           "rendered": false,
@@ -2315,9 +2344,10 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "bsClass": "tab-pane",
                             "children": false,
+                            "component": [Function],
                             "eventKey": "sources",
+                            "message": "One of the Sources associated to this service has an invalid format",
                           },
                           "ref": null,
                           "rendered": false,
@@ -2328,7 +2358,6 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "bsClass": "tab-pane",
                             "children": <ServiceInfoVirtualServices
                               editorLink="/namespaces/istio-system/services/reviews"
                               validations={undefined}
@@ -2363,7 +2392,9 @@ ShallowWrapper {
                                 ]
                               }
                             />,
+                            "component": [Function],
                             "eventKey": "virtualservices",
+                            "message": "One of the Virtual Services associated to this service has an invalid format",
                           },
                           "ref": null,
                           "rendered": Object {
@@ -2413,7 +2444,6 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "bsClass": "tab-pane",
                             "children": <ServiceInfoDestinationRules
                               destinationRules={
                                 Array [
@@ -2473,7 +2503,9 @@ ShallowWrapper {
                                 }
                               }
                             />,
+                            "component": [Function],
                             "eventKey": "destinationrules",
+                            "message": "One of the Destination Rules associated to this service has an invalid format",
                           },
                           "ref": null,
                           "rendered": Object {
@@ -2775,17 +2807,20 @@ ShallowWrapper {
                       mountOnEnter={false}
                       unmountOnExit={false}
                     >
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="workloads"
+                        message="One of the Workloads associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="sources"
+                        message="One of the Sources associated to this service has an invalid format"
                       />
-                      <TabPane
-                        bsClass="tab-pane"
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="virtualservices"
+                        message="One of the Virtual Services associated to this service has an invalid format"
                       >
                         <ServiceInfoVirtualServices
                           editorLink="/namespaces/istio-system/services/reviews"
@@ -2821,10 +2856,11 @@ ShallowWrapper {
                             ]
                           }
                         />
-                      </TabPane>
-                      <TabPane
-                        bsClass="tab-pane"
+                      </WithErrorBoundary>
+                      <WithErrorBoundary
+                        component={[Function]}
                         eventKey="destinationrules"
+                        message="One of the Destination Rules associated to this service has an invalid format"
                       >
                         <ServiceInfoDestinationRules
                           destinationRules={
@@ -2885,7 +2921,7 @@ ShallowWrapper {
                             }
                           }
                         />
-                      </TabPane>
+                      </WithErrorBoundary>
                     </TabContent>
                   </div>
                 </Uncontrolled(TabContainer)>
@@ -3108,17 +3144,20 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="workloads"
+                          message="One of the Workloads associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="sources"
+                          message="One of the Sources associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="virtualservices"
+                          message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -3154,10 +3193,11 @@ ShallowWrapper {
                               ]
                             }
                           />
-                        </TabPane>
-                        <TabPane
-                          bsClass="tab-pane"
+                        </WithErrorBoundary>
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="destinationrules"
+                          message="One of the Destination Rules associated to this service has an invalid format"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -3218,7 +3258,7 @@ ShallowWrapper {
                               }
                             }
                           />
-                        </TabPane>
+                        </WithErrorBoundary>
                       </TabContent>
                     </div>
                   </Uncontrolled(TabContainer)>
@@ -3701,17 +3741,20 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="workloads"
+                          message="One of the Workloads associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="sources"
+                          message="One of the Sources associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="virtualservices"
+                          message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -3747,10 +3790,11 @@ ShallowWrapper {
                               ]
                             }
                           />
-                        </TabPane>
-                        <TabPane
-                          bsClass="tab-pane"
+                        </WithErrorBoundary>
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="destinationrules"
+                          message="One of the Destination Rules associated to this service has an invalid format"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -3811,7 +3855,7 @@ ShallowWrapper {
                               }
                             }
                           />
-                        </TabPane>
+                        </WithErrorBoundary>
                       </TabContent>
                     </div>
                   </Uncontrolled(TabContainer)>
@@ -3884,17 +3928,20 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="workloads"
+                          message="One of the Workloads associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="sources"
+                          message="One of the Sources associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="virtualservices"
+                          message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -3930,10 +3977,11 @@ ShallowWrapper {
                               ]
                             }
                           />
-                        </TabPane>
-                        <TabPane
-                          bsClass="tab-pane"
+                        </WithErrorBoundary>
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="destinationrules"
+                          message="One of the Destination Rules associated to this service has an invalid format"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -3994,7 +4042,7 @@ ShallowWrapper {
                               }
                             }
                           />
-                        </TabPane>
+                        </WithErrorBoundary>
                       </TabContent>
                     </div>
                   </Uncontrolled(TabContainer)>,
@@ -4064,17 +4112,20 @@ ShallowWrapper {
                         mountOnEnter={false}
                         unmountOnExit={false}
                       >
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="workloads"
+                          message="One of the Workloads associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="sources"
+                          message="One of the Sources associated to this service has an invalid format"
                         />
-                        <TabPane
-                          bsClass="tab-pane"
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="virtualservices"
+                          message="One of the Virtual Services associated to this service has an invalid format"
                         >
                           <ServiceInfoVirtualServices
                             editorLink="/namespaces/istio-system/services/reviews"
@@ -4110,10 +4161,11 @@ ShallowWrapper {
                               ]
                             }
                           />
-                        </TabPane>
-                        <TabPane
-                          bsClass="tab-pane"
+                        </WithErrorBoundary>
+                        <WithErrorBoundary
+                          component={[Function]}
                           eventKey="destinationrules"
+                          message="One of the Destination Rules associated to this service has an invalid format"
                         >
                           <ServiceInfoDestinationRules
                             destinationRules={
@@ -4174,7 +4226,7 @@ ShallowWrapper {
                               }
                             }
                           />
-                        </TabPane>
+                        </WithErrorBoundary>
                       </TabContent>
                     </div>,
                     "id": "service-tabs",
@@ -4239,17 +4291,20 @@ ShallowWrapper {
                           mountOnEnter={false}
                           unmountOnExit={false}
                         >
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="workloads"
+                            message="One of the Workloads associated to this service has an invalid format"
                           />
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="sources"
+                            message="One of the Sources associated to this service has an invalid format"
                           />
-                          <TabPane
-                            bsClass="tab-pane"
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="virtualservices"
+                            message="One of the Virtual Services associated to this service has an invalid format"
                           >
                             <ServiceInfoVirtualServices
                               editorLink="/namespaces/istio-system/services/reviews"
@@ -4285,10 +4340,11 @@ ShallowWrapper {
                                 ]
                               }
                             />
-                          </TabPane>
-                          <TabPane
-                            bsClass="tab-pane"
+                          </WithErrorBoundary>
+                          <WithErrorBoundary
+                            component={[Function]}
                             eventKey="destinationrules"
+                            message="One of the Destination Rules associated to this service has an invalid format"
                           >
                             <ServiceInfoDestinationRules
                               destinationRules={
@@ -4349,7 +4405,7 @@ ShallowWrapper {
                                 }
                               }
                             />
-                          </TabPane>
+                          </WithErrorBoundary>
                         </TabContent>,
                       ],
                     },
@@ -4525,17 +4581,20 @@ ShallowWrapper {
                           "animation": true,
                           "bsClass": "tab",
                           "children": Array [
-                            <TabPane
-                              bsClass="tab-pane"
+                            <WithErrorBoundary
+                              component={[Function]}
                               eventKey="workloads"
+                              message="One of the Workloads associated to this service has an invalid format"
                             />,
-                            <TabPane
-                              bsClass="tab-pane"
+                            <WithErrorBoundary
+                              component={[Function]}
                               eventKey="sources"
+                              message="One of the Sources associated to this service has an invalid format"
                             />,
-                            <TabPane
-                              bsClass="tab-pane"
+                            <WithErrorBoundary
+                              component={[Function]}
                               eventKey="virtualservices"
+                              message="One of the Virtual Services associated to this service has an invalid format"
                             >
                               <ServiceInfoVirtualServices
                                 editorLink="/namespaces/istio-system/services/reviews"
@@ -4571,10 +4630,11 @@ ShallowWrapper {
                                   ]
                                 }
                               />
-                            </TabPane>,
-                            <TabPane
-                              bsClass="tab-pane"
+                            </WithErrorBoundary>,
+                            <WithErrorBoundary
+                              component={[Function]}
                               eventKey="destinationrules"
+                              message="One of the Destination Rules associated to this service has an invalid format"
                             >
                               <ServiceInfoDestinationRules
                                 destinationRules={
@@ -4635,7 +4695,7 @@ ShallowWrapper {
                                   }
                                 }
                               />
-                            </TabPane>,
+                            </WithErrorBoundary>,
                           ],
                           "componentClass": "div",
                           "mountOnEnter": false,
@@ -4648,9 +4708,10 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "bsClass": "tab-pane",
                               "children": false,
+                              "component": [Function],
                               "eventKey": "workloads",
+                              "message": "One of the Workloads associated to this service has an invalid format",
                             },
                             "ref": null,
                             "rendered": false,
@@ -4661,9 +4722,10 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "bsClass": "tab-pane",
                               "children": false,
+                              "component": [Function],
                               "eventKey": "sources",
+                              "message": "One of the Sources associated to this service has an invalid format",
                             },
                             "ref": null,
                             "rendered": false,
@@ -4674,7 +4736,6 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "bsClass": "tab-pane",
                               "children": <ServiceInfoVirtualServices
                                 editorLink="/namespaces/istio-system/services/reviews"
                                 validations={undefined}
@@ -4709,7 +4770,9 @@ ShallowWrapper {
                                   ]
                                 }
                               />,
+                              "component": [Function],
                               "eventKey": "virtualservices",
+                              "message": "One of the Virtual Services associated to this service has an invalid format",
                             },
                             "ref": null,
                             "rendered": Object {
@@ -4759,7 +4822,6 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "bsClass": "tab-pane",
                               "children": <ServiceInfoDestinationRules
                                 destinationRules={
                                   Array [
@@ -4819,7 +4881,9 @@ ShallowWrapper {
                                   }
                                 }
                               />,
+                              "component": [Function],
                               "eventKey": "destinationrules",
+                              "message": "One of the Destination Rules associated to this service has an invalid format",
                             },
                             "ref": null,
                             "rendered": Object {

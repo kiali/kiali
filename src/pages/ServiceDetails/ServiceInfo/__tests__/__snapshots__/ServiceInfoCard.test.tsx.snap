@@ -347,7 +347,7 @@ ShallowWrapper {
                 "rendered": Object {
                   "instance": null,
                   "key": undefined,
-                  "nodeType": "class",
+                  "nodeType": "function",
                   "props": Object {
                     "name": "my_key",
                     "value": "my_value",
@@ -677,7 +677,7 @@ ShallowWrapper {
                   "rendered": Object {
                     "instance": null,
                     "key": undefined,
-                    "nodeType": "class",
+                    "nodeType": "function",
                     "props": Object {
                       "name": "my_key",
                       "value": "my_value",

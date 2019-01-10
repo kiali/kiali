@@ -23,6 +23,7 @@ import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { Validations } from '../../types/IstioObjects';
 import { ServiceInfoRoutes } from '../../components/InfoRoutes/ServiceInfoRoutes';
 import { Route } from '../../components/InfoRoutes/InfoRoutes';
+import WithErrorBoundary from '../../components/ErrorBoundary/WithErrorBoundary';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -91,6 +92,10 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     });
 
     return differentDependencies.size;
+  }
+
+  errorBoundaryMessage(resourceName: string) {
+    return `One of the ${resourceName} associated to this service has an invalid format`;
   }
 
   render() {
@@ -185,17 +190,29 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     </NavItem>
                   </Nav>
                   <TabContent>
-                    <TabPane eventKey={'workloads'}>
+                    <WithErrorBoundary
+                      component={TabPane}
+                      eventKey={'workloads'}
+                      message={this.errorBoundaryMessage('Workloads')}
+                    >
                       {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
                       )}
-                    </TabPane>
-                    <TabPane eventKey={'sources'}>
+                    </WithErrorBoundary>
+                    <WithErrorBoundary
+                      component={TabPane}
+                      eventKey={'sources'}
+                      message={this.errorBoundaryMessage('Sources')}
+                    >
                       {(Object.keys(dependencies).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
-                    </TabPane>
-                    <TabPane eventKey={'virtualservices'}>
+                    </WithErrorBoundary>
+                    <WithErrorBoundary
+                      component={TabPane}
+                      eventKey={'virtualservices'}
+                      message={this.errorBoundaryMessage('Virtual Services')}
+                    >
                       {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
                           virtualServices={virtualServices.items}
@@ -203,8 +220,12 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                           validations={this.props.validations!['virtualservice']}
                         />
                       )}
-                    </TabPane>
-                    <TabPane eventKey={'destinationrules'}>
+                    </WithErrorBoundary>
+                    <WithErrorBoundary
+                      component={TabPane}
+                      eventKey={'destinationrules'}
+                      message={this.errorBoundaryMessage('Destination Rules')}
+                    >
                       {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules
                           destinationRules={destinationRules.items}
@@ -212,7 +233,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                           validations={this.props.validations!['destinationrule']}
                         />
                       )}
-                    </TabPane>
+                    </WithErrorBoundary>
                   </TabContent>
                 </div>
               </TabContainer>
