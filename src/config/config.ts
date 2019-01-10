@@ -142,6 +142,6 @@ export const setServerConfig = (newServerConf: ServerConfig) => {
   serverConf = newServerConf;
 };
 
-export const serverConfig = () => {
-  return deepFreeze(serverConf) as typeof serverConf;
+export const serverConfig = (): ServerConfig => {
+  return deepFreeze(serverConf);
 };

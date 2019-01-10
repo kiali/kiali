@@ -1,5 +1,5 @@
 import { ThunkDispatch } from 'redux-thunk';
-import { setServerConfig, ServerConfig } from '../config';
+import { setServerConfig } from '../config';
 import { HTTP_CODES } from '../types/Common';
 import { KialiAppState } from '../store/Store';
 import { KialiAppAction } from './KialiAppAction';
@@ -7,6 +7,7 @@ import HelpDropdownThunkActions from './HelpDropdownThunkActions';
 import GrafanaThunkActions from './GrafanaThunkActions';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
+import { ServerConfig } from '../config/config';
 
 const performLogin = (
   dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,
