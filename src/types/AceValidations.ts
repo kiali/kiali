@@ -99,8 +99,15 @@ const parseMarker = (
     position: -1
   };
 
+  let tokenPos = startsFrom;
+
+  // Find start of the spec part first, this should skip the whole metadata part
+  if (startsFrom < 0) {
+    tokenPos = yaml.indexOf('spec:', tokenPos);
+  }
+
   // Find initial token position
-  let tokenPos = yaml.indexOf(token, startsFrom);
+  tokenPos = yaml.indexOf(token, tokenPos);
   if (tokenPos < 0) {
     return aceMarker;
   }
