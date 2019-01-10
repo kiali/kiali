@@ -36,8 +36,6 @@ const NodeColorFillHoverFailure = '#ffe6e6';
 const NodeHeight = '10px';
 const NodeIconCB = ICONS().ISTIO.CIRCUIT_BREAKER.ascii; // bolt
 const NodeIconMS = ICONS().ISTIO.MISSING_SIDECAR.ascii; // exclamation
-// TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE
-// const NodeIconSE = ICONS().ISTIO.SERVICEENTRY.ascii; // pficon-services
 const NodeIconVS = ICONS().ISTIO.VIRTUALSERVICE.ascii; // code-branch
 const NodeImageOut = require('../../../assets/img/node-out.png');
 const NodeImageOutLocked = require('../../../assets/img/node-out-locked.png');
@@ -123,7 +121,8 @@ export class GraphStyles {
 
     const getNodeBackgroundImage = (ele: any): string => {
       const isInaccessible = ele.data('isInaccessible');
-      if (isInaccessible) {
+      const isServiceEntry = ele.data('isServiceEntry');
+      if (isInaccessible && !isServiceEntry) {
         return NodeImageOutLocked;
       }
       const isOutside = ele.data('isOutside');
@@ -213,10 +212,6 @@ export class GraphStyles {
       if (cyGlobal.showCircuitBreakers && ele.data('hasCB')) {
         badges = NodeIconCB + badges;
       }
-      // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE
-      // if (ele.data('isServiceEntry') !== undefined) {
-      //   badges = NodeIconSE + badges;
-      // }
       if (cyGlobal.showVirtualServices && ele.data('hasVS')) {
         badges = NodeIconVS + badges;
       }
