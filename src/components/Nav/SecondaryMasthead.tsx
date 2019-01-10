@@ -2,8 +2,9 @@ import React from 'react';
 import { style } from 'typestyle';
 
 const secondaryMastheadStyle = style({
-  borderBottom: '1px solid #d1d1d1',
-  padding: '10px 15px'
+  padding: '5px 5px',
+  boxShadow: '0 2px 4px 0 #0000002B',
+  height: '42px'
 });
 
 export default class SecondaryMasthead extends React.PureComponent {
