@@ -113,14 +113,14 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     }
     const cy = this.props.cyData.cyRef;
     const selector = this.parseFindValue(this.findValue);
+    cy.startBatch();
+    // unhighlight old find-hits
+    cy.elements('*.find').removeClass('find');
     if (selector) {
-      cy.startBatch();
-      // unhighlight old find-hits
-      cy.elements('*.find').removeClass('find');
       // add new find-hits
       cy.elements(selector).addClass('find');
-      cy.endBatch();
     }
+    cy.endBatch();
   };
 
   private parseFindValue = (val: string): string | undefined => {
