@@ -134,41 +134,43 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         health: r
       }));
     });
-    Promise.all(promises).then(responses => {
-      const allNamespaces: NamespaceInfo[] = [];
-      responses.forEach(response => {
-        const info: NamespaceInfo = {
-          name: response.namespace,
-          inError: [],
-          inWarning: [],
-          inSuccess: [],
-          notAvailable: []
-        };
-        const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
-        let show = noFilter;
-        Object.keys(response.health).forEach(item => {
-          const health: Health = response.health[item];
-          const status = health.getGlobalStatus();
-          if (status === FAILURE) {
-            info.inError.push(item);
-            show = show || showInError;
-          } else if (status === DEGRADED) {
-            info.inWarning.push(item);
-            show = show || showInWarning;
-          } else if (status === HEALTHY) {
-            info.inSuccess.push(item);
-            show = show || showInSuccess;
-          } else {
-            info.notAvailable.push(item);
+    Promise.all(promises)
+      .then(responses => {
+        const allNamespaces: NamespaceInfo[] = [];
+        responses.forEach(response => {
+          const info: NamespaceInfo = {
+            name: response.namespace,
+            inError: [],
+            inWarning: [],
+            inSuccess: [],
+            notAvailable: []
+          };
+          const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
+          let show = noFilter;
+          Object.keys(response.health).forEach(item => {
+            const health: Health = response.health[item];
+            const status = health.getGlobalStatus();
+            if (status === FAILURE) {
+              info.inError.push(item);
+              show = show || showInError;
+            } else if (status === DEGRADED) {
+              info.inWarning.push(item);
+              show = show || showInWarning;
+            } else if (status === HEALTHY) {
+              info.inSuccess.push(item);
+              show = show || showInSuccess;
+            } else {
+              info.notAvailable.push(item);
+            }
+          });
+          if (show) {
+            allNamespaces.push(info);
           }
         });
-        if (show) {
-          allNamespaces.push(info);
-        }
-      });
 
-      this.setState({ type: type, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
-    });
+        this.setState({ type: type, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
+      })
+      .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
   handleAxiosError(message: string, error: AxiosError) {

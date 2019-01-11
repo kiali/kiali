@@ -1,14 +1,10 @@
 import { ServiceListItem } from '../../../types/ServiceList';
-import { ServiceHealth, RequestHealth, EnvoyHealth } from '../../../types/Health';
+import { ServiceHealth, RequestHealth } from '../../../types/Health';
 import { ServiceListFilters } from '../FiltersAndSorts';
 
 const makeService = (name: string, errRatio: number): ServiceListItem & { health: ServiceHealth } => {
   const reqErrs: RequestHealth = { errorRatio: errRatio, inboundErrorRatio: errRatio, outboundErrorRatio: -1 };
-  const envoy: EnvoyHealth = {
-    inbound: { healthy: 0, total: 0 },
-    outbound: { healthy: 0, total: 0 }
-  };
-  return { name: name, health: new ServiceHealth(envoy, reqErrs, 60) } as ServiceListItem & {
+  return { name: name, health: new ServiceHealth(reqErrs, 60) } as ServiceListItem & {
     health: ServiceHealth;
   };
 };
