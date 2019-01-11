@@ -73,15 +73,3 @@ type Metric struct {
 
 // Histogram contains Metric objects for several histogram-kind statistics
 type Histogram = map[string]*Metric
-
-// EnvoyServiceHealth is the number of healthy versus total membership (ie. replicas) inside envoy cluster for inbound and outbound traffic
-type EnvoyServiceHealth struct {
-	Inbound  EnvoyRatio `json:"inbound"`
-	Outbound EnvoyRatio `json:"outbound"`
-}
-
-// EnvoyRatio is the number of healthy members versus total members
-type EnvoyRatio struct {
-	Healthy int `json:"healthy"`
-	Total   int `json:"total"`
-}
