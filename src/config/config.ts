@@ -84,6 +84,7 @@ const conf = {
       },
       appHealth: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/health`,
       appMetrics: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/metrics`,
+      appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioConfigDetail: (namespace: string, objectType: string, object: string) =>
@@ -98,6 +99,8 @@ const conf = {
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/istio_validations`,
+      customDashboard: (namespace: string, app: string, template: string) =>
+        `api/namespaces/${namespace}/apps/${app}/customdashboard/${template}`,
       serverConfig: `api/config`,
       services: (namespace: string) => `api/namespaces/${namespace}/services`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
@@ -105,6 +108,8 @@ const conf = {
         `api/namespaces/${namespace}/services/${service}/graph`,
       serviceHealth: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/health`,
       serviceMetrics: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/metrics`,
+      serviceDashboard: (namespace: string, service: string) =>
+        `api/namespaces/${namespace}/services/${service}/dashboard`,
       serviceValidations: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/istio_validations`,
       status: 'api/status',
@@ -116,7 +121,9 @@ const conf = {
       workloadHealth: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/health`,
       workloadMetrics: (namespace: string, workload: string) =>
-        `api/namespaces/${namespace}/workloads/${workload}/metrics`
+        `api/namespaces/${namespace}/workloads/${workload}/metrics`,
+      workloadDashboard: (namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/dashboard`
     }
   }
 };

@@ -2,8 +2,7 @@ import * as React from 'react';
 import { LineChart, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { format } from 'd3-format';
-import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
-import { TimeSeries, Metric } from '../../types/Metrics';
+import { TimeSeries, Metric, AllPromLabelsValues } from '../../types/Metrics';
 
 type MetricsChartBaseProps = {
   chartName: string;
@@ -114,7 +113,7 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     );
   };
 
-  protected isVisibleMetric(metric: Metric, labelValues: Map<L.PromLabel, L.LabelValues>) {
+  protected isVisibleMetric(metric: Metric, labelValues: AllPromLabelsValues) {
     for (let promLabelName in metric) {
       if (metric.hasOwnProperty(promLabelName)) {
         const actualValue = metric[promLabelName];

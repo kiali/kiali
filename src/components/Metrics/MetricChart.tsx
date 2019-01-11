@@ -1,13 +1,12 @@
 import graphUtils from '../../utils/Graphing';
-import { TimeSeries } from '../../types/Metrics';
-import { MetricsLabels as L } from '../MetricsOptions/MetricsLabels';
+import { TimeSeries, AllPromLabelsValues } from '../../types/Metrics';
 import MetricsChartBase from './MetricsChartBase';
 
 type MetricChartProps = {
   series: TimeSeries[];
   chartName: string;
   unit: string;
-  labelValues: Map<L.PromLabel, L.LabelValues>;
+  labelValues: AllPromLabelsValues;
   onExpandRequested?: () => void;
 };
 

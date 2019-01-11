@@ -1,13 +1,15 @@
 import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import Metrics, { MetricsProps } from '../components/Metrics/Metrics';
+import IstioMetrics, { IstioMetricsProps } from '../components/Metrics/IstioMetrics';
 
 const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
   grafanaInfo: state.grafanaInfo
 });
 
-const ServiceMetricsConnected = withRouter<RouteComponentProps<{}> & MetricsProps>(connect(mapStateToProps)(Metrics));
+const ServiceMetricsConnected = withRouter<RouteComponentProps<{}> & IstioMetricsProps>(
+  connect(mapStateToProps)(IstioMetrics)
+);
 
 export default ServiceMetricsConnected;

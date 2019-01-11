@@ -1,19 +1,23 @@
-interface MetricsOptions {
+export interface BaseMetricsOptions {
   rateInterval?: string;
   rateFunc?: string;
   queryTime?: number;
   duration?: number;
   step?: number;
-  version?: string;
-  filters?: string[];
   quantiles?: string[];
   avg?: boolean;
   byLabels?: string[];
+}
+
+export interface MetricsOptions extends BaseMetricsOptions {
+  filters?: string[];
   reporter: Reporter;
   direction: Direction;
 }
 
+export interface CustomMetricsOptions extends BaseMetricsOptions {
+  version?: string;
+}
+
 export type Reporter = 'source' | 'destination';
 export type Direction = 'inbound' | 'outbound';
-
-export default MetricsOptions;

@@ -11,6 +11,8 @@ import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer'
 import { WorkloadHealth } from '../../types/Health';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
+import { serverConfig } from '../../config';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -150,6 +152,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   };
 
   render() {
+    const cfg = serverConfig();
+    const app = this.state.workload.labels[cfg.istioLabels['AppLabelName']];
+    const version = this.state.workload.labels[cfg.istioLabels['VersionLabelName']];
+    const isLabeled = app && version;
     return (
       <>
         {this.renderBreadcrumbs()}
@@ -165,6 +171,14 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
               <NavItem eventKey="out_metrics">
                 <div>Outbound Metrics</div>
               </NavItem>
+              {isLabeled &&
+                this.state.workload.customDashboards.map(dashboard => {
+                  return (
+                    <NavItem key={dashboard.template} eventKey={dashboard.template}>
+                      <div>{dashboard.title}</div>
+                    </NavItem>
+                  );
+                })}
             </Nav>
             <TabContent>
               <TabPane eventKey="info">
@@ -195,6 +209,24 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   direction={'outbound'}
                 />
               </TabPane>
+              {isLabeled &&
+                this.state.workload.customDashboards.map(dashboard => {
+                  return (
+                    <TabPane
+                      key={dashboard.template}
+                      eventKey={dashboard.template}
+                      mountOnEnter={true}
+                      unmountOnExit={true}
+                    >
+                      <CustomMetricsContainer
+                        namespace={this.props.match.params.namespace}
+                        app={app}
+                        version={version}
+                        template={dashboard.template}
+                      />
+                    </TabPane>
+                  );
+                })}
             </TabContent>
           </div>
         </TabContainer>

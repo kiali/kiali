@@ -10,8 +10,8 @@ import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
+import { MetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import MetricsOptions from 'src/types/MetricsOptions';
 
 type SummaryPanelGraphState = {
   loading: boolean;

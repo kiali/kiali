@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import history from '../../app/History';
 import NamespaceFilter from '../Filters/NamespaceFilter';
-import { ActiveFilter } from 'src/types/Filters';
+import { ActiveFilter } from '../../types/Filters';
 import { healthFilter } from '../Filters/CommonFilters';
 import Namespace from '../../types/Namespace';
 
