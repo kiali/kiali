@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Icon } from 'patternfly-react';
 import { NodeType } from '../../types/Graph';
 import { nodeData, NodeData } from './SummaryPanelCommon';
+import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 const getTitle = (data: NodeData) => {
   if (data.nodeType === NodeType.UNKNOWN) {
@@ -93,7 +94,7 @@ export const renderTitle = (data: NodeData) => {
 
 export const renderDestServicesLinks = (node: any) => {
   const data = nodeData(node);
-  const destServices = node.data('destServices');
+  const destServices = node.data(CyNode.destServices);
 
   let links: any[] = [];
   if (!destServices) {

@@ -2,16 +2,22 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../store/Store';
 import { GraphActions } from './GraphActions';
 import { KialiAppAction } from './KialiAppAction';
+import { CyData } from '../types/Graph';
 
 const GraphThunkActions = {
-  graphRendered: (cy: any) => {
+  graphReady: (cyRef: any) => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
       dispatch(
-        GraphActions.showSidePanelInfo({
+        GraphActions.updateSummary({
           summaryType: 'graph',
-          summaryTarget: cy
+          summaryTarget: cyRef
         })
       );
+    };
+  },
+  updateGraph: (cyData: CyData) => {
+    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+      dispatch(GraphActions.updateGraph(cyData));
     };
   }
 };

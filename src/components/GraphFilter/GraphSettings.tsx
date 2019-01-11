@@ -4,7 +4,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { Omit } from 'react-router';
 import { HistoryManager, URLParams } from '../../app/History';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { GraphFilterState, KialiAppState } from '../../store/Store';
@@ -12,8 +11,9 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { GraphType } from '../../types/Graph';
 import { PfColors } from '../Pf/PfColors';
+import { Omit } from 'lodash';
 
-type ReduxProps = Omit<GraphFilterState, 'showLegend'> & {
+type ReduxProps = Omit<GraphFilterState, 'showLegend' | 'showFindHelp'> & {
   // Dispatch methods
   toggleGraphCircuitBreakers(): void;
   toggleGraphMissingSidecars(): void;

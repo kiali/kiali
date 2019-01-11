@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar, FormGroup, Button } from 'patternfly-react';
+import { Button, FormGroup, Toolbar } from 'patternfly-react';
 import { style } from 'typestyle';
 import * as _ from 'lodash';
 import { connect } from 'react-redux';
@@ -13,6 +13,7 @@ import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { GraphType, NodeParamsType } from '../../types/Graph';
 import { EdgeLabelMode } from '../../types/GraphFilter';
 
+import GraphFindContainer from './GraphFind';
 import GraphRefreshContainer from './GraphRefresh';
 import GraphSettingsContainer from './GraphSettings';
 import { HistoryManager, URLParams } from '../../app/History';
@@ -127,37 +128,37 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
   render() {
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
     const edgeLabelModeKey: string = _.findKey(EdgeLabelMode, val => val === this.props.edgeLabelMode)!;
-
     return (
       <>
         <Toolbar>
-          <FormGroup className={zeroPaddingLeft}>
-            {this.props.node && (
+          {this.props.node && (
+            <FormGroup className={zeroPaddingLeft}>
               <Button className={namespaceStyle} onClick={this.handleNamespaceReturn}>
                 Back to Full Graph...
               </Button>
-            )}
-          </FormGroup>
+            </FormGroup>
+          )}
           <FormGroup className={zeroPaddingLeft}>
             <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
+            <ToolbarDropdown
+              id={'graph_filter_edge_labels'}
+              disabled={false}
+              handleSelect={this.setEdgeLabelMode}
+              value={edgeLabelModeKey}
+              label="Edge Labels"
+              options={GraphFilter.EDGE_LABEL_MODES}
+            />
+            <ToolbarDropdown
+              id={'graph_filter_view_type'}
+              disabled={this.props.node !== undefined || this.props.disabled}
+              handleSelect={this.setGraphType}
+              nameDropdown={'Graph Type'}
+              value={graphTypeKey}
+              label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
+              options={GraphFilter.GRAPH_TYPES}
+            />
           </FormGroup>
-          <ToolbarDropdown
-            id={'graph_filter_edge_labels'}
-            disabled={false}
-            handleSelect={this.setEdgeLabelMode}
-            value={edgeLabelModeKey}
-            label="Edge Labels"
-            options={GraphFilter.EDGE_LABEL_MODES}
-          />
-          <ToolbarDropdown
-            id={'graph_filter_view_type'}
-            disabled={this.props.node !== undefined || this.props.disabled}
-            handleSelect={this.setGraphType}
-            nameDropdown={'Graph Type'}
-            value={graphTypeKey}
-            label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
-            options={GraphFilter.GRAPH_TYPES}
-          />
+          <GraphFindContainer />
           <Toolbar.RightContent>
             <GraphRefreshContainer
               id="graph_refresh_container"
@@ -189,7 +190,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
   graphType: graphTypeSelector(state),
-  node: state.graph.node
+  node: state.graph.node,
+  showFindHelp: state.graph.filterState.showFindHelp
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
@@ -197,7 +199,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
     setGraphType: bindActionCreators(GraphFilterActions.setGraphType, dispatch),
-    setNode: bindActionCreators(GraphActions.setNode, dispatch)
+    setNode: bindActionCreators(GraphActions.setNode, dispatch),
+    toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch)
   };
 };
 

@@ -11,6 +11,7 @@ import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import Label from '../../components/Label/Label';
 import { serverConfig } from '../../config';
+import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export interface NodeData {
   app: string;
@@ -62,17 +63,17 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
 
 export const nodeData = (node: any): NodeData => {
   return {
-    app: node.data('app'),
+    app: node.data(CyNode.app),
     hasParent: !!node.data('parent'),
-    isInaccessible: node.data('isInaccessible'),
-    isOutsider: node.data('isOutsider'),
-    isRoot: node.data('isRoot'),
-    isServiceEntry: node.data('isServiceEntry'),
-    namespace: node.data('namespace'),
-    nodeType: node.data('nodeType'),
-    service: node.data('service'),
-    version: node.data('version'),
-    workload: node.data('workload')
+    isInaccessible: node.data(CyNode.isInaccessible),
+    isOutsider: node.data(CyNode.isOutside),
+    isRoot: node.data(CyNode.isRoot),
+    isServiceEntry: node.data(CyNode.isServiceEntry),
+    namespace: node.data(CyNode.namespace),
+    nodeType: node.data(CyNode.nodeType),
+    service: node.data(CyNode.service),
+    version: node.data(CyNode.version),
+    workload: node.data(CyNode.workload)
   };
 };
 

@@ -21,7 +21,7 @@ import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config';
-import { EDGE_HTTP, EDGE_TCP } from '../../utils/TrafficRate';
+import { CyEdge } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -88,10 +88,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const edge = this.props.data.summaryTarget;
     const source = edge.source();
     const dest = edge.target();
-    const http = this.safeRate(edge.data(EDGE_HTTP.RATE));
-    const http3xx = this.safeRate(edge.data(EDGE_HTTP.RATE3XX));
-    const http4xx = this.safeRate(edge.data(EDGE_HTTP.RATE4XX));
-    const http5xx = this.safeRate(edge.data(EDGE_HTTP.RATE5XX));
+    const http = this.safeRate(edge.data(CyEdge.http));
+    const http3xx = this.safeRate(edge.data(CyEdge.http3XX));
+    const http4xx = this.safeRate(edge.data(CyEdge.http4XX));
+    const http5xx = this.safeRate(edge.data(CyEdge.http5XX));
     const hasHttpTraffic = this.hasHttpMetrics(edge);
     const hasTcpTraffic = this.hasTcpMetrics(edge);
 
@@ -424,10 +424,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   }
 
   private hasHttpMetrics = (edge): boolean => {
-    return edge.data(EDGE_HTTP.RATE) ? true : false;
+    return edge.data(CyEdge.http) ? true : false;
   };
 
   private hasTcpMetrics = (edge): boolean => {
-    return edge.data(EDGE_TCP.RATE) ? true : false;
+    return edge.data(CyEdge.tcp) ? true : false;
   };
 }

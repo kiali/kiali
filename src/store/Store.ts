@@ -2,7 +2,7 @@ import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
 import { DurationInSeconds, PollIntervalInMs, TimeInSeconds } from '../types/Common';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
-import { GraphType, NodeParamsType } from '../types/Graph';
+import { GraphType, NodeParamsType, SummaryData, CyData } from '../types/Graph';
 
 // Store is the Redux Data store
 
@@ -23,6 +23,8 @@ export interface GraphFilterState {
   // dropdown props
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
+  // find props
+  showFindHelp: boolean;
   // Toggle props
   showCircuitBreakers: boolean;
   showLegend: boolean;
@@ -44,6 +46,8 @@ export interface MessageCenterState {
 }
 
 export interface GraphState {
+  // cyData is updated when the graph is fully rendered (i.e. after refresh)
+  cyData: CyData | null;
   isLoading: boolean;
   isError: boolean;
   error?: string; // the error message to show from loading graph
@@ -53,10 +57,7 @@ export interface GraphState {
   filterState: GraphFilterState;
   layout: Layout;
   node?: NodeParamsType;
-  sidePanelInfo: {
-    kind: string;
-    graphReference: any;
-  } | null;
+  summaryData: SummaryData | null;
 }
 
 export interface Token {

@@ -23,6 +23,7 @@ import { Metrics } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config';
+import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -117,7 +118,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
           </div>
-          {this.renderBadgeSummary(group.data('hasVS'))}
+          {this.renderBadgeSummary(group.data(CyNode.hasVS))}
         </div>
         <div className="panel-body">
           {workloadList.length > 0 && (
@@ -210,9 +211,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .toArray()
       .map((c, i) => (
         <Label
-          key={c.data('version')}
+          key={c.data(CyNode.version)}
           name={serverConfig().istioLabels['VersionLabelName']}
-          value={c.data('version')}
+          value={c.data(CyNode.version)}
         />
       ));
   };

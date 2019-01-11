@@ -3,22 +3,22 @@ import GraphThunkActions from '../GraphThunkActions';
 import { getType } from 'typesafe-actions';
 
 describe('GraphActions', () => {
-  it('should build "show side panel info" action', () => {
-    const showAction = GraphActions.showSidePanelInfo({ summaryType: 'node', summaryTarget: 'target' });
-    expect(showAction.type).toEqual(getType(GraphActions.showSidePanelInfo));
+  it('should build "update summary" action', () => {
+    const showAction = GraphActions.updateSummary({ summaryType: 'node', summaryTarget: 'target' });
+    expect(showAction.type).toEqual(getType(GraphActions.updateSummary));
     expect(showAction.payload).toEqual({
       summaryType: 'node',
       summaryTarget: 'target'
     });
   });
 
-  it('should dispatch "show side panel namespace info" on render', () => {
+  it('should dispatch "update summary" action on render', () => {
     let dispatch = jest.fn();
-    GraphThunkActions.graphRendered('cyRef')(dispatch);
+    GraphThunkActions.graphReady('cyRef')(dispatch);
 
     expect(dispatch.mock.calls.length).toBe(1);
     expect(dispatch.mock.calls[0][0]).toEqual(
-      GraphActions.showSidePanelInfo({
+      GraphActions.updateSummary({
         summaryTarget: 'cyRef',
         summaryType: 'graph'
       })

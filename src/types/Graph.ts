@@ -1,11 +1,15 @@
 import { EdgeLabelMode } from './GraphFilter';
 import Namespace from './Namespace';
+import { TimeInMilliseconds } from './Common';
 
-// SummaryData will have two fields:
-//   summaryTarget: The cytoscape element
-//   summaryType  : one of 'graph', 'node', 'edge', 'group'
+export interface CyData {
+  updateTimestamp: TimeInMilliseconds;
+  cyRef: any;
+}
+
+export type SummaryType = 'graph' | 'node' | 'edge' | 'group';
 export interface SummaryData {
-  summaryType: 'graph' | 'node' | 'edge' | 'group';
+  summaryType: SummaryType;
   summaryTarget: any;
 }
 
@@ -65,7 +69,7 @@ export type CytoscapeGlobalScratchData = {
 };
 
 export interface CytoscapeBaseEvent {
-  summaryType: string; // what the summary panel should show. One of: graph, node, edge, or group
+  summaryType: SummaryType; // what the summary panel should show
   summaryTarget: any; // the cytoscape element that was the target of the event
 }
 

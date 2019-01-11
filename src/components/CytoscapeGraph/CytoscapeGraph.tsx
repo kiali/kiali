@@ -31,7 +31,8 @@ import {
   CytoscapeGlobalScratchData,
   NodeParamsType,
   NodeType,
-  GraphType
+  GraphType,
+  CyData
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
@@ -42,6 +43,7 @@ import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { DagreGraph } from './graphs/DagreGraph';
+import { CyNode } from './CytoscapeGraphUtils';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
@@ -62,17 +64,18 @@ type ReduxProps = {
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
-  onClick: (event: CytoscapeClickEvent) => void;
   onReady: (cytoscapeRef: any) => void;
-  refresh: () => void;
   setActiveNamespaces: (namespace: Namespace[]) => void;
   setNode: (node?: NodeParamsType) => void;
+  updateGraph: (cyData: CyData) => void;
+  updateSummary: (event: CytoscapeClickEvent) => void;
 };
 
 type CytoscapeGraphProps = ReduxProps & {
   isLoading: boolean;
   isError: boolean;
   containerClassName?: string;
+  refresh: () => void;
 };
 
 type CytoscapeGraphState = {};
@@ -163,6 +166,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     this.processGraphUpdate(cy, updateLayout);
+
     // pre-select node if provided
     const node = this.props.node;
     if (node && cy && cy.$(':selected').length === 0) {
@@ -183,12 +187,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       const eles = cy.nodes(selector);
       if (eles.length > 0) {
         this.selectTarget(eles[0]);
-        this.props.onClick({ summaryType: eles[0].data('isGroup') ? 'group' : 'node', summaryTarget: eles[0] });
+        this.props.updateSummary({
+          summaryType: eles[0].data(CyNode.isGroup) ? 'group' : 'node',
+          summaryTarget: eles[0]
+        });
       }
     }
     if (this.props.elements !== prevProps.elements) {
       this.updateHealth(cy);
     }
+
+    this.props.updateGraph({ updateTimestamp: Date.now(), cyRef: cy });
   }
 
   render() {
@@ -261,7 +270,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
       } else if (target.isNode()) {
-        if (target.data('isGroup')) {
+        if (target.data(CyNode.isGroup)) {
           return { summaryType: 'group', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
@@ -332,7 +341,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.on('destroy', (evt: any) => {
       this.trafficRenderer.stop();
       this.cy = undefined;
-      this.props.onClick({ summaryType: 'graph', summaryTarget: undefined });
+      this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
     });
   }
 
@@ -453,26 +462,26 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
 
-    if (target.data('isInaccessible')) {
+    if (target.data(CyNode.isInaccessible)) {
       return;
     }
-    if (target.data('hasMissingSC')) {
+    if (target.data(CyNode.hasMissingSC)) {
       MessageCenterUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`
       );
       return;
     }
-    if (target.data('isOutside')) {
-      this.props.setActiveNamespaces([{ name: target.data('namespace') }]);
+    if (target.data(CyNode.isOutside)) {
+      this.props.setActiveNamespaces([{ name: target.data(CyNode.namespace) }]);
       return;
     }
 
-    const namespace = target.data('namespace');
-    const nodeType = target.data('nodeType');
-    const workload = target.data('workload');
-    const app = target.data('app');
-    const version = targetType === 'group' ? undefined : event.summaryTarget.data('version');
-    const service = target.data('service');
+    const namespace = target.data(CyNode.namespace);
+    const nodeType = target.data(CyNode.nodeType);
+    const workload = target.data(CyNode.workload);
+    const app = target.data(CyNode.app);
+    const version = targetType === 'group' ? undefined : event.summaryTarget.data(CyNode.version);
+    const service = target.data(CyNode.service);
     const targetNode: NodeParamsType = {
       namespace: { name: namespace },
       nodeType: nodeType,
@@ -520,7 +529,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   };
 
   private handleTap = (event: CytoscapeClickEvent) => {
-    this.props.onClick(event);
+    this.props.updateSummary(event);
     this.graphHighlighter.onClick(event);
   };
 
@@ -596,13 +605,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const workloadHealthPerNamespace = new Map<string, Promise<NamespaceWorkloadHealth>>();
     // Asynchronously fetch health
     cy.nodes().forEach(ele => {
-      const inaccessible = ele.data('isInaccessible');
+      const inaccessible = ele.data(CyNode.isInaccessible);
       if (inaccessible) {
         return;
       }
-      const namespace = ele.data('namespace');
-      const nodeType = ele.data('nodeType');
-      const workload = ele.data('workload');
+      const namespace = ele.data(CyNode.namespace);
+      const nodeType = ele.data(CyNode.nodeType);
+      const workload = ele.data(CyNode.workload);
       const workloadOk = workload && workload !== '' && workload !== 'unknown';
       // use workload health when workload is set and valid (workload nodes or versionApp nodes)
       const useWorkloadHealth = nodeType === NodeType.WORKLOAD || (nodeType === NodeType.APP && workloadOk);
@@ -615,7 +624,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         }
         this.updateNodeHealth(ele, promise, workload);
       } else if (nodeType === NodeType.APP) {
-        const app = ele.data('app');
+        const app = ele.data(CyNode.app);
         let promise = appHealthPerNamespace.get(namespace);
         if (!promise) {
           promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
@@ -623,9 +632,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         }
         this.updateNodeHealth(ele, promise, app);
         // TODO: If we want to block health checks for service entries, uncomment this (see kiali-2029)
-        // } else if (nodeType === NodeType.SERVICE && !ele.data('isServiceEntry')) {
+        // } else if (nodeType === NodeType.SERVICE && !ele.data(CyNode.isServiceEntry)) {
       } else if (nodeType === NodeType.SERVICE) {
-        const service = ele.data('service');
+        const service = ele.data(CyNode.service);
 
         let promise = serviceHealthPerNamespace.get(namespace);
         if (!promise) {
@@ -681,10 +690,11 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  onClick: (event: CytoscapeClickEvent) => dispatch(GraphActions.showSidePanelInfo(event)),
-  onReady: (cy: any) => dispatch(GraphThunkActions.graphRendered(cy)),
+  onReady: (cy: any) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
-  setNode: bindActionCreators(GraphActions.setNode, dispatch)
+  setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  updateGraph: (cyData: CyData) => dispatch(GraphActions.updateGraph(cyData)),
+  updateSummary: (event: CytoscapeClickEvent) => dispatch(GraphActions.updateSummary(event))
 });
 
 const CytoscapeGraphContainer = connect(

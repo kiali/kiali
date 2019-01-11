@@ -40,12 +40,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   showSecurity: state.graph.filterState.showSecurity,
   showServiceNodes: state.graph.filterState.showServiceNodes,
   showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  summaryData: state.graph.sidePanelInfo
-    ? {
-        summaryTarget: state.graph.sidePanelInfo.graphReference,
-        summaryType: state.graph.sidePanelInfo.kind
-      }
-    : null
+  summaryData: state.graph.summaryData
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

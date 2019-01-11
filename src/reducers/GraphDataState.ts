@@ -9,6 +9,7 @@ import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
+  cyData: null,
   isLoading: false,
   isError: false,
   error: undefined,
@@ -17,11 +18,12 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   graphData: {},
   layout: DagreGraph.getLayout(),
   node: undefined,
-  sidePanelInfo: null,
+  summaryData: null,
   filterState: {
     edgeLabelMode: EdgeLabelMode.HIDE,
     graphType: GraphType.VERSIONED_APP,
     showCircuitBreakers: true,
+    showFindHelp: false,
     showLegend: false,
     showMissingSidecars: true,
     showNodeLabels: true,
@@ -56,6 +58,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       newState.isError = true;
       newState.error = action.payload.error;
       break;
+    case getType(GraphActions.changed):
+      newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
+      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
+      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
+      break;
     case getType(GraphActions.setLayout):
       newState.layout = action.payload;
       break;
@@ -65,21 +73,22 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
       newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
+      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
       break;
-    case getType(GraphActions.showSidePanelInfo):
-      newState.sidePanelInfo = {
-        kind: action.payload.summaryType,
-        graphReference: action.payload.summaryTarget
+    case getType(GraphActions.updateGraph):
+      newState.cyData = {
+        updateTimestamp: action.payload.updateTimestamp,
+        cyRef: action.payload.cyRef
       };
       break;
-    case getType(GraphActions.changed):
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
+    case getType(GraphActions.updateSummary):
+      newState.summaryData = {
+        summaryType: action.payload.summaryType,
+        summaryTarget: action.payload.summaryTarget
+      };
       break;
     // Filter actions
+    //
     case getType(GraphFilterActions.setEdgelLabelMode):
       newState.filterState.edgeLabelMode = action.payload;
       break;
@@ -89,10 +98,10 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
       newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
+      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
       break;
-    case getType(GraphFilterActions.toggleLegend):
-      newState.filterState.showLegend = !state.filterState.showLegend;
+    case getType(GraphFilterActions.toggleFindHelp):
+      newState.filterState.showFindHelp = !state.filterState.showFindHelp;
       break;
     case getType(GraphFilterActions.toggleGraphNodeLabel):
       newState.filterState.showNodeLabels = !state.filterState.showNodeLabels;
@@ -109,13 +118,16 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
     case getType(GraphFilterActions.toggleGraphSecurity):
       newState.filterState.showSecurity = !state.filterState.showSecurity;
       break;
+    case getType(GraphFilterActions.toggleLegend):
+      newState.filterState.showLegend = !state.filterState.showLegend;
+      break;
     case getType(GraphFilterActions.toggleServiceNodes):
       newState.filterState.showServiceNodes = !state.filterState.showServiceNodes;
       // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on serviceNodeschange)
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
       newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.sidePanelInfo = INITIAL_GRAPH_STATE.sidePanelInfo;
+      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
       break;
     case getType(GraphFilterActions.toggleTrafficAnimation):
       newState.filterState.showTrafficAnimation = !state.filterState.showTrafficAnimation;

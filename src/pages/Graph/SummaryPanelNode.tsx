@@ -2,14 +2,7 @@ import * as React from 'react';
 import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
 import { Icon } from 'patternfly-react';
 
-import {
-  getTrafficRate,
-  getAccumulatedTrafficRate,
-  NODE_HTTP_IN,
-  NODE_HTTP_OUT,
-  NODE_TCP_IN,
-  NODE_TCP_OUT
-} from '../../utils/TrafficRate';
+import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -33,6 +26,7 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { serverConfig, ICONS } from '../../config';
+import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -262,7 +256,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           )}
           <span> {renderTitle(data)}</span>
           {renderLabels(data)}
-          {this.renderBadgeSummary(node.data('hasCB'), node.data('hasVS'), node.data('hasMissingSC'))}
+          {this.renderBadgeSummary(node.data(CyNode.hasCB), node.data(CyNode.hasVS), node.data(CyNode.hasMissingSC))}
         </div>
         <div className="panel-body">
           {shouldRenderSvcList && (
@@ -316,7 +310,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   private renderSparklines = node => {
-    if (NodeType.UNKNOWN === node.data('nodeType')) {
+    if (NodeType.UNKNOWN === node.data(CyNode.nodeType)) {
       return (
         <>
           <div>
@@ -337,11 +331,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       );
     }
 
-    const isServiceNode = node.data('nodeType') === NodeType.SERVICE;
+    const isServiceNode = node.data(CyNode.nodeType) === NodeType.SERVICE;
     let serviceWithUnknownSource: boolean = false;
     if (isServiceNode) {
       for (const n of node.incomers()) {
-        if (NodeType.UNKNOWN === n.data('nodeType')) {
+        if (NodeType.UNKNOWN === n.data(CyNode.nodeType)) {
           serviceWithUnknownSource = true;
           break;
         }
@@ -451,14 +445,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   private hasHttpTraffic = (node): boolean => {
-    if (node.data(NODE_HTTP_IN.RATE) || node.data(NODE_HTTP_OUT.RATE)) {
+    if (node.data(CyNode.httpIn) || node.data(CyNode.httpOut)) {
       return true;
     }
     return false;
   };
 
   private hasTcpTraffic = (node): boolean => {
-    if (node.data(NODE_TCP_IN.RATE) || node.data(NODE_TCP_OUT.RATE)) {
+    if (node.data(CyNode.tcpIn) || node.data(CyNode.tcpOut)) {
       return true;
     }
     return false;

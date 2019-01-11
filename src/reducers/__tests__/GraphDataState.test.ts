@@ -9,6 +9,7 @@ import { DagreGraph } from '../../components/CytoscapeGraph/graphs/DagreGraph';
 describe('GraphDataState', () => {
   it('should return the initial state', () => {
     expect(graphDataState(undefined, GlobalActions.unknown())).toEqual({
+      cyData: null,
       error: undefined,
       isLoading: false,
       isError: false,
@@ -16,6 +17,7 @@ describe('GraphDataState', () => {
         edgeLabelMode: EdgeLabelMode.HIDE,
         graphType: GraphType.VERSIONED_APP,
         showCircuitBreakers: true,
+        showFindHelp: false,
         showLegend: false,
         showMissingSidecars: true,
         showNodeLabels: true,
@@ -30,7 +32,7 @@ describe('GraphDataState', () => {
       graphData: {},
       layout: DagreGraph.getLayout(),
       node: undefined,
-      sidePanelInfo: null
+      summaryData: null
     });
   });
 
@@ -38,7 +40,7 @@ describe('GraphDataState', () => {
     const action = GraphDataActions.getGraphDataStart();
     const updatedState = graphDataState(undefined, action);
 
-    expect(updatedState.sidePanelInfo).toBeNull();
+    expect(updatedState.summaryData).toBeNull();
     expect(updatedState.isLoading).toBeTruthy();
   });
 
@@ -66,10 +68,10 @@ describe('GraphDataState', () => {
     expect(updatedState.error).toBeDefined();
   });
 
-  it('should handle GRAPH_SIDE_PANEL_SHOW_INFO', () => {
-    const action = GraphActions.showSidePanelInfo({ summaryType: 'node', summaryTarget: 'mynode' });
+  it('should handle UPDATE_SUMMARY', () => {
+    const action = GraphActions.updateSummary({ summaryType: 'node', summaryTarget: 'mynode' });
     const updatedState = graphDataState(undefined, action);
 
-    expect(updatedState.sidePanelInfo).toEqual({ kind: 'node', graphReference: 'mynode' });
+    expect(updatedState.summaryData).toEqual({ summaryType: 'node', summaryTarget: 'mynode' });
   });
 });
