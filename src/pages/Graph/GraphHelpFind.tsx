@@ -186,7 +186,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
   render() {
     const className = this.props.className ? this.props.className : '';
     return (
-      <Draggable>
+      <Draggable handle="#helpheader">
         <div
           className={`modal-content ${className}`}
           style={{
@@ -198,7 +198,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
             position: 'absolute'
           }}
         >
-          <div className="modal-header">
+          <div id="helpheader" className="modal-header">
             <Button className="close" bsClass="" onClick={this.props.onClose}>
               <Icon title="Close" type="pf" name="close" />
             </Button>
