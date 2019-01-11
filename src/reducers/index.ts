@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 
 import { KialiAppState } from '../store/Store';
 import messageCenter from './MessageCenter';
-import LoginState from './LoginState';
+import loginState from './LoginState';
 import HelpDropdownState from './HelpDropdownState';
 import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
@@ -12,7 +12,7 @@ import GrafanaState from './GrafanaState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
-  authentication: LoginState,
+  authentication: loginState,
   statusState: HelpDropdownState,
   messageCenter,
   namespaces: namespaceState,

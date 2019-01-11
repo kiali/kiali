@@ -1,9 +1,9 @@
 import { getType } from 'typesafe-actions';
-import { LoginState as LoginStateInterface } from '../store/Store';
+import { LoginState } from '../store/Store';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { LoginActions } from '../actions/LoginActions';
 
-export const INITIAL_LOGIN_STATE: LoginStateInterface = {
+export const INITIAL_LOGIN_STATE: LoginState = {
   token: undefined,
   username: undefined,
   error: false,
@@ -13,8 +13,8 @@ export const INITIAL_LOGIN_STATE: LoginStateInterface = {
   sessionTimeOut: undefined
 };
 
-// This Reducer allows changes to the 'LoginState' portion of Redux Store
-const LoginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: KialiAppAction): LoginStateInterface => {
+// This Reducer allows changes to the 'loginState' portion of Redux Store
+const loginState = (state: LoginState = INITIAL_LOGIN_STATE, action: KialiAppAction): LoginState => {
   switch (action.type) {
     case getType(LoginActions.loginRequest):
       return Object.assign({}, INITIAL_LOGIN_STATE, {
@@ -50,4 +50,4 @@ const LoginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: Ki
   }
 };
 
-export default LoginState;
+export default loginState;
