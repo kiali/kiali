@@ -20,6 +20,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/util"
 	osappsv1 "github.com/openshift/api/apps/v1"
@@ -65,6 +66,11 @@ func TestNamespaceAppHealth(t *testing.T) {
 		assert.Equal(t, "ns", args[0])
 	}).Return([]batch_v1beta1.CronJob{}, nil)
 
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Contains(t, []string{"reviews", "httpbin"}, args[1])
+	}).Return(prometheus.EnvoyServiceHealth{}, nil)
+
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
 	prom.On("GetAllRequestRates", mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
@@ -80,6 +86,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
+	prom.AssertNumberOfCalls(t, "GetServiceHealth", 2)
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
 
@@ -105,6 +112,10 @@ func TestAppHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/apps/reviews/health"
 
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, map[string]string{"app": "reviews"}, args[1])
+	}).Return([]v1.Service{kubetest.FakeServiceList()[0]}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
 		assert.Equal(t, "ns", args[0])
 		assert.Equal(t, "app=reviews", args[1])
@@ -131,6 +142,11 @@ func TestAppHealth(t *testing.T) {
 		assert.Equal(t, "ns", args[0])
 	}).Return([]batch_v1beta1.CronJob{}, nil)
 
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "reviews", args[1])
+	}).Return(prometheus.EnvoyServiceHealth{}, nil)
+
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
 	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, model.Vector{}, nil)
 
@@ -142,9 +158,11 @@ func TestAppHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	k8s.AssertNumberOfCalls(t, "GetServices", 1)
 	k8s.AssertNumberOfCalls(t, "GetPods", 1)
 	k8s.AssertNumberOfCalls(t, "GetDeployments", 1)
 	k8s.AssertNumberOfCalls(t, "GetReplicaSets", 1)
+	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 1)
 }
 
@@ -165,10 +183,20 @@ func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClient
 func TestServiceHealth(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	ts, _, prom := setupServiceHealthEndpoint(t)
+	ts, k8s, prom := setupServiceHealthEndpoint(t)
 	defer ts.Close()
 
 	url := ts.URL + "/api/namespaces/ns/services/svc/health"
+
+	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "svc", args[1])
+	}).Return(kubetest.FakeService(), nil)
+
+	prom.On("GetServiceHealth", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]int32")).Run(func(args mock.Arguments) {
+		assert.Equal(t, "ns", args[0])
+		assert.Equal(t, "svc", args[1])
+	}).Return(prometheus.EnvoyServiceHealth{}, nil)
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
 	prom.On("GetServiceRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, nil)
@@ -181,6 +209,8 @@ func TestServiceHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
+	k8s.AssertNumberOfCalls(t, "GetService", 1)
+	prom.AssertNumberOfCalls(t, "GetServiceHealth", 1)
 	prom.AssertNumberOfCalls(t, "GetServiceRequestRates", 1)
 }
 

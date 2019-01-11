@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/kiali/kiali/prometheus"
 	"github.com/prometheus/common/model"
 )
 
@@ -15,13 +16,15 @@ type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
-	Requests RequestHealth `json:"requests"`
+	Envoy    prometheus.EnvoyServiceHealth `json:"envoy"`
+	Requests RequestHealth                 `json:"requests"`
 }
 
 // AppHealth contains aggregated health from various sources, for a given app
 type AppHealth struct {
-	WorkloadStatuses []WorkloadStatus `json:"workloadStatuses"`
-	Requests         RequestHealth    `json:"requests"`
+	Envoy            []EnvoyHealthWrapper `json:"envoy"`
+	WorkloadStatuses []WorkloadStatus     `json:"workloadStatuses"`
+	Requests         RequestHealth        `json:"requests"`
 }
 
 func NewEmptyRequestHealth() RequestHealth {
@@ -31,6 +34,7 @@ func NewEmptyRequestHealth() RequestHealth {
 // EmptyAppHealth create an empty AppHealth
 func EmptyAppHealth() AppHealth {
 	return AppHealth{
+		Envoy:            []EnvoyHealthWrapper{},
 		WorkloadStatuses: []WorkloadStatus{},
 		Requests:         NewEmptyRequestHealth(),
 	}
@@ -39,6 +43,7 @@ func EmptyAppHealth() AppHealth {
 // EmptyServiceHealth create an empty ServiceHealth
 func EmptyServiceHealth() ServiceHealth {
 	return ServiceHealth{
+		Envoy:    prometheus.EnvoyServiceHealth{},
 		Requests: NewEmptyRequestHealth(),
 	}
 }
@@ -47,6 +52,12 @@ func EmptyServiceHealth() ServiceHealth {
 type WorkloadHealth struct {
 	WorkloadStatus WorkloadStatus `json:"workloadStatus"`
 	Requests       RequestHealth  `json:"requests"`
+}
+
+// EnvoyHealthWrapper wraps EnvoyServiceHealth with the service name
+type EnvoyHealthWrapper struct {
+	prometheus.EnvoyServiceHealth
+	Service string `json:"service"`
 }
 
 // WorkloadStatus gives the available / total replicas in a deployment of a pod
