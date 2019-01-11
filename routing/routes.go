@@ -66,9 +66,10 @@ func NewRoutes() (r *Routes) {
 			handlers.GetToken,
 			true,
 		},
-		// swagger:route GET /auth/info OAuthInfo
+		// swagger:route GET /auth/info AuthenticationInfo
 		// ---
-		// Endpoint to get the info (login path and so on) for OAuth on Openshift
+		// Endpoint to get login info, such as strategy, authorization endpoints
+		// for OAuth providers and so on.
 		//
 		//     Consumes:
 		//     - application/json
@@ -79,10 +80,8 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
-		//      404: notFoundError
 		//      500: internalError
-		//      200: info
+		//      200: authenticationInfo
 		{
 			"AuthenticationInfo",
 			"GET",
@@ -90,7 +89,7 @@ func NewRoutes() (r *Routes) {
 			handlers.AuthenticationInfo,
 			false,
 		},
-		// swagger:route POST /auth/openshift-token OAuthInfo
+		// swagger:route POST /auth/openshift-token OpenshiftToken
 		// ---
 		// Endpoint to check if a token from Openshift is working correctly
 		//
@@ -103,9 +102,8 @@ func NewRoutes() (r *Routes) {
 		//     Schemes: http, https
 		//
 		// responses:
-		//      default: genericError
 		//      500: internalError
-		//      200: info
+		//      200: tokenGenerated
 		{
 			"OpenshiftCheckToken",
 			"POST",

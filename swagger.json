@@ -38,6 +38,54 @@
         }
       }
     },
+    "/auth/info": {
+      "get": {
+        "description": "Endpoint to get login info, such as strategy, authorization endpoints\nfor OAuth providers and so on.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "AuthenticationInfo",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/authenticationInfo"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/auth/openshift-token": {
+      "post": {
+        "description": "Endpoint to check if a token from Openshift is working correctly",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "OpenshiftToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenGenerated"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/config": {
       "get": {
         "description": "Endpoint to get the config of Kiali",
@@ -4252,14 +4300,15 @@
       "type": "object",
       "title": "TokenGenerated tokenGenerated",
       "required": [
+        "username",
         "token",
-        "expired_at"
+        "expiresOn"
       ],
       "properties": {
-        "expired_at": {
+        "expiresOn": {
           "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
           "type": "string",
-          "x-go-name": "ExpiredAt",
+          "x-go-name": "ExpiresOn",
           "example": "2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603"
         },
         "token": {
@@ -4267,6 +4316,12 @@
           "type": "string",
           "x-go-name": "Token",
           "example": "zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD"
+        },
+        "username": {
+          "description": "The username for the token\nA string with the user's username",
+          "type": "string",
+          "x-go-name": "Username",
+          "example": "admin"
         }
       },
       "x-go-package": "github.com/kiali/kiali/config"
@@ -4830,6 +4885,17 @@
       "description": "Listing all apps in the namespace",
       "schema": {
         "$ref": "#/definitions/AppList"
+      }
+    },
+    "authenticationInfo": {
+      "description": "Return the information necessary to handle login",
+      "headers": {
+        "AuthorizationEndpoint": {
+          "type": "string"
+        },
+        "Strategy": {
+          "type": "string"
+        }
       }
     },
     "badRequestError": {
