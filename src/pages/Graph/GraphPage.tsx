@@ -291,7 +291,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                   <Icon title="Help" type="pf" name="help" />
                 </Button>
               </Breadcrumb.Item>
-              {this.props.graphTimestamp && (
+              {this.props.graphTimestamp > 0 && (
                 <span className={'pull-right'}>
                   {new Date(graphStart).toLocaleDateString(undefined, timeDisplayOptions)}
                   {' ... '}
