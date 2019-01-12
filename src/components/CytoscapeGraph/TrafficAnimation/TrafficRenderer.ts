@@ -398,11 +398,12 @@ export default class TrafficRenderer {
   }
 
   private getTrafficEdgeType(edge: any) {
-    if (edge.data(CyEdge.http) !== undefined) {
+    if (edge.data(CyEdge.http) > 0) {
       return TrafficEdgeType.HTTP;
-    } else if (edge.data(CyEdge.tcp) !== undefined) {
+    } else if (edge.data(CyEdge.tcp) > 0) {
       return TrafficEdgeType.TCP;
     }
+    // No TCP or HTTP traffic found
     return TrafficEdgeType.NONE;
   }
 
@@ -440,7 +441,7 @@ export default class TrafficRenderer {
     }
 
     if (trafficEdge.getType() === TrafficEdgeType.HTTP) {
-      const timer = this.timerFromRate(edge.data(CyEdge.tcp));
+      const timer = this.timerFromRate(edge.data(CyEdge.http));
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
       const speed = this.speedFromResponseTime(edge.data(CyEdge.responseTime)) * edgeLengthFactor;
