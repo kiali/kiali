@@ -445,16 +445,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   private hasHttpTraffic = (node): boolean => {
-    if (node.data(CyNode.httpIn) || node.data(CyNode.httpOut)) {
-      return true;
-    }
-    return false;
+    return node.data(CyNode.httpIn) > 0 || node.data(CyNode.httpOut) > 0;
   };
 
   private hasTcpTraffic = (node): boolean => {
-    if (node.data(CyNode.tcpIn) || node.data(CyNode.tcpOut)) {
-      return true;
-    }
-    return false;
+    return node.data(CyNode.tcpIn) > 0 || node.data(CyNode.tcpOut) > 0;
   };
 }
