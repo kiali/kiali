@@ -98,7 +98,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "Request volume",
 			Unit:  "ops",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "request_count",
 	},
@@ -106,7 +106,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "Request duration",
 			Unit:  "s",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "request_duration",
 	},
@@ -114,7 +114,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "Request size",
 			Unit:  "B",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "request_size",
 	},
@@ -122,7 +122,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "Response size",
 			Unit:  "B",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "response_size",
 	},
@@ -130,7 +130,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "TCP received",
 			Unit:  "bps",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "tcp_received",
 	},
@@ -138,7 +138,7 @@ var istioCharts = []istioChart{
 		Chart: models.Chart{
 			Name:  "TCP sent",
 			Unit:  "bps",
-			Spans: 12,
+			Spans: 6,
 		},
 		refName: "tcp_sent",
 	},
