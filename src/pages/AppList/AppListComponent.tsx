@@ -9,7 +9,6 @@ import { FilterSelected, StatefulFilters } from '../../components/Filters/Statef
 import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import RateIntervalToolbarItem from '../ServiceList/RateIntervalToolbarItem';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
@@ -174,10 +173,6 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <RateIntervalToolbarItem
-            rateIntervalSelected={this.state.rateInterval}
-            onRateIntervalChanged={this.rateIntervalChangedHandler}
-          />
           <ToolbarRightContent>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
