@@ -2702,11 +2702,11 @@
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
       "type": "object",
       "properties": {
-        "counterRate": {
-          "$ref": "#/definitions/Metric"
-        },
         "histogram": {
           "$ref": "#/definitions/Histogram"
+        },
+        "metric": {
+          "$ref": "#/definitions/Metric"
         },
         "name": {
           "type": "string",
