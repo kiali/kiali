@@ -2663,31 +2663,6 @@
     "EdgeData": {
       "type": "object",
       "properties": {
-        "http": {
-          "description": "App Fields (not required by Cytoscape)",
-          "type": "string",
-          "x-go-name": "Http"
-        },
-        "http3XX": {
-          "type": "string",
-          "x-go-name": "Http3xx"
-        },
-        "http4XX": {
-          "type": "string",
-          "x-go-name": "Http4xx"
-        },
-        "http5XX": {
-          "type": "string",
-          "x-go-name": "Http5xx"
-        },
-        "httpPercentErr": {
-          "type": "string",
-          "x-go-name": "HttpPercentErr"
-        },
-        "httpPercentReq": {
-          "type": "string",
-          "x-go-name": "HttpPercentReq"
-        },
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
@@ -2713,9 +2688,13 @@
           "type": "string",
           "x-go-name": "Target"
         },
-        "tcp": {
-          "type": "string",
-          "x-go-name": "Tcp"
+        "traffic": {
+          "description": "App Fields (not required by Cytoscape)",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProtocolTraffic"
+          },
+          "x-go-name": "Traffic"
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
@@ -3137,26 +3116,6 @@
           "type": "boolean",
           "x-go-name": "HasVS"
         },
-        "httpIn": {
-          "type": "string",
-          "x-go-name": "HttpIn"
-        },
-        "httpIn3XX": {
-          "type": "string",
-          "x-go-name": "HttpIn3xx"
-        },
-        "httpIn4XX": {
-          "type": "string",
-          "x-go-name": "HttpIn4xx"
-        },
-        "httpIn5XX": {
-          "type": "string",
-          "x-go-name": "HttpIn5xx"
-        },
-        "httpOut": {
-          "type": "string",
-          "x-go-name": "HttpOut"
-        },
         "id": {
           "description": "Cytoscape Fields",
           "type": "string",
@@ -3211,13 +3170,12 @@
           "type": "string",
           "x-go-name": "Service"
         },
-        "tcpIn": {
-          "type": "string",
-          "x-go-name": "TcpIn"
-        },
-        "tcpOut": {
-          "type": "string",
-          "x-go-name": "TcpOut"
+        "traffic": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProtocolTraffic"
+          },
+          "x-go-name": "Traffic"
         },
         "version": {
           "type": "string",
@@ -3462,6 +3420,23 @@
         "$ref": "#/definitions/Port"
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ProtocolTraffic": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "x-go-name": "Protocol"
+        },
+        "rates": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Rates"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
     },
     "QuotaSpec": {
       "type": "object",
