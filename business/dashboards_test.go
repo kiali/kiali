@@ -55,8 +55,8 @@ func TestGetDashboard(t *testing.T) {
 	assert.Equal("My chart 1", dashboard.Charts[0].Name)
 	assert.Equal("My chart 2", dashboard.Charts[1].Name)
 	assert.Nil(dashboard.Charts[0].Histogram)
-	assert.Nil(dashboard.Charts[1].CounterRate)
-	assert.Equal(model.SampleValue(10), dashboard.Charts[0].CounterRate.Matrix[0].Values[0].Value)
+	assert.Nil(dashboard.Charts[1].Metric)
+	assert.Equal(model.SampleValue(10), dashboard.Charts[0].Metric.Matrix[0].Values[0].Value)
 	assert.Equal(model.SampleValue(11), dashboard.Charts[1].Histogram["avg"].Matrix[0].Values[0].Value)
 }
 
@@ -119,10 +119,10 @@ func TestGetIstioDashboard(t *testing.T) {
 	assert.Equal("Request duration", dashboard.Charts[1].Name)
 	assert.Equal("TCP sent", dashboard.Charts[5].Name)
 	assert.Nil(dashboard.Charts[0].Histogram)
-	assert.Nil(dashboard.Charts[1].CounterRate)
-	assert.Equal(model.SampleValue(10), dashboard.Charts[0].CounterRate.Matrix[0].Values[0].Value)
+	assert.Nil(dashboard.Charts[1].Metric)
+	assert.Equal(model.SampleValue(10), dashboard.Charts[0].Metric.Matrix[0].Values[0].Value)
 	assert.Equal(model.SampleValue(20), dashboard.Charts[1].Histogram["avg"].Matrix[0].Values[0].Value)
-	assert.Equal(model.SampleValue(13), dashboard.Charts[5].CounterRate.Matrix[0].Values[0].Value)
+	assert.Equal(model.SampleValue(13), dashboard.Charts[5].Metric.Matrix[0].Values[0].Value)
 }
 
 func fakeCounter(value int) *prometheus.Metric {
@@ -152,7 +152,7 @@ func fakeDashboard(id string) *kubernetes.MonitoringDashboard {
 					Unit:       "s",
 					Spans:      6,
 					MetricName: "my_metric_1",
-					MetricType: "counter",
+					DataType:   "rate",
 					Aggregations: []kubernetes.MonitoringDashboardAggregation{
 						kubernetes.MonitoringDashboardAggregation{
 							DisplayName: "Agg 1",
@@ -165,7 +165,7 @@ func fakeDashboard(id string) *kubernetes.MonitoringDashboard {
 					Unit:       "s",
 					Spans:      6,
 					MetricName: "my_metric_2",
-					MetricType: "histogram",
+					DataType:   "histogram",
 					Aggregations: []kubernetes.MonitoringDashboardAggregation{
 						kubernetes.MonitoringDashboardAggregation{
 							DisplayName: "Agg 2",

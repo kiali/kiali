@@ -72,8 +72,10 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 		go func(idx int, chart kubernetes.MonitoringDashboardChart) {
 			defer wg.Done()
 			filledCharts[idx] = models.ConvertChart(chart)
-			if chart.MetricType == kubernetes.Counter {
-				filledCharts[idx].CounterRate = in.prom.FetchRateRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
+			if chart.DataType == kubernetes.Raw {
+				filledCharts[idx].Metric = in.prom.FetchRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
+			} else if chart.DataType == kubernetes.Rate {
+				filledCharts[idx].Metric = in.prom.FetchRateRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			} else {
 				filledCharts[idx].Histogram = in.prom.FetchHistogramRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			}
@@ -159,7 +161,7 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 	for _, chartTpl := range istioCharts {
 		newChart := chartTpl.Chart
 		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
-			newChart.CounterRate = metric
+			newChart.Metric = metric
 		}
 		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
 			newChart.Histogram = histo

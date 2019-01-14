@@ -5,9 +5,11 @@ import (
 )
 
 const (
-	// Counter constant for MetricType
-	Counter = "counter"
-	// Histogram constant for MetricType
+	// Raw constant for DataType
+	Raw = "raw"
+	// Rate constant for DataType
+	Rate = "rate"
+	// Histogram constant for DataType
 	Histogram = "histogram"
 )
 
@@ -30,7 +32,7 @@ type MonitoringDashboardChart struct {
 	Unit         string
 	Spans        int
 	MetricName   string
-	MetricType   string // MetricType is either "counter" or "histogram"
+	DataType     string // MetricType is either "raw", "rate" or "histogram"
 	Aggregations []MonitoringDashboardAggregation
 }
 
