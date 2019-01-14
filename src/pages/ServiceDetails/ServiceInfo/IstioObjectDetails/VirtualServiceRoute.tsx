@@ -149,8 +149,8 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
   rows(route: any, routeIndex: number) {
     return (route.route || []).map((routeItem, destinationIndex) => {
-      let statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
-      let isValid = statusFrom === '' ? true : false;
+      const statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
+      const isValid = statusFrom === '' ? true : false;
       return {
         id: destinationIndex,
         status: { value: statusFrom },

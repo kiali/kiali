@@ -279,7 +279,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   renderActionButtons = () => {
     // User won't save if file has yaml errors
-    let yamlErrors = this.state.yamlValidations && this.state.yamlValidations.markers.length > 0 ? true : false;
+    const yamlErrors = this.state.yamlValidations && this.state.yamlValidations.markers.length > 0 ? true : false;
     return (
       <IstioActionButtons
         objectName={this.props.match.params.object}
@@ -417,9 +417,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   // Helper method to extract search urls with format
   // ?list=overview or ?list=yaml
   private parseSearch = (): ParsedSearch => {
-    let parsed: ParsedSearch = {};
+    const parsed: ParsedSearch = {};
     if (this.props.location.search) {
-      let firstParams = this.props.location.search
+      const firstParams = this.props.location.search
         .split('&')[0]
         .replace('?', '')
         .split('=');

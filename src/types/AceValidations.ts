@@ -224,7 +224,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
 };
 
 export const parseKialiValidations = (yamlInput: string, kialiValidations?: Validations): AceValidations => {
-  let aceValidations: AceValidations = {
+  const aceValidations: AceValidations = {
     markers: [],
     annotations: []
   };
@@ -236,7 +236,7 @@ export const parseKialiValidations = (yamlInput: string, kialiValidations?: Vali
   const objectValidations = getObjectValidations(kialiValidations);
   objectValidations.forEach(objectValidation => {
     objectValidation.checks.forEach(check => {
-      let aceCheck = parseCheck(yamlInput, check);
+      const aceCheck = parseCheck(yamlInput, check);
       aceValidations.markers.push(aceCheck.marker);
       aceValidations.annotations.push(aceCheck.annotation);
     });
@@ -245,16 +245,16 @@ export const parseKialiValidations = (yamlInput: string, kialiValidations?: Vali
 };
 
 export const parseYamlValidations = (yamlInput: string): AceValidations => {
-  let parsedValidations: AceValidations = {
+  const parsedValidations: AceValidations = {
     markers: [],
     annotations: []
   };
   try {
     jsYaml.safeLoadAll(yamlInput);
   } catch (e) {
-    let row = e.mark && e.mark.line ? e.mark.line : 0;
-    let col = e.mark && e.mark.column ? e.mark.column : 0;
-    let message = e.message ? e.message : '';
+    const row = e.mark && e.mark.line ? e.mark.line : 0;
+    const col = e.mark && e.mark.column ? e.mark.column : 0;
+    const message = e.message ? e.message : '';
     parsedValidations.markers.push({
       startRow: row,
       startCol: 0,

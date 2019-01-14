@@ -143,8 +143,8 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   }
 
   rawConfig(destinationRule: DestinationRule) {
-    let globalStatus = this.globalStatus(destinationRule);
-    let isValid = globalStatus === '' ? true : false;
+    const globalStatus = this.globalStatus(destinationRule);
+    const isValid = globalStatus === '' ? true : false;
     return (
       <div className="card-pf-body" key={'virtualServiceConfig'}>
         <h4>DestinationRule: {destinationRule.metadata.name}</h4>
