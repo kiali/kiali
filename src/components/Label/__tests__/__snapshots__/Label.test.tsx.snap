@@ -2,6 +2,7 @@
 
 exports[`#Badge render correctly with data should render badge 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Label
     name="app"

@@ -134,7 +134,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details', error));
       });
   };
-  
+
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
     details.destinationRules.items.forEach((destinationRule, index, ary) => {
       const dr = new DestinationRuleValidator(destinationRule);

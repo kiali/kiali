@@ -2,6 +2,7 @@
 
 exports[`Overview page renders initial layout 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <OverviewPage />,
   Symbol(enzyme.__renderer__): Object {

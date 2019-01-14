@@ -2,6 +2,7 @@
 
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}
@@ -1000,6 +1001,7 @@ ShallowWrapper {
 
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}
@@ -1773,6 +1775,7 @@ ShallowWrapper {
 
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}
@@ -2171,6 +2174,7 @@ ShallowWrapper {
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}
@@ -3169,6 +3173,7 @@ ShallowWrapper {
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}
@@ -3942,6 +3947,7 @@ ShallowWrapper {
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ToolbarDropdown
     disabled={false}

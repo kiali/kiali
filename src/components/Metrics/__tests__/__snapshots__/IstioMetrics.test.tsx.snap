@@ -2,6 +2,7 @@
 
 exports[`Inbound Metrics for a workload renders initial layout 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Provider
     store={
@@ -72,6 +73,7 @@ ShallowWrapper {
 
 exports[`Metrics for a service renders initial layout 1`] = `
 ShallowWrapper {
+  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <Provider
     store={
