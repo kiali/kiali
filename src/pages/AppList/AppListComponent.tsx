@@ -168,7 +168,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
               onSortTypeSelected={this.updateSortField}
             />
             <Sort.DirectionSelector
-              isNumeric={false}
+              isNumeric={this.state.currentSortField.isNumeric}
               isAscending={this.state.isSortAscending}
               onClick={this.updateSortDirection}
             />

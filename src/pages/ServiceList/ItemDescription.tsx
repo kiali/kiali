@@ -3,7 +3,6 @@ import { ServiceListItem } from '../../types/ServiceList';
 import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
-import ServiceErrorRate from './ServiceErrorRate';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 interface Props {
@@ -55,9 +54,6 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
             <td>
               <strong>Health: </strong>
               <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
-            </td>
-            <td>
-              <ServiceErrorRate requestHealth={this.state.health.requests} />
             </td>
             <td>{!this.props.item.istioSidecar && <MissingSidecar />}</td>
             <td />
