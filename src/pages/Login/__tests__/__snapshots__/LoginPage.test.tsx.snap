@@ -2,7 +2,6 @@
 
 exports[`#LoginPage render correctly should render LoginPage 1`] = `
 ShallowWrapper {
-  "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <LoginPage
     authenticate={[MockFunction]}
