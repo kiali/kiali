@@ -30,11 +30,11 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   globalStatus(rule: VirtualService) {
-    let validation = this.validation(rule);
-    let checks = globalChecks(validation);
-    let severity = validationToSeverity(validation);
-    let iconName = severityToIconName(severity);
-    let color = severityToColor(severity);
+    const validation = this.validation(rule);
+    const checks = globalChecks(validation);
+    const severity = validationToSeverity(validation);
+    const iconName = severityToIconName(severity);
+    const color = severityToColor(severity);
     let message = checks.map(check => check.message).join(',');
 
     if (!message.length) {
@@ -57,8 +57,8 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   hostStatusMessage(virtualService: VirtualService) {
-    let checks = checkForPath(this.validation(virtualService), 'spec/hosts');
-    let severity = highestSeverity(checks);
+    const checks = checkForPath(this.validation(virtualService), 'spec/hosts');
+    const severity = highestSeverity(checks);
 
     return {
       message: checks.map(check => check.message).join(','),
@@ -68,7 +68,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   generateGatewaysList(gateways: string[]) {
-    let childrenList: any = [];
+    const childrenList: any = [];
     Object.keys(gateways).forEach((key, j) =>
       childrenList.push(
         <li key={'gateway_' + gateways[key] + '_' + j}>

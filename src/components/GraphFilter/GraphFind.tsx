@@ -223,7 +223,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return unaryExpression;
     }
 
-    let tokens = expression.split(op);
+    const tokens = expression.split(op);
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
       if (!unaryExpression) {

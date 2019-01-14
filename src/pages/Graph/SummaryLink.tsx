@@ -24,7 +24,7 @@ const getLink = (data: NodeData, nodeType?: NodeType) => {
   if (!nodeType || data.nodeType === NodeType.UNKNOWN) {
     nodeType = data.nodeType;
   }
-  let { app, service, workload } = data;
+  const { app, service, workload } = data;
   let displayName: string = 'unknown';
   let link: string | undefined;
   let key: string | undefined;
@@ -96,7 +96,7 @@ export const renderDestServicesLinks = (node: any) => {
   const data = nodeData(node);
   const destServices = node.data(CyNode.destServices);
 
-  let links: any[] = [];
+  const links: any[] = [];
   if (!destServices) {
     return links;
   }

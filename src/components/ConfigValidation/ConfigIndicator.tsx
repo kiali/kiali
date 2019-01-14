@@ -87,7 +87,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
       numChecks += validation.checks.length;
     });
 
-    let issuesMessages: string[] = [];
+    const issuesMessages: string[] = [];
     if (numChecks === 0) {
       issuesMessages.push('No issues found');
     } else {
@@ -101,7 +101,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
       }
     }
 
-    let validationsInfo: JSX.Element[] = [];
+    const validationsInfo: JSX.Element[] = [];
     const showDefinitions = this.props.definition && numChecks !== 0;
     if (showDefinitions) {
       this.props.validations.map(validation => {

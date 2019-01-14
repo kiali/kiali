@@ -45,7 +45,7 @@ interface ValidationChecks {
 
 const tabName = 'list';
 const tabIconStyle = style({
-  fontSize: '0.9em',
+  fontSize: '0.9em'
 });
 
 class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
@@ -58,7 +58,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   }
 
   validationChecks(): ValidationChecks {
-    let validationChecks = {
+    const validationChecks = {
       hasVirtualServiceChecks: false,
       hasDestinationRuleChecks: false
     };
@@ -84,7 +84,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   differentSourcesCount(): number {
     const dependencies = this.props.serviceDetails.dependencies || {};
 
-    let differentDependencies = new Set();
+    const differentDependencies = new Set();
     Object.keys(dependencies).forEach(key => {
       dependencies[key].forEach((dependency: Route) => {
         differentDependencies.add(dependency.name);

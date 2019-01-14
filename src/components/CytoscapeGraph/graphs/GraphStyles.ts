@@ -179,7 +179,7 @@ export class GraphStyles {
               content = '';
           }
         } else {
-          let contentArray: string[] = [];
+          const contentArray: string[] = [];
           if ((isMultiNamespace || isOutside) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
             contentArray.push(namespace);
           }

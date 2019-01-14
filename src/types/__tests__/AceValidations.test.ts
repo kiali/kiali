@@ -204,14 +204,14 @@ describe('#parseAceValidations in DestinationRule', () => {
     Check it marks lines 3-4 (starting to count in 0 instead of 1)
       host: details
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(3);
     expect(marker.endRow).toEqual(4);
     expect(marker.startCol).toEqual(0);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(3);
@@ -231,14 +231,14 @@ describe('#parseAceValidations in VirtualService', () => {
       hosts:
         - productpage
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(3);
     expect(marker.endRow).toEqual(5);
     expect(marker.startCol).toEqual(0);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(3);
@@ -261,14 +261,14 @@ describe('#parseAceValidations in VirtualService', () => {
           name: productpage
           subset: v2
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toBe(12);
     expect(marker.endRow).toBe(19);
     expect(marker.startCol).toBe(4);
     expect(marker.endCol).toBe(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toBe(0);
     expect(annotation.row).toBe(12);
@@ -291,14 +291,14 @@ describe('#parseAceValidations in VirtualService', () => {
           name: productpage
           subset: v4
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(22);
     expect(marker.endRow).toEqual(29);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(22);
@@ -321,14 +321,14 @@ describe('#parseAceValidations in VirtualService', () => {
           name: productpage
           subset: v6
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(32);
     expect(marker.endRow).toEqual(39);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(32);
@@ -347,14 +347,14 @@ describe('#parseAceValidations in VirtualService', () => {
             name: productpage
             subset: v4
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(26);
     expect(marker.endRow).toEqual(29);
     expect(marker.startCol).toEqual(4);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(26);
@@ -373,14 +373,14 @@ describe('#parseAceValidations in VirtualService', () => {
             name: productpage
             subset: v4
    */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(33);
     expect(marker.endRow).toEqual(36);
     expect(marker.startCol).toEqual(6);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(33);
@@ -399,14 +399,14 @@ describe('#parseAceValidations in VirtualService', () => {
               name: productpage
               subset: v4
      */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(33);
     expect(marker.endRow).toEqual(36);
     expect(marker.startCol).toEqual(8);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(33);
@@ -425,14 +425,14 @@ describe('#parseAceValidations in VirtualService', () => {
               name: productpage
               subset: v4
      */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(16);
     expect(marker.endRow).toEqual(19);
     expect(marker.startCol).toEqual(8);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(16);
@@ -449,14 +449,14 @@ describe('#parseAceValidations in VirtualService', () => {
       Check it marks lines 46-47 (starting to count in 0):
         weight: 25a
      */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(46);
     expect(marker.endRow).toEqual(47);
     expect(marker.startCol).toEqual(16);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(46);
@@ -473,14 +473,14 @@ describe('#parseAceValidations in VirtualService', () => {
       Check it marks lines 62-63 (starting to count in 0):
         weight: 28a
      */
-    let marker = aceValidations.markers[0];
+    const marker = aceValidations.markers[0];
     expect(marker).toBeDefined();
     expect(marker.startRow).toEqual(62);
     expect(marker.endRow).toEqual(63);
     expect(marker.startCol).toEqual(16);
     expect(marker.endCol).toEqual(0);
 
-    let annotation = aceValidations.annotations[0];
+    const annotation = aceValidations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(62);

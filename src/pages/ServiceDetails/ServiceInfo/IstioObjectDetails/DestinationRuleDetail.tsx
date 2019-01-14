@@ -30,10 +30,10 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
     if (!validation) {
       return '';
     }
-    let checks = globalChecks(validation);
-    let severity = validationToSeverity(validation);
-    let iconName = severityToIconName(severity);
-    let color = severityToColor(severity);
+    const checks = globalChecks(validation);
+    const severity = validationToSeverity(validation);
+    const iconName = severityToIconName(severity);
+    const color = severityToColor(severity);
     let message = checks.map(check => check.message).join(',');
 
     if (!message.length) {

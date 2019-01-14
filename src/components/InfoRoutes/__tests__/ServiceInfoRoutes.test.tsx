@@ -14,7 +14,7 @@ describe('#WorloadInfoRoutes render correctly with data', () => {
       { name: 'istio-citadel', namespace: 'istio-system' }
     ];
 
-    let routes = {};
+    const routes = {};
     routes['productpage-v1'] = services;
 
     wrapper = render(

@@ -70,7 +70,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     if (this.cy) {
       this.destroy();
     }
-    let opts = Object.assign(
+    const opts = Object.assign(
       {
         container: this.divParentRef.current,
         boxSelectionEnabled: false,

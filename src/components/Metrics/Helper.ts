@@ -74,9 +74,9 @@ namespace MetricsHelper {
     value: string,
     checked: boolean
   ): AllLabelsValues => {
-    let newLabels = new Map();
+    const newLabels = new Map();
     labelValues.forEach((val, key) => {
-      let newVal = assign(val)({});
+      const newVal = assign(val)({});
       if (key === label) {
         newVal[value] = checked;
       }

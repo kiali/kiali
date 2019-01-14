@@ -56,7 +56,7 @@ class DetailObject extends React.Component<DetailObjectProps> {
       return '';
     }
 
-    let valueType = typeof value;
+    const valueType = typeof value;
     if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
       return (
         <div className="label-collection">
@@ -71,24 +71,24 @@ class DetailObject extends React.Component<DetailObjectProps> {
       );
     }
 
-    let childrenList: any = [];
-    let listKey = this.generateKey();
-    let checkLabel = this.checkLabel(name);
+    const childrenList: any = [];
+    const listKey = this.generateKey();
+    const checkLabel = this.checkLabel(name);
     if (Array.isArray(value)) {
       value.forEach((v, i) => {
-        let vType = typeof v;
+        const vType = typeof v;
         if (vType === 'string' || vType === 'number' || vType === 'boolean') {
           childrenList.push(<li key={listKey + '_i' + i}>{v}</li>);
         } else {
           Object.keys(v).forEach((key, j) => {
-            let childList = this.buildList(key, v[key], checkLabel, depth + 1);
+            const childList = this.buildList(key, v[key], checkLabel, depth + 1);
             childrenList.push(<li key={listKey + '_i' + i + '_j' + j}>{childList}</li>);
           });
         }
       });
     } else {
       Object.keys(value || {}).forEach((key, k) => {
-        let childList = this.buildList(key, value[key], checkLabel, depth + 1);
+        const childList = this.buildList(key, value[key], checkLabel, depth + 1);
         childrenList.push(<li key={listKey + '_k' + k}>{childList}</li>);
       });
     }
@@ -111,9 +111,9 @@ class DetailObject extends React.Component<DetailObjectProps> {
   }
 
   render() {
-    let findLabels = typeof this.props.labels !== 'undefined' && this.props.labels.length > 0;
+    const findLabels = typeof this.props.labels !== 'undefined' && this.props.labels.length > 0;
 
-    let objectList = this.buildList(this.props.name, this.props.detail, findLabels, 0);
+    const objectList = this.buildList(this.props.name, this.props.detail, findLabels, 0);
     return <div>{objectList}</div>;
   }
 }

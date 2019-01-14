@@ -37,8 +37,8 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
   }
 
   renderServices(namespace: string, workload: string, serviceNames: string[]) {
-    let iconType = 'pf';
-    let iconName = 'service';
+    const iconType = 'pf';
+    const iconName = 'service';
     return serviceNames.map(service => (
       <div key={'workload_' + workload + '_service_' + service} className="ServiceList-Title">
         <Icon type={iconType} name={iconName} className="service-icon" />
@@ -51,8 +51,8 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     /*
       Not sure if we need a common icon per Workload instead of an icon per type of Workload
      */
-    let iconName = WorkloadIcon;
-    let iconType = 'pf';
+    const iconName = WorkloadIcon;
+    const iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
         <div className="ServiceList-Title">
@@ -72,8 +72,8 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
   }
 
   renderServiceItem(namespace: string, appName: string, serviceName: string) {
-    let iconName = 'service';
-    let iconType = 'pf';
+    const iconName = 'service';
+    const iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
         <div className="ServiceList-Title">

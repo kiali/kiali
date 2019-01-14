@@ -28,7 +28,7 @@ describe('#LoginPage render correctly', () => {
   });
 
   it('handleChange should change state', () => {
-    let instance = wrapper.instance() as LoginPage;
+    const instance = wrapper.instance() as LoginPage;
     instance.handleChange({ target: { name: 'username', value: username } });
     expect(instance.state['username']).toBe(username);
     instance.handleChange({ target: { name: 'password', value: password } });
@@ -36,9 +36,9 @@ describe('#LoginPage render correctly', () => {
   });
 
   it('handleKeyPress should call handleSubmit if enterkey', () => {
-    let instance = wrapper.instance() as LoginPage;
+    const instance = wrapper.instance() as LoginPage;
     const spy = jest.spyOn(instance, 'handleSubmit');
-    let event = {
+    const event = {
       charCode: KEY_CODES.TAB_KEY,
       preventDefault: () => {
         return null;
@@ -52,7 +52,7 @@ describe('#LoginPage render correctly', () => {
   });
 
   it('handleSubmit should call authenticate', () => {
-    let instance = wrapper.instance() as LoginPage;
+    const instance = wrapper.instance() as LoginPage;
     instance.setState({ username: username, password: password });
     const spy = jest.spyOn(instance.props, 'authenticate');
     const event = {

@@ -38,7 +38,7 @@ const GraphDataThunkActions = {
         return Promise.resolve();
       }
       dispatch(GraphDataActions.getGraphDataStart());
-      let restParams = {
+      const restParams = {
         duration: duration + 's',
         graphType: graphType,
         injectServiceNodes: injectServiceNodes

@@ -41,9 +41,9 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   }
 
   fetchApp = () => {
-    let promiseDetails = API.getApp(authentication(), this.props.match.params.namespace, this.props.match.params.app);
+    const promiseDetails = API.getApp(authentication(), this.props.match.params.namespace, this.props.match.params.app);
 
-    let promiseHealth = API.getAppHealth(
+    const promiseHealth = API.getAppHealth(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.app,

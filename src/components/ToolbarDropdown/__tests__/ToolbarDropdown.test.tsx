@@ -67,7 +67,7 @@ describe('ToolbarDropdown', () => {
         options={config().toolbar.intervalDuration}
       />
     );
-    let elt = wrapper
+    const elt = wrapper
       .find('#graph_filter_interval_duration')
       .find('SafeAnchor')
       .first();
@@ -104,7 +104,7 @@ describe('ToolbarDropdown', () => {
         options={options}
       />
     );
-    let elt = wrapper.find('#' + idElement);
+    const elt = wrapper.find('#' + idElement);
     expect(elt.prop('title')).toEqual(initialLabel);
     expect(elt.prop('id')).toEqual(idElement);
     expect(elt.children().length).toEqual(Object.keys(options).length);

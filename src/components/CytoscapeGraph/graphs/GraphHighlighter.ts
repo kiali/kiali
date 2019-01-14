@@ -69,7 +69,7 @@ export class GraphHighlighter {
   // When a service group box element is selected, we will highlight the nodes it contain,
   // their related nodes (including edges).
   refresh = () => {
-    let toHighlight = this.getHighlighted();
+    const toHighlight = this.getHighlighted();
     if (!toHighlight) {
       return;
     }

@@ -114,7 +114,7 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
   };
 
   protected isVisibleMetric(metric: Metric, labelValues: AllPromLabelsValues) {
-    for (let promLabelName in metric) {
+    for (const promLabelName in metric) {
       if (metric.hasOwnProperty(promLabelName)) {
         const actualValue = metric[promLabelName];
         const values = labelValues.get(promLabelName);

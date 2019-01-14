@@ -3,7 +3,7 @@ import { IstioConfigListFilters } from '../FiltersAndSorts';
 import { SortField } from '../../../types/SortFilters';
 
 const mockIstioConfigList = (names: string[]): IstioConfigList => {
-  let testData: IstioConfigList = {
+  const testData: IstioConfigList = {
     namespace: {
       name: 'test'
     },

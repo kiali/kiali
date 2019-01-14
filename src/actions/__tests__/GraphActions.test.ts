@@ -13,7 +13,7 @@ describe('GraphActions', () => {
   });
 
   it('should dispatch "update summary" action on render', () => {
-    let dispatch = jest.fn();
+    const dispatch = jest.fn();
     GraphThunkActions.graphReady('cyRef')(dispatch);
 
     expect(dispatch.mock.calls.length).toBe(1);

@@ -149,8 +149,8 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   render() {
-    let appItemsList: React.ReactElement<{}>[] = [];
-    let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
+    const appItemsList: React.ReactElement<{}>[] = [];
+    const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
     pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
 

@@ -34,7 +34,7 @@ class ServiceJaegerPage extends React.Component<RouteComponentProps<{}>, Service
   componentDidMount() {
     API.getJaegerInfo(authentication())
       .then(response => {
-        let data = response['data'];
+        const data = response['data'];
         this.setState({
           jaegerURL: data.url
         });

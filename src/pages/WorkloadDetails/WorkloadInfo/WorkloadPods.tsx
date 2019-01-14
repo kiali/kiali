@@ -252,7 +252,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
   }
   rows() {
     return (this.state.groups || []).map((group, vsIdx) => {
-      let generateRows = {
+      const generateRows = {
         id: vsIdx,
         status: (
           <ConfigIndicator id={vsIdx + '-config-validation'} validations={this.validation(group)} definition={true} />

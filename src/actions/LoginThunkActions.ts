@@ -16,9 +16,9 @@ const performLogin = (
 ) => {
   dispatch(LoginActions.loginRequest());
 
-  let anonymous = username === undefined;
-  let loginUser: string = username === undefined ? 'anonymous' : username;
-  let loginPass: string = password === undefined ? 'anonymous' : password;
+  const anonymous = username === undefined;
+  const loginUser: string = username === undefined ? 'anonymous' : username;
+  const loginPass: string = password === undefined ? 'anonymous' : password;
 
   API.login(loginUser, loginPass).then(
     token => {

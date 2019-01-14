@@ -28,10 +28,10 @@ class UserDropdown extends React.Component<UserProps, UserState> {
     };
   }
   componentDidMount() {
-    let checkSessionTimerId = setInterval(() => {
+    const checkSessionTimerId = setInterval(() => {
       this.checkSession();
     }, 3000);
-    let timeLeftTimerId = setInterval(() => {
+    const timeLeftTimerId = setInterval(() => {
       this.setState({ timeCountDownSeconds: this.timeLeft() / MILLISECONDS });
     }, 1000);
 

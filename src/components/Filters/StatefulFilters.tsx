@@ -168,9 +168,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   removeFilter = (filter: ActiveFilter) => {
     const { activeFilters } = this.state;
 
-    let index = activeFilters.indexOf(filter);
+    const index = activeFilters.indexOf(filter);
     if (index > -1) {
-      let updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
+      const updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
       this.updateActiveFilters(updated);
     }
   };

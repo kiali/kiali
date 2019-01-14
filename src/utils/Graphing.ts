@@ -28,8 +28,8 @@ export default {
     xseries = xseries.concat(matrix[0].values.map(dp => dp[0] * 1000));
 
     // yseries are the values of each serie.
-    let yseries: any[] = matrix.map(mat => {
-      let serie: any = [title || mat.name];
+    const yseries: any[] = matrix.map(mat => {
+      const serie: any = [title || mat.name];
       return serie.concat(mat.values.map(dp => dp[1]));
     });
 

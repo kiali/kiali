@@ -136,7 +136,7 @@ class WorkloadServices extends React.Component<WorkloadServicesProps, WorkloadSe
 
   rows() {
     return (this.props.services || []).map((service, vsIdx) => {
-      let generateRows = {
+      const generateRows = {
         id: vsIdx,
         name: this.overviewLink(service),
         createdAt: <LocalTime time={service.createdAt} />,

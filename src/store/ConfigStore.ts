@@ -43,7 +43,7 @@ const configureStore = (initialState: KialiAppState) => {
 // Setup the initial state of the Redux store with defaults
 // (instead of having things be undefined until they are populated by query)
 // Redux 4.0 actually required this
-let initialStore: KialiAppState = {
+const initialStore: KialiAppState = {
   globalState: INITIAL_GLOBAL_STATE,
   statusState: INITIAL_STATUS_STATE,
   namespaces: INITIAL_NAMESPACE_STATE,

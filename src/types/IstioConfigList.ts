@@ -114,12 +114,12 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   if (configFilters && configFilters.length === 0) {
     return unfiltered;
   }
-  let filtered: IstioConfigItem[] = [];
+  const filtered: IstioConfigItem[] = [];
 
-  let filterByValid = configFilters.indexOf('Valid') > -1;
-  let filterByNotValid = configFilters.indexOf('Not Valid') > -1;
-  let filterByNotValidated = configFilters.indexOf('Not Validated') > -1;
-  let filterByWarning = configFilters.indexOf('Warning') > -1;
+  const filterByValid = configFilters.indexOf('Valid') > -1;
+  const filterByNotValid = configFilters.indexOf('Not Valid') > -1;
+  const filterByNotValidated = configFilters.indexOf('Not Validated') > -1;
+  const filterByWarning = configFilters.indexOf('Warning') > -1;
   if (filterByValid && filterByNotValid && filterByNotValidated && filterByWarning) {
     return unfiltered;
   }
@@ -142,7 +142,7 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 };
 
 export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
-  let istioItems: IstioConfigItem[] = [];
+  const istioItems: IstioConfigItem[] = [];
   istioConfigList.gateways.forEach(gw =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'gateway', name: gw.metadata.name, gateway: gw })
   );

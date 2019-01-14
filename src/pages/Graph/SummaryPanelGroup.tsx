@@ -316,7 +316,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private renderWorkloadList = (group): any[] => {
-    let workloadList: any[] = [];
+    const workloadList: any[] = [];
 
     group.children('node[workload]').forEach((node, index) => {
       const data = nodeData(node);

@@ -8,14 +8,14 @@ describe('HealthDetails', () => {
   it('renders healthy', () => {
     const health = new ServiceHealth({ errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 }, 60);
 
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" />);
+    const wrapper = shallow(<HealthDetails id="svc" health={health} headline="" />);
     expect(wrapper).toMatchSnapshot();
   });
 
   it('renders deployments failure', () => {
     const health = new ServiceHealth({ errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 }, 60);
 
-    let wrapper = shallow(<HealthDetails id="svc" health={health} headline="" />);
+    const wrapper = shallow(<HealthDetails id="svc" health={health} headline="" />);
     expect(wrapper).toMatchSnapshot();
   });
 });

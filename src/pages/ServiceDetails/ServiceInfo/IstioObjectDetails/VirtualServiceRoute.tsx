@@ -32,8 +32,8 @@ const PFBlueColors = [
 class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   cellFormat = value => <Table.Cell>{value}</Table.Cell>;
   headerFormat = (label, { column }) => {
-    let className = column.property || column.header.label.toLowerCase();
-    let colSpan = column.header && column.header.props ? column.header.props.colSpan || '' : '';
+    const className = column.property || column.header.label.toLowerCase();
+    const colSpan = column.header && column.header.props ? column.header.props.colSpan || '' : '';
 
     return (
       <Table.Heading colSpan={colSpan} className={className}>
@@ -159,7 +159,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, routeIndex: number, destinationIndex: number) {
-    let checks = checkForPath(
+    const checks = checkForPath(
       validation,
       'spec/' +
         this.props.kind.toLowerCase() +
@@ -177,8 +177,8 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
       )
     );
 
-    let severity = highestSeverity(checks);
-    let iconName = severity ? severityToIconName(severity) : 'ok';
+    const severity = highestSeverity(checks);
+    const iconName = severity ? severityToIconName(severity) : 'ok';
     if (iconName !== 'ok') {
       return (
         <OverlayTrigger
@@ -196,7 +196,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   destinationFrom(destinationWeight: DestinationWeight, i: number) {
-    let destination = destinationWeight.destination;
+    const destination = destinationWeight.destination;
     return {
       host: destination.host || '-',
       subset: destination.subset || '-',
@@ -282,11 +282,11 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   routeStatusMessage(route: HTTPRoute | TCPRoute, routeIndex: number) {
-    let checks = checkForPath(
+    const checks = checkForPath(
       this.validation(),
       'spec/' + this.props.kind.toLowerCase() + '[' + routeIndex + ']/route'
     );
-    let severity = highestSeverity(checks);
+    const severity = highestSeverity(checks);
 
     return {
       message: checks.map(check => check.message).join(','),

@@ -226,7 +226,7 @@ class IstioConfigListComponent extends ListComponent.Component<
 
   renderIstioItem(istioItem: IstioConfigItem, index: number) {
     let to = '/namespaces/' + istioItem.namespace + '/istio';
-    let name = istioItem.name;
+    const name = istioItem.name;
     let iconName = '';
     let iconType = '';
     let type = 'No type found';
@@ -271,8 +271,8 @@ class IstioConfigListComponent extends ListComponent.Component<
     if (istioItem.type === 'adapter' || istioItem.type === 'template') {
       // Build a /adapters/<adapter_type_plural>/<adapter_name> or
       //         /templates/<template_type_plural>/<template_name>
-      let istioType = istioItem.type + 's';
-      let subtype = istioItem.type === 'adapter' ? istioItem.adapter!.adapters : istioItem.template!.templates;
+      const istioType = istioItem.type + 's';
+      const subtype = istioItem.type === 'adapter' ? istioItem.adapter!.adapters : istioItem.template!.templates;
       to = to + '/' + istioType + '/' + subtype + '/' + name;
     } else {
       to = to + '/' + dicIstioType[type] + '/' + name;
@@ -317,8 +317,8 @@ class IstioConfigListComponent extends ListComponent.Component<
   }
 
   render() {
-    let istioList: any = [];
-    let pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
+    const istioList: any = [];
+    const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
     pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
 

@@ -56,7 +56,7 @@ export const getIstioConfig = (namespace: string) => {
   if (namespace === 'bookinfo') {
     return mockPromiseFromFile(`./src/services/__mockData__/getIstioConfigBookinfo.json`);
   }
-  let emptyIstioConfig = {
+  const emptyIstioConfig = {
     namespace: {
       name: namespace
     },

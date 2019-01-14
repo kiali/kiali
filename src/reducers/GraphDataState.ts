@@ -37,7 +37,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
-  let newState: GraphState = {
+  const newState: GraphState = {
     ...state
   };
 

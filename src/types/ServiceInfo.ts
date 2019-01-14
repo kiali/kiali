@@ -140,7 +140,7 @@ export const checkForPath = (object: ObjectValidation, path: string): ObjectChec
     return [];
   }
 
-  let check = object.checks.filter(item => {
+  const check = object.checks.filter(item => {
     return item.path === path;
   });
 

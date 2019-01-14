@@ -26,7 +26,7 @@ interface YamlPosition {
 }
 
 const getObjectValidations = (validations: Validations): ObjectValidation[] => {
-  let oValidations: ObjectValidation[] = [];
+  const oValidations: ObjectValidation[] = [];
   Object.keys(validations).forEach(objectType => {
     Object.keys(validations[objectType]).forEach(object => oValidations.push(validations[objectType][object]));
   });
@@ -44,7 +44,7 @@ const numRows = (yaml: string): number => {
 };
 
 const posToRowCol = (yaml: string, pos: number): YamlPosition => {
-  let rowCol: YamlPosition = {
+  const rowCol: YamlPosition = {
     position: pos,
     row: 0,
     col: 0
@@ -63,7 +63,7 @@ const posToRowCol = (yaml: string, pos: number): YamlPosition => {
 const rowColToPos = (yaml: string, row: number, col: number): number => {
   let currentRow = 0;
   let currentCol = 0;
-  let pos = -1;
+  const pos = -1;
   for (let i = 0; i < yaml.length; i++) {
     if (yaml.charAt(i) === '\n') {
       currentRow++;
@@ -91,7 +91,7 @@ const parseMarker = (
   isArray: boolean,
   arrayIndex?: number
 ): AceMarker => {
-  let aceMarker: AceMarker = {
+  const aceMarker: AceMarker = {
     startRow: 0,
     startCol: 0,
     endRow: 0,
@@ -112,32 +112,32 @@ const parseMarker = (
     return aceMarker;
   }
 
-  let maxRows = numRows(yaml);
+  const maxRows = numRows(yaml);
 
   // Array should find first '-' token to situate pos
   if (isArray && arrayIndex !== undefined) {
     tokenPos = yaml.indexOf('-', tokenPos);
     // We should find the right '-' under the same col of the yaml
-    let firstArrayRowCol = posToRowCol(yaml, tokenPos);
+    const firstArrayRowCol = posToRowCol(yaml, tokenPos);
     let row = firstArrayRowCol.row;
-    let col = firstArrayRowCol.col;
+    const col = firstArrayRowCol.col;
     let arrayIndexPos = tokenPos;
     let indexRow = 0;
     // Iterate to find next '-' token according arrayIndex
     while (row < maxRows && indexRow < arrayIndex) {
       row++;
-      let checkPos = rowColToPos(yaml, row, col);
+      const checkPos = rowColToPos(yaml, row, col);
       if (yaml.charAt(checkPos) === '-') {
         arrayIndexPos = checkPos;
         indexRow++;
       }
     }
-    let arrayRowCol = posToRowCol(yaml, arrayIndexPos);
+    const arrayRowCol = posToRowCol(yaml, arrayIndexPos);
     aceMarker.position = arrayIndexPos + 1; // Increase the index to not repeat same finding on next iteration
     aceMarker.startRow = arrayRowCol.row;
     aceMarker.startCol = arrayRowCol.col;
   } else {
-    let tokenRowCol = posToRowCol(yaml, tokenPos);
+    const tokenRowCol = posToRowCol(yaml, tokenPos);
     aceMarker.position = tokenPos + token.length; // Increase the index to not repeat same finding on next iteration
     aceMarker.startRow = tokenRowCol.row;
     aceMarker.startCol = tokenRowCol.col;
@@ -147,7 +147,7 @@ const parseMarker = (
   for (let row = aceMarker.startRow + 1; row < maxRows + 1; row++) {
     // It searches by row and column, starting from the beginning of the line
     for (let col = 0; col <= aceMarker.startCol; col++) {
-      let endTokenPos = rowColToPos(yaml, row, col);
+      const endTokenPos = rowColToPos(yaml, row, col);
       // We need to differentiate if token is an array or not to mark the end of the mark
       if (yaml.charAt(endTokenPos) !== ' ' && (isArray || yaml.charAt(endTokenPos) !== '-')) {
         aceMarker.endRow = row;
@@ -160,8 +160,8 @@ const parseMarker = (
 };
 
 const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
-  let severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'error';
-  let marker = {
+  const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'error';
+  const marker = {
     startRow: 0,
     startCol: 0,
     endRow: 0,
@@ -169,7 +169,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     className: 'istio-validation-' + severity,
     type: severity
   };
-  let annotation = {
+  const annotation = {
     row: 0,
     column: 0,
     type: severity,
@@ -193,17 +193,17 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
       - spec/<protocol: http|tcp>[nRoute]/route[nDestination]/destination
    */
   if (check.path.length > 0) {
-    let tokens: string[] = check.path.split('/');
+    const tokens: string[] = check.path.split('/');
     // It skips the first 'spec' token
     if (tokens.length > 1) {
       for (let i = 1; i < tokens.length; i++) {
-        let token = tokens[i];
+        const token = tokens[i];
         // Check if token has an array or not
         if (token.indexOf('[') > -1 && token.indexOf(']') > -1) {
-          let startPos = token.indexOf('[');
-          let endPos = token.indexOf(']');
-          let arrayIndex = +token.substr(startPos + 1, endPos - startPos - 1);
-          let subtoken = token.substr(0, startPos);
+          const startPos = token.indexOf('[');
+          const endPos = token.indexOf(']');
+          const arrayIndex = +token.substr(startPos + 1, endPos - startPos - 1);
+          const subtoken = token.substr(0, startPos);
           aceMarker = parseMarker(yaml, aceMarker.position, subtoken, true, arrayIndex);
         } else {
           aceMarker = parseMarker(yaml, aceMarker.position, token, false);
@@ -222,7 +222,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
 };
 
 export const parseAceValidations = (yaml: string, validations?: Validations): AceValidations => {
-  let aceValidations: AceValidations = {
+  const aceValidations: AceValidations = {
     markers: [],
     annotations: []
   };
@@ -231,10 +231,10 @@ export const parseAceValidations = (yaml: string, validations?: Validations): Ac
     return aceValidations;
   }
 
-  let objectValidations = getObjectValidations(validations);
+  const objectValidations = getObjectValidations(validations);
   objectValidations.forEach(objectValidation => {
     objectValidation.checks.forEach(check => {
-      let aceCheck = parseCheck(yaml, check);
+      const aceCheck = parseCheck(yaml, check);
       aceValidations.markers.push(aceCheck.marker);
       aceValidations.annotations.push(aceCheck.annotation);
     });

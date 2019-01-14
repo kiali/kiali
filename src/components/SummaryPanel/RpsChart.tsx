@@ -70,7 +70,7 @@ const renderSparkline = (series: [string | number][], colors: PfColors[], yTickF
     type: 'area-spline'
   };
 
-  let axisProps = sparklineAxisProps();
+  const axisProps = sparklineAxisProps();
   if (yTickFormat) {
     axisProps.y.tick = {
       format: yTickFormat
@@ -229,7 +229,7 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
   };
 
   private abbreviateBytes = (bytes: number): BytesAbbreviation => {
-    let abbreviation: BytesAbbreviation = {
+    const abbreviation: BytesAbbreviation = {
       originalValue: bytes,
       multiplier: 1,
       unit: 'B',

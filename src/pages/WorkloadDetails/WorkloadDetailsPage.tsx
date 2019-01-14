@@ -77,13 +77,13 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   }
 
   fetchWorkload = () => {
-    let promiseDetails = API.getWorkload(
+    const promiseDetails = API.getWorkload(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.workload
     );
 
-    let promiseHealth = API.getWorkloadHealth(
+    const promiseHealth = API.getWorkloadHealth(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.workload,

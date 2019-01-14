@@ -25,9 +25,9 @@ export namespace AppListClass {
   };
 
   export const renderAppListItem = (appItem: AppListItem, index: number): React.ReactElement<{}> => {
-    let object = appItem;
-    let iconName = 'applications';
-    let iconType = 'pf';
+    const object = appItem;
+    const iconName = 'applications';
+    const iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
         <div className="ServiceList-Title">

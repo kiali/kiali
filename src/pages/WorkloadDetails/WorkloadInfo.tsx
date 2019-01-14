@@ -29,7 +29,7 @@ type WorkloadInfoState = {};
 
 const tabName = 'list';
 const tabIconStyle = style({
-  fontSize: '0.9em',
+  fontSize: '0.9em'
 });
 
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
@@ -39,7 +39,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
   }
 
   validationChecks(): ValidationChecks {
-    let validationChecks = {
+    const validationChecks = {
       hasPodsChecks: false
     };
 

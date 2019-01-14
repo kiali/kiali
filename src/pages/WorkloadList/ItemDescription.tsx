@@ -55,10 +55,10 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
   }
 
   render() {
-    let namespace = this.props.workloadItem.namespace;
-    let object = this.props.workloadItem.workload;
-    let iconName = WorkloadIcon;
-    let iconType = 'pf';
+    const namespace = this.props.workloadItem.namespace;
+    const object = this.props.workloadItem.workload;
+    const iconName = WorkloadIcon;
+    const iconType = 'pf';
     const heading = (
       <div className="ServiceList-Heading">
         <div className="ServiceList-Title">

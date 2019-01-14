@@ -6,7 +6,7 @@ import { VerticalNav } from 'patternfly-react';
 import { RouteComponentProps } from 'react-router';
 
 const getMockRouterProps = <P extends {}>(data: P) => {
-  let location = {
+  const location = {
     hash: '',
     key: '',
     pathname: '',
@@ -46,7 +46,7 @@ const getMockRouterProps = <P extends {}>(data: P) => {
 };
 
 const _tester = (path: string, expectedMenuPath: string) => {
-  let routerProps = getMockRouterProps({});
+  const routerProps = getMockRouterProps({});
   routerProps.location.pathname = path;
 
   const wrapper = shallow(

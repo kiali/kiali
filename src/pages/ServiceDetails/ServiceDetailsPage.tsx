@@ -76,9 +76,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   // Helper method to extract search urls with format
   // ?virtualservice=name or ?destinationrule=name
   parseSearch(): ParsedSearch {
-    let parsed: ParsedSearch = {};
+    const parsed: ParsedSearch = {};
     if (this.props.location.search) {
-      let firstParams = this.props.location.search
+      const firstParams = this.props.location.search
         .split('&')[0]
         .replace('?', '')
         .split('=');
@@ -101,7 +101,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   searchValidation(parsedSearch: ParsedSearch) {
-    let vals: Validations = {};
+    const vals: Validations = {};
 
     if (
       this.state.validations &&
@@ -131,12 +131,12 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   fetchBackend = () => {
-    let promiseDetails = API.getServiceDetail(
+    const promiseDetails = API.getServiceDetail(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.service
     );
-    let promiseValidations = API.getServiceValidations(
+    const promiseValidations = API.getServiceValidations(
       authentication(),
       this.props.match.params.namespace,
       this.props.match.params.service
@@ -158,7 +158,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       const dr = new DestinationRuleValidator(destinationRule);
       const formatValidation = dr.formatValidation();
 
-      let objectValidations = validations['destinationrule'][destinationRule.metadata.name];
+      const objectValidations = validations['destinationrule'][destinationRule.metadata.name];
       if (
         formatValidation !== null &&
         !objectValidations.checks.some(check => check.message === formatValidation.message)

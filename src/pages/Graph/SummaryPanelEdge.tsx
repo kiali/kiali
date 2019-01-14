@@ -175,7 +175,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         sourceLabel = 'source_workload';
         sourceValue = data.workload;
     }
-    let comparator = (metric: Metric) => {
+    const comparator = (metric: Metric) => {
       if (this.isSpecialServiceDest(destMetricType)) {
         return metric[sourceLabel] === sourceValue && metric['destination_workload'] === 'unknown';
       }
@@ -251,7 +251,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     this.metricsPromise.promise
       .then(response => {
         // HTTP
-        let metrics = response.data.metrics;
+        const metrics = response.data.metrics;
         const histograms = response.data.histograms;
         const reqRates = this.getNodeDataPoints(
           metrics['request_count'],
