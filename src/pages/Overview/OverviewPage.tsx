@@ -202,13 +202,10 @@ class OverviewPage extends React.Component<OverviewProps, State> {
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
               {this.state.namespaces.map(ns => {
                 const nbItems = ns.inError.length + ns.inWarning.length + ns.inSuccess.length + ns.notAvailable.length;
-                const encodedNsName = encodeURIComponent(ns.name);
                 return (
                   <Col xs={6} sm={3} md={3} key={ns.name}>
                     <Card matchHeight={true} accented={true} aggregated={true}>
-                      <CardTitle>
-                        <Link to={`/graph/namespaces?namespaces=` + encodedNsName}>{ns.name}</Link>
-                      </CardTitle>
+                      <CardTitle>{ns.name}</CardTitle>
                       <CardBody>
                         <ListPageLink target={targetPage} namespaces={[{ name: ns.name }]}>
                           {nbItems === 1 ? oneItemText : nbItems + pluralText}
