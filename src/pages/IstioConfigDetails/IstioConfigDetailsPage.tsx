@@ -128,7 +128,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   onCancel = () => {
     if (this.hasOverview()) {
       this.props.history.push(this.props.location.pathname + '?list=overview');
-      this.fetchIstioObjectDetails();
     } else {
       this.backToList();
     }
@@ -184,10 +183,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   onEditorChange = (value: string) => {
-    // This is a workaround to prevent that first CTRL+Z invocation clears the editor.
-    if (!this.state.isModified && value === '') {
-      value = this.fetchYaml();
-    }
     this.setState({
       isModified: true,
       yamlModified: value,
