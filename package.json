@@ -1,6 +1,6 @@
 {
   "name": "@kiali/kiali-ui",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
   "keywords": [
     "istio service mesh",
