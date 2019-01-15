@@ -234,7 +234,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
-  renderEditor = (yamlSource: string) => {
+  renderEditor = () => {
+    const yamlSource = this.fetchYaml();
     let editorValidations: AceValidations = {
       markers: [],
       annotations: []
@@ -247,24 +248,27 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         editorValidations.annotations = this.state.yamlValidations.annotations;
       }
     }
+
     return (
       <div className="container-fluid container-cards-pf">
         <Row className="row-cards-pf">
           <Col>
-            <AceEditor
-              ref={this.aceEditorRef}
-              mode="yaml"
-              theme="eclipse"
-              onChange={this.onEditorChange}
-              width={'100%'}
-              height={'50vh'}
-              className={'istio-ace-editor'}
-              readOnly={!this.canUpdate()}
-              setOptions={aceOptions}
-              value={yamlSource}
-              annotations={editorValidations.annotations}
-              markers={editorValidations.markers}
-            />
+            {this.state.istioObjectDetails ? (
+              <AceEditor
+                ref={this.aceEditorRef}
+                mode="yaml"
+                theme="eclipse"
+                onChange={this.onEditorChange}
+                width={'100%'}
+                height={'50vh'}
+                className={'istio-ace-editor'}
+                readOnly={!this.canUpdate()}
+                setOptions={aceOptions}
+                value={this.state.istioObjectDetails ? yamlSource : undefined}
+                annotations={editorValidations.annotations}
+                markers={editorValidations.markers}
+              />
+            ) : null}
             {this.renderActionButtons()}
           </Col>
         </Row>
@@ -387,7 +391,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                 {this.renderOverview()}
               </TabPane>
             ) : null}
-            <TabPane eventKey="yaml">{this.renderEditor(this.fetchYaml())}</TabPane>
+            <TabPane eventKey="yaml">{this.renderEditor()}</TabPane>
           </TabContent>
         </div>
       </TabContainer>
