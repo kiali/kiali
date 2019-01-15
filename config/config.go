@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Environment vars can define some default values.
