@@ -172,7 +172,7 @@ def test_service_metrics_endpoint(kiali_client):
     assert 'request_size' in histograms
     assert 'response_size' in histograms
 
-def test_service_health_endpoint(kiali_client):
+def __test_service_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_health = kiali_client.request(method_name='serviceHealth', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
