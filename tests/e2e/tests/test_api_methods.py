@@ -240,7 +240,6 @@ def test_negative_404(kiali_client):
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'bookinfo', 'workload': 'invalid'}
 
     evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)
-    #evaluate_response(kiali_client, method_name='serviceHealth', path=INVALID_PARAMS_SERVICEHEALTH, status_code_expected=404)
     evaluate_response(kiali_client, method_name='workloadDetails', path=INVALID_PARAMS_WORKLOADDETAILS, status_code_expected=404)
     evaluate_response(kiali_client, method_name='appDetails', path=INVALID_PARAMS_APPDETAILS, status_code_expected=404)
     evaluate_response(kiali_client, method_name='istioConfigDetails', path=INVALID_PARAMS_ISTIOCONFIGDETAILS, status_code_expected=404)
