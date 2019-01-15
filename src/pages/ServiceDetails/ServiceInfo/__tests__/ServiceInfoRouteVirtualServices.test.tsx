@@ -60,13 +60,7 @@ const virtualServices: VirtualService[] = [
 
 describe('#ServiceInfoVirtualServices render correctly with data', () => {
   it('should render service virtual services', () => {
-    const wrapper = shallow(
-      <ServiceInfoVirtualServices
-        virtualServices={virtualServices}
-        editorLink={'/namespaces/test_namespace/services/test_services'}
-        validations={{}}
-      />
-    );
+    const wrapper = shallow(<ServiceInfoVirtualServices virtualServices={virtualServices} validations={{}} />);
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });

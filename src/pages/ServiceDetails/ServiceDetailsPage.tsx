@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
-import history from '../../app/History';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
-import IstioObjectDetails from './IstioObjectDetails';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
@@ -69,10 +67,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return url;
   }
 
-  validateParams(parsed: ParsedSearch): boolean {
-    return this.searchObject(parsed) !== undefined;
-  }
-
   // Helper method to extract search urls with format
   // ?virtualservice=name or ?destinationrule=name
   parseSearch(): ParsedSearch {
@@ -85,19 +79,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       parsed.type = firstParams[0];
       parsed.name = firstParams[1];
     }
-    if (this.validateParams(parsed)) {
-      return parsed;
-    }
     return {};
-  }
-
-  searchObject(parsed: ParsedSearch) {
-    if (parsed.type === 'virtualservice') {
-      return this.state.serviceDetailsInfo.virtualServices.items.find(vs => parsed.name === vs.metadata.name);
-    } else if (parsed.type === 'destinationrule') {
-      return this.state.serviceDetailsInfo.destinationRules.items.find(dr => parsed.name === dr.metadata.name);
-    }
-    return undefined;
   }
 
   searchValidation(parsedSearch: ParsedSearch) {
@@ -170,28 +152,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return validations;
   }
 
-  onDeleteIstioObject = (type: string, name: string) => {
-    API.deleteIstioConfigDetail(authentication(), this.props.match.params.namespace, type, name)
-      .then(r => {
-        this.fetchBackend();
-        history.push(this.servicePageURL());
-      })
-      .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not delete Istio object', error));
-      });
-  };
-
   navigateToJaeger = () => {
     window.open(this.props.jaegerUrl + `/search?service=${this.props.match.params.service}`, '_blank');
   };
 
-  renderBreadcrumbs = (parsedSearch: ParsedSearch, showingDetails: boolean) => {
+  renderBreadcrumbs = (parsedSearch: ParsedSearch) => {
     const urlParams = new URLSearchParams(this.props.location.search);
-    const parsedSearchTypeHuman = parsedSearch.type === 'virtualservice' ? 'Virtual Service' : 'Destination Rule';
     const to = this.servicePageURL();
-    const toDetailsTab = to + '?list=' + parsedSearch.type + 's';
-    const toDetails = to + '?' + parsedSearch.type + '=' + parsedSearch.name;
-    const defaultDetailTab = parsedSearch.type === 'virtualservice' ? 'overview' : 'yaml';
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
@@ -205,94 +172,54 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         <Breadcrumb.Item componentClass={'span'}>
           <Link to={to}>Service: {this.props.match.params.service}</Link>
         </Breadcrumb.Item>
-        {!showingDetails ? (
-          <Breadcrumb.Item active={true}>
-            Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
-          </Breadcrumb.Item>
-        ) : (
-          <>
-            <Breadcrumb.Item componentClass={'span'}>
-              <Link to={toDetailsTab}>Service Info</Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item componentClass={'span'}>
-              <Link to={toDetails}>
-                {parsedSearchTypeHuman}: {parsedSearch.name}
-              </Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item active={true}>
-              {parsedSearchTypeHuman}{' '}
-              {(urlParams.get('detail') || defaultDetailTab) === 'overview' ? 'Overview' : 'YAML'}
-            </Breadcrumb.Item>
-          </>
-        )}
+        <Breadcrumb.Item active={true}>
+          Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
+        </Breadcrumb.Item>
       </Breadcrumb>
     );
   };
 
   render() {
     const parsedSearch = this.parseSearch();
-    const istioObject = this.searchObject(parsedSearch);
-    const editorVisible = parsedSearch.name && parsedSearch.type;
-    const permissions =
-      parsedSearch.type === 'virtualservice'
-        ? this.state.serviceDetailsInfo.virtualServices.permissions
-        : this.state.serviceDetailsInfo.destinationRules.permissions;
     return (
       <>
-        {this.renderBreadcrumbs(parsedSearch, !!(editorVisible && istioObject))}
-        {editorVisible && istioObject ? (
-          <IstioObjectDetails
-            namespace={this.props.match.params.namespace}
-            object={istioObject}
-            validations={this.searchValidation(parsedSearch)}
-            onSelectTab={this.tabSelectHandler}
-            activeTab={this.activeTab}
-            servicePageURL={this.servicePageURL(parsedSearch)}
-            onDelete={() => this.onDeleteIstioObject(parsedSearch.type! + 's', parsedSearch.name!)}
-            permissions={permissions}
-          />
-        ) : (
-          <TabContainer
-            id="basic-tabs"
-            activeKey={this.activeTab('tab', 'info')}
-            onSelect={this.tabSelectHandler('tab')}
-          >
-            <div>
-              <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                <NavItem eventKey="info">
-                  <div>Info</div>
-                </NavItem>
-                <NavItem eventKey="metrics">
-                  <div>Inbound Metrics</div>
-                </NavItem>
-                <NavItem onClick={this.navigateToJaeger}>
-                  <div>Traces</div>
-                </NavItem>
-              </Nav>
-              <TabContent>
-                <TabPane eventKey="info">
-                  <ServiceInfo
-                    namespace={this.props.match.params.namespace}
-                    service={this.props.match.params.service}
-                    serviceDetails={this.state.serviceDetailsInfo}
-                    validations={this.state.validations}
-                    onRefresh={this.fetchBackend}
-                    activeTab={this.activeTab}
-                    onSelectTab={this.tabSelectHandler}
-                  />
-                </TabPane>
-                <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
-                  <ServiceMetricsContainer
-                    namespace={this.props.match.params.namespace}
-                    object={this.props.match.params.service}
-                    objectType={MetricsObjectTypes.SERVICE}
-                    direction={'inbound'}
-                  />
-                </TabPane>
-              </TabContent>
-            </div>
-          </TabContainer>
-        )}
+        {this.renderBreadcrumbs(parsedSearch)}
+        <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
+          <div>
+            <Nav bsClass="nav nav-tabs nav-tabs-pf">
+              <NavItem eventKey="info">
+                <div>Info</div>
+              </NavItem>
+              <NavItem eventKey="metrics">
+                <div>Inbound Metrics</div>
+              </NavItem>
+              <NavItem onClick={this.navigateToJaeger}>
+                <div>Traces</div>
+              </NavItem>
+            </Nav>
+            <TabContent>
+              <TabPane eventKey="info">
+                <ServiceInfo
+                  namespace={this.props.match.params.namespace}
+                  service={this.props.match.params.service}
+                  serviceDetails={this.state.serviceDetailsInfo}
+                  validations={this.state.validations}
+                  onRefresh={this.fetchBackend}
+                  activeTab={this.activeTab}
+                  onSelectTab={this.tabSelectHandler}
+                />
+              </TabPane>
+              <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
+                <ServiceMetricsContainer
+                  namespace={this.props.match.params.namespace}
+                  object={this.props.match.params.service}
+                  objectType={MetricsObjectTypes.SERVICE}
+                  direction={'inbound'}
+                />
+              </TabPane>
+            </TabContent>
+          </div>
+        </TabContainer>
       </>
     );
   }

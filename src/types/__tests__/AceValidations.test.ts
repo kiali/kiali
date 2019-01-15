@@ -1,5 +1,5 @@
 import { Validations } from '../IstioObjects';
-import { parseAceValidations } from '../AceValidations';
+import { parseKialiValidations } from '../AceValidations';
 
 const fs = require('fs');
 
@@ -193,9 +193,9 @@ const vsInvalidHttpFifthSecondWeigth: Validations = {
 const destinationRuleYaml = fs.readFileSync(`./src/types/__testData__/destinationRule.yaml`).toString();
 const virtualServiceYaml = fs.readFileSync(`./src/types/__testData__/virtualService.yaml`).toString();
 
-describe('#parseAceValidations in DestinationRule', () => {
+describe('#parseKialiValidations in DestinationRule', () => {
   it('should mark an invalid host', () => {
-    const aceValidations = parseAceValidations(destinationRuleYaml, destinationRuleValidations);
+    const aceValidations = parseKialiValidations(destinationRuleYaml, destinationRuleValidations);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -220,9 +220,9 @@ describe('#parseAceValidations in DestinationRule', () => {
   });
 });
 
-describe('#parseAceValidations in VirtualService', () => {
+describe('#parseKialiValidations in VirtualService', () => {
   it('should detect invalid hosts', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHosts);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHosts);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -247,7 +247,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid first http route', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpFirstRoute);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstRoute);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -277,7 +277,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid second http route', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpSecondRoute);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondRoute);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -307,7 +307,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid third http route', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpThirdRoute);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdRoute);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -337,7 +337,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid second http second destination field', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpSecondSecondDestinationField);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondSecondDestinationField);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -363,7 +363,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid third http first destination field', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpThirdFirstDestinationField);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstDestinationField);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -389,7 +389,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid third http first destination field subset not found', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpThirdFirstSubsetNotFound);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstSubsetNotFound);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -415,7 +415,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid first http second destination field subset not found', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpFirstSecondSubsetNotFound);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstSecondSubsetNotFound);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -441,7 +441,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid fourth http first weight', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpFourthFirstWeigth);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFourthFirstWeigth);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toBe(1);
     expect(aceValidations.annotations.length).toBe(1);
@@ -465,7 +465,7 @@ describe('#parseAceValidations in VirtualService', () => {
   });
 
   it('should detect invalid fifth http second weight', () => {
-    const aceValidations = parseAceValidations(virtualServiceYaml, vsInvalidHttpFifthSecondWeigth);
+    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFifthSecondWeigth);
     expect(aceValidations).toBeDefined();
     expect(aceValidations.markers.length).toEqual(1);
     expect(aceValidations.annotations.length).toEqual(1);

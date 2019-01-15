@@ -4,7 +4,6 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
 ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <ServiceInfoVirtualServices
-    editorLink="/namespaces/test_namespace/services/test_services"
     validations={Object {}}
     virtualServices={
       Array [
@@ -277,7 +276,7 @@ ShallowWrapper {
                 Object {
                   "actions": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
                   </Link>,
@@ -287,7 +286,7 @@ ShallowWrapper {
                   "id": 0,
                   "name": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
                   </Link>,
@@ -507,7 +506,7 @@ ShallowWrapper {
                 Object {
                   "actions": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
                   </Link>,
@@ -517,7 +516,7 @@ ShallowWrapper {
                   "id": 0,
                   "name": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
                   </Link>,
@@ -650,7 +649,7 @@ ShallowWrapper {
                   Object {
                     "actions": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
                     </Link>,
@@ -660,7 +659,7 @@ ShallowWrapper {
                     "id": 0,
                     "name": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
                     </Link>,
@@ -876,7 +875,7 @@ ShallowWrapper {
                 Object {
                   "actions": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
                   </Link>,
@@ -886,7 +885,7 @@ ShallowWrapper {
                   "id": 0,
                   "name": <Link
                     replace={false}
-                    to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                    to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
                   </Link>,
@@ -1116,7 +1115,7 @@ ShallowWrapper {
                   Object {
                     "actions": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
                     </Link>,
@@ -1126,7 +1125,7 @@ ShallowWrapper {
                     "id": 0,
                     "name": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
                     </Link>,
@@ -1346,7 +1345,7 @@ ShallowWrapper {
                   Object {
                     "actions": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
                     </Link>,
@@ -1356,7 +1355,7 @@ ShallowWrapper {
                     "id": 0,
                     "name": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
                     </Link>,
@@ -1489,7 +1488,7 @@ ShallowWrapper {
                     Object {
                       "actions": <Link
                         replace={false}
-                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                        to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                       >
                         View YAML
                       </Link>,
@@ -1499,7 +1498,7 @@ ShallowWrapper {
                       "id": 0,
                       "name": <Link
                         replace={false}
-                        to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                        to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                       >
                         reviews-default
                       </Link>,
@@ -1715,7 +1714,7 @@ ShallowWrapper {
                   Object {
                     "actions": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=yaml"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
                     </Link>,
@@ -1725,7 +1724,7 @@ ShallowWrapper {
                     "id": 0,
                     "name": <Link
                       replace={false}
-                      to="/namespaces/test_namespace/services/test_services?virtualservice=reviews-default&detail=overview"
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
                     </Link>,

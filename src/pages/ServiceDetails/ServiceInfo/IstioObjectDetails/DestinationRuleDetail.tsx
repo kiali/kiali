@@ -6,6 +6,7 @@ import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import * as resolve from 'table-resolver';
 import Label from '../../../../components/Label/Label';
+import { Link } from 'react-router-dom';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -124,11 +125,30 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
     );
   }
 
+  serviceLink(namespace: string, host: string, isValid: boolean): any {
+    if (!host) {
+      return '-';
+    }
+    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
+    if (host.indexOf('.') > -1 || !isValid) {
+      return host;
+    } else {
+      return (
+        <Link to={'/namespaces/' + namespace + '/services/' + host}>
+          {host + ' '}
+          <Icon type="pf" name="service" />
+        </Link>
+      );
+    }
+  }
+
   rawConfig(destinationRule: DestinationRule) {
+    const globalStatus = this.globalStatus(destinationRule);
+    const isValid = globalStatus === '' ? true : false;
     return (
       <div className="card-pf-body" key={'virtualServiceConfig'}>
         <h4>DestinationRule: {destinationRule.metadata.name}</h4>
-        <div>{this.globalStatus(destinationRule)}</div>
+        <div>{globalStatus}</div>
         <div>
           <strong>Created at</strong>: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />
         </div>
@@ -137,7 +157,8 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
         </div>
         {destinationRule.spec.host && (
           <div>
-            <strong>Host</strong>: {destinationRule.spec.host}
+            <strong>Host</strong>:{' '}
+            {this.serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
           </div>
         )}
         {destinationRule.spec.trafficPolicy && (

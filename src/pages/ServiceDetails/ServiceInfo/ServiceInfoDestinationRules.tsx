@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { EditorLink } from '../../../types/ServiceInfo';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
 import LocalTime from '../../../components/Time/LocalTime';
@@ -10,7 +9,7 @@ import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioO
 import Labels from '../../../components/Label/Labels';
 import { safeRender } from '../../../utils/SafeRender';
 
-interface ServiceInfoDestinationRulesProps extends EditorLink {
+interface ServiceInfoDestinationRulesProps {
   destinationRules?: DestinationRule[];
   validations: { [key: string]: ObjectValidation };
 }
@@ -120,7 +119,15 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   yamlLink(destinationRule: DestinationRule) {
     return (
-      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.metadata.name + '&detail=yaml'}>
+      <Link
+        to={
+          '/namespaces/' +
+          destinationRule.metadata.namespace +
+          '/istio/destinationrules/' +
+          destinationRule.metadata.name +
+          '?list=yaml'
+        }
+      >
         View YAML
       </Link>
     );
@@ -132,7 +139,15 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
 
   overviewLink(destinationRule: DestinationRule) {
     return (
-      <Link to={this.props.editorLink + '?destinationrule=' + destinationRule.metadata.name + '&detail=overview'}>
+      <Link
+        to={
+          '/namespaces/' +
+          destinationRule.metadata.namespace +
+          '/istio/destinationrules/' +
+          destinationRule.metadata.name +
+          '?list=overview'
+        }
+      >
         {destinationRule.metadata.name}
       </Link>
     );

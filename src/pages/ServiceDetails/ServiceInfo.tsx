@@ -122,7 +122,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       return getSeverityIcon(severity);
     };
 
-    const editorLink = '/namespaces/' + this.props.namespace + '/services/' + this.props.service;
     return (
       <div>
         {this.state.error ? (
@@ -216,7 +215,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
                           virtualServices={virtualServices.items}
-                          editorLink={editorLink}
                           validations={this.props.validations!['virtualservice']}
                         />
                       )}
@@ -229,7 +227,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules
                           destinationRules={destinationRules.items}
-                          editorLink={editorLink}
                           validations={this.props.validations!['destinationrule']}
                         />
                       )}

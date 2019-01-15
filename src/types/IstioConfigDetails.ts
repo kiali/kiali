@@ -39,7 +39,6 @@ export interface IstioConfigDetails {
 }
 
 export const aceOptions: AceOptions = {
-  readOnly: true,
   showPrintMargin: false,
   autoScrollEditorIntoView: true
 };
