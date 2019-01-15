@@ -24,7 +24,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 			business, err := business.Get()
 
 			if err != nil {
-				log.Warning("Token error: ", err)
+				log.Warning("Could not get business layer: ", err)
 				statusCode = http.StatusUnauthorized
 			} else {
 				err := business.OpenshiftOAuth.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))

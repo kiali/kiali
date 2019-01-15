@@ -61,15 +61,10 @@ const serverPrefix = "https://openshift.default.svc/"
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
 	var server *OAuthAuthorizationServer
 
-	if err != nil {
-		message := fmt.Errorf("Could not parse data from the Openshift API: %v", err)
-		return nil, message
-	}
-
 	response, err := request("GET", ".well-known/oauth-authorization-server", nil)
 
 	if err != nil {
-		message := fmt.Errorf("Could not parse data from the Openshift API: %v", err)
+		message := fmt.Errorf("Could not send request to the Openshift OAuth API: %v", err)
 		return nil, message
 	}
 
@@ -81,6 +76,11 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 	}
 
 	redirectURL, err := getKialiRoutePath()
+
+	if err != nil {
+		message := fmt.Errorf("Could not get Kiali route for OAuth redirect: %v", err)
+		return nil, message
+	}
 
 	metadata = &OAuthMetadata{}
 
@@ -101,7 +101,7 @@ func (in *OpenshiftOAuthService) ValidateToken(token string) error {
 	k8s, err := kube.NewForConfig(k8sConfig)
 
 	if err != nil {
-		return fmt.Errorf("could not connect to Openshift: %v", err)
+		return fmt.Errorf("could not get Openshift cluster config: %v", err)
 	}
 
 	_, err = k8s.Discovery().ServerVersion()
@@ -119,13 +119,13 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	response, err := request("GET", "oapi/v1/users/~", &token)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+		return nil, fmt.Errorf("Could not get user info from Openshift: %v", err)
 	}
 
 	err = json.Unmarshal(response, &user)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+		return nil, fmt.Errorf("Could not parse user info from Openshift: %v", err)
 	}
 
 	return user, nil
