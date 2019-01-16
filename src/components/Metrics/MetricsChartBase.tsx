@@ -93,11 +93,6 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     return fmt + this.props.unit;
   };
 
-  adjustHeight(columns: any[]): number {
-    const series = columns.length - 1;
-    return 350 + series * 23;
-  }
-
   protected onExpandHandler = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     this.props.onExpandRequested!();
@@ -138,7 +133,7 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
   render() {
     const data = this.getSeriesData();
     this.checkUnload(data);
-    const height = this.adjustHeight(data.columns);
+    const height = 350;
     // Note: if any direct interaction is needed with the C3 chart,
     //  use "oninit" hook and reference "this" as the C3 chart object.
     //  see commented code
