@@ -36,11 +36,13 @@ interface IstioConfigDetailsState {
 
 class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioConfigId>, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
+  promptTo: string;
 
   constructor(props: RouteComponentProps<IstioConfigId>) {
     super(props);
     this.state = { isModified: false };
     this.aceEditorRef = React.createRef();
+    this.promptTo = '';
   }
 
   updateTypeFilter = () => {
@@ -101,6 +103,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     } else {
       window.onbeforeunload = null;
     }
+    // This will reset the flag to prevent ask multiple times the confirmnation to leave with unsaved changed
+    this.promptTo = '';
     // Hack to force redisplay of annotations after update
     // See https://github.com/securingsincity/react-ace/issues/300
     if (this.aceEditorRef.current) {
@@ -110,6 +114,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (this.props.match.params !== prevProps.match.params) {
       this.fetchIstioObjectDetailsFromProps(this.props.match.params);
     }
+  }
+
+  componentWillUnmount() {
+    // Reset ask confirmation flag
+    window.onbeforeunload = null;
   }
 
   backToList = () => {
@@ -404,7 +413,19 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         {this.renderBreadcrumbs()}
         {this.renderRightToolbar()}
         {this.renderTabs()}
-        <Prompt when={this.state.isModified} message="You have unsaved changes, are you sure you want to leave?" />
+        <Prompt
+          message={location => {
+            if (this.state.isModified) {
+              // Check if Prompt is invoked multiple times
+              if (this.promptTo === location.pathname) {
+                return true;
+              }
+              this.promptTo = location.pathname;
+              return 'You have unsaved changes, are you sure you want to leave?';
+            }
+            return true;
+          }}
+        />
       </>
     );
   }
