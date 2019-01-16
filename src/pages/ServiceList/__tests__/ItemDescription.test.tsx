@@ -27,7 +27,7 @@ describe('ItemDescription', () => {
     resolver(health);
     return new Promise(r => setImmediate(r)).then(() => {
       wrapper.update();
-      expect(wrapper.text()).toBe('Health: <HealthIndicator /><ServiceErrorRate /><MissingSidecar />');
+      expect(wrapper.text()).toBe('Health: <HealthIndicator /><MissingSidecar />');
     });
   });
 });

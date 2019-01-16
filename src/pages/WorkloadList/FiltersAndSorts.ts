@@ -89,15 +89,23 @@ export namespace WorkloadListFilters {
       }
     },
     {
-      id: 'errorrate',
-      title: 'Error Rate',
-      isNumeric: true,
-      param: 'er',
+      id: 'health',
+      title: 'Health',
+      isNumeric: false,
+      param: 'he',
       compare: (a: WorkloadItemHealth, b: WorkloadItemHealth) => {
         if (a.health && b.health) {
-          const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
-          const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
-          return ratioA === ratioB ? a.workload.name.localeCompare(b.workload.name) : ratioA - ratioB;
+          const statusForA = a.health.getGlobalStatus();
+          const statusForB = b.health.getGlobalStatus();
+
+          if (statusForA.priority === statusForB.priority) {
+            // If both workloads have same health status, use error rate to determine order.
+            const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
+            const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
+            return ratioA === ratioB ? a.workload.name.localeCompare(b.workload.name) : ratioB - ratioA;
+          }
+
+          return statusForB.priority - statusForA.priority;
         }
         return 0;
       }
@@ -262,8 +270,8 @@ export namespace WorkloadListFilters {
     sortField: SortField<WorkloadListItem>,
     isAscending: boolean
   ): Promise<WorkloadListItem[]> => {
-    if (sortField.title === 'Error Rate') {
-      // In the case of error rate sorting, we may not have all health promises ready yet
+    if (sortField.title === 'Health') {
+      // In the case of health sorting, we may not have all health promises ready yet
       // So we need to get them all before actually sorting
       const allHealthPromises: Promise<WorkloadItemHealth>[] = unsorted.map(item => {
         return item.healthPromise.then(health => {

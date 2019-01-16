@@ -5,7 +5,6 @@ import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
 import { WorkloadHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
-import ErrorRate from './ErrorRate';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 
@@ -76,11 +75,6 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
               <td>
                 <strong>Health: </strong>
                 <HealthIndicator id={object.name} health={this.state.health} mode={DisplayMode.SMALL} />
-              </td>
-            )}
-            {this.state.health && (
-              <td>
-                <ErrorRate requestHealth={this.state.health.requests} />
               </td>
             )}
             <td>{!object.istioSidecar && <MissingSidecar />}</td>

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { AppHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
-import AppErrorRate from './AppErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
@@ -55,9 +54,6 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
             <td>
               <strong>Health: </strong>
               <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
-            </td>
-            <td>
-              <AppErrorRate requestHealth={this.state.health.requests} />
             </td>
             <td>{!this.props.item.istioSidecar && <MissingSidecar />}</td>
             <td />

@@ -10,22 +10,42 @@ const makeService = (name: string, errRatio: number): ServiceListItem & { health
 };
 
 describe('SortField#compare', () => {
-  describe('sortField = error_rate, is ascending', () => {
-    const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Error Rate')!;
-    it('should return >0 when A service has more error than B', () => {
-      const serviceA = makeService('A', 0.4);
+  describe('sortField = health, is ascending', () => {
+    const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Health')!;
+    it('should return >0 when A service health is better than B (priority)', () => {
+      const serviceA = makeService('A', 0);
       const serviceB = makeService('B', 0.2);
       expect(sortField.compare(serviceA, serviceB)).toBeGreaterThan(0);
     });
-    it('should return <0 when A service has more error than B', () => {
-      const serviceA = makeService('A', 0.2);
-      const serviceB = makeService('B', 0.4);
+    it('should return <0 when A service health is worst than B (priority)', () => {
+      const serviceA = makeService('A', 0.5); // errorRate > Threshold for "error"
+      const serviceB = makeService('B', 0.1); // Threshold for "error" > errorRate > Threshold for "warn"
       expect(sortField.compare(serviceA, serviceB)).toBeLessThan(0);
     });
-    it('should return zero when A and B services has same error rate', () => {
+    it('should return zero when A and B services has same health (priority)', () => {
       const serviceA = makeService('', 0.1);
       const serviceB = makeService('', 0.1);
       expect(sortField.compare(serviceA, serviceB)).toBe(0);
+    });
+    it('should return >0 when A and B have same health and B has more error', () => {
+      const serviceA = makeService('A', 0.1); // Health resolves to "warn"
+      const serviceB = makeService('B', 0.12); // Health also resolves to "warn"
+      expect(sortField.compare(serviceA, serviceB)).toBeGreaterThan(0);
+    });
+    it('should return <0 when A and B have same health rating and A has more error', () => {
+      const serviceA = makeService('A', 0.15); // Health resolves to "warn"
+      const serviceB = makeService('B', 0.12); // Health also resolves to "warn"
+      expect(sortField.compare(serviceA, serviceB)).toBeLessThan(0);
+    });
+    it('should return <0 when A and B have same health (order by name; correct ordering)', () => {
+      const serviceA = makeService('A', 0.11);
+      const serviceB = makeService('B', 0.11);
+      expect(sortField.compare(serviceA, serviceB)).toBeLessThan(0);
+    });
+    it('should return >0 when A and B have same health (order by name; incorrect ordering)', () => {
+      const serviceA = makeService('A', 0.11);
+      const serviceB = makeService('B', 0.11);
+      expect(sortField.compare(serviceB, serviceA)).toBeGreaterThan(0);
     });
   });
 });
