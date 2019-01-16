@@ -1,12 +1,12 @@
 // Configuration
 
-import { config, serverConfig, setServerConfig } from './config';
+import { config, serverConfig, setServerConfig } from './Config';
 
 // Icons
 
-import { ICONS } from './icons';
+import { ICONS } from './Icons';
 
 // Logos
-import { IstioLogo, KialiLogo } from './logos';
+import { IstioLogo, KialiLogo } from './Logos';
 
 export { config, serverConfig, setServerConfig, ICONS, IstioLogo, KialiLogo };

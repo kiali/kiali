@@ -23,7 +23,7 @@ import { App } from '../types/App';
 import { NodeParamsType, NodeType } from '../types/Graph';
 import { config } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
-import { ServerConfig } from '../config/config';
+import { ServerConfig } from '../config/Config';
 
 export interface Response<T> {
   data: T;

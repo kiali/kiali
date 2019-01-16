@@ -7,7 +7,7 @@ import HelpDropdownThunkActions from './HelpDropdownThunkActions';
 import GrafanaThunkActions from './GrafanaThunkActions';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
-import { ServerConfig } from '../config/config';
+import { ServerConfig } from '../config/Config';
 
 const performLogin = (
   dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,

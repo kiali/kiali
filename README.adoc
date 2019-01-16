@@ -145,7 +145,7 @@ brew install watchman
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
 
 == Configure Kiali
-Use the link:https://github.com/kiali/kiali-ui/blob/master/src/config.ts[config file] to configure Kiali-UI.
+Use the link:https://github.com/kiali/kiali-ui/blob/master/src/Config.ts[config file] to configure Kiali-UI.
 
 [cols="1a,1a"]
 |===
