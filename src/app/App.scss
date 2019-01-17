@@ -1,4 +1,4 @@
-$icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
+$icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 
 /**
   Patternfly Sass
@@ -49,7 +49,7 @@ a:focus {
 }
 
 // SplitButton looks separated inside a toolbar, fix that
-.toolbar-pf .form-group .btn+.btn {
+.toolbar-pf .form-group .btn + .btn {
   margin-left: 0;
 }
 
@@ -96,12 +96,13 @@ a:focus {
 .about-modal-pf,
 .login-pf body,
 .nav-pf-vertical,
-.nav-pf-vertical .list-group-item.active>a, .nav-pf-vertical .list-group-item:hover>a
-{
+.nav-pf-vertical .list-group-item.active > a,
+.nav-pf-vertical .list-group-item:hover > a {
   background-color: #003145;
   background-image: none;
 }
-.nav-pf-vertical .list-group-item.active, .nav-pf-vertical .list-group-item.active:hover {
+.nav-pf-vertical .list-group-item.active,
+.nav-pf-vertical .list-group-item.active:hover {
   border-color: #438fdd;
 }
 .nav-pf-vertical .list-group-item {
@@ -122,11 +123,14 @@ html.kiosk.layout-pf.layout-pf-fixed div.nav-pf-vertical.nav-pf-vertical-with-su
   display: none;
 }
 
-html.kiosk.layout-pf.layout-pf-fixed > body{
+html.kiosk.layout-pf.layout-pf-fixed > body {
   padding-top: 0px;
 }
 
-html.kiosk.layout-pf.layout-pf-fixed  div.container-fluid.container-pf-nav-pf-vertical{
+html.kiosk.layout-pf.layout-pf-fixed div.container-fluid.container-pf-nav-pf-vertical {
   margin-left: 0px;
 }
 
+.toast-pf {
+  max-width: 100%;
+}
