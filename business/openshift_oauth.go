@@ -12,12 +12,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 
-	"strings"
-
 	kube "k8s.io/client-go/kubernetes"
-	
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 type OpenshiftOAuthService struct {
