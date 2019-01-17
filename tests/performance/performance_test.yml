@@ -1,0 +1,163 @@
+- hosts: localhost
+  connection: local
+  vars: 
+    - kialiAPI: '' 
+
+  tasks:
+  - name: Get Kiali API URL with parameters
+    kiali_ansible_module:
+      kiali_api_hostname: "{{ kiali_hostname }}"
+      kiali_api_port: "{{ kiali_port }}"
+      kiali_api_username: "{{ kiali_username }}"
+      kiali_api_password: "{{ kiali_password }}"
+      kiali_api_request: 
+        method_name: "{{ kiali_method_name }}"
+        path: "{{ kiali_path }}" 
+        params: "{{ kiali_params | default('') }}" 
+    register: kialiAPI
+
+
+  - name: Deleting Namespace from old testing
+    k8s:
+      api_version: v1
+      kind: Project
+      name: "{{ kiali_method_name | lower }}-api-performance-test"
+      state: absent
+    ignore_errors: true
+
+  - name: Creating Namespace for new tests 
+    k8s:
+      api_version: v1
+      kind: Project
+      name: "{{ kiali_method_name | lower }}-api-performance-test"
+      state: present
+    register: projectStatus
+    until: projectStatus.changed == true
+    retries: 100
+    delay: 20
+
+  - name: Creating Configmap
+    k8s: 
+      state: present
+      definition:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: kiali-api-performance-configmap
+          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+        data:
+          duration: "{{ duration }}"
+          route: "{{ kialiAPI['url'] }}"
+          rate: "{{ rate }}"
+          session_id: "{{ 9999999 | random | to_uuid }}"
+          influx_address: "{{ influx_address }}"
+
+
+
+  - name: Creating InfluxDB Secret
+    k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: influx-credentials
+          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+        type: Opaque
+        data:
+          username: "{{ influx_username | b64encode }}"
+          password: "{{ influx_password | b64encode }}"
+
+  - name: Creating Kiali Secret
+    k8s: 
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: kiali-credentials
+          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+        type: Opaque
+        data:
+          username: "{{ kiali_username | b64encode }}"
+          password: "{{ kiali_password | b64encode }}"
+
+  - name: Deploy Kiali Windsock
+    k8s:
+      state: present
+      definition:
+        apiVersion: extensions/v1beta1
+        kind: ReplicaSet
+        metadata:
+          name: kiali-windsock-user{{ item }}
+          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+          labels:
+            app: kiali-windsock-user{{ item }}
+        spec:
+          replicas: 1
+          strategy:
+            type: Recreate
+          template:
+            metadata:
+              labels:
+                app: kiali-windsock-user{{ item }}
+            spec:
+              containers:
+              - image: gbaufake/windsock:latest
+                name: kiali-windsock-user{{ item }}
+                imagePullPolicy: Always
+                env:
+                - name: SESSION_ID
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kiali-api-performance-configmap
+                      key: session_id
+
+                - name: DURATION
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kiali-api-performance-configmap
+                      key: duration
+
+                - name: ROUTE
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kiali-api-performance-configmap
+                      key: route
+
+                - name: RATE
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kiali-api-performance-configmap
+                      key: rate
+
+                - name: INFLUX_ADDRESS
+                  valueFrom:
+                    configMapKeyRef:
+                      name: kiali-api-performance-configmap
+                      key: influx_address
+
+                - name: INFLUX_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: influx-credentials
+                      key: username
+
+                - name: INFLUX_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: influx-credentials
+                      key: password
+
+                - name: KIALI_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: kiali-credentials
+                      key: username
+
+                - name: KIALI_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: kiali-credentials
+                      key: password
+    with_sequence: start=1 end={{ number_of_users }} format=%d
