@@ -55,7 +55,7 @@
     "start:prod": "npm run restore-rcue; REACT_APP_RCUE=true npm run start:kiali",
     "test": "react-scripts-ts test --env=jsdom __tests__",
     "snyk": "snyk test",
-    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json}\""
+    "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
     "axios": "0.18.0",
@@ -135,7 +135,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run pretty-quick --staged && npm run lint:precommit"
+      "pre-commit": "yarn run pretty-quick --staged --pattern \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
     }
   },
   "browserslist": [
