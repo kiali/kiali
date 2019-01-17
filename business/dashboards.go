@@ -18,20 +18,12 @@ type DashboardsService struct {
 	mon  kubernetes.KialiMonitoringInterface
 }
 
-// Memoize titles
-var dashboardTitles = make(map[string]string)
-
-func dashboardKey(namespace, name string) string {
-	// @ is forbidden charatecter in k8s resource name, so safe to use here
-	return name + "@" + namespace
-}
-
 // NewDashboardsService initializes this business service
 func NewDashboardsService(mon kubernetes.KialiMonitoringInterface, prom prometheus.ClientInterface) DashboardsService {
 	return DashboardsService{prom: prom, mon: mon}
 }
 
-func (in *DashboardsService) loadDashboardResourceUpdatingCache(namespace, template string) (*kubernetes.MonitoringDashboard, error) {
+func (in *DashboardsService) loadDashboardResource(namespace, template string) (*kubernetes.MonitoringDashboard, error) {
 	// There is an override mechanism with dashboards: default dashboards can be provided in Kiali namespace,
 	// and can be overriden in app namespace.
 	// So we look for the one in app namespace first, and only if not found fallback to the one in istio-system.
@@ -44,15 +36,12 @@ func (in *DashboardsService) loadDashboardResourceUpdatingCache(namespace, templ
 		}
 	}
 
-	// Update cached titles as soon as we reload a dashboard, to keep it decently up-to-date
-	dashboardTitles[dashboardKey(namespace, template)] = dashboard.Spec.Title
-
 	return dashboard, nil
 }
 
 // GetDashboard returns a dashboard filled-in with target data
 func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, template string) (*models.MonitoringDashboard, error) {
-	dashboard, err := in.loadDashboardResourceUpdatingCache(params.Namespace, template)
+	dashboard, err := in.loadDashboardResource(params.Namespace, template)
 	if err != nil {
 		return nil, err
 	}
@@ -171,11 +160,7 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 }
 
 func (in *DashboardsService) getDashboardTitle(namespace, template string) string {
-	key := dashboardKey(namespace, template)
-	if title, ok := dashboardTitles[key]; ok {
-		return title
-	}
-	dashboard, err := in.loadDashboardResourceUpdatingCache(namespace, template)
+	dashboard, err := in.loadDashboardResource(namespace, template)
 	if err != nil {
 		log.Errorf("Cannot get dashboard %s in namespace %s", template, namespace)
 		return ""
