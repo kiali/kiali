@@ -11,23 +11,32 @@ import Namespace from '../types/Namespace';
 import { style } from 'typestyle';
 import { PfColors } from './Pf/PfColors';
 
+const namespaceButtonColors = {
+  backgroundColor: PfColors.White,
+  borderColor: '#18546B',
+  color: '#003145'
+};
+
 const namespaceButtonStyle = style({
-  color: PfColors.Black,
-  outline: 'none',
+  ...namespaceButtonColors,
+  borderRadius: '2px 2px 0 0',
+  borderWidth: '1px 1px 3px 1px',
+  height: '32px',
+  boxSizing: 'border-box',
+  padding: '4px 6px 5px 6px',
+  // these properties are being overridden by btn:hover/focus and btn-link:hover/focus
   $nest: {
-    '&:hover': {
-      textDecoration: 'none',
-      color: PfColors.Black,
-      outline: 'none',
-      boxShadow: 'none'
-    },
-    '&:focus': {
-      textDecoration: 'none',
-      color: PfColors.Black,
-      outline: 'none',
-      boxShadow: 'none'
-    }
+    '&:hover': namespaceButtonColors,
+    '&:focus': namespaceButtonColors
   }
+});
+
+const namespaceLabelStyle = style({
+  fontWeight: 500
+});
+
+const namespaceValueStyle = style({
+  fontWeight: 600
 });
 
 interface NamespaceListType {
@@ -54,11 +63,23 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
 
   namespaceButtonText() {
     if (this.props.activeNamespaces.length === 0) {
-      return 'Select a namespace';
+      return <span className={namespaceValueStyle}>Select a namespace</span>;
     } else if (this.props.activeNamespaces.length === 1) {
-      return `Namespace: ${this.props.activeNamespaces[0].name}`;
+      return (
+        <>
+          <span className={namespaceLabelStyle}>Namespace:</span>
+          <span>&nbsp;</span>
+          <span className={namespaceValueStyle}>{this.props.activeNamespaces[0].name}</span>
+        </>
+      );
     } else {
-      return `Namespaces: ${this.props.activeNamespaces.length} namespaces`;
+      return (
+        <>
+          <span className={namespaceLabelStyle}>Namespaces:</span>
+          <span>&nbsp;</span>
+          <span className={namespaceValueStyle}>{`${this.props.activeNamespaces.length} namespaces`}</span>
+        </>
+      );
     }
   }
 
