@@ -22,6 +22,11 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := FormatHostnameForPrefixSearch(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
+			if !n.hasMatchingService(fqdn.Service) {
+				validation := models.BuildCheck("This host has no matching workloads", "error", "spec/host")
+				validations = append(validations, &validation)
+				valid = false
+			}
 			if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
 					// Check that each subset has a matching workload somewhere..
@@ -45,12 +50,6 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 						}
 					}
 
-				}
-			} else {
-				if !n.hasMatchingService(fqdn.Service) {
-					validation := models.BuildCheck("This host has no matching workloads", "error", "spec/host")
-					validations = append(validations, &validation)
-					valid = false
 				}
 			}
 		}

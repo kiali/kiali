@@ -50,8 +50,8 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
-	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
-	assert.Equal("spec/subsets[0]", validations[0].Path)
+	assert.Equal("This host has no matching workloads", validations[0].Message)
+	assert.Equal("spec/host", validations[0].Path)
 }
 
 func TestNoMatchingSubset(t *testing.T) {
