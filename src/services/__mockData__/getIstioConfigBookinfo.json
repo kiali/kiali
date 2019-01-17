@@ -214,5 +214,97 @@
       }
     }
   ],
-  "rules": []
+  "rules": [],
+  "validations": {
+    "destinationrule": {
+      "details": {
+        "name": "details",
+        "objectType": "destinationrule",
+        "valid": true,
+        "checks": []
+      },
+      "productpage": {
+        "name": "productpage",
+        "objectType": "destinationrule",
+        "valid": true,
+        "checks": []
+      },
+      "ratings": {
+        "name": "ratings",
+        "objectType": "destinationrule",
+        "valid": true,
+        "checks": []
+      },
+      "reviews": {
+        "name": "reviews",
+        "objectType": "destinationrule",
+        "valid": true,
+        "checks": []
+      }
+    },
+    "routerule": {
+      "details-default": {
+        "name": "details-default",
+        "objectType": "routerule",
+        "valid": true,
+        "checks": null
+      },
+      "productpage-default": {
+        "name": "productpage-default",
+        "objectType": "routerule",
+        "valid": true,
+        "checks": null
+      },
+      "ratings-default": {
+        "name": "ratings-default",
+        "objectType": "routerule",
+        "valid": true,
+        "checks": null
+      },
+      "recommendation-503": {
+        "name": "recommendation-503",
+        "objectType": "routerule",
+        "valid": false,
+        "checks": [
+          {
+            "message": "Destination doesn't have a valid service",
+            "severity": "error",
+            "path": "spec/destination"
+          }
+        ]
+      },
+      "reviews-default": {
+        "name": "reviews-default",
+        "objectType": "routerule",
+        "valid": true,
+        "checks": null
+      }
+    },
+    "virtualservice": {
+      "details": {
+        "name": "details",
+        "objectType": "virtualservice",
+        "valid": true,
+        "checks": []
+      },
+      "productpage": {
+        "name": "productpage",
+        "objectType": "virtualservice",
+        "valid": true,
+        "checks": []
+      },
+      "ratings": {
+        "name": "ratings",
+        "objectType": "virtualservice",
+        "valid": true,
+        "checks": []
+      },
+      "reviews": {
+        "name": "reviews",
+        "objectType": "virtualservice",
+        "valid": true,
+        "checks": []
+      }
+    }
+  }
 }

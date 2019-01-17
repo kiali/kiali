@@ -91,14 +91,11 @@ const conf = {
         `api/namespaces/${namespace}/istio/${objectType}/${object}`,
       istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
-      istioConfigValidations: (namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}/istio_validations`,
       jaeger: 'api/jaeger',
       namespaces: 'api/namespaces',
       namespacesGraphElements: `api/namespaces/graph`,
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
-      namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/istio_validations`,
       customDashboard: (namespace: string, app: string, template: string) =>
         `api/namespaces/${namespace}/apps/${app}/customdashboard/${template}`,
       serverConfig: `api/config`,
@@ -110,8 +107,6 @@ const conf = {
       serviceMetrics: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/metrics`,
       serviceDashboard: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/dashboard`,
-      serviceValidations: (namespace: string, service: string) =>
-        `api/namespaces/${namespace}/services/${service}/istio_validations`,
       status: 'api/status',
       token: 'api/token',
       workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,

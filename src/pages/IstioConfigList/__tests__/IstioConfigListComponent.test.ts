@@ -16,7 +16,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     templates: [],
     quotaSpecs: [],
     quotaSpecBindings: [],
-    permissions: {}
+    permissions: {},
+    validations: {}
   };
   names.forEach(name => {
     testData.gateways.push({ metadata: { name: name + '0' }, spec: {} });

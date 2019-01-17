@@ -84,7 +84,9 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   tooltipContent() {
     let numChecks = 0;
     this.props.validations.forEach(validation => {
-      numChecks += validation.checks.length;
+      if (validation !== undefined) {
+        numChecks += validation.checks.length;
+      }
     });
 
     const issuesMessages: string[] = [];

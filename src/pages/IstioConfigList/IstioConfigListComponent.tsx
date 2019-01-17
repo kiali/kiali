@@ -23,7 +23,6 @@ import {
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
 import { authentication } from '../../utils/Authentication';
-import { NamespaceValidations } from '../../types/IstioObjects';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -108,7 +107,7 @@ class IstioConfigListComponent extends ListComponent.Component<
         .register('namespaces', API.getNamespaces(authentication()))
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
-          this.fetchConfigsAndValidations(
+          this.fetchConfigs(
             namespaces.map(namespace => namespace.name),
             istioTypeFilters,
             istioNameFilters,
@@ -122,7 +121,7 @@ class IstioConfigListComponent extends ListComponent.Component<
           }
         });
     } else {
-      this.fetchConfigsAndValidations(
+      this.fetchConfigs(
         namespacesSelected,
         istioTypeFilters,
         istioNameFilters,
@@ -132,51 +131,20 @@ class IstioConfigListComponent extends ListComponent.Component<
     }
   }
 
-  updateValidation(istioItems: IstioConfigItem[], namespaceValidation: NamespaceValidations): IstioConfigItem[] {
-    istioItems.forEach(istioItem => {
-      if (
-        namespaceValidation[istioItem.namespace] &&
-        namespaceValidation[istioItem.namespace][istioItem.type] &&
-        namespaceValidation[istioItem.namespace][istioItem.type][istioItem.name]
-      ) {
-        istioItem.validation = namespaceValidation[istioItem.namespace][istioItem.type][istioItem.name];
-      }
-    });
-    return istioItems;
-  }
-
-  fetchConfigsAndValidations(
+  fetchConfigs(
     namespaces: string[],
     istioTypeFilters: string[],
     istioNameFilters: string[],
     configValidationFilters: string[],
     resetPagination?: boolean
   ) {
-    // Retrieve the istio config list/items and validations asynchronously
-    // Both are cancelable to avoid updating the state if the component umounts before data retrieval finishes.
     const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters);
-    const validationPromises = this.fetchValidations(namespaces);
 
     configsPromises
-      .then(configItems => {
-        // Unify validations and configs as a Promise
-        const mergedItemsPromise = validationPromises.then(namespaceValidations =>
-          filterByConfigValidation(this.updateValidation(configItems, namespaceValidations), configValidationFilters)
-        );
-        if (configValidationFilters.length > 0 || this.state.currentSortField.id === 'configvalidation') {
-          // If user *is* filtering and/or sorting using "validations", we must wait until the validations are fetched in order
-          // to update/sort the view. This way, we avoid a flickering list and/or ending up with a wrong sorting.
-          return mergedItemsPromise;
-        }
-        // If user *is not* filtering nor sorting using "validations", we can show the list as soon as istio configs
-        // are retrieved and update the view at a later time once the validations are fetched.
-        // For that, we return "configItems" instead of "mergedItemsPromise"
-        mergedItemsPromise.then(() => this.forceUpdate());
-        return configItems;
-      })
       .then(items =>
         IstioConfigListFilters.sortIstioItems(items, this.state.currentSortField, this.state.isSortAscending)
       )
+      .then(configItems => filterByConfigValidation(configItems, configValidationFilters))
       .then(sorted => {
         // Update the view when data is fetched
         const currentPage = resetPagination ? 1 : this.state.pagination.page;
@@ -192,6 +160,7 @@ class IstioConfigListComponent extends ListComponent.Component<
         });
       })
       .catch(istioError => {
+        console.log(istioError);
         if (!istioError.isCanceled) {
           this.handleAxiosError('Could not fetch Istio objects list', istioError);
         }
@@ -201,26 +170,13 @@ class IstioConfigListComponent extends ListComponent.Component<
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
     return this.promises
-      .registerAll('configs', namespaces.map(ns => API.getIstioConfig(authentication(), ns, typeFilters)))
+      .registerAll('configs', namespaces.map(ns => API.getIstioConfig(authentication(), ns, typeFilters, true)))
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
         responses.forEach(response => {
           istioItems = istioItems.concat(toIstioItems(filterByName(response.data, istioNameFilters)));
         });
         return istioItems;
-      });
-  }
-
-  // Fetch validations and return them as an object keyed with namespace
-  fetchValidations(namespaces: string[]) {
-    return this.promises
-      .registerAll('validations', namespaces.map(ns => API.getNamespaceValidations(authentication(), ns)))
-      .then(responses => {
-        const namespaceValidations: NamespaceValidations = {};
-        responses.forEach(response =>
-          Object.keys(response.data).forEach(namespace => (namespaceValidations[namespace] = response.data[namespace]))
-        );
-        return namespaceValidations;
       });
   }
 

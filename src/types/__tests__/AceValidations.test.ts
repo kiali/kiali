@@ -1,193 +1,149 @@
-import { Validations } from '../IstioObjects';
+import { ObjectValidation } from '../IstioObjects';
 import { parseKialiValidations } from '../AceValidations';
 
 const fs = require('fs');
 
-const destinationRuleValidations: Validations = {
-  destinationrule: {
-    details: {
-      name: 'details',
-      objectType: 'destinationrule',
-      valid: false,
-      checks: [
-        {
-          message: "Host doesn't have a valid service",
-          severity: 'error',
-          path: 'spec/host'
-        }
-      ]
+const destinationRuleValidations: ObjectValidation = {
+  name: 'details',
+  objectType: 'destinationrule',
+  valid: false,
+  checks: [
+    {
+      message: "Host doesn't have a valid service",
+      severity: 'error',
+      path: 'spec/host'
     }
-  }
+  ]
 };
 
-const vsInvalidHosts: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: "Hosts doesn't have a valid service",
-          severity: 'error',
-          path: 'spec/hosts'
-        }
-      ]
+const vsInvalidHosts: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: "Hosts doesn't have a valid service",
+      severity: 'error',
+      path: 'spec/hosts'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpFirstRoute: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'All routes should have weight',
-          severity: 'error',
-          path: 'spec/http[0]/route'
-        }
-      ]
+const vsInvalidHttpFirstRoute: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'All routes should have weight',
+      severity: 'error',
+      path: 'spec/http[0]/route'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpSecondRoute: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'All routes should have weight',
-          severity: 'error',
-          path: 'spec/http[1]/route'
-        }
-      ]
+const vsInvalidHttpSecondRoute: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'All routes should have weight',
+      severity: 'error',
+      path: 'spec/http[1]/route'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpThirdRoute: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'All routes should have weight',
-          severity: 'error',
-          path: 'spec/http[2]/route'
-        }
-      ]
+const vsInvalidHttpThirdRoute: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'All routes should have weight',
+      severity: 'error',
+      path: 'spec/http[2]/route'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpSecondSecondDestinationField: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Destination field is mandatory',
-          severity: 'error',
-          path: 'spec/http[1]/route[1]'
-        }
-      ]
+const vsInvalidHttpSecondSecondDestinationField: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Destination field is mandatory',
+      severity: 'error',
+      path: 'spec/http[1]/route[1]'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpThirdFirstDestinationField: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Destination field is mandatory',
-          severity: 'error',
-          path: 'spec/http[2]/route[0]'
-        }
-      ]
+const vsInvalidHttpThirdFirstDestinationField: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Destination field is mandatory',
+      severity: 'error',
+      path: 'spec/http[2]/route[0]'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpThirdFirstSubsetNotFound: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Subset not found',
-          severity: 'warning',
-          path: 'spec/http[2]/route[0]/destination'
-        }
-      ]
+const vsInvalidHttpThirdFirstSubsetNotFound: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Subset not found',
+      severity: 'warning',
+      path: 'spec/http[2]/route[0]/destination'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpFirstSecondSubsetNotFound: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Subset not found',
-          severity: 'warning',
-          path: 'spec/http[0]/route[1]/destination'
-        }
-      ]
+const vsInvalidHttpFirstSecondSubsetNotFound: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Subset not found',
+      severity: 'warning',
+      path: 'spec/http[0]/route[1]/destination'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpFourthFirstWeigth: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Weight must be a number',
-          severity: 'warning',
-          path: 'spec/http[3]/route[0]/weigth/25a'
-        }
-      ]
+const vsInvalidHttpFourthFirstWeigth: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Weight must be a number',
+      severity: 'warning',
+      path: 'spec/http[3]/route[0]/weigth/25a'
     }
-  }
+  ]
 };
 
-const vsInvalidHttpFifthSecondWeigth: Validations = {
-  virtualservice: {
-    productpage: {
-      name: 'productpage',
-      objectType: 'virtualservice',
-      valid: false,
-      checks: [
-        {
-          message: 'Weight must be a number',
-          severity: 'warning',
-          path: 'spec/http[4]/route[1]/weigth/28a'
-        }
-      ]
+const vsInvalidHttpFifthSecondWeigth: ObjectValidation = {
+  name: 'productpage',
+  objectType: 'virtualservice',
+  valid: false,
+  checks: [
+    {
+      message: 'Weight must be a number',
+      severity: 'warning',
+      path: 'spec/http[4]/route[1]/weigth/28a'
     }
-  }
+  ]
 };
 
 const destinationRuleYaml = fs.readFileSync(`./src/types/__testData__/destinationRule.yaml`).toString();

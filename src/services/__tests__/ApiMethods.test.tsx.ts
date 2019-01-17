@@ -114,7 +114,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getServiceDetail', () => {
-    const result = API.getServiceDetail(authentication(), 'istio-system', '');
+    const result = API.getServiceDetail(authentication(), 'istio-system', '', false);
     evaluatePromise(result);
   });
 });

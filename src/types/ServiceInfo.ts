@@ -1,6 +1,14 @@
 import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
-import { Pod, Port, ObjectCheck, ObjectValidation, DestinationRules, VirtualServices } from './IstioObjects';
+import {
+  Pod,
+  Port,
+  ObjectCheck,
+  ObjectValidation,
+  DestinationRules,
+  VirtualServices,
+  Validations
+} from './IstioObjects';
 import { Route } from '../components/InfoRoutes/InfoRoutes';
 
 export interface Endpoints {
@@ -56,6 +64,7 @@ export interface ServiceDetailsInfo {
   dependencies?: { [key: string]: Route[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
+  validations: Validations;
 }
 
 const higherThan = [
@@ -116,7 +125,7 @@ export const highestSeverity = (checks: ObjectCheck[]): string => {
 };
 
 const numberOfChecks = (type: string, object: ObjectValidation) =>
-  (object ? object.checks : []).filter(i => i.severity === type).length;
+  (object && object.checks ? object.checks : []).filter(i => i.severity === type).length;
 
 export const validationToSeverity = (object: ObjectValidation): string => {
   const warnChecks = numberOfChecks('warning', object);
@@ -136,7 +145,7 @@ export const validationToIconName = (object: ObjectValidation): string => {
 };
 
 export const checkForPath = (object: ObjectValidation, path: string): ObjectCheck[] => {
-  if (!object) {
+  if (!object || !object.checks) {
     return [];
   }
 

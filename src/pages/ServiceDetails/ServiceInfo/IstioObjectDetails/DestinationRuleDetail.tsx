@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 interface DestinationRuleProps {
   namespace: string;
   destinationRule: DestinationRule;
-  validations: { [key: string]: ObjectValidation };
+  validation: ObjectValidation;
 }
 
 class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
@@ -20,8 +20,8 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   }
 
   validation(destinationRule: DestinationRule): ObjectValidation | undefined {
-    if (this.props.validations && this.props.validations[destinationRule.metadata.name]) {
-      return this.props.validations[destinationRule.metadata.name];
+    if (this.props.validation) {
+      return this.props.validation;
     }
     return undefined;
   }

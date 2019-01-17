@@ -55,7 +55,7 @@ describe('#GetGraphElements using Promises', () => {
 
 describe('#GetServiceDetail using Promises', () => {
   it('should load service detail data', () => {
-    return API.getServiceDetail('bookinfo', 'reviews').then(({ data }) => {
+    return API.getServiceDetail('bookinfo', 'reviews', 'true').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.name).toEqual('reviews');
       expect(data.namespace.name).toEqual('bookinfo');
@@ -66,63 +66,35 @@ describe('#GetServiceDetail using Promises', () => {
       expect(data.virtualServices.items).toBeInstanceOf(Array);
       expect(data.destinationRules.items).toBeInstanceOf(Array);
       expect(data.dependencies).toBeInstanceOf(Object);
+      expect(data.validations).toBeInstanceOf(Object);
     });
   });
 });
 
 describe('#GetIstioConfig using Promises', () => {
   it('should load istio config objects of namespace', () => {
-    return API.getIstioConfig('bookinfo').then(({ data }) => {
+    return API.getIstioConfig('bookinfo', null, 'true').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('bookinfo');
       expect(data.rules).toBeDefined();
       expect(data.rules).toBeInstanceOf(Array);
+      expect(data.validations).toBeDefined();
+      expect(data.validations.routerule).toBeDefined();
+      expect(data.validations.destinationrule).toBeDefined();
+      expect(data.validations.virtualservice).toBeDefined();
     });
   });
 });
 
 describe('#GetIstioConfigDetail using Promises', () => {
   it('should load istio config detail data', () => {
-    return API.getIstioConfigDetail('istio-system', 'rules', 'promhttp').then(({ data }) => {
+    return API.getIstioConfigDetail('istio-system', 'rules', 'promhttp', 'true').then(({ data }) => {
       expect(data).toBeDefined();
       expect(data.namespace.name).toEqual('istio-system');
       expect(data.rule.metadata.name).toEqual('promhttp');
       expect(data.rule.spec.match).toEqual('context.protocol == "http"');
       expect(data.rule.spec.actions).toBeInstanceOf(Array);
-    });
-  });
-});
-
-describe('#GetServiceValidations using Promises', () => {
-  it('should load istio service validation data', () => {
-    return API.getServiceValidations('bookinfo', 'reviews').then(({ data }) => {
-      expect(data).toBeDefined();
-      expect(data!['pod']).toBeDefined();
-      expect(data!['routerule']).toBeDefined();
-    });
-  });
-});
-
-describe('#GetNamespaceValidations using Promises', () => {
-  it('should load istio namespace validation data', () => {
-    return API.getNamespaceValidations('bookinfo').then(({ data }) => {
-      expect(data).toBeDefined();
-      expect(Object.keys(data)).toEqual(['bookinfo']);
-      expect(data!['bookinfo']).toBeDefined();
-      expect(data!['bookinfo']['routerule']).toBeDefined();
-      expect(data!['bookinfo']['destinationrule']).toBeDefined();
-      expect(data!['bookinfo']['virtualservice']).toBeDefined();
-    });
-  });
-});
-
-describe('#GetIstioConfigValidations using Promises', () => {
-  it('should load istio object validation data', () => {
-    return API.getIstioConfigValidations('bookinfo', 'routerule', 'recommendation-503').then(({ data }) => {
-      expect(data).toBeDefined();
-      expect(Object.keys(data)).toEqual(['routerule']);
-      expect(data!['routerule']).toBeDefined();
-      expect(data!['routerule']['recommendation-503']).toBeDefined();
+      expect(data.validation).toBeInstanceOf(Object);
     });
   });
 });

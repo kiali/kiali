@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 interface VirtualServiceProps {
   namespace: string;
   virtualService: VirtualService;
-  validations: { [key: string]: ObjectValidation };
+  validation: ObjectValidation;
 }
 
 class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
@@ -26,7 +26,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   validation(virtualService: VirtualService): ObjectValidation {
-    return this.props.validations[virtualService.metadata.name];
+    return this.props.validation[virtualService.metadata.name];
   }
 
   globalStatus(rule: VirtualService) {
@@ -127,7 +127,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
                 namespace={virtualService.metadata.namespace || ''}
                 kind="HTTP"
                 routes={virtualService.spec.http}
-                validations={this.props.validations}
+                validation={this.props.validation}
               />
             </>
           ) : (
@@ -140,7 +140,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
                 namespace={virtualService.metadata.namespace || ''}
                 kind="TCP"
                 routes={virtualService.spec.tcp}
-                validations={this.props.validations}
+                validation={this.props.validation}
               />
             </>
           ) : (
@@ -153,7 +153,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
                 namespace={virtualService.metadata.namespace || ''}
                 kind="TLS"
                 routes={virtualService.spec.tls}
-                validations={this.props.validations}
+                validation={this.props.validation}
               />
             </>
           ) : (

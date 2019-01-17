@@ -5,7 +5,6 @@ import { MonitoringDashboard, Metrics } from '../types/Metrics';
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
-import { NamespaceValidations, Validations } from '../types/IstioObjects';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
 import { GrafanaInfo } from '../store/Store';
@@ -90,16 +89,25 @@ export const getNamespaceMetrics = (auth: AuthToken, namespace: string, params: 
   return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {}, auth);
 };
 
-export const getIstioConfig = (auth: AuthToken, namespace: string, objects: string[]) => {
+export const getIstioConfig = (auth: AuthToken, namespace: string, objects: string[], validate: boolean) => {
   const params = objects && objects.length > 0 ? { objects: objects.join(',') } : {};
+  if (validate) {
+    params['validate'] = validate;
+  }
   return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.istioConfig(namespace), params, {}, auth);
 };
 
-export const getIstioConfigDetail = (auth: AuthToken, namespace: string, objectType: string, object: string) => {
+export const getIstioConfigDetail = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  object: string,
+  validate: boolean
+) => {
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
     urls.istioConfigDetail(namespace, objectType, object),
-    {},
+    validate ? { validate: true } : {},
     {},
     auth
   );
@@ -352,8 +360,17 @@ export const getServerConfig = (auth: AuthToken) => {
   return newRequest<ServerConfig>(HTTP_VERBS.GET, urls.serverConfig, {}, {}, auth);
 };
 
-export const getServiceDetail = (auth: AuthToken, namespace: string, service: string): Promise<ServiceDetailsInfo> => {
-  return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), {}, {}, auth).then(r => {
+export const getServiceDetail = (
+  auth: AuthToken,
+  namespace: string,
+  service: string,
+  validate: boolean
+): Promise<ServiceDetailsInfo> => {
+  const params = {};
+  if (validate) {
+    params['validate'] = true;
+  }
+  return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}, auth).then(r => {
     const info: ServiceDetailsInfo = r.data;
     if (info.health) {
       // Default rate interval in backend = 600s
@@ -361,24 +378,6 @@ export const getServiceDetail = (auth: AuthToken, namespace: string, service: st
     }
     return info;
   });
-};
-
-export const getServiceValidations = (auth: AuthToken, namespace: string, service: string) => {
-  return newRequest<Validations>(HTTP_VERBS.GET, urls.serviceValidations(namespace, service), {}, {}, auth);
-};
-
-export const getNamespaceValidations = (auth: string, namespace: string) => {
-  return newRequest<NamespaceValidations>(HTTP_VERBS.GET, urls.namespaceValidations(namespace), {}, {}, auth);
-};
-
-export const getIstioConfigValidations = (auth: AuthToken, namespace: string, objectType: string, object: string) => {
-  return newRequest<Validations>(
-    HTTP_VERBS.GET,
-    urls.istioConfigValidations(namespace, objectType, object),
-    {},
-    {},
-    auth
-  );
 };
 
 export const getWorkloads = (auth: AuthToken, namespace: string) => {

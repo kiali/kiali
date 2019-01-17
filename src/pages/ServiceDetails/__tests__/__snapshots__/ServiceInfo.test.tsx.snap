@@ -146,6 +146,27 @@ ShallowWrapper {
           "resourceVersion": "2652",
           "type": "ClusterIP",
         },
+        "validations": Object {
+          "destinationrule": Object {
+            "reviews": Object {
+              "checks": Array [
+                Object {
+                  "message": "This subset is not found from the host",
+                  "path": "spec/subsets[0]/version",
+                  "severity": "error",
+                },
+                Object {
+                  "message": "This subset is not found from the host",
+                  "path": "spec/subsets[1]/version",
+                  "severity": "error",
+                },
+              ],
+              "name": "details",
+              "objectType": "destinationrule",
+              "valid": false,
+            },
+          },
+        },
         "virtualServices": Object {
           "items": Array [
             Object {

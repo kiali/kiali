@@ -1,5 +1,5 @@
 import { Annotation, Marker } from 'react-ace';
-import { ObjectCheck, ObjectValidation, Validations } from './IstioObjects';
+import { ObjectCheck, ObjectValidation } from './IstioObjects';
 
 export const jsYaml = require('js-yaml');
 
@@ -26,14 +26,6 @@ interface YamlPosition {
   row: number;
   col: number;
 }
-
-const getObjectValidations = (validations: Validations): ObjectValidation[] => {
-  const oValidations: ObjectValidation[] = [];
-  Object.keys(validations).forEach(objectType => {
-    Object.keys(validations[objectType]).forEach(object => oValidations.push(validations[objectType][object]));
-  });
-  return oValidations;
-};
 
 const numRows = (yaml: string): number => {
   let rows = 0;
@@ -223,7 +215,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
   return { marker: marker, annotation: annotation };
 };
 
-export const parseKialiValidations = (yamlInput: string, kialiValidations?: Validations): AceValidations => {
+export const parseKialiValidations = (yamlInput: string, kialiValidations?: ObjectValidation): AceValidations => {
   const aceValidations: AceValidations = {
     markers: [],
     annotations: []
@@ -233,13 +225,10 @@ export const parseKialiValidations = (yamlInput: string, kialiValidations?: Vali
     return aceValidations;
   }
 
-  const objectValidations = getObjectValidations(kialiValidations);
-  objectValidations.forEach(objectValidation => {
-    objectValidation.checks.forEach(check => {
-      const aceCheck = parseCheck(yamlInput, check);
-      aceValidations.markers.push(aceCheck.marker);
-      aceValidations.annotations.push(aceCheck.annotation);
-    });
+  kialiValidations.checks.forEach(check => {
+    const aceCheck = parseCheck(yamlInput, check);
+    aceValidations.markers.push(aceCheck.marker);
+    aceValidations.annotations.push(aceCheck.annotation);
   });
   return aceValidations;
 };

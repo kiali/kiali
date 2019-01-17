@@ -17,7 +17,7 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
-import { Validations } from '../../types/IstioObjects';
+import { ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
 import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
@@ -28,7 +28,7 @@ import DestinationRuleDetail from '../ServiceDetails/ServiceInfo/IstioObjectDeta
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
-  istioValidations?: Validations;
+  istioValidations?: ObjectValidation;
   isModified: boolean;
   yamlModified?: string;
   yamlValidations?: AceValidations;
@@ -68,21 +68,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           props.objectSubtype,
           props.object
         )
-      : API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object);
+      : API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object, true);
 
     // Note that adapters/templates are not supported yet for validations
-    // This logic will be refactored later on KIALI-1671
-    const promiseConfigValidations = API.getIstioConfigValidations(
-      authentication(),
-      props.namespace,
-      props.objectType,
-      props.object
-    );
-    Promise.all([promiseConfigDetails, promiseConfigValidations])
-      .then(([resultConfigDetails, resultConfigValidations]) => {
+    promiseConfigDetails
+      .then(resultConfigDetails => {
         this.setState({
           istioObjectDetails: resultConfigDetails.data,
-          istioValidations: resultConfigValidations.data,
+          istioValidations: resultConfigDetails.data.validation,
           isModified: false,
           yamlModified: ''
         });
@@ -195,7 +188,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.setState({
       isModified: true,
       yamlModified: value,
-      istioValidations: {},
+      istioValidations: {} as ObjectValidation,
       yamlValidations: parseYamlValidations(value)
     });
   };
@@ -356,7 +349,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         return (
           <VirtualServiceDetail
             virtualService={this.state.istioObjectDetails.virtualService}
-            validations={this.state.istioValidations['virtualservice']}
+            validation={this.state.istioValidations}
             namespace={this.state.istioObjectDetails.namespace.name}
           />
         );
@@ -365,7 +358,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         return (
           <DestinationRuleDetail
             destinationRule={this.state.istioObjectDetails.destinationRule}
-            validations={this.state.istioValidations['destinationrule']}
+            validation={this.state.istioValidations}
             namespace={this.state.istioObjectDetails.namespace.name}
           />
         );

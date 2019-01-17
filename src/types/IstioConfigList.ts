@@ -11,7 +11,8 @@ import {
   QuotaSpecBinding,
   ServiceEntry,
   VirtualService,
-  VirtualServices
+  VirtualServices,
+  Validations
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -43,6 +44,7 @@ export interface IstioConfigList {
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
   permissions: { [key: string]: ResourcePermissions };
+  validations: Validations;
 }
 
 export interface IstioService {
@@ -106,7 +108,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     templates: unfiltered.templates.filter(r => includeName(r.metadata.name, names)),
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.metadata.name, names)),
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
-    permissions: unfiltered.permissions
+    permissions: unfiltered.permissions,
+    validations: unfiltered.validations
   };
 };
 
@@ -143,15 +146,30 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 
 export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
+
+  const hasValidations = (type: string, name: string) =>
+    istioConfigList.validations[type] && istioConfigList.validations[type][name];
+
   istioConfigList.gateways.forEach(gw =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'gateway', name: gw.metadata.name, gateway: gw })
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'gateway',
+      name: gw.metadata.name,
+      gateway: gw,
+      validation: hasValidations('gateway', gw.metadata.name)
+        ? istioConfigList.validations['gateway'][gw.metadata.name]
+        : undefined
+    })
   );
   istioConfigList.virtualServices.items.forEach(vs =>
     istioItems.push({
       namespace: istioConfigList.namespace.name,
       type: 'virtualservice',
       name: vs.metadata.name,
-      virtualService: vs
+      virtualService: vs,
+      validation: hasValidations('virtualservice', vs.metadata.name)
+        ? istioConfigList.validations['virtualservice'][vs.metadata.name]
+        : undefined
     })
   );
   istioConfigList.destinationRules.items.forEach(dr =>
@@ -159,7 +177,10 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       namespace: istioConfigList.namespace.name,
       type: 'destinationrule',
       name: dr.metadata.name,
-      destinationRule: dr
+      destinationRule: dr,
+      validation: hasValidations('destinationrule', dr.metadata.name)
+        ? istioConfigList.validations['destinationrule'][dr.metadata.name]
+        : undefined
     })
   );
   istioConfigList.serviceEntries.forEach(se =>
@@ -167,7 +188,10 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       namespace: istioConfigList.namespace.name,
       type: 'serviceentry',
       name: se.metadata.name,
-      serviceEntry: se
+      serviceEntry: se,
+      validation: hasValidations('serviceentry', se.metadata.name)
+        ? istioConfigList.validations['serviceentry'][se.metadata.name]
+        : undefined
     })
   );
   istioConfigList.rules.forEach(r =>

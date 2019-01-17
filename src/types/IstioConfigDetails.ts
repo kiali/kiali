@@ -12,7 +12,8 @@ import {
   QuotaSpecBinding,
   RouteRule,
   ServiceEntry,
-  VirtualService
+  VirtualService,
+  ObjectValidation
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -36,6 +37,7 @@ export interface IstioConfigDetails {
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
   permissions: ResourcePermissions;
+  validation: ObjectValidation;
 }
 
 export const aceOptions: AceOptions = {

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfo from '../ServiceInfo';
 import { hasIstioSidecar, ServiceDetailsInfo } from '../../../types/ServiceInfo';
-import { Validations } from '../../../types/IstioObjects';
 
 jest.mock('../../../services/Api');
 
@@ -27,19 +26,26 @@ describe('#ServiceInfo render correctly with data', () => {
         dependencies: data.dependencies,
         virtualServices: data.virtualServices,
         destinationRules: data.destinationRules,
-        health: data.health
-      };
-
-      const validations: Validations = {
-        destinationrule: {
-          reviews: {
-            name: 'details',
-            objectType: 'destinationrule',
-            valid: false,
-            checks: [
-              { message: 'This subset is not found from the host', severity: 'error', path: 'spec/subsets[0]/version' },
-              { message: 'This subset is not found from the host', severity: 'error', path: 'spec/subsets[1]/version' }
-            ]
+        health: data.health,
+        validations: {
+          destinationrule: {
+            reviews: {
+              name: 'details',
+              objectType: 'destinationrule',
+              valid: false,
+              checks: [
+                {
+                  message: 'This subset is not found from the host',
+                  severity: 'error',
+                  path: 'spec/subsets[0]/version'
+                },
+                {
+                  message: 'This subset is not found from the host',
+                  severity: 'error',
+                  path: 'spec/subsets[1]/version'
+                }
+              ]
+            }
           }
         }
       };
@@ -49,7 +55,7 @@ describe('#ServiceInfo render correctly with data', () => {
           namespace="istio-system"
           service="reviews"
           serviceDetails={serviceDetailsInfo}
-          validations={validations}
+          validations={serviceDetailsInfo.validations}
           onRefresh={jest.fn()}
           onSelectTab={jest.fn()}
           activeTab={jest.fn()}

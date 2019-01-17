@@ -5,7 +5,7 @@ import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { Validations } from '../../types/IstioObjects';
+import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
@@ -31,7 +31,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
-      validations: {},
       serviceDetailsInfo: {
         istioSidecar: false,
         service: {
@@ -54,8 +53,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             update: false,
             delete: false
           }
-        }
-      }
+        },
+        validations: {}
+      },
+      validations: {}
     };
   }
 
@@ -83,17 +84,18 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   searchValidation(parsedSearch: ParsedSearch) {
-    const vals: Validations = {};
+    let vals;
 
     if (
-      this.state.validations &&
+      this.state.serviceDetailsInfo.validations &&
       parsedSearch.type &&
       parsedSearch.name &&
-      this.state.validations[parsedSearch.type] &&
-      this.state.validations[parsedSearch.type][parsedSearch.name]
+      this.state.serviceDetailsInfo.validations[parsedSearch.type] &&
+      this.state.serviceDetailsInfo.validations[parsedSearch.type][parsedSearch.name]
     ) {
-      vals[parsedSearch.type] = {};
-      vals[parsedSearch.type][parsedSearch.name] = this.state.validations[parsedSearch.type][parsedSearch.name];
+      vals = this.state.serviceDetailsInfo.validations[parsedSearch.type][parsedSearch.name];
+    } else {
+      vals = {} as ObjectValidation;
     }
 
     return vals;
@@ -116,18 +118,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const promiseDetails = API.getServiceDetail(
       authentication(),
       this.props.match.params.namespace,
-      this.props.match.params.service
+      this.props.match.params.service,
+      true
     );
-    const promiseValidations = API.getServiceValidations(
-      authentication(),
-      this.props.match.params.namespace,
-      this.props.match.params.service
-    );
-    Promise.all([promiseDetails, promiseValidations])
-      .then(([resultDetails, resultValidations]) => {
+    promiseDetails
+      .then(resultDetails => {
         this.setState({
           serviceDetailsInfo: resultDetails,
-          validations: this.addFormatValidation(resultDetails, resultValidations.data)
+          validations: this.addFormatValidation(resultDetails, resultDetails.validations)
         });
       })
       .catch(error => {
