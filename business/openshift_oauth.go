@@ -2,6 +2,7 @@ package business
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -158,10 +159,20 @@ func getKialiRoutePath() (*string, error) {
 }
 
 func request(method string, url string, auth *string) ([]byte, error) {
-	// TODO: Force proper use of in-cluster tls certs.
+	certPool := x509.NewCertPool()
+	cert, err := ioutil.ReadFile("/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get root CA certificates: %s", err)
+	}
+
+	certPool.AppendCertsFromPEM(cert)
+
+	tlsConfig := &tls.Config{RootCAs: certPool}
+
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: tlsConfig,
 		}}
 
 	request, err := http.NewRequest(method, strings.Join([]string{serverPrefix, url}, ""), nil)
