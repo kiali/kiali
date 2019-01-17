@@ -74,6 +74,15 @@ rules:
   - list
   - patch
   - watch
+- apiGroups: ["authentication.istio.io"]
+  resources:
+  - policies
+  verbs:
+  - delete
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups: ["apps.openshift.io"]
   resources:
   - deploymentconfigs

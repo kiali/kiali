@@ -268,6 +268,25 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	return quotaSpecBinding.DeepCopyIstioObject(), nil
 }
 
+func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
+	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(policies).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	policyList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a PolicyList list", namespace)
+	}
+
+	policies := make([]IstioObject, 0)
+	for _, ps := range policyList.GetItems() {
+		policies = append(policies, ps.DeepCopyIstioObject())
+	}
+
+	return policies, nil
+}
+
 // UpdateIstioObject updates an Istio object from either config api or networking api
 func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
 	log.Infof("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)

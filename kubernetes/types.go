@@ -38,6 +38,12 @@ const (
 	quotaspecbindingType     = "QuotaSpecBinding"
 	quotaspecbindingTypeList = "QuotaSpecBindingList"
 
+	// Policies
+
+	policies       = "policies"
+	policyType     = "Policy"
+	policyTypeList = "PolicyList"
+
 	// Config - Rules
 
 	rules        = "rules"
@@ -163,6 +169,12 @@ var (
 	}
 	apiNetworkingVersion = networkingGroupVersion.Group + "/" + networkingGroupVersion.Version
 
+	authenticationGroupVersion = schema.GroupVersion{
+		Group:   "authentication.istio.io",
+		Version: "v1alpha1",
+	}
+	apiAuthenticationVersion = authenticationGroupVersion.Group + "/" + authenticationGroupVersion.Version
+
 	networkingTypes = []struct {
 		objectKind     string
 		collectionKind string
@@ -201,6 +213,16 @@ var (
 		{
 			objectKind:     quotaspecbindingType,
 			collectionKind: quotaspecbindingTypeList,
+		},
+	}
+
+	authenticationTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     policyType,
+			collectionKind: policyTypeList,
 		},
 	}
 

@@ -99,6 +99,7 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeTemplates = defaultInclude
 	criteria.IncludeQuotaSpecs = defaultInclude
 	criteria.IncludeQuotaSpecBindings = defaultInclude
+	criteria.IncludePolicies = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -131,6 +132,9 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, business.QuotaSpecBindings) {
 		criteria.IncludeQuotaSpecBindings = true
+	}
+	if checkType(types, business.Policies) {
+		criteria.IncludePolicies = true
 	}
 	return criteria
 }

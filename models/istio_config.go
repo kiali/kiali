@@ -19,6 +19,7 @@ type IstioConfigList struct {
 	Templates         IstioTemplates    `json:"templates"`
 	QuotaSpecs        QuotaSpecs        `json:"quotaSpecs"`
 	QuotaSpecBindings QuotaSpecBindings `json:"quotaSpecBindings"`
+	Policies          Policies          `json:"policies"`
 	IstioValidations  IstioValidations  `json:"validations"`
 }
 

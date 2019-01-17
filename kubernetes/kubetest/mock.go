@@ -230,6 +230,11 @@ func (o *K8SClientMock) GetVirtualService(namespace string, virtualservice strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetPolicies(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) IsOpenShift() bool {
 	args := o.Called()
 	return args.Get(0).(bool)

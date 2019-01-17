@@ -26,6 +26,7 @@ type IstioConfigCriteria struct {
 	IncludeTemplates         bool
 	IncludeQuotaSpecs        bool
 	IncludeQuotaSpecBindings bool
+	IncludePolicies          bool
 }
 
 const (
@@ -38,6 +39,7 @@ const (
 	Templates         = "templates"
 	QuotaSpecs        = "quotaspecs"
 	QuotaSpecBindings = "quotaspecbindings"
+	Policies          = "policies"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -50,6 +52,7 @@ var resourceTypesToAPI = map[string]string{
 	Rules:             "config.istio.io",
 	QuotaSpecs:        "config.istio.io",
 	QuotaSpecBindings: "config.istio.io",
+	Policies:          "authentication.istio.io",
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -73,11 +76,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		Templates:         models.IstioTemplates{},
 		QuotaSpecs:        models.QuotaSpecs{},
 		QuotaSpecBindings: models.QuotaSpecBindings{},
+		Policies:          models.Policies{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr error
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(10)
 
 	go func() {
 		defer wg.Done()
@@ -156,6 +160,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		if criteria.IncludeQuotaSpecBindings {
 			if qb, qbErr = in.k8s.GetQuotaSpecBindings(criteria.Namespace); qbErr == nil {
 				(&istioConfigList.QuotaSpecBindings).Parse(qb)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludePolicies {
+			if pc, pcErr = in.k8s.GetPolicies(criteria.Namespace); pcErr == nil {
+				(&istioConfigList.Policies).Parse(pc)
 			}
 		}
 	}()
