@@ -17,34 +17,33 @@ import (
 // If serviceName param is provided, it filters all the Istio objects pointing to a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error) {
-	var virtualServices, destinationRules []IstioObject
-	var virtualServicesErr, destinationRulesErr error
-	var wg sync.WaitGroup
-	wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		virtualServices, virtualServicesErr = in.GetVirtualServices(namespace, serviceName)
-	}()
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 4)
 
-	go func() {
-		defer wg.Done()
-		destinationRules, destinationRulesErr = in.GetDestinationRules(namespace, serviceName)
-	}()
+	istioDetails := IstioDetails{}
+	vss := make([]IstioObject, 0)
+	drs := make([]IstioObject, 0)
+	gws := make([]IstioObject, 0)
+	ses := make([]IstioObject, 0)
 
+	wg.Add(4)
+	go fetchNoEntry(&ses, namespace, in.GetServiceEntries, &wg, errChan)
+	go fetchNoEntry(&gws, namespace, in.GetGateways, &wg, errChan)
+	go fetch(&vss, namespace, serviceName, in.GetVirtualServices, &wg, errChan)
+	go fetch(&drs, namespace, serviceName, in.GetDestinationRules, &wg, errChan)
 	wg.Wait()
 
-	var istioDetails = IstioDetails{}
-
-	istioDetails.VirtualServices = virtualServices
-	if virtualServicesErr != nil {
-		return nil, virtualServicesErr
+	if len(errChan) != 0 {
+		// We return first error only, likely to be the same issue for all
+		err := <-errChan
+		return nil, err
 	}
 
-	istioDetails.DestinationRules = destinationRules
-	if destinationRulesErr != nil {
-		return nil, destinationRulesErr
-	}
+	istioDetails.VirtualServices = vss
+	istioDetails.DestinationRules = drs
+	istioDetails.Gateways = gws
+	istioDetails.ServiceEntries = ses
 
 	return &istioDetails, nil
 }
@@ -479,4 +478,23 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 	}
 	// No gateways defined or all found. Return -1 indicates no missing gateway
 	return true, -1
+}
+
+func fetch(rValue *[]IstioObject, namespace string, service string, fetcher func(string, string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+	defer wg.Done()
+	fetched, err := fetcher(namespace, service)
+	*rValue = append(*rValue, fetched...)
+	if err != nil {
+		errChan <- err
+	}
+}
+
+// Identical to above, but since k8s layer has both (namespace, serviceentry) and (namespace) queries, we need two different functions
+func fetchNoEntry(rValue *[]IstioObject, namespace string, fetcher func(string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
+	defer wg.Done()
+	fetched, err := fetcher(namespace)
+	*rValue = append(*rValue, fetched...)
+	if err != nil && len(errChan) == 0 {
+		errChan <- err
+	}
 }

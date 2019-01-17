@@ -545,6 +545,13 @@ if [ "$_CMD" = "up" ]; then
       ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
   fi
 
+  if [ "${REMOVE_JAEGER}" == "true" ]; then
+      echo "Removing Jaeger from cluster..."
+      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=jaeger -n istio-system
+      echo "Removing Elasticsearch from cluster..."
+      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
+  fi
+
 elif [ "$_CMD" = "down" ];then
 
   echo "Will shutdown the OpenShift cluster"

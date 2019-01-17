@@ -9,9 +9,9 @@ def before_all_tests(kiali_client):
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
     tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'GetToken',
-                          'namespaceList', 'namespaceMetrics','namespaceHealth','namespaceValidations',
+                          'namespaceList', 'namespaceMetrics','namespaceHealth',
                           'istioConfigList', 'istioConfigDetails', 'objectValidations', ''
-                          'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth', 'serviceValidations',
+                          'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
                           'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigDetailsSubtype',
@@ -87,23 +87,12 @@ def test_namespace_health(kiali_client):
     evaluate_response(kiali_client, method_name='namespaceHealth', path={'namespace': 'istio-system'})
 
 
-def test_namespace_validations(kiali_client):
-    evaluate_response(kiali_client, method_name='namespaceValidations', path={'namespace': 'istio-system'})
-
-
 def test_istio_config_list(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigList', path={'namespace': 'istio-system'})
 
 
 def test_istio_config_details(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': 'istio-system', 'object_type': 'rules', 'object': 'promtcp'})
-
-
-def test_object_validations(kiali_client):
-    evaluate_response(kiali_client, method_name='objectValidations', path={'namespace': 'bookinfo', 'object_type': 'service', 'object': 'productpage'}, status_code_expected=400)
-    evaluate_response(kiali_client, method_name='objectValidations', path={'namespace': 'istio-system', 'object_type': 'rules', 'object': 'promtcp'})
-
-
 
 def test_istio_config_details_subtype(kiali_client):
     evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': 'istio-system', 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
@@ -122,10 +111,6 @@ def test_service_metrics(kiali_client):
 
 def test_service_health(kiali_client):
     evaluate_response(kiali_client, method_name='serviceHealth', path={'namespace': 'istio-system', 'service': 'kiali'})
-
-
-def test_service_validations(kiali_client):
-    evaluate_response(kiali_client, method_name='serviceValidations', path={'namespace': 'istio-system', 'service': 'kiali'})
 
 
 def test_app_list(kiali_client):

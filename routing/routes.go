@@ -146,37 +146,6 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigDetails,
 			true,
 		},
-		//
-		// NOTE: Order of routes is important when two patterns may match
-		// On this case, this endpoint will have priority
-		// 	GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
-		//  vs
-		//  GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}
-		//
-		// TODO This is going to be refactored in KIALI-1671 so this workaround is temporal for KIALI-1947
-		//
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object}/istio_validations config objectValidations
-		// ---
-		// Endpoint to get the list of istio object validations for a service
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      400: badRequestError
-		//      404: notFoundError
-		//      500: internalError
-		//      200: typeValidationsResponse
-		//
-		{
-			"IstioConfigValidations",
-			"GET",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}/istio_validations",
-			handlers.IstioConfigValidations,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigDetailsSubtype
 		// ---
 		// Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype
@@ -644,22 +613,6 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadHealth,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/istio_validations services serviceValidations
-		// ---
-		// Endpoint to get the list of istio object validations for a service
-		//
-		// responses:
-		//      500: internalError
-		//      404: notFoundError
-		//      200: typeValidationsResponse
-		//
-		{
-			"ServiceValidations",
-			"GET",
-			"/api/namespaces/{namespace}/services/{service}/istio_validations",
-			handlers.ServiceIstioValidations,
-			true,
-		},
 		// swagger:route GET /namespaces/{namespace}/metrics namespaces namespaceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a namespace
@@ -700,27 +653,6 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/health",
 			handlers.NamespaceHealth,
-			true,
-		},
-		// swagger:route GET /namespaces/{namespace}/istio_validations namespaces namespaceValidations
-		// ---
-		// Endpoint to get the list of istio object validations for a namespace
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      500: internalError
-		//      404: notFoundError
-		//      200: namespaceValidationsResponse
-		//
-		{
-			"NamespaceValidations",
-			"GET",
-			"/api/namespaces/{namespace}/istio_validations",
-			handlers.NamespaceIstioValidations,
 			true,
 		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces

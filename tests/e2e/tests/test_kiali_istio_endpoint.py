@@ -15,10 +15,10 @@ def test_istio_config_list(kiali_client):
 
 def test_istio_namespace_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
-    istio_validations = kiali_client.request(method_name='namespaceValidations', path={'namespace': bookinfo_namespace}).json()
+    istio_validations = kiali_client.request(method_name='istioConfigList', path={'namespace': bookinfo_namespace}, params={'validate': 'true'}).json()
 
     assert istio_validations != None
-    assert bookinfo_namespace in istio_validations
+    assert "validations" in istio_validations
 
 def test_istio_object_type(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
@@ -32,9 +32,10 @@ def test_istio_object_type(kiali_client):
 def test_istio_object_istio_validations(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    istio_validations = kiali_client.request(method_name='objectValidations',
-                            path={'namespace': bookinfo_namespace, 'object_type': OBJECT_TYPE, 'object': OBJECT}).json()
-    assert istio_validations != None
-    assert istio_validations.get('virtualservice') != None
-    assert OBJECT in istio_validations.get('virtualservice')
+    istio_validations = kiali_client.request(method_name='istioConfigDetails',
+                            path={'namespace': bookinfo_namespace, 'object_type': OBJECT_TYPE, 'object': OBJECT}, params={'validate': 'true'}).json()
 
+    assert istio_validations != None
+    assert istio_validations.get('validation') != None
+    assert OBJECT in istio_validations.get('validation').get('name')
+    assert OBJECT_TYPE in istio_validations.get('validation').get('objectType')
