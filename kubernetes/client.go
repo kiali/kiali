@@ -71,6 +71,7 @@ type IstioClientInterface interface {
 	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
 	GetTemplate(namespace, templateType, templateName string) (IstioObject, error)
 	GetTemplates(namespace string) ([]IstioObject, error)
+	GetPolicy(namespace string, policyName string) (IstioObject, error)
 	GetPolicies(namespace string) ([]IstioObject, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
