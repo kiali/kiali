@@ -29,6 +29,9 @@ _output
 # IntelliJ
 .idea/
 
+# VSCode
+.vscode/
+
 # The vendor directory is to be committed to the git repo
 #vendor/
 
