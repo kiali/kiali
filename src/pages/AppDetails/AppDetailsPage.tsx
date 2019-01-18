@@ -30,7 +30,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         name: '',
         workloads: [],
         serviceNames: [],
-        customDashboards: []
+        runtimes: []
       }
     };
     this.fetchApp();
@@ -113,12 +113,14 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
               <NavItem eventKey="out_metrics">
                 <div>Outbound Metrics</div>
               </NavItem>
-              {this.state.app.customDashboards.map(dashboard => {
-                return (
-                  <NavItem key={dashboard.template} eventKey={dashboard.template}>
-                    <div>{dashboard.title}</div>
-                  </NavItem>
-                );
+              {this.state.app.runtimes.map(runtime => {
+                return runtime.dashboardRefs.map(dashboard => {
+                  return (
+                    <NavItem key={dashboard.template} eventKey={dashboard.template}>
+                      <div>{dashboard.title}</div>
+                    </NavItem>
+                  );
+                });
               })}
             </Nav>
             <TabContent>
@@ -148,21 +150,23 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   direction={'outbound'}
                 />
               </TabPane>
-              {this.state.app.customDashboards.map(dashboard => {
-                return (
-                  <TabPane
-                    key={dashboard.template}
-                    eventKey={dashboard.template}
-                    mountOnEnter={true}
-                    unmountOnExit={true}
-                  >
-                    <CustomMetricsContainer
-                      namespace={this.props.match.params.namespace}
-                      app={this.props.match.params.app}
-                      template={dashboard.template}
-                    />
-                  </TabPane>
-                );
+              {this.state.app.runtimes.map(runtime => {
+                return runtime.dashboardRefs.map(dashboard => {
+                  return (
+                    <TabPane
+                      key={dashboard.template}
+                      eventKey={dashboard.template}
+                      mountOnEnter={true}
+                      unmountOnExit={true}
+                    >
+                      <CustomMetricsContainer
+                        namespace={this.props.match.params.namespace}
+                        app={this.props.match.params.app}
+                        template={dashboard.template}
+                      />
+                    </TabPane>
+                  );
+                });
               })}
             </TabContent>
           </div>
