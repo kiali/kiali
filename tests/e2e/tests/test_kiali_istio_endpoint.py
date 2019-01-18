@@ -38,4 +38,4 @@ def test_istio_object_istio_validations(kiali_client):
     assert istio_validations != None
     assert istio_validations.get('validation') != None
     assert OBJECT in istio_validations.get('validation').get('name')
-    assert OBJECT_TYPE in istio_validations.get('validation').get('objectType')
+    assert OBJECT_TYPE in istio_validations.get('objectType')
