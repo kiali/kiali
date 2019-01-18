@@ -87,6 +87,12 @@ func PrepareIstioDashboard(direction, local, remote string) MonitoringDashboard 
 	}
 }
 
+// Runtime holds the runtime title and associated dashboard template(s)
+type Runtime struct {
+	Name          string         `json:"name"`
+	DashboardRefs []DashboardRef `json:"dashboardRefs"`
+}
+
 // DashboardRef holds template name and title for a custom dashboard
 type DashboardRef struct {
 	Template string `json:"template"`

@@ -1,0 +1,51 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-server
+  labels:
+    runtime: Vert.x
+spec:
+  title: Vert.x Server Metrics
+  charts:
+    - name: "Server response time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_http_server_responseTime_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Server request count rate"
+      unit: "ops"
+      spans: 6
+      metricName: "vertx_http_server_requestCount_total"
+      dataType: "rate"
+      aggregations:
+        - label: "code"
+          displayName: "Error code"
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Server active connections"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_server_connections"
+      dataType: "raw"
+    - name: "Server active websockets"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_server_wsConnections"
+      dataType: "raw"
+    - name: "Server bytes sent"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_server_bytesSent"
+      dataType: "histogram"
+    - name: "Server bytes received"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_server_bytesReceived"
+      dataType: "histogram"

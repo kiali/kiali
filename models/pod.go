@@ -23,7 +23,7 @@ type Pod struct {
 	Status              string            `json:"status"`
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
-	CustomDashboards    []string          `json:"customDashboards"`
+	RuntimesAnnotation  []string          `json:"runtimesAnnotation"`
 }
 
 // Reference holds some information on the pod creator
@@ -92,8 +92,8 @@ func (pod *Pod) Parse(p *v1.Pod) {
 		}
 	}
 	// Check for custom dashboards annotation
-	if rawDashboards, ok := p.Annotations["kiali.io/dashboards"]; ok {
-		pod.CustomDashboards = strings.Split(strings.TrimSpace(rawDashboards), ",")
+	if rawRuntimes, ok := p.Annotations["kiali.io/runtimes"]; ok {
+		pod.RuntimesAnnotation = strings.Split(strings.TrimSpace(rawRuntimes), ",")
 	}
 	pod.Status = string(p.Status.Phase)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]

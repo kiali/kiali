@@ -161,25 +161,60 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 	return &dashboard, nil
 }
 
-func (in *DashboardsService) getDashboardTitle(namespace, template string) string {
-	dashboard, err := in.loadDashboardResource(namespace, template)
-	if err != nil {
-		log.Errorf("Cannot get dashboard %s in namespace %s", template, namespace)
-		return ""
+func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames []string) []models.Runtime {
+	dashboards := make([]*kubernetes.MonitoringDashboard, len(templatesNames))
+	wg := sync.WaitGroup{}
+	wg.Add(len(templatesNames))
+	for idx, template := range templatesNames {
+		go func(i int, tpl string) {
+			defer wg.Done()
+			dashboard, err := in.loadDashboardResource(namespace, tpl)
+			if err != nil {
+				log.Errorf("Cannot get dashboard %s in namespace %s. Error was: %v", tpl, namespace, err)
+			} else {
+				dashboards[i] = dashboard
+			}
+		}(idx, template)
 	}
-	return dashboard.Spec.Title
-}
 
-func (in *DashboardsService) getTitlesFromTemplates(namespace string, templatesNames map[string]string) []models.DashboardRef {
-	dashboards := []models.DashboardRef{}
-	for _, tpl := range templatesNames {
-		title := in.getDashboardTitle(namespace, tpl)
-		if title != "" {
-			dashboards = append(dashboards, models.DashboardRef{
-				Template: tpl,
-				Title:    title,
+	wg.Wait()
+
+	runtimes := []models.Runtime{}
+	for _, dashboard := range dashboards {
+		if dashboard == nil {
+			continue
+		}
+		runtime := getDashboardRuntime(dashboard)
+		ref := models.DashboardRef{
+			Template: dashboard.Metadata["name"].(string),
+			Title:    dashboard.Spec.Title,
+		}
+		found := false
+		for i := range runtimes {
+			rtObj := &runtimes[i]
+			if rtObj.Name == runtime {
+				rtObj.DashboardRefs = append(rtObj.DashboardRefs, ref)
+				found = true
+				break
+			}
+		}
+		if !found {
+			runtimes = append(runtimes, models.Runtime{
+				Name:          runtime,
+				DashboardRefs: []models.DashboardRef{ref},
 			})
 		}
 	}
-	return dashboards
+	return runtimes
+}
+
+func getDashboardRuntime(dashboard *kubernetes.MonitoringDashboard) string {
+	if labels, ok := dashboard.Metadata["labels"]; ok {
+		if labelsMap, ok := labels.(map[string]interface{}); ok {
+			if runtime, ok := labelsMap["runtime"]; ok {
+				return runtime.(string)
+			}
+		}
+	}
+	return dashboard.Spec.Title
 }

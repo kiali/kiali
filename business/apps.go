@@ -200,16 +200,11 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 
 // fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
 func (in *AppService) fillCustomDashboardRefs(namespace string, app *models.App, details *appDetails) {
-	uniqueRefs := make(map[string]string)
+	allPods := models.Pods{}
 	for _, workload := range details.Workloads {
-		for _, pod := range workload.Pods {
-			for _, ref := range pod.CustomDashboards {
-				if ref != "" {
-					uniqueRefs[ref] = ref
-				}
-			}
-		}
+		allPods = append(allPods, workload.Pods...)
 	}
+	uniqueRefsList := getUniqueRuntimes(allPods)
 	mon, err := kubernetes.NewKialiMonitoringClient()
 	if err != nil {
 		// Do not fail the whole query, just log & return
@@ -217,5 +212,5 @@ func (in *AppService) fillCustomDashboardRefs(namespace string, app *models.App,
 		return
 	}
 	dash := NewDashboardsService(mon, in.prom)
-	app.CustomDashboards = dash.getTitlesFromTemplates(namespace, uniqueRefs)
+	app.Runtimes = dash.buildRuntimesList(namespace, uniqueRefsList)
 }
