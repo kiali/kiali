@@ -339,6 +339,9 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	case QuotaSpecBindings:
 		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
 		istioConfigDetail.QuotaSpecBinding.Parse(result)
+	case Policies:
+		istioConfigDetail.Policy = &models.Policy{}
+		istioConfigDetail.Policy.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}

@@ -54,8 +54,10 @@ func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name stri
 	var err error
 	if api == configGroupVersion.Group {
 		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else {
+	} else if api == networkingGroupVersion.Group {
 		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	} else {
+		_, err = in.istioAuthenticationApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	}
 	return err
 }
@@ -309,8 +311,10 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	bytePatch := []byte(jsonPatch)
 	if api == configGroupVersion.Group {
 		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	} else {
+	} else if api == networkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else {
+		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	}
 	if err != nil {
 		return nil, err
