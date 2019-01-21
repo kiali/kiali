@@ -2,6 +2,7 @@ import pytest
 import tests.conftest as conftest
 
 OBJECT_TYPE = 'virtualservices'
+OBJECT_TYPE_SINGLE = 'virtualservice'
 OBJECT = 'bookinfo-vs'
 
 def test_istio_config_list(kiali_client):
@@ -38,4 +39,4 @@ def test_istio_object_istio_validations(kiali_client):
     assert istio_validations != None
     assert istio_validations.get('validation') != None
     assert OBJECT in istio_validations.get('validation').get('name')
-    assert OBJECT_TYPE in istio_validations.get('objectType')
+    assert OBJECT_TYPE_SINGLE in istio_validations.get('validation').get('objectType')
