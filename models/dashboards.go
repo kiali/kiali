@@ -17,11 +17,11 @@ type MonitoringDashboard struct {
 
 // Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource
 type Chart struct {
-	Name        string               `json:"name"`
-	Unit        string               `json:"unit"`
-	Spans       int                  `json:"spans"`
-	CounterRate *prometheus.Metric   `json:"counterRate"`
-	Histogram   prometheus.Histogram `json:"histogram"`
+	Name      string               `json:"name"`
+	Unit      string               `json:"unit"`
+	Spans     int                  `json:"spans"`
+	Metric    *prometheus.Metric   `json:"metric"`
+	Histogram prometheus.Histogram `json:"histogram"`
 }
 
 // ConvertChart converts a k8s chart (from MonitoringDashboard k8s resource) into this models chart

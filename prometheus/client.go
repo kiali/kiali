@@ -25,6 +25,7 @@ type ClientInterface interface {
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
 	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
+	FetchRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
 	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
 	GetMetrics(query *IstioMetricsQuery) Metrics
@@ -201,6 +202,16 @@ func (in *Client) GetAppRequestRates(namespace, app, ratesInterval string, query
 // Returns (in, out, error)
 func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error) {
 	return getItemRequestRates(in.api, namespace, workload, "workload", queryTime, ratesInterval)
+}
+
+// FetchRange fetches a simple metric (gauge or counter) in given range
+func (in *Client) FetchRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
+	query := fmt.Sprintf("sum(%s%s)", metricName, labels)
+	if grouping != "" {
+		query += fmt.Sprintf(" by (%s)", grouping)
+	}
+	query = roundSignificant(query, 0.001)
+	return fetchRange(in.api, query, q.Range)
 }
 
 // FetchRateRange fetches a counter's rate in given range

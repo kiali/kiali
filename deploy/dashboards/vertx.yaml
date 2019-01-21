@@ -9,7 +9,7 @@ spec:
       unit: "s"
       spans: 6
       metricName: "vertx_http_server_responseTime_seconds"
-      metricType: "histogram"
+      dataType: "histogram"
       aggregations:
         - label: "path"
           displayName: "Path"
@@ -17,7 +17,7 @@ spec:
       unit: "s"
       spans: 6
       metricName: "vertx_http_client_responseTime_seconds"
-      metricType: "histogram"
+      dataType: "histogram"
       aggregations:
         - label: "path"
           displayName: "Path"
@@ -25,7 +25,7 @@ spec:
       unit: "ops"
       spans: 6
       metricName: "vertx_http_server_requestCount_total"
-      metricType: "counter"
+      dataType: "rate"
       aggregations:
         - label: "code"
           displayName: "Error code"
