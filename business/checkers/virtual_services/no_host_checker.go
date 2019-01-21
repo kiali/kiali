@@ -30,7 +30,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 							if aDestinationWeight, ok := route.([]interface{}); ok {
 								for i, destination := range aDestinationWeight {
 									if !n.checkDestination(destination, protocol) {
-										validation := models.BuildCheck("DestinationWeight on route doesn't have a valid service (host not found)", "error", fmt.Sprintf("spec/%s/destination[%d]/host", protocol, i))
+										validation := models.BuildCheck("DestinationWeight on route doesn't have a valid service (host not found)", "error", fmt.Sprintf("spec/%s/route[%d]/destination/host", protocol, i))
 										validations = append(validations, &validation)
 									}
 								}

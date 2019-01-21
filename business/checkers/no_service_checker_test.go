@@ -102,9 +102,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
-	assert.Equal("spec/http/destination[0]/host", productVs.Checks[0].Path)
+	assert.Equal("spec/http/route[0]/destination/host", productVs.Checks[0].Path)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[0].Message)
-	assert.Equal("spec/tcp/destination[0]/host", productVs.Checks[1].Path)
+	assert.Equal("spec/tcp/route[0]/destination/host", productVs.Checks[1].Path)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
