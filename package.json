@@ -55,6 +55,7 @@
     "start:prod": "npm run restore-rcue; REACT_APP_RCUE=true npm run start:kiali",
     "test": "react-scripts-ts test --env=jsdom __tests__",
     "snyk": "snyk test",
+    "analyze": "source-map-explorer build/static/js/main.*",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
@@ -115,6 +116,7 @@
     "prettier": "1.15.3",
     "pretty-quick": "1.8.0",
     "snyk": "^1.116.2",
+    "source-map-explorer": "1.6.0",
     "tslint-no-circular-imports": "0.6.1",
     "typescript": "3.2.1"
   },
