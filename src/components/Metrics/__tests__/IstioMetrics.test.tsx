@@ -45,7 +45,7 @@ const createMetricChart = (name: string): Chart => {
     name: name,
     unit: 'B',
     spans: 12,
-    counterRate: {
+    metric: {
       matrix: [
         {
           metric: { __name__: name },

@@ -73,14 +73,14 @@ export class Dashboard extends React.Component<DashboardProps, {}> {
   }
 
   private renderChart(chart: M.Chart, expandHandler?: () => void) {
-    if (chart.counterRate) {
+    if (chart.metric) {
       return (
         <MetricChart
           key={chart.name}
           chartName={chart.name}
           labelValues={this.props.labelValues}
           unit={chart.unit}
-          series={chart.counterRate.matrix}
+          series={chart.metric.matrix}
           onExpandRequested={expandHandler}
         />
       );

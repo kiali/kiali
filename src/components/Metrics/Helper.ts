@@ -45,8 +45,8 @@ namespace MetricsHelper {
     const labelsWithValues: AllLabelsValues = new Map();
     dashboard.aggregations.forEach(agg => labelsWithValues.set(agg.displayName, {}));
     dashboard.charts.forEach(chart => {
-      if (chart.counterRate) {
-        extractLabelValuesOnSeries(chart.counterRate.matrix, dashboard.aggregations, labelsWithValues);
+      if (chart.metric) {
+        extractLabelValuesOnSeries(chart.metric.matrix, dashboard.aggregations, labelsWithValues);
       }
       if (chart.histogram) {
         Object.keys(chart.histogram).forEach(stat => {

@@ -50,7 +50,7 @@ export interface Chart {
   name: string;
   unit: string;
   spans: number;
-  counterRate?: MetricGroup;
+  metric?: MetricGroup;
   histogram?: Histogram;
 }
 
