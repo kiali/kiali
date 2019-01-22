@@ -48,9 +48,30 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	return &istioDetails, nil
 }
 
+// CreateIstioObject creates an Istio object
+func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, name string, json string) (IstioObject, error) {
+	var result runtime.Object
+	var err error
+
+	if api == configGroupVersion.Group {
+		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
+	} else {
+		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	istioObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
+	}
+	return istioObject, err
+}
+
 // DeleteIstioObject deletes an Istio object from either config api or networking api
 func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
-	log.Infof("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
+	log.Debugf("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var err error
 	if api == configGroupVersion.Group {
 		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
@@ -305,7 +326,7 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 
 // UpdateIstioObject updates an Istio object from either config api or networking api
 func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
-	log.Infof("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
+	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var result runtime.Object
 	var err error
 	bytePatch := []byte(jsonPatch)

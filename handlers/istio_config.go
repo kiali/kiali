@@ -278,6 +278,36 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 }
 
+func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
+	// Feels kinda replicated for multiple functions..
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	objectType := params["object_type"]
+	objectSubtype := params["object_subtype"]
+	object := params["object"]
+
+	api := business.GetIstioAPI(objectType)
+	if api == "" {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+		return
+	}
+
+	// Get business layer
+	business, err := business.Get()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
+	}
+
+	business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, string(body))
+
+}
+
 func checkObjectType(objectType string) bool {
 	return business.GetIstioAPI(objectType) != ""
 }
