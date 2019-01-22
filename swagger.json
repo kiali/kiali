@@ -1089,6 +1089,41 @@
           "config"
         ],
         "operationId": "istioConfigCreateSubtype",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object type.",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/istioConfigDetailsResponse"
@@ -1297,6 +1332,33 @@
           "config"
         ],
         "operationId": "istioConfigCreate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object type.",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/istioConfigDetailsResponse"
