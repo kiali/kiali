@@ -85,7 +85,7 @@ func TestOneRouteWithoutWeight(t *testing.T) {
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 
 	assert.Equal(validations[1].Message, "All routes should have weight")
-	assert.Equal(validations[1].Severity, "error")
+	assert.Equal(validations[1].Severity, "warning")
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
 }
 
@@ -105,8 +105,20 @@ func TestSecondHTTPRouteHasNoWeight(t *testing.T) {
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 
 	assert.Equal(validations[1].Message, "All routes should have weight")
-	assert.Equal(validations[1].Severity, "error")
+	assert.Equal(validations[1].Severity, "warning")
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
+}
+
+func TestNoWeightRouteBut100SumUp(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	validations, valid := RouteChecker{fake2Routes100SumUp()}.Check()
+
+	// wrong weight'ed route rule
+	assert.True(valid)
+	assert.Empty(validations)
+	assert.Len(validations, 0)
 }
 
 func fakeIstioObjects() kubernetes.IstioObject {
@@ -175,4 +187,14 @@ func fake2HTTPRoutes() kubernetes.IstioObject {
 	}
 
 	return validVirtualService
+}
+
+func fake2Routes100SumUp() kubernetes.IstioObject {
+	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", 100),
+		data.AddRoutesToVirtualService("http", data.CreateRoute("reviews", "v1", -10),
+			data.CreateEmptyVirtualService("reviews-100-plus", "test", []string{"reviews"}),
+		),
+	)
+
+	return virtualService
 }

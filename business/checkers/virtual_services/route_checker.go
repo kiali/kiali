@@ -98,7 +98,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 			if weightCount != destinationWeights.Len() {
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-				validation := buildValidation("All routes should have weight", "error", path)
+				validation := buildValidation("All routes should have weight", "warning", path)
 				validations = append(validations, &validation)
 			}
 		}
