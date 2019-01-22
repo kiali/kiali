@@ -13,10 +13,12 @@ enum GraphDataActionKeys {
 const decorateGraphData = (graphData: any) => {
   const elementsDefaults = {
     edges: {
+      grpc: '0',
+      grpcErr: '0',
       http: '0',
-      http3XX: '0',
-      http4XX: '0',
-      http5XX: '0',
+      http3xx: '0',
+      http4xx: '0',
+      http5xx: '0',
       httpPercentErr: '0',
       httpPercentReq: '100',
       isMTLS: undefined,
@@ -27,13 +29,16 @@ const decorateGraphData = (graphData: any) => {
     nodes: {
       app: undefined,
       destServices: undefined,
+      grpcIn: '0',
+      grpcInErr: '0',
+      grpcOut: '0',
       hasCB: undefined,
       hasMissingSC: undefined,
       hasVS: undefined,
       httpIn: '0',
-      httpIn3XX: '0',
-      httpIn4XX: '0',
-      httpIn5XX: '0',
+      httpIn3xx: '0',
+      httpIn4xx: '0',
+      httpIn5xx: '0',
       httpOut: '0',
       isDead: undefined,
       isGroup: undefined,
@@ -54,6 +59,11 @@ const decorateGraphData = (graphData: any) => {
     if (graphData.nodes) {
       graphData.nodes = graphData.nodes.map(node => {
         const decoratedNode = { ...node };
+        if (node.data.traffic) {
+          node.data.traffic.map(protocol => {
+            decoratedNode.data = { ...protocol.rates, ...decoratedNode.data };
+          });
+        }
         decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data };
         return decoratedNode;
       });
@@ -61,6 +71,11 @@ const decorateGraphData = (graphData: any) => {
     if (graphData.edges) {
       graphData.edges = graphData.edges.map(edge => {
         const decoratedEdge = { ...edge };
+        if (edge.data.traffic) {
+          edge.data.traffic.map(protocol => {
+            decoratedEdge.data = { ...protocol.rates, ...decoratedEdge.data };
+          });
+        }
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data };
         return decoratedEdge;
       });

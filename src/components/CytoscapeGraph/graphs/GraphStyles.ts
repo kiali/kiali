@@ -60,12 +60,20 @@ export class GraphStyles {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
-    const getHttpEdgeColor = (ele: any): string => {
-      const http = ele.data(CyEdge.http) ? Number(ele.data(CyEdge.http)) : 0;
-      if (http === 0 || ele.data(CyEdge.isUnused)) {
+    const getEdgeColor = (ele: any): string => {
+      let rate = 0;
+      let pErr = 0;
+      if (ele.data(CyEdge.http) > 0) {
+        rate = Number(ele.data(CyEdge.http));
+        pErr = ele.data(CyEdge.httpPercentErr) > 0 ? Number(ele.data(CyEdge.httpPercentErr)) : 0;
+      } else if (ele.data(CyEdge.grpc) > 0) {
+        rate = Number(ele.data(CyEdge.grpc));
+        pErr = ele.data(CyEdge.grpcPercentErr) > 0 ? Number(ele.data(CyEdge.grpcPercentErr)) : 0;
+      }
+
+      if (rate === 0 || ele.data(CyEdge.isUnused)) {
         return EdgeColorDead;
       }
-      const pErr = ele.data(CyEdge.httpPercentErr) ? Number(ele.data(CyEdge.httpPercentErr)) : 0;
       if (pErr > REQUESTS_THRESHOLDS.failure) {
         return EdgeColorFailure;
       }
@@ -82,30 +90,39 @@ export class GraphStyles {
 
       switch (edgeLabelMode) {
         case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND: {
-          if (ele.data(CyEdge.http)) {
-            const http = Number(ele.data(CyEdge.http));
-            if (http > 0) {
-              const httpPercentErr = ele.data(CyEdge.httpPercentErr) ? Number(ele.data(CyEdge.httpPercentErr)) : 0;
-              content = httpPercentErr > 0 ? http.toFixed(2) + ', ' + httpPercentErr.toFixed(1) + '%' : http.toFixed(2);
-            }
-          } else if (ele.data(CyEdge.tcp)) {
-            const tcp = Number(ele.data(CyEdge.tcp));
-            if (tcp > 0) {
-              content = `${tcp.toFixed(2)}`;
-            }
+          let rate = 0;
+          let pErr = 0;
+          if (ele.data(CyEdge.http) > 0) {
+            rate = Number(ele.data(CyEdge.http));
+            pErr = ele.data(CyEdge.httpPercentErr) > 0 ? Number(ele.data(CyEdge.httpPercentErr)) : 0;
+          } else if (ele.data(CyEdge.grpc) > 0) {
+            rate = Number(ele.data(CyEdge.grpc));
+            pErr = ele.data(CyEdge.grpcPercentErr) > 0 ? Number(ele.data(CyEdge.grpcPercentErr)) : 0;
+          } else if (ele.data(CyEdge.tcp) > 0) {
+            rate = Number(ele.data(CyEdge.tcp));
+          }
+
+          if (rate > 0) {
+            content = pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
           }
           break;
         }
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
-          const responseTime = ele.data(CyEdge.responseTime) ? Number(ele.data(CyEdge.responseTime)) : 0;
+          const responseTime = ele.data(CyEdge.responseTime) > 0 ? Number(ele.data(CyEdge.responseTime)) : 0;
           if (responseTime > 0) {
             content = responseTime < 1000.0 ? responseTime.toFixed(0) + 'ms' : (responseTime / 1000.0).toFixed(2) + 's';
           }
           break;
         }
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
-          const httpPercentReq = ele.data(CyEdge.httpPercentReq) ? Number(ele.data(CyEdge.httpPercentReq)) : 100.0;
-          content = httpPercentReq < 100.0 ? httpPercentReq.toFixed(1) + '%' : '100%';
+          let pReq = 100;
+          if (ele.data(CyEdge.httpPercentReq) > 0) {
+            pReq = Number(ele.data(CyEdge.httpPercentReq));
+          } else if (ele.data(CyEdge.grpcPercentReq) > 0) {
+            pReq = Number(ele.data(CyEdge.grpcPercentReq));
+          }
+
+          content = pReq < 100.0 ? pReq.toFixed(1) + '%' : '100%';
           break;
         }
         default:
@@ -318,14 +335,6 @@ export class GraphStyles {
           'background-color': NodeColorFillBox
         }
       },
-      // Uncomment and update if we decide to apply style overrides for a selected group (composite) node
-      // {
-      //  // version group selected
-      //  selector: '$node:selected',
-      //  css: {
-      //    'background-color': PfColors.Blue50
-      //  }
-      // },
       {
         selector: 'edge',
         css: {
@@ -336,14 +345,14 @@ export class GraphStyles {
             return getEdgeLabel(ele);
           },
           'line-color': (ele: any) => {
-            return getHttpEdgeColor(ele);
+            return getEdgeColor(ele);
           },
           'line-style': (ele: any) => {
             return ele.data(CyEdge.isUnused) ? 'dotted' : 'solid';
           },
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: any) => {
-            return getHttpEdgeColor(ele);
+            return getEdgeColor(ele);
           },
           'text-outline-color': EdgeTextOutlineColor,
           'text-outline-width': EdgeTextOutlineWidth,
@@ -362,6 +371,12 @@ export class GraphStyles {
           'target-arrow-shape': 'triangle-cross',
           'line-color': PfColors.Blue600,
           'target-arrow-color': PfColors.Blue600
+        }
+      },
+      {
+        selector: 'edge[grpc > 0]',
+        css: {
+          'target-arrow-shape': 'tee'
         }
       },
       // When you mouse over a node, all nodes other than the moused over node

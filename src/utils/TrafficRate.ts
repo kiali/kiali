@@ -4,15 +4,15 @@ const safeRate = (rate: string) => (rate ? Number(rate) : 0.0);
 
 const NODE_HTTP_IN = {
   RATE: CyNode.httpIn,
-  RATE3XX: CyNode.httpIn3XX,
-  RATE4XX: CyNode.httpIn4XX,
-  RATE5XX: CyNode.httpIn5XX
+  RATE3XX: CyNode.httpIn3xx,
+  RATE4XX: CyNode.httpIn4xx,
+  RATE5XX: CyNode.httpIn5xx
 };
 const EDGE_HTTP = {
   RATE: CyEdge.http,
-  RATE3XX: CyEdge.http3XX,
-  RATE4XX: CyEdge.http4XX,
-  RATE5XX: CyEdge.http5XX
+  RATE3XX: CyEdge.http3xx,
+  RATE4XX: CyEdge.http4xx,
+  RATE5XX: CyEdge.http5xx
 };
 
 export interface TrafficRate {

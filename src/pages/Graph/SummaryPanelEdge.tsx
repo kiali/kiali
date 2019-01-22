@@ -89,9 +89,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const source = edge.source();
     const dest = edge.target();
     const http = this.safeRate(edge.data(CyEdge.http));
-    const http3xx = this.safeRate(edge.data(CyEdge.http3XX));
-    const http4xx = this.safeRate(edge.data(CyEdge.http4XX));
-    const http5xx = this.safeRate(edge.data(CyEdge.http5XX));
+    const http3xx = this.safeRate(edge.data(CyEdge.http3xx));
+    const http4xx = this.safeRate(edge.data(CyEdge.http4xx));
+    const http5xx = this.safeRate(edge.data(CyEdge.http5xx));
     const hasHttpTraffic = this.hasHttpMetrics(edge);
     const hasTcpTraffic = this.hasTcpMetrics(edge);
 
