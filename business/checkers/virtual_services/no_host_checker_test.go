@@ -14,7 +14,7 @@ func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace:      "test",
 		ServiceNames:   []string{"reviews", "other"},
 		VirtualService: data.CreateVirtualService(),
 	}.Check()
@@ -32,7 +32,7 @@ func TestNoValidHost(t *testing.T) {
 	virtualService := data.CreateVirtualService()
 
 	validations, valid := NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace:      "test",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
@@ -49,7 +49,7 @@ func TestNoValidHost(t *testing.T) {
 	delete(virtualService.GetSpec(), "http")
 
 	validations, valid = NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace:      "test",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
@@ -63,7 +63,7 @@ func TestNoValidHost(t *testing.T) {
 	delete(virtualService.GetSpec(), "tcp")
 
 	validations, valid = NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace:      "test",
 		ServiceNames:   []string{"details", "other"},
 		VirtualService: virtualService,
 	}.Check()
@@ -84,8 +84,8 @@ func TestValidServiceEntryHost(t *testing.T) {
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	validations, valid := NoHostChecker{
-		Namespace:      "test-namespace",
-		ServiceNames:   []string{"my-wiki-rule"},
+		Namespace:      "wikipedia",
+		ServiceNames:   []string{},
 		VirtualService: virtualService,
 	}.Check()
 
@@ -96,9 +96,29 @@ func TestValidServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateExternalServiceEntry()
 
 	validations, valid = NoHostChecker{
-		Namespace:         "test-namespace",
-		ServiceNames:      []string{"my-wiki-rule"},
+		Namespace:         "wikipedia",
+		ServiceNames:      []string{},
 		VirtualService:    virtualService,
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestGoogleApisServiceExample(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	vs := data.CreateGoogleApisExampleVirtualService()
+	serviceEntry := data.CreateGoogleApisExampleExternalServiceEntry()
+
+	validations, valid := NoHostChecker{
+		Namespace:         "bookinfo",
+		ServiceNames:      []string{},
+		VirtualService:    vs,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
 	}.Check()
 

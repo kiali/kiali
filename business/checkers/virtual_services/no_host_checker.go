@@ -19,13 +19,7 @@ func (virtualService NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	routeProtocols := []string{"http", "tcp", "tls"}
-	for _, serviceName := range virtualService.ServiceNames {
-		if valid = kubernetes.FilterByRoute(virtualService.VirtualService.GetSpec(), routeProtocols, serviceName, virtualService.Namespace, virtualService.ServiceEntryHosts); valid {
-			break
-		}
-	}
-
-	if !valid {
+	if valid = kubernetes.FilterByRoute(virtualService.VirtualService.GetSpec(), routeProtocols, virtualService.ServiceNames, virtualService.Namespace, virtualService.ServiceEntryHosts); !valid {
 		for _, protocol := range routeProtocols {
 			if _, ok := virtualService.VirtualService.GetSpec()[protocol]; ok {
 				validation := models.BuildCheck("DestinationWeight on route doesn't have a valid service (host not found)", "error", fmt.Sprintf("spec/%s", protocol))

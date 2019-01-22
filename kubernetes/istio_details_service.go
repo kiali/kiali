@@ -77,7 +77,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
 		routeProtocols := []string{"http", "tcp"}
-		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
+		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, []string{serviceName}, namespace, nil) {
 			appendVirtualService = true
 		}
 		if appendVirtualService {
@@ -314,7 +314,7 @@ func FilterByHost(host, serviceName, namespace string) bool {
 	return false
 }
 
-func FilterByRoute(spec map[string]interface{}, protocols []string, service string, namespace string, serviceEntries map[string]struct{}) bool {
+func FilterByRoute(spec map[string]interface{}, protocols []string, serviceNames []string, namespace string, serviceEntries map[string]struct{}) bool {
 	if len(protocols) == 0 {
 		return false
 	}
@@ -331,8 +331,10 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
 												if host, ok := mDestinationW["host"]; ok {
 													if sHost, ok := host.(string); ok {
-														if FilterByHost(sHost, service, namespace) {
-															return true
+														for _, service := range serviceNames {
+															if FilterByHost(sHost, service, namespace) {
+																return true
+															}
 														}
 														if serviceEntries != nil {
 															// We have ServiceEntry to check

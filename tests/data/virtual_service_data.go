@@ -99,3 +99,62 @@ func CreateExternalServiceEntry() kubernetes.IstioObject {
 		},
 	}).DeepCopyIstioObject()
 }
+
+// CreateGoogleApisExampleExternalServiceEntry to test KIALI-2262
+func CreateGoogleApisExampleExternalServiceEntry() kubernetes.IstioObject {
+	return (&kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "google",
+			Namespace: "bookinfo",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"www.googleapis.com",
+			},
+			"location": "MESH_EXTERNAL",
+			"ports": map[string]interface{}{
+				"number":   uint64(443),
+				"name":     "https",
+				"protocol": "HTTPS",
+			},
+			"resolution": "DNS",
+		},
+	}).DeepCopyIstioObject()
+}
+
+func CreateGoogleApisExampleVirtualService() kubernetes.IstioObject {
+	vs := CreateEmptyVirtualService("google", "bookinfo", []string{"www.googleapis.com"})
+	vs.GetSpec()["tls"] = []interface{}{
+		map[string]interface{}{
+			"route": []interface{}{
+				map[string]interface{}{
+					"destination": map[string]interface{}{
+						"host": "www.googleapis.com",
+						"port": map[string]interface{}{
+							"number": uint64(443),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return vs
+	/*
+		vs.SetSpec(map[string]interface{}{
+			"hosts": []interface{}{
+				"www.googleapis.com",
+			},
+			"tls": map[string]interface{}{
+				"route": []interface{}{
+					"destination": map[string]interface{}{
+						"host": "www.googleapis.com",
+						"port": map[string]interface{}{
+							"number": uint64(443)
+						}
+					}
+				}
+			},
+		})
+	*/
+}
