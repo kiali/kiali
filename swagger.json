@@ -2918,6 +2918,9 @@
         "permissions": {
           "$ref": "#/definitions/ResourcePermissions"
         },
+        "policy": {
+          "$ref": "#/definitions/Policy"
+        },
         "quotaSpec": {
           "$ref": "#/definitions/QuotaSpec"
         },
@@ -2961,6 +2964,9 @@
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
+        },
+        "policies": {
+          "$ref": "#/definitions/Policies"
         },
         "quotaSpecBindings": {
           "$ref": "#/definitions/QuotaSpecBindings"
@@ -3434,6 +3440,52 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Pod"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Policy"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "originIsOptional": {
+              "type": "object",
+              "x-go-name": "OriginIsOptional"
+            },
+            "origins": {
+              "type": "object",
+              "x-go-name": "Origins"
+            },
+            "peerIsOptional": {
+              "type": "object",
+              "x-go-name": "PeerIsOptional"
+            },
+            "peers": {
+              "type": "object",
+              "x-go-name": "Peers"
+            },
+            "principalBinding": {
+              "type": "object",
+              "x-go-name": "PrincipalBinding"
+            },
+            "targets": {
+              "type": "object",
+              "x-go-name": "Targets"
+            }
+          },
+          "x-go-name": "Spec"
+        }
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },

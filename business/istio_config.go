@@ -26,6 +26,7 @@ type IstioConfigCriteria struct {
 	IncludeTemplates         bool
 	IncludeQuotaSpecs        bool
 	IncludeQuotaSpecBindings bool
+	IncludePolicies          bool
 }
 
 const (
@@ -38,6 +39,7 @@ const (
 	Templates         = "templates"
 	QuotaSpecs        = "quotaspecs"
 	QuotaSpecBindings = "quotaspecbindings"
+	Policies          = "policies"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -50,6 +52,7 @@ var resourceTypesToAPI = map[string]string{
 	Rules:             "config.istio.io",
 	QuotaSpecs:        "config.istio.io",
 	QuotaSpecBindings: "config.istio.io",
+	Policies:          "authentication.istio.io",
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -73,11 +76,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		Templates:         models.IstioTemplates{},
 		QuotaSpecs:        models.QuotaSpecs{},
 		QuotaSpecBindings: models.QuotaSpecBindings{},
+		Policies:          models.Policies{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr error
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(10)
 
 	go func() {
 		defer wg.Done()
@@ -160,6 +164,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		if criteria.IncludePolicies {
+			if pc, pcErr = in.k8s.GetPolicies(criteria.Namespace); pcErr == nil {
+				(&istioConfigList.Policies).Parse(pc)
+			}
+		}
+	}()
+
 	wg.Wait()
 
 	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr} {
@@ -186,7 +199,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb, r, a, t, pc kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -244,6 +257,11 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if qb, err = in.k8s.GetQuotaSpecBinding(namespace, object); err == nil {
 			istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
 			istioConfigDetail.QuotaSpecBinding.Parse(qb)
+		}
+	case Policies:
+		if pc, err = in.k8s.GetPolicy(namespace, object); err == nil {
+			istioConfigDetail.Policy = &models.Policy{}
+			istioConfigDetail.Policy.Parse(pc)
 		}
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
@@ -321,6 +339,9 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	case QuotaSpecBindings:
 		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
 		istioConfigDetail.QuotaSpecBinding.Parse(result)
+	case Policies:
+		istioConfigDetail.Policy = &models.Policy{}
+		istioConfigDetail.Policy.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}

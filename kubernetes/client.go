@@ -71,6 +71,8 @@ type IstioClientInterface interface {
 	GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
 	GetTemplate(namespace, templateType, templateName string) (IstioObject, error)
 	GetTemplates(namespace string) ([]IstioObject, error)
+	GetPolicy(namespace string, policyName string) (IstioObject, error)
+	GetPolicies(namespace string) ([]IstioObject, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
@@ -82,9 +84,10 @@ type IstioClientInterface interface {
 // It hides the way it queries each API
 type IstioClient struct {
 	IstioClientInterface
-	k8s                *kube.Clientset
-	istioConfigApi     *rest.RESTClient
-	istioNetworkingApi *rest.RESTClient
+	k8s                    *kube.Clientset
+	istioConfigApi         *rest.RESTClient
+	istioNetworkingApi     *rest.RESTClient
+	istioAuthenticationApi *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
@@ -200,8 +203,14 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.collectionKind), &GenericIstioObjectList{})
 			}
+			// Register authentication types
+			for _, at := range authenticationTypes {
+				scheme.AddKnownTypeWithName(authenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(authenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
+			}
 			meta_v1.AddToGroupVersion(scheme, configGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, networkingGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, authenticationGroupVersion)
 			return nil
 		})
 
@@ -221,8 +230,14 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	istioAuthenticationAPI, err := newClientForAPI(config, authenticationGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
+	client.istioAuthenticationApi = istioAuthenticationAPI
 	return &client, nil
 }
 
