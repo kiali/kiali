@@ -59,25 +59,40 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
 			// Incoming non-error traffic can not raise the dead because it is caused by an
 			// edge case (pod life-cycle change) that we don't want to see.
-			httpIn4xx, hasHttpIn4xx := n.Metadata["httpIn4xx"]
-			httpIn5xx, hasHttpIn5xx := n.Metadata["httpIn5xx"]
-			if (!hasHttpIn4xx || httpIn4xx.(float64) == 0) && (!hasHttpIn5xx || httpIn5xx.(float64) == 0) {
+			isDead := true
+		ServiceCase:
+			for _, p := range graph.Protocols {
+				for _, r := range p.NodeRates {
+					if r.IsErr {
+						if errRate, hasErrRate := n.Metadata[r.Name]; hasErrRate && errRate.(float64) > 0 {
+							isDead = false
+							break ServiceCase
+						}
+					}
+				}
+			}
+			if isDead {
 				delete(trafficMap, id)
 				numRemoved++
 			}
 		default:
-			// a node with HTTP traffic is not dead, skip
-			httpIn, hasHttpIn := n.Metadata["httpIn"]
-			httpOut, hasHttpOut := n.Metadata["httpOut"]
-			if (hasHttpIn && httpIn.(float64) > 0) || (hasHttpOut && httpOut.(float64) > 0) {
+			// a node with traffic is not dead, skip
+			isDead := true
+		DefaultCase:
+			for _, p := range graph.Protocols {
+				for _, r := range p.NodeRates {
+					if r.IsIn || r.IsOut {
+						if rate, hasRate := n.Metadata[r.Name]; hasRate && rate.(float64) > 0 {
+							isDead = false
+							break DefaultCase
+						}
+					}
+				}
+			}
+			if !isDead {
 				continue
 			}
-			// a node with TCP Sent traffic is not dead, skip
-			httpIn, hasHttpIn = n.Metadata["tcpIn"]
-			httpOut, hasHttpOut = n.Metadata["tcpOut"]
-			if (hasHttpIn && httpIn.(float64) > 0) || (hasHttpOut && httpOut.(float64) > 0) {
-				continue
-			}
+
 			// There are some node types that are never associated with backing workloads (such as versionless app nodes).
 			// Nodes of those types are never dead because their workload clearly can't be missing (they don't have workloads).
 			// - note: unknown is not saved by this rule (kiali-2078) - i.e. unknown nodes can be declared dead

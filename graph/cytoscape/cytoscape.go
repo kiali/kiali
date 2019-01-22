@@ -22,37 +22,36 @@ import (
 	"github.com/kiali/kiali/graph/options"
 )
 
+type ProtocolTraffic struct {
+	Protocol string            `json:"protocol"` // protocol
+	Rates    map[string]string `json:"rates"`    // map[rate]value
+}
+
 type NodeData struct {
 	// Cytoscape Fields
 	Id     string `json:"id"`               // unique internal node ID (n0, n1...)
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	NodeType        string          `json:"nodeType"`
-	Namespace       string          `json:"namespace"`
-	Workload        string          `json:"workload,omitempty"`
-	App             string          `json:"app,omitempty"`
-	Version         string          `json:"version,omitempty"`
-	Service         string          `json:"service,omitempty"`         // requested service for NodeTypeService
-	DestServices    map[string]bool `json:"destServices,omitempty"`    // requested services for [dest] node
-	HttpIn          string          `json:"httpIn,omitempty"`          // incoming edge aggregate, requests per second, 2 digit precision
-	HttpIn3xx       string          `json:"httpIn3XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
-	HttpIn4xx       string          `json:"httpIn4XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
-	HttpIn5xx       string          `json:"httpIn5XX,omitempty"`       // incoming edge aggregate, requests per second, 2 digit precision
-	HttpOut         string          `json:"httpOut,omitempty"`         // outgoing edge aggregate, requests per second, 2 digit precision
-	TcpIn           string          `json:"tcpIn,omitempty"`           // incoming edge aggregate, bytes per second, 2 digit precision
-	TcpOut          string          `json:"tcpOut,omitempty"`          // outgoing edge aggregate, bytes per second, 2 digit precision
-	HasCB           bool            `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
-	HasMissingSC    bool            `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
-	HasVS           bool            `json:"hasVS,omitempty"`           // true (has route rule) | false
-	IsDead          bool            `json:"isDead,omitempty"`          // true (has no pods) | false
-	IsGroup         string          `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
-	IsInaccessible  bool            `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
-	IsMisconfigured string          `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
-	IsOutside       bool            `json:"isOutside,omitempty"`       // true | false
-	IsRoot          bool            `json:"isRoot,omitempty"`          // true | false
-	IsServiceEntry  string          `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
-	IsUnused        bool            `json:"isUnused,omitempty"`        // true | false
+	NodeType        string            `json:"nodeType"`
+	Namespace       string            `json:"namespace"`
+	Workload        string            `json:"workload,omitempty"`
+	App             string            `json:"app,omitempty"`
+	Version         string            `json:"version,omitempty"`
+	Service         string            `json:"service,omitempty"`         // requested service for NodeTypeService
+	DestServices    map[string]bool   `json:"destServices,omitempty"`    // requested services for [dest] node
+	Traffic         []ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for all detected protocols
+	HasCB           bool              `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
+	HasMissingSC    bool              `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
+	HasVS           bool              `json:"hasVS,omitempty"`           // true (has route rule) | false
+	IsDead          bool              `json:"isDead,omitempty"`          // true (has no pods) | false
+	IsGroup         string            `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
+	IsInaccessible  bool              `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
+	IsMisconfigured string            `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
+	IsOutside       bool              `json:"isOutside,omitempty"`       // true | false
+	IsRoot          bool              `json:"isRoot,omitempty"`          // true | false
+	IsServiceEntry  string            `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
+	IsUnused        bool              `json:"isUnused,omitempty"`        // true | false
 }
 
 type EdgeData struct {
@@ -62,16 +61,10 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Http           string `json:"http,omitempty"`           // requests per second, 2 digit precision
-	Http3xx        string `json:"http3XX,omitempty"`        // requests per second, 2 digit precision
-	Http4xx        string `json:"http4XX,omitempty"`        // requests per second, 2 digit precision
-	Http5xx        string `json:"http5XX,omitempty"`        // requests per second, 2 digit precision
-	HttpPercentErr string `json:"httpPercentErr,omitempty"` // percent of error responses, 1 digit precision
-	HttpPercentReq string `json:"httpPercentReq,omitempty"` // percent of total parent requests, 1 digit precision
-	ResponseTime   string `json:"responseTime,omitempty"`   // in millis
-	IsMTLS         bool   `json:"isMTLS,omitempty"`         // true (mutual TLS connection) | false
-	IsUnused       bool   `json:"isUnused,omitempty"`       // true | false
-	Tcp            string `json:"tcp,omitempty"`            // bytes per second, 2 digit precision
+	Traffic      []ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for all detected protocols
+	ResponseTime string            `json:"responseTime,omitempty"` // in millis
+	IsMTLS       bool              `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
+	IsUnused     bool              `json:"isUnused,omitempty"`     // true | false
 }
 
 type NodeWrapper struct {
@@ -251,7 +244,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				Source: sourceIdHash,
 				Target: destIdHash,
 			}
-			addEdgeTelemetry(&ed, e, o)
+			addEdgeTelemetry(e, &ed)
 
 			ew := EdgeWrapper{
 				Data: &ed,
@@ -261,41 +254,85 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 	}
 }
 
-func addNodeTelemetry(s *graph.Node, nd *NodeData) {
-	httpIn := getRate(s.Metadata, "httpIn")
-
-	if httpIn > 0.0 {
-		nd.HttpIn = fmt.Sprintf("%.2f", httpIn)
-
-		httpIn3xx := getRate(s.Metadata, "httpIn3xx")
-		httpIn4xx := getRate(s.Metadata, "httpIn4xx")
-		httpIn5xx := getRate(s.Metadata, "httpIn5xx")
-
-		if httpIn3xx > 0.0 {
-			nd.HttpIn3xx = fmt.Sprintf("%.2f", httpIn3xx)
+func addNodeTelemetry(n *graph.Node, nd *NodeData) {
+	nd.Traffic = []ProtocolTraffic{}
+	for _, p := range graph.Protocols {
+		protocolTraffic := ProtocolTraffic{Protocol: p.Name}
+		for _, r := range p.NodeRates {
+			if rateVal := getRate(n.Metadata, r.Name); rateVal > 0.0 {
+				if protocolTraffic.Rates == nil {
+					protocolTraffic.Rates = make(map[string]string)
+				}
+				protocolTraffic.Rates[r.Name] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+			}
 		}
-		if httpIn4xx > 0.0 {
-			nd.HttpIn4xx = fmt.Sprintf("%.2f", httpIn4xx)
-		}
-		if httpIn5xx > 0.0 {
-			nd.HttpIn5xx = fmt.Sprintf("%.2f", httpIn5xx)
+		if protocolTraffic.Rates != nil {
+			nd.Traffic = append(nd.Traffic, protocolTraffic)
 		}
 	}
+}
 
-	httpOut := getRate(s.Metadata, "httpOut")
-
-	if httpOut > 0.0 {
-		nd.HttpOut = fmt.Sprintf("%.2f", httpOut)
+func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
+	if val, ok := e.Metadata["isMTLS"]; ok {
+		ed.IsMTLS = val.(bool)
+	}
+	if val, ok := e.Metadata["responseTime"]; ok {
+		responseTime := val.(float64)
+		ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
+	}
+	if val, ok := e.Source.Metadata["isUnused"]; ok {
+		ed.IsUnused = val.(bool)
 	}
 
-	tcpIn := getRate(s.Metadata, "tcpIn")
-	tcpOut := getRate(s.Metadata, "tcpOut")
-
-	if tcpIn > 0.0 {
-		nd.TcpIn = fmt.Sprintf("%.2f", tcpIn)
-	}
-	if tcpOut > 0.0 {
-		nd.TcpOut = fmt.Sprintf("%.2f", tcpOut)
+	ed.Traffic = []ProtocolTraffic{}
+	for _, p := range graph.Protocols {
+		protocolTraffic := ProtocolTraffic{Protocol: p.Name}
+		total := 0.0
+		err := 0.0
+		var percentErr, percentReq graph.Rate
+		for _, r := range p.EdgeRates {
+			rateVal := getRate(e.Metadata, r.Name)
+			switch {
+			case r.IsTotal:
+				total = rateVal
+			case r.IsErr:
+				err += rateVal
+			case r.IsPercentErr:
+				percentErr = r
+			case r.IsPercentReq:
+				percentReq = r
+			}
+			if rateVal := getRate(e.Metadata, r.Name); rateVal > 0.0 {
+				if protocolTraffic.Rates == nil {
+					protocolTraffic.Rates = make(map[string]string)
+				}
+				protocolTraffic.Rates[r.Name] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+			}
+		}
+		if protocolTraffic.Rates != nil {
+			if total > 0 {
+				if percentErr.Name != "" {
+					rateVal := err / total * 100
+					if rateVal > 0.0 {
+						protocolTraffic.Rates[percentErr.Name] = fmt.Sprintf("%.*f", percentErr.Precision, rateVal)
+					}
+				}
+				if percentReq.Name != "" {
+					rateVal := 0.0
+					for _, r := range p.NodeRates {
+						if !r.IsOut {
+							continue
+						}
+						rateVal = total / getRate(e.Source.Metadata, r.Name) * 100.0
+						break
+					}
+					if rateVal > 0.0 && rateVal < 100.0 {
+						protocolTraffic.Rates[percentReq.Name] = fmt.Sprintf("%.*f", percentReq.Precision, rateVal)
+					}
+				}
+			}
+			ed.Traffic = append(ed.Traffic, protocolTraffic)
+		}
 	}
 }
 
@@ -304,55 +341,6 @@ func getRate(md map[string]interface{}, k string) float64 {
 		return rate.(float64)
 	}
 	return 0.0
-}
-
-func addEdgeTelemetry(ed *EdgeData, e *graph.Edge, o options.VendorOptions) {
-	http := getRate(e.Metadata, "http")
-
-	if http > 0.0 {
-		http3xx := getRate(e.Metadata, "http3xx")
-		http4xx := getRate(e.Metadata, "http4xx")
-		http5xx := getRate(e.Metadata, "http5xx")
-		httpErr := http4xx + http5xx
-		httpPercentErr := httpErr / http * 100.0
-
-		ed.Http = fmt.Sprintf("%.2f", http)
-		if http3xx > 0.0 {
-			ed.Http3xx = fmt.Sprintf("%.2f", http3xx)
-		}
-		if http4xx > 0.0 {
-			ed.Http4xx = fmt.Sprintf("%.2f", http4xx)
-		}
-		if http5xx > 0.0 {
-			ed.Http5xx = fmt.Sprintf("%.2f", http5xx)
-		}
-		if httpPercentErr > 0.0 {
-			ed.HttpPercentErr = fmt.Sprintf("%.1f", httpPercentErr)
-		}
-
-		if val, ok := e.Metadata["responseTime"]; ok {
-			responseTime := val.(float64)
-			ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
-		}
-
-		httpPercentReq := http / getRate(e.Source.Metadata, "httpOut") * 100.0
-		if httpPercentReq < 100.0 {
-			ed.HttpPercentReq = fmt.Sprintf("%.1f", httpPercentReq)
-		}
-	} else {
-		if val, ok := e.Source.Metadata["isUnused"]; ok {
-			ed.IsUnused = val.(bool)
-		}
-	}
-
-	if val, ok := e.Metadata["isMTLS"]; ok {
-		ed.IsMTLS = val.(bool)
-	}
-
-	tcp := getRate(e.Metadata, "tcp")
-	if tcp > 0.0 {
-		ed.Tcp = fmt.Sprintf("%.2f", tcp)
-	}
 }
 
 // groupByVersion adds compound nodes to group multiple versions of the same app

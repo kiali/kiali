@@ -213,43 +213,43 @@ func testTrafficMap() map[string]*graph.Node {
 
 	e := n0.AddEdge(&n1)
 	e = n00.AddEdge(&n1)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	e = n0.AddEdge(&n2)
 	e = n00.AddEdge(&n2)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	e = n0.AddEdge(&n3)
 	e = n00.AddEdge(&n3)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	e = n0.AddEdge(&n4)
 	e = n00.AddEdge(&n4)
-	e.Metadata["httpIn"] = 0.0
+	e.Metadata["http"] = 0.0
 
 	e = n0.AddEdge(&n5)
 	e = n00.AddEdge(&n5)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	e = n0.AddEdge(&n6)
 	e = n00.AddEdge(&n6)
-	e.Metadata["httpIn"] = 0.0
+	e.Metadata["http"] = 0.0
 
 	e = n0.AddEdge(&n7)
 	e = n00.AddEdge(&n7)
-	e.Metadata["tcpIn"] = 74.1
+	e.Metadata["tcp"] = 74.1
 
 	e = n0.AddEdge(&n8)
 	e = n00.AddEdge(&n8)
-	e.Metadata["tcpIn"] = 74.1
+	e.Metadata["tcp"] = 74.1
 
 	e = n0.AddEdge(&n9)
 	e = n00.AddEdge(&n9)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	e = n0.AddEdge(&n10)
 	e = n00.AddEdge(&n10)
-	e.Metadata["httpIn"] = 0.8
+	e.Metadata["http"] = 0.8
 
 	return trafficMap
 }
