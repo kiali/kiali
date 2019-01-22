@@ -540,3 +540,58 @@ export interface QuotaSpecRef {
   name: string;
   namespace?: string;
 }
+
+export interface PortSelector {
+  name: string;
+  number: number;
+}
+
+export interface TargetSelector {
+  name: string;
+  ports?: PortSelector[];
+}
+
+export enum MutualTlsMode {
+  STRICT = 'STRICT',
+  PERMISSIVE = 'PERMISSIVE'
+}
+
+export interface MutualTls {
+  allowTls: boolean;
+  mode: MutualTlsMode;
+}
+
+export interface PeerAuthenticationMethod {
+  mtls: MutualTls;
+}
+
+export interface Jwt {
+  issuer: string;
+  audiences: string[];
+  jwksUri?: string;
+  jwtHeaders: string[];
+  jwtParams: string[];
+}
+
+export interface OriginAuthenticationMethod {
+  jwt: Jwt;
+}
+
+export enum PrincipalBinding {
+  USE_PEER = 'USE_PEER',
+  USE_ORIGIN = 'USE_ORIGIN'
+}
+
+export interface PolicySpec {
+  targets?: TargetSelector[];
+  peers?: PeerAuthenticationMethod[];
+  peerIsOptional?: boolean;
+  origins?: OriginAuthenticationMethod[];
+  originIsOptional?: boolean;
+  principalBinding?: PrincipalBinding;
+}
+
+export interface Policy {
+  metadata: K8sMetadata;
+  spec: PolicySpec;
+}

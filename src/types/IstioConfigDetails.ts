@@ -8,6 +8,7 @@ import {
   IstioAdapter,
   IstioRule,
   IstioTemplate,
+  Policy,
   QuotaSpec,
   QuotaSpecBinding,
   RouteRule,
@@ -36,6 +37,7 @@ export interface IstioConfigDetails {
   template: IstioTemplate;
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
+  policy: Policy;
   permissions: ResourcePermissions;
   validation: ObjectValidation;
 }

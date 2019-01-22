@@ -7,6 +7,7 @@ import {
   IstioRule,
   IstioTemplate,
   ObjectValidation,
+  Policy,
   QuotaSpec,
   QuotaSpecBinding,
   ServiceEntry,
@@ -29,6 +30,7 @@ export interface IstioConfigItem {
   template?: IstioTemplate;
   quotaSpec?: QuotaSpec;
   quotaSpecBinding?: QuotaSpecBinding;
+  policy?: Policy;
   validation?: ObjectValidation;
 }
 
@@ -43,6 +45,7 @@ export interface IstioConfigList {
   templates: IstioTemplate[];
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
+  policies: Policy[];
   permissions: { [key: string]: ResourcePermissions };
   validations: Validations;
 }
@@ -65,6 +68,7 @@ export const dicIstioType = {
   Template: 'templates',
   QuotaSpec: 'quotaspecs',
   QuotaSpecBinding: 'quotaspecbindings',
+  Policy: 'policies',
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
@@ -75,7 +79,8 @@ export const dicIstioType = {
   quotaspecs: 'QuotaSpec',
   quotaspecbindings: 'QuotaSpecBinding',
   instance: 'Instance',
-  handler: 'Handler'
+  handler: 'Handler',
+  policies: 'Policy'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -108,8 +113,9 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     templates: unfiltered.templates.filter(r => includeName(r.metadata.name, names)),
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.metadata.name, names)),
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
+    policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),
+    validations: unfiltered.validations,
     permissions: unfiltered.permissions,
-    validations: unfiltered.validations
   };
 };
 
@@ -217,6 +223,14 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       type: 'quotaspecbinding',
       name: qsb.metadata.name,
       quotaSpecBinding: qsb
+    })
+  );
+  istioConfigList.policies.forEach(p =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'policy',
+      name: p.metadata.name,
+      policy: p
     })
   );
   return istioItems;

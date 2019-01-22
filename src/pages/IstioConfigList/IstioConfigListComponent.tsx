@@ -222,6 +222,10 @@ class IstioConfigListComponent extends ListComponent.Component<
       iconName = 'integration';
       iconType = 'pf';
       type = 'QuotaSpecBinding';
+    } else if (istioItem.type === 'policy') {
+      iconName = 'locked';
+      iconType = 'pf';
+      type = 'Policy';
     }
     // Adapters and Templates need to pass subtype
     if (istioItem.type === 'adapter' || istioItem.type === 'template') {

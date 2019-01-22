@@ -16,8 +16,9 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     templates: [],
     quotaSpecs: [],
     quotaSpecBindings: [],
-    permissions: {},
-    validations: {}
+    policies: [],
+    validations: {},
+    permissions: {}
   };
   names.forEach(name => {
     testData.gateways.push({ metadata: { name: name + '0' }, spec: {} });
@@ -39,6 +40,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     });
     testData.quotaSpecs.push({ metadata: { name: name + '7' }, spec: {} });
     testData.quotaSpecBindings.push({ metadata: { name: name + '8' }, spec: {} });
+    testData.policies.push({ metadata: { name: name + '8' }, spec: {} });
   });
   return testData;
 };
@@ -87,7 +89,7 @@ describe('IstioConfigListComponent#toIstioItems', () => {
     const istioItems = toIstioItems(unfiltered);
 
     expect(istioItems).toBeDefined();
-    expect(istioItems.length).toBe(27);
+    expect(istioItems.length).toBe(30);
     expect(istioItems[0].gateway).toBeDefined();
     expect(istioItems[0].destinationRule).toBeUndefined();
     expect(istioItems[3].virtualService).toBeDefined();
@@ -105,7 +107,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(27);
+      expect(sorted.length).toBe(30);
 
       const first = sorted[0];
       expect(first.gateway).toBeDefined();
@@ -129,7 +131,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     // Descending
     IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(27);
+      expect(sorted.length).toBe(30);
 
       const first = sorted[0];
       expect(first.quotaSpecBinding).toBeDefined();
@@ -148,7 +150,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(27);
+      expect(sorted.length).toBe(30);
 
       const first = sorted[0];
       expect(first.adapter).toBeDefined();
@@ -171,7 +173,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(27);
+      expect(sorted.length).toBe(30);
 
       const first = sorted[0];
       expect(first.virtualService).toBeDefined();

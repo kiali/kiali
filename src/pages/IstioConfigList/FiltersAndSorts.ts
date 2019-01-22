@@ -125,6 +125,10 @@ export namespace IstioConfigListFilters {
       {
         id: 'QuotaSpecBinding',
         title: 'QuotaSpecBinding'
+      },
+      {
+        id: 'Policy',
+        title: 'Policy'
       }
     ]
   };
