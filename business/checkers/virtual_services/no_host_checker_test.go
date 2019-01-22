@@ -41,10 +41,10 @@ func TestNoValidHost(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[0].Message)
-	assert.Equal("spec/http", validations[0].Path)
+	assert.Equal("spec/http/route[0]/destination/host", validations[0].Path)
 	assert.Equal("error", validations[1].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[1].Message)
-	assert.Equal("spec/tcp", validations[1].Path)
+	assert.Equal("spec/tcp/route[0]/destination/host", validations[1].Path)
 
 	delete(virtualService.GetSpec(), "http")
 
@@ -58,7 +58,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[0].Message)
-	assert.Equal("spec/tcp", validations[0].Path)
+	assert.Equal("spec/tcp/route[0]/destination/host", validations[0].Path)
 
 	delete(virtualService.GetSpec(), "tcp")
 
@@ -71,7 +71,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal("error", validations[0].Severity)
-	assert.Equal("VirtualService doesn't define any route protocol", validations[0].Message)
+	assert.Equal("VirtualService doesn't define any valid route protocol", validations[0].Message)
 	assert.Equal("", validations[0].Path)
 }
 

@@ -393,51 +393,6 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 	return false
 }
 
-func FilterByRouteAndSubset(spec map[string]interface{}, protocols []string, service string, namespace string, subsets []string) bool {
-	if len(protocols) == 0 {
-		return false
-	}
-	for _, protocol := range protocols {
-		if prot, ok := spec[protocol]; ok {
-			if aHttp, ok := prot.([]interface{}); ok {
-				for _, httpRoute := range aHttp {
-					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
-						if route, ok := mHttpRoute["route"]; ok {
-							if aDestinationWeight, ok := route.([]interface{}); ok {
-								for _, destination := range aDestinationWeight {
-									if mDestination, ok := destination.(map[string]interface{}); ok {
-										if destinationW, ok := mDestination["destination"]; ok {
-											if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
-												if host, ok := mDestinationW["host"]; ok {
-													if sHost, ok := host.(string); ok {
-														if FilterByHost(sHost, service, namespace) {
-															// Check service + name is found on a route
-															if subset, ok := mDestinationW["subset"]; ok {
-																if sSubset, ok := subset.(string); ok {
-																	for _, checkSubset := range subsets {
-																		if sSubset == checkSubset {
-																			return true
-																		}
-																	}
-																}
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return false
-}
-
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
 // exported for test
 func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -102,9 +102,9 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
-	assert.Equal("spec/http", productVs.Checks[0].Path)
+	assert.Equal("spec/http/route[0]/destination/host", productVs.Checks[0].Path)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[0].Message)
-	assert.Equal("spec/tcp", productVs.Checks[1].Path)
+	assert.Equal("spec/tcp/route[0]/destination/host", productVs.Checks[1].Path)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", productVs.Checks[1].Message)
 
 	validations = NoServiceChecker{
