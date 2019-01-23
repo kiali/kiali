@@ -804,3 +804,86 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)
 	assert.Nil(err)
 }
+
+func TestGloballyEnabledWithOneMeshPolicy(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+
+	assert.NoError(err)
+	assert.Equal(true, isGloballyEnabled)
+}
+
+func TestGloballyEnabledWithOneMeshPolicyWithWrongName(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+
+	assert.NoError(err)
+	assert.Equal(false, isGloballyEnabled)
+}
+
+func fakeMeshPolicyEnablingMTLS(name string) []kubernetes.IstioObject {
+	policy := kubernetes.GenericIstioObject{}
+	policy.Name = name
+	policy.Spec = map[string]interface{}{
+		"peers": []interface{}{
+			map[string]interface{}{
+				"mtls": "",
+			},
+		},
+	}
+	return []kubernetes.IstioObject{&policy}
+}
+
+func TestNotGloballyEnabledWithoutMeshPolicy(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetMeshPolicies").Return([]kubernetes.IstioObject{}, nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+
+	assert.NoError(err)
+	assert.Equal(false, isGloballyEnabled)
+}
+
+func TestNotGloballyEnabledWithAMeshPolicy(t *testing.T) {
+	assert := assert.New(t)
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+
+	assert.NoError(err)
+	assert.Equal(false, isGloballyEnabled)
+}
+
+func fakeMeshPolicyEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
+	policy := kubernetes.GenericIstioObject{}
+	policy.Name = "non-global-tls-enabler"
+	policy.Spec = map[string]interface{}{
+		"peers": []interface{}{
+			map[string]interface{}{
+				"mtls": "",
+			},
+		},
+		"targets": []interface{}{
+			map[string]interface{}{
+				"name": "productpage",
+			},
+		},
+	}
+	return []kubernetes.IstioObject{&policy}
+}

@@ -476,3 +476,43 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 	}
 	return canCreate, (canUpdate || canPatch), canDelete
 }
+
+func (in *IstioConfigService) IsMTLSGloballyEnabled() (bool, error) {
+	mps, err := in.k8s.GetMeshPolicies()
+	if err != nil {
+		return false, err
+	}
+
+	mtlsEnabled := false
+
+	for _, mp := range mps {
+
+		// It is mandatory to have default as a name
+		if meshMeta := mp.GetObjectMeta(); meshMeta.Name != "default" {
+			continue
+		}
+
+		// It is no globally enabled when has targets
+		targets, targetPresent := mp.GetSpec()["targets"]
+		specificTarget := targetPresent && len(targets.([]interface{})) > 0
+		if specificTarget {
+			continue
+		}
+
+		// It is globally enabled when a peer has mtls enabled
+		peers, peersPresent := mp.GetSpec()["peers"]
+		if !peersPresent {
+			continue
+		}
+
+		for _, peer := range peers.([]interface{}) {
+			peerMap := peer.(map[string]interface{})
+			if _, present := peerMap["mtls"]; present {
+				mtlsEnabled = true
+				break
+			}
+		}
+	}
+
+	return mtlsEnabled, nil
+}
