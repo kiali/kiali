@@ -55,9 +55,12 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, name stri
 
 	if api == configGroupVersion.Group {
 		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
-	} else {
+	} else if api == networkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
+	} else {
+		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
 	}
+
 	if err != nil {
 		return nil, err
 	}

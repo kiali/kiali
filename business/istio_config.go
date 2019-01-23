@@ -296,10 +296,10 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
-	return in.ModifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch, in.k8s.UpdateIstioObject)
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch, in.k8s.UpdateIstioObject)
 }
 
-func (in *IstioConfigService) ModifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string, fn func(string, string, string, string, string) (kubernetes.IstioObject, error)) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string, fn func(string, string, string, string, string) (kubernetes.IstioObject, error)) (models.IstioConfigDetails, error) {
 	var err error
 	updatedType := resourceType
 	if resourceType == Adapters || resourceType == Templates {
@@ -359,7 +359,7 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
-	return in.ModifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json, in.k8s.CreateIstioObject)
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json, in.k8s.CreateIstioObject)
 }
 
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {
