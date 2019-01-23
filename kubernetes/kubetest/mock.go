@@ -245,6 +245,11 @@ func (o *K8SClientMock) GetPolicy(namespace string, policyName string) (kubernet
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetMeshPolicies() ([]kubernetes.IstioObject, error) {
+	args := o.Called()
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) IsOpenShift() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
