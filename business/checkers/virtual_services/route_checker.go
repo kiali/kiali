@@ -74,7 +74,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%s",
 					kind, routeIdx, destWeightIdx, destinationWeight["weight"])
-				validation := buildValidation("Weight must be a number", "error", path)
+				validation := buildErrorValidation("Weight must be a number", path)
 				validations = append(validations, &validation)
 			}
 
@@ -82,8 +82,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
 					kind, routeIdx, destWeightIdx, weight)
-				validation := buildValidation("Weight should be between 0 and 100",
-					"error", path)
+				validation := buildErrorValidation("Weight should be between 0 and 100", path)
 				validations = append(validations, &validation)
 			}
 
@@ -93,12 +92,12 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 		if weightCount > 0 && weightSum != 100 {
 			valid = false
 			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-			validation := buildValidation("Weight sum should be 100", "error", path)
+			validation := buildErrorValidation("Weight sum should be 100", path)
 			validations = append(validations, &validation)
 			if weightCount != destinationWeights.Len() {
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-				validation := buildValidation("All routes should have weight", "warning", path)
+				validation := buildWarningValidation("All routes should have weight", path)
 				validations = append(validations, &validation)
 			}
 		}
@@ -107,9 +106,16 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 	return validations, valid
 }
 
-func buildValidation(message, severity, path string) models.IstioCheck {
-	validation := models.BuildCheck(message, severity, path)
+func buildErrorValidation(message string, path string) models.IstioCheck {
+	validation := models.BuildErrorCheck(message, path)
 	log.Infof("%s - %s. Galley should be performing this validation but it isn't. "+
-		"Make sure Galley is fully working.", severity, message)
+		"Make sure Galley is fully working.", models.ErrorSeverity, message)
+	return validation
+}
+
+func buildWarningValidation(message string, path string) models.IstioCheck {
+	validation := models.BuildWarningCheck(message, path)
+	log.Infof("%s - %s. Galley should be performing this validation but it isn't. "+
+		"Make sure Galley is fully working.", models.WarningSeverity, message)
 	return validation
 }

@@ -23,7 +23,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 		if dHost, ok := host.(string); ok {
 			fqdn := FormatHostnameForPrefixSearch(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
 			if !n.hasMatchingService(fqdn.Service) {
-				validation := models.BuildCheck("This host has no matching workloads", "error", "spec/host")
+				validation := models.BuildErrorCheck("This host has no matching workloads", "spec/host")
 				validations = append(validations, &validation)
 				valid = false
 			}
@@ -41,7 +41,8 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 										}
 									}
 									if !n.hasMatchingWorkload(fqdn.Service, stringLabels) {
-										validation := models.BuildCheck("This subset's labels are not found from any matching host", "error", "spec/subsets["+strconv.Itoa(i)+"]")
+										validation := models.BuildErrorCheck("This subset's labels are not found from any matching host",
+											"spec/subsets["+strconv.Itoa(i)+"]")
 										validations = append(validations, &validation)
 										valid = false
 									}

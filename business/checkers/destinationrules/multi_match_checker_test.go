@@ -52,7 +52,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
-	assert.Equal("warning", validation.Checks[0].Severity)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 }
 
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {
@@ -75,7 +75,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
-	assert.Equal("warning", validation.Checks[0].Severity)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 
 	destinationRules = []kubernetes.IstioObject{
 		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
@@ -91,7 +91,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
-	assert.Equal("warning", validation.Checks[0].Severity)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 
 }
 
@@ -157,6 +157,6 @@ func TestReviewsExample(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
-	assert.Equal("warning", validation.Checks[0].Severity)
+	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(1, len(validation.Checks))
 }

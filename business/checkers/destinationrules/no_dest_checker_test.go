@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -49,7 +50,7 @@ func TestNoValidHost(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("This host has no matching workloads", validations[0].Message)
 	assert.Equal("spec/host", validations[0].Path)
 }
@@ -71,7 +72,7 @@ func TestNoMatchingSubset(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
@@ -105,7 +106,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }

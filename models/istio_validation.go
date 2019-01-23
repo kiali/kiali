@@ -49,12 +49,19 @@ type IstioCheck struct {
 	// Indicates the level of importance: error or warning
 	// required: true
 	// example: error
-	Severity string `json:"severity"`
+	Severity SeverityLevel `json:"severity"`
 
 	// String that describes where in the yaml file is the check located
 	// example: spec/http[0]/route
 	Path string `json:"path"`
 }
+
+type SeverityLevel string
+
+const (
+	ErrorSeverity   SeverityLevel = "error"
+	WarningSeverity SeverityLevel = "warning"
+)
 
 var ObjectTypeSingular = map[string]string{
 	"gateways":          "gateway",
@@ -66,7 +73,15 @@ var ObjectTypeSingular = map[string]string{
 	"quotaspecbindings": "quotaspecbinding",
 }
 
-func BuildCheck(message, severity, path string) IstioCheck {
+func BuildWarningCheck(message, path string) IstioCheck {
+	return buildCheck(message, WarningSeverity, path)
+}
+
+func BuildErrorCheck(message, path string) IstioCheck {
+	return buildCheck(message, ErrorSeverity, path)
+}
+
+func buildCheck(message string, severity SeverityLevel, path string) IstioCheck {
 	return IstioCheck{Message: message, Severity: severity, Path: path}
 }
 

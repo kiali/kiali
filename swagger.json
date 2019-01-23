@@ -3021,10 +3021,7 @@
           "example": "spec/http[0]/route"
         },
         "severity": {
-          "description": "Indicates the level of importance: error or warning",
-          "type": "string",
-          "x-go-name": "Severity",
-          "example": "error"
+          "$ref": "#/definitions/SeverityLevel"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3992,6 +3989,10 @@
       "items": {
         "$ref": "#/definitions/Service"
       },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "SeverityLevel": {
+      "type": "string",
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "SourceWorkload": {

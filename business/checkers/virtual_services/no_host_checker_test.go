@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -39,10 +40,10 @@ func TestNoValidHost(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[0].Message)
 	assert.Equal("spec/http/route[0]/destination/host", validations[0].Path)
-	assert.Equal("error", validations[1].Severity)
+	assert.Equal(models.ErrorSeverity, validations[1].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[1].Message)
 	assert.Equal("spec/tcp/route[0]/destination/host", validations[1].Path)
 
@@ -56,7 +57,7 @@ func TestNoValidHost(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("DestinationWeight on route doesn't have a valid service (host not found)", validations[0].Message)
 	assert.Equal("spec/tcp/route[0]/destination/host", validations[0].Path)
 
@@ -70,7 +71,7 @@ func TestNoValidHost(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal("VirtualService doesn't define any valid route protocol", validations[0].Message)
 	assert.Equal("", validations[0].Path)
 }
