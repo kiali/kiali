@@ -7,7 +7,8 @@ import {
   durationSelector,
   refreshIntervalSelector,
   graphTypeSelector,
-  edgeLabelModeSelector
+  edgeLabelModeSelector,
+  graphDataSelector
 } from '../store/Selectors';
 
 import { KialiAppState } from '../store/Store';
@@ -26,7 +27,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
-  graphData: state.graph.graphData,
+  graphData: graphDataSelector(state),
   graphDuration: state.graph.graphDataDuration,
   graphTimestamp: state.graph.graphDataTimestamp,
   graphType: graphTypeSelector(state),

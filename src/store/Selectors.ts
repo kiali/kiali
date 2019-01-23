@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect';
+import * as GraphData from './Selectors/GraphData';
 import { KialiAppState } from './Store';
 // These memoized selectors are from Redux Reselect package
 
@@ -61,3 +62,5 @@ export const showServiceNodesSelector = createSelector(
   showServiceNodes,
   x => x // identity function
 );
+
+export const graphDataSelector = GraphData.graphDataSelector;

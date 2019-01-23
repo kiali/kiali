@@ -20,7 +20,8 @@ import {
   durationSelector,
   edgeLabelModeSelector,
   refreshIntervalSelector,
-  graphTypeSelector
+  graphTypeSelector,
+  graphDataSelector
 } from '../../store/Selectors';
 import {
   CytoscapeBaseEvent,
@@ -672,7 +673,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   duration: durationSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
-  elements: state.graph.graphData,
+  elements: graphDataSelector(state),
   graphType: graphTypeSelector(state),
   isError: state.graph.isError,
   isLoading: state.graph.isLoading,
