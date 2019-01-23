@@ -1,7 +1,6 @@
 import { SortField } from '../../types/SortFilters';
 import { IstioConfigItem } from '../../types/IstioConfigList';
 import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
-import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 
 export namespace IstioConfigListFilters {
   export const getType = (item: IstioConfigItem): string => {
@@ -159,13 +158,7 @@ export namespace IstioConfigListFilters {
     ]
   };
 
-  export const availableFilters: FilterType[] = [
-    NamespaceFilter.create(),
-    istioTypeFilter,
-    istioNameFilter,
-    configValidationFilter
-  ];
-  export const namespaceFilter = availableFilters[0];
+  export const availableFilters: FilterType[] = [istioTypeFilter, istioNameFilter, configValidationFilter];
 
   export const sortIstioItems = (
     unsorted: IstioConfigItem[],

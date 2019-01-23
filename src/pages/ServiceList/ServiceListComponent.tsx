@@ -26,7 +26,6 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
-import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -34,6 +33,7 @@ interface ServiceListComponentState extends ListComponent.State<ServiceListItem>
 
 interface ServiceListComponentProps extends ListComponent.Props<ServiceListItem> {
   rateInterval: number;
+  activeNamespaces: Namespace[];
 }
 
 class ServiceListComponent extends ListComponent.Component<
@@ -81,6 +81,7 @@ class ServiceListComponent extends ListComponent.Component<
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
+      prevProps.activeNamespaces === this.props.activeNamespaces &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
     );
@@ -103,7 +104,7 @@ class ServiceListComponent extends ListComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    const namespacesSelected = getFilterSelectedValues(ServiceListFilters.namespaceFilter, activeFilters);
+    const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
     if (namespacesSelected.length === 0) {
       this.promises

@@ -2,7 +2,6 @@ import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } 
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
 import { SortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WorkloadHealth } from '../../types/Health';
-import NamespaceFilter from '../../components/Filters/NamespaceFilter';
 import {
   presenceValues,
   istioSidecarFilter,
@@ -186,7 +185,6 @@ export namespace WorkloadListFilters {
   };
 
   export const availableFilters: FilterType[] = [
-    NamespaceFilter.create(),
     workloadNameFilter,
     workloadTypeFilter,
     istioSidecarFilter,
@@ -194,7 +192,6 @@ export namespace WorkloadListFilters {
     appLabelFilter,
     versionLabelFilter
   ];
-  export const namespaceFilter = availableFilters[0];
 
   /** Filter Method */
   const includeName = (name: string, names: string[]) => {

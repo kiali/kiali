@@ -42,7 +42,8 @@ type State = {
   type: OverviewType;
 };
 
-interface OverviewProps {}
+type OverviewProps = {};
+
 const cardGridStyle = style({
   width: '100%'
 });

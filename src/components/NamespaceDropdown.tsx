@@ -1,15 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
+import _ from 'lodash';
+import { style } from 'typestyle';
+import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
-import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import Namespace from '../types/Namespace';
-import { style } from 'typestyle';
 import { PfColors } from './Pf/PfColors';
+import { HistoryManager, URLParams } from '../app/History';
 
 const namespaceButtonColors = {
   backgroundColor: PfColors.White,
@@ -44,6 +46,7 @@ interface NamespaceListType {
   activeNamespaces: Namespace[];
   items: Namespace[];
   toggleNamespace: (namespace: Namespace) => void;
+  setNamespaces: (namespaces: Namespace[]) => void;
   refresh: () => void;
   clearAll: () => void;
 }
@@ -55,7 +58,29 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
 
   componentDidMount() {
     this.props.refresh();
+    this.syncNamespacesURLParam();
   }
+
+  componentDidUpdate(prevProps: NamespaceListType) {
+    if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
+      if (this.props.activeNamespaces.length === 0) {
+        HistoryManager.deleteParam(URLParams.NAMESPACES);
+      } else {
+        HistoryManager.setParam(URLParams.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
+      }
+    }
+  }
+
+  syncNamespacesURLParam = () => {
+    const namespaces = (HistoryManager.getParam(URLParams.NAMESPACES) || '').split(',').filter(Boolean);
+    if (namespaces.length > 0 && _.difference(namespaces, this.props.activeNamespaces.map(item => item.name))) {
+      // We must change the props of namespaces
+      const items = namespaces.map(ns => ({ name: ns } as Namespace));
+      this.props.setNamespaces(items);
+    } else if (namespaces.length === 0 && this.props.activeNamespaces.length !== 0) {
+      HistoryManager.setParam(URLParams.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
+    }
+  };
 
   onNamespaceToggled = (a: any) => {
     this.props.toggleNamespace({ name: a.target.value });
@@ -153,6 +178,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     },
     clearAll: () => {
       dispatch(NamespaceActions.setActiveNamespaces([]));
+    },
+    setNamespaces: (namespaces: Namespace[]) => {
+      dispatch(NamespaceActions.setActiveNamespaces(namespaces));
     }
   };
 };

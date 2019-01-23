@@ -135,6 +135,22 @@ const secondaryMastheadRoutes: Path[] = [
   {
     path: '/graph/namespaces',
     component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/applications',
+    component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/services',
+    component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/workloads',
+    component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/istio',
+    component: DefaultSecondaryMasthead
   }
 ];
 

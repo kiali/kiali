@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import AppListComponent from './AppListComponent';
+import AppListComponent from '../../containers/AppListComponentContainer';
 import { AppListFilters } from './FiltersAndSorts';
 
 const AppListPage: React.SFC<{}> = () => {

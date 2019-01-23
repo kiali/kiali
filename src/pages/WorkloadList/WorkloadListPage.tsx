@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import WorkloadListComponent from './WorkloadListComponent';
+import WorkloadListComponent from '../../containers/WorkloadListComponentContainer';
 import { WorkloadListFilters } from './FiltersAndSorts';
 
 const WorkloadListPage: React.SFC<{}> = () => {

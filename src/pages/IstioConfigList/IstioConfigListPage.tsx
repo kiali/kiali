@@ -1,5 +1,5 @@
 import * as React from 'react';
-import IstioConfigListComponent from './IstioConfigListComponent';
+import IstioConfigListComponent from '../../containers/IstioConfigListComponentContainer';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { IstioConfigListFilters } from './FiltersAndSorts';

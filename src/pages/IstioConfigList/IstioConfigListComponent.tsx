@@ -32,7 +32,9 @@ import { SortField } from '../../types/SortFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
-interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {}
+interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {
+  activeNamespaces: Namespace[];
+}
 
 class IstioConfigListComponent extends ListComponent.Component<
   IstioConfigListComponentProps,
@@ -79,6 +81,7 @@ class IstioConfigListComponent extends ListComponent.Component<
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
+      prevProps.activeNamespaces === this.props.activeNamespaces &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
     );
@@ -92,7 +95,7 @@ class IstioConfigListComponent extends ListComponent.Component<
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    const namespacesSelected = getFilterSelectedValues(IstioConfigListFilters.namespaceFilter, activeFilters);
+    const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(
       value => dicIstioType[value]
     );

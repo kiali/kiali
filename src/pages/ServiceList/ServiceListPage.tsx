@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ServiceListComponent from './ServiceListComponent';
+import ServiceListComponent from '../../containers/ServiceListComponentContainer';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { ServiceListFilters } from './FiltersAndSorts';

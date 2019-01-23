@@ -12,12 +12,12 @@ class RenderPage extends React.Component {
     });
   }
 
-  renderPathRoutes() {
-    return this.renderPaths(pathRoutes);
-  }
-
   renderSecondaryMastheadRoutes() {
     return this.renderPaths(secondaryMastheadRoutes);
+  }
+
+  renderPathRoutes() {
+    return this.renderPaths(pathRoutes);
   }
 
   render() {
