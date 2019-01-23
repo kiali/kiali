@@ -25,7 +25,6 @@ type Protocol struct {
 	UnitShort string
 }
 
-/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 var GRPC Protocol = Protocol{
 	Name: "grpc",
 	EdgeRates: []Rate{
@@ -42,7 +41,7 @@ var GRPC Protocol = Protocol{
 	Unit:      "requests per second",
 	UnitShort: "rps",
 }
-*/
+
 var HTTP Protocol = Protocol{
 	Name: "http",
 	EdgeRates: []Rate{
@@ -76,16 +75,12 @@ var TCP Protocol = Protocol{
 	UnitShort: "bps",
 }
 
-// TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
-// var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
-var Protocols []Protocol = []Protocol{HTTP, TCP}
+var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
 func AddToMetadata(protocol string, val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	switch protocol {
 	case "grpc":
-		// TODO: For now, treat gRPC like HTTP, uncomment this (and remove the http line below it) when we want to treat gRPC explicitly
-		// addToMetadataGrpc(val, code, sourceMetadata, destMetadata, edgeMetadata)
-		addToMetadataHttp(val, code, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataGrpc(val, code, sourceMetadata, destMetadata, edgeMetadata)
 	case "http":
 		addToMetadataHttp(val, code, sourceMetadata, destMetadata, edgeMetadata)
 	case "tcp":
@@ -95,7 +90,6 @@ func AddToMetadata(protocol string, val float64, code string, sourceMetadata, de
 	}
 }
 
-/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "grpcOut", val)
 	addToMetadataValue(destMetadata, "grpcIn", val)
@@ -114,7 +108,6 @@ func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, e
 		addToMetadataValue(edgeMetadata, "grpcErr", val)
 	}
 }
-*/
 
 func addToMetadataHttp(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "httpOut", val)
@@ -143,11 +136,9 @@ func addToMetadataTcp(val float64, code string, sourceMetadata, destMetadata, ed
 }
 
 func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface{}) {
-	/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 	if val, valOk := edgeMetadata["grpc"]; valOk {
 		addToMetadataValue(sourceMetadata, "grpcOut", val.(float64))
 	}
-	*/
 	if val, valOk := edgeMetadata["http"]; valOk {
 		addToMetadataValue(sourceMetadata, "httpOut", val.(float64))
 	}
