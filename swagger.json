@@ -2464,14 +2464,6 @@
         "serviceNames"
       ],
       "properties": {
-        "customDashboards": {
-          "description": "Custom dashboard ids and titles",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardRef"
-          },
-          "x-go-name": "CustomDashboards"
-        },
         "name": {
           "description": "Name of the application",
           "type": "string",
@@ -2480,6 +2472,14 @@
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
+        },
+        "runtimes": {
+          "description": "Runtimes and associated dashboards",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Runtime"
+          },
+          "x-go-name": "Runtimes"
         },
         "serviceNames": {
           "description": "List of service names linked with an application",
@@ -3386,13 +3386,6 @@
           },
           "x-go-name": "CreatedBy"
         },
-        "customDashboards": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "CustomDashboards"
-        },
         "istioContainers": {
           "type": "array",
           "items": {
@@ -3417,6 +3410,13 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "runtimesAnnotation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RuntimesAnnotation"
         },
         "status": {
           "type": "string",
@@ -3567,6 +3567,24 @@
         "update": {
           "type": "boolean",
           "x-go-name": "Update"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Runtime": {
+      "description": "Runtime holds the runtime title and associated dashboard template(s)",
+      "type": "object",
+      "properties": {
+        "dashboardRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DashboardRef"
+          },
+          "x-go-name": "DashboardRefs"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4036,14 +4054,6 @@
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
         },
-        "customDashboards": {
-          "description": "Custom dashboard ids and titles",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardRef"
-          },
-          "x-go-name": "CustomDashboards"
-        },
         "destinationServices": {
           "type": "array",
           "items": {
@@ -4093,6 +4103,14 @@
           "type": "string",
           "x-go-name": "ResourceVersion",
           "example": "192892127"
+        },
+        "runtimes": {
+          "description": "Runtimes and associated dashboards",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Runtime"
+          },
+          "x-go-name": "Runtimes"
         },
         "services": {
           "$ref": "#/definitions/Services"
