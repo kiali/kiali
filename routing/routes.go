@@ -214,6 +214,29 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigUpdate,
 			true,
 		},
+		// swagger:route POST /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigCreateSubtype
+		// ---
+		// Endpoint to create an Istio object by using an Istio Config item
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//		202
+		//		201: istioConfigDetailsResponse
+		//      200: istioConfigDetailsResponse
+		//
+		{
+			"IstioConfigCreateSubtype",
+			"POST",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			handlers.IstioConfigCreate,
+			true,
+		},
 		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDelete
 		// ---
 		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
@@ -258,6 +281,29 @@ func NewRoutes() (r *Routes) {
 			"PATCH",
 			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
 			handlers.IstioConfigUpdate,
+			true,
+		},
+		// swagger:route POST /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigCreate
+		// ---
+		// Endpoint to create an Istio object by using an Istio Config item
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//		202
+		//		201: istioConfigDetailsResponse
+		//      200: istioConfigDetailsResponse
+		//
+		{
+			"IstioConfigCreate",
+			"POST",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			handlers.IstioConfigCreate,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services services serviceList

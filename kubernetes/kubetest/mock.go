@@ -7,7 +7,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -29,6 +29,11 @@ func NewK8SClientMock() *K8SClientMock {
 }
 
 // Business methods
+
+func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {
+	args := o.Called(api, namespace, resourceType, name, jsonPatch)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
 
 func (o *K8SClientMock) DeleteIstioObject(api, namespace, objectType, objectName string) error {
 	args := o.Called(api, namespace, objectType, objectName)

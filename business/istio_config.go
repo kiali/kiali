@@ -296,6 +296,11 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch, in.k8s.UpdateIstioObject)
+}
+
+func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string, fn func(string, string, string, string, string) (kubernetes.IstioObject, error)) (models.IstioConfigDetails, error) {
+	var err error
 	updatedType := resourceType
 	if resourceType == Adapters || resourceType == Templates {
 		updatedType = resourceSubtype
@@ -306,7 +311,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = resourceType
 
-	result, err = in.k8s.UpdateIstioObject(api, namespace, updatedType, name, jsonPatch)
+	result, err = fn(api, namespace, updatedType, name, json)
 	if err != nil {
 		return istioConfigDetail, err
 	}
@@ -346,6 +351,15 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}
 	return istioConfigDetail, err
+
+}
+
+func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string) (models.IstioConfigDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
+	defer promtimer.ObserveNow(&err)
+
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json, in.k8s.CreateIstioObject)
 }
 
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {

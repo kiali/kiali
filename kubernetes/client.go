@@ -12,7 +12,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,6 +34,7 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
+	CreateIstioObject(api, namespace, resourceType, name, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
 	GetAdapters(namespace string) ([]IstioObject, error)
@@ -77,7 +78,7 @@ type IstioClientInterface interface {
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
 	Stop()
-	UpdateIstioObject(api, namespace, resourteType, name, jsonPatch string) (IstioObject, error)
+	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs

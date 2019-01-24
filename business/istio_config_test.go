@@ -765,3 +765,42 @@ func mockUpdateIstioConfigDetails() IstioConfigService {
 	k8s.On("UpdateIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-update", mock.AnythingOfType("string")).Return(updatedTemplate, nil)
 	return IstioConfigService{k8s: k8s}
 }
+
+// mockCreateIstioConfigDetails to verify the behavior of API calls is the same for create and update
+func mockCreateIstioConfigDetails() IstioConfigService {
+	k8s := new(kubetest.K8SClientMock)
+	var createdVirtualService, createdTemplate kubernetes.IstioObject
+
+	createdVirtualService = &kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "reviews-to-update",
+			Namespace: "test",
+		},
+	}
+	createdTemplate = &kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "listchecker-to-update",
+			Namespace: "test",
+		},
+	}
+	k8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
+	k8s.On("CreateIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-update", mock.AnythingOfType("string")).Return(createdTemplate, nil)
+	return IstioConfigService{k8s: k8s}
+}
+
+func TestCreateIstioConfigDetails(t *testing.T) {
+	assert := assert.New(t)
+	configService := mockCreateIstioConfigDetails()
+
+	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "reviews-to-update", "{}")
+	assert.Equal("test", createVirtualService.Namespace.Name)
+	assert.Equal("virtualservices", createVirtualService.ObjectType)
+	assert.Equal("reviews-to-update", createVirtualService.VirtualService.Metadata.Name)
+	assert.Nil(err)
+
+	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "listchecker-to-update", "{}")
+	assert.Equal("test", createTemplate.Namespace.Name)
+	assert.Equal("templates", createTemplate.ObjectType)
+	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)
+	assert.Nil(err)
+}

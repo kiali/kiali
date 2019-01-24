@@ -31,7 +31,7 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
-// swagger:parameters istioConfigList  workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters istioConfigList  workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype
 type NamespaceParam struct {
 	// The namespace id.
 	//
@@ -40,7 +40,7 @@ type NamespaceParam struct {
 	Name string `json:"namespace"`
 }
 
-// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
+// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype istioConfigCreate istioConfigCreateSubtype
 type ObjectNameParam struct {
 	// The Istio object name.
 	//
@@ -49,7 +49,7 @@ type ObjectNameParam struct {
 	Name string `json:"object"`
 }
 
-// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
+// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype istioConfigCreate istioConfigCreateSubtype
 type ObjectTypeParam struct {
 	// The Istio object type.
 	//
@@ -59,7 +59,7 @@ type ObjectTypeParam struct {
 	Name string `json:"object_type"`
 }
 
-// swagger:parameters istioConfigDetailsSubtype istioConfigDeleteSubtype istioConfigUpdateSubtype
+// swagger:parameters istioConfigDetailsSubtype istioConfigDeleteSubtype istioConfigUpdateSubtype istioConfigCreateSubtype
 type ObjectSubtypeParam struct {
 	// The Istio object subtype.
 	//
