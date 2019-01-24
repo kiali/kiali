@@ -27,6 +27,10 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 		}
 		q.Direction = dir
 	}
+	requestProtocol := queryParams.Get("requestProtocol")
+	if requestProtocol != "" {
+		q.RequestProtocol = requestProtocol
+	}
 	reporter := queryParams.Get("reporter")
 	if reporter != "" {
 		if reporter != "source" && reporter != "destination" {

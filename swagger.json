@@ -697,6 +697,14 @@
           },
           {
             "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
@@ -878,6 +886,14 @@
             "x-go-name": "Name",
             "description": "Interval used for rate and histogram calculation.",
             "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
             "in": "query"
           },
           {
@@ -1687,6 +1703,14 @@
           },
           {
             "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
@@ -1965,6 +1989,14 @@
           },
           {
             "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
@@ -2164,6 +2196,14 @@
             "x-go-name": "Name",
             "description": "Interval used for rate and histogram calculation.",
             "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
             "in": "query"
           },
           {
@@ -2442,6 +2482,14 @@
             "x-go-name": "Name",
             "description": "Interval used for rate and histogram calculation.",
             "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "all protocols",
+            "x-go-name": "Name",
+            "description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'.",
+            "name": "requestProtocol",
             "in": "query"
           },
           {

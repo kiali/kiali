@@ -25,6 +25,9 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	q.Add("byLabels[]", "response_code")
 	q.Add("filters[]", "request_count")
 	q.Add("filters[]", "request_size")
+	q.Add("reporter", "destination")
+	q.Add("direction", "outbound")
+	q.Add("requestProtocol", "http")
 	req.URL.RawQuery = q.Encode()
 
 	mq := prometheus.IstioMetricsQuery{Namespace: "ns"}
@@ -38,6 +41,9 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	assert.Equal(t, 10*time.Second, mq.Step)
 	assert.Equal(t, []string{"response_code"}, mq.ByLabels)
 	assert.Equal(t, []string{"request_count", "request_size"}, mq.Filters)
+	assert.Equal(t, "destination", mq.Reporter)
+	assert.Equal(t, "outbound", mq.Direction)
+	assert.Equal(t, "http", mq.RequestProtocol)
 
 	// Check that start date is normalized for step
 	// Interval [12:24:21, 12:41:01] should be converted to [12:24:20, 12:41:01]

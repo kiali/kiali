@@ -30,13 +30,14 @@ func (q *BaseMetricsQuery) fillDefaults() {
 // IstioMetricsQuery holds query parameters for a typical metrics query
 type IstioMetricsQuery struct {
 	BaseMetricsQuery
-	Filters   []string
-	Namespace string
-	App       string
-	Workload  string
-	Service   string
-	Direction string // outbound | inbound
-	Reporter  string // source | destination, defaults to source if not provided
+	Filters         []string
+	Namespace       string
+	App             string
+	Workload        string
+	Service         string
+	Direction       string // outbound | inbound
+	RequestProtocol string // e.g. http | grpc
+	Reporter        string // source | destination, defaults to source if not provided
 }
 
 // FillDefaults fills the struct with default parameters

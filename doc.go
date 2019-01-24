@@ -255,6 +255,16 @@ type RateIntervalParam struct {
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+type RequestProtocolParam struct {
+	// Desired request protocol for the telemetry: For example, 'http' or 'grpc'.
+	//
+	// in: query
+	// required: false
+	// default: all protocols
+	Name string `json:"requestProtocol"`
+}
+
+// swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
 type ReporterParam struct {
 	// Istio telemetry reporter: 'source' or 'destination'.
 	//
