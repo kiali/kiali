@@ -2,28 +2,21 @@ DOCKER_NAME ?= gbaufake/windsock
 DOCKER_TAG ?= latest
 
 
-KIALI_HOSTNAME ?= 'kiali-istio-system.openshift2.jonqe.lab.eng.bos.redhat.com'
-KIALI_PORT ?= '443'
-KIALI_USERNAME ?= 'admin'
-KIALI_PASSWORD ?= 'admin'
+KIALI_HOSTNAME = 'https://kiali-istio-system.openshift2.jonqe.lab.eng.bos.redhat.com:443/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&duration=10m'
+KIALI_USERNAME = 'admin'
+KIALI_PASSWORD = 'admin'
+TEST_NAME = 'graphNamespace'
 
 
-# See Kiali Python Client to use it properly ()
-KIALI_PATH ?= '{"namespace":"bookinfo"}'
-params={'namespaces': 'bookinfo', "graphType": "versionedApp", "duration": "60s"}'
-KIALI_METHOD_NAME ?= 'workloadList'
-KIALI_PARAMS ?= ''
+# InfluxDB is needed to compile all the tests logs from different pods
+INFLUX_ADDRESS = 'http://route-influxdb.prod.os.jonqe.lab.eng.bos.redhat.com:80'
+INFLUX_USERNAME = 'admin'
+INFLUX_PASSWORD = 'admin'
 
 
-
-INFLUX_ADDRESS ?= 'http://route-influxdb.prod.os.jonqe.lab.eng.bos.redhat.com:80'
-INFLUX_USERNAME ?= 'admin'
-INFLUX_PASSWORD ?= 'admin'
-
-
-RATE ?= '1'
-DURATION ?= '100'
-NUMBER_OF_USERS ?= '5'
+RATE = '1' # requests rate per second
+DURATION = '100' # duration of test in seconds (0 is eternal)
+NUMBER_OF_USERS = '5' # number of pods which be deployed
 
 
 all: docker-build
@@ -43,12 +36,9 @@ clean:
 deploy-performance-test:
 	@echo Deploying Performance Test Kiali Windsock
 	ansible-playbook performance_test.yml -e kiali_hostname=${KIALI_HOSTNAME} \
-	-e kiali_path=${KIALI_PATH} \
-	-e kiali_port=${KIALI_PORT} \
-	-e kiali_params=${KIALI_PARAMS} \
 	-e kiali_username=${KIALI_USERNAME} \
 	-e kiali_password=${KIALI_PASSWORD} \
-	-e kiali_method_name=${KIALI_METHOD_NAME} \
+	-e test_name=${TEST_NAME} \
 	-e influx_address=${INFLUX_ADDRESS} \
 	-e influx_username=${INFLUX_USERNAME} \
 	-e influx_password=${INFLUX_PASSWORD} \

@@ -1,27 +1,13 @@
 - hosts: localhost
   connection: local
   vars: 
-    - kialiAPI: '' 
 
   tasks:
-  - name: Get Kiali API URL with parameters
-    kiali_ansible_module:
-      kiali_api_hostname: "{{ kiali_hostname }}"
-      kiali_api_port: "{{ kiali_port }}"
-      kiali_api_username: "{{ kiali_username }}"
-      kiali_api_password: "{{ kiali_password }}"
-      kiali_api_request: 
-        method_name: "{{ kiali_method_name }}"
-        path: "{{ kiali_path }}" 
-        params: "{{ kiali_params | default('') }}" 
-    register: kialiAPI
-
-
   - name: Deleting Namespace from old testing
     k8s:
       api_version: v1
       kind: Project
-      name: "{{ kiali_method_name | lower }}-api-performance-test"
+      name: "{{ test_name | lower }}-api-performance-test"
       state: absent
     ignore_errors: true
 
@@ -29,7 +15,7 @@
     k8s:
       api_version: v1
       kind: Project
-      name: "{{ kiali_method_name | lower }}-api-performance-test"
+      name: "{{ test_name | lower }}-api-performance-test"
       state: present
     register: projectStatus
     until: projectStatus.changed == true
@@ -44,10 +30,10 @@
         kind: ConfigMap
         metadata:
           name: kiali-api-performance-configmap
-          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+          namespace: "{{ test_name | lower }}-api-performance-test"
         data:
           duration: "{{ duration }}"
-          route: "{{ kialiAPI['url'] }}"
+          route: "{{ kiali_hostname }}"
           rate: "{{ rate }}"
           session_id: "{{ 9999999 | random | to_uuid }}"
           influx_address: "{{ influx_address }}"
@@ -62,7 +48,7 @@
         kind: Secret
         metadata:
           name: influx-credentials
-          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+          namespace: "{{ test_name | lower }}-api-performance-test"
         type: Opaque
         data:
           username: "{{ influx_username | b64encode }}"
@@ -76,7 +62,7 @@
         kind: Secret
         metadata:
           name: kiali-credentials
-          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+          namespace: "{{ test_name | lower }}-api-performance-test"
         type: Opaque
         data:
           username: "{{ kiali_username | b64encode }}"
@@ -90,7 +76,7 @@
         kind: ReplicaSet
         metadata:
           name: kiali-windsock-user{{ item }}
-          namespace: "{{ kiali_method_name | lower }}-api-performance-test"
+          namespace: "{{ test_name | lower }}-api-performance-test"
           labels:
             app: kiali-windsock-user{{ item }}
         spec:
