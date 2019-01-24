@@ -40,7 +40,7 @@ type NamespaceParam struct {
 	Name string `json:"namespace"`
 }
 
-// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype istioConfigCreate istioConfigCreateSubtype
+// swagger:parameters istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype
 type ObjectNameParam struct {
 	// The Istio object name.
 	//

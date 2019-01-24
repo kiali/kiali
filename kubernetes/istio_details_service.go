@@ -49,16 +49,17 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 }
 
 // CreateIstioObject creates an Istio object
-func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, name string, json string) (IstioObject, error) {
+func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error) {
 	var result runtime.Object
 	var err error
 
-	if api == configGroupVersion.Group {
-		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
-	} else if api == networkingGroupVersion.Group {
-		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
+	byteJson := []byte(json)
+	if api == ConfigGroupVersion.Group {
+		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+	} else if api == NetworkingGroupVersion.Group {
+		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	} else {
-		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).SubResource(name).Body(json).Do().Get()
+		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	}
 
 	if err != nil {
@@ -67,7 +68,7 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, name stri
 
 	istioObject, ok := result.(*GenericIstioObject)
 	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
+		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, resourceType)
 	}
 	return istioObject, err
 }
@@ -76,9 +77,9 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, name stri
 func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
 	log.Debugf("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var err error
-	if api == configGroupVersion.Group {
+	if api == ConfigGroupVersion.Group {
 		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else if api == networkingGroupVersion.Group {
+	} else if api == NetworkingGroupVersion.Group {
 		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	} else {
 		_, err = in.istioAuthenticationApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
@@ -333,9 +334,9 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	var result runtime.Object
 	var err error
 	bytePatch := []byte(jsonPatch)
-	if api == configGroupVersion.Group {
+	if api == ConfigGroupVersion.Group {
 		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	} else if api == networkingGroupVersion.Group {
+	} else if api == NetworkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	} else {
 		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()

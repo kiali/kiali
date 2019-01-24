@@ -1,8 +1,10 @@
 package business
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -43,16 +45,22 @@ const (
 )
 
 var resourceTypesToAPI = map[string]string{
-	DestinationRules:  "networking.istio.io",
-	VirtualServices:   "networking.istio.io",
-	ServiceEntries:    "networking.istio.io",
-	Gateways:          "networking.istio.io",
-	Adapters:          "config.istio.io",
-	Templates:         "config.istio.io",
-	Rules:             "config.istio.io",
-	QuotaSpecs:        "config.istio.io",
-	QuotaSpecBindings: "config.istio.io",
-	Policies:          "authentication.istio.io",
+	DestinationRules:  kubernetes.NetworkingGroupVersion.Group,
+	VirtualServices:   kubernetes.NetworkingGroupVersion.Group,
+	ServiceEntries:    kubernetes.NetworkingGroupVersion.Group,
+	Gateways:          kubernetes.NetworkingGroupVersion.Group,
+	Adapters:          kubernetes.ConfigGroupVersion.Group,
+	Templates:         kubernetes.ConfigGroupVersion.Group,
+	Rules:             kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecs:        kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecBindings: kubernetes.ConfigGroupVersion.Group,
+	Policies:          kubernetes.AuthenticationGroupVersion.Group,
+}
+
+var apiToVersion = map[string]string{
+	kubernetes.NetworkingGroupVersion.Group: kubernetes.ApiNetworkingVersion,
+	kubernetes.ConfigGroupVersion.Group:     kubernetes.ApiConfigVersion,
+	kubernetes.ApiAuthenticationVersion:     kubernetes.ApiAuthenticationVersion,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -278,6 +286,68 @@ func GetIstioAPI(resourceType string) string {
 	return resourceTypesToAPI[resourceType]
 }
 
+// ParseJsonForCreate checks if a json is well formed according resourceType/subresourceType.
+// It returns a json validated to be used in the Create operation, or an error to report in the handler layer.
+func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType string, body []byte) (string, error) {
+	var err error
+	istioConfigDetail := models.IstioConfigDetails{}
+	apiVersion := apiToVersion[resourceTypesToAPI[resourceType]]
+	var kind string
+	var marshalled string
+	if resourceType == Adapters || resourceType == Templates {
+		kind = kubernetes.PluralType[subresourceType]
+	} else {
+		kind = kubernetes.PluralType[resourceType]
+	}
+	switch resourceType {
+	case Gateways:
+		istioConfigDetail.Gateway = &models.Gateway{}
+		err = json.Unmarshal(body, istioConfigDetail.Gateway)
+	case VirtualServices:
+		istioConfigDetail.VirtualService = &models.VirtualService{}
+		err = json.Unmarshal(body, istioConfigDetail.VirtualService)
+	case DestinationRules:
+		istioConfigDetail.DestinationRule = &models.DestinationRule{}
+		err = json.Unmarshal(body, istioConfigDetail.DestinationRule)
+	case ServiceEntries:
+		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
+		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
+	case Rules:
+		istioConfigDetail.Rule = &models.IstioRule{}
+		err = json.Unmarshal(body, istioConfigDetail.Rule)
+	case Adapters:
+		istioConfigDetail.Adapter = &models.IstioAdapter{}
+		err = json.Unmarshal(body, istioConfigDetail.Adapter)
+	case Templates:
+		istioConfigDetail.Template = &models.IstioTemplate{}
+		err = json.Unmarshal(body, istioConfigDetail.Template)
+	case QuotaSpecs:
+		istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
+		err = json.Unmarshal(body, istioConfigDetail.QuotaSpec)
+	case QuotaSpecBindings:
+		istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
+		err = json.Unmarshal(body, istioConfigDetail.QuotaSpecBinding)
+	case Policies:
+		istioConfigDetail.Policy = &models.Policy{}
+		err = json.Unmarshal(body, istioConfigDetail.Policy)
+	default:
+		err = fmt.Errorf("Object type not found: %v", resourceType)
+	}
+	if err != nil {
+		return "", err
+	}
+	// Append apiVersion and kind
+	marshalled = string(body)
+	marshalled = strings.TrimSpace(marshalled)
+	marshalled = "" +
+		"{\n" +
+		"\"kind\": \"" + kind + "\",\n" +
+		"\"apiVersion\": \"" + apiVersion + "\"," +
+		marshalled[1:]
+
+	return marshalled, nil
+}
+
 // DeleteIstioConfigDetail deletes the given Istio resource
 func (in *IstioConfigService) DeleteIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name string) (err error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "DeleteIstioConfigDetail")
@@ -296,10 +366,10 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(api, namespace, resourceTy
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "UpdateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
-	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch, in.k8s.UpdateIstioObject)
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, jsonPatch, false)
 }
 
-func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string, fn func(string, string, string, string, string) (kubernetes.IstioObject, error)) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string, create bool) (models.IstioConfigDetails, error) {
 	var err error
 	updatedType := resourceType
 	if resourceType == Adapters || resourceType == Templates {
@@ -311,7 +381,13 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = resourceType
 
-	result, err = fn(api, namespace, updatedType, name, json)
+	if create {
+		// Create new object
+		result, err = in.k8s.CreateIstioObject(api, namespace, updatedType, json)
+	} else {
+		// Update/Path existing object
+		result, err = in.k8s.UpdateIstioObject(api, namespace, updatedType, name, json)
+	}
 	if err != nil {
 		return istioConfigDetail, err
 	}
@@ -354,12 +430,12 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 
 }
 
-func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype, json string) (models.IstioConfigDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
-	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, name, json, in.k8s.CreateIstioObject)
+	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, "", json, true)
 }
 
 func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {

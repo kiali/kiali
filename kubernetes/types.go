@@ -157,23 +157,23 @@ const (
 )
 
 var (
-	configGroupVersion = schema.GroupVersion{
+	ConfigGroupVersion = schema.GroupVersion{
 		Group:   "config.istio.io",
 		Version: "v1alpha2",
 	}
-	apiConfigVersion = configGroupVersion.Group + "/" + configGroupVersion.Version
+	ApiConfigVersion = ConfigGroupVersion.Group + "/" + ConfigGroupVersion.Version
 
-	networkingGroupVersion = schema.GroupVersion{
+	NetworkingGroupVersion = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
-	apiNetworkingVersion = networkingGroupVersion.Group + "/" + networkingGroupVersion.Version
+	ApiNetworkingVersion = NetworkingGroupVersion.Group + "/" + NetworkingGroupVersion.Version
 
-	authenticationGroupVersion = schema.GroupVersion{
+	AuthenticationGroupVersion = schema.GroupVersion{
 		Group:   "authentication.istio.io",
 		Version: "v1alpha1",
 	}
-	apiAuthenticationVersion = authenticationGroupVersion.Group + "/" + authenticationGroupVersion.Version
+	ApiAuthenticationVersion = AuthenticationGroupVersion.Group + "/" + AuthenticationGroupVersion.Version
 
 	networkingTypes = []struct {
 		objectKind     string
@@ -372,6 +372,51 @@ var (
 		quotaType:                quotas,
 		reportnothingType:        reportnothings,
 		servicecontrolreportType: servicecontrolreports,
+	}
+
+	PluralType = map[string]string{
+		// Networking
+		gateways:         gatewayType,
+		virtualServices:  virtualServiceType,
+		destinationRules: destinationRuleType,
+		serviceentries:   serviceentryType,
+
+		// Main Config files
+		rules:             ruleType,
+		quotaspecs:        quotaspecType,
+		quotaspecbindings: quotaspecbindingType,
+
+		// Adapters
+		circonuses:      circonusType,
+		deniers:         denierType,
+		fluentds:        fluentdType,
+		handlers:        handlerType,
+		kubernetesenvs:  kubernetesenvType,
+		listcheckers:    listcheckerType,
+		memquotas:       memquotaType,
+		opas:            opaType,
+		prometheuses:    prometheusType,
+		rbacs:           rbacType,
+		servicecontrols: servicecontrolType,
+		solarwindses:    solarwindsType,
+		stackdrivers:    stackdriverType,
+		statsds:         statsdType,
+		stdios:          stdioType,
+
+		// Templates
+		apikeys:               apikeyType,
+		authorizations:        authorizationType,
+		checknothings:         checknothingType,
+		kuberneteses:          kubernetesType,
+		listEntries:           listEntryType,
+		logentries:            logentryType,
+		metrics:               metricType,
+		quotas:                quotaType,
+		reportnothings:        reportnothingType,
+		servicecontrolreports: servicecontrolreportType,
+
+		// Policies
+		policies: policyType,
 	}
 )
 
