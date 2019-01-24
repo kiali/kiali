@@ -30,8 +30,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 							if aDestinationWeight, ok := route.([]interface{}); ok {
 								for i, destination := range aDestinationWeight {
 									if !n.checkDestination(destination, protocol) {
-										validation := models.BuildCheck("DestinationWeight on route doesn't have a valid service (host not found)",
-											models.ErrorSeverity,
+										validation := models.Build("virtualservices.nohost.hostnotfound",
 											fmt.Sprintf("spec/%s/route[%d]/destination/host", protocol, i))
 										validations = append(validations, &validation)
 									}
@@ -45,8 +44,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	if countOfDefinedProtocols < 1 {
-		validation := models.BuildCheck("VirtualService doesn't define any valid route protocol",
-			models.ErrorSeverity, "")
+		validation := models.Build("virtualservices.nohost.invalidprotocol", "")
 		validations = append(validations, &validation)
 	}
 

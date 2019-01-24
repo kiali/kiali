@@ -64,8 +64,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 
 func addError(validations models.IstioValidations, gatewayRuleName string, serverIndex, hostIndex int) models.IstioValidations {
 	key := models.IstioValidationKey{Name: gatewayRuleName, ObjectType: GatewayCheckerType}
-	checks := models.BuildCheck("More than one Gateway for the same host port combination",
-		models.WarningSeverity,
+	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{
 		Name:       gatewayRuleName,
