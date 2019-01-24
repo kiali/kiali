@@ -61,15 +61,15 @@ func writeVegetaResultInfluxDatabase(res *vegeta.Result, pod string, session str
 		"session":         session,
 		"sequential_code": strconv.Itoa(int(res.Seq)),
 		"route":           routeEnv,
-		"pod":             pod,
 		"response_code":   strconv.Itoa(int(res.Code)),
+		"pod":             pod,
 	}
 
 	fields := map[string]interface{}{
 		"error":         res.Error,
 		"body":          string(res.Body[:]),
-		"response_size": strconv.Itoa(int(res.BytesIn)),
-		"latency":       res.Latency,
+		"response_size": int64(res.BytesIn),
+		"latency":       int64(res.Latency / time.Millisecond),
 	}
 
 	pt, _ := client.NewPoint("requests", tags, fields, res.Timestamp)

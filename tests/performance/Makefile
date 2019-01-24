@@ -2,20 +2,20 @@ DOCKER_NAME ?= gbaufake/windsock
 DOCKER_TAG ?= latest
 
 
-KIALI_HOSTNAME = 'https://kiali-istio-system.openshift2.jonqe.lab.eng.bos.redhat.com:443/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&duration=10m'
+KIALI_HOSTNAME = 'kiali.hostname.com'
 KIALI_USERNAME = 'admin'
 KIALI_PASSWORD = 'admin'
 TEST_NAME = 'graphNamespace'
 
 
-# InfluxDB is needed to compile all the tests logs from different pods
-INFLUX_ADDRESS = 'http://route-influxdb.prod.os.jonqe.lab.eng.bos.redhat.com:80'
+# InfluxDB is needed to compile all the tests logs from different pods (it is not directly provided)
+INFLUX_ADDRESS = 'influx-hostname.com'
 INFLUX_USERNAME = 'admin'
 INFLUX_PASSWORD = 'admin'
 
 
 RATE = '1' # requests rate per second
-DURATION = '100' # duration of test in seconds (0 is eternal)
+DURATION = '0' # duration of test in seconds (0 is eternal)
 NUMBER_OF_USERS = '5' # number of pods which be deployed
 
 
