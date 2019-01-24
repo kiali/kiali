@@ -49,7 +49,7 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 				if !ok || destinationWeight["destination"] == nil {
 					valid = false
 					path := fmt.Sprintf("spec/%s[%d]/route[%d]", protocol, routeIdx, destWeightIdx)
-					validation := models.BuildErrorCheck("Destination field is mandatory", path)
+					validation := models.BuildCheck("Destination field is mandatory", models.ErrorSeverity, path)
 					validations = append(validations, &validation)
 					continue
 				}
@@ -71,7 +71,7 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 
 				if !checker.subsetPresent(host, subset) {
 					path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination", protocol, routeIdx, destWeightIdx)
-					validation := models.BuildWarningCheck("Subset not found", path)
+					validation := models.BuildCheck("Subset not found", models.WarningSeverity, path)
 					validations = append(validations, &validation)
 				}
 			}

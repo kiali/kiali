@@ -56,7 +56,8 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validations models.IstioValidations) {
 	virtualServiceName := virtualService.GetObjectMeta().Name
 	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: "virtualservice"}
-	checks := models.BuildWarningCheck("More than one Virtual Service for same host", "spec/hosts")
+	checks := models.BuildCheck("More than one Virtual Service for same host",
+		models.WarningSeverity, "spec/hosts")
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
 		ObjectType: "virtualservice",

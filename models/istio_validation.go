@@ -73,15 +73,7 @@ var ObjectTypeSingular = map[string]string{
 	"quotaspecbindings": "quotaspecbinding",
 }
 
-func BuildWarningCheck(message, path string) IstioCheck {
-	return buildCheck(message, WarningSeverity, path)
-}
-
-func BuildErrorCheck(message, path string) IstioCheck {
-	return buildCheck(message, ErrorSeverity, path)
-}
-
-func buildCheck(message string, severity SeverityLevel, path string) IstioCheck {
+func BuildCheck(message string, severity SeverityLevel, path string) IstioCheck {
 	return IstioCheck{Message: message, Severity: severity, Path: path}
 }
 
