@@ -48,6 +48,9 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, string) {
 	if q.App != "" {
 		labels = append(labels, fmt.Sprintf(`%s_app="%s"`, ref, q.App))
 	}
+	if q.RequestProtocol != "" {
+		labels = append(labels, fmt.Sprintf(`request_protocol="%s"`, q.RequestProtocol))
+	}
 
 	full := "{" + strings.Join(labels, ",") + "}"
 
