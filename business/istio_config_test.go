@@ -792,13 +792,13 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	configService := mockCreateIstioConfigDetails()
 
-	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "{}")
+	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", createVirtualService.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
-	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "{}")
+	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", []byte("{}"))
 	assert.Equal("test", createTemplate.Namespace.Name)
 	assert.Equal("templates", createTemplate.ObjectType)
 	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)

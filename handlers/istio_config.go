@@ -303,12 +303,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	json, err := business.IstioConfig.ParseJsonForCreate(objectType, objectSubtype, body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
-	}
-
-	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, json)
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, body)
 	if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, err.Error())
 		return

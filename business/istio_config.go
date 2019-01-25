@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	errors2 "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -430,11 +432,15 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 
 }
 
-func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype, json string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceType, resourceSubtype string, body []byte) (models.IstioConfigDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "IstioConfigService", "CreateIstioConfigDetail")
 	defer promtimer.ObserveNow(&err)
 
+	json, err := in.ParseJsonForCreate(resourceType, resourceSubtype, body)
+	if err != nil {
+		return models.IstioConfigDetails{}, errors2.NewBadRequest(err.Error())
+	}
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, "", json, true)
 }
 
