@@ -66,14 +66,13 @@
           "id": "347e210a97f5235b5a60b810ef1bfaa6",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "100.00"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
             }
-          ]
+          }
         }
       },
       {
@@ -81,14 +80,12 @@
           "id": "c3fa6dedc4a1b3d61a3bb48dcb46dafa",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcp": "31.00"
-              }
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "31.00"
             }
-          ]
+          }
         }
       }
     ]
