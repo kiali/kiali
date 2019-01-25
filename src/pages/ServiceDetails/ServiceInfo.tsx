@@ -62,20 +62,20 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       hasVirtualServiceChecks: false,
       hasDestinationRuleChecks: false
     };
-
+    const validations = this.props.validations || {};
     validationChecks.hasVirtualServiceChecks = this.props.serviceDetails.virtualServices.items.some(
       virtualService =>
-        this.props.validations['virtualservice'] &&
-        this.props.validations['virtualservice'][virtualService.metadata.name] &&
-        this.props.validations['virtualservice'][virtualService.metadata.name].checks.length > 0
+        validations['virtualservice'] &&
+        validations['virtualservice'][virtualService.metadata.name] &&
+        validations['virtualservice'][virtualService.metadata.name].checks.length > 0
     );
 
     validationChecks.hasDestinationRuleChecks = this.props.serviceDetails.destinationRules.items.some(
       destinationRule =>
-        this.props.validations['destinationrule'] &&
+        validations['destinationrule'] &&
         destinationRule.metadata &&
-        this.props.validations['destinationrule'][destinationRule.metadata.name] &&
-        this.props.validations['destinationrule'][destinationRule.metadata.name].checks.length > 0
+        validations['destinationrule'][destinationRule.metadata.name] &&
+        validations['destinationrule'][destinationRule.metadata.name].checks.length > 0
     );
 
     return validationChecks;
@@ -103,6 +103,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const dependencies = this.props.serviceDetails.dependencies || {};
     const virtualServices = this.props.serviceDetails.virtualServices || [];
     const destinationRules = this.props.serviceDetails.destinationRules || [];
+    const validations = this.props.validations || {};
     const validationChecks = this.validationChecks();
     const getSeverityIcon: any = (severity: string = 'error') => (
       <span className={tabIconStyle}>
@@ -114,8 +115,8 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = 'warning';
       keys.map(key => {
-        const validations = this.props.validations![type][key];
-        if (validationToSeverity(validations) === 'error') {
+        const validationsForIcon = (this.props.validations || {})![type][key];
+        if (validationToSeverity(validationsForIcon) === 'error') {
           severity = 'error';
         }
       });
@@ -215,7 +216,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
                           virtualServices={virtualServices.items}
-                          validations={this.props.validations!['virtualservice']}
+                          validations={validations!['virtualservice']}
                         />
                       )}
                     </WithErrorBoundary>
@@ -227,7 +228,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules
                           destinationRules={destinationRules.items}
-                          validations={this.props.validations!['destinationrule']}
+                          validations={validations!['destinationrule']}
                         />
                       )}
                     </WithErrorBoundary>
