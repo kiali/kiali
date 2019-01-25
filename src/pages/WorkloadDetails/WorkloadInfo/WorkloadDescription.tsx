@@ -55,6 +55,11 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               <div>
                 <strong>Resource Version</strong> {workload.resourceVersion}
               </div>
+              {workload.runtimes.length > 0 && (
+                <div>
+                  <strong>Runtime(s)</strong> {workload.runtimes.map(rt => rt.name).join(', ')}
+                </div>
+              )}
             </Col>
             <Col xs={12} sm={4} md={4} lg={4} />
             <Col xs={12} sm={4} md={2} lg={2}>
