@@ -94,7 +94,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var istioConfigValidations models.IstioValidations
+	var istioConfigValidations = models.IstioValidations{}
 
 	wg := sync.WaitGroup{}
 	if includeValidations {
