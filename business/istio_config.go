@@ -453,7 +453,7 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 		if objectSubtype != "" {
 			resourceType = objectSubtype
 		}
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"patch", "update", "delete"})
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "update", "delete"})
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
