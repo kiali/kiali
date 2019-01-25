@@ -24,7 +24,7 @@ export class CancelablePromise<T> {
     while (last.next) {
       last = last.next;
     }
-    last.next = new CancelablePromise<T>(this.promise.then(mapper));
+    last.next = new CancelablePromise<T>(this.promise.then(t => (this.hasCanceled ? t : mapper(t))));
     this.promise = last.next.promise;
     return last.next;
   }

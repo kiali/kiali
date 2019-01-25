@@ -1,22 +1,13 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import {
-  AggregateStatusNotification,
-  AggregateStatusNotifications,
-  Breadcrumb,
-  Card,
-  CardBody,
-  CardGrid,
-  CardTitle,
-  Col,
-  Icon,
-  Row
-} from 'patternfly-react';
+import { Breadcrumb, Card, CardBody, CardGrid, CardTitle, Col, Icon, Row } from 'patternfly-react';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
+import _ from 'lodash';
 
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import * as API from '../../services/Api';
 import {
   DEGRADED,
@@ -27,15 +18,15 @@ import {
   NamespaceServiceHealth,
   NamespaceWorkloadHealth
 } from '../../types/Health';
-import Namespace from '../../types/Namespace';
+import { SortField } from '../../types/SortFilters';
 import { authentication } from '../../utils/Authentication';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
-import OverviewStatus from './OverviewStatus';
 import OverviewToolbarContainer, { OverviewToolbar, OverviewType } from './OverviewToolbar';
-import NamespaceInfo from './NamespaceInfo';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
-import { SortField } from '../../types/SortFilters';
+import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
+import OverviewStatuses from './OverviewStatuses';
+import { switchType } from './OverviewHelper';
 
 type State = {
   namespaces: NamespaceInfo[];
@@ -49,6 +40,8 @@ const cardGridStyle = style({
 });
 
 class OverviewPage extends React.Component<OverviewProps, State> {
+  private promises = new PromisesRegistry();
+
   private static summarizeHealthFilters() {
     const healthFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.healthFilter.title);
     if (healthFilters.length === 0) {
@@ -84,10 +77,6 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     };
   }
 
-  private static switchType<T, U, V>(type: OverviewType, caseApp: T, caseService: U, caseWorkload: V): T | U | V {
-    return type === 'app' ? caseApp : type === 'service' ? caseService : caseWorkload;
-  }
-
   constructor(props: OverviewProps) {
     super(props);
     this.state = {
@@ -100,76 +89,100 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     this.load();
   }
 
+  componentWillUnmount() {
+    this.promises.cancelAll();
+  }
+
   sortFields() {
     return FiltersAndSorts.sortFields;
   }
 
   load = () => {
-    API.getNamespaces(authentication())
+    this.promises.cancelAll();
+    this.promises
+      .register('namespaces', API.getNamespaces(authentication()))
       .then(namespacesResponse => {
         const nameFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.nameFilter.title);
-        const namespaces: Namespace[] = namespacesResponse['data'].filter(ns => {
-          return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
-        });
-        this.fetchHealth(namespaces.map(namespace => namespace.name));
+        const allNamespaces: NamespaceInfo[] = namespacesResponse['data']
+          .filter(ns => {
+            return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
+          })
+          .map(ns => {
+            const previous = this.state.namespaces.find(prev => prev.name === ns.name);
+            return {
+              name: ns.name,
+              status: previous ? previous.status : undefined
+            };
+          });
+        const isAscending = ListPagesHelper.isCurrentSortAscending();
+        const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
+        const type = OverviewToolbar.currentOverviewType();
+        // Set state before actually fetching health
+        this.setState({ type: type, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) }, () =>
+          this.fetchHealth(isAscending, sortField, type)
+        );
       })
       .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list', namespacesError));
   };
 
-  fetchHealth(namespaces: string[]) {
+  fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType) {
     const rateInterval = ListPagesHelper.currentDuration();
-    const isAscending = ListPagesHelper.isCurrentSortAscending();
-    const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
-    const type = OverviewToolbar.currentOverviewType();
-    const promises = namespaces.map(namespace => {
-      const healthPromise: Promise<
-        NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth
-      > = OverviewPage.switchType(
-        type,
-        () => API.getNamespaceAppHealth(authentication(), namespace, rateInterval),
-        () => API.getNamespaceServiceHealth(authentication(), namespace, rateInterval),
-        () => API.getNamespaceWorkloadHealth(authentication(), namespace, rateInterval)
-      )();
-      return healthPromise.then(r => ({
-        namespace: namespace,
-        health: r
-      }));
+    // debounce async for back-pressure, ten by ten
+    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+      this.promises
+        .registerChained('healthchunks', undefined, () => this.fetchHealthChunk(chunk, rateInterval, type))
+        .then(() => {
+          this.setState(prevState => {
+            let newNamespaces = prevState.namespaces.slice();
+            if (sortField.id === 'health') {
+              newNamespaces = FiltersAndSorts.sortFunc(newNamespaces, sortField, isAscending);
+            }
+            return { namespaces: newNamespaces };
+          });
+        });
     });
-    Promise.all(promises)
-      .then(responses => {
-        const allNamespaces: NamespaceInfo[] = [];
-        responses.forEach(response => {
-          const info: NamespaceInfo = {
-            name: response.namespace,
+  }
+
+  fetchHealthChunk(chunk: NamespaceInfo[], rateInterval: number, type: OverviewType) {
+    const apiFunc = switchType(
+      type,
+      API.getNamespaceAppHealth,
+      API.getNamespaceServiceHealth,
+      API.getNamespaceWorkloadHealth
+    );
+    return Promise.all(
+      chunk.map(nsInfo => {
+        const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
+          authentication(),
+          nsInfo.name,
+          rateInterval
+        );
+        return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
+      })
+    )
+      .then(results => {
+        results.forEach(result => {
+          const nsStatus: NamespaceStatus = {
             inError: [],
             inWarning: [],
             inSuccess: [],
             notAvailable: []
           };
-          const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
-          let show = noFilter;
-          Object.keys(response.health).forEach(item => {
-            const health: Health = response.health[item];
+          Object.keys(result.health).forEach(item => {
+            const health: Health = result.health[item];
             const status = health.getGlobalStatus();
             if (status === FAILURE) {
-              info.inError.push(item);
-              show = show || showInError;
+              nsStatus.inError.push(item);
             } else if (status === DEGRADED) {
-              info.inWarning.push(item);
-              show = show || showInWarning;
+              nsStatus.inWarning.push(item);
             } else if (status === HEALTHY) {
-              info.inSuccess.push(item);
-              show = show || showInSuccess;
+              nsStatus.inSuccess.push(item);
             } else {
-              info.notAvailable.push(item);
+              nsStatus.notAvailable.push(item);
             }
           });
-          if (show) {
-            allNamespaces.push(info);
-          }
+          result.nsInfo.status = nsStatus;
         });
-
-        this.setState({ type: type, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) });
       })
       .catch(err => this.handleAxiosError('Could not fetch health', err));
   }
@@ -184,14 +197,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   render() {
-    const targetPage = OverviewPage.switchType(
-      this.state.type,
-      TargetPage.APPLICATIONS,
-      TargetPage.SERVICES,
-      TargetPage.WORKLOADS
-    );
-    const oneItemText = OverviewPage.switchType(this.state.type, '1 Application', '1 Service', '1 Workload');
-    const pluralText = OverviewPage.switchType(this.state.type, ' Applications', ' Services', ' Workloads');
+    const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
     return (
       <>
         <Breadcrumb title={true}>
@@ -201,79 +207,58 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         <div className="cards-pf">
           <CardGrid matchHeight={true} className={cardGridStyle}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
-              {this.state.namespaces.map(ns => {
-                const nbItems = ns.inError.length + ns.inWarning.length + ns.inSuccess.length + ns.notAvailable.length;
-                return (
-                  <Col xs={6} sm={3} md={3} key={ns.name}>
-                    <Card matchHeight={true} accented={true} aggregated={true}>
-                      <CardTitle>{ns.name}</CardTitle>
-                      <CardBody>
-                        <ListPageLink target={targetPage} namespaces={[{ name: ns.name }]}>
-                          {nbItems === 1 ? oneItemText : nbItems + pluralText}
-                        </ListPageLink>
-                        <AggregateStatusNotifications>
-                          {ns.inError.length > 0 && (
-                            <OverviewStatus
-                              id={ns.name + '-failure'}
-                              namespace={ns.name}
-                              status={FAILURE}
-                              items={ns.inError}
-                              targetPage={targetPage}
-                            />
+              {this.state.namespaces
+                .filter(ns => {
+                  return (
+                    noFilter ||
+                    (ns.status &&
+                      ((showInError && ns.status.inError.length > 0) ||
+                        (showInWarning && ns.status.inWarning.length > 0) ||
+                        (showInSuccess && ns.status.inSuccess.length > 0)))
+                  );
+                })
+                .map(ns => {
+                  return (
+                    <Col xs={6} sm={3} md={3} key={ns.name}>
+                      <Card matchHeight={true} accented={true} aggregated={true}>
+                        <CardTitle>{ns.name}</CardTitle>
+                        <CardBody>
+                          {ns.status ? (
+                            <OverviewStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />
+                          ) : (
+                            <div style={{ height: 70 }} />
                           )}
-                          {ns.inWarning.length > 0 && (
-                            <OverviewStatus
-                              id={ns.name + '-degraded'}
-                              namespace={ns.name}
-                              status={DEGRADED}
-                              items={ns.inWarning}
-                              targetPage={targetPage}
-                            />
-                          )}
-                          {ns.inSuccess.length > 0 && (
-                            <OverviewStatus
-                              id={ns.name + '-healthy'}
-                              namespace={ns.name}
-                              status={HEALTHY}
-                              items={ns.inSuccess}
-                              targetPage={targetPage}
-                            />
-                          )}
-                          {nbItems === ns.notAvailable.length && (
-                            <AggregateStatusNotification>N/A</AggregateStatusNotification>
-                          )}
-                        </AggregateStatusNotifications>
-                        <div>
-                          <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">
-                            <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                          </Link>
-                          <ListPageLink
-                            target={TargetPage.APPLICATIONS}
-                            namespaces={[{ name: ns.name }]}
-                            title="Applications list"
-                          >
-                            <Icon type="pf" name="applications" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                          </ListPageLink>
-                          <ListPageLink
-                            target={TargetPage.WORKLOADS}
-                            namespaces={[{ name: ns.name }]}
-                            title="Workloads list"
-                          >
-                            <Icon type="pf" name="bundle" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                          </ListPageLink>
-                          <ListPageLink
-                            target={TargetPage.SERVICES}
-                            namespaces={[{ name: ns.name }]}
-                            title="Services list"
-                          >
-                            <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                          </ListPageLink>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </Col>
-                );
-              })}
+                          <div>
+                            <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">
+                              <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
+                            </Link>
+                            <ListPageLink
+                              target={TargetPage.APPLICATIONS}
+                              namespaces={[{ name: ns.name }]}
+                              title="Applications list"
+                            >
+                              <Icon type="pf" name="applications" style={{ paddingLeft: 10, paddingRight: 10 }} />
+                            </ListPageLink>
+                            <ListPageLink
+                              target={TargetPage.WORKLOADS}
+                              namespaces={[{ name: ns.name }]}
+                              title="Workloads list"
+                            >
+                              <Icon type="pf" name="bundle" style={{ paddingLeft: 10, paddingRight: 10 }} />
+                            </ListPageLink>
+                            <ListPageLink
+                              target={TargetPage.SERVICES}
+                              namespaces={[{ name: ns.name }]}
+                              title="Services list"
+                            >
+                              <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
+                            </ListPageLink>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </Col>
+                  );
+                })}
             </Row>
           </CardGrid>
         </div>

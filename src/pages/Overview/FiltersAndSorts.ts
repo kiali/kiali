@@ -53,13 +53,19 @@ export namespace FiltersAndSorts {
       isNumeric: false,
       param: 'h',
       compare: (a: NamespaceInfo, b: NamespaceInfo) => {
-        let diff = b.inError.length - a.inError.length;
-        if (diff !== 0) {
-          return diff;
-        }
-        diff = b.inWarning.length - a.inWarning.length;
-        if (diff !== 0) {
-          return diff;
+        if (a.status && b.status) {
+          let diff = b.status.inError.length - a.status.inError.length;
+          if (diff !== 0) {
+            return diff;
+          }
+          diff = b.status.inWarning.length - a.status.inWarning.length;
+          if (diff !== 0) {
+            return diff;
+          }
+        } else if (a.status) {
+          return -1;
+        } else if (b.status) {
+          return 1;
         }
         // default comparison fallback
         return a.name.localeCompare(b.name);
