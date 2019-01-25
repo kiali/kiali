@@ -530,8 +530,8 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 			},
 		},
 		Status: auth_v1.SubjectAccessReviewStatus{
-			Allowed: false,
-			Reason:  "not authorized",
+			Allowed: true,
+			Reason:  "authorized",
 		},
 	}
 	update := auth_v1.SelfSubjectAccessReview{
