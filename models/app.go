@@ -55,6 +55,6 @@ type App struct {
 	// required: true
 	ServiceNames []string `json:"serviceNames"`
 
-	// Custom dashboard ids and titles
-	CustomDashboards []DashboardRef `json:"customDashboards"`
+	// Runtimes and associated dashboards
+	Runtimes []Runtime `json:"runtimes"`
 }

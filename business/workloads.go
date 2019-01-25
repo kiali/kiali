@@ -994,14 +994,7 @@ func controllerPriority(type1, type2 string) string {
 
 // fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this workload and add them to the model
 func (in *WorkloadService) fillCustomDashboardRefs(namespace string, workload *models.Workload) {
-	uniqueRefs := make(map[string]string)
-	for _, pod := range workload.Pods {
-		for _, ref := range pod.CustomDashboards {
-			if ref != "" {
-				uniqueRefs[ref] = ref
-			}
-		}
-	}
+	uniqueRefsList := getUniqueRuntimes(workload.Pods)
 	mon, err := kubernetes.NewKialiMonitoringClient()
 	if err != nil {
 		// Do not fail the whole query, just log & return
@@ -1009,5 +1002,27 @@ func (in *WorkloadService) fillCustomDashboardRefs(namespace string, workload *m
 		return
 	}
 	dash := NewDashboardsService(mon, in.prom)
-	workload.CustomDashboards = dash.getTitlesFromTemplates(namespace, uniqueRefs)
+	workload.Runtimes = dash.buildRuntimesList(namespace, uniqueRefsList)
+}
+
+func getUniqueRuntimes(pods models.Pods) []string {
+	// Get uniqueness from plain list rather than map to preserve ordering; anyway, very low amount of objects is expected
+	uniqueRefs := []string{}
+	for _, pod := range pods {
+		for _, ref := range pod.RuntimesAnnotation {
+			if ref != "" {
+				exists := false
+				for _, existingRef := range uniqueRefs {
+					if ref == existingRef {
+						exists = true
+						break
+					}
+				}
+				if !exists {
+					uniqueRefs = append(uniqueRefs, ref)
+				}
+			}
+		}
+	}
+	return uniqueRefs
 }

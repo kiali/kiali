@@ -19,7 +19,8 @@ var kialiMonitoringGroupVersion = schema.GroupVersion{
 }
 
 type MonitoringDashboard struct {
-	Spec MonitoringDashboardSpec
+	Metadata map[string]interface{}
+	Spec     MonitoringDashboardSpec
 }
 
 type MonitoringDashboardSpec struct {
