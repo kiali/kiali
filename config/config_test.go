@@ -2,7 +2,10 @@ package config
 
 import (
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/kiali/kiali/config/security"
 )
 
 func TestEnvVar(t *testing.T) {
@@ -208,5 +211,69 @@ func TestError(t *testing.T) {
 	_, err = LoadFromFile("bogus-file-name")
 	if err == nil {
 		t.Errorf("Load should have failed")
+	}
+}
+
+func TestMarshalUnmarshalCredentials(t *testing.T) {
+	testConf := Config{
+		Server: Server{
+			Credentials: security.Credentials{
+				Username: "foo",
+				Password: "bar",
+			},
+		},
+	}
+
+	yamlString, err := Marshal(&testConf)
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	if !strings.Contains(yamlString, "username: foo\n") {
+		t.Errorf("Failed to marshal credentials - [%v]", yamlString)
+	}
+	conf, err := Unmarshal(yamlString)
+	if err != nil {
+		t.Errorf("Failed to unmarshal: %v", err)
+	}
+	if conf.Server.Credentials.Username != "foo" {
+		t.Errorf("Failed to unmarshal username credentials:\n%v", conf)
+	}
+	if conf.Server.Credentials.Password != "bar" {
+		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
+	}
+	if conf.Server.Credentials.Anonymous {
+		t.Errorf("Failed to unmarshal credentials - anonymous should be false:\n%v", conf)
+	}
+
+	// see that the Anonymous flag is ignored by yaml marshalling/unmarshalling
+	testConf = Config{
+		Server: Server{
+			Credentials: security.Credentials{
+				Username:  "",
+				Password:  "",
+				Anonymous: true,
+			},
+		},
+	}
+
+	yamlString, err = Marshal(&testConf)
+	if err != nil {
+		t.Errorf("Failed to marshal: %v", err)
+	}
+	if strings.Contains(yamlString, "nonymous") {
+		t.Errorf("Should not be marshalling Anonymous flag - [%v]", yamlString)
+	}
+	conf, err = Unmarshal(yamlString)
+	if err != nil {
+		t.Errorf("Failed to unmarshal: %v", err)
+	}
+	if conf.Server.Credentials.Username != "" {
+		t.Errorf("Failed to unmarshal empty username credentials:\n%v", conf)
+	}
+	if conf.Server.Credentials.Password != "" {
+		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
+	}
+	if conf.Server.Credentials.Anonymous {
+		t.Errorf("Failed to unmarshal credentials - anonymous not have been unmarshalled\n%v", conf)
 	}
 }
