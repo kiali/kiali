@@ -172,12 +172,14 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 <div>Outbound Metrics</div>
               </NavItem>
               {isLabeled &&
-                this.state.workload.customDashboards.map(dashboard => {
-                  return (
-                    <NavItem key={dashboard.template} eventKey={dashboard.template}>
-                      <div>{dashboard.title}</div>
-                    </NavItem>
-                  );
+                this.state.workload.runtimes.map(runtime => {
+                  return runtime.dashboardRefs.map(dashboard => {
+                    return (
+                      <NavItem key={dashboard.template} eventKey={dashboard.template}>
+                        <div>{dashboard.title}</div>
+                      </NavItem>
+                    );
+                  });
                 })}
             </Nav>
             <TabContent>
@@ -210,22 +212,24 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 />
               </TabPane>
               {isLabeled &&
-                this.state.workload.customDashboards.map(dashboard => {
-                  return (
-                    <TabPane
-                      key={dashboard.template}
-                      eventKey={dashboard.template}
-                      mountOnEnter={true}
-                      unmountOnExit={true}
-                    >
-                      <CustomMetricsContainer
-                        namespace={this.props.match.params.namespace}
-                        app={app}
-                        version={version}
-                        template={dashboard.template}
-                      />
-                    </TabPane>
-                  );
+                this.state.workload.runtimes.map(runtime => {
+                  return runtime.dashboardRefs.map(dashboard => {
+                    return (
+                      <TabPane
+                        key={dashboard.template}
+                        eventKey={dashboard.template}
+                        mountOnEnter={true}
+                        unmountOnExit={true}
+                      >
+                        <CustomMetricsContainer
+                          namespace={this.props.match.params.namespace}
+                          app={app}
+                          version={version}
+                          template={dashboard.template}
+                        />
+                      </TabPane>
+                    );
+                  });
                 })}
             </TabContent>
           </div>

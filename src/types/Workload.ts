@@ -22,7 +22,7 @@ export interface Workload {
   pods: Pod[];
   services: Service[];
   destinationServices: Route[];
-  customDashboards: DashboardRef[];
+  runtimes: Runtime[];
 }
 
 export const emptyWorkload: Workload = {
@@ -39,7 +39,7 @@ export const emptyWorkload: Workload = {
   pods: [],
   services: [],
   destinationServices: [],
-  customDashboards: []
+  runtimes: []
 };
 
 export const worloadLink = (ns: string, name: string) => {
@@ -77,6 +77,11 @@ export interface WorkloadListItem {
 export interface WorkloadNamespaceResponse {
   namespace: Namespace;
   workloads: WorkloadOverview[];
+}
+
+export interface Runtime {
+  name: string;
+  dashboardRefs: DashboardRef[];
 }
 
 export interface DashboardRef {
