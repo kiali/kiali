@@ -473,5 +473,5 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
-	return canCreate || canUpdate || canPatch, canDelete
+	return canCreate && (canUpdate || canPatch), canDelete
 }
