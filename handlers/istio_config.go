@@ -284,7 +284,6 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	namespace := params["namespace"]
 	objectType := params["object_type"]
 	objectSubtype := params["object_subtype"]
-	object := params["object"]
 
 	api := business.GetIstioAPI(objectType)
 	if api == "" {
@@ -304,8 +303,19 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, string(body))
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(api, namespace, objectType, objectSubtype, body)
+	if errors.IsNotFound(err) {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		return
+	} else if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
+	RespondWithJSON(w, http.StatusOK, createdConfigDetails)
 }
 
 func checkObjectType(objectType string) bool {

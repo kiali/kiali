@@ -30,8 +30,8 @@ func NewK8SClientMock() *K8SClientMock {
 
 // Business methods
 
-func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {
-	args := o.Called(api, namespace, resourceType, name, jsonPatch)
+func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, json string) (kubernetes.IstioObject, error) {
+	args := o.Called(api, namespace, resourceType, json)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 

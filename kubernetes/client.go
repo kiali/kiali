@@ -34,7 +34,7 @@ var (
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
-	CreateIstioObject(api, namespace, resourceType, name, json string) (IstioObject, error)
+	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
 	GetAdapters(namespace string) ([]IstioObject, error)
@@ -186,32 +186,32 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		func(scheme *runtime.Scheme) error {
 			// Register networking types
 			for _, nt := range networkingTypes {
-				scheme.AddKnownTypeWithName(networkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(networkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
+				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.collectionKind), &GenericIstioObjectList{})
 			}
 			// Register config types
 			for _, cf := range configTypes {
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(cf.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(cf.collectionKind), &GenericIstioObjectList{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(cf.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(cf.collectionKind), &GenericIstioObjectList{})
 			}
 			// Register adapter types
 			for _, ad := range adapterTypes {
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(ad.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(ad.collectionKind), &GenericIstioObjectList{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(ad.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(ad.collectionKind), &GenericIstioObjectList{})
 			}
 			// Register template types
 			for _, tp := range templateTypes {
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(configGroupVersion.WithKind(tp.collectionKind), &GenericIstioObjectList{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(tp.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(ConfigGroupVersion.WithKind(tp.collectionKind), &GenericIstioObjectList{})
 			}
 			// Register authentication types
 			for _, at := range authenticationTypes {
-				scheme.AddKnownTypeWithName(authenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
-				scheme.AddKnownTypeWithName(authenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
+				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
 			}
-			meta_v1.AddToGroupVersion(scheme, configGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, networkingGroupVersion)
-			meta_v1.AddToGroupVersion(scheme, authenticationGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, AuthenticationGroupVersion)
 			return nil
 		})
 
@@ -221,17 +221,17 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	}
 
 	// Istio needs another type as it queries a different K8S API.
-	istioConfigAPI, err := newClientForAPI(config, configGroupVersion, types)
+	istioConfigAPI, err := newClientForAPI(config, ConfigGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
-	istioNetworkingAPI, err := newClientForAPI(config, networkingGroupVersion, types)
+	istioNetworkingAPI, err := newClientForAPI(config, NetworkingGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}
 
-	istioAuthenticationAPI, err := newClientForAPI(config, authenticationGroupVersion, types)
+	istioAuthenticationAPI, err := newClientForAPI(config, AuthenticationGroupVersion, types)
 	if err != nil {
 		return nil, err
 	}

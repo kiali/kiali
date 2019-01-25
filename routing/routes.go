@@ -214,7 +214,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigUpdate,
 			true,
 		},
-		// swagger:route POST /namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object} config istioConfigCreateSubtype
+		// swagger:route POST /namespaces/{namespace}/istio/{object_type}/{object_subtype} config istioConfigCreateSubtype
 		// ---
 		// Endpoint to create an Istio object by using an Istio Config item
 		//
@@ -233,7 +233,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"IstioConfigCreateSubtype",
 			"POST",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}",
+			"/api/namespaces/{namespace}/istio/{object_type}/{object_subtype}",
 			handlers.IstioConfigCreate,
 			true,
 		},
@@ -283,7 +283,7 @@ func NewRoutes() (r *Routes) {
 			handlers.IstioConfigUpdate,
 			true,
 		},
-		// swagger:route POST /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigCreate
+		// swagger:route POST /namespaces/{namespace}/istio/{object_type} config istioConfigCreate
 		// ---
 		// Endpoint to create an Istio object by using an Istio Config item
 		//
@@ -302,7 +302,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"IstioConfigCreate",
 			"POST",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			"/api/namespaces/{namespace}/istio/{object_type}",
 			handlers.IstioConfigCreate,
 			true,
 		},

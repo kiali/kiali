@@ -1028,6 +1028,112 @@
         }
       }
     },
+    "/namespaces/{namespace}/istio/{object_type}": {
+      "post": {
+        "description": "Endpoint to create an Istio object by using an Istio Config item",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigCreate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object type.",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "201": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/istio/{object_type}/{object_subtype}": {
+      "post": {
+        "description": "Endpoint to create an Istio object by using an Istio Config item",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "config"
+        ],
+        "operationId": "istioConfigCreateSubtype",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object type.",
+            "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "201": {
+            "$ref": "#/responses/istioConfigDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/istio/{object_type}/{object_subtype}/{object}": {
       "get": {
         "description": "Endpoint to get the Istio Config of an Istio object used for templates and adapters that is necessary to define a subtype",
@@ -1083,69 +1189,6 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      },
-      "post": {
-        "description": "Endpoint to create an Istio object by using an Istio Config item",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "istioConfigCreateSubtype",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "201": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
           },
           "404": {
             "$ref": "#/responses/notFoundError"
@@ -1326,61 +1369,6 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      },
-      "post": {
-        "description": "Endpoint to create an Istio object by using an Istio Config item",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "config"
-        ],
-        "operationId": "istioConfigCreate",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace id.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "pattern": "^(gateways|virtualservices|destinationrules|serviceentries|rules|quotaspecs|quotaspecbindings)$",
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object type.",
-            "name": "object_type",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
-          },
-          "201": {
-            "$ref": "#/responses/istioConfigDetailsResponse"
           },
           "404": {
             "$ref": "#/responses/notFoundError"

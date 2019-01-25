@@ -783,8 +783,8 @@ func mockCreateIstioConfigDetails() IstioConfigService {
 			Namespace: "test",
 		},
 	}
-	k8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", "reviews-to-update", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
-	k8s.On("CreateIstioObject", "config.istio.io", "test", "listcheckers", "listchecker-to-update", mock.AnythingOfType("string")).Return(createdTemplate, nil)
+	k8s.On("CreateIstioObject", "networking.istio.io", "test", "virtualservices", mock.AnythingOfType("string")).Return(createdVirtualService, nil)
+	k8s.On("CreateIstioObject", "config.istio.io", "test", "listcheckers", mock.AnythingOfType("string")).Return(createdTemplate, nil)
 	return IstioConfigService{k8s: k8s}
 }
 
@@ -792,13 +792,13 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	configService := mockCreateIstioConfigDetails()
 
-	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", "reviews-to-update", "{}")
+	createVirtualService, err := configService.CreateIstioConfigDetail("networking.istio.io", "test", "virtualservices", "", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
 	assert.Equal("virtualservices", createVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", createVirtualService.VirtualService.Metadata.Name)
 	assert.Nil(err)
 
-	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", "listchecker-to-update", "{}")
+	createTemplate, err := configService.CreateIstioConfigDetail("config.istio.io", "test", "templates", "listcheckers", []byte("{}"))
 	assert.Equal("test", createTemplate.Namespace.Name)
 	assert.Equal("templates", createTemplate.ObjectType)
 	assert.Equal("listchecker-to-update", createTemplate.Template.Metadata.Name)
