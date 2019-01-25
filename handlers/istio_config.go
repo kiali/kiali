@@ -232,7 +232,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 	} else {
-		RespondWithJSON(w, http.StatusOK, "Deleted")
+		RespondWithCode(w, http.StatusOK)
 	}
 	return
 }
