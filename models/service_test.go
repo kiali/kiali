@@ -21,8 +21,8 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetService(fakeService())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
-	service.SetVirtualServices(fakeVirtualServices(), false, false)
-	service.SetDestinationRules(fakeDestinationRules(), false, false)
+	service.SetVirtualServices(fakeVirtualServices(), false, false, false)
+	service.SetDestinationRules(fakeDestinationRules(), false, false, false)
 	service.SetSourceWorkloads(fakeSourceWorkloads())
 
 	// Kubernetes Details

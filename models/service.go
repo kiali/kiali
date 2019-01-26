@@ -96,13 +96,13 @@ func (s *ServiceDetails) SetPods(pods []v1.Pod) {
 	s.IstioSidecar = mPods.HasIstioSideCar()
 }
 
-func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canUpdate, canDelete bool) {
-	s.VirtualServices.Permissions = ResourcePermissions{Update: canUpdate, Delete: canDelete}
+func (s *ServiceDetails) SetVirtualServices(vs []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
+	s.VirtualServices.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
 	(&s.VirtualServices).Parse(vs)
 }
 
-func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canUpdate, canDelete bool) {
-	s.DestinationRules.Permissions = ResourcePermissions{Update: canUpdate, Delete: canDelete}
+func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCreate, canUpdate, canDelete bool) {
+	s.DestinationRules.Permissions = ResourcePermissions{Create: canCreate, Update: canUpdate, Delete: canDelete}
 	(&s.DestinationRules).Parse(dr)
 }
 

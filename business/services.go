@@ -172,16 +172,16 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		}
 	}()
 
-	var vsUpdate, vsDelete bool
+	var vsCreate, vsUpdate, vsDelete bool
 	go func() {
 		defer wg.Done()
-		vsUpdate, vsDelete = getUpdateDeletePermissions(in.k8s, namespace, VirtualServices, "")
+		vsCreate, vsUpdate, vsDelete = getPermissions(in.k8s, namespace, VirtualServices, "")
 	}()
 
-	var drUpdate, drDelete bool
+	var drCreate, drUpdate, drDelete bool
 	go func() {
 		defer wg.Done()
-		drUpdate, drDelete = getUpdateDeletePermissions(in.k8s, namespace, DestinationRules, "")
+		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, DestinationRules, "")
 	}()
 
 	wg.Wait()
@@ -201,8 +201,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetService(svc)
 	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
 	s.SetEndpoints(eps)
-	s.SetVirtualServices(vs, vsUpdate, vsDelete)
-	s.SetDestinationRules(dr, drUpdate, drDelete)
+	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
+	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
 	s.SetSourceWorkloads(sWk)
 	return &s, nil
 }
