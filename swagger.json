@@ -3741,6 +3741,10 @@
       "description": "ResourcePermissions holds permission flags for an object type\nTrue means allowed.",
       "type": "object",
       "properties": {
+        "create": {
+          "type": "boolean",
+          "x-go-name": "Create"
+        },
         "delete": {
           "type": "boolean",
           "x-go-name": "Delete"
