@@ -44,11 +44,13 @@ spec:
             secretKeyRef:
               name: kiali
               key: username
+              optional: true
         - name: SERVER_CREDENTIALS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: kiali
               key: passphrase
+              optional: true
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"

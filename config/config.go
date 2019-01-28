@@ -183,6 +183,13 @@ func NewConfig() (c *Config) {
 		Username: getDefaultString(EnvServerCredentialsUsername, ""),
 		Password: getDefaultString(EnvServerCredentialsPassword, ""),
 	}
+	// anonymous access is allowed if username and password were explicitly set to empty string
+	if c.Server.Credentials.Username == "" && c.Server.Credentials.Password == "" {
+		_, unameOK := os.LookupEnv(EnvServerCredentialsUsername)
+		_, pwordOK := os.LookupEnv(EnvServerCredentialsPassword)
+		c.Server.Credentials.Anonymous = unameOK && pwordOK
+	}
+
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/opt/kiali/console"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)

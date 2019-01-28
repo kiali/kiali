@@ -14,9 +14,10 @@ type Identity struct {
 // Credentials provides information when needing to authenticate to remote endpoints.
 // Credentials are either a username/password or a bearer token, but not both.
 type Credentials struct {
-	Username string `yaml:",omitempty"`
-	Password string `yaml:",omitempty"`
-	Token    string `yaml:",omitempty"`
+	Username  string `yaml:",omitempty"`
+	Password  string `yaml:",omitempty"`
+	Token     string `yaml:",omitempty"`
+	Anonymous bool   `yaml:"-"` // true if credentials are explicitly empty allowing anonymous access; ignored for yaml purposes
 }
 
 // TLS options - SkipCertificateValidation will disable server certificate verification - the client
@@ -28,6 +29,10 @@ type TLS struct {
 // ValidateCredentials makes sure that if username is provided, so is password (and vice versa)
 // and also makes sure if username/password is provided that token is not (and vice versa).
 // It is valid to have nothing defined (no username, password, nor token).
+// If nothing is defined and the "Anonymous" flag is false, this usually means the person who
+// installed Kiali most likely forgot to set credentials - therefore access should always be denied.
+// If nothing is defined and the "Anonymous" flag is true, this means anonymous access is specifically allowed.
+// If the "Anonymous" flag is true but non-empty credentials are defined, a validation error occurs.
 func (c *Credentials) ValidateCredentials() error {
 	if c.Username != "" && c.Password == "" {
 		return fmt.Errorf("A password must be provided if a username is set")
@@ -39,6 +44,10 @@ func (c *Credentials) ValidateCredentials() error {
 
 	if c.Username != "" && c.Token != "" {
 		return fmt.Errorf("Username/password cannot be specified if a token is specified also. Only Username/Password or Token can be set but not both")
+	}
+
+	if c.Anonymous && (c.Username != "" || c.Token != "") {
+		return fmt.Errorf("The 'Anonymous' flag is true but non-empty credentials exist")
 	}
 
 	return nil
