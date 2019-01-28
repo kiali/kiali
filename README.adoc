@@ -141,8 +141,27 @@ Note: for OS/X users testing requires watchman to be installed
 brew install watchman
 ----
 
+== Testing Libraries for Vulnerabilities
+We use https://snyk.io/[Snyk] for JS vulnerability testing. Snyke will run automatically on every commit pushed to `kiali-ui`.
+
+If you wish to run Snyk manually to test before you push, then the following command can be used:
+[source,shell]
+----
+yarn run snyk
+----
+
+
 == Production Builds
 Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
+
+== Analyze Javascript Library Size
+To produce a graphical representation of the all the libraries in the project (showing what % of total each one is).
+[source,shell]
+----
+yarn build
+yarn run analyze
+----
+Which will then launch a browser with your graphical source map displayed.
 
 == Configure Kiali
 Use the link:https://github.com/kiali/kiali-ui/blob/master/src/Config.ts[config file] to configure Kiali-UI.
