@@ -38,6 +38,9 @@ const loginState = (state: LoginState = INITIAL_LOGIN_STATE, action: KialiAppAct
       let message = 'Error connecting to Kiali';
       if (action.payload.error.request.status === 401) {
         message = 'Unauthorized. Error in username or password';
+      } else if (action.payload.error.request.status === 520) {
+        message =
+          'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator creates a valid secret and restarts Kiali. Please refer to the Kiali documentation for more details.';
       }
       return Object.assign({}, INITIAL_LOGIN_STATE, {
         error: true,
