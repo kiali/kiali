@@ -530,15 +530,15 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 			},
 		},
 		Status: auth_v1.SubjectAccessReviewStatus{
-			Allowed: false,
-			Reason:  "not authorized",
+			Allowed: true,
+			Reason:  "authorized",
 		},
 	}
 	update := auth_v1.SelfSubjectAccessReview{
 		Spec: auth_v1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &auth_v1.ResourceAttributes{
 				Namespace: "test",
-				Verb:      "update",
+				Verb:      "patch",
 				Resource:  "destinationrules",
 			},
 		},

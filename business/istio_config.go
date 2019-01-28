@@ -215,8 +215,9 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 
 	go func() {
 		defer wg.Done()
-		canUpdate, canDelete := getUpdateDeletePermissions(in.k8s, namespace, objectType, objectSubtype)
+		canCreate, canUpdate, canDelete := getPermissions(in.k8s, namespace, objectType, objectSubtype)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
+			Create: canCreate,
 			Update: canUpdate,
 			Delete: canDelete,
 		}
@@ -444,8 +445,8 @@ func (in *IstioConfigService) CreateIstioConfigDetail(api, namespace, resourceTy
 	return in.modifyIstioConfigDetail(api, namespace, resourceType, resourceSubtype, "", json, true)
 }
 
-func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool) {
-	var canPatch, canUpdate, canDelete bool
+func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, objectSubtype string) (bool, bool, bool) {
+	var canCreate, canPatch, canUpdate, canDelete bool
 	if api, ok := resourceTypesToAPI[objectType]; ok {
 		// objectType will always match the api used in adapters/templates
 		// but if objectSubtype is present it should be used as resourceType
@@ -453,11 +454,13 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 		if objectSubtype != "" {
 			resourceType = objectSubtype
 		}
-		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"patch", "update", "delete"})
+		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "update", "delete"})
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
 					switch ssar.Spec.ResourceAttributes.Verb {
+					case "create":
+						canCreate = ssar.Status.Allowed
 					case "patch":
 						canPatch = ssar.Status.Allowed
 					case "update":
@@ -471,5 +474,5 @@ func getUpdateDeletePermissions(k8s kubernetes.IstioClientInterface, namespace, 
 			log.Errorf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 		}
 	}
-	return canUpdate || canPatch, canDelete
+	return canCreate, (canUpdate || canPatch), canDelete
 }
