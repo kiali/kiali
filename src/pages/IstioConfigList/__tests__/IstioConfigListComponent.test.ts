@@ -8,8 +8,8 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
       name: 'test'
     },
     gateways: [],
-    virtualServices: { items: [], permissions: { update: false, delete: false } },
-    destinationRules: { items: [], permissions: { update: false, delete: false } },
+    virtualServices: { items: [], permissions: { create: false, update: false, delete: false } },
+    destinationRules: { items: [], permissions: { create: false, update: false, delete: false } },
     serviceEntries: [],
     rules: [],
     adapters: [],

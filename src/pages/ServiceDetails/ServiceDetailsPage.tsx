@@ -43,6 +43,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         virtualServices: {
           items: [],
           permissions: {
+            create: false,
             update: false,
             delete: false
           }
@@ -50,6 +51,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         destinationRules: {
           items: [],
           permissions: {
+            create: false,
             update: false,
             delete: false
           }

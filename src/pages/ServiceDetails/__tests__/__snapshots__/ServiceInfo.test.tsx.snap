@@ -258,24 +258,112 @@ ShallowWrapper {
               sm={12}
               xs={12}
             >
-              <Button
-                active={false}
-                block={false}
-                bsClass="btn"
-                bsStyle="default"
-                disabled={false}
-                onClick={[MockFunction]}
+              <span
                 style={
                   Object {
                     "float": "right",
                   }
                 }
               >
-                <Icon
-                  name="refresh"
-                  type="fa"
+                <Button
+                  active={false}
+                  block={false}
+                  bsClass="btn"
+                  bsStyle="default"
+                  disabled={false}
+                  onClick={[MockFunction]}
+                >
+                  <Icon
+                    name="refresh"
+                    type="fa"
+                  />
+                </Button>
+                 
+                <IstioWizardDropdown
+                  destinationRules={
+                    Object {
+                      "items": Array [
+                        Object {
+                          "metadata": Object {
+                            "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                            "name": "reviews",
+                            "resourceVersion": "393061",
+                          },
+                          "spec": Object {
+                            "host": "reviews",
+                            "subsets": Array [
+                              Object {
+                                "labels": Object {
+                                  "version": "v1",
+                                },
+                                "name": "v1",
+                              },
+                              Object {
+                                "labels": Object {
+                                  "version": "v2",
+                                },
+                                "name": "v2",
+                              },
+                              Object {
+                                "labels": Object {
+                                  "version": "v3",
+                                },
+                                "name": "v3",
+                              },
+                            ],
+                            "trafficPolicy": null,
+                          },
+                        },
+                      ],
+                      "permissions": Object {
+                        "delete": false,
+                        "update": false,
+                      },
+                    }
+                  }
+                  namespace="istio-system"
+                  onChange={[MockFunction]}
+                  serviceName="reviews"
+                  show={false}
+                  virtualServices={
+                    Object {
+                      "items": Array [
+                        Object {
+                          "metadata": Object {
+                            "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                            "name": "reviews",
+                            "resourceVersion": "393057",
+                          },
+                          "spec": Object {
+                            "gateways": null,
+                            "hosts": Array [
+                              "reviews",
+                            ],
+                            "http": Array [
+                              Object {
+                                "route": Array [
+                                  Object {
+                                    "destination": Object {
+                                      "host": "reviews",
+                                      "subset": "v1",
+                                    },
+                                  },
+                                ],
+                              },
+                            ],
+                            "tcp": null,
+                          },
+                        },
+                      ],
+                      "permissions": Object {
+                        "delete": false,
+                        "update": false,
+                      },
+                    }
+                  }
+                  workloads={Array []}
                 />
-              </Button>
+              </span>
             </Col>
           </Row>
           <Row
@@ -593,24 +681,112 @@ ShallowWrapper {
                 sm={12}
                 xs={12}
               >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="default"
-                  disabled={false}
-                  onClick={[MockFunction]}
+                <span
                   style={
                     Object {
                       "float": "right",
                     }
                   }
                 >
-                  <Icon
-                    name="refresh"
-                    type="fa"
+                  <Button
+                    active={false}
+                    block={false}
+                    bsClass="btn"
+                    bsStyle="default"
+                    disabled={false}
+                    onClick={[MockFunction]}
+                  >
+                    <Icon
+                      name="refresh"
+                      type="fa"
+                    />
+                  </Button>
+                   
+                  <IstioWizardDropdown
+                    destinationRules={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393061",
+                            },
+                            "spec": Object {
+                              "host": "reviews",
+                              "subsets": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                  "name": "v1",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                  "name": "v2",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v3",
+                                  },
+                                  "name": "v3",
+                                },
+                              ],
+                              "trafficPolicy": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    namespace="istio-system"
+                    onChange={[MockFunction]}
+                    serviceName="reviews"
+                    show={false}
+                    virtualServices={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393057",
+                            },
+                            "spec": Object {
+                              "gateways": null,
+                              "hosts": Array [
+                                "reviews",
+                              ],
+                              "http": Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                              "tcp": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    workloads={Array []}
                   />
-                </Button>
+                </span>
               </Col>
             </Row>,
             <Row
@@ -922,24 +1098,112 @@ ShallowWrapper {
                 sm={12}
                 xs={12}
               >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="default"
-                  disabled={false}
-                  onClick={[MockFunction]}
+                <span
                   style={
                     Object {
                       "float": "right",
                     }
                   }
                 >
-                  <Icon
-                    name="refresh"
-                    type="fa"
+                  <Button
+                    active={false}
+                    block={false}
+                    bsClass="btn"
+                    bsStyle="default"
+                    disabled={false}
+                    onClick={[MockFunction]}
+                  >
+                    <Icon
+                      name="refresh"
+                      type="fa"
+                    />
+                  </Button>
+                   
+                  <IstioWizardDropdown
+                    destinationRules={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393061",
+                            },
+                            "spec": Object {
+                              "host": "reviews",
+                              "subsets": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                  "name": "v1",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                  "name": "v2",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v3",
+                                  },
+                                  "name": "v3",
+                                },
+                              ],
+                              "trafficPolicy": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    namespace="istio-system"
+                    onChange={[MockFunction]}
+                    serviceName="reviews"
+                    show={false}
+                    virtualServices={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393057",
+                            },
+                            "spec": Object {
+                              "gateways": null,
+                              "hosts": Array [
+                                "reviews",
+                              ],
+                              "http": Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                              "tcp": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    workloads={Array []}
                   />
-                </Button>
+                </span>
               </Col>,
               "className": "row-cards-pf",
               "componentClass": "div",
@@ -951,24 +1215,112 @@ ShallowWrapper {
               "nodeType": "class",
               "props": Object {
                 "bsClass": "col",
-                "children": <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="default"
-                  disabled={false}
-                  onClick={[MockFunction]}
+                "children": <span
                   style={
                     Object {
                       "float": "right",
                     }
                   }
                 >
-                  <Icon
-                    name="refresh"
-                    type="fa"
+                  <Button
+                    active={false}
+                    block={false}
+                    bsClass="btn"
+                    bsStyle="default"
+                    disabled={false}
+                    onClick={[MockFunction]}
+                  >
+                    <Icon
+                      name="refresh"
+                      type="fa"
+                    />
+                  </Button>
+                   
+                  <IstioWizardDropdown
+                    destinationRules={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393061",
+                            },
+                            "spec": Object {
+                              "host": "reviews",
+                              "subsets": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                  "name": "v1",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                  "name": "v2",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v3",
+                                  },
+                                  "name": "v3",
+                                },
+                              ],
+                              "trafficPolicy": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    namespace="istio-system"
+                    onChange={[MockFunction]}
+                    serviceName="reviews"
+                    show={false}
+                    virtualServices={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393057",
+                            },
+                            "spec": Object {
+                              "gateways": null,
+                              "hosts": Array [
+                                "reviews",
+                              ],
+                              "http": Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                              "tcp": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    workloads={Array []}
                   />
-                </Button>,
+                </span>,
                 "componentClass": "div",
                 "lg": 12,
                 "md": 12,
@@ -979,36 +1331,236 @@ ShallowWrapper {
               "rendered": Object {
                 "instance": null,
                 "key": undefined,
-                "nodeType": "class",
+                "nodeType": "host",
                 "props": Object {
-                  "active": false,
-                  "block": false,
-                  "bsClass": "btn",
-                  "bsStyle": "default",
-                  "children": <Icon
-                    name="refresh"
-                    type="fa"
-                  />,
-                  "disabled": false,
-                  "onClick": [MockFunction],
+                  "children": Array [
+                    <Button
+                      active={false}
+                      block={false}
+                      bsClass="btn"
+                      bsStyle="default"
+                      disabled={false}
+                      onClick={[MockFunction]}
+                    >
+                      <Icon
+                        name="refresh"
+                        type="fa"
+                      />
+                    </Button>,
+                    " ",
+                    <IstioWizardDropdown
+                      destinationRules={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393061",
+                              },
+                              "spec": Object {
+                                "host": "reviews",
+                                "subsets": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                    "name": "v1",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                    "name": "v2",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v3",
+                                    },
+                                    "name": "v3",
+                                  },
+                                ],
+                                "trafficPolicy": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      namespace="istio-system"
+                      onChange={[MockFunction]}
+                      serviceName="reviews"
+                      show={false}
+                      virtualServices={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393057",
+                              },
+                              "spec": Object {
+                                "gateways": null,
+                                "hosts": Array [
+                                  "reviews",
+                                ],
+                                "http": Array [
+                                  Object {
+                                    "route": Array [
+                                      Object {
+                                        "destination": Object {
+                                          "host": "reviews",
+                                          "subset": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                                "tcp": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      workloads={Array []}
+                    />,
+                  ],
                   "style": Object {
                     "float": "right",
                   },
                 },
                 "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "function",
-                  "props": Object {
-                    "name": "refresh",
-                    "type": "fa",
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "active": false,
+                      "block": false,
+                      "bsClass": "btn",
+                      "bsStyle": "default",
+                      "children": <Icon
+                        name="refresh"
+                        type="fa"
+                      />,
+                      "disabled": false,
+                      "onClick": [MockFunction],
+                    },
+                    "ref": null,
+                    "rendered": Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "function",
+                      "props": Object {
+                        "name": "refresh",
+                        "type": "fa",
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                    "type": [Function],
                   },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
-                "type": [Function],
+                  " ",
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "destinationRules": Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393061",
+                            },
+                            "spec": Object {
+                              "host": "reviews",
+                              "subsets": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                  "name": "v1",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                  "name": "v2",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v3",
+                                  },
+                                  "name": "v3",
+                                },
+                              ],
+                              "trafficPolicy": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      },
+                      "namespace": "istio-system",
+                      "onChange": [MockFunction],
+                      "serviceName": "reviews",
+                      "show": false,
+                      "virtualServices": Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393057",
+                            },
+                            "spec": Object {
+                              "gateways": null,
+                              "hosts": Array [
+                                "reviews",
+                              ],
+                              "http": Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                              "tcp": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      },
+                      "workloads": Array [],
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                ],
+                "type": "span",
               },
               "type": [Function],
             },
@@ -2618,24 +3170,112 @@ ShallowWrapper {
                 sm={12}
                 xs={12}
               >
-                <Button
-                  active={false}
-                  block={false}
-                  bsClass="btn"
-                  bsStyle="default"
-                  disabled={false}
-                  onClick={[MockFunction]}
+                <span
                   style={
                     Object {
                       "float": "right",
                     }
                   }
                 >
-                  <Icon
-                    name="refresh"
-                    type="fa"
+                  <Button
+                    active={false}
+                    block={false}
+                    bsClass="btn"
+                    bsStyle="default"
+                    disabled={false}
+                    onClick={[MockFunction]}
+                  >
+                    <Icon
+                      name="refresh"
+                      type="fa"
+                    />
+                  </Button>
+                   
+                  <IstioWizardDropdown
+                    destinationRules={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393061",
+                            },
+                            "spec": Object {
+                              "host": "reviews",
+                              "subsets": Array [
+                                Object {
+                                  "labels": Object {
+                                    "version": "v1",
+                                  },
+                                  "name": "v1",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v2",
+                                  },
+                                  "name": "v2",
+                                },
+                                Object {
+                                  "labels": Object {
+                                    "version": "v3",
+                                  },
+                                  "name": "v3",
+                                },
+                              ],
+                              "trafficPolicy": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    namespace="istio-system"
+                    onChange={[MockFunction]}
+                    serviceName="reviews"
+                    show={false}
+                    virtualServices={
+                      Object {
+                        "items": Array [
+                          Object {
+                            "metadata": Object {
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                              "name": "reviews",
+                              "resourceVersion": "393057",
+                            },
+                            "spec": Object {
+                              "gateways": null,
+                              "hosts": Array [
+                                "reviews",
+                              ],
+                              "http": Array [
+                                Object {
+                                  "route": Array [
+                                    Object {
+                                      "destination": Object {
+                                        "host": "reviews",
+                                        "subset": "v1",
+                                      },
+                                    },
+                                  ],
+                                },
+                              ],
+                              "tcp": null,
+                            },
+                          },
+                        ],
+                        "permissions": Object {
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    workloads={Array []}
                   />
-                </Button>
+                </span>
               </Col>
             </Row>
             <Row
@@ -2953,24 +3593,112 @@ ShallowWrapper {
                   sm={12}
                   xs={12}
                 >
-                  <Button
-                    active={false}
-                    block={false}
-                    bsClass="btn"
-                    bsStyle="default"
-                    disabled={false}
-                    onClick={[MockFunction]}
+                  <span
                     style={
                       Object {
                         "float": "right",
                       }
                     }
                   >
-                    <Icon
-                      name="refresh"
-                      type="fa"
+                    <Button
+                      active={false}
+                      block={false}
+                      bsClass="btn"
+                      bsStyle="default"
+                      disabled={false}
+                      onClick={[MockFunction]}
+                    >
+                      <Icon
+                        name="refresh"
+                        type="fa"
+                      />
+                    </Button>
+                     
+                    <IstioWizardDropdown
+                      destinationRules={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393061",
+                              },
+                              "spec": Object {
+                                "host": "reviews",
+                                "subsets": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                    "name": "v1",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                    "name": "v2",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v3",
+                                    },
+                                    "name": "v3",
+                                  },
+                                ],
+                                "trafficPolicy": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      namespace="istio-system"
+                      onChange={[MockFunction]}
+                      serviceName="reviews"
+                      show={false}
+                      virtualServices={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393057",
+                              },
+                              "spec": Object {
+                                "gateways": null,
+                                "hosts": Array [
+                                  "reviews",
+                                ],
+                                "http": Array [
+                                  Object {
+                                    "route": Array [
+                                      Object {
+                                        "destination": Object {
+                                          "host": "reviews",
+                                          "subset": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                                "tcp": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      workloads={Array []}
                     />
-                  </Button>
+                  </span>
                 </Col>
               </Row>,
               <Row
@@ -3282,24 +4010,112 @@ ShallowWrapper {
                   sm={12}
                   xs={12}
                 >
-                  <Button
-                    active={false}
-                    block={false}
-                    bsClass="btn"
-                    bsStyle="default"
-                    disabled={false}
-                    onClick={[MockFunction]}
+                  <span
                     style={
                       Object {
                         "float": "right",
                       }
                     }
                   >
-                    <Icon
-                      name="refresh"
-                      type="fa"
+                    <Button
+                      active={false}
+                      block={false}
+                      bsClass="btn"
+                      bsStyle="default"
+                      disabled={false}
+                      onClick={[MockFunction]}
+                    >
+                      <Icon
+                        name="refresh"
+                        type="fa"
+                      />
+                    </Button>
+                     
+                    <IstioWizardDropdown
+                      destinationRules={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393061",
+                              },
+                              "spec": Object {
+                                "host": "reviews",
+                                "subsets": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                    "name": "v1",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                    "name": "v2",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v3",
+                                    },
+                                    "name": "v3",
+                                  },
+                                ],
+                                "trafficPolicy": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      namespace="istio-system"
+                      onChange={[MockFunction]}
+                      serviceName="reviews"
+                      show={false}
+                      virtualServices={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393057",
+                              },
+                              "spec": Object {
+                                "gateways": null,
+                                "hosts": Array [
+                                  "reviews",
+                                ],
+                                "http": Array [
+                                  Object {
+                                    "route": Array [
+                                      Object {
+                                        "destination": Object {
+                                          "host": "reviews",
+                                          "subset": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                                "tcp": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      workloads={Array []}
                     />
-                  </Button>
+                  </span>
                 </Col>,
                 "className": "row-cards-pf",
                 "componentClass": "div",
@@ -3311,24 +4127,112 @@ ShallowWrapper {
                 "nodeType": "class",
                 "props": Object {
                   "bsClass": "col",
-                  "children": <Button
-                    active={false}
-                    block={false}
-                    bsClass="btn"
-                    bsStyle="default"
-                    disabled={false}
-                    onClick={[MockFunction]}
+                  "children": <span
                     style={
                       Object {
                         "float": "right",
                       }
                     }
                   >
-                    <Icon
-                      name="refresh"
-                      type="fa"
+                    <Button
+                      active={false}
+                      block={false}
+                      bsClass="btn"
+                      bsStyle="default"
+                      disabled={false}
+                      onClick={[MockFunction]}
+                    >
+                      <Icon
+                        name="refresh"
+                        type="fa"
+                      />
+                    </Button>
+                     
+                    <IstioWizardDropdown
+                      destinationRules={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393061",
+                              },
+                              "spec": Object {
+                                "host": "reviews",
+                                "subsets": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                    "name": "v1",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                    "name": "v2",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v3",
+                                    },
+                                    "name": "v3",
+                                  },
+                                ],
+                                "trafficPolicy": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      namespace="istio-system"
+                      onChange={[MockFunction]}
+                      serviceName="reviews"
+                      show={false}
+                      virtualServices={
+                        Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393057",
+                              },
+                              "spec": Object {
+                                "gateways": null,
+                                "hosts": Array [
+                                  "reviews",
+                                ],
+                                "http": Array [
+                                  Object {
+                                    "route": Array [
+                                      Object {
+                                        "destination": Object {
+                                          "host": "reviews",
+                                          "subset": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                                "tcp": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      workloads={Array []}
                     />
-                  </Button>,
+                  </span>,
                   "componentClass": "div",
                   "lg": 12,
                   "md": 12,
@@ -3339,36 +4243,236 @@ ShallowWrapper {
                 "rendered": Object {
                   "instance": null,
                   "key": undefined,
-                  "nodeType": "class",
+                  "nodeType": "host",
                   "props": Object {
-                    "active": false,
-                    "block": false,
-                    "bsClass": "btn",
-                    "bsStyle": "default",
-                    "children": <Icon
-                      name="refresh"
-                      type="fa"
-                    />,
-                    "disabled": false,
-                    "onClick": [MockFunction],
+                    "children": Array [
+                      <Button
+                        active={false}
+                        block={false}
+                        bsClass="btn"
+                        bsStyle="default"
+                        disabled={false}
+                        onClick={[MockFunction]}
+                      >
+                        <Icon
+                          name="refresh"
+                          type="fa"
+                        />
+                      </Button>,
+                      " ",
+                      <IstioWizardDropdown
+                        destinationRules={
+                          Object {
+                            "items": Array [
+                              Object {
+                                "metadata": Object {
+                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "name": "reviews",
+                                  "resourceVersion": "393061",
+                                },
+                                "spec": Object {
+                                  "host": "reviews",
+                                  "subsets": Array [
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v1",
+                                      },
+                                      "name": "v1",
+                                    },
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v2",
+                                      },
+                                      "name": "v2",
+                                    },
+                                    Object {
+                                      "labels": Object {
+                                        "version": "v3",
+                                      },
+                                      "name": "v3",
+                                    },
+                                  ],
+                                  "trafficPolicy": null,
+                                },
+                              },
+                            ],
+                            "permissions": Object {
+                              "delete": false,
+                              "update": false,
+                            },
+                          }
+                        }
+                        namespace="istio-system"
+                        onChange={[MockFunction]}
+                        serviceName="reviews"
+                        show={false}
+                        virtualServices={
+                          Object {
+                            "items": Array [
+                              Object {
+                                "metadata": Object {
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "name": "reviews",
+                                  "resourceVersion": "393057",
+                                },
+                                "spec": Object {
+                                  "gateways": null,
+                                  "hosts": Array [
+                                    "reviews",
+                                  ],
+                                  "http": Array [
+                                    Object {
+                                      "route": Array [
+                                        Object {
+                                          "destination": Object {
+                                            "host": "reviews",
+                                            "subset": "v1",
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                  "tcp": null,
+                                },
+                              },
+                            ],
+                            "permissions": Object {
+                              "delete": false,
+                              "update": false,
+                            },
+                          }
+                        }
+                        workloads={Array []}
+                      />,
+                    ],
                     "style": Object {
                       "float": "right",
                     },
                   },
                   "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "function",
-                    "props": Object {
-                      "name": "refresh",
-                      "type": "fa",
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "active": false,
+                        "block": false,
+                        "bsClass": "btn",
+                        "bsStyle": "default",
+                        "children": <Icon
+                          name="refresh"
+                          type="fa"
+                        />,
+                        "disabled": false,
+                        "onClick": [MockFunction],
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "function",
+                        "props": Object {
+                          "name": "refresh",
+                          "type": "fa",
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                      "type": [Function],
                     },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
-                  "type": [Function],
+                    " ",
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "destinationRules": Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393061",
+                              },
+                              "spec": Object {
+                                "host": "reviews",
+                                "subsets": Array [
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v1",
+                                    },
+                                    "name": "v1",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v2",
+                                    },
+                                    "name": "v2",
+                                  },
+                                  Object {
+                                    "labels": Object {
+                                      "version": "v3",
+                                    },
+                                    "name": "v3",
+                                  },
+                                ],
+                                "trafficPolicy": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        },
+                        "namespace": "istio-system",
+                        "onChange": [MockFunction],
+                        "serviceName": "reviews",
+                        "show": false,
+                        "virtualServices": Object {
+                          "items": Array [
+                            Object {
+                              "metadata": Object {
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
+                                "name": "reviews",
+                                "resourceVersion": "393057",
+                              },
+                              "spec": Object {
+                                "gateways": null,
+                                "hosts": Array [
+                                  "reviews",
+                                ],
+                                "http": Array [
+                                  Object {
+                                    "route": Array [
+                                      Object {
+                                        "destination": Object {
+                                          "host": "reviews",
+                                          "subset": "v1",
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                                "tcp": null,
+                              },
+                            },
+                          ],
+                          "permissions": Object {
+                            "delete": false,
+                            "update": false,
+                          },
+                        },
+                        "workloads": Array [],
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "span",
                 },
                 "type": [Function],
               },

@@ -176,6 +176,31 @@ export const updateIstioConfigDetailSubtype = (
   );
 };
 
+export const createIstioConfigDetail = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  json: string
+): Promise<Response<string>> => {
+  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), {}, json, auth);
+};
+
+export const createIstioConfigDetailSubtype = (
+  auth: AuthToken,
+  namespace: string,
+  objectType: string,
+  objectSubtype: string,
+  json: string
+): Promise<Response<string>> => {
+  return newRequest(
+    HTTP_VERBS.POST,
+    urls.istioConfigCreateSubtype(namespace, objectType, objectSubtype),
+    {},
+    json,
+    auth
+  );
+};
+
 export const getServices = (auth: AuthToken, namespace: string) => {
   return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), {}, {}, auth);
 };

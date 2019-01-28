@@ -24,6 +24,7 @@ import { Validations } from '../../types/IstioObjects';
 import { ServiceInfoRoutes } from '../../components/InfoRoutes/ServiceInfoRoutes';
 import { Route } from '../../components/InfoRoutes/InfoRoutes';
 import WithErrorBoundary from '../../components/ErrorBoundary/WithErrorBoundary';
+import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -138,9 +139,21 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-                <Icon name="refresh" />
-              </Button>
+              <span style={{ float: 'right' }}>
+                <Button onClick={this.props.onRefresh}>
+                  <Icon name="refresh" />
+                </Button>
+                &nbsp;
+                <IstioWizardDropdown
+                  namespace={this.props.namespace}
+                  serviceName={this.props.serviceDetails.service.name}
+                  show={false}
+                  workloads={workloads}
+                  virtualServices={virtualServices}
+                  destinationRules={destinationRules}
+                  onChange={this.props.onRefresh}
+                />
+              </span>
             </Col>
           </Row>
           <Row className="row-cards-pf">

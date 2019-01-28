@@ -115,7 +115,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
     policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),
     validations: unfiltered.validations,
-    permissions: unfiltered.permissions,
+    permissions: unfiltered.permissions
   };
 };
 

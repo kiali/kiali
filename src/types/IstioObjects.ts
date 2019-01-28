@@ -297,7 +297,7 @@ export interface TrafficPolicy {
 export interface Subset {
   name: string;
   labels: { [key: string]: string };
-  trafficPolicy: TrafficPolicy;
+  trafficPolicy?: TrafficPolicy;
 }
 
 export interface DestinationRuleSpec {
