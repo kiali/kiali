@@ -3065,6 +3065,9 @@
         "gateway": {
           "$ref": "#/definitions/Gateway"
         },
+        "meshPolicy": {
+          "$ref": "#/definitions/Policy"
+        },
         "namespace": {
           "$ref": "#/definitions/namespace"
         },
@@ -3118,6 +3121,9 @@
         },
         "gateways": {
           "$ref": "#/definitions/Gateways"
+        },
+        "meshPolicies": {
+          "$ref": "#/definitions/Policies"
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
