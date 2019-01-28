@@ -285,6 +285,6 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
-	assert.Equal("More than one Virtual Service for same host", validation.Checks[0].Message)
+	assert.Equal(models.CheckMessage("virtualservices.singlehost"), validation.Checks[0].Message)
 	assert.Equal("spec/hosts", validation.Checks[0].Path)
 }

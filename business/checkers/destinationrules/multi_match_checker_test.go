@@ -53,6 +53,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
+	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
 }
 
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {

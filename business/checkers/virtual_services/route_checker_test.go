@@ -30,11 +30,11 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 2)
-	assert.Equal(validations[0].Message, "Weight should be between 0 and 100")
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.weightrange"))
 	assert.Equal(validations[0].Severity, models.ErrorSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route[1]/weight/145")
 
-	assert.Equal(validations[1].Message, "Weight sum should be 100")
+	assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.route.weightsum"))
 	assert.Equal(validations[1].Severity, models.ErrorSeverity)
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
 
@@ -50,7 +50,7 @@ func TestServiceOver100VirtualService(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, "Weight sum should be 100")
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.weightsum"))
 	assert.Equal(validations[0].Severity, models.ErrorSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 }
@@ -65,7 +65,7 @@ func TestServiceUnder100VirtualService(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Len(validations, 1)
-	assert.Equal(validations[0].Message, "Weight sum should be 100")
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.weightsum"))
 	assert.Equal(validations[0].Severity, models.ErrorSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 }
@@ -81,11 +81,11 @@ func TestOneRouteWithoutWeight(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 2)
 
-	assert.Equal(validations[0].Message, "Weight sum should be 100")
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.weightsum"))
 	assert.Equal(validations[0].Severity, models.ErrorSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 
-	assert.Equal(validations[1].Message, "All routes should have weight")
+	assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.route.allweightspresent"))
 	assert.Equal(validations[1].Severity, models.WarningSeverity)
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
 }
@@ -101,11 +101,11 @@ func TestSecondHTTPRouteHasNoWeight(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Len(validations, 2)
 
-	assert.Equal(validations[0].Message, "Weight sum should be 100")
+	assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.route.weightsum"))
 	assert.Equal(validations[0].Severity, models.ErrorSeverity)
 	assert.Equal(validations[0].Path, "spec/http[0]/route")
 
-	assert.Equal(validations[1].Message, "All routes should have weight")
+	assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.route.allweightspresent"))
 	assert.Equal(validations[1].Severity, models.WarningSeverity)
 	assert.Equal(validations[1].Path, "spec/http[0]/route")
 }

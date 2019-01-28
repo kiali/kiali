@@ -138,6 +138,10 @@ func Build(checkId string, path string) IstioCheck {
 	return check
 }
 
+func CheckMessage(checkId string) string {
+	return checkDescriptors[checkId].Message
+}
+
 func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations {
 	fiv := IstioValidations{}
 	for k, v := range iv {

@@ -51,7 +51,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal("This host has no matching workloads", validations[0].Message)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingworkload"), validations[0].Message)
 	assert.Equal("spec/host", validations[0].Path)
 }
 
@@ -73,7 +73,7 @@ func TestNoMatchingSubset(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetlabels"), validations[0].Message)
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
@@ -107,15 +107,6 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal("This subset's labels are not found from any matching host", validations[0].Message)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.subsetlabels"), validations[0].Message)
 	assert.Equal("spec/subsets[0]", validations[0].Path)
-}
-
-func getServices(services []string) map[string][]string {
-	serviceMap := make(map[string][]string, len(services))
-
-	for _, s := range services {
-		serviceMap[s] = []string{"v1", "v2"}
-	}
-	return serviceMap
 }

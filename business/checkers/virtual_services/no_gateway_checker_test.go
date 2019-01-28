@@ -22,6 +22,7 @@ func TestMissingGateway(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
 }
 
 func TestFoundGateway(t *testing.T) {
