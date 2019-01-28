@@ -5,17 +5,93 @@
 #
 # This script deploys the Kiali components into OpenShift.
 #
-# To customize the behavior of this script, you can set one or more of the
-# environment variables used by this script.
-# See below for all the environment variables used.
+# To use this script, the "oc" command must be in your PATH.
+# This script utilizes "envsubst" - make sure that command line tool
+# is installed and in your PATH.
 #
 # This script assumes all the OpenShift YAML files exist in the same
 # directory where this script is found. If an expected YAML file is missing,
 # an attempt will be made to download it.
 #
-# To use this script, the "oc" command must be in your PATH.
-# This script utilizes "envsubst" - make sure that command line tool
-# is installed and in your PATH.
+# To customize the behavior of this script, you can set one or more of the
+# following environment variables:
+#
+# KIALI_USERNAME
+#    This is the username that will be required when logging into Kiali.
+#    If this is not set, or if it is set to an empty string, you will be prompted
+#    to enter a username.
+#    Default: ""
+#
+# KIALI_PASSPHRASE
+#    This is the passphrase that will be required when logging into Kiali.
+#    If this is not set, or if it is set to an empty string, you will be prompted
+#    to enter a passphrase.
+#    Default: ""
+#
+# KIALI_USERNAME_BASE64
+#    If you wish to provide Kiali's username in base64 encoding, set this env var with
+#    a value of the desired username in base64 format.
+#    If this is set, KIALI_USERNAME is ignored.
+#    Default: this is not set by default
+#
+# KIALI_PASSPHRASE_BASE64
+#    If you wish to provide Kiali's passphrase in base64 encoding, set this env var with
+#    a value of the desired passphrase in base64 format.
+#    If this is set, KIALI_PASSPHRASE is ignored.
+#    Default: this is not set by default
+#
+# JAEGER_URL
+#    The Jaeger URL that Kiali will use when integrating with Jaeger.
+#    This URL must be accessible to clients external to the cluster
+#    in order for the integration to work properly.
+#    Default: "http://jaeger-query-istio-system.127.0.0.1.nip.io"
+#
+# GRAFANA_URL
+#    The Grafana URL that Kiali will use when integrating with Grafana.
+#    This URL must be accessible to clients external to the cluster
+#    in order for the integration to work properly.
+#    Default: "http://grafana-istio-system.127.0.0.1.nip.io"
+#
+# IMAGE_NAME
+#    Determines which image to download and install.
+#    Default: "kiali/kiali"
+#
+# IMAGE_VERSION
+#    Determines which version of Kiali to install.
+#    This can be set to "latest" in which case the latest image is installed (which may or
+#    may not be a released version of Kiali).
+#    This can be set to "lastrelease" in which case the last Kiali release is installed.
+#    Otherwise, you can set to this any valid Kiali version (such as "v0.12").
+#    Default: "lastrelease"
+#
+# VERSION_LABEL
+#    Kiali resources will be assigned a "version" label when they are deployed.
+#    This env var determines what value those "version" labels will be.
+#    If the IMAGE_VERSION env var is "latest", this VERSION_LABEL will be fixed to "master".
+#    If the IMAGE_VERSION env var is "lastrelease", this VERSION_LABEL will be fixed to
+#    the last Kiali release version string.
+#    If the IMAGE_VERSION env var is anything else, you can assign VERSION_LABEL to anything
+#    and it will be used for the value of Kiali's "version" labels, otherwise it will default
+#    to the value of IMAGE_VERSION env var value.
+#    Default: See above for how the default value is determined
+#
+# IMAGE_PULL_POLICY_TOKEN
+#    The Kubernetes pull policy tag for the Kiali deployment.
+#    Default: "imagePullPolicy: Always"
+#
+# NAMESPACE
+#    The namespace into which Kiali is to be installed.
+#    Default: "istio-system"
+#
+# ISTIO_NAMESPACE
+#    The namespace where Istio is installed.
+#    Default: The value of the NAMESPACE env var
+#
+# VERBOSE_MODE
+#    Determines which priority levels of log messages Kiali will output.
+#    Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
+#    Default: "3"
+#
 ##############################################################################
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
@@ -43,7 +119,7 @@ get_downloader() {
 # The credentials can be specified either as already base64 encoded, or in plain text.
 # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
 if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
-  KIALI_USERNAME="${KIALI_USERNAME=admin}" # note: the "=" inside ${} is on purpose
+  KIALI_USERNAME="${KIALI_USERNAME=}" # note: the "=" inside ${} is on purpose
   if [ "$KIALI_USERNAME" == "" ]; then
     KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
   fi
@@ -51,7 +127,7 @@ if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
 fi
 
 if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
-  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=admin}" # note: the "=" inside ${} is on purpose
+  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=}" # note: the "=" inside ${} is on purpose
   if [ "$KIALI_PASSPHRASE" == "" ]; then
     KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
     echo
@@ -106,6 +182,18 @@ else
     VERSION_LABEL="master"
   fi
 fi
+
+echo "=== SETTINGS ==="
+echo IMAGE_NAME=$IMAGE_NAME
+echo IMAGE_VESRION=$IMAGE_VERSION
+echo VERSION_LABEL=$VERSION_LABEL
+echo IMAGE_PULL_POLICY_TOKEN=$IMAGE_PULL_POLICY_TOKEN
+echo NAMESPACE=$NAMESPACE
+echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
+echo JAEGER_URL=$JAEGER_URL
+echo GRAFANA_URL=$GRAFANA_URL
+echo VERBOSE_MODE=$VERBOSE_MODE
+echo "=== SETTINGS ==="
 
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.

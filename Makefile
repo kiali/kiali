@@ -261,6 +261,8 @@ NAMESPACE="${NAMESPACE}" \
 JAEGER_URL="${JAEGER_URL}" \
 GRAFANA_URL="${GRAFANA_URL}"  \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+KIALI_USERNAME="admin" \
+KIALI_PASSPHRASE="admin" \
 deploy/openshift/deploy-kiali-to-openshift.sh
 
 ## openshift-undeploy: Undeploy from Openshift project.
@@ -293,6 +295,8 @@ NAMESPACE="${NAMESPACE}" \
 JAEGER_URL="${JAEGER_URL}" \
 GRAFANA_URL="${GRAFANA_URL}"  \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+KIALI_USERNAME="admin" \
+KIALI_PASSPHRASE="admin" \
 deploy/kubernetes/deploy-kiali-to-kubernetes.sh
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
