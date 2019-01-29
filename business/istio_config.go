@@ -65,6 +65,12 @@ var apiToVersion = map[string]string{
 	kubernetes.ApiAuthenticationVersion:     kubernetes.ApiAuthenticationVersion,
 }
 
+const (
+	MeshmTLSEnabled          = "MESH_MTLS_ENABLED"
+	MeshmTLSPartiallyEnabled = "MESH_MTLS_PARTIALLY_ENABLED"
+	MeshmTLSNotEnabled       = "MESH_MTLS_NOT_ENABLED"
+)
+
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
@@ -477,7 +483,27 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 	return canCreate, (canUpdate || canPatch), canDelete
 }
 
-func (in *IstioConfigService) IsMTLSGloballyEnabled() (bool, error) {
+func (in *IstioConfigService) MeshWidemTLSStatus() (string, error) {
+	mpp, mpErr := in.hasMeshPolicyEnabled()
+	if mpErr != nil {
+		return "", mpErr
+	}
+
+	drp, drErr := in.hasDestinationRuleEnabled()
+	if drErr != nil {
+		return "", drErr
+	}
+
+	if drp && mpp {
+		return MeshmTLSEnabled, nil
+	} else if drp || mpp {
+		return MeshmTLSPartiallyEnabled, nil
+	}
+
+	return MeshmTLSNotEnabled, nil
+}
+
+func (in *IstioConfigService) hasMeshPolicyEnabled() (bool, error) {
 	mps, err := in.k8s.GetMeshPolicies()
 	if err != nil {
 		return false, err
@@ -515,4 +541,37 @@ func (in *IstioConfigService) IsMTLSGloballyEnabled() (bool, error) {
 	}
 
 	return mtlsEnabled, nil
+}
+
+func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
+	dr, err := in.k8s.GetDestinationRule("default", "default")
+	if err != nil {
+		if errors2.IsNotFound(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	// Host my be *.local
+	host, hostPresent := dr.GetSpec()["host"]
+	if !hostPresent || host != "*.local" {
+		return false, nil
+	}
+
+	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
+		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
+			if tls, found := trafficCasted["tls"]; found {
+				if tlsCasted, ok := tls.(map[string]interface{}); ok {
+					if mode, found := tlsCasted["mode"]; found {
+						if modeCasted, ok := mode.(string); ok {
+							return modeCasted == "ISTIO_MUTUAL", nil
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false, nil
 }

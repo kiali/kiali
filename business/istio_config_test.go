@@ -805,85 +805,190 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestGloballyEnabledWithOneMeshPolicy(t *testing.T) {
+func TestCorrectMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
-	assert.Equal(true, isGloballyEnabled)
+	assert.Equal(true, meshPolicyEnabled)
 }
 
-func TestGloballyEnabledWithOneMeshPolicyWithWrongName(t *testing.T) {
+func TestPolicyWithWrongName(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+	isGloballyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, isGloballyEnabled)
 }
 
 func fakeMeshPolicyEnablingMTLS(name string) []kubernetes.IstioObject {
-	policy := kubernetes.GenericIstioObject{}
-	policy.Name = name
-	policy.Spec = map[string]interface{}{
-		"peers": []interface{}{
-			map[string]interface{}{
-				"mtls": "",
-			},
+	mtls := []interface{}{
+		map[string]interface{}{
+			"mtls": "",
 		},
 	}
-	return []kubernetes.IstioObject{&policy}
+
+	policy := data.CreateEmptyMeshPolicy(name, mtls)
+
+	return []kubernetes.IstioObject{policy}
 }
 
-func TestNotGloballyEnabledWithoutMeshPolicy(t *testing.T) {
+func TestWithoutMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies").Return([]kubernetes.IstioObject{}, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
-	assert.Equal(false, isGloballyEnabled)
+	assert.Equal(false, meshPolicyEnabled)
 }
 
-func TestNotGloballyEnabledWithAMeshPolicy(t *testing.T) {
+func TestMeshPolicyWithTargets(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	isGloballyEnabled, err := (istioConfigService).IsMTLSGloballyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
-	assert.Equal(false, isGloballyEnabled)
+	assert.Equal(false, meshPolicyEnabled)
 }
 
 func fakeMeshPolicyEnablingMTLSSpecificTarget() []kubernetes.IstioObject {
-	policy := kubernetes.GenericIstioObject{}
-	policy.Name = "non-global-tls-enabler"
-	policy.Spec = map[string]interface{}{
-		"peers": []interface{}{
-			map[string]interface{}{
-				"mtls": "",
-			},
-		},
-		"targets": []interface{}{
-			map[string]interface{}{
-				"name": "productpage",
-			},
+	targets := []interface{}{
+		map[string]interface{}{
+			"name": "productpage",
 		},
 	}
-	return []kubernetes.IstioObject{&policy}
+
+	mtls := []interface{}{
+		map[string]interface{}{
+			"mtls": "",
+		},
+	}
+
+	policy := data.AddTargetsToMeshPolicy(targets,
+		data.CreateEmptyMeshPolicy("non-global-tls-enabled", mtls))
+
+	return []kubernetes.IstioObject{policy}
+}
+
+func TestDestinationRuleEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+
+	assert.NoError(err)
+	assert.Equal(true, drEnabled)
+}
+
+func TestDRWildcardLocalHost(t *testing.T) {
+	assert := assert.New(t)
+
+	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+
+	assert.NoError(err)
+	assert.Equal(false, drEnabled)
+}
+
+func TestDRNotMutualTLSMode(t *testing.T) {
+	assert := assert.New(t)
+
+	trafficPolicy := map[string]interface{}{
+		"tls": map[string]interface{}{
+			"mode": "SIMPLE",
+		},
+	}
+
+	dr := data.AddTrafficPolicyToDestinationRule(trafficPolicy,
+		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+
+	assert.NoError(err)
+	assert.Equal(false, drEnabled)
+}
+
+func TestMeshStatusEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	status, err := (istioConfigService).MeshWidemTLSStatus()
+
+	assert.NoError(err)
+	assert.Equal(MeshmTLSEnabled, status)
+}
+
+func TestMeshStatusPartiallyEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	status, err := (istioConfigService).MeshWidemTLSStatus()
+
+	assert.NoError(err)
+	assert.Equal(MeshmTLSPartiallyEnabled, status)
+}
+
+func TestMeshStatusNotEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+
+	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
+
+	istioConfigService := IstioConfigService{k8s: k8s}
+	status, err := (istioConfigService).MeshWidemTLSStatus()
+
+	assert.NoError(err)
+	assert.Equal(MeshmTLSNotEnabled, status)
 }

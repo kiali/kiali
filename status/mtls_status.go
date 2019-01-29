@@ -4,11 +4,6 @@ import (
 	"github.com/kiali/kiali/business"
 )
 
-const (
-	GloballyEnabled    = "GLOBALLY_ENABLED"
-	NotGloballyEnabled = "NOT_GLOBALLY_ENABLED"
-)
-
 func (si *StatusInfo) getmTLSStatus() {
 	// Get business layer
 	business, err := business.Get()
@@ -17,15 +12,10 @@ func (si *StatusInfo) getmTLSStatus() {
 		return
 	}
 
-	isGlobalmTLSEnabled, err := business.IstioConfig.IsMTLSGloballyEnabled()
+	globalmTLSStatus, err := business.IstioConfig.MeshWidemTLSStatus()
 	if err != nil {
 		Put(ClusterMTLS, "error")
 	}
 
-	status := NotGloballyEnabled
-	if isGlobalmTLSEnabled {
-		status = GloballyEnabled
-	}
-
-	Put(ClusterMTLS, status)
+	Put(ClusterMTLS, globalmTLSStatus)
 }
