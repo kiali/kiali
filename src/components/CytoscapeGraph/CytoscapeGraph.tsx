@@ -6,7 +6,6 @@ import ReactResizeDetector from 'react-resize-detector';
 
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
-import * as LayoutDictionary from './graphs/LayoutDictionary';
 import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
@@ -43,7 +42,6 @@ import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } f
 import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
-import { DagreGraph } from './graphs/DagreGraph';
 import { CyNode } from './CytoscapeGraphUtils';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
@@ -394,22 +392,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.json({ elements: this.props.elements });
 
     if (updateLayout) {
-      // Enable labels when doing a relayout, layouts can be told to take into account the labels to avoid
-      // overlap, but we need to have them enabled (nodeDimensionsIncludeLabels: true)
-      this.turnNodeLabelsTo(cy, true);
-      const layoutOptions = LayoutDictionary.getLayout(this.props.layout);
-      if (cy.nodes('$node > node').length > 0) {
-        // if there is any parent node, run the group-compound-layout
-        cy.layout({
-          ...layoutOptions,
-          name: 'group-compound-layout',
-          realLayout: this.props.layout.name,
-          // Currently we do not support non discrete layouts for the compounds, but this can be supported if needed.
-          compoundLayoutOptions: LayoutDictionary.getLayout(DagreGraph.getLayout())
-        }).run();
-      } else {
-        cy.layout(layoutOptions).run();
-      }
+      CytoscapeGraphUtils.runLayout(cy, this.props.layout);
     }
 
     // Create and destroy labels

@@ -323,9 +323,12 @@ export default class TrafficRenderer {
       this.layer.setTransform(this.context);
       Object.keys(this.trafficEdges).forEach(edgeId => {
         const trafficEdge = this.trafficEdges[edgeId];
-        trafficEdge.processStep(step);
-        trafficEdge.removeFinishedPoints();
-        this.render(trafficEdge);
+        // Skip if edge is currently hidden
+        if (trafficEdge.getEdge().visible()) {
+          trafficEdge.processStep(step);
+          trafficEdge.removeFinishedPoints();
+          this.render(trafficEdge);
+        }
       });
       this.previousTimestamp = nextTimestamp;
     } catch (exception) {
@@ -400,7 +403,8 @@ export default class TrafficRenderer {
   private getTrafficEdgeType(edge: any) {
     if (edge.data(CyEdge.http) > 0) {
       return TrafficEdgeType.HTTP;
-    } else if (edge.data(CyEdge.tcp) > 0) {
+    }
+    if (edge.data(CyEdge.tcp) > 0) {
       return TrafficEdgeType.TCP;
     }
     // No TCP or HTTP traffic found

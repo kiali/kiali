@@ -17,7 +17,7 @@ const decorateGraphData = (graphData: any) => {
       http4xx: '0',
       http5xx: '0',
       httpPercentErr: '0',
-      httpPercentReq: '100',
+      httpPercentReq: '100.0',
       isMTLS: undefined,
       isUnused: undefined,
       responseTime: '0',
@@ -57,7 +57,9 @@ const decorateGraphData = (graphData: any) => {
       graphData.nodes = graphData.nodes.map(node => {
         const decoratedNode = { ...node };
         if (node.data.traffic) {
-          node.data.traffic.map(protocol => {
+          const traffic = node.data.traffic;
+          node.data.traffic = undefined;
+          traffic.map(protocol => {
             decoratedNode.data = { ...protocol.rates, ...decoratedNode.data };
           });
         }
@@ -69,7 +71,9 @@ const decorateGraphData = (graphData: any) => {
       graphData.edges = graphData.edges.map(edge => {
         const decoratedEdge = { ...edge };
         if (edge.data.traffic) {
-          edge.data.traffic.map(protocol => {
+          const traffic = edge.data.traffic;
+          edge.data.traffic = undefined;
+          traffic.map(protocol => {
             decoratedEdge.data = { ...protocol.rates, ...decoratedEdge.data };
           });
         }

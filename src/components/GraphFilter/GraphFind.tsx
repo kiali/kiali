@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Form, FormControl, FormGroup, Icon, InputGroup } from 'patternfly-react';
+import { Button, FormControl, FormGroup, Icon, InputGroup } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -32,6 +32,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     router: () => null
   };
 
+  private hideInputRef;
+  private hideInputValue: string;
+  private hideValue: string;
+  private hiddenElements: any | undefined;
   private findInputRef;
   private findInputValue: string;
   private findValue: string;
@@ -42,6 +46,12 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
+
+    this.hideInputRef = React.createRef();
+    this.hideInputValue = '';
+    this.hideValue = '';
+    this.hiddenElements = undefined;
+
     this.findInputRef = React.createRef();
     this.findInputValue = '';
     this.findValue = '';
@@ -51,13 +61,16 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     if (this.findValue.length > 0 && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp) {
       this.handleFind();
     }
+    if (this.hideValue.length > 0 && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp) {
+      this.handleHide();
+    }
   }
 
   render() {
     return (
       <>
-        <FormGroup>
-          <Form onSubmit={this.handleFindSubmit} inline="true">
+        <FormGroup style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <span className={'form-inline'}>
             <InputGroup>
               <FormControl
                 type="text"
@@ -66,6 +79,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
                   this.findInputRef = ref;
                 }}
                 onChange={this.updateFind}
+                onKeyPress={this.checkSubmitFind}
                 placeholder="Find..."
               />
               <InputGroup.Button>
@@ -73,11 +87,26 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
                   <Icon name="close" type="fa" />
                 </Button>
               </InputGroup.Button>
+              <FormControl
+                type="text"
+                style={{ width: '18em' }}
+                inputRef={ref => {
+                  this.hideInputRef = ref;
+                }}
+                onChange={this.updateHide}
+                onKeyPress={this.checkSubmitHide}
+                placeholder="Hide..."
+              />
+              <InputGroup.Button>
+                <Button onClick={this.clearHide}>
+                  <Icon name="close" type="fa" />
+                </Button>
+              </InputGroup.Button>
             </InputGroup>
             <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-              <Icon name="help" type="pf" title="Help Find..." />
+              <Icon name="help" type="pf" title="Help Find/Hide..." />
             </Button>
-          </Form>
+          </span>
         </FormGroup>
         {this.props.showFindHelp && <GraphHelpFind onClose={this.toggleFindHelp} />}{' '}
       </>
@@ -88,8 +117,42 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     this.props.toggleFindHelp();
   };
 
+  private updateHide = event => {
+    this.hideInputValue = event.target.value;
+  };
+
   private updateFind = event => {
     this.findInputValue = event.target.value;
+  };
+
+  private checkSubmitHide = event => {
+    const keyCode = event.keyCode ? event.keyCode : event.which;
+    if (keyCode === 13) {
+      event.preventDefault();
+      if (this.hideValue !== this.hideInputValue) {
+        this.hideValue = this.hideInputValue;
+        this.handleHide();
+      }
+    }
+  };
+
+  private checkSubmitFind = event => {
+    const keyCode = event.keyCode ? event.keyCode : event.which;
+    if (keyCode === 13) {
+      event.preventDefault();
+      if (this.findValue !== this.findInputValue) {
+        this.findValue = this.findInputValue;
+        this.handleFind();
+      }
+    }
+  };
+
+  private clearHide = () => {
+    this.hideInputValue = '';
+    this.hideValue = '';
+    // note, we don't use hideInputRef.current because <FormControl> deals with refs differently than <input>
+    this.hideInputRef.value = '';
+    this.handleHide();
   };
 
   private clearFind = () => {
@@ -100,10 +163,34 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     this.handleFind();
   };
 
-  private handleFindSubmit = event => {
-    event.preventDefault();
-    this.findValue = this.findInputValue;
-    this.handleFind();
+  private handleHide = () => {
+    if (!this.props.cyData) {
+      console.debug('Skip Hide: cy not set.');
+      return;
+    }
+    const cy = this.props.cyData.cyRef;
+    const selector = this.parseFindValue(this.hideValue);
+    cy.startBatch();
+    // this could also be done using cy remove/restore but we had better results
+    // using visible/hidden.  The latter worked better when hiding animation, and
+    // also prevents the need for running layout because visible/hidden maintains
+    // the space of the hidden elements.
+    if (this.hiddenElements) {
+      // make visible old hide-hits
+      this.hiddenElements.style({ visibility: 'visible' });
+      this.hiddenElements = undefined;
+    }
+    if (selector) {
+      // hide new hide-hits
+      this.hiddenElements = cy.$(selector);
+      this.hiddenElements = this.hiddenElements.add(this.hiddenElements.connectedEdges());
+      this.hiddenElements.style({ visibility: 'hidden' });
+      // now hide any appboxes that don't have any visible children
+      const hiddenAppBoxes = cy.$('$node[isGroup]').not(cy.$('$node[isGroup] > :visible'));
+      hiddenAppBoxes.style({ visibility: 'hidden' });
+      this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
+    }
+    cy.endBatch();
   };
 
   private handleFind = () => {
@@ -243,11 +330,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case 'app':
         return { target: 'node', selector: `[${CyNode.app} ${op} "${val}"]` };
       case 'httpin': {
-        const s = this.getNumericSelector(CyNode.httpIn, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyNode.httpIn, op, val, expression);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'httpout': {
-        const s = this.getNumericSelector(CyNode.httpOut, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyNode.httpOut, op, val, expression);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'name': {
@@ -293,11 +380,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case 'service':
         return { target: 'node', selector: `[${CyNode.service} ${op} "${val}"]` };
       case 'tcpin': {
-        const s = this.getNumericSelector(CyNode.tcpIn, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyNode.tcpIn, op, val, expression);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'tcpout': {
-        const s = this.getNumericSelector(CyNode.tcpOut, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyNode.tcpOut, op, val, expression);
         return s ? { target: 'node', selector: s } : undefined;
       }
       case 'version':
@@ -309,25 +396,25 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       // edges..
       //
       case 'http': {
-        const s = this.getNumericSelector(CyEdge.http, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyEdge.http, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%error':
       case '%err': {
-        const s = this.getNumericSelector(CyEdge.httpPercentErr, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyEdge.httpPercentErr, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case '%traffic': {
-        const s = this.getNumericSelector(CyEdge.httpPercentReq, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyEdge.httpPercentReq, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'rt':
       case 'responsetime': {
-        const s = this.getNumericSelector(CyEdge.responseTime, op, val, 0.001, expression);
+        const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       case 'tcp': {
-        const s = this.getNumericSelector(CyEdge.tcp, op, val, 1.0, expression);
+        const s = this.getNumericSelector(CyEdge.tcp, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
@@ -336,13 +423,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     }
   };
 
-  private getNumericSelector(
-    field: string,
-    op: string,
-    val: any,
-    multiplier: number,
-    expression: string
-  ): string | undefined {
+  private getNumericSelector(field: string, op: string, val: any, expression: string): string | undefined {
     if (isNaN(val)) {
       MessageCenterUtils.add(`Invalid find value, expected a numeric value (use . for decimals):  [${expression}]`);
       return undefined;
@@ -360,12 +441,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
         return undefined;
     }
 
-    const numVal = Number(val) * multiplier;
     switch (op) {
       case '=':
-        return numVal === 0 ? `[^${field}]` : `[${field} ${op} "${val}"]`;
       case '!=':
-        return `[${field} ${op} "${val}"]`;
+        // let the user type in 0 in various ways but set to the proper default value
+        return Number(val) !== 0 ? `[${field} ${op} "${val}"]` : `[${field} ${op} "0"]`;
       default:
         return `[${field} ${op} ${val}]`;
     }
