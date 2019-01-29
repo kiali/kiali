@@ -209,12 +209,12 @@ do
   yaml_path="${YAML_DIR}/${yaml}.yaml"
   if [ -f "${yaml_path}" ]; then
     echo "Using YAML file: ${yaml_path}"
-    cat ${yaml_path} | envsubst | oc create -n ${NAMESPACE} -f -
+    cat ${yaml_path} | envsubst | oc apply -n ${NAMESPACE} -f -
   else
     get_downloader
     yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
     echo "Downloading YAML via: ${downloader} ${yaml_url}"
-    ${downloader} ${yaml_url} | envsubst | oc create -n ${NAMESPACE} -f -
+    ${downloader} ${yaml_url} | envsubst | oc apply -n ${NAMESPACE} -f -
   fi
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to OpenShift. Aborting."
