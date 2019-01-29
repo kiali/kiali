@@ -191,6 +191,14 @@
           },
           {
             "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "x-go-name": "Name",
             "description": "Comma-separated list of namespaces to include in the graph. The namespaces must be accessible to the client.",
             "name": "namespaces",
@@ -292,6 +300,14 @@
           },
           {
             "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
+            "in": "query"
+          },
+          {
+            "type": "string",
             "default": "now",
             "x-go-name": "Name",
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
@@ -389,6 +405,14 @@
             "x-go-name": "Name",
             "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
             "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {
@@ -2293,6 +2317,14 @@
             "x-go-name": "Name",
             "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
             "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {

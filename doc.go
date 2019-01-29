@@ -150,6 +150,16 @@ type IncludeIstioParam struct {
 	Name string `json:"includeIstio"`
 }
 
+// swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
+type InjectServiceNodes struct {
+	// Flag for injecting the requested service node between source and destination nodes.
+	//
+	// in: query
+	// required: false
+	// default: false
+	Name string `json:"injectServiceNodes"`
+}
+
 // swagger:parameters graphNamespaces
 type NamespacesParam struct {
 	// Comma-separated list of namespaces to include in the graph. The namespaces must be accessible to the client.
