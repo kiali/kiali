@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { Breadcrumb, Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
@@ -19,12 +20,13 @@ import 'brace/theme/eclipse';
 import { authentication } from '../../utils/Authentication';
 import { ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
 import VirtualServiceDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/DestinationRuleDetail';
+import history from '../../app/History';
+import { Paths } from '../../config';
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -116,7 +118,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   backToList = () => {
     // Back to list page
-    ListPageLink.navigateTo(TargetPage.ISTIO, [{ name: this.props.match.params.namespace }]);
+    history.push(`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`);
   };
 
   canDelete = () => {
@@ -314,21 +316,26 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.ISTIO}>Istio Config</ListPageLink>
+          <Link to={`/${Paths.ISTIO}`} title={'Istio config'}>
+            Istio Config
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.ISTIO} namespaces={[{ name: this.props.match.params.namespace }]}>
+          <Link
+            to={`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`}
+            title={`Istio configs of ${this.props.match.params.namespace}`}
+          >
             Namespace: {this.props.match.params.namespace}
-          </ListPageLink>
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink
-            target={TargetPage.ISTIO}
-            namespaces={[{ name: this.props.match.params.namespace }]}
+          <Link
+            to={`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`}
+            title={`Istio configs of ${this.props.match.params.namespace}`}
             onClick={this.updateTypeFilter}
           >
             Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
-          </ListPageLink>
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} active={true}>
           Istio Object: {this.props.match.params.object}

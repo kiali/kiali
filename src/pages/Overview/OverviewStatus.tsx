@@ -1,21 +1,35 @@
 import * as React from 'react';
 import { AggregateStatusNotification, Icon, OverlayTrigger, Popover } from 'patternfly-react';
-
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
+import { Link } from 'react-router-dom';
 import { Status } from '../../types/Health';
+import { Paths } from '../../config';
+import { ActiveFilter } from '../../types/Filters';
+import { healthFilter } from '../../components/Filters/CommonFilters';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
 type Props = {
   id: string;
   namespace: string;
   status: Status;
   items: string[];
-  targetPage: TargetPage;
+  targetPage: Paths;
 };
 
 class OverviewStatus extends React.Component<Props, {}> {
   constructor(props: Props) {
     super(props);
   }
+
+  setFilters = () => {
+    const filters: (ActiveFilter & { id: string })[] = [
+      {
+        id: healthFilter.id,
+        category: healthFilter.title,
+        value: this.props.status.name
+      }
+    ];
+    FilterSelected.setSelected(filters);
+  };
 
   render() {
     const length = this.props.items.length;
@@ -26,7 +40,7 @@ class OverviewStatus extends React.Component<Props, {}> {
     }
     return (
       <OverlayTrigger
-        // Prettier makes irrelevant line-breaking clashing with tslint
+        // Prettier makes irrelevant line-breaking clashing withtslint
         // prettier-ignore
         overlay={<Popover id={this.props.id} title={this.props.status.name}>
             {items.map((app, idx) => {
@@ -38,14 +52,10 @@ class OverviewStatus extends React.Component<Props, {}> {
         rootClose={true}
       >
         <AggregateStatusNotification>
-          <ListPageLink
-            target={this.props.targetPage}
-            namespaces={[{ name: this.props.namespace }]}
-            health={this.props.status.name}
-          >
+          <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.setFilters()}>
             <Icon type="pf" name={this.props.status.icon} />
             {length}
-          </ListPageLink>
+          </Link>
         </AggregateStatusNotification>
       </OverlayTrigger>
     );

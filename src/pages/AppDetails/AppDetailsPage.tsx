@@ -8,9 +8,9 @@ import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
+import { Paths } from '../../config';
 
 type AppDetailsState = {
   app: App;
@@ -82,12 +82,12 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.APPLICATIONS}>Applications</ListPageLink>
+          <Link to={`/${Paths.APPLICATIONS}`}>Applications</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.APPLICATIONS} namespaces={[{ name: this.props.match.params.namespace }]}>
+          <Link to={`/${Paths.APPLICATIONS}?namespaces=${this.props.match.params.namespace}`}>
             Namespace: {this.props.match.params.namespace}
-          </ListPageLink>
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={to}>App: {this.props.match.params.app}</Link>

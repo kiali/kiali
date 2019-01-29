@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { AggregateStatusNotification, AggregateStatusNotifications } from 'patternfly-react';
-
+import { Link } from 'react-router-dom';
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
-
 import OverviewStatus from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from './NamespaceInfo';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { switchType } from './OverviewHelper';
+import { Paths } from '../../config';
 
 type Props = {
   name: string;
@@ -21,7 +20,7 @@ class OverviewStatuses extends React.Component<Props> {
   }
 
   render() {
-    const targetPage = switchType(this.props.type, TargetPage.APPLICATIONS, TargetPage.SERVICES, TargetPage.WORKLOADS);
+    const targetPage = switchType(this.props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.props.name;
     const status = this.props.status;
     const nbItems =
@@ -34,9 +33,9 @@ class OverviewStatuses extends React.Component<Props> {
     }
     return (
       <>
-        <ListPageLink target={targetPage} namespaces={[{ name: name }]}>
+        <Link to={`/${targetPage}?namespaces=${name}`} >
           {text}
-        </ListPageLink>
+        </Link>
         <AggregateStatusNotifications>
           {status.inError.length > 0 && (
             <OverviewStatus

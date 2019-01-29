@@ -1,10 +1,10 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import RateTable from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType } from '../../types/Graph';
 import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
@@ -12,6 +12,7 @@ import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { MetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import { Paths } from '../../config';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -178,15 +179,24 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
   private renderTopologySummary = (numSvc: number, numWorkloads: number, numApps: number, numEdges: number) => (
     <div>
-      <ListPageLink key="appsLink" target={TargetPage.APPLICATIONS} namespaces={this.props.namespaces}>
+      <Link
+        key="appsLink"
+        to={`/${Paths.APPLICATIONS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+      >
         {' applications'}
-      </ListPageLink>
-      <ListPageLink key="servicesLink" target={TargetPage.SERVICES} namespaces={this.props.namespaces}>
+      </Link>
+      <Link
+        key="servicesLink"
+        to={`/${Paths.SERVICES}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+      >
         {', services'}
-      </ListPageLink>
-      <ListPageLink key="workloadsLink" target={TargetPage.WORKLOADS} namespaces={this.props.namespaces}>
+      </Link>
+      <Link
+        key="workloadsLink"
+        to={`/${Paths.WORKLOADS}?namespaces=${this.props.namespaces.map(ns => ns.name).join(',')}`}
+      >
         {', workloads'}
-      </ListPageLink>
+      </Link>
       <br />
       <br />
       <strong>Current Graph:</strong>

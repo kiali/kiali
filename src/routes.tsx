@@ -9,7 +9,7 @@ import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import OverviewPage from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './containers/GraphPageContainer';
-import { ICONS } from './config';
+import { ICONS, Paths } from './config';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
@@ -33,26 +33,26 @@ const navItems: MenuItem[] = [
   {
     iconClass: ICONS().MENU.APPLICATIONS,
     title: 'Applications',
-    to: '/applications',
-    pathsActive: [/^\/namespaces\/(.*)\/applications\/(.*)/]
+    to: '/' + Paths.APPLICATIONS,
+    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)/')]
   },
   {
     iconClass: ICONS().MENU.WORKLOADS,
     title: 'Workloads',
-    to: '/workloads',
-    pathsActive: [/^\/namespaces\/(.*)\/workloads\/(.*)/]
+    to: '/' + Paths.WORKLOADS,
+    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)/')]
   },
   {
     iconClass: ICONS().MENU.SERVICES,
     title: 'Services',
-    to: '/services',
-    pathsActive: [/^\/namespaces\/(.*)\/services\/(.*)/]
+    to: '/' + Paths.SERVICES,
+    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)/')]
   },
   {
     iconClass: ICONS().MENU.ISTIO_CONFIG,
     title: 'Istio Config',
-    to: '/istio',
-    pathsActive: [/^\/namespaces\/(.*)\/istio\/(.*)/]
+    to: '/' + Paths.ISTIO,
+    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)/')]
   },
   {
     iconClass: ICONS().MENU.DISTRIBUTED_TRACING,
@@ -69,19 +69,19 @@ const pathRoutes: Path[] = [
     component: OverviewPage
   },
   {
-    path: '/graph/node/namespaces/:namespace/applications/:app/versions/:version',
+    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
     component: GraphPageContainer
   },
   {
-    path: '/graph/node/namespaces/:namespace/applications/:app',
+    path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
     component: GraphPageContainer
   },
   {
-    path: '/graph/node/namespaces/:namespace/services/:service',
+    path: '/graph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
     component: GraphPageContainer
   },
   {
-    path: '/graph/node/namespaces/:namespace/workloads/:workload',
+    path: '/graph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
     component: GraphPageContainer
   },
   {
@@ -89,40 +89,40 @@ const pathRoutes: Path[] = [
     component: GraphPageContainer
   },
   {
-    path: '/namespaces/:namespace/services/:service',
+    path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
     component: ServiceDetailsPageContainer
   },
   // NOTE that order on routes is important
   {
-    path: '/namespaces/:namespace/istio/:objectType/:objectSubtype/:object',
+    path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:objectSubtype/:object',
     component: IstioConfigDetailsPage
   },
   {
-    path: '/namespaces/:namespace/istio/:objectType/:object',
+    path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:object',
     component: IstioConfigDetailsPage
   },
   {
-    path: '/services',
+    path: '/' + Paths.SERVICES,
     component: ServiceListPage
   },
   {
-    path: '/applications',
+    path: '/' + Paths.APPLICATIONS,
     component: AppListPage
   },
   {
-    path: '/namespaces/:namespace/applications/:app',
+    path: '/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
     component: AppDetailsPage
   },
   {
-    path: '/workloads',
+    path: '/' + Paths.WORKLOADS,
     component: WorkloadListPage
   },
   {
-    path: '/namespaces/:namespace/workloads/:workload',
+    path: '/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
     component: WorkloadDetailsPage
   },
   {
-    path: '/istio',
+    path: '/' + Paths.ISTIO,
     component: IstioConfigPage
   },
   {
@@ -137,19 +137,19 @@ const secondaryMastheadRoutes: Path[] = [
     component: DefaultSecondaryMasthead
   },
   {
-    path: '/applications',
+    path: '/' + Paths.APPLICATIONS,
     component: DefaultSecondaryMasthead
   },
   {
-    path: '/services',
+    path: '/' + Paths.SERVICES,
     component: DefaultSecondaryMasthead
   },
   {
-    path: '/workloads',
+    path: '/' + Paths.WORKLOADS,
     component: DefaultSecondaryMasthead
   },
   {
-    path: '/istio',
+    path: '/' + Paths.ISTIO,
     component: DefaultSecondaryMasthead
   }
 ];

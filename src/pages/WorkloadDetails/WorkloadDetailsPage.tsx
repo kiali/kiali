@@ -9,10 +9,9 @@ import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config';
+import { serverConfig, Paths } from '../../config';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -136,12 +135,12 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.WORKLOADS}>Workloads</ListPageLink>
+          <Link to={`/${Paths.WORKLOADS}`}>Workloads</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
-          <ListPageLink target={TargetPage.WORKLOADS} namespaces={[{ name: this.props.match.params.namespace }]}>
+          <Link to={`/${Paths.WORKLOADS}?namespaces=${this.props.match.params.namespace}`}>
             Namespace: {this.props.match.params.namespace}
-          </ListPageLink>
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass="span">
           <Link to={to}>Workload: {this.props.match.params.workload}</Link>

@@ -9,9 +9,9 @@ import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
-import { ListPageLink, TargetPage } from '../../components/ListPage/ListPageLink';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
+import { Paths } from '../../config';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -162,12 +162,12 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return (
       <Breadcrumb title={true}>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.SERVICES}>Services</ListPageLink>
+          <Link to={`/${Paths.SERVICES}`}>Services</Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
-          <ListPageLink target={TargetPage.SERVICES} namespaces={[{ name: this.props.match.params.namespace }]}>
+          <Link to={`/${Paths.SERVICES}?namespaces=${this.props.match.params.namespace}`}>
             Namespace: {this.props.match.params.namespace}
-          </ListPageLink>
+          </Link>
         </Breadcrumb.Item>
         <Breadcrumb.Item componentClass={'span'}>
           <Link to={to}>Service: {this.props.match.params.service}</Link>

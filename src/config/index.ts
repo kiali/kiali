@@ -9,4 +9,8 @@ import { ICONS } from './Icons';
 // Logos
 import { IstioLogo, KialiLogo } from './Logos';
 
-export { config, serverConfig, setServerConfig, ICONS, IstioLogo, KialiLogo };
+// Paths
+
+import { Paths } from './Paths';
+
+export { config, Paths, serverConfig, setServerConfig, ICONS, IstioLogo, KialiLogo };

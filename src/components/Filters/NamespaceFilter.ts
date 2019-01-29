@@ -3,7 +3,7 @@ import { authentication } from '../../utils/Authentication';
 import { FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 
 export class NamespaceFilter {
-  static id = 'namespace';
+  static id = 'namespaces';
   static category = 'Namespace';
 
   static create = (): FilterType => {
