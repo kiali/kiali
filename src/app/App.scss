@@ -11,6 +11,11 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 @import 'patternfly-react';
 
 /**
+  Patternfly React Extensions Sass
+*/
+@import 'patternfly-react-extensions';
+
+/**
   Application Overrides
 */
 //override navbar-default from React Boostrap NavBar
