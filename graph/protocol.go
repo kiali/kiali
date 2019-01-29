@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kiali/kiali/log"
@@ -145,6 +146,36 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface
 	if val, valOk := edgeMetadata["tcp"]; valOk {
 		addToMetadataValue(sourceMetadata, "tcpOut", val.(float64))
 	}
+}
+
+func AddServiceGraphTraffic(target, source *Edge) {
+	protocol := target.Metadata["protocol"]
+	switch protocol {
+	case "grpc":
+		addToMetadataValue(target.Metadata, "grpc", source.Metadata["grpc"].(float64))
+		if val, ok := source.Metadata["grpcErr"]; ok {
+			addToMetadataValue(target.Metadata, "grpcErr", val.(float64))
+		}
+	case "http":
+		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
+		if val, ok := source.Metadata["http3xx"]; ok {
+			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
+		}
+		if val, ok := source.Metadata["http4xx"]; ok {
+			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
+		}
+		if val, ok := source.Metadata["http5xx"]; ok {
+			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
+		}
+	case "tcp":
+		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
+	default:
+		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
+	}
+
+	// handle any appender-based edge data (nothing currently)
+	// note: We used to average response times of the aggregated edges but realized that
+	// we can't average quantiles (kiali-2297).
 }
 
 func addToMetadataValue(md map[string]interface{}, k string, v float64) {

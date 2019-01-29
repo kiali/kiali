@@ -261,24 +261,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 }
 
 func addServiceGraphTraffic(target, source *graph.Edge) {
-	protocol := target.Metadata["protocol"]
-	switch protocol {
-	case "http":
-		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
-		if val, ok := source.Metadata["http3xx"]; ok {
-			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
-		}
-		if val, ok := source.Metadata["http4xx"]; ok {
-			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
-		}
-		if val, ok := source.Metadata["http5xx"]; ok {
-			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
-		}
-	case "tcp":
-		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
-	default:
-		graph.Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
-	}
+	graph.AddServiceGraphTraffic(target, source)
 
 	// handle any appender-based edge data (nothing currently)
 	// note: We used to average response times of the aggregated edges but realized that
@@ -288,14 +271,6 @@ func addServiceGraphTraffic(target, source *graph.Edge) {
 func checkNodeType(expected string, n *graph.Node) {
 	if expected != n.NodeType {
 		graph.Error(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n))
-	}
-}
-
-func addToMetadataValue(md map[string]interface{}, k string, v float64) {
-	if curr, ok := md[k]; ok {
-		md[k] = curr.(float64) + v
-	} else {
-		md[k] = v
 	}
 }
 
