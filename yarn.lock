@@ -2112,7 +2112,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-classnames@^2.2.0, classnames@^2.2.5:
+classnames@^2.2.0, classnames@^2.2.3, classnames@^2.2.5, classnames@^2.2.6:
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
   integrity sha512-JR/iSQOSt+LQIWwrwEzJ9uk0xfN3mTVYMwt1Ir5mUcSN6pU+V4zQFFaJsclJbPuAUQH+yfWef6tm7l1quW3C8Q==
@@ -3049,6 +3049,11 @@ diff-match-patch@^1.0.4:
   resolved "https://registry.yarnpkg.com/diff-match-patch/-/diff-match-patch-1.0.4.tgz#6ac4b55237463761c4daf0dc603eb869124744b1"
   integrity sha512-Uv3SW8bmH9nAtHKaKSanOQmj2DnlH65fUpcrMdfdaOxUG02QQ4YGZ8AE7kKOMisF7UqvOlGKVYWRvezdncW9lg==
 
+diff@^2.2.2:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-2.2.3.tgz#60eafd0d28ee906e4e8ff0a52c1229521033bf99"
+  integrity sha1-YOr9DSjukG5Oj/ClLBIpUhAzv5k=
+
 diff@^3.2.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
@@ -3107,7 +3112,7 @@ dom-converter@~0.2:
   dependencies:
     utila "~0.4"
 
-dom-helpers@^3.2.0, dom-helpers@^3.2.1, dom-helpers@^3.3.1:
+"dom-helpers@^2.4.0 || ^3.0.0", dom-helpers@^3.2.0, dom-helpers@^3.2.1, dom-helpers@^3.3.1:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/dom-helpers/-/dom-helpers-3.4.0.tgz#e9b369700f959f62ecde5a6babde4bccd9169af8"
   integrity sha512-LnuPJ+dwqKDIyotW1VzmOZ5TONUN7CwkCR5hrgawTUbkBGYdeoNLZo6nNfGkCrjtE1nXXaj7iMMpDa8/d9WoIA==
@@ -4231,6 +4236,11 @@ getpass@^0.1.1:
   integrity sha1-Xv+OPmhNVprkyysSgmBOi6YhSfo=
   dependencies:
     assert-plus "^1.0.0"
+
+gitdiff-parser@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/gitdiff-parser/-/gitdiff-parser-0.1.2.tgz#26a256e05e9c2d5016b512a96c1dacb40862b92a"
+  integrity sha512-glDM6E1AwLYYTOPyI0CqamNEUSuwwAkmwULWpE2sHMpMZNzGJwErt7+eV+yIZcsbDza0pVSlwlBHFWbTf2Wu7A==
 
 glob-base@^0.3.0:
   version "0.3.0"
@@ -6092,6 +6102,11 @@ lodash.escape@^4.0.1:
   resolved "https://registry.yarnpkg.com/lodash.escape/-/lodash.escape-4.0.1.tgz#c9044690c21e04294beaa517712fded1fa88de98"
   integrity sha1-yQRGkMIeBClL6qUXcS/e0fqI3pg=
 
+lodash.findlastindex@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.findlastindex/-/lodash.findlastindex-4.6.0.tgz#b8375ac0f02e9b926375cdf8dc3ea814abf9c6ac"
+  integrity sha1-uDdawPAum5Jjdc343D6oFKv5xqw=
+
 lodash.flatten@^4.4.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/lodash.flatten/-/lodash.flatten-4.4.0.tgz#f31c22225a9632d2bbf8e4addbef240aa765a61f"
@@ -6126,6 +6141,11 @@ lodash.isstring@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/lodash.isstring/-/lodash.isstring-4.0.1.tgz#d527dfb5456eca7cc9bb95d5daeaf88ba54a5451"
   integrity sha1-1SfftUVuynzJu5XV2ur4i6VKVFE=
+
+lodash.mapvalues@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.mapvalues/-/lodash.mapvalues-4.6.0.tgz#1bafa5005de9dd6f4f26668c30ca37230cc9689c"
+  integrity sha1-G6+lAF3p3W9PJmaMMMo3IwzJaJw=
 
 lodash.memoize@^4.1.2:
   version "4.1.2"
@@ -6207,7 +6227,7 @@ longest@^1.0.1:
   resolved "https://registry.yarnpkg.com/longest/-/longest-1.0.1.tgz#30a0b2da38f73770e8294a0d22e6625ed77d0097"
   integrity sha1-MKCy2jj3N3DoKUoNIuZiXtd9AJc=
 
-loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.2.0, loose-envify@^1.3.1, loose-envify@^1.4.0:
+loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.2.0, loose-envify@^1.3.0, loose-envify@^1.3.1, loose-envify@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
   integrity sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==
@@ -7375,6 +7395,21 @@ patternfly-bootstrap-treeview@~2.1.0:
     bootstrap "3.4.x"
     jquery ">= 2.1.x"
 
+patternfly-react-extensions@2.16.8:
+  version "2.16.8"
+  resolved "https://registry.yarnpkg.com/patternfly-react-extensions/-/patternfly-react-extensions-2.16.8.tgz#b8368e762a7a45c5ca965985d57880cc884e57a9"
+  integrity sha512-qCgJIwKWD1eyUclhCP5G9zKP7KPC0OOJlpz5X2paS/VeD8hb6f4eibsv5owLGNCi6iLYko2fMKNOItueq0e8oQ==
+  dependencies:
+    breakjs "^1.0.0"
+    classnames "^2.2.5"
+    css-element-queries "^1.0.1"
+    patternfly "^3.58.0"
+    patternfly-react "^2.29.7"
+    react-bootstrap "^0.32.1"
+    react-diff-view "^1.8.1"
+    react-virtualized "9.x"
+    unidiff "^1.0.1"
+
 patternfly-react@2.25.3:
   version "2.25.3"
   resolved "https://registry.yarnpkg.com/patternfly-react/-/patternfly-react-2.25.3.tgz#75993bab9810bab0a6c5fd6de49b1d6ed65d8daa"
@@ -7395,6 +7430,32 @@ patternfly-react@2.25.3:
     react-motion "^0.5.2"
     reactabular-table "^8.14.0"
     recompose "^0.26.0"
+  optionalDependencies:
+    sortabular "^1.5.1"
+    table-resolver "^3.2.0"
+
+patternfly-react@^2.29.7:
+  version "2.29.7"
+  resolved "https://registry.yarnpkg.com/patternfly-react/-/patternfly-react-2.29.7.tgz#5ddcdceabc5fdfe8bc561c184624f9a30249b53d"
+  integrity sha512-RWz9QEMdZCI0pKA+XuXSNqmsWvDkjORzxwlmVIvDTk6z+Vs5zbOUHhjCN16R77BLIM0ZlZ8lxCMQ9vNak+M4Tw==
+  dependencies:
+    bootstrap-slider-without-jquery "^10.0.0"
+    breakjs "^1.0.0"
+    classnames "^2.2.5"
+    css-element-queries "^1.0.1"
+    lodash "^4.17.11"
+    patternfly "^3.58.0"
+    react-bootstrap "^0.32.1"
+    react-bootstrap-switch "^15.5.3"
+    react-bootstrap-typeahead "^3.1.3"
+    react-c3js "^0.1.20"
+    react-click-outside "^3.0.1"
+    react-collapse "^4.0.3"
+    react-fontawesome "^1.6.1"
+    react-motion "^0.5.2"
+    reactabular-table "^8.14.0"
+    recompose "^0.26.0"
+    uuid "^3.3.2"
   optionalDependencies:
     sortabular "^1.5.1"
     table-resolver "^3.2.0"
@@ -8254,6 +8315,19 @@ react-dev-utils@^5.0.1:
     strip-ansi "3.0.1"
     text-table "0.2.0"
 
+react-diff-view@^1.8.1:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/react-diff-view/-/react-diff-view-1.8.1.tgz#0b9b4adcb92de6730d28177d68654dfcc2097f73"
+  integrity sha512-+soJL85Xnsak/VOdxSgiDKhhaFiOkckiswwrXdiWVCxV3LP9POyJR4AqGVFGdkntJ3YT63mtwTYuunFeId+XSA==
+  dependencies:
+    classnames "^2.2.6"
+    gitdiff-parser "^0.1.2"
+    leven "^2.1.0"
+    lodash.escape "^4.0.1"
+    lodash.findlastindex "^4.6.0"
+    lodash.mapvalues "^4.6.0"
+    warning "^4.0.1"
+
 react-dom@16.6.3:
   version "16.6.3"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.6.3.tgz#8fa7ba6883c85211b8da2d0efeffc9d3825cccc0"
@@ -8481,6 +8555,18 @@ react-transition-group@^2.0.0, react-transition-group@^2.2.0:
     dom-helpers "^3.3.1"
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
+    react-lifecycles-compat "^3.0.4"
+
+react-virtualized@9.x:
+  version "9.21.0"
+  resolved "https://registry.yarnpkg.com/react-virtualized/-/react-virtualized-9.21.0.tgz#8267c40ffb48db35b242a36dea85edcf280a6506"
+  integrity sha512-duKD2HvO33mqld4EtQKm9H9H0p+xce1c++2D5xn59Ma7P8VT7CprfAe5hwjd1OGkyhqzOZiTMlTal7LxjH5yBQ==
+  dependencies:
+    babel-runtime "^6.26.0"
+    classnames "^2.2.3"
+    dom-helpers "^2.4.0 || ^3.0.0"
+    loose-envify "^1.3.0"
+    prop-types "^15.6.0"
     react-lifecycles-compat "^3.0.4"
 
 react@16.6.3:
@@ -10478,6 +10564,13 @@ underscore@^1.8.3:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.9.1.tgz#06dce34a0e68a7babc29b365b8e74b8925203961"
   integrity sha512-5/4etnCkd9c8gwgowi5/om/mYO5ajCaOgdzj/oW+0eQV9WxKBDZw5+ycmKmeaTXjInS/W0BzpGLo2xR2aBwZdg==
+
+unidiff@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/unidiff/-/unidiff-1.0.1.tgz#2ff8da0710a9abb4e1133e9da4c87747fb5ff508"
+  integrity sha512-n9pCo9OKQE+QWsUa45BdSy7Y0hpHpyPHwNxcEgqFgPqxb1Y8DH4d9WTepcJpmLsnDEWDch6hxh2g/sM0bvyxMA==
+  dependencies:
+    diff "^2.2.2"
 
 union-value@^1.0.0:
   version "1.0.0"
