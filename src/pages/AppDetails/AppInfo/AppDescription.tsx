@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Row, Col, ListView, ListViewItem, ListViewIcon, Icon } from 'patternfly-react';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
+import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
 import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
 import { WorkloadIcon } from '../../../types/Workload';
@@ -56,7 +57,10 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     const heading = (
       <div className="ServiceList-Heading">
         <div className="ServiceList-Title">
-          <div className="component-label">Workload</div>
+          <div className="component-label">
+            Workload{' '}
+            {!workload.istioSidecar && <MissingSidecar style={{ marginLeft: '10px' }} tooltip={true} text={''} />}
+          </div>
           <Link to={this.workloadLink(namespace, workload.workloadName)}>{workload.workloadName}</Link>
         </div>
       </div>
