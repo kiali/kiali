@@ -4,7 +4,7 @@ import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { ICONS } from '../../config';
 
 const MissingSidecar = props => {
-  const { style, text, type, name, color, tooltip, ...otherProps } = props;
+  const { style, text, textTooltip, type, name, color, tooltip, ...otherProps } = props;
 
   const iconComponent = (
     <span style={style} {...otherProps}>
@@ -16,7 +16,7 @@ const MissingSidecar = props => {
     <OverlayTrigger
       overlay={
         <Tooltip>
-          <strong>{text}</strong>
+          <strong>{textTooltip}</strong>
         </Tooltip>
       }
       placement="right"
@@ -32,6 +32,7 @@ const MissingSidecar = props => {
 
 MissingSidecar.propTypes = {
   text: PropTypes.string,
+  textTooltip: PropTypes.string,
   tooltip: PropTypes.bool,
   type: PropTypes.string,
   name: PropTypes.string,
@@ -40,6 +41,7 @@ MissingSidecar.propTypes = {
 
 MissingSidecar.defaultProps = {
   text: 'Missing Sidecar',
+  textTooltip: 'Missing Sidecar',
   tooltip: false,
   type: ICONS().ISTIO.MISSING_SIDECAR.type,
   name: ICONS().ISTIO.MISSING_SIDECAR.name,

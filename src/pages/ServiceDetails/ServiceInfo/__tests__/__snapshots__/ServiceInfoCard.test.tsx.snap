@@ -72,6 +72,7 @@ ShallowWrapper {
                 color="red"
                 name="blueprint"
                 text="Missing Sidecar"
+                textTooltip="Missing Sidecar"
                 tooltip={false}
                 type="pf"
               />
@@ -137,6 +138,7 @@ ShallowWrapper {
                 color="red"
                 name="blueprint"
                 text="Missing Sidecar"
+                textTooltip="Missing Sidecar"
                 tooltip={false}
                 type="pf"
               />
@@ -172,6 +174,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  textTooltip="Missing Sidecar"
                   tooltip={false}
                   type="pf"
                 />
@@ -206,6 +209,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  textTooltip="Missing Sidecar"
                   tooltip={false}
                   type="pf"
                 />,
@@ -222,6 +226,7 @@ ShallowWrapper {
                   "color": "red",
                   "name": "blueprint",
                   "text": "Missing Sidecar",
+                  "textTooltip": "Missing Sidecar",
                   "tooltip": false,
                   "type": "pf",
                 },
@@ -402,6 +407,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  textTooltip="Missing Sidecar"
                   tooltip={false}
                   type="pf"
                 />
@@ -467,6 +473,7 @@ ShallowWrapper {
                   color="red"
                   name="blueprint"
                   text="Missing Sidecar"
+                  textTooltip="Missing Sidecar"
                   tooltip={false}
                   type="pf"
                 />
@@ -502,6 +509,7 @@ ShallowWrapper {
                     color="red"
                     name="blueprint"
                     text="Missing Sidecar"
+                    textTooltip="Missing Sidecar"
                     tooltip={false}
                     type="pf"
                   />
@@ -536,6 +544,7 @@ ShallowWrapper {
                     color="red"
                     name="blueprint"
                     text="Missing Sidecar"
+                    textTooltip="Missing Sidecar"
                     tooltip={false}
                     type="pf"
                   />,
@@ -552,6 +561,7 @@ ShallowWrapper {
                     "color": "red",
                     "name": "blueprint",
                     "text": "Missing Sidecar",
+                    "textTooltip": "Missing Sidecar",
                     "tooltip": false,
                     "type": "pf",
                   },
