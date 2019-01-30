@@ -1,6 +1,9 @@
 import { createStore, applyMiddleware, compose } from 'redux';
 import { KialiAppState } from './Store';
 import { persistStore, persistReducer } from 'redux-persist';
+import { persistFilter } from 'redux-persist-transform-filter';
+import { createTransform } from 'redux-persist';
+
 import rootReducer from '../reducers';
 import thunk from 'redux-thunk';
 
@@ -20,10 +23,25 @@ declare const window;
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const persistKey = 'kiali-' + (webRoot && webRoot !== '/' ? webRoot.substring(1) : 'root');
 
+// Needed to be able to whitelist fields but allowing to keep an initialState
+const whitelistInputWithInitialState = (reducerName: string, inboundPaths: string[], initialState: any) =>
+  createTransform(
+    inboundState => persistFilter(inboundState, inboundPaths, 'whitelist'),
+    outboundState => ({ ...initialState, ...outboundState }),
+    { whitelist: [reducerName] }
+  );
+
+const namespacePersistFilter = whitelistInputWithInitialState(
+  'namespaces',
+  ['activeNamespaces'],
+  INITIAL_NAMESPACE_STATE
+);
+
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'statusState']
+  whitelist: ['authentication', 'statusState', 'namespaces'],
+  transforms: [namespacePersistFilter]
 };
 
 const composeEnhancers =
