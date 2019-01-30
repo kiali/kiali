@@ -9,6 +9,7 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -544,7 +545,7 @@ func (in *IstioConfigService) hasMeshPolicyEnabled() (bool, error) {
 }
 
 func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
-	dr, err := in.k8s.GetDestinationRule("default", "default")
+	dr, err := in.k8s.GetDestinationRule(config.Get().IstioNamespace, "default")
 	if err != nil {
 		if errors2.IsNotFound(err) {
 			return false, nil

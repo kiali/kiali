@@ -892,10 +892,10 @@ func TestDestinationRuleEnabled(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
 	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
@@ -908,10 +908,10 @@ func TestDRWildcardLocalHost(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
 	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
@@ -930,10 +930,10 @@ func TestDRNotMutualTLSMode(t *testing.T) {
 	}
 
 	dr := data.AddTrafficPolicyToDestinationRule(trafficPolicy,
-		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
 	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
@@ -946,10 +946,10 @@ func TestMeshStatusEnabled(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("default", "default", "*.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
@@ -963,10 +963,10 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
@@ -980,10 +980,10 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	assert := assert.New(t)
 
 	dr := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("default", "default", "sleep.foo.svc.cluster.local"))
+		data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetDestinationRule", "default", "default").Return(dr, nil)
+	k8s.On("GetDestinationRule", "istio-system", "default").Return(dr, nil)
 	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
