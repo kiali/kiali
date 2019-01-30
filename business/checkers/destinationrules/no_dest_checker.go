@@ -12,6 +12,8 @@ type NoDestinationChecker struct {
 	Namespace       string
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
+	ServiceEntries  map[string]struct{}
+	ServiceNames    []string
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -81,10 +83,21 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[str
 
 func (n NoDestinationChecker) hasMatchingService(service string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
+	// Check Workloads
 	for _, wl := range n.WorkloadList.Workloads {
 		if service == wl.Labels[appLabel] {
 			return true
 		}
+	}
+	// Check ServiceNames
+	for _, s := range n.ServiceNames {
+		if service == s {
+			return true
+		}
+	}
+	// Check ServiceEntries
+	if _, found := n.ServiceEntries[service]; found {
+		return true
 	}
 	return false
 }
