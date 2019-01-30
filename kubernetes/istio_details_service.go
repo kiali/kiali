@@ -219,6 +219,25 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	return destinationRules, nil
 }
 
+func (in *IstioClient) GetAllDestinationRules() ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Resource(destinationRules).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	destinationRuleList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("It doesn't return a DestinationRule list")
+	}
+
+	destinationRules := make([]IstioObject, 0)
+	for _, dr := range destinationRuleList.GetItems() {
+		destinationRules = append(destinationRules, dr.DeepCopyIstioObject())
+	}
+
+	return destinationRules, nil
+}
+
 func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).SubResource(destinationrule).Do().Get()
 	if err != nil {

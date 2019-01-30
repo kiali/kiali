@@ -85,6 +85,11 @@ func (o *K8SClientMock) GetDestinationRule(namespace string, destinationrule str
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetAllDestinationRules() ([]kubernetes.IstioObject, error) {
+	args := o.Called()
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error) {
 	args := o.Called(namespace, serviceName)
 	return args.Get(0).(*v1.Endpoints), args.Error(1)

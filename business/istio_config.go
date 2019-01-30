@@ -9,7 +9,6 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -545,28 +544,28 @@ func (in *IstioConfigService) hasMeshPolicyEnabled() (bool, error) {
 }
 
 func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
-	dr, err := in.k8s.GetDestinationRule(config.Get().IstioNamespace, "default")
+	drs, err := in.k8s.GetAllDestinationRules()
 	if err != nil {
-		if errors2.IsNotFound(err) {
-			return false, nil
-		} else {
-			return false, err
+		return false, err
+	}
+
+	mtlsEnabled := false
+
+	for _, dr := range drs {
+		// Host my be *.local
+		host, hostPresent := dr.GetSpec()["host"]
+		if !hostPresent || host != "*.local" {
+			continue
 		}
-	}
 
-	// Host my be *.local
-	host, hostPresent := dr.GetSpec()["host"]
-	if !hostPresent || host != "*.local" {
-		return false, nil
-	}
-
-	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
-		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
-			if tls, found := trafficCasted["tls"]; found {
-				if tlsCasted, ok := tls.(map[string]interface{}); ok {
-					if mode, found := tlsCasted["mode"]; found {
-						if modeCasted, ok := mode.(string); ok {
-							return modeCasted == "ISTIO_MUTUAL", nil
+		if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
+			if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
+				if tls, found := trafficCasted["tls"]; found {
+					if tlsCasted, ok := tls.(map[string]interface{}); ok {
+						if mode, found := tlsCasted["mode"]; found {
+							if modeCasted, ok := mode.(string); ok {
+								mtlsEnabled = modeCasted == "ISTIO_MUTUAL"
+							}
 						}
 					}
 				}
@@ -574,5 +573,5 @@ func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
 		}
 	}
 
-	return false, nil
+	return mtlsEnabled, nil
 }
