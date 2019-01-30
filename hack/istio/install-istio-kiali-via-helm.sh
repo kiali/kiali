@@ -331,9 +331,11 @@ fi
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
   ${CLIENT_EXE} delete -f /tmp/istio.yaml
+  for i in ${ISTIO_DIR}/install/kubernetes/helm/istio-init/files/crd*yaml; do ${CLIENT_EXE} delete -f $i; done
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
+  for i in ${ISTIO_DIR}/install/kubernetes/helm/istio-init/files/crd*yaml; do ${CLIENT_EXE} apply -f $i; done
   ${CLIENT_EXE} apply -f /tmp/istio.yaml
 fi
 
