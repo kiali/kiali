@@ -49,12 +49,19 @@ type IstioCheck struct {
 	// Indicates the level of importance: error or warning
 	// required: true
 	// example: error
-	Severity string `json:"severity"`
+	Severity SeverityLevel `json:"severity"`
 
 	// String that describes where in the yaml file is the check located
 	// example: spec/http[0]/route
 	Path string `json:"path"`
 }
+
+type SeverityLevel string
+
+const (
+	ErrorSeverity   SeverityLevel = "error"
+	WarningSeverity SeverityLevel = "warning"
+)
 
 var ObjectTypeSingular = map[string]string{
 	"gateways":          "gateway",
@@ -66,8 +73,73 @@ var ObjectTypeSingular = map[string]string{
 	"quotaspecbindings": "quotaspecbinding",
 }
 
-func BuildCheck(message, severity, path string) IstioCheck {
-	return IstioCheck{Message: message, Severity: severity, Path: path}
+var checkDescriptors = map[string]IstioCheck{
+	"destinationrules.multimatch": {
+		Message:  "More than one DestinationRules for the same host subset combination",
+		Severity: WarningSeverity,
+	},
+	"destinationrules.nodest.matchingworkload": {
+		Message:  "This host has no matching workloads",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.nodest.subsetlabels": {
+		Message:  "This subset's labels are not found from any matching host",
+		Severity: ErrorSeverity,
+	},
+	"gateways.multimatch": {
+		Message:  "More than one Gateway for the same host port combination",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.nogateway": {
+		Message:  "VirtualService is pointing to a non-existent gateway",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.nohost.hostnotfound": {
+		Message:  "DestinationWeight on route doesn't have a valid service (host not found)",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.nohost.invalidprotocol": {
+		Message:  "VirtualService doesn't define any valid route protocol",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.route.numericweight": {
+		Message:  "Weight must be a number",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.route.weightrange": {
+		Message:  "Weight should be between 0 and 100",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.route.weightsum": {
+		Message:  "Weight sum should be 100",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.route.allweightspresent": {
+		Message:  "All routes should have weight",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.singlehost": {
+		Message:  "More than one Virtual Service for same host",
+		Severity: WarningSeverity,
+	},
+	"virtualservices.subsetpresent.destinationmandatory": {
+		Message:  "Destination field is mandatory",
+		Severity: ErrorSeverity,
+	},
+	"virtualservices.subsetpresent.subsetnotfound": {
+		Message:  "Subset not found",
+		Severity: WarningSeverity,
+	},
+}
+
+func Build(checkId string, path string) IstioCheck {
+	check := checkDescriptors[checkId]
+	check.Path = path
+	return check
+}
+
+func CheckMessage(checkId string) string {
+	return checkDescriptors[checkId].Message
 }
 
 func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations {

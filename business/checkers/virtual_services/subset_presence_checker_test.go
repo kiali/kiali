@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
 )
@@ -92,12 +93,12 @@ func TestSubsetsNotFound(t *testing.T) {
 		assert.True(valid)
 		assert.NotEmpty(validations)
 		assert.Len(validations, 2)
-		assert.Equal(validations[0].Message, "Subset not found")
-		assert.Equal(validations[0].Severity, "warning")
+		assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[0].Severity, models.WarningSeverity)
 		assert.Equal(validations[0].Path, "spec/"+protocol+"[0]/route[0]/destination")
 
-		assert.Equal(validations[1].Message, "Subset not found")
-		assert.Equal(validations[1].Severity, "warning")
+		assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[1].Severity, models.WarningSeverity)
 		assert.Equal(validations[1].Path, "spec/"+protocol+"[0]/route[1]/destination")
 	}
 }
@@ -132,8 +133,8 @@ func TestVirtualServiceWithoutDestination(t *testing.T) {
 		assert.False(valid)
 		assert.NotEmpty(validations)
 		assert.Len(validations, 1)
-		assert.Equal(validations[0].Message, "Destination field is mandatory")
-		assert.Equal(validations[0].Severity, "error")
+		assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.subsetpresent.destinationmandatory"))
+		assert.Equal(validations[0].Severity, models.ErrorSeverity)
 		assert.Equal(validations[0].Path, "spec/"+protocol+"[0]/route[0]")
 	}
 }
@@ -191,12 +192,12 @@ func TestWrongDestinationRule(t *testing.T) {
 		assert.True(valid)
 		assert.NotEmpty(validations)
 		assert.Len(validations, 2)
-		assert.Equal(validations[0].Message, "Subset not found")
-		assert.Equal(validations[0].Severity, "warning")
+		assert.Equal(validations[0].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[0].Severity, models.WarningSeverity)
 		assert.Equal(validations[0].Path, "spec/"+protocol+"[0]/route[0]/destination")
 
-		assert.Equal(validations[1].Message, "Subset not found")
-		assert.Equal(validations[1].Severity, "warning")
+		assert.Equal(validations[1].Message, models.CheckMessage("virtualservices.subsetpresent.subsetnotfound"))
+		assert.Equal(validations[1].Severity, models.WarningSeverity)
 		assert.Equal(validations[1].Path, "spec/"+protocol+"[0]/route[1]/destination")
 	}
 }

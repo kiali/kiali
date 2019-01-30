@@ -74,7 +74,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%s",
 					kind, routeIdx, destWeightIdx, destinationWeight["weight"])
-				validation := buildValidation("Weight must be a number", "error", path)
+				validation := buildValidation("virtualservices.route.numericweight", path)
 				validations = append(validations, &validation)
 			}
 
@@ -82,8 +82,7 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route[%d]/weight/%d",
 					kind, routeIdx, destWeightIdx, weight)
-				validation := buildValidation("Weight should be between 0 and 100",
-					"error", path)
+				validation := buildValidation("virtualservices.route.weightrange", path)
 				validations = append(validations, &validation)
 			}
 
@@ -93,12 +92,12 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 		if weightCount > 0 && weightSum != 100 {
 			valid = false
 			path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-			validation := buildValidation("Weight sum should be 100", "error", path)
+			validation := buildValidation("virtualservices.route.weightsum", path)
 			validations = append(validations, &validation)
 			if weightCount != destinationWeights.Len() {
 				valid = false
 				path := fmt.Sprintf("spec/%s[%d]/route", kind, routeIdx)
-				validation := buildValidation("All routes should have weight", "warning", path)
+				validation := buildValidation("virtualservices.route.allweightspresent", path)
 				validations = append(validations, &validation)
 			}
 		}
@@ -107,9 +106,9 @@ func (route RouteChecker) checkRoutesFor(kind string) ([]*models.IstioCheck, boo
 	return validations, valid
 }
 
-func buildValidation(message, severity, path string) models.IstioCheck {
-	validation := models.BuildCheck(message, severity, path)
-	log.Infof("%s - %s. Galley should be performing this validation but it isn't. "+
-		"Make sure Galley is fully working.", severity, message)
+func buildValidation(checkId string, path string) models.IstioCheck {
+	validation := models.Build(checkId, path)
+	log.Infof("%s Galley should be performing this validation but it isn't. "+
+		"Make sure Galley is fully working.", checkId)
 	return validation
 }

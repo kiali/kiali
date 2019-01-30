@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +21,8 @@ func TestMissingGateway(t *testing.T) {
 	validations, valid := checker.Check()
 	assert.False(valid)
 	assert.NotEmpty(validations)
-	assert.Equal("error", validations[0].Severity)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
 }
 
 func TestFoundGateway(t *testing.T) {

@@ -19,7 +19,7 @@ func (s NoGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 	valid, index := kubernetes.ValidateVirtualServiceGateways(s.VirtualService.GetSpec(), s.GatewayNames)
 	if !valid {
 		path := "spec/gateways[" + strconv.Itoa(index) + "]"
-		validation := models.BuildCheck("VirtualService is pointing to a non-existent gateway", "error", path)
+		validation := models.Build("virtualservices.nogateway", path)
 		validations = append(validations, &validation)
 	}
 
