@@ -175,3 +175,16 @@ MyComponent.propTypes = {
   })
 };
 ----
+
+== Redux and URL Consistency
+
+Every application page should strive to have it's state in Redux so that
+we have a reproducible application state contained in Redux.
+To this end, we also want pages to be bookmarkable via URL. The URL and it's
+parameters become the API for the page. And, the Redux application state should
+be able to be mutated via the URL parameters. In order to support this, here are some
+of the rules needed:
+
+* On component construction let URL param values override any existing redux state values.
+* On component construction set (via replace) any unset URL params to reflect the redux state value. This gives us a full bookmark at all times.
+* After construction update URL (via replace) as necessary to reflect redux state changes. This is typically done in _componentDidUpdate_. This maintains the full bookmark.
