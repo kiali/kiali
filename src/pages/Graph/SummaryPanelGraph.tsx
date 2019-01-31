@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import RateTable from '../../components/SummaryPanel/RateTable';
+import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType } from '../../types/Graph';
-import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
+import { SummaryPanelPropType, NodeType } from '../../types/Graph';
+import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { Icon } from 'patternfly-react';
 import { authentication } from '../../utils/Authentication';
@@ -78,15 +78,14 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       return null;
     }
 
-    const baseQuery = cy
-      .nodes()
-      .filter('[!isGroup]')
-      .filter('[!isRoot]');
-    const numSvc = baseQuery.filter('[nodeType="service"]').size();
-    const numWorkloads = baseQuery.filter('[nodeType="workload"]').size();
-    const numApps = baseQuery.filter('[nodeType="app"]').size();
+    const numSvc = cy.$(`node[nodeType = "${NodeType.SERVICE}"]`).size();
+    const numWorkloads = cy.$(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
+    const numApps = cy.$(`node[nodeType = "${NodeType.APP}"][!isGroup]`).size();
     const numEdges = cy.edges().size();
-    const trafficRate = getAccumulatedTrafficRate(cy.edges());
+    // when getting accumulated traffic rates don't count requests from injected service nodes
+    const nonServiceEdges = cy.$(`node[nodeType != "${NodeType.SERVICE}"][!isGroup]`).edgesTo('*');
+    const trafficRateGrpc = getAccumulatedTrafficRateGrpc(nonServiceEdges);
+    const trafficRateHttp = getAccumulatedTrafficRateHttp(nonServiceEdges);
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
@@ -97,13 +96,22 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         </div>
         <div className="panel-body">
           <div>
-            <RateTable
-              title="HTTP Traffic (requests per second):"
-              rate={trafficRate.rate}
-              rate3xx={trafficRate.rate3xx}
-              rate4xx={trafficRate.rate4xx}
-              rate5xx={trafficRate.rate5xx}
-            />
+            {trafficRateGrpc.rate > 0 && (
+              <RateTableGrpc
+                title="GRPC Traffic (requests per second):"
+                rate={trafficRateGrpc.rate}
+                rateErr={trafficRateGrpc.rateErr}
+              />
+            )}
+            {trafficRateHttp.rate > 0 && (
+              <RateTableHttp
+                title="HTTP Traffic (requests per second):"
+                rate={trafficRateHttp.rate}
+                rate3xx={trafficRateHttp.rate3xx}
+                rate4xx={trafficRateHttp.rate4xx}
+                rate5xx={trafficRateHttp.rate5xx}
+              />
+            )}
             {this.shouldShowRPSChart() && (
               <div>
                 <hr />

@@ -13,6 +13,12 @@ export interface SummaryData {
   summaryTarget: any;
 }
 
+export enum Protocol {
+  GRPC = 'grpc',
+  HTTP = 'http',
+  TCP = 'tcp'
+}
+
 export interface SummaryPanelPropType {
   data: SummaryData;
   namespaces: Namespace[];

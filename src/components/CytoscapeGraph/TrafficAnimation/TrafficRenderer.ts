@@ -8,6 +8,7 @@ import {
   Diamond
 } from './TrafficPointRenderer';
 import { CyEdge } from '../CytoscapeGraphUtils';
+import { Protocol } from '../../../types/Graph';
 
 const TCP_SETTINGS = {
   baseSpeed: 0.5,
@@ -51,17 +52,17 @@ enum EdgeConnectionType {
 }
 
 enum TrafficEdgeType {
-  HTTP,
-  TCP,
+  RPS, // requests-per-second (includes http, grpc)
+  TCP, // bytes-per-second
   NONE
 }
 
 /**
- * Returns a TrafficPointRenderer for a Http error point
+ * Returns a TrafficPointRenderer for an RPS error point
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer = (edge: any) => {
+const getTrafficPointRendererForRpsError: (edge: any) => TrafficPointRenderer = (edge: any) => {
   return new TrafficPointConcentricDiamondRenderer(
     new Diamond(2.5, PfColors.White, PfColors.Red100, 1.0),
     new Diamond(1, PfColors.Red100, PfColors.Red100, 1.0)
@@ -69,11 +70,11 @@ const getTrafficPointRendererForHttpError: (edge: any) => TrafficPointRenderer =
 };
 
 /**
- * Returns a TrafficPointRenderer for a Http success point
+ * Returns a TrafficPointRenderer for a RPS success point
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForHttpSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
+const getTrafficPointRendererForRpsSuccess: (edge: any) => TrafficPointRenderer = (edge: any) => {
   return new TrafficPointCircleRenderer(1, PfColors.White, edge.style('line-color'), 2);
 };
 
@@ -160,8 +161,8 @@ class TrafficPointGenerator {
     let renderer;
     let offset;
     const isErrorPoint = Math.random() <= this.errorRate;
-    if (this.type === TrafficEdgeType.HTTP) {
-      renderer = isErrorPoint ? getTrafficPointRendererForHttpError(edge) : getTrafficPointRendererForHttpSuccess(edge);
+    if (this.type === TrafficEdgeType.RPS) {
+      renderer = isErrorPoint ? getTrafficPointRendererForRpsError(edge) : getTrafficPointRendererForRpsSuccess(edge);
     } else if (this.type === TrafficEdgeType.TCP) {
       renderer = getTrafficPointRendererForTcp(edge);
       // Cheap way to put some offset around the edge, I think this is enough unless we want more accuracy
@@ -401,14 +402,15 @@ export default class TrafficRenderer {
   }
 
   private getTrafficEdgeType(edge: any) {
-    if (edge.data(CyEdge.http) > 0) {
-      return TrafficEdgeType.HTTP;
+    switch (edge.data(CyEdge.protocol)) {
+      case Protocol.GRPC:
+      case Protocol.HTTP:
+        return TrafficEdgeType.RPS;
+      case Protocol.TCP:
+        return TrafficEdgeType.TCP;
+      default:
+        return TrafficEdgeType.NONE;
     }
-    if (edge.data(CyEdge.tcp) > 0) {
-      return TrafficEdgeType.TCP;
-    }
-    // No TCP or HTTP traffic found
-    return TrafficEdgeType.NONE;
   }
 
   private processEdges(edges: any): TrafficEdgeHash {
@@ -429,8 +431,8 @@ export default class TrafficRenderer {
   }
 
   private fillTrafficEdge(edge: any, trafficEdge: TrafficEdge) {
-    // Need to identify if we are going to fill a HTTP or TCP traffic edge
-    // HTTP traffic has rate, responseTime, percentErr (among others) where TCP traffic only has: tcpSentRate
+    // Need to identify if we are going to fill an RPS or TCP traffic edge
+    // RPS traffic has rate, responseTime, percentErr (among others) where TCP traffic only has: tcpSentRate
 
     let edgeLengthFactor = 1;
     try {
@@ -444,12 +446,16 @@ export default class TrafficRenderer {
       );
     }
 
-    if (trafficEdge.getType() === TrafficEdgeType.HTTP) {
-      const timer = this.timerFromRate(edge.data(CyEdge.http));
+    if (trafficEdge.getType() === TrafficEdgeType.RPS) {
+      const isHttp = edge.data(CyEdge.protocol) === Protocol.HTTP;
+      const rate = isHttp ? CyEdge.http : CyEdge.grpc;
+      const pErr = isHttp ? CyEdge.httpPercentErr : CyEdge.grpcPercentErr;
+
+      const timer = this.timerFromRate(edge.data(rate));
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
       const speed = this.speedFromResponseTime(edge.data(CyEdge.responseTime)) * edgeLengthFactor;
-      const errorRate = edge.data(CyEdge.httpPercentErr) === undefined ? 0 : edge.data(CyEdge.httpPercentErr) / 100;
+      const errorRate = edge.data(pErr) === undefined ? 0 : edge.data(pErr) / 100;
       trafficEdge.setSpeed(speed);
       trafficEdge.setTimer(timer);
       trafficEdge.setEdge(edge);

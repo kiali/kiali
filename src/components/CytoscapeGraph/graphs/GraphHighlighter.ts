@@ -3,6 +3,7 @@ import { DimClass } from './GraphStyles';
 
 const DIM_CLASS: string = DimClass;
 const HIGHLIGHT_CLASS: string = 'mousehighlight';
+const HOVERED_CLASS: string = 'mousehover';
 
 export class GraphHighlighter {
   cy: any;
@@ -41,12 +42,14 @@ export class GraphHighlighter {
     // selected element highlighted
     if (this.selected.summaryType === 'graph' && ['node', 'edge', 'group'].indexOf(event.summaryType) !== -1) {
       this.hovered = event;
+      this.hovered.summaryTarget.addClass(HOVERED_CLASS);
       this.refresh();
     }
   };
 
   onMouseOut = (event: CytoscapeMouseOutEvent) => {
     if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
+      this.hovered.summaryTarget.removeClass(HOVERED_CLASS);
       this.hovered = undefined;
       this.unhighlight();
     }

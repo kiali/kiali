@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-import { NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType, Protocol } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 import { MetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
@@ -77,17 +77,16 @@ export const nodeData = (node: any): NodeData => {
   };
 };
 
-export const getNodeMetricType = (data: NodeData) => {
+export const getNodeMetricType = (data: NodeData): NodeMetricType => {
   switch (data.nodeType) {
-    case NodeType.WORKLOAD:
-      return NodeMetricType.WORKLOAD;
     case NodeType.APP:
       // treat versioned app like a workload to narrow to the specific version
       return data.workload ? NodeMetricType.WORKLOAD : NodeMetricType.APP;
     case NodeType.SERVICE:
       return NodeMetricType.SERVICE;
     default:
-      return undefined;
+      // treat UNKNOWN as a workload with name="unknown"
+      return NodeMetricType.WORKLOAD;
   }
 };
 
@@ -98,6 +97,7 @@ export const getNodeMetrics = (
   filters: Array<string>,
   direction: Direction,
   reporter: Reporter,
+  requestProtocol?: string,
   quantiles?: Array<string>,
   byLabels?: Array<string>
 ): Promise<Response<M.Metrics>> => {
@@ -111,7 +111,8 @@ export const getNodeMetrics = (
     quantiles: quantiles,
     byLabels: byLabels,
     direction: direction,
-    reporter: reporter
+    reporter: reporter,
+    requestProtocol: requestProtocol
   };
 
   switch (nodeMetricType) {
@@ -149,7 +150,8 @@ export const mergeMetricsResponses = (promises: Promise<Response<M.Metrics>>[]):
 export const getDatapoints = (
   mg: M.MetricGroup,
   title: string,
-  comparator?: (metric: Metric) => boolean
+  comparator?: (metric: Metric, protocol?: Protocol) => boolean,
+  protocol?: Protocol
 ): [string | number][] => {
   let series: M.TimeSeries[] = [];
   if (mg && mg.matrix) {
@@ -157,7 +159,7 @@ export const getDatapoints = (
     if (comparator) {
       for (let i = 0; i < tsa.length; ++i) {
         const ts = tsa[i];
-        if (comparator(ts.metric)) {
+        if (comparator(ts.metric, protocol)) {
           series.push(ts);
         }
       }

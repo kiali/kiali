@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-import RateTable from '../../components/SummaryPanel/RateTable';
+import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
-import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeType, Protocol, SummaryPanelPropType } from '../../types/Graph';
 import { renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
@@ -14,8 +14,7 @@ import {
   renderNoTraffic,
   NodeData,
   NodeMetricType,
-  renderLabels,
-  mergeMetricsResponses
+  renderLabels
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -88,12 +87,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const edge = this.props.data.summaryTarget;
     const source = edge.source();
     const dest = edge.target();
-    const http = this.safeRate(edge.data(CyEdge.http));
-    const http3xx = this.safeRate(edge.data(CyEdge.http3xx));
-    const http4xx = this.safeRate(edge.data(CyEdge.http4xx));
-    const http5xx = this.safeRate(edge.data(CyEdge.http5xx));
-    const hasHttpTraffic = this.hasHttpMetrics(edge);
-    const hasTcpTraffic = this.hasTcpMetrics(edge);
+    const protocol = edge.data(CyEdge.protocol);
+    const isGrpc = protocol === Protocol.GRPC;
+    const isHttp = protocol === Protocol.HTTP;
+    const isTcp = protocol === Protocol.TCP;
 
     const HeadingBlock = ({ prefix, node }) => {
       const data = nodeData(node);
@@ -111,21 +108,30 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="From" node={source} />
         <HeadingBlock prefix="To" node={dest} />
         <div className="panel-body">
-          {hasHttpTraffic ? (
+          {isGrpc && (
             <>
-              <RateTable
-                title="HTTP Traffic (requests per second):"
-                rate={http}
-                rate3xx={http3xx}
-                rate4xx={http4xx}
-                rate5xx={http5xx}
+              <RateTableGrpc
+                title="GRPC Traffic (requests per second):"
+                rate={this.safeRate(edge.data(CyEdge.grpc))}
+                rateErr={this.safeRate(edge.data(CyEdge.grpcPercentErr))}
               />
               <hr />
             </>
-          ) : (
-            !hasTcpTraffic && renderNoTraffic()
           )}
-          {this.renderCharts(edge, hasHttpTraffic, hasTcpTraffic)}
+          {isHttp && (
+            <>
+              <RateTableHttp
+                title="HTTP Traffic (requests per second):"
+                rate={this.safeRate(edge.data(CyEdge.http))}
+                rate3xx={this.safeRate(edge.data(CyEdge.http3xx))}
+                rate4xx={this.safeRate(edge.data(CyEdge.http4xx))}
+                rate5xx={this.safeRate(edge.data(CyEdge.http5xx))}
+              />
+              <hr />
+            </>
+          )}
+          {!isGrpc && !isHttp && !isTcp && renderNoTraffic()}
+          {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
         </div>
       </div>
     );
@@ -190,6 +196,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const destData = nodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
+    const protocol = edge.data(CyEdge.protocol);
+    const isGrpc = protocol === Protocol.GRPC;
+    const isHttp = protocol === Protocol.HTTP;
+    const isTcp = protocol === Protocol.TCP;
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
@@ -197,12 +207,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
 
     // Just return if the metric types are unset, there is no data, or charts are unsupported
-    if (
-      !destMetricType ||
-      !sourceMetricType ||
-      !this.hasSupportedCharts(edge) ||
-      (!this.hasHttpMetrics(edge) && !this.hasTcpMetrics(edge))
-    ) {
+    if (!destMetricType || !sourceMetricType || !this.hasSupportedCharts(edge) || (!isGrpc && !isHttp && !isTcp)) {
       this.setState({
         loading: false
       });
@@ -212,104 +217,112 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const quantiles = ['0.5', '0.95', '0.99'];
     const byLabels = this.getByLabels(sourceMetricType, destMetricType);
 
-    const reporterHTTP =
-      sourceData.nodeType === NodeType.UNKNOWN ||
-      sourceData.namespace === serverConfig().istioNamespace ||
-      sourceData.nodeType === NodeType.SERVICE
-        ? 'destination'
-        : 'source';
-    const filtersHTTP = ['request_count', 'request_duration', 'request_error_count'];
-    const promiseHTTP = getNodeMetrics(
-      destMetricType,
-      edge.target(),
-      props,
-      filtersHTTP,
-      'inbound',
-      reporterHTTP,
-      quantiles,
-      byLabels
-    );
-
-    // TCP uses slightly different reporting
-    const reporterTCP =
-      sourceData.nodeType === NodeType.UNKNOWN || sourceData.namespace === serverConfig().istioNamespace
-        ? 'destination'
-        : 'source';
-    const filtersTCP = ['tcp_sent', 'tcp_received'];
-    const promiseTCP = getNodeMetrics(
-      destMetricType,
-      edge.target(),
-      props,
-      filtersTCP,
-      'inbound',
-      reporterTCP,
-      quantiles,
-      byLabels
-    );
-
-    this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
+    let promiseRps, promiseTcp;
+    if (isGrpc || isHttp) {
+      const reporterRps =
+        sourceData.nodeType === NodeType.UNKNOWN ||
+        sourceData.nodeType === NodeType.SERVICE ||
+        sourceData.namespace === serverConfig().istioNamespace ||
+        destData.namespace === serverConfig().istioNamespace
+          ? 'destination'
+          : 'source';
+      const filtersRps = ['request_count', 'request_duration', 'request_error_count'];
+      promiseRps = getNodeMetrics(
+        destMetricType,
+        edge.target(),
+        props,
+        filtersRps,
+        'inbound',
+        reporterRps,
+        protocol,
+        quantiles,
+        byLabels
+      );
+    } else {
+      // TCP uses slightly different reporting
+      const reporterTCP =
+        sourceData.nodeType === NodeType.UNKNOWN || sourceData.namespace === serverConfig().istioNamespace
+          ? 'destination'
+          : 'source';
+      const filtersTCP = ['tcp_sent', 'tcp_received'];
+      promiseTcp = getNodeMetrics(
+        destMetricType,
+        edge.target(),
+        props,
+        filtersTCP,
+        'inbound',
+        reporterTCP,
+        'tcp',
+        quantiles,
+        byLabels
+      );
+    }
+    this.metricsPromise = makeCancelablePromise(promiseRps ? promiseRps : promiseTcp);
     this.metricsPromise.promise
       .then(response => {
-        // HTTP
         const metrics = response.data.metrics;
         const histograms = response.data.histograms;
-        const reqRates = this.getNodeDataPoints(
-          metrics['request_count'],
-          'RPS',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const errRates = this.getNodeDataPoints(
-          metrics['request_error_count'],
-          'Error',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const rtAvg = this.getNodeDataPoints(
-          histograms['request_duration']['avg'],
-          'Average',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const rtMed = this.getNodeDataPoints(
-          histograms['request_duration']['0.5'],
-          'Median',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const rt95 = this.getNodeDataPoints(
-          histograms['request_duration']['0.95'],
-          '95th',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const rt99 = this.getNodeDataPoints(
-          histograms['request_duration']['0.99'],
-          '99th',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        // TCP
-        const tcpSentRates = this.getNodeDataPoints(
-          metrics['tcp_sent'],
-          'Sent',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
-        const tcpReceivedRates = this.getNodeDataPoints(
-          metrics['tcp_received'],
-          'Received',
-          sourceMetricType,
-          destMetricType,
-          sourceData
-        );
+        let reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSentRates, tcpReceivedRates;
+        if (isGrpc || isHttp) {
+          reqRates = this.getNodeDataPoints(
+            metrics['request_count'],
+            'RPS',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          errRates = this.getNodeDataPoints(
+            metrics['request_error_count'],
+            'Error',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          rtAvg = this.getNodeDataPoints(
+            histograms['request_duration']['avg'],
+            'Average',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          rtMed = this.getNodeDataPoints(
+            histograms['request_duration']['0.5'],
+            'Median',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          rt95 = this.getNodeDataPoints(
+            histograms['request_duration']['0.95'],
+            '95th',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          rt99 = this.getNodeDataPoints(
+            histograms['request_duration']['0.99'],
+            '99th',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+        } else {
+          // TCP
+          tcpSentRates = this.getNodeDataPoints(
+            metrics['tcp_sent'],
+            'Sent',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+          tcpReceivedRates = this.getNodeDataPoints(
+            metrics['tcp_received'],
+            'Received',
+            sourceMetricType,
+            destMetricType,
+            sourceData
+          );
+        }
 
         this.setState({
           loading: false,
@@ -339,13 +352,13 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private safeRate = (s: string) => {
-    return s === undefined ? 0.0 : Number(s);
+  private safeRate = (s: any) => {
+    return isNaN(s) ? 0.0 : Number(s);
   };
 
-  private renderCharts = (edge, hasHttpTraffic, hasTcpTraffic) => {
+  private renderCharts = (edge, isGrpc, isHttp, isTcp) => {
     if (!this.hasSupportedCharts(edge)) {
-      return hasHttpTraffic ? (
+      return isGrpc || isHttp ? (
         <>
           <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. See the
           chart above for aggregate traffic or use the workload graph type to observe individual workload-to-service
@@ -358,9 +371,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         </>
       );
     }
+
     if (this.state.loading && !this.state.reqRates) {
       return <strong>Loading charts...</strong>;
     }
+
     if (this.state.metricsLoadError) {
       return (
         <div>
@@ -370,14 +385,16 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     }
 
-    let httpCharts, tcpCharts;
-    if (hasHttpTraffic) {
-      httpCharts = (
+    let rpsChart, tcpChart;
+    if (isGrpc || isHttp) {
+      const labelRps = isGrpc ? 'GRPC Request Traffic' : 'HTTP Request Traffic';
+      const labelRt = isGrpc ? 'GRPC Request Response Time (ms)' : 'HTTP Request Response Time (ms)';
+      rpsChart = (
         <>
-          <RpsChart label="HTTP Request Traffic" dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
+          <RpsChart label={labelRps} dataRps={this.state.reqRates!} dataErrors={this.state.errRates} />
           <hr />
           <ResponseTimeChart
-            label="HTTP Request Response Time (ms)"
+            label={labelRt}
             rtAvg={this.state.rtAvg}
             rtMed={this.state.rtMed}
             rt95={this.state.rt95}
@@ -386,18 +403,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           <hr />
         </>
       );
-    }
-
-    if (hasTcpTraffic) {
-      tcpCharts = (
-        <TcpChart label="TCP Traffic" sentRates={this.state.tcpSent} receivedRates={this.state.tcpReceived} />
-      );
+    } else if (isTcp) {
+      tcpChart = <TcpChart label="TCP Traffic" sentRates={this.state.tcpSent} receivedRates={this.state.tcpReceived} />;
     }
 
     return (
       <>
-        {httpCharts}
-        {tcpCharts}
+        {rpsChart}
+        {tcpChart}
       </>
     );
   };
@@ -422,12 +435,4 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       this.props.graphType !== GraphType.SERVICE
     );
   }
-
-  private hasHttpMetrics = (edge): boolean => {
-    return edge.data(CyEdge.http) ? true : false;
-  };
-
-  private hasTcpMetrics = (edge): boolean => {
-    return edge.data(CyEdge.tcp) ? true : false;
-  };
 }

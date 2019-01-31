@@ -2,7 +2,86 @@ import * as React from 'react';
 import { StackedBarChart } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 
-type InOutRateChartPropType = {
+type InOutRateChartGrpcPropType = {
+  height?: number;
+  legendPos?: string; // e.g. right, left
+  percentOkIn: number;
+  percentErrIn: number;
+  percentOkOut: number;
+  percentErrOut: number;
+  showLegend?: boolean;
+};
+
+export class InOutRateChartGrpc extends React.Component<InOutRateChartGrpcPropType> {
+  static defaultProps: InOutRateChartGrpcPropType = {
+    height: 150,
+    legendPos: 'bottom',
+    percentOkIn: 0,
+    percentErrIn: 0,
+    percentOkOut: 0,
+    percentErrOut: 0,
+    showLegend: true
+  };
+
+  constructor(props: InOutRateChartGrpcPropType) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <StackedBarChart
+        size={{ height: this.props.height }}
+        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
+        grid={{
+          x: {
+            show: false
+          },
+          y: {
+            show: true
+          }
+        }}
+        axis={{
+          rotated: true,
+          x: {
+            categories: ['In', 'Out'],
+            type: 'category'
+          },
+          y: {
+            show: true,
+            inner: false,
+            label: {
+              text: '%',
+              position: 'inner-right'
+            },
+            min: 0,
+            max: 100,
+            tick: {
+              values: [0, 25, 50, 75, 100]
+            },
+            padding: {
+              top: 20,
+              bottom: 0
+            }
+          }
+        }}
+        data={{
+          groups: [['OK', 'Err']],
+          columns: [
+            ['OK', this.props.percentOkIn, this.props.percentOkOut],
+            ['Err', this.props.percentErrIn, this.props.percentErrOut]
+          ],
+          // order: 'asc',
+          colors: {
+            OK: PfColors.Green400,
+            Err: PfColors.Red100
+          }
+        }}
+      />
+    );
+  }
+}
+
+type InOutRateChartHttpPropType = {
   percent2xxIn: number;
   percent3xxIn: number;
   percent4xxIn: number;
@@ -16,8 +95,8 @@ type InOutRateChartPropType = {
   legendPos?: string; // e.g. right, left
 };
 
-export default class InOutRateChart extends React.Component<InOutRateChartPropType> {
-  static defaultProps: InOutRateChartPropType = {
+export class InOutRateChartHttp extends React.Component<InOutRateChartHttpPropType> {
+  static defaultProps: InOutRateChartHttpPropType = {
     percent2xxIn: 0,
     percent3xxIn: 0,
     percent4xxIn: 0,
@@ -31,7 +110,7 @@ export default class InOutRateChart extends React.Component<InOutRateChartPropTy
     legendPos: 'bottom'
   };
 
-  constructor(props: InOutRateChartPropType) {
+  constructor(props: InOutRateChartHttpPropType) {
     super(props);
   }
 

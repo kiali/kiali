@@ -10,9 +10,10 @@ export interface BaseMetricsOptions {
 }
 
 export interface MetricsOptions extends BaseMetricsOptions {
-  filters?: string[];
-  reporter: Reporter;
   direction: Direction;
+  filters?: string[];
+  requestProtocol?: string;
+  reporter: Reporter;
 }
 
 export interface CustomMetricsOptions extends BaseMetricsOptions {

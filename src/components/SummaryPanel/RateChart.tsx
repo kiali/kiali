@@ -2,7 +2,79 @@ import * as React from 'react';
 import { StackedBarChart } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 
-type RateChartPropType = {
+type RateChartGrpcPropType = {
+  height?: number;
+  legendPos?: string; // e.g. right, left
+  percentErr: number;
+  percentOK: number;
+  showLegend?: boolean;
+};
+
+export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
+  static defaultProps: RateChartGrpcPropType = {
+    height: 100,
+    legendPos: 'bottom',
+    percentErr: 0,
+    percentOK: 0,
+    showLegend: true
+  };
+
+  constructor(props: RateChartGrpcPropType) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <StackedBarChart
+        size={{ height: this.props.height }}
+        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
+        grid={{
+          x: {
+            show: false
+          },
+          y: {
+            show: true
+          }
+        }}
+        axis={{
+          rotated: true,
+          x: {
+            categories: [''],
+            type: 'category'
+          },
+          y: {
+            show: true,
+            inner: false,
+            label: {
+              text: '%',
+              position: 'inner-right'
+            },
+            min: 0,
+            max: 100,
+            tick: {
+              values: [0, 25, 50, 75, 100]
+            },
+            padding: {
+              top: 20,
+              bottom: 0
+            }
+          }
+        }}
+        data={{
+          groups: [['OK', 'Err']],
+          columns: [['OK', this.props.percentOK], ['Err', this.props.percentErr]],
+          // order: 'asc',
+          colors: {
+            OK: PfColors.Green400,
+            Err: PfColors.Red100
+          }
+        }}
+      />
+    );
+  }
+}
+
+type RateChartHttpPropType = {
   percent2xx: number;
   percent3xx: number;
   percent4xx: number;
@@ -12,8 +84,8 @@ type RateChartPropType = {
   legendPos?: string; // e.g. right, left
 };
 
-export default class RateChart extends React.Component<RateChartPropType> {
-  static defaultProps: RateChartPropType = {
+export class RateChartHttp extends React.Component<RateChartHttpPropType> {
+  static defaultProps: RateChartHttpPropType = {
     percent2xx: 0,
     percent3xx: 0,
     percent4xx: 0,
@@ -23,7 +95,7 @@ export default class RateChart extends React.Component<RateChartPropType> {
     legendPos: 'bottom'
   };
 
-  constructor(props: RateChartPropType) {
+  constructor(props: RateChartHttpPropType) {
     super(props);
   }
 

@@ -17,6 +17,7 @@ export const CyEdge = {
   id: 'id',
   isMTLS: 'isMTLS',
   isUnused: 'isUnused',
+  protocol: 'protocol',
   responseTime: 'responseTime',
   tcp: 'tcp'
 };

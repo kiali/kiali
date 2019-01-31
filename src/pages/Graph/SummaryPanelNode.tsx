@@ -2,10 +2,15 @@ import * as React from 'react';
 import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
 import { Icon } from 'patternfly-react';
 
-import { getTrafficRate, getAccumulatedTrafficRate } from '../../utils/TrafficRate';
-import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
+import {
+  getAccumulatedTrafficRateGrpc,
+  getAccumulatedTrafficRateHttp,
+  getTrafficRateGrpc,
+  getTrafficRateHttp
+} from '../../utils/TrafficRate';
+import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { GraphType, NodeType, SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeType, SummaryPanelPropType, Protocol } from '../../types/Graph';
 import { Metrics, Metric } from '../../types/Metrics';
 import {
   shouldRefreshData,
@@ -30,10 +35,14 @@ import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelStateType = {
   loading: boolean;
-  requestCountIn: [string | number][] | null;
-  requestCountOut: [string | number][];
-  errorCountIn: [string | number][];
-  errorCountOut: [string | number][];
+  grpcRequestCountIn: [string | number][] | null;
+  grpcRequestCountOut: [string | number][];
+  grpcErrorCountIn: [string | number][];
+  grpcErrorCountOut: [string | number][];
+  httpRequestCountIn: [string | number][] | null;
+  httpRequestCountOut: [string | number][];
+  httpErrorCountIn: [string | number][];
+  httpErrorCountOut: [string | number][];
   tcpSentIn: [string | number][];
   tcpSentOut: [string | number][];
   tcpReceivedIn: [string | number][];
@@ -58,10 +67,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     this.state = {
       loading: true,
-      requestCountIn: null,
-      requestCountOut: [],
-      errorCountIn: [],
-      errorCountOut: [],
+      grpcRequestCountIn: null,
+      grpcRequestCountOut: [],
+      grpcErrorCountIn: [],
+      grpcErrorCountOut: [],
+      httpRequestCountIn: null,
+      httpRequestCountOut: [],
+      httpErrorCountIn: [],
+      httpErrorCountOut: [],
       tcpSentIn: [],
       tcpSentOut: [],
       tcpReceivedIn: [],
@@ -72,19 +85,19 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   componentDidMount() {
-    this.fetchRequestCountMetrics(this.props);
+    this.updateCharts(this.props);
     updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType) {
     if (prevProps.data.summaryTarget !== this.props.data.summaryTarget) {
       this.setState({
-        requestCountIn: null,
+        grpcRequestCountIn: null,
         loading: true
       });
     }
     if (shouldRefreshData(prevProps, this.props)) {
-      this.fetchRequestCountMetrics(this.props);
+      this.updateCharts(this.props);
       updateHealth(this.props.data.summaryTarget, this.setState.bind(this));
     }
   }
@@ -95,7 +108,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     }
   }
 
-  fetchRequestCountMetrics(props: SummaryPanelPropType) {
+  updateCharts(props: SummaryPanelPropType) {
     const target = props.data.summaryTarget;
     const data = nodeData(target);
     const nodeMetricType = getNodeMetricType(data);
@@ -105,15 +118,16 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       this.metricsPromise = undefined;
     }
 
-    if (!nodeMetricType || (!this.hasHttpTraffic(target) && !this.hasTcpTraffic(target))) {
+    if (!this.hasGrpcTraffic(target) && !this.hasHttpTraffic(target) && !this.hasTcpTraffic(target)) {
       this.setState({ loading: false });
       return;
     }
 
-    let promiseOut: Promise<Response<Metrics>>, promiseIn: Promise<Response<Metrics>>;
-    // set outgoing unless it is a non-root outsider (because they have no outgoing edges) or a
-    // service node (because they don't have "real" outgoing edges).
+    let promiseOut: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+    let promiseIn: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
 
+    // Ignore outgoing traffic if it is a non-root outsider (because they have no outgoing edges) or a
+    // service node (because they don't have "real" outgoing edges).
     if (data.nodeType !== NodeType.SERVICE && (data.isRoot || !data.isOutsider)) {
       const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
       // use source metrics for outgoing, except for:
@@ -123,14 +137,23 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         data.nodeType === NodeType.UNKNOWN || data.namespace === serverConfig().istioNamespace
           ? 'destination'
           : 'source';
-      const byLabels = data.isRoot ? ['destination_service_namespace'] : undefined;
-      promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter, undefined, byLabels);
-    } else {
-      promiseOut = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+      const byLabels = data.isRoot ? ['destination_service_namespace', 'request_protocol'] : ['request_protocol'];
+      promiseOut = getNodeMetrics(
+        nodeMetricType,
+        target,
+        props,
+        filters,
+        'outbound',
+        reporter,
+        undefined,
+        undefined,
+        byLabels
+      );
     }
+
     // set incoming unless it is a root (because they have no incoming edges)
     if (!data.isRoot) {
-      const filtersHTTP = ['request_count', 'request_error_count'];
+      const filtersRps = ['request_count', 'request_error_count'];
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter =
         data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
@@ -138,14 +161,17 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
-      const byLabels = this.isSpecialServiceDest(nodeMetricType) ? ['destination_workload'] : undefined;
-      const promiseHTTP = getNodeMetrics(
+      const byLabels = this.isServiceDestCornerCase(nodeMetricType)
+        ? ['destination_workload', 'request_protocol']
+        : ['request_protocol'];
+      const promiseRps = getNodeMetrics(
         nodeMetricType,
         target,
         props,
-        filtersHTTP,
+        filtersRps,
         'inbound',
         reporter,
+        undefined,
         undefined,
         byLabels
       );
@@ -158,12 +184,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         'inbound',
         'source',
         undefined,
+        undefined,
         byLabels
       );
-      promiseIn = mergeMetricsResponses([promiseHTTP, promiseTCP]);
-    } else {
-      promiseIn = Promise.resolve({ data: { metrics: {}, histograms: {} } });
+      promiseIn = mergeMetricsResponses([promiseRps, promiseTCP]);
     }
+
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
     this.metricsPromise.promise
       .then(responses => {
@@ -178,7 +204,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         this.setState({
           loading: false,
           metricsLoadError: errorMsg,
-          requestCountIn: null
+          grpcRequestCountIn: null
         });
       });
 
@@ -186,14 +212,21 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   }
 
   showRequestCountMetrics(outbound: Metrics, inbound: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
-    let comparator;
-    if (this.isSpecialServiceDest(nodeMetricType)) {
-      comparator = (metric: Metric) => {
-        return metric['destination_workload'] === 'unknown';
+    let comparator = (metric: Metric, protocol?: Protocol) => {
+      return protocol ? metric['request_protocol'] === protocol : true;
+    };
+    if (this.isServiceDestCornerCase(nodeMetricType)) {
+      comparator = (metric: Metric, protocol?: Protocol) => {
+        return (
+          (protocol ? metric['request_protocol'] === protocol : true) && metric['destination_workload'] === 'unknown'
+        );
       };
     } else if (data.isRoot) {
-      comparator = (metric: Metric) => {
-        return this.isActiveNamespace(metric['destination_service_namespace']);
+      comparator = (metric: Metric, protocol?: Protocol) => {
+        return (
+          (protocol ? metric['request_protocol'] === protocol : true) &&
+          this.isActiveNamespace(metric['destination_service_namespace'])
+        );
       };
     }
     const rcOut = outbound.metrics['request_count'];
@@ -206,10 +239,14 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const tcpReceivedIn = inbound.metrics['tcp_received'];
     this.setState({
       loading: false,
-      requestCountOut: getDatapoints(rcOut, 'RPS', comparator),
-      errorCountOut: getDatapoints(ecOut, 'Error', comparator),
-      requestCountIn: getDatapoints(rcIn, 'RPS', comparator),
-      errorCountIn: getDatapoints(ecIn, 'Error', comparator),
+      grpcRequestCountOut: getDatapoints(rcOut, 'RPS', comparator, Protocol.GRPC),
+      grpcErrorCountOut: getDatapoints(ecOut, 'Error', comparator, Protocol.GRPC),
+      grpcRequestCountIn: getDatapoints(rcIn, 'RPS', comparator, Protocol.GRPC),
+      grpcErrorCountIn: getDatapoints(ecIn, 'Error', comparator, Protocol.GRPC),
+      httpRequestCountOut: getDatapoints(rcOut, 'RPS', comparator, Protocol.HTTP),
+      httpErrorCountOut: getDatapoints(ecOut, 'Error', comparator, Protocol.HTTP),
+      httpRequestCountIn: getDatapoints(rcIn, 'RPS', comparator, Protocol.HTTP),
+      httpErrorCountIn: getDatapoints(ecIn, 'Error', comparator, Protocol.HTTP),
       tcpSentOut: getDatapoints(tcpSentOut, 'Sent', comparator),
       tcpReceivedOut: getDatapoints(tcpReceivedOut, 'Received', comparator),
       tcpSentIn: getDatapoints(tcpSentIn, 'Sent', comparator),
@@ -280,20 +317,41 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               </Link>
             </p>
           )} */}
-          {this.hasHttpTraffic(node) ? this.renderHttpRates(node) : renderNoTraffic('HTTP')}
-          <div>{this.renderSparklines(node)}</div>
+          {this.hasGrpcTraffic(node) && this.renderGrpcRates(node)}
+          {this.hasHttpTraffic(node) && this.renderHttpRates(node)}
+          <div>{this.renderCharts(node)}</div>
+          {!this.hasGrpcTraffic(node) && renderNoTraffic('GRPC')}
+          {!this.hasHttpTraffic(node) && renderNoTraffic('HTTP')}
         </div>
       </div>
     );
   }
 
-  private renderHttpRates = node => {
-    const incoming = getTrafficRate(node);
-    const outgoing = getAccumulatedTrafficRate(this.props.data.summaryTarget.edgesTo('*'));
+  private renderGrpcRates = node => {
+    const incoming = getTrafficRateGrpc(node);
+    const outgoing = getAccumulatedTrafficRateGrpc(this.props.data.summaryTarget.edgesTo('*'));
 
     return (
       <>
-        <InOutRateTable
+        <InOutRateTableGrpc
+          title="GRPC Traffic (requests per second):"
+          inRate={incoming.rate}
+          inRateErr={incoming.rateErr}
+          outRate={outgoing.rate}
+          outRateErr={outgoing.rateErr}
+        />
+        <hr />
+      </>
+    );
+  };
+
+  private renderHttpRates = node => {
+    const incoming = getTrafficRateHttp(node);
+    const outgoing = getAccumulatedTrafficRateHttp(this.props.data.summaryTarget.edgesTo('*'));
+
+    return (
+      <>
+        <InOutRateTableHttp
           title="HTTP Traffic (requests per second):"
           inRate={incoming.rate}
           inRate3xx={incoming.rate3xx}
@@ -309,17 +367,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private renderSparklines = node => {
+  private renderCharts = node => {
     if (NodeType.UNKNOWN === node.data(CyNode.nodeType)) {
       return (
         <>
           <div>
             <Icon type="pf" name="info" /> Sparkline charts not supported for unknown node. Use edge for details.
+            <hr />
           </div>
         </>
       );
     }
-    if (this.state.loading && !this.state.requestCountIn) {
+    if (this.state.loading && !this.state.grpcRequestCountIn) {
       return <strong>Loading charts...</strong>;
     }
     if (this.state.metricsLoadError) {
@@ -341,15 +400,49 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         }
       }
     }
-    let httpCharts, tcpCharts;
+
+    let grpcCharts, httpCharts, tcpCharts;
+
+    if (this.hasGrpcTraffic(node)) {
+      grpcCharts = (
+        <>
+          <RpsChart
+            label={isServiceNode ? 'GRPC - Request Traffic' : 'GRPC - Inbound Request Traffic'}
+            dataRps={this.state.grpcRequestCountIn!}
+            dataErrors={this.state.grpcErrorCountIn}
+          />
+          {serviceWithUnknownSource && (
+            <>
+              <div>
+                <Icon type="pf" name="info" /> Traffic from unknown not included. Use edge for details.
+              </div>
+            </>
+          )}
+          <RpsChart
+            label="GRPC - Outbound Request Traffic"
+            dataRps={this.state.grpcRequestCountOut}
+            dataErrors={this.state.grpcErrorCountOut}
+            hide={isServiceNode}
+          />
+          {this.isIstioOutgoingCornerCase(node) && (
+            <>
+              <div>
+                <Icon type="pf" name="info" /> Traffic to istio-system not included. Use edge for details.
+              </div>
+            </>
+          )}
+          <hr />
+        </>
+      );
+    }
 
     if (this.hasHttpTraffic(node)) {
       httpCharts = (
         <>
           <RpsChart
             label={isServiceNode ? 'HTTP - Request Traffic' : 'HTTP - Inbound Request Traffic'}
-            dataRps={this.state.requestCountIn!}
-            dataErrors={this.state.errorCountIn}
+            dataRps={this.state.httpRequestCountIn!}
+            dataErrors={this.state.httpErrorCountIn}
           />
           {serviceWithUnknownSource && (
             <>
@@ -360,10 +453,17 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           )}
           <RpsChart
             label="HTTP - Outbound Request Traffic"
-            dataRps={this.state.requestCountOut}
-            dataErrors={this.state.errorCountOut}
+            dataRps={this.state.httpRequestCountOut}
+            dataErrors={this.state.httpErrorCountOut}
             hide={isServiceNode}
           />
+          {this.isIstioOutgoingCornerCase(node) && (
+            <>
+              <div>
+                <Icon type="pf" name="info" /> Traffic to istio-system not included. Use edge for details.
+              </div>
+            </>
+          )}
           <hr />
         </>
       );
@@ -390,6 +490,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     return (
       <>
+        {grpcCharts}
         {httpCharts}
         {tcpCharts}
       </>
@@ -436,13 +537,29 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   // We need to handle the special case of a dest service node showing client failures. These service nodes show up in
   // non-service graphs, even when not injecting service nodes.
-  private isSpecialServiceDest(nodeMetricType: NodeMetricType) {
+  private isServiceDestCornerCase = (nodeMetricType: NodeMetricType): boolean => {
     return (
       nodeMetricType === NodeMetricType.SERVICE &&
       !this.props.injectServiceNodes &&
       this.props.graphType !== GraphType.SERVICE
     );
-  }
+  };
+
+  // We need to handle the special case of a non-istio-system, non-unknown node with outgoing traffic to istio-system.
+  // The traffic is lost because it is dest-only and we use source-reporting.
+  private isIstioOutgoingCornerCase = (node): boolean => {
+    const nodeType = node.data(CyNode.nodeType);
+    const namespace = node.data(CyNode.namespace);
+    const istioNamespace = serverConfig().istioNamespace;
+    if (nodeType === NodeType.UNKNOWN || namespace === istioNamespace) {
+      return false;
+    }
+    return node.edgesTo(`node[${CyNode.namespace} = "${istioNamespace}"]`).size() > 0;
+  };
+
+  private hasGrpcTraffic = (node): boolean => {
+    return node.data(CyNode.grpcIn) > 0 || node.data(CyNode.grpcOut) > 0;
+  };
 
   private hasHttpTraffic = (node): boolean => {
     return node.data(CyNode.httpIn) > 0 || node.data(CyNode.httpOut) > 0;

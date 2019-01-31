@@ -83,7 +83,7 @@ export class GraphStyles {
       return EdgeColor;
     };
 
-    const getEdgeLabel = (ele: any): string => {
+    const getEdgeLabel = (ele: any, includeProtocol?: boolean): string => {
       const cyGlobal = getCyGlobalData(ele);
       const edgeLabelMode = cyGlobal.edgeLabelMode;
       let content = '';
@@ -103,7 +103,13 @@ export class GraphStyles {
           }
 
           if (rate > 0) {
-            content = pErr > 0 ? rate.toFixed(2) + ', ' + pErr.toFixed(1) + '%' : rate.toFixed(2);
+            if (pErr > 0) {
+              let sErr = pErr.toFixed(1);
+              sErr = `, ${sErr.endsWith('.0') ? pErr.toFixed(0) : sErr}%`;
+              content = rate.toFixed(2) + sErr;
+            } else {
+              content = rate.toFixed(2);
+            }
           }
           break;
         }
@@ -115,18 +121,24 @@ export class GraphStyles {
           break;
         }
         case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
-          let pReq = 100;
+          let pReq;
           if (ele.data(CyEdge.httpPercentReq) > 0) {
             pReq = Number(ele.data(CyEdge.httpPercentReq));
           } else if (ele.data(CyEdge.grpcPercentReq) > 0) {
             pReq = Number(ele.data(CyEdge.grpcPercentReq));
           }
-
-          content = pReq < 100.0 ? pReq.toFixed(1) + '%' : '100%';
+          if (pReq > 0) {
+            const sReq = pReq.toFixed(1);
+            content = `${sReq.endsWith('.0') ? pReq.toFixed(0) : sReq}%`;
+          }
           break;
         }
         default:
           content = '';
+      }
+
+      if (includeProtocol) {
+        content = ele.data(CyEdge.protocol) + ' ' + content;
       }
 
       if (cyGlobal.showSecurity && ele.data(CyEdge.isMTLS)) {
@@ -373,12 +385,6 @@ export class GraphStyles {
           'target-arrow-color': PfColors.Blue600
         }
       },
-      {
-        selector: 'edge[grpc > 0]',
-        css: {
-          'target-arrow-shape': 'tee'
-        }
-      },
       // When you mouse over a node, all nodes other than the moused over node
       // and its direct incoming/outgoing edges/nodes are dimmed by these styles.
       {
@@ -409,6 +415,14 @@ export class GraphStyles {
         selector: 'edge.mousehighlight',
         style: {
           'font-size': EdgeTextFontSizeHover
+        }
+      },
+      {
+        selector: 'edge.mousehover',
+        style: {
+          label: (ele: any) => {
+            return getEdgeLabel(ele, true);
+          }
         }
       },
       {

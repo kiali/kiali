@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
 
-import InOutRateTable from '../../components/SummaryPanel/InOutRateTable';
+import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
 import graphUtils from '../../utils/Graphing';
-import { getAccumulatedTrafficRate } from '../../utils/TrafficRate';
+import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import { RenderLink, renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
@@ -134,6 +134,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               View detailed charts <Icon name="angle-double-right" />
             </Link>
           </p> */}
+          {this.hasGrpcTraffic(group) ? this.renderGrpcRates(group) : renderNoTraffic('GRPC')}
           {this.hasHttpTraffic(group) ? this.renderHttpRates(group) : renderNoTraffic('HTTP')}
           <div>{this.renderSparklines(group)}</div>
         </div>
@@ -151,7 +152,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       this.metricsPromise = undefined;
     }
 
-    if (!nodeMetricType || (!this.hasHttpTraffic(target) && !this.hasTcpTraffic(target))) {
+    if (!this.hasGrpcTraffic(target) && !this.hasHttpTraffic(target) && !this.hasTcpTraffic(target)) {
       this.setState({ loading: false });
       return;
     }
@@ -231,14 +232,33 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     );
   };
 
-  private renderHttpRates = group => {
+  private renderGrpcRates = group => {
     const nonServiceChildren = group.children('node[nodeType != "' + NodeType.SERVICE + '"]');
-    const incoming = getAccumulatedTrafficRate(nonServiceChildren);
-    const outgoing = getAccumulatedTrafficRate(nonServiceChildren.edgesTo('*'));
+    const incoming = getAccumulatedTrafficRateGrpc(nonServiceChildren.incomers('edge[*]'));
+    const outgoing = getAccumulatedTrafficRateGrpc(nonServiceChildren.edgesTo('*'));
 
     return (
       <>
-        <InOutRateTable
+        <InOutRateTableGrpc
+          title="GRPC Traffic (requests per second):"
+          inRate={incoming.rate}
+          inRateErr={incoming.rateErr}
+          outRate={outgoing.rate}
+          outRateErr={outgoing.rateErr}
+        />
+        <hr />
+      </>
+    );
+  };
+
+  private renderHttpRates = group => {
+    const nonServiceChildren = group.children(`node[nodeType != "${NodeType.SERVICE}"]`);
+    const incoming = getAccumulatedTrafficRateHttp(nonServiceChildren.incomers('edge[*]'));
+    const outgoing = getAccumulatedTrafficRateHttp(nonServiceChildren.edgesTo('*'));
+
+    return (
+      <>
+        <InOutRateTableHttp
           title="HTTP Traffic (requests per second):"
           inRate={incoming.rate}
           inRate3xx={incoming.rate3xx}
@@ -331,11 +351,23 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return workloadList;
   };
 
+  private hasGrpcTraffic = (group): boolean => {
+    if (
+      group
+        .children()
+        .filter('[grpcIn > 0],[grpcOut > 0]')
+        .size() > 0
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   private hasHttpTraffic = (group): boolean => {
     if (
       group
         .children()
-        .filter('[httpIn],[httpOut]')
+        .filter('[httpIn > 0],[httpOut > 0]')
         .size() > 0
     ) {
       return true;
@@ -347,7 +379,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     if (
       group
         .children()
-        .filter('[tcpIn],[tcpOut]')
+        .filter('[tcpIn > 0],[tcpOut > 0]')
         .size() > 0
     ) {
       return true;

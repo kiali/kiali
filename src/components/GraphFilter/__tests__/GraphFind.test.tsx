@@ -67,7 +67,11 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseFindValue('outside')).toEqual('node[isOutside]');
     // @ts-ignore
-    expect(instance.parseFindValue('unused')).toEqual('node[isUnused]');
+    expect(instance.parseFindValue('outsider')).toEqual('node[isOutside]');
+    // @ts-ignore
+    expect(instance.parseFindValue('root')).toEqual('node[isRoot]');
+    // @ts-ignore
+    expect(instance.parseFindValue('trafficsource')).toEqual('node[isRoot]');
     // @ts-ignore
     expect(instance.parseFindValue('virtualService')).toEqual('node[hasVS]');
     // @ts-ignore
@@ -75,13 +79,21 @@ describe('Parse find value test', () => {
 
     // check coverage of edge operands
     // @ts-ignore
+    expect(instance.parseFindValue('grpc > 5.0')).toEqual('edge[grpc > 5.0]');
+    // @ts-ignore
+    expect(instance.parseFindValue('%grpcerror > 50')).toEqual('edge[grpcPercentErr > 50]');
+    // @ts-ignore
+    expect(instance.parseFindValue('%grpcerr > 50')).toEqual('edge[grpcPercentErr > 50]');
+    // @ts-ignore
+    expect(instance.parseFindValue('%grpctraffic > 50')).toEqual('edge[grpcPercentReq > 50]');
+    // @ts-ignore
     expect(instance.parseFindValue('http > 5.0')).toEqual('edge[http > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('%error > 50')).toEqual('edge[httpPercentErr > 50]');
+    expect(instance.parseFindValue('%httperror > 50')).toEqual('edge[httpPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%err > 50')).toEqual('edge[httpPercentErr > 50]');
+    expect(instance.parseFindValue('%httperr > 50')).toEqual('edge[httpPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%traffic > 50')).toEqual('edge[httpPercentReq > 50]');
+    expect(instance.parseFindValue('%httptraffic > 50')).toEqual('edge[httpPercentReq > 50]');
     // @ts-ignore
     expect(instance.parseFindValue('responseTime > 5.0')).toEqual('edge[responseTime > 5.0]');
     // @ts-ignore

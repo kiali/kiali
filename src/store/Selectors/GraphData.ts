@@ -10,33 +10,36 @@ import { createSelector } from 'reselect';
 const decorateGraphData = (graphData: any) => {
   const elementsDefaults = {
     edges: {
-      grpc: '0',
-      grpcErr: '0',
-      http: '0',
-      http3xx: '0',
-      http4xx: '0',
-      http5xx: '0',
-      httpPercentErr: '0',
-      httpPercentReq: '100.0',
+      grpc: 'NaN',
+      grpcErr: 'NaN',
+      grpcPercentErr: 'NaN',
+      grpcPercentReq: 'NaN',
+      http: 'NaN',
+      http3xx: 'NaN',
+      http4xx: 'NaN',
+      http5xx: 'NaN',
+      httpPercentErr: 'NaN',
+      httpPercentReq: 'NaN',
       isMTLS: undefined,
       isUnused: undefined,
-      responseTime: '0',
-      tcp: '0'
+      protocol: undefined,
+      responseTime: 'NaN',
+      tcp: 'NaN'
     },
     nodes: {
       app: undefined,
       destServices: undefined,
-      grpcIn: '0',
-      grpcInErr: '0',
-      grpcOut: '0',
+      grpcIn: 'NaN',
+      grpcInErr: 'NaN',
+      grpcOut: 'NaN',
       hasCB: undefined,
       hasMissingSC: undefined,
       hasVS: undefined,
-      httpIn: '0',
-      httpIn3xx: '0',
-      httpIn4xx: '0',
-      httpIn5xx: '0',
-      httpOut: '0',
+      httpIn: 'NaN',
+      httpIn3xx: 'NaN',
+      httpIn4xx: 'NaN',
+      httpIn5xx: 'NaN',
+      httpOut: 'NaN',
       isDead: undefined,
       isGroup: undefined,
       isInaccessible: undefined,
@@ -46,8 +49,8 @@ const decorateGraphData = (graphData: any) => {
       isServiceEntry: undefined,
       isUnused: undefined,
       service: undefined,
-      tcpIn: '0',
-      tcpOut: '0',
+      tcpIn: 'NaN',
+      tcpOut: 'NaN',
       version: undefined,
       workload: undefined
     }
@@ -56,6 +59,10 @@ const decorateGraphData = (graphData: any) => {
     if (graphData.nodes) {
       graphData.nodes = graphData.nodes.map(node => {
         const decoratedNode = { ...node };
+        // parse out the traffic data into top level fields for the various protocols. This is done
+        // to be back compatible with our existing ui code that expects the explicit http and tcp fields.
+        // We can then set the 'traffic' field undefined because it is unused in the cy element handling.
+        // TODO: refactor the code to use the traffic structure.
         if (node.data.traffic) {
           const traffic = node.data.traffic;
           node.data.traffic = undefined;
@@ -70,12 +77,11 @@ const decorateGraphData = (graphData: any) => {
     if (graphData.edges) {
       graphData.edges = graphData.edges.map(edge => {
         const decoratedEdge = { ...edge };
+        // see comment above about the 'traffic' data handling
         if (edge.data.traffic) {
           const traffic = edge.data.traffic;
           edge.data.traffic = undefined;
-          traffic.map(protocol => {
-            decoratedEdge.data = { ...protocol.rates, ...decoratedEdge.data };
-          });
+          decoratedEdge.data = { protocol: traffic.protocol, ...traffic.rates, ...decoratedEdge.data };
         }
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data };
         return decoratedEdge;

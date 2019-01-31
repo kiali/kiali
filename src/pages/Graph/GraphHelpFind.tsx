@@ -267,7 +267,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                         },
                         {
                           id: 'e90',
-                          e: '%traffic >= 50.0',
+                          e: '%httptraffic >= 50.0',
                           d: `find edges with >= 50% of the outgoing http request traffic of the parent`
                         }
                       ]}
@@ -286,8 +286,10 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     <Table.Body
                       rowKey="id"
                       rows={[
-                        { id: 'nc00', c: 'httpin <op> <number>', n: 'unit: requests per second' },
-                        { id: 'nc10', c: 'httpout <op> <number>', n: 'unit: requests per second' },
+                        { id: 'nc00', c: 'grpcin <op> <number>', n: 'unit: requests per second' },
+                        { id: 'nc10', c: 'grpcout <op> <number>', n: 'unit: requests per second' },
+                        { id: 'nc12', c: 'httpin <op> <number>', n: 'unit: requests per second' },
+                        { id: 'nc13', c: 'httpout <op> <number>', n: 'unit: requests per second' },
                         {
                           id: 'nc15',
                           c: 'name <op> <string>',
@@ -323,16 +325,20 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     <Table.Body
                       rowKey="id"
                       rows={[
-                        { id: 'ec00', c: 'http <op> <number>', n: 'unit: requests per second' },
-                        { id: 'ec10', c: '%err <op> <number>', n: 'range: [0..100]' },
-                        { id: 'ec20', c: '%traffic <op> <number>', n: 'range: [0..100]' },
+                        { id: 'ec00', c: 'grpc <op> <number>', n: 'unit: requests per second' },
+                        { id: 'ec10', c: '%grpcerr <op> <number>', n: 'range: [0..100]' },
+                        { id: 'ec20', c: '%grpctraffic <op> <number>', n: 'range: [0..100]' },
+                        { id: 'ec23', c: 'http <op> <number>', n: 'unit: requests per second' },
+                        { id: 'ec24', c: '%httperr <op> <number>', n: 'range: [0..100]' },
+                        { id: 'ec25', c: '%httptraffic <op> <number>', n: 'range: [0..100]' },
+                        { id: 'ec30', c: 'protocol <op> <protocol>', n: 'grpc, http, tcp, etc..' },
                         {
-                          id: 'ec30',
+                          id: 'ec40',
                           c: 'responsetime <op> <number>',
                           n: `unit: millis, 'Response Time' edge labels required`
                         },
-                        { id: 'ec40', c: 'tcp <op> <number>', n: 'unit: requests per second' },
-                        { id: 'ec50', c: 'mtls' }
+                        { id: 'ec50', c: 'tcp <op> <number>', n: 'unit: requests per second' },
+                        { id: 'ec60', c: 'mtls' }
                       ]}
                     />
                   </TablePfProvider>
@@ -385,7 +391,12 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                         { id: 't30', t: 'Expressions can not combine node and edge criteria.' },
                         {
                           id: 't40',
-                          t: 'Numeric equality (=) is exact match. Include leading 0 and digits of precision.'
+                          t: 'Numeric equality (=,!=) is exact match. Include leading 0 and digits of precision.'
+                        },
+                        {
+                          id: 't45',
+                          t:
+                            'Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'
                         },
                         { id: 't50', t: 'Numerics use "." decimal notation.' },
                         { id: 't60', t: 'Percentages use 1 digit of precision, Rates use 2 digits of precision.' },
