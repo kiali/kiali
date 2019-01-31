@@ -248,15 +248,13 @@
           "id": "710c2bf1d8a5b3fc854451e7346e05f5",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "12.5"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.5"
             }
-          ]
+          }
         }
       },
       {
@@ -264,19 +262,17 @@
           "id": "df66cffc756bf9983dd453837e4e14a7",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "5cd385c1ee3309ae40828b5702ae57fb",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "80.00",
-                "http3xx": "20.00",
-                "http4xx": "20.00",
-                "http5xx": "20.00",
-                "httpPercentErr": "50.0",
-                "httpPercentReq": "50.0"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "80.00",
+              "http3xx": "20.00",
+              "http4xx": "20.00",
+              "http5xx": "20.00",
+              "httpPercentErr": "50.0",
+              "httpPercentReq": "50.0"
             }
-          ]
+          }
         }
       },
       {
@@ -284,15 +280,13 @@
           "id": "1da31b81ccaf408abccbc57071458462",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "731126638001dfa2b6cbeb3b326b6678",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "12.5"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.5"
             }
-          ]
+          }
         }
       },
       {
@@ -300,14 +294,12 @@
           "id": "cc4b63704dba836d37dd97aacf75afee",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "9c4a705d62316000f11544ec6d27cdc6",
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcp": "31.00"
-              }
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "31.00"
             }
-          ]
+          }
         }
       },
       {
@@ -315,15 +307,13 @@
           "id": "c2ab8814859ec0974c5efd597b5bb4fd",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "9e97011b2086f59a90626cfd5cf23fbf",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "12.5"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.5"
             }
-          ]
+          }
         }
       },
       {
@@ -331,15 +321,13 @@
           "id": "943e5cc1b00d97a8a344fe1efd941130",
           "source": "240c2314cefc993c5d9479a5c349fbd2",
           "target": "fc3e7c5bb695ef8ed8ab2c5f6ac4725b",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "12.5"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.5"
             }
-          ]
+          }
         }
       },
       {
@@ -347,15 +335,13 @@
           "id": "dfb27d138c8b9b95b699e910fdda93bf",
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "2075586d4defa2622017ea76b7c582c0",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "28.6"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "28.6"
             }
-          ]
+          }
         }
       },
       {
@@ -363,17 +349,15 @@
           "id": "fa1db53921ef4a16b273c5260df63c2d",
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "5fd49fef66081810598406b0686500ae",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "30.00",
-                "http5xx": "10.00",
-                "httpPercentErr": "33.3",
-                "httpPercentReq": "42.9"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "30.00",
+              "http5xx": "10.00",
+              "httpPercentErr": "33.3",
+              "httpPercentReq": "42.9"
             }
-          ]
+          }
         }
       },
       {
@@ -381,15 +365,13 @@
           "id": "6822e986b101e54af3305af8d2d08051",
           "source": "731126638001dfa2b6cbeb3b326b6678",
           "target": "731126638001dfa2b6cbeb3b326b6678",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "28.6"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "28.6"
             }
-          ]
+          }
         }
       },
       {
@@ -397,17 +379,15 @@
           "id": "0b356bd23faa1d1f26b3edeb4bbf0502",
           "source": "9e97011b2086f59a90626cfd5cf23fbf",
           "target": "5fd49fef66081810598406b0686500ae",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "30.00",
-                "http5xx": "10.00",
-                "httpPercentErr": "33.3",
-                "httpPercentReq": "60.0"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "30.00",
+              "http5xx": "10.00",
+              "httpPercentErr": "33.3",
+              "httpPercentReq": "60.0"
             }
-          ]
+          }
         }
       },
       {
@@ -415,15 +395,13 @@
           "id": "0d137e50b408f6108b52a8db15f90472",
           "source": "9e97011b2086f59a90626cfd5cf23fbf",
           "target": "9e97011b2086f59a90626cfd5cf23fbf",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "20.00",
-                "httpPercentReq": "40.0"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "40.0"
             }
-          ]
+          }
         }
       },
       {
@@ -431,14 +409,13 @@
           "id": "b38eaa93622c6c652c3daf15b31a476d",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "50.00"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "100.0"
             }
-          ]
+          }
         }
       },
       {
@@ -446,14 +423,12 @@
           "id": "add44fff17f11c9c090f09d178d6090c",
           "source": "b30b0078325bf2e1adb4d57c4c0c2665",
           "target": "9c4a705d62316000f11544ec6d27cdc6",
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcp": "400.00"
-              }
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "400.00"
             }
-          ]
+          }
         }
       },
       {
@@ -461,14 +436,13 @@
           "id": "347e210a97f5235b5a60b810ef1bfaa6",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "240c2314cefc993c5d9479a5c349fbd2",
-          "traffic": [
-            {
-              "protocol": "http",
-              "rates": {
-                "http": "100.00"
-              }
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
             }
-          ]
+          }
         }
       },
       {
@@ -476,14 +450,12 @@
           "id": "5644333566484a57ab42a2567bd5d805",
           "source": "c72e12859eac1424516065e6a64c92e0",
           "target": "9c4a705d62316000f11544ec6d27cdc6",
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcp": "150.00"
-              }
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "150.00"
             }
-          ]
+          }
         }
       }
     ]

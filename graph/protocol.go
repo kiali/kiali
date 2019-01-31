@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kiali/kiali/log"
@@ -25,7 +26,6 @@ type Protocol struct {
 	UnitShort string
 }
 
-/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 var GRPC Protocol = Protocol{
 	Name: "grpc",
 	EdgeRates: []Rate{
@@ -42,7 +42,7 @@ var GRPC Protocol = Protocol{
 	Unit:      "requests per second",
 	UnitShort: "rps",
 }
-*/
+
 var HTTP Protocol = Protocol{
 	Name: "http",
 	EdgeRates: []Rate{
@@ -76,16 +76,12 @@ var TCP Protocol = Protocol{
 	UnitShort: "bps",
 }
 
-// TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
-// var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
-var Protocols []Protocol = []Protocol{HTTP, TCP}
+var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
 func AddToMetadata(protocol string, val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	switch protocol {
 	case "grpc":
-		// TODO: For now, treat gRPC like HTTP, uncomment this (and remove the http line below it) when we want to treat gRPC explicitly
-		// addToMetadataGrpc(val, code, sourceMetadata, destMetadata, edgeMetadata)
-		addToMetadataHttp(val, code, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataGrpc(val, code, sourceMetadata, destMetadata, edgeMetadata)
 	case "http":
 		addToMetadataHttp(val, code, sourceMetadata, destMetadata, edgeMetadata)
 	case "tcp":
@@ -95,7 +91,6 @@ func AddToMetadata(protocol string, val float64, code string, sourceMetadata, de
 	}
 }
 
-/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "grpcOut", val)
 	addToMetadataValue(destMetadata, "grpcIn", val)
@@ -114,7 +109,6 @@ func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, e
 		addToMetadataValue(edgeMetadata, "grpcErr", val)
 	}
 }
-*/
 
 func addToMetadataHttp(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "httpOut", val)
@@ -143,17 +137,45 @@ func addToMetadataTcp(val float64, code string, sourceMetadata, destMetadata, ed
 }
 
 func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface{}) {
-	/* TODO: For now, treat gRPC like HTTP, uncomment this when we want to treat gRPC explicitly
 	if val, valOk := edgeMetadata["grpc"]; valOk {
 		addToMetadataValue(sourceMetadata, "grpcOut", val.(float64))
 	}
-	*/
 	if val, valOk := edgeMetadata["http"]; valOk {
 		addToMetadataValue(sourceMetadata, "httpOut", val.(float64))
 	}
 	if val, valOk := edgeMetadata["tcp"]; valOk {
 		addToMetadataValue(sourceMetadata, "tcpOut", val.(float64))
 	}
+}
+
+func AddServiceGraphTraffic(target, source *Edge) {
+	protocol := target.Metadata["protocol"]
+	switch protocol {
+	case "grpc":
+		addToMetadataValue(target.Metadata, "grpc", source.Metadata["grpc"].(float64))
+		if val, ok := source.Metadata["grpcErr"]; ok {
+			addToMetadataValue(target.Metadata, "grpcErr", val.(float64))
+		}
+	case "http":
+		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
+		if val, ok := source.Metadata["http3xx"]; ok {
+			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
+		}
+		if val, ok := source.Metadata["http4xx"]; ok {
+			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
+		}
+		if val, ok := source.Metadata["http5xx"]; ok {
+			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
+		}
+	case "tcp":
+		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
+	default:
+		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
+	}
+
+	// handle any appender-based edge data (nothing currently)
+	// note: We used to average response times of the aggregated edges but realized that
+	// we can't average quantiles (kiali-2297).
 }
 
 func addToMetadataValue(md map[string]interface{}, k string, v float64) {

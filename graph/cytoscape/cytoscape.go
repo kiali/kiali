@@ -61,10 +61,10 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Traffic      []ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for all detected protocols
-	ResponseTime string            `json:"responseTime,omitempty"` // in millis
-	IsMTLS       bool              `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
-	IsUnused     bool              `json:"isUnused,omitempty"`     // true | false
+	Traffic      ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
+	ResponseTime string          `json:"responseTime,omitempty"` // in millis
+	IsMTLS       bool            `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
+	IsUnused     bool            `json:"isUnused,omitempty"`     // true | false
 }
 
 type NodeWrapper struct {
@@ -284,7 +284,8 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 		ed.IsUnused = val.(bool)
 	}
 
-	ed.Traffic = []ProtocolTraffic{}
+	// an edge represents traffic for at most one protocol
+	ed.Traffic = ProtocolTraffic{}
 	for _, p := range graph.Protocols {
 		protocolTraffic := ProtocolTraffic{Protocol: p.Name}
 		total := 0.0
@@ -294,12 +295,17 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 			rateVal := getRate(e.Metadata, r.Name)
 			switch {
 			case r.IsTotal:
+				// there is one field holding the total traffic
 				total = rateVal
 			case r.IsErr:
+				// error rates can be reported for several error status codes, so sum up all
+				// of the error traffic to be used in the percentErr calculation below.
 				err += rateVal
 			case r.IsPercentErr:
+				// hold onto the percentErr field so we know how to report it below
 				percentErr = r
 			case r.IsPercentReq:
+				// hold onto the percentReq field so we know how to report it below
 				percentReq = r
 			}
 			if rateVal := getRate(e.Metadata, r.Name); rateVal > 0.0 {
@@ -326,12 +332,13 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 						rateVal = total / getRate(e.Source.Metadata, r.Name) * 100.0
 						break
 					}
-					if rateVal > 0.0 && rateVal < 100.0 {
+					if rateVal > 0.0 {
 						protocolTraffic.Rates[percentReq.Name] = fmt.Sprintf("%.*f", percentReq.Precision, rateVal)
 					}
 				}
 			}
-			ed.Traffic = append(ed.Traffic, protocolTraffic)
+			ed.Traffic = protocolTraffic
+			break
 		}
 	}
 }

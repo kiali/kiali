@@ -2875,12 +2875,7 @@
           "x-go-name": "Target"
         },
         "traffic": {
-          "description": "App Fields (not required by Cytoscape)",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ProtocolTraffic"
-          },
-          "x-go-name": "Traffic"
+          "$ref": "#/definitions/ProtocolTraffic"
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph/cytoscape"

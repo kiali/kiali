@@ -261,59 +261,17 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 }
 
 func addServiceGraphTraffic(target, source *graph.Edge) {
-	protocol := target.Metadata["protocol"]
-	switch protocol {
-	case "http":
-		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
-		if val, ok := source.Metadata["http3xx"]; ok {
-			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
-		}
-		if val, ok := source.Metadata["http4xx"]; ok {
-			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
-		}
-		if val, ok := source.Metadata["http5xx"]; ok {
-			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
-		}
-	case "tcp":
-		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
-	default:
-		graph.Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
-	}
-	// hande any appender-based edge data
-	// - responseTime is not a counter, set an average, not a total
-	if responseTime, ok := source.Metadata["responseTime"]; ok {
-		averageMetadataValue(target.Metadata, "responseTime", responseTime.(float64))
-	}
+	graph.AddServiceGraphTraffic(target, source)
+
+	// handle any appender-based edge data (nothing currently)
+	// note: We used to average response times of the aggregated edges but realized that
+	// we can't average quantiles (kiali-2297).
 }
 
 func checkNodeType(expected string, n *graph.Node) {
 	if expected != n.NodeType {
 		graph.Error(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n))
 	}
-}
-
-func addToMetadataValue(md map[string]interface{}, k string, v float64) {
-	if curr, ok := md[k]; ok {
-		md[k] = curr.(float64) + v
-	} else {
-		md[k] = v
-	}
-}
-
-func averageMetadataValue(md map[string]interface{}, k string, v float64) {
-	total := v
-	count := 1.0
-	kTotal := k + "_total"
-	kCount := k + "_count"
-	if prevTotal, ok := md[kTotal]; ok {
-		total += prevTotal.(float64)
-	}
-	if prevCount, ok := md[kCount]; ok {
-		count += prevCount.(float64)
-	}
-	md[kTotal] = total
-	md[kCount] = count
-	md[k] = total / count
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
@@ -363,9 +321,9 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	if o.IncludeIstio {
 		istioNamespace := config.Get().IstioNamespace
 
-		// 4) if the target namespace is istioNamespace re-query for traffic originating from a workload outside of the namespace
+		// 4) if the target namespace is istioNamespace re-query for traffic originating from outside (other than unknown, covered in query #1)
 		if namespace == istioNamespace {
-			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%s",destination_service_namespace="%s"} [%vs])) by (%s)`,
+			query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload!="unknown",source_workload_namespace!="%s",destination_service_namespace="%s"} [%vs])) by (%s)`,
 				requestsMetric,
 				namespace,
 				namespace,
