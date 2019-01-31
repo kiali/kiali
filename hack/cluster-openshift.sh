@@ -503,14 +503,14 @@ if [ "$_CMD" = "up" ]; then
       echo "Wait for Istio to fully start (this is going to take a while)..."
 
       echo -n "Waiting for Istio Deployments to be created..."
-      while [ "$(oc get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
+      while [ "$(${MAISTRA_ISTIO_OC_COMMAND} get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
       do
          sleep 5
          echo -n '.'
       done
       echo "done."
 
-      for app in $(oc get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+      for app in $(${MAISTRA_ISTIO_OC_COMMAND} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
       do
          echo -n "Waiting for ${app} to be ready..."
          readyReplicas="0"
@@ -518,7 +518,7 @@ if [ "$_CMD" = "up" ]; then
          do
             sleep 1
             echo -n '.'
-            readyReplicas="$(oc get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+            readyReplicas="$(${MAISTRA_ISTIO_OC_COMMAND} get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
          done
          echo "done."
       done
