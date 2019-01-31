@@ -21,7 +21,9 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   summaryData: null,
   filterState: {
     edgeLabelMode: EdgeLabelMode.HIDE,
+    findValue: '',
     graphType: GraphType.VERSIONED_APP,
+    hideValue: '',
     showCircuitBreakers: true,
     showFindHelp: false,
     showLegend: false,
@@ -92,6 +94,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
     case getType(GraphFilterActions.setEdgelLabelMode):
       newState.filterState.edgeLabelMode = action.payload;
       break;
+    case getType(GraphFilterActions.setFindValue):
+      newState.filterState.findValue = action.payload;
+      break;
     case getType(GraphFilterActions.setGraphType):
       newState.filterState.graphType = action.payload;
       // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
@@ -99,6 +104,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
       newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
       newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
+      break;
+    case getType(GraphFilterActions.setHideValue):
+      newState.filterState.hideValue = action.payload;
       break;
     case getType(GraphFilterActions.toggleFindHelp):
       newState.filterState.showFindHelp = !state.filterState.showFindHelp;

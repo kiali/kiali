@@ -24,6 +24,8 @@ export interface GraphFilterState {
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   // find props
+  findValue: string;
+  hideValue: string;
   showFindHelp: boolean;
   // Toggle props
   showCircuitBreakers: boolean;

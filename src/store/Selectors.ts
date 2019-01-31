@@ -35,10 +35,24 @@ export const edgeLabelModeSelector = createSelector(
   x => x // identity function
 );
 
+const findValue = (state: KialiAppState) => state.graph.filterState.findValue;
+
+export const findValueSelector = createSelector(
+  findValue,
+  x => x // identity function
+);
+
 const graphType = (state: KialiAppState) => state.graph.filterState.graphType;
 
 export const graphTypeSelector = createSelector(
   graphType,
+  x => x // identity function
+);
+
+const hideValue = (state: KialiAppState) => state.graph.filterState.hideValue;
+
+export const hideValueSelector = createSelector(
+  hideValue,
   x => x // identity function
 );
 

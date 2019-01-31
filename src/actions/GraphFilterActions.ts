@@ -5,7 +5,9 @@ import { EdgeLabelMode } from '../types/GraphFilter';
 
 enum GraphFilterActionKeys {
   SET_EDGE_LABEL_MODE = 'SET_EDGE_LABEL_MODE',
+  SET_FIND_VALUE = 'SET_FIND_VALUE',
   SET_GRAPH_TYPE = 'SET_GRAPH_TYPE',
+  SET_HIDE_VALUE = 'SET_HIDE_VALUE',
   // Toggle Actions
   TOGGLE_GRAPH_NODE_LABEL = 'TOGGLE_GRAPH_NODE_LABEL',
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
@@ -23,7 +25,9 @@ enum GraphFilterActionKeys {
 
 export const GraphFilterActions = {
   setEdgelLabelMode: createStandardAction(GraphFilterActionKeys.SET_EDGE_LABEL_MODE)<EdgeLabelMode>(),
+  setFindValue: createStandardAction(GraphFilterActionKeys.SET_FIND_VALUE)<string>(),
   setGraphType: createStandardAction(GraphFilterActionKeys.SET_GRAPH_TYPE)<GraphType>(),
+  setHideValue: createStandardAction(GraphFilterActionKeys.SET_HIDE_VALUE)<string>(),
   // Toggle actions
   showGraphFilters: createStandardAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS)<boolean>(),
   toggleGraphNodeLabel: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL),

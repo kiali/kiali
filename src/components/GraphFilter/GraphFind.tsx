@@ -5,6 +5,8 @@ import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
+import { findValueSelector, hideValueSelector } from '../../store/Selectors';
+
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
 import { KialiAppAction } from '../../actions/KialiAppAction';
@@ -15,8 +17,12 @@ import { CyData } from '../../types/Graph';
 
 type ReduxProps = {
   cyData: CyData;
+  findValue: string;
+  hideValue: string;
   showFindHelp: boolean;
 
+  setFindValue: (val: string) => void;
+  setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
 };
 
@@ -32,13 +38,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     router: () => null
   };
 
-  private hideInputRef;
-  private hideInputValue: string;
-  private hideValue: string;
-  private hiddenElements: any | undefined;
   private findInputRef;
   private findInputValue: string;
-  private findValue: string;
+  private hiddenElements: any | undefined;
+  private hideInputRef;
+  private hideInputValue: string;
 
   constructor(props: GraphFindProps) {
     super(props);
@@ -46,22 +50,26 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
-
-    this.hideInputRef = React.createRef();
-    this.hideInputValue = '';
-    this.hideValue = '';
-    this.hiddenElements = undefined;
-
-    this.findInputRef = React.createRef();
-    this.findInputValue = '';
-    this.findValue = '';
   }
 
+  // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
+  // the graph loading, we can't perform this graph "post-processing" until we have a valid cy graph.  We can assume
+  // that applying the find/hide on update is sufficient because  we will be updated after the cy is loaded
+  // due to a change notification for this.props.cyData.
   componentDidUpdate(prevProps: GraphFindProps) {
-    if (this.findValue.length > 0 && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp) {
+    // make sure the input box reflects the redux value
+    this.findInputRef.value = this.props.findValue;
+    this.hideInputRef.value = this.props.hideValue;
+
+    const findChanged = this.props.findValue !== prevProps.findValue;
+    const hideChanged = this.props.hideValue !== prevProps.hideValue;
+    const graphChanged =
+      this.props.cyData && prevProps.cyData && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp;
+
+    if (findChanged || (graphChanged && this.props.findValue)) {
       this.handleFind();
     }
-    if (this.hideValue.length > 0 && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp) {
+    if (hideChanged || (graphChanged && this.props.hideValue)) {
       this.handleHide();
     }
   }
@@ -129,9 +137,8 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     if (keyCode === 13) {
       event.preventDefault();
-      if (this.hideValue !== this.hideInputValue) {
-        this.hideValue = this.hideInputValue;
-        this.handleHide();
+      if (this.props.hideValue !== this.hideInputValue) {
+        this.props.setHideValue(this.hideInputValue);
       }
     }
   };
@@ -140,27 +147,24 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     if (keyCode === 13) {
       event.preventDefault();
-      if (this.findValue !== this.findInputValue) {
-        this.findValue = this.findInputValue;
-        this.handleFind();
+      if (this.props.findValue !== this.findInputValue) {
+        this.props.setFindValue(this.findInputValue);
       }
     }
   };
 
   private clearHide = () => {
-    this.hideInputValue = '';
-    this.hideValue = '';
     // note, we don't use hideInputRef.current because <FormControl> deals with refs differently than <input>
     this.hideInputRef.value = '';
-    this.handleHide();
+    this.hideInputValue = '';
+    this.props.setHideValue('');
   };
 
   private clearFind = () => {
-    this.findInputValue = '';
-    this.findValue = '';
     // note, we don't use findInputRef.current because <FormControl> deals with refs differently than <input>
     this.findInputRef.value = '';
-    this.handleFind();
+    this.findInputValue = '';
+    this.props.setFindValue('');
   };
 
   private handleHide = () => {
@@ -169,7 +173,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return;
     }
     const cy = this.props.cyData.cyRef;
-    const selector = this.parseFindValue(this.hideValue);
+    const selector = this.parseFindValue(this.props.hideValue);
     cy.startBatch();
     // this could also be done using cy remove/restore but we had better results
     // using visible/hidden.  The latter worked better when hiding animation, and
@@ -202,7 +206,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return;
     }
     const cy = this.props.cyData.cyRef;
-    const selector = this.parseFindValue(this.findValue);
+    const selector = this.parseFindValue(this.props.findValue);
     cy.startBatch();
     // unhighlight old find-hits
     cy.elements('*.find').removeClass('find');
@@ -532,11 +536,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   cyData: state.graph.cyData,
+  findValue: findValueSelector(state),
+  hideValue: hideValueSelector(state),
   showFindHelp: state.graph.filterState.showFindHelp
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
+    setFindValue: bindActionCreators(GraphFilterActions.setFindValue, dispatch),
+    setHideValue: bindActionCreators(GraphFilterActions.setHideValue, dispatch),
     toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch)
   };
 };

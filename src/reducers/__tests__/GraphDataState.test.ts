@@ -15,7 +15,9 @@ describe('GraphDataState', () => {
       isError: false,
       filterState: {
         edgeLabelMode: EdgeLabelMode.HIDE,
+        findValue: '',
         graphType: GraphType.VERSIONED_APP,
+        hideValue: '',
         showCircuitBreakers: true,
         showFindHelp: false,
         showLegend: false,

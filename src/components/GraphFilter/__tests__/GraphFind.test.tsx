@@ -7,13 +7,21 @@ const testHandler = () => {
   console.log('handled');
 };
 
+const testSetter = val => {
+  console.log('set');
+};
+
 // TODO Find out why typescript is unhappy and get rid of all of these ts-ignores
 describe('Parse find value test', () => {
   it('should return the correct selector for raw find values', () => {
     const wrapper = shallow(
       <GraphFind
         cyData={{ updateTimestamp: 123, cyRef: 'dummyRef' }}
+        findValue="testFind"
+        hideValue="testHide"
         showFindHelp={false}
+        setFindValue={testSetter}
+        setHideValue={testSetter}
         toggleFindHelp={testHandler}
       />
     );
