@@ -26,7 +26,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   validation(virtualService: VirtualService): ObjectValidation {
-    return this.props.validation[virtualService.metadata.name];
+    return this.props.validation;
   }
 
   globalStatus(rule: VirtualService) {
