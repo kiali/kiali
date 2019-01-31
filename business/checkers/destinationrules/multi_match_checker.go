@@ -31,13 +31,18 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	// Equality search is: [fqdn][subset]
 	seenHostSubsets := make(map[string]map[string]string)
 
-	for _, v := range m.DestinationRules {
-		if host, ok := v.GetSpec()["host"]; ok {
-			destinationRulesName := v.GetObjectMeta().Name
+	for _, dr := range m.DestinationRules {
+		if host, ok := dr.GetSpec()["host"]; ok {
+			destinationRulesName := dr.GetObjectMeta().Name
 			if dHost, ok := host.(string); ok {
-				fqdn := FormatHostnameForPrefixSearch(dHost, v.GetObjectMeta().Namespace, v.GetObjectMeta().ClusterName)
+				fqdn := FormatHostnameForPrefixSearch(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
-				foundSubsets := extractSubsets(v, destinationRulesName)
+				// Skip DR validation if it enables mTLS either namespace or mesh-wide
+				if enablesNonLocalmTLS(dr, fqdn) {
+					continue
+				}
+
+				foundSubsets := extractSubsets(dr, destinationRulesName)
 
 				if fqdn.Service == "*" {
 					// We need to check the matching subsets from all hosts now
@@ -68,6 +73,28 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	}
 
 	return validations
+}
+
+func enablesNonLocalmTLS(dr kubernetes.IstioObject, fdqn Host) bool {
+	if fdqn.Service != "*" {
+		return false
+	}
+
+	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
+		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
+			if tls, found := trafficCasted["tls"]; found {
+				if tlsCasted, ok := tls.(map[string]interface{}); ok {
+					if mode, found := tlsCasted["mode"]; found {
+						if modeCasted, ok := mode.(string); ok {
+							return modeCasted == "ISTIO_MUTUAL"
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []subset {
