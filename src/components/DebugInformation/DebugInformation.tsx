@@ -75,7 +75,7 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
         debugInformation,
         (key: string, value: any) => {
           // We have to patch some runtime properties  we don't want to serialize
-          if (['cyRef', 'summaryTarget'].includes(key)) {
+          if (['cyRef', 'summaryTarget', 'token', 'username'].includes(key)) {
             return null;
           }
           return value;
