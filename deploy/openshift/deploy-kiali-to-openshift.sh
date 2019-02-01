@@ -149,8 +149,9 @@ export KIALI_PASSPHRASE_BASE64
 
 # Make sure we have access to all required tools
 
-if which 'oc' > /dev/null 2>&1 ; then
-  echo "oc is here: $(which oc)"
+OC_TOOL_PATH=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
+if [ "$?" == "0" ]; then
+  echo "oc is here: ${OC_TOOL_PATH}"
 else
   echo "ERROR: You do not have 'oc' in your PATH. Please install it and retry."
   exit 1
@@ -209,12 +210,12 @@ do
   yaml_path="${YAML_DIR}/${yaml}.yaml"
   if [ -f "${yaml_path}" ]; then
     echo "Using YAML file: ${yaml_path}"
-    cat ${yaml_path} | envsubst | oc apply -n ${NAMESPACE} -f -
+    cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   else
     get_downloader
     yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
     echo "Downloading YAML via: ${downloader} ${yaml_url}"
-    ${downloader} ${yaml_url} | envsubst | oc apply -n ${NAMESPACE} -f -
+    ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   fi
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to OpenShift. Aborting."
