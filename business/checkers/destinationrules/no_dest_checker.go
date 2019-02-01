@@ -63,6 +63,13 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 
 func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[string]string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
+
+	// Check wildcard hosts
+	if service == "*" {
+		return true
+	}
+
+	// Check workloads
 	for _, wl := range n.WorkloadList.Workloads {
 		if service == wl.Labels[appLabel] {
 			valid := true
@@ -83,6 +90,12 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[str
 
 func (n NoDestinationChecker) hasMatchingService(service string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
+
+	// Check wildcard hosts
+	if service == "*" {
+		return true
+	}
+
 	// Check Workloads
 	for _, wl := range n.WorkloadList.Workloads {
 		if service == wl.Labels[appLabel] {
