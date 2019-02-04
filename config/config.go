@@ -51,11 +51,15 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
-	EnvJaegerURL = "JAEGER_URL"
+	EnvJaegerURL         = "JAEGER_URL"
+	EnvJaegerService     = "JAEGER_SERVICE"
+	EnvJaegerServicePort = "JAEGER_SERVICE_PORT"
 
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
+
+	EnvMaistra = "MAISTRA"
 
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
@@ -104,7 +108,9 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
-	URL string `yaml:"url"`
+	URL         string `yaml:"url"`
+	Service     string `yaml:"service"`
+	ServicePort int64  `yaml:"service_port"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -162,6 +168,7 @@ type Config struct {
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
+	Maistra          bool              `yaml:"maistra,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
 }
@@ -173,6 +180,7 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
+	c.Maistra = getDefaultBool(EnvMaistra, false)
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
@@ -220,6 +228,8 @@ func NewConfig() (c *Config) {
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
+	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	c.ExternalServices.Jaeger.ServicePort = getDefaultInt64(EnvJaegerServicePort, 16686)
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))

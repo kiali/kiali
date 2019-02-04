@@ -97,6 +97,9 @@ func istioVersion() (*ExternalServiceInfo, error) {
 		if err == nil {
 			rawVersion := string(body)
 			product, err = parseIstioRawVersion(rawVersion)
+			if config.Get().Maistra && !strings.Contains(product.Name, "Maistra") {
+				product.Name += " (Maistra)"
+			}
 			return product, err
 		}
 	}
@@ -188,6 +191,9 @@ func jaegerVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = "Jaeger"
 	product.Url = config.Get().ExternalServices.Jaeger.URL
+	if config.Get().Maistra {
+		product.Url += "/jaeger"
+	}
 
 	return &product, nil
 }
