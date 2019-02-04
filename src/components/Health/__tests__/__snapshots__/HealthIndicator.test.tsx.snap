@@ -34,7 +34,7 @@ ShallowWrapper {
               "name": "Healthy",
               "priority": 1,
             },
-            "title": "Workload Status",
+            "title": "Pods Status",
           },
           Object {
             "children": Array [
@@ -100,239 +100,27 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "host",
+    "nodeType": "class",
     "props": Object {
-      "children": <HealthDetails
-        headline="Healthy"
-        health={
-          AppHealth {
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "A: 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "title": "Workload Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#72767b",
-                      "name": "No health information",
-                      "priority": 0,
-                      "text": "N/A",
-                    },
-                    "text": "Inbound: No requests",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#72767b",
-                      "name": "No health information",
-                      "priority": 0,
-                      "text": "N/A",
-                    },
-                    "text": "Outbound: No requests",
-                  },
-                ],
-                "status": Object {
-                  "color": "#72767b",
-                  "name": "No health information",
-                  "priority": 0,
-                  "text": "N/A",
-                },
-                "title": "Error Rate over last 10 min",
-              },
-            ],
-            "rateInterval": 600,
-            "requests": Object {
-              "errorRatio": -1,
-              "inboundErrorRatio": -1,
-              "outboundErrorRatio": -1,
-            },
-            "workloadStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
+      "children": <Icon
+        className="health-icon"
+        name="ok"
+        style={
+          Object {
+            "fontSize": "18px",
           }
         }
-        id="svc"
-        placement={undefined}
+        tabIndex="0"
+        type="pf"
+      />,
+      "defaultOverlayShown": false,
+      "overlay": <Popover
+        bsClass="popover"
+        id="svc-health-tooltip"
+        placement="right"
+        title="Healthy"
       >
-        <Icon
-          className="health-icon"
-          name="ok"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />
-      </HealthDetails>,
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": <Icon
-          className="health-icon"
-          name="ok"
-          style={
-            Object {
-              "fontSize": "18px",
-            }
-          }
-          tabIndex="0"
-          type="pf"
-        />,
-        "headline": "Healthy",
-        "health": AppHealth {
-          "items": Array [
-            Object {
-              "children": Array [
-                Object {
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "text": "A: 1 / 1",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#3f9c35",
-                    "icon": "ok",
-                    "name": "Healthy",
-                    "priority": 1,
-                  },
-                  "text": "B: 2 / 2",
-                },
-              ],
-              "status": Object {
-                "color": "#3f9c35",
-                "icon": "ok",
-                "name": "Healthy",
-                "priority": 1,
-              },
-              "title": "Workload Status",
-            },
-            Object {
-              "children": Array [
-                Object {
-                  "status": Object {
-                    "color": "#72767b",
-                    "name": "No health information",
-                    "priority": 0,
-                    "text": "N/A",
-                  },
-                  "text": "Inbound: No requests",
-                },
-                Object {
-                  "status": Object {
-                    "color": "#72767b",
-                    "name": "No health information",
-                    "priority": 0,
-                    "text": "N/A",
-                  },
-                  "text": "Outbound: No requests",
-                },
-              ],
-              "status": Object {
-                "color": "#72767b",
-                "name": "No health information",
-                "priority": 0,
-                "text": "N/A",
-              },
-              "title": "Error Rate over last 10 min",
-            },
-          ],
-          "rateInterval": 600,
-          "requests": Object {
-            "errorRatio": -1,
-            "inboundErrorRatio": -1,
-            "outboundErrorRatio": -1,
-          },
-          "workloadStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "A",
-              "replicas": 1,
-            },
-            Object {
-              "available": 2,
-              "name": "B",
-              "replicas": 2,
-            },
-          ],
-        },
-        "id": "svc",
-        "placement": undefined,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "className": "health-icon",
-          "name": "ok",
-          "style": Object {
-            "fontSize": "18px",
-          },
-          "tabIndex": "0",
-          "type": "pf",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": [Function],
-    },
-    "type": "span",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": <HealthDetails
-          headline="Healthy"
+        <HealthDetails
           health={
             AppHealth {
               "items": Array [
@@ -363,7 +151,7 @@ ShallowWrapper {
                     "name": "Healthy",
                     "priority": 1,
                   },
-                  "title": "Workload Status",
+                  "title": "Pods Status",
                 },
                 Object {
                   "children": Array [
@@ -415,144 +203,170 @@ ShallowWrapper {
               ],
             }
           }
-          id="svc"
-          placement={undefined}
+        />
+      </Popover>,
+      "placement": "right",
+      "rootClose": false,
+      "trigger": Array [
+        "hover",
+        "focus",
+      ],
+    },
+    "ref": null,
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "function",
+      "props": Object {
+        "className": "health-icon",
+        "name": "ok",
+        "style": Object {
+          "fontSize": "18px",
+        },
+        "tabIndex": "0",
+        "type": "pf",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "children": <Icon
+          className="health-icon"
+          name="ok"
+          style={
+            Object {
+              "fontSize": "18px",
+            }
+          }
+          tabIndex="0"
+          type="pf"
+        />,
+        "defaultOverlayShown": false,
+        "overlay": <Popover
+          bsClass="popover"
+          id="svc-health-tooltip"
+          placement="right"
+          title="Healthy"
         >
-          <Icon
-            className="health-icon"
-            name="ok"
-            style={
-              Object {
-                "fontSize": "18px",
+          <HealthDetails
+            health={
+              AppHealth {
+                "items": Array [
+                  Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "name": "Healthy",
+                          "priority": 1,
+                        },
+                        "text": "A: 1 / 1",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#3f9c35",
+                          "icon": "ok",
+                          "name": "Healthy",
+                          "priority": 1,
+                        },
+                        "text": "B: 2 / 2",
+                      },
+                    ],
+                    "status": Object {
+                      "color": "#3f9c35",
+                      "icon": "ok",
+                      "name": "Healthy",
+                      "priority": 1,
+                    },
+                    "title": "Pods Status",
+                  },
+                  Object {
+                    "children": Array [
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Inbound: No requests",
+                      },
+                      Object {
+                        "status": Object {
+                          "color": "#72767b",
+                          "name": "No health information",
+                          "priority": 0,
+                          "text": "N/A",
+                        },
+                        "text": "Outbound: No requests",
+                      },
+                    ],
+                    "status": Object {
+                      "color": "#72767b",
+                      "name": "No health information",
+                      "priority": 0,
+                      "text": "N/A",
+                    },
+                    "title": "Error Rate over last 10 min",
+                  },
+                ],
+                "rateInterval": 600,
+                "requests": Object {
+                  "errorRatio": -1,
+                  "inboundErrorRatio": -1,
+                  "outboundErrorRatio": -1,
+                },
+                "workloadStatuses": Array [
+                  Object {
+                    "available": 1,
+                    "name": "A",
+                    "replicas": 1,
+                  },
+                  Object {
+                    "available": 2,
+                    "name": "B",
+                    "replicas": 2,
+                  },
+                ],
               }
             }
-            tabIndex="0"
-            type="pf"
           />
-        </HealthDetails>,
+        </Popover>,
+        "placement": "right",
+        "rootClose": false,
+        "trigger": Array [
+          "hover",
+          "focus",
+        ],
       },
       "ref": null,
       "rendered": Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "class",
+        "nodeType": "function",
         "props": Object {
-          "children": <Icon
-            className="health-icon"
-            name="ok"
-            style={
-              Object {
-                "fontSize": "18px",
-              }
-            }
-            tabIndex="0"
-            type="pf"
-          />,
-          "headline": "Healthy",
-          "health": AppHealth {
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "A: 1 / 1",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#3f9c35",
-                      "icon": "ok",
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "status": Object {
-                  "color": "#3f9c35",
-                  "icon": "ok",
-                  "name": "Healthy",
-                  "priority": 1,
-                },
-                "title": "Workload Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "color": "#72767b",
-                      "name": "No health information",
-                      "priority": 0,
-                      "text": "N/A",
-                    },
-                    "text": "Inbound: No requests",
-                  },
-                  Object {
-                    "status": Object {
-                      "color": "#72767b",
-                      "name": "No health information",
-                      "priority": 0,
-                      "text": "N/A",
-                    },
-                    "text": "Outbound: No requests",
-                  },
-                ],
-                "status": Object {
-                  "color": "#72767b",
-                  "name": "No health information",
-                  "priority": 0,
-                  "text": "N/A",
-                },
-                "title": "Error Rate over last 10 min",
-              },
-            ],
-            "rateInterval": 600,
-            "requests": Object {
-              "errorRatio": -1,
-              "inboundErrorRatio": -1,
-              "outboundErrorRatio": -1,
-            },
-            "workloadStatuses": Array [
-              Object {
-                "available": 1,
-                "name": "A",
-                "replicas": 1,
-              },
-              Object {
-                "available": 2,
-                "name": "B",
-                "replicas": 2,
-              },
-            ],
+          "className": "health-icon",
+          "name": "ok",
+          "style": Object {
+            "fontSize": "18px",
           },
-          "id": "svc",
-          "placement": undefined,
+          "tabIndex": "0",
+          "type": "pf",
         },
         "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "className": "health-icon",
-            "name": "ok",
-            "style": Object {
-              "fontSize": "18px",
-            },
-            "tabIndex": "0",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
+        "rendered": null,
         "type": [Function],
       },
-      "type": "span",
+      "type": [Function],
     },
   ],
   Symbol(enzyme.__options__): Object {

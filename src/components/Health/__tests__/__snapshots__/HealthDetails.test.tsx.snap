@@ -4,7 +4,6 @@ exports[`HealthDetails renders deployments failure 1`] = `
 ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthDetails
-    headline=""
     health={
       ServiceHealth {
         "items": Array [
@@ -27,7 +26,6 @@ ShallowWrapper {
         },
       }
     }
-    id="svc"
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -39,18 +37,78 @@ ShallowWrapper {
   },
   Symbol(enzyme.__node__): Object {
     "instance": null,
-    "key": undefined,
-    "nodeType": "class",
+    "key": "0",
+    "nodeType": "host",
     "props": Object {
-      "children": undefined,
-      "defaultOverlayShown": false,
-      "overlay": <Popover
-        bsClass="popover"
-        id="svc-health-tooltip"
-        placement="right"
-        title=""
-      >
-        <div>
+      "children": Array [
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#72767b",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate: 
+        </strong>,
+        "No requests over last min",
+        undefined,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <span
+              style={
+                Object {
+                  "color": "#72767b",
+                }
+              }
+            >
+              N/A
+            </span>,
+            " Error Rate: ",
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": "N/A",
+              "style": Object {
+                "color": "#72767b",
+              },
+            },
+            "ref": null,
+            "rendered": "N/A",
+            "type": "span",
+          },
+          " Error Rate: ",
+        ],
+        "type": "strong",
+      },
+      "No requests over last min",
+      undefined,
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": "0",
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
           <strong>
             <span
               style={
@@ -62,37 +120,19 @@ ShallowWrapper {
               N/A
             </span>
              Error Rate: 
-          </strong>
-          No requests over last min
-        </div>
-      </Popover>,
-      "placement": "right",
-      "rootClose": false,
-      "trigger": Array [
-        "hover",
-        "focus",
-      ],
-    },
-    "ref": null,
-    "rendered": null,
-    "type": [Function],
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": undefined,
-        "defaultOverlayShown": false,
-        "overlay": <Popover
-          bsClass="popover"
-          id="svc-health-tooltip"
-          placement="right"
-          title=""
-        >
-          <div>
-            <strong>
+          </strong>,
+          "No requests over last min",
+          undefined,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
               <span
                 style={
                   Object {
@@ -101,22 +141,34 @@ ShallowWrapper {
                 }
               >
                 N/A
-              </span>
-               Error Rate: 
-            </strong>
-            No requests over last min
-          </div>
-        </Popover>,
-        "placement": "right",
-        "rootClose": false,
-        "trigger": Array [
-          "hover",
-          "focus",
-        ],
-      },
-      "ref": null,
-      "rendered": null,
-      "type": [Function],
+              </span>,
+              " Error Rate: ",
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": "N/A",
+                "style": Object {
+                  "color": "#72767b",
+                },
+              },
+              "ref": null,
+              "rendered": "N/A",
+              "type": "span",
+            },
+            " Error Rate: ",
+          ],
+          "type": "strong",
+        },
+        "No requests over last min",
+        undefined,
+      ],
+      "type": "div",
     },
   ],
   Symbol(enzyme.__options__): Object {
@@ -143,7 +195,6 @@ exports[`HealthDetails renders healthy 1`] = `
 ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <HealthDetails
-    headline=""
     health={
       ServiceHealth {
         "items": Array [
@@ -166,7 +217,6 @@ ShallowWrapper {
         },
       }
     }
-    id="svc"
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -178,18 +228,78 @@ ShallowWrapper {
   },
   Symbol(enzyme.__node__): Object {
     "instance": null,
-    "key": undefined,
-    "nodeType": "class",
+    "key": "0",
+    "nodeType": "host",
     "props": Object {
-      "children": undefined,
-      "defaultOverlayShown": false,
-      "overlay": <Popover
-        bsClass="popover"
-        id="svc-health-tooltip"
-        placement="right"
-        title=""
-      >
-        <div>
+      "children": Array [
+        <strong>
+          <span
+            style={
+              Object {
+                "color": "#72767b",
+              }
+            }
+          >
+            N/A
+          </span>
+           Error Rate: 
+        </strong>,
+        "No requests over last min",
+        undefined,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <span
+              style={
+                Object {
+                  "color": "#72767b",
+                }
+              }
+            >
+              N/A
+            </span>,
+            " Error Rate: ",
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": "N/A",
+              "style": Object {
+                "color": "#72767b",
+              },
+            },
+            "ref": null,
+            "rendered": "N/A",
+            "type": "span",
+          },
+          " Error Rate: ",
+        ],
+        "type": "strong",
+      },
+      "No requests over last min",
+      undefined,
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": "0",
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
           <strong>
             <span
               style={
@@ -201,37 +311,19 @@ ShallowWrapper {
               N/A
             </span>
              Error Rate: 
-          </strong>
-          No requests over last min
-        </div>
-      </Popover>,
-      "placement": "right",
-      "rootClose": false,
-      "trigger": Array [
-        "hover",
-        "focus",
-      ],
-    },
-    "ref": null,
-    "rendered": null,
-    "type": [Function],
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "children": undefined,
-        "defaultOverlayShown": false,
-        "overlay": <Popover
-          bsClass="popover"
-          id="svc-health-tooltip"
-          placement="right"
-          title=""
-        >
-          <div>
-            <strong>
+          </strong>,
+          "No requests over last min",
+          undefined,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
               <span
                 style={
                   Object {
@@ -240,22 +332,34 @@ ShallowWrapper {
                 }
               >
                 N/A
-              </span>
-               Error Rate: 
-            </strong>
-            No requests over last min
-          </div>
-        </Popover>,
-        "placement": "right",
-        "rootClose": false,
-        "trigger": Array [
-          "hover",
-          "focus",
-        ],
-      },
-      "ref": null,
-      "rendered": null,
-      "type": [Function],
+              </span>,
+              " Error Rate: ",
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": "N/A",
+                "style": Object {
+                  "color": "#72767b",
+                },
+              },
+              "ref": null,
+              "rendered": "N/A",
+              "type": "span",
+            },
+            " Error Rate: ",
+          ],
+          "type": "strong",
+        },
+        "No requests over last min",
+        undefined,
+      ],
+      "type": "div",
     },
   ],
   Symbol(enzyme.__options__): Object {

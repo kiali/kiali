@@ -50,7 +50,7 @@ describe('HealthIndicator', () => {
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
     expect(html).toContain('pficon-warning');
-    expect(html).toContain('Pod workload degraded');
+    expect(html).toContain('1 / 10');
   });
 
   it('renders some scaled down workload', () => {
@@ -69,7 +69,7 @@ describe('HealthIndicator', () => {
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
     expect(html).toContain('pficon-ok');
-    expect(html).toContain('inactive workload');
+    expect(html).toContain('0 / 0');
   });
 
   it('renders all workloads down', () => {
@@ -88,7 +88,6 @@ describe('HealthIndicator', () => {
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).toContain('No active workload');
   });
 
   it('renders error rate failure', () => {
@@ -107,7 +106,7 @@ describe('HealthIndicator', () => {
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
     expect(html).toContain('pficon-error');
-    expect(html).toContain('Outbound errors failure');
-    expect(html).toContain('Inbound errors degraded');
+    expect(html).toContain('Outbound: 20.00%');
+    expect(html).toContain('Inbound: 10.00%');
   });
 });

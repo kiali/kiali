@@ -71,7 +71,6 @@ describe('Health', () => {
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
-    expect(health.getReport()).toEqual([]);
   });
   it('should aggregate degraded workload', () => {
     const health = new H.AppHealth(
@@ -80,7 +79,6 @@ describe('Health', () => {
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.DEGRADED);
-    expect(health.getReport()).toEqual(['Pod workload degraded']);
   });
   it('should aggregate failing requests', () => {
     const health = new H.AppHealth(
@@ -89,7 +87,6 @@ describe('Health', () => {
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
-    expect(health.getReport()).toEqual(['Inbound errors failure: 30.00%>=20%, Outbound errors degraded: 10.00%>=0.1%']);
   });
   it('should aggregate multiple issues', () => {
     const health = new H.AppHealth(
@@ -98,9 +95,5 @@ describe('Health', () => {
       60
     );
     expect(health.getGlobalStatus()).toEqual(H.FAILURE);
-    expect(health.getReport()).toEqual([
-      'No active workload!',
-      'Inbound errors failure: 30.00%>=20%, Outbound errors degraded: 10.00%>=0.1%'
-    ]);
   });
 });

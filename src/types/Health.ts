@@ -6,7 +6,6 @@ interface HealthItem {
   title: string;
   text?: string;
   children?: HealthSubItem[];
-  report?: string;
 }
 
 interface HealthSubItem {
@@ -132,10 +131,10 @@ export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix
 export const getRequestErrorsViolations = (reqIn: ThresholdStatus, reqOut: ThresholdStatus): string => {
   const violations: string[] = [];
   if (reqIn.violation) {
-    violations.push(`Inbound errors ${reqIn.status.name.toLowerCase()}: ${reqIn.violation}`);
+    violations.push(`Inbound errors: ${reqIn.violation}`);
   }
   if (reqOut.violation) {
-    violations.push(`Outbound errors ${reqOut.status.name.toLowerCase()}: ${reqOut.violation}`);
+    violations.push(`Outbound errors: ${reqOut.violation}`);
   }
   return violations.join(', ');
 };
@@ -149,10 +148,6 @@ export abstract class Health {
 
   getGlobalStatus(): Status {
     return this.items.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
-  }
-
-  getReport(): string[] {
-    return this.items.filter(i => i.report !== undefined).map(i => i.report!);
   }
 }
 
@@ -170,9 +165,6 @@ export class ServiceHealth extends Health {
         status: reqErrorsRatio.status,
         text: reqErrorsText + ' over ' + getName(rateInterval).toLowerCase()
       };
-      if (reqErrorsRatio.violation) {
-        item.report = `Error rate ${reqErrorsRatio.status.name.toLowerCase()}: ${reqErrorsRatio.violation}`;
-      }
       items.push(item);
     }
     return items;
@@ -206,22 +198,15 @@ export class AppHealth extends Health {
           status: status
         };
       });
-      const workloadStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+      const podsStatus = children.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
       const item: HealthItem = {
-        title: 'Workload Status',
-        status: workloadStatus,
+        title: 'Pods Status',
+        status: podsStatus,
         children: children
       };
       if (countInactive > 0 && countInactive === workloadStatuses.length) {
         // No active deployment => special case for failure
-        item.report = 'No active workload!';
         item.status = FAILURE;
-      } else if (workloadStatus === FAILURE || workloadStatus === DEGRADED) {
-        item.report = 'Pod workload ' + workloadStatus.name.toLowerCase();
-      } else if (countInactive === 1) {
-        item.report = 'One inactive workload';
-      } else if (countInactive > 1) {
-        item.report = `${countInactive} inactive workloads`;
       }
       items.push(item);
     }
@@ -235,10 +220,6 @@ export class AppHealth extends Health {
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
-      const violations = getRequestErrorsViolations(reqIn, reqOut);
-      if (violations.length > 0) {
-        item.report = violations;
-      }
       items.push(item);
     }
     return items;
@@ -261,15 +242,12 @@ export class WorkloadHealth extends Health {
     const items: HealthItem[] = [];
     {
       // Pods
-      const workStatus = ratioCheck(workloadStatus.available, workloadStatus.replicas);
+      const podsStatus = ratioCheck(workloadStatus.available, workloadStatus.replicas);
       const item: HealthItem = {
-        title: 'Workloads Status',
-        status: workStatus,
+        title: 'Pods Status',
+        status: podsStatus,
         text: String(workloadStatus.available + ' / ' + workloadStatus.replicas)
       };
-      if (workStatus === FAILURE || workStatus === DEGRADED) {
-        item.report = 'Pod workload ' + workStatus.name.toLowerCase();
-      }
       items.push(item);
     }
     {
@@ -282,10 +260,6 @@ export class WorkloadHealth extends Health {
         status: both,
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
-      const violations = getRequestErrorsViolations(reqIn, reqOut);
-      if (violations.length > 0) {
-        item.report = violations;
-      }
       items.push(item);
     }
     return items;

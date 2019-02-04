@@ -61,8 +61,8 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                 </div>
               )}
             </Col>
-            <Col xs={12} sm={4} md={4} lg={4} />
-            <Col xs={12} sm={4} md={2} lg={2}>
+            <Col xs={12} sm={4} md={3} lg={3} />
+            <Col xs={12} sm={4} md={3} lg={3}>
               <div className="progress-description">
                 <strong>Health</strong>
               </div>

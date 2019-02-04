@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Icon } from 'patternfly-react';
+import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 
@@ -17,25 +17,18 @@ interface Props {
 
 interface HealthState {
   globalStatus: H.Status;
-  info: string[];
 }
 
 export class HealthIndicator extends React.PureComponent<Props, HealthState> {
-  static updateHealth = (health?: H.Health) => {
-    if (health) {
-      return { info: health.getReport(), globalStatus: health.getGlobalStatus() };
-    } else {
-      return { info: [], globalStatus: H.NA };
-    }
-  };
-
-  static getDerivedStateFromProps(props: Props, state: HealthState) {
-    return HealthIndicator.updateHealth(props.health);
+  static getDerivedStateFromProps(props: Props) {
+    return {
+      globalStatus: props.health ? props.health.getGlobalStatus() : H.NA
+    };
   }
 
   constructor(props: Props) {
     super(props);
-    this.state = HealthIndicator.updateHealth(props.health);
+    this.state = HealthIndicator.getDerivedStateFromProps(props);
   }
 
   render() {
@@ -50,43 +43,62 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
   }
 
   renderSmall(health: H.Health) {
-    return <span>{this.renderIndicator(health, '18px', '12px', this.state.globalStatus.name)}</span>;
+    const icon = this.renderIcon('18px', '12px');
+    return this.renderPopover(health, icon);
   }
 
   renderLarge(health: H.Health) {
+    const spanStyle: React.CSSProperties = {
+      color: this.state.globalStatus.color,
+      fontWeight: 'bold',
+      position: 'relative',
+      top: -9,
+      left: 10
+    };
     return (
-      <div style={{ color: this.state.globalStatus.color }}>
-        {this.renderIndicator(health, '35px', '24px', this.state.globalStatus.name)}
+      <>
+        {this.renderIcon('35px', '24px')}
+        <span style={spanStyle}>{this.state.globalStatus.name}</span>
         <br />
-        {this.state.info.length === 1 && this.state.info[0]}
-        {this.state.info.length > 1 && (
-          <ul style={{ padding: 0 }}>
-            {this.state.info.map((line, idx) => (
-              <li key={idx}>{line}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <br />
+        <HealthDetails health={health} />
+      </>
     );
   }
 
-  renderIndicator(health: H.Health, iconSize: string, textSize: string, title: string) {
+  renderIcon(iconSize: string, textSize: string) {
     if (this.state.globalStatus.icon) {
       return (
-        <HealthDetails id={this.props.id} health={health} headline={title} placement={this.props.tooltipPlacement}>
-          <Icon
-            type="pf"
-            name={this.state.globalStatus.icon}
-            style={{ fontSize: iconSize }}
-            className="health-icon"
-            tabIndex="0"
-          />
-        </HealthDetails>
+        <Icon
+          type="pf"
+          name={this.state.globalStatus.icon}
+          style={{ fontSize: iconSize }}
+          className="health-icon"
+          tabIndex="0"
+        />
       );
     } else {
       return (
         <span style={{ color: this.state.globalStatus.color, fontSize: textSize }}>{this.state.globalStatus.text}</span>
       );
     }
+  }
+
+  renderPopover(health: H.Health, icon: JSX.Element) {
+    const popover = (
+      <Popover id={this.props.id + '-health-tooltip'} title={this.state.globalStatus.name}>
+        <HealthDetails health={health} />
+      </Popover>
+    );
+    return (
+      <OverlayTrigger
+        placement={this.props.tooltipPlacement || 'right'}
+        overlay={popover}
+        trigger={['hover', 'focus']}
+        rootClose={false}
+      >
+        {icon}
+      </OverlayTrigger>
+    );
   }
 }
