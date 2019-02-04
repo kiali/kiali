@@ -270,13 +270,6 @@ identity:
   private_key_file: VALUE
 ----
 
-|`MAISTRA`
-|Istio installation is Maistra. (Default: false)
-[source,yaml]
-----
-maistra: VALUE
-----
-
 |`ISTIO_NAMESPACE`
 | The namespace where Istio is installed. (Default: istio-system)
 [source,yaml]

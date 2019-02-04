@@ -189,8 +189,9 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		// Maybe a future jaeger business layer
 		defer wg.Done()
 		err, eTraces = getErrorTracesFromJaeger(service)
+		// Avoid if error in Jaeger set eTraces to -1 to show a warning in Kiali
 		if err != nil {
-			errChan <- err
+			eTraces = -1
 		}
 	}()
 

@@ -59,8 +59,6 @@ const (
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
 
-	EnvMaistra = "MAISTRA"
-
 	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
 	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
 
@@ -168,7 +166,6 @@ type Config struct {
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
-	Maistra          bool              `yaml:"maistra,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
 }
@@ -180,7 +177,6 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.Maistra = getDefaultBool(EnvMaistra, false)
 	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/status"
 )
 
 type Trace struct {
@@ -25,7 +26,12 @@ func getErrorTracesFromJaeger(service string) (err error, errorTraces int) {
 	err = nil
 
 	if config.Get().ExternalServices.Jaeger.Service != "" {
-		u, errParse := url.Parse(fmt.Sprintf("http://%s:%d/api/traces", config.Get().ExternalServices.Jaeger.Service, config.Get().ExternalServices.Jaeger.ServicePort))
+		jaegerMaistra := ""
+		if isMaistra, _ := status.IsMaistra(); isMaistra {
+			jaegerMaistra = "jaeger/"
+		}
+
+		u, errParse := url.Parse(fmt.Sprintf("http://%s:%d/%sapi/traces", config.Get().ExternalServices.Jaeger.Service, config.Get().ExternalServices.Jaeger.ServicePort, jaegerMaistra))
 		if errParse != nil {
 			err = errParse
 		} else {
