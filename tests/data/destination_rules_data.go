@@ -45,3 +45,16 @@ func AddSubsetToDestinationRule(subset map[string]interface{}, dr kubernetes.Ist
 	}
 	return dr
 }
+
+func AddTrafficPolicyToDestinationRule(trafficPolicy map[string]interface{}, dr kubernetes.IstioObject) kubernetes.IstioObject {
+	dr.GetSpec()["trafficPolicy"] = trafficPolicy
+	return dr
+}
+
+func CreateMTLSTrafficPolicyForDestinationRules() map[string]interface{} {
+	return map[string]interface{}{
+		"tls": map[string]interface{}{
+			"mode": "ISTIO_MUTUAL",
+		},
+	}
+}

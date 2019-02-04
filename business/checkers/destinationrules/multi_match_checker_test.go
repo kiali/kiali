@@ -96,6 +96,50 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 
 }
 
+func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateTestDestinationRule("test", "rule2", "*.local")),
+	}
+
+	validations := MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.Empty(validations)
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	assert.False(ok)
+	assert.Nil(validation)
+}
+
+func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []kubernetes.IstioObject{
+		data.CreateTestDestinationRule("test", "rule1", "host1"),
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local")),
+	}
+
+	validations := MultiMatchChecker{
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.Empty(validations)
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	assert.False(ok)
+	assert.Nil(validation)
+}
+
 func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

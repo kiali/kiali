@@ -16,6 +16,7 @@ func appVersionLabel(app, version string) map[string]string {
 		"version": version,
 	}
 }
+
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
@@ -26,6 +27,42 @@ func TestValidHost(t *testing.T) {
 			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
 		),
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestValidWildcardHost(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace",
+			"name", "*.test-namespace.svc.cluster.local"),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestValidMeshWideHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "*.local"),
 	}.Check()
 
 	assert.True(valid)
