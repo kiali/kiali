@@ -73,9 +73,13 @@ func (a ServiceEntryAppender) getServiceEntry(service string, globalInfo *Global
 			graph.CheckError(err)
 
 			for _, entry := range istioCfg.ServiceEntries {
-				if entry.Spec.Hosts != nil && (entry.Spec.Location == "MESH_EXTERNAL" || entry.Spec.Location == "MESH_INTERNAL") {
+				if entry.Spec.Hosts != nil {
+					location := "MESH_EXTERNAL"
+					if entry.Spec.Location == "MESH_INTERNAL" {
+						location = "MESH_INTERNAL"
+					}
 					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						globalInfo.ServiceEntries[host.(string)] = entry.Spec.Location.(string)
+						globalInfo.ServiceEntries[host.(string)] = location
 					}
 				}
 			}
