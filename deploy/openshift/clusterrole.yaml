@@ -13,7 +13,6 @@ rules:
   - namespaces
   - nodes
   - pods
-  - projects
   - services
   - replicationcontrollers
   verbs:
