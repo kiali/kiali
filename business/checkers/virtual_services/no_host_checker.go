@@ -24,14 +24,14 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 		if prot, ok := n.VirtualService.GetSpec()[protocol]; ok {
 			countOfDefinedProtocols++
 			if aHttp, ok := prot.([]interface{}); ok {
-				for _, httpRoute := range aHttp {
+				for k, httpRoute := range aHttp {
 					if mHttpRoute, ok := httpRoute.(map[string]interface{}); ok {
 						if route, ok := mHttpRoute["route"]; ok {
 							if aDestinationWeight, ok := route.([]interface{}); ok {
 								for i, destination := range aDestinationWeight {
 									if !n.checkDestination(destination, protocol) {
 										validation := models.Build("virtualservices.nohost.hostnotfound",
-											fmt.Sprintf("spec/%s/route[%d]/destination/host", protocol, i))
+											fmt.Sprintf("spec/%s[%d]/route[%d]/destination/host", protocol, k, i))
 										validations = append(validations, &validation)
 									}
 								}

@@ -42,10 +42,10 @@ func TestNoValidHost(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[0].Message)
-	assert.Equal("spec/http/route[0]/destination/host", validations[0].Path)
+	assert.Equal("spec/http[0]/route[0]/destination/host", validations[0].Path)
 	assert.Equal(models.ErrorSeverity, validations[1].Severity)
 	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[1].Message)
-	assert.Equal("spec/tcp/route[0]/destination/host", validations[1].Path)
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[1].Path)
 
 	delete(virtualService.GetSpec(), "http")
 
@@ -59,7 +59,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
 	assert.Equal(models.CheckMessage("virtualservices.nohost.hostnotfound"), validations[0].Message)
-	assert.Equal("spec/tcp/route[0]/destination/host", validations[0].Path)
+	assert.Equal("spec/tcp[0]/route[0]/destination/host", validations[0].Path)
 
 	delete(virtualService.GetSpec(), "tcp")
 
