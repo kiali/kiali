@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/status"
 )
 
 type Trace struct {
@@ -26,12 +25,7 @@ func getErrorTracesFromJaeger(service string) (err error, errorTraces int) {
 	err = nil
 
 	if config.Get().ExternalServices.Jaeger.Service != "" {
-		jaegerMaistra := ""
-		if isMaistra, _ := status.IsMaistra(); isMaistra {
-			jaegerMaistra = "jaeger/"
-		}
-
-		u, errParse := url.Parse(fmt.Sprintf("http://%s:%d/%sapi/traces", config.Get().ExternalServices.Jaeger.Service, config.Get().ExternalServices.Jaeger.ServicePort, jaegerMaistra))
+		u, errParse := url.Parse(fmt.Sprintf("http://%s/api/traces", config.Get().ExternalServices.Jaeger.Service))
 		if errParse != nil {
 			err = errParse
 		} else {
@@ -43,7 +37,11 @@ func getErrorTracesFromJaeger(service string) (err error, errorTraces int) {
 			q.Set("end", fmt.Sprintf("%d", t))
 			q.Set("tags", "{\"error\":\"true\"}")
 			u.RawQuery = q.Encode()
-			resp, reqError := http.Get(u.String())
+			timeout := time.Duration(3000 * time.Millisecond)
+			client := http.Client{
+				Timeout: timeout,
+			}
+			resp, reqError := client.Get(u.String())
 			if reqError != nil {
 				err = reqError
 			} else {

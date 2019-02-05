@@ -96,7 +96,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 
 	for _, versionToTest := range versionsToTest {
 		info.WarningMessages = []string{} // reset before we test
-		p, _, err := parseIstioRawVersion(versionToTest.rawVersion)
+		p, err := parseIstioRawVersion(versionToTest.rawVersion)
 		if err != nil {
 			t.Errorf("Got an error trying to validate [%+v]: %+v", versionToTest, err)
 		}

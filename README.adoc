@@ -524,15 +524,6 @@ external_services:
     service: VALUE
 ----
 
-|`JAEGER_SERVICE_PORT`
-|The port of the Jaeger service.(default is 16686). Kiali uses JAEGER_SERVICE_PORT to connect internally (within the cluster) to Jaeger service to query the error traces.
-[source,yaml]
-----
-external_services:
-  jaeger:
-    service_port: VALUE
-----
-
 |`JAEGER_URL`
 |The URL to the Jaeger service. When not set, Kiali throw an error when the user try request to Jaeger (/api/jaeger).
 [source,yaml]

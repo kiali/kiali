@@ -81,35 +81,12 @@ func validateVersion(istioReq string, installedVersion string) bool {
 	return false
 }
 
-func IsMaistra() (bool, error) {
-	isMaistra := false
-	rawVersion, err := requestIstio()
-	if err == nil {
-		_, isMaistra, err = parseIstioRawVersion(rawVersion)
-		return isMaistra, err
-	}
-	return isMaistra, err
-}
-
 func istioVersion() (*ExternalServiceInfo, error) {
 	var (
+		body    []byte
 		err     error
 		product *ExternalServiceInfo
-	)
-	rawVersion, err := requestIstio()
-	if err == nil {
-		product, _, err = parseIstioRawVersion(rawVersion)
-		return product, err
-	}
-
-	return nil, err
-}
-
-func requestIstio() (string, error) {
-	var (
-		body []byte
-		err  error
-		resp *http.Response
+		resp    *http.Response
 	)
 
 	istioConfig := config.Get().ExternalServices.Istio
@@ -119,32 +96,32 @@ func requestIstio() (string, error) {
 		body, err = ioutil.ReadAll(resp.Body)
 		if err == nil {
 			rawVersion := string(body)
-			return rawVersion, err
+			product, err = parseIstioRawVersion(rawVersion)
+			return product, err
 		}
 	}
-	return "", err
+	return nil, err
 }
 
-func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, bool, error) {
+func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{Name: "Unknown", Version: "Unknown"}
 
 	// First see if we detect Maistra (either product or upstream project).
 	// If it is not Maistra, see if it is upstream Istio (either a release or snapshot).
 	// If it is neither then it is some unknown Istio implementation that we do not support.
-	isMaistra := false
+
 	maistraVersionStringArr := maistraProductVersionExpr.FindStringSubmatch(rawVersion)
 	if maistraVersionStringArr != nil {
 		log.Debugf("Detected Maistra product version [%v]", rawVersion)
 		if len(maistraVersionStringArr) > 1 {
 			product.Name = "Maistra"
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			isMaistra = true
 			if !validateVersion(config.MaistraVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Maistra version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
-			return &product, isMaistra, nil
+			return &product, nil
 		}
 	}
 
@@ -154,13 +131,12 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, bool, error)
 		if len(maistraVersionStringArr) > 1 {
 			product.Name = "Maistra Project"
 			product.Version = maistraVersionStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
-			isMaistra = true
 			if !validateVersion(config.MaistraVersionSupported, product.Version) {
 				info.WarningMessages = append(info.WarningMessages, "Maistra project version "+product.Version+" is not supported, the version should be "+config.MaistraVersionSupported)
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
-			return &product, isMaistra, nil
+			return &product, nil
 		}
 	}
 
@@ -175,7 +151,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, bool, error)
 				info.WarningMessages = append(info.WarningMessages, "Istio version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
-			return &product, isMaistra, nil
+			return &product, nil
 		}
 	}
 
@@ -192,7 +168,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, bool, error)
 				info.WarningMessages = append(info.WarningMessages, "Istio snapshot version "+product.Version+" is not supported, the version should be "+config.IstioVersionSupported)
 			}
 			// we know this is Istio upstream - either a supported or unsupported version - return now
-			return &product, isMaistra, nil
+			return &product, nil
 		}
 	}
 
@@ -200,7 +176,7 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, bool, error)
 	product.Name = "Unknown Istio Implementation"
 	product.Version = rawVersion
 	info.WarningMessages = append(info.WarningMessages, "Unknown Istio implementation version "+product.Version+" is not recognized, thus not supported.")
-	return &product, isMaistra, nil
+	return &product, nil
 }
 
 type p8sResponseVersion struct {
