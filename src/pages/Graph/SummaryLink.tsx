@@ -101,23 +101,21 @@ export const renderDestServicesLinks = (node: any) => {
     return links;
   }
 
-  const serviceNodeData: NodeData = {
-    app: '',
-    hasParent: false,
-    isInaccessible: data.isInaccessible,
-    isOutsider: data.isOutsider,
-    isRoot: data.isRoot,
-    isServiceEntry: data.isServiceEntry,
-    namespace: data.namespace,
-    nodeType: NodeType.SERVICE,
-    service: '',
-    version: '',
-    workload: ''
-  };
-
-  Object.keys(destServices).forEach(k => {
-    serviceNodeData.service = k;
-    links.push(<RenderLink key={k} data={serviceNodeData} />);
+  Object.keys(destServices).forEach((k, index) => {
+    const serviceNodeData: NodeData = {
+      app: '',
+      hasParent: false,
+      isInaccessible: data.isInaccessible,
+      isOutsider: data.isOutsider,
+      isRoot: data.isRoot,
+      isServiceEntry: data.isServiceEntry,
+      namespace: data.namespace,
+      nodeType: NodeType.SERVICE,
+      service: k,
+      version: '',
+      workload: ''
+    };
+    links.push(<RenderLink key={`service-${index}`} data={serviceNodeData} nodeType={NodeType.SERVICE} />);
     links.push(<span key={`comma-after-${k}`}>, </span>);
   });
 
