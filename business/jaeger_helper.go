@@ -20,7 +20,7 @@ type RequestTrace struct {
 }
 
 // ConfigToJS generates env.js file from Kiali config
-func getErrorTracesFromJaeger(service string) (err error, errorTraces int) {
+func getErrorTracesFromJaeger(namespace string, service string) (err error, errorTraces int) {
 	errorTraces = 0
 	err = nil
 
@@ -31,7 +31,7 @@ func getErrorTracesFromJaeger(service string) (err error, errorTraces int) {
 		} else {
 			q := u.Query()
 			q.Set("lookback", "1h")
-			q.Set("service", service)
+			q.Set("service", fmt.Sprintf("%s.%s", service, namespace))
 			t := time.Now().UnixNano() / 1000
 			q.Set("start", fmt.Sprintf("%d", t-60*60*1000*1000))
 			q.Set("end", fmt.Sprintf("%d", t))
