@@ -34,25 +34,25 @@ const navItems: MenuItem[] = [
     iconClass: ICONS().MENU.APPLICATIONS,
     title: 'Applications',
     to: '/' + Paths.APPLICATIONS,
-    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)/')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
   },
   {
     iconClass: ICONS().MENU.WORKLOADS,
     title: 'Workloads',
     to: '/' + Paths.WORKLOADS,
-    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)/')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
   },
   {
     iconClass: ICONS().MENU.SERVICES,
     title: 'Services',
     to: '/' + Paths.SERVICES,
-    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)/')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
     iconClass: ICONS().MENU.ISTIO_CONFIG,
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
-    pathsActive: [new RegExp('/^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)/')]
+    pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)')]
   },
   {
     iconClass: ICONS().MENU.DISTRIBUTED_TRACING,
