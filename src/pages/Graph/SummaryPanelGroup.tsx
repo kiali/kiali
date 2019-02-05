@@ -234,7 +234,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private renderGrpcRates = group => {
     const nonServiceChildren = group.children('node[nodeType != "' + NodeType.SERVICE + '"]');
-    const incoming = getAccumulatedTrafficRateGrpc(nonServiceChildren.incomers('edge[*]'));
+    const incoming = getAccumulatedTrafficRateGrpc(nonServiceChildren.incomers('edge'));
     const outgoing = getAccumulatedTrafficRateGrpc(nonServiceChildren.edgesTo('*'));
 
     return (
@@ -253,7 +253,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private renderHttpRates = group => {
     const nonServiceChildren = group.children(`node[nodeType != "${NodeType.SERVICE}"]`);
-    const incoming = getAccumulatedTrafficRateHttp(nonServiceChildren.incomers('edge[*]'));
+    const incoming = getAccumulatedTrafficRateHttp(nonServiceChildren.incomers('edge'));
     const outgoing = getAccumulatedTrafficRateHttp(nonServiceChildren.edgesTo('*'));
 
     return (
