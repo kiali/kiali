@@ -192,10 +192,12 @@ export class GraphStyles {
         if (isGroupMember) {
           switch (nodeType) {
             case NodeType.APP:
-              if (version && version !== 'unknown') {
+              if (cyGlobal.graphType === GraphType.APP) {
+                content = app;
+              } else if (version && version !== 'unknown') {
                 content = version;
               } else {
-                content = `unknown\n${workload}`;
+                content = workload ? `unknown\n${workload}` : 'unknown';
               }
               break;
             case NodeType.SERVICE:

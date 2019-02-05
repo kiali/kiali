@@ -293,7 +293,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           )}
           <span> {renderTitle(data)}</span>
           {renderLabels(data)}
-          {this.renderBadgeSummary(node.data(CyNode.hasCB), node.data(CyNode.hasVS), node.data(CyNode.hasMissingSC))}
+          {this.renderBadgeSummary(
+            node.data(CyNode.hasCB),
+            node.data(CyNode.hasVS),
+            node.data(CyNode.hasMissingSC),
+            node.data(CyNode.isDead)
+          )}
         </div>
         <div className="panel-body">
           {shouldRenderSvcList && (
@@ -498,7 +503,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   // TODO:(see https://github.com/kiali/kiali-design/issues/63) If we want to show an icon for SE uncomment below
-  private renderBadgeSummary = (hasCB: boolean, hasVS: boolean, hasMissingSC: boolean) => {
+  private renderBadgeSummary = (hasCB: boolean, hasVS: boolean, hasMissingSC: boolean, isDead: boolean) => {
     return (
       <>
         {hasCB && (
@@ -529,6 +534,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               style={{ width: '10px', marginRight: '5px' }}
             />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
+          </div>
+        )}
+        {isDead && (
+          <div>
+            <Icon type="pf" name="info" style={{ width: '10px', marginRight: '5px' }} />
+            <span style={{ paddingLeft: '4px' }}>Has No Running Pods</span>
           </div>
         )}
       </>
