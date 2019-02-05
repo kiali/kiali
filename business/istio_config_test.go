@@ -809,10 +809,10 @@ func TestCorrectMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(true, meshPolicyEnabled)
@@ -822,10 +822,10 @@ func TestPolicyWithWrongName(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	isGloballyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
+	isGloballyEnabled, err := (istioConfigService).hasMeshPolicyEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(false, isGloballyEnabled)
@@ -847,10 +847,10 @@ func TestWithoutMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetMeshPolicies", "test").Return([]kubernetes.IstioObject{}, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
@@ -860,10 +860,10 @@ func TestMeshPolicyWithTargets(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled()
+	meshPolicyEnabled, err := (istioConfigService).hasMeshPolicyEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
@@ -895,10 +895,10 @@ func TestDestinationRuleEnabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(true, drEnabled)
@@ -911,10 +911,10 @@ func TestDRWildcardLocalHost(t *testing.T) {
 		data.CreateEmptyDestinationRule("myproject", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(false, drEnabled)
@@ -933,10 +933,10 @@ func TestDRNotMutualTLSMode(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled()
+	drEnabled, err := (istioConfigService).hasDestinationRuleEnabled([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(false, drEnabled)
@@ -949,11 +949,11 @@ func TestMeshStatusEnabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "default", "*.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	status, err := (istioConfigService).MeshWidemTLSStatus()
+	status, err := (istioConfigService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(MeshmTLSEnabled, status)
@@ -966,11 +966,11 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLS("default"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	status, err := (istioConfigService).MeshWidemTLSStatus()
+	status, err := (istioConfigService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(MeshmTLSPartiallyEnabled, status)
@@ -983,11 +983,11 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "default", "sleep.foo.svc.cluster.local"))
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetAllDestinationRules").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
+	k8s.On("GetAllDestinationRules", []string{"test"}).Return([]kubernetes.IstioObject{dr}, nil)
+	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLS("wrong-name"), nil)
 
 	istioConfigService := IstioConfigService{k8s: k8s}
-	status, err := (istioConfigService).MeshWidemTLSStatus()
+	status, err := (istioConfigService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
 	assert.Equal(MeshmTLSNotEnabled, status)

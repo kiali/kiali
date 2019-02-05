@@ -370,8 +370,10 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 	return policy.DeepCopyIstioObject(), nil
 }
 
-func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
-	result, err := in.istioAuthenticationApi.Get().Resource(meshPolicies).Do().Get()
+func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) {
+	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
+	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
+	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(meshPolicies).Do().Get()
 	if err != nil {
 		return nil, err
 	}

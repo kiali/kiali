@@ -484,7 +484,7 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 }
 
 func (in *IstioConfigService) MeshWidemTLSStatus(namespaces []string) (string, error) {
-	mpp, mpErr := in.hasMeshPolicyEnabled()
+	mpp, mpErr := in.hasMeshPolicyEnabled(namespaces)
 	if mpErr != nil {
 		return "", mpErr
 	}
@@ -503,8 +503,14 @@ func (in *IstioConfigService) MeshWidemTLSStatus(namespaces []string) (string, e
 	return MeshmTLSNotEnabled, nil
 }
 
-func (in *IstioConfigService) hasMeshPolicyEnabled() (bool, error) {
-	mps, err := in.k8s.GetMeshPolicies()
+func (in *IstioConfigService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
+	if len(namespaces) < 1 {
+		return false, fmt.Errorf("Can't find MeshPolicies without a namespace")
+	}
+
+	// MeshPolicies are not namespaced. So any namespace user has access to
+	// will work to retrieve all the MeshPolicies.
+	mps, err := in.k8s.GetMeshPolicies(namespaces[0])
 	if err != nil {
 		return false, err
 	}

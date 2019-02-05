@@ -85,8 +85,8 @@ func (o *K8SClientMock) GetDestinationRule(namespace string, destinationrule str
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetAllDestinationRules() ([]kubernetes.IstioObject, error) {
-	args := o.Called()
+func (o *K8SClientMock) GetAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespaces)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
@@ -245,8 +245,8 @@ func (o *K8SClientMock) GetPolicy(namespace string, policyName string) (kubernet
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetMeshPolicies() ([]kubernetes.IstioObject, error) {
-	args := o.Called()
+func (o *K8SClientMock) GetMeshPolicies(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
