@@ -483,13 +483,13 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 	return canCreate, (canUpdate || canPatch), canDelete
 }
 
-func (in *IstioConfigService) MeshWidemTLSStatus() (string, error) {
+func (in *IstioConfigService) MeshWidemTLSStatus(namespaces []string) (string, error) {
 	mpp, mpErr := in.hasMeshPolicyEnabled()
 	if mpErr != nil {
 		return "", mpErr
 	}
 
-	drp, drErr := in.hasDestinationRuleEnabled()
+	drp, drErr := in.hasDestinationRuleEnabled(namespaces)
 	if drErr != nil {
 		return "", drErr
 	}
@@ -543,8 +543,8 @@ func (in *IstioConfigService) hasMeshPolicyEnabled() (bool, error) {
 	return mtlsEnabled, nil
 }
 
-func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
-	drs, err := in.k8s.GetAllDestinationRules()
+func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bool, error) {
+	drs, err := in.k8s.GetAllDestinationRules(namespaces)
 	if err != nil {
 		return false, err
 	}
@@ -552,7 +552,8 @@ func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
 	mtlsEnabled := false
 
 	for _, dr := range drs {
-		// Host my be *.local
+		// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
+		// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 		host, hostPresent := dr.GetSpec()["host"]
 		if !hostPresent || host != "*.local" {
 			continue
@@ -564,7 +565,10 @@ func (in *IstioConfigService) hasDestinationRuleEnabled() (bool, error) {
 					if tlsCasted, ok := tls.(map[string]interface{}); ok {
 						if mode, found := tlsCasted["mode"]; found {
 							if modeCasted, ok := mode.(string); ok {
-								mtlsEnabled = modeCasted == "ISTIO_MUTUAL"
+								if modeCasted == "ISTIO_MUTUAL" {
+									mtlsEnabled = true
+									break
+								}
 							}
 						}
 					}

@@ -49,12 +49,12 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 			namespaces = models.CastProjectCollection(projects)
 		}
 	} else {
-		services, err := in.k8s.GetNamespaces()
+		nss, err := in.k8s.GetNamespaces()
 		if err != nil {
 			return nil, err
 		}
 
-		namespaces = models.CastNamespaceCollection(services)
+		namespaces = models.CastNamespaceCollection(nss)
 	}
 
 	result := namespaces

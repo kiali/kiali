@@ -219,23 +219,46 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	return destinationRules, nil
 }
 
-func (in *IstioClient) GetAllDestinationRules() ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Resource(destinationRules).Do().Get()
-	if err != nil {
-		return nil, err
+func (in *IstioClient) GetAllDestinationRules(namespaces []string) ([]IstioObject, error) {
+	allDestinationRules := make([]IstioObject, 0)
+
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 1)
+
+	wg.Add(len(namespaces))
+
+	for _, namespace := range namespaces {
+		go func(ns string) {
+			defer wg.Done()
+
+			result, err := in.istioNetworkingApi.Get().Namespace(ns).Resource(destinationRules).Do().Get()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			destinationRuleList, ok := result.(*GenericIstioObjectList)
+			if !ok {
+				errChan <- fmt.Errorf("It doesn't return a DestinationRule list")
+				return
+			}
+
+			for _, dr := range destinationRuleList.GetItems() {
+				allDestinationRules = append(allDestinationRules, dr.DeepCopyIstioObject())
+			}
+		}(namespace)
 	}
 
-	destinationRuleList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("It doesn't return a DestinationRule list")
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	destinationRules := make([]IstioObject, 0)
-	for _, dr := range destinationRuleList.GetItems() {
-		destinationRules = append(destinationRules, dr.DeepCopyIstioObject())
-	}
-
-	return destinationRules, nil
+	return allDestinationRules, nil
 }
 
 func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {
