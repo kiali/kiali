@@ -188,11 +188,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		// Maybe a future jaeger business layer
 		defer wg.Done()
-		err, eTraces = getErrorTracesFromJaeger(namespace, service)
-		// Avoid if error in Jaeger set eTraces to -1 to show a warning in Kiali
-		if err != nil {
-			eTraces = -1
-		}
+		eTraces, err = getErrorTracesFromJaeger(namespace, service)
 	}()
 
 	wg.Wait()

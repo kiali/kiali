@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/kiali/kiali/business"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -94,6 +95,13 @@ func main() {
 
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
+
+	// check if Jaeger is available
+	_, err := business.GetServices()
+	if err != nil {
+		business.JaegerAvailable = false
+		log.Errorf("Jaeger is not available : %s", err)
+	}
 
 	// Start listening to requests
 	server := server.NewServer()
