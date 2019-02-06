@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { MessageCenterContainer, MessageCenterTriggerContainer } from '../../containers/MessageCenterContainer';
 import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
+import GlobalMTLSStatus from '../../containers/GlobalMTLSContainer';
 import LoginPage from '../../containers/LoginPageContainer';
 import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
@@ -112,6 +113,7 @@ class Navigation extends React.Component<PropsType> {
             <VerticalNav.Brand iconImg={KialiLogo} />
             <PfSpinnerContainer />
             <VerticalNav.IconBar>
+              <GlobalMTLSStatus />
               <MessageCenterTriggerContainer />
               <HelpDropdown />
               <UserDropdown />
