@@ -65,6 +65,12 @@ var apiToVersion = map[string]string{
 	kubernetes.ApiAuthenticationVersion:     kubernetes.ApiAuthenticationVersion,
 }
 
+const (
+	MeshmTLSEnabled          = "MESH_MTLS_ENABLED"
+	MeshmTLSPartiallyEnabled = "MESH_MTLS_PARTIALLY_ENABLED"
+	MeshmTLSNotEnabled       = "MESH_MTLS_NOT_ENABLED"
+)
+
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {
@@ -475,4 +481,141 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 		}
 	}
 	return canCreate, (canUpdate || canPatch), canDelete
+}
+
+func (in *IstioConfigService) MeshWidemTLSStatus(namespaces []string) (string, error) {
+	mpp, mpErr := in.hasMeshPolicyEnabled(namespaces)
+	if mpErr != nil {
+		return "", mpErr
+	}
+
+	drp, drErr := in.hasDestinationRuleEnabled(namespaces)
+	if drErr != nil {
+		return "", drErr
+	}
+
+	if drp && mpp {
+		return MeshmTLSEnabled, nil
+	} else if drp || mpp {
+		return MeshmTLSPartiallyEnabled, nil
+	}
+
+	return MeshmTLSNotEnabled, nil
+}
+
+func (in *IstioConfigService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
+	if len(namespaces) < 1 {
+		return false, fmt.Errorf("Can't find MeshPolicies without a namespace")
+	}
+
+	// MeshPolicies are not namespaced. So any namespace user has access to
+	// will work to retrieve all the MeshPolicies.
+	mps, err := in.k8s.GetMeshPolicies(namespaces[0])
+	if err != nil {
+		return false, err
+	}
+
+	mtlsEnabled := false
+
+	for _, mp := range mps {
+
+		// It is mandatory to have default as a name
+		if meshMeta := mp.GetObjectMeta(); meshMeta.Name != "default" {
+			continue
+		}
+
+		// It is no globally enabled when has targets
+		targets, targetPresent := mp.GetSpec()["targets"]
+		specificTarget := targetPresent && len(targets.([]interface{})) > 0
+		if specificTarget {
+			continue
+		}
+
+		// It is globally enabled when a peer has mtls enabled
+		peers, peersPresent := mp.GetSpec()["peers"]
+		if !peersPresent {
+			continue
+		}
+
+		for _, peer := range peers.([]interface{}) {
+			peerMap := peer.(map[string]interface{})
+			if _, present := peerMap["mtls"]; present {
+				mtlsEnabled = true
+				break
+			}
+		}
+	}
+
+	return mtlsEnabled, nil
+}
+
+func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bool, error) {
+	drs, err := in.getAllDestinationRules(namespaces)
+	if err != nil {
+		return false, err
+	}
+
+	mtlsEnabled := false
+
+	for _, dr := range drs {
+		// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
+		// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
+		host, hostPresent := dr.GetSpec()["host"]
+		if !hostPresent || host != "*.local" {
+			continue
+		}
+
+		if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
+			if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
+				if tls, found := trafficCasted["tls"]; found {
+					if tlsCasted, ok := tls.(map[string]interface{}); ok {
+						if mode, found := tlsCasted["mode"]; found {
+							if modeCasted, ok := mode.(string); ok {
+								if modeCasted == "ISTIO_MUTUAL" {
+									mtlsEnabled = true
+									break
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return mtlsEnabled, nil
+}
+
+func (in *IstioConfigService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
+	allDestinationRules := make([]kubernetes.IstioObject, 0)
+
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 1)
+
+	wg.Add(len(namespaces))
+
+	for _, namespace := range namespaces {
+		go func(ns string) {
+			defer wg.Done()
+
+			drs, err := in.k8s.GetDestinationRules(ns, "")
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			allDestinationRules = append(allDestinationRules, drs...)
+		}(namespace)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return allDestinationRules, nil
 }

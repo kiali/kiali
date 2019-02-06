@@ -52,6 +52,7 @@ type IstioClientInterface interface {
 	GetIstioRule(namespace string, istiorule string) (IstioObject, error)
 	GetIstioRules(namespace string) ([]IstioObject, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
+	GetMeshPolicies(namespace string) ([]IstioObject, error)
 	GetNamespace(namespace string) (*v1.Namespace, error)
 	GetNamespaces() ([]v1.Namespace, error)
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)

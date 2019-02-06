@@ -7,6 +7,7 @@ const (
 	CoreVersion    = name + " core version"
 	CoreCommitHash = name + " core commit hash"
 	State          = name + " state"
+	ClusterMTLS    = "Istio mTLS"
 	StateRunning   = "running"
 )
 
@@ -75,6 +76,7 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 func Get() (status StatusInfo) {
 	info.ExternalServices = []ExternalServiceInfo{}
 	info.WarningMessages = []string{}
+	info.getmTLSStatus()
 	getVersions()
 	return info
 }

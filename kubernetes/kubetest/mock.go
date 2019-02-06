@@ -200,11 +200,6 @@ func (o *K8SClientMock) GetServiceEntry(namespace string, serviceEntryName strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServicePods(namespace string, serviceName string, serviceVersion string) (*v1.PodList, error) {
-	args := o.Called(namespace, serviceName, serviceVersion)
-	return args.Get(0).(*v1.PodList), args.Error(1)
-}
-
 func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error) {
 	args := o.Called(namespace, statefulsetName)
 	return args.Get(0).(*v1beta2.StatefulSet), args.Error(1)
@@ -243,6 +238,11 @@ func (o *K8SClientMock) GetPolicies(namespace string) ([]kubernetes.IstioObject,
 func (o *K8SClientMock) GetPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetMeshPolicies(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
 func (o *K8SClientMock) IsOpenShift() bool {

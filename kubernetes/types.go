@@ -44,6 +44,12 @@ const (
 	policyType     = "Policy"
 	policyTypeList = "PolicyList"
 
+	//MeshPolicies
+
+	meshPolicies       = "meshpolicies"
+	meshPolicyType     = "MeshPolicy"
+	meshPolicyTypeList = "MeshPolicyList"
+
 	// Config - Rules
 
 	rules        = "rules"
@@ -223,6 +229,10 @@ var (
 		{
 			objectKind:     policyType,
 			collectionKind: policyTypeList,
+		},
+		{
+			objectKind:     meshPolicyType,
+			collectionKind: meshPolicyTypeList,
 		},
 	}
 
