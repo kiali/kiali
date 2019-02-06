@@ -550,7 +550,7 @@ func (in *IstioConfigService) hasMeshPolicyEnabled(namespaces []string) (bool, e
 }
 
 func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bool, error) {
-	drs, err := in.k8s.GetAllDestinationRules(namespaces)
+	drs, err := in.getAllDestinationRules(namespaces)
 	if err != nil {
 		return false, err
 	}
@@ -584,4 +584,38 @@ func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bo
 	}
 
 	return mtlsEnabled, nil
+}
+
+func (in *IstioConfigService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
+	allDestinationRules := make([]kubernetes.IstioObject, 0)
+
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 1)
+
+	wg.Add(len(namespaces))
+
+	for _, namespace := range namespaces {
+		go func(ns string) {
+			defer wg.Done()
+
+			drs, err := in.k8s.GetDestinationRules(ns, "")
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			allDestinationRules = append(allDestinationRules, drs...)
+		}(namespace)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return allDestinationRules, nil
 }

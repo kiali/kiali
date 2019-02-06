@@ -45,7 +45,6 @@ type IstioClientInterface interface {
 	GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
 	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
-	GetAllDestinationRules(namespace []string) ([]IstioObject, error)
 	GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error)
 	GetGateway(namespace string, gateway string) (IstioObject, error)
 	GetGateways(namespace string) ([]IstioObject, error)
