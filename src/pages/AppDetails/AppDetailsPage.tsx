@@ -17,19 +17,34 @@ type AppDetailsState = {
   health?: AppHealth;
 };
 
+const emptyApp = {
+  namespace: { name: '' },
+  name: '',
+  workloads: [],
+  serviceNames: [],
+  runtimes: []
+};
+
 class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsState> {
   constructor(props: RouteComponentProps<AppId>) {
     super(props);
     this.state = {
-      app: {
-        namespace: { name: '' },
-        name: '',
-        workloads: [],
-        serviceNames: [],
-        runtimes: []
-      }
+      app: emptyApp
     };
     this.fetchApp();
+  }
+
+  componentDidUpdate(prevProps: RouteComponentProps<AppId>) {
+    if (
+      this.props.match.params.namespace !== prevProps.match.params.namespace ||
+      this.props.match.params.app !== prevProps.match.params.app
+    ) {
+      this.setState({
+        app: emptyApp,
+        health: undefined
+      });
+      this.fetchApp();
+    }
   }
 
   fetchApp = () => {
