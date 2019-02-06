@@ -203,7 +203,7 @@ echo "=== SETTINGS ==="
 
 YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 
-get_yaml() {
+apply_yaml() {
   local yaml_file="${1}.yaml"
   local yaml_path="${YAML_DIR}/${yaml_file}"
   local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
@@ -223,7 +223,7 @@ get_yaml() {
 echo "Deploying Kiali to OpenShift project ${NAMESPACE}"
 for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
 do
-  get_yaml ${yaml} | envsubst | oc create -n ${NAMESPACE} -f -
+  apply_yaml ${yaml}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to OpenShift. Aborting."
@@ -233,7 +233,6 @@ done
 
 # As a last step, we enable oAuth, because we need stuff like routes to be well
 # defined before creating the OAuthClients.
-get_yaml "oauth" | \
-  PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" \
+PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" \
   REDIRECT_URL="${PROTOCOL}://$(oc get routes -n ${NAMESPACE} kiali -o jsonpath={.spec.host})" \
-  envsubst | oc create -n ${NAMESPACE} -f -
+  apply_yaml "oauth"

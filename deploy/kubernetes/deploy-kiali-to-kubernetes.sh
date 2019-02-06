@@ -200,19 +200,7 @@ echo "=== SETTINGS ==="
 
 YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 
-<<<<<<< HEAD
-# Now deploy all the Kiali components to kubernetes
-# If we are missing one or more of the yaml files, download them
-echo "Deploying Kiali to Kubernetes project ${NAMESPACE}"
-for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
-do
-  yaml_file="${yaml}.yaml"
-  yaml_path="${YAML_DIR}/${yaml}.yaml"
-  if [ -f "${yaml_path}" ]; then
-    echo "Using YAML file: ${yaml_path}"
-    cat ${yaml_path} | envsubst | kubectl apply -n ${NAMESPACE} -f -
-=======
-get_yaml() {
+apply_yaml() {
   local yaml_file="${1}.yaml"
   local yaml_path="${YAML_DIR}/${yaml_file}"
   local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
@@ -232,7 +220,7 @@ get_yaml() {
 echo "Deploying Kiali to kubernetes project ${NAMESPACE}"
 for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
 do
-  get_yaml ${yaml} | envsubst | kubectl create -n ${NAMESPACE} -f -
+  apply_yaml ${yaml}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to Kubernetes. Aborting."
