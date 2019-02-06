@@ -6,7 +6,7 @@ metadata:
     app: kiali
     version: ${VERSION_LABEL}
 rules:
-- apiGroups: [""]
+- apiGroups: ["", "route.openshift.io"]
   resources:
   - configmaps
   - endpoints
@@ -15,6 +15,7 @@ rules:
   - pods
   - services
   - replicationcontrollers
+  - routes
   verbs:
   - get
   - list
@@ -39,7 +40,6 @@ rules:
   resources:
   - cronjobs
   - jobs
-  - routes
   verbs:
   - get
   - list
