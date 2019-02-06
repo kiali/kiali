@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Breadcrumb, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { RouteComponentProps } from 'react-router-dom';
+import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -11,7 +11,7 @@ import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceInfo from './ServiceInfo';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
-import { Paths } from '../../config';
+import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -156,34 +156,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     window.open(this.props.jaegerUrl + `/search?service=${this.props.match.params.service}`, '_blank');
   };
 
-  renderBreadcrumbs = (parsedSearch: ParsedSearch) => {
-    const urlParams = new URLSearchParams(this.props.location.search);
-    const to = this.servicePageURL();
-    return (
-      <Breadcrumb title={true}>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link to={`/${Paths.SERVICES}`}>Services</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link to={`/${Paths.SERVICES}?namespaces=${this.props.match.params.namespace}`}>
-            Namespace: {this.props.match.params.namespace}
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link to={to}>Service: {this.props.match.params.service}</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active={true}>
-          Service {(urlParams.get('tab') || 'info') === 'info' ? 'Info' : 'Metrics'}
-        </Breadcrumb.Item>
-      </Breadcrumb>
-    );
-  };
-
   render() {
-    const parsedSearch = this.parseSearch();
     return (
       <>
-        {this.renderBreadcrumbs(parsedSearch)}
+        <BreadcrumbView location={this.props.location} />
         <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">

@@ -1,17 +1,18 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
 import { ObjectCheck, Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
-import { Breadcrumb, TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
+import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { serverConfig, Paths } from '../../config';
+import { serverConfig } from '../../config';
+import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -19,10 +20,6 @@ type WorkloadDetailsState = {
   istioEnabled: boolean;
   health?: WorkloadHealth;
 };
-interface ParsedSearch {
-  type?: string;
-  name?: string;
-}
 
 class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, WorkloadDetailsState> {
   constructor(props: RouteComponentProps<WorkloadId>) {
@@ -33,10 +30,6 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       istioEnabled: false
     };
     this.fetchWorkload();
-  }
-
-  workloadPageURL(parsedSearch?: ParsedSearch) {
-    return '/namespaces/' + this.props.match.params.namespace + '/workloads/' + this.props.match.params.workload;
   }
 
   // All information for validations is fetched in the workload, no need to add another call
@@ -115,41 +108,6 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return istioEnabled;
   };
 
-  renderBreadcrumbs = () => {
-    const urlParams = new URLSearchParams(this.props.location.search);
-    const to = this.workloadPageURL();
-    let tab: string;
-    switch (urlParams.get('tab')) {
-      case 'info':
-        tab = 'Info';
-        break;
-      case 'in_metrics':
-        tab = 'Inbound Metrics';
-        break;
-      case 'out_metrics':
-        tab = 'Outbound Metrics';
-        break;
-      default:
-        tab = 'Info';
-    }
-    return (
-      <Breadcrumb title={true}>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={`/${Paths.WORKLOADS}`}>Workloads</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={`/${Paths.WORKLOADS}?namespaces=${this.props.match.params.namespace}`}>
-            Namespace: {this.props.match.params.namespace}
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={to}>Workload: {this.props.match.params.workload}</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active={true}>Workload {tab}</Breadcrumb.Item>
-      </Breadcrumb>
-    );
-  };
-
   render() {
     const cfg = serverConfig();
     const app = this.state.workload.labels[cfg.istioLabels['AppLabelName']];
@@ -157,7 +115,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     const isLabeled = app && version;
     return (
       <>
-        {this.renderBreadcrumbs()}
+        <BreadcrumbView location={this.props.location} />
         <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">

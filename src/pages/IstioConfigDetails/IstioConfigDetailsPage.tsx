@@ -1,9 +1,6 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
-import { Breadcrumb, Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { ActiveFilter } from '../../types/Filters';
 import {
   aceOptions,
   IstioConfigDetails,
@@ -11,7 +8,6 @@ import {
   ParsedSearch,
   safeDumpOptions
 } from '../../types/IstioConfigDetails';
-import { dicIstioType } from '../../types/IstioConfigList';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
@@ -23,6 +19,7 @@ import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } f
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
+import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import VirtualServiceDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
@@ -46,16 +43,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.aceEditorRef = React.createRef();
     this.promptTo = '';
   }
-
-  updateTypeFilter = () => {
-    // When updateTypeFilter is called, selected filters are already updated with namespace. Just push additional type obj
-    const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
-    activeFilters.push({
-      category: 'Istio Type',
-      value: dicIstioType[this.props.match.params.objectType]
-    });
-    FilterSelected.setSelected(activeFilters);
-  };
 
   fetchIstioObjectDetails = () => {
     this.fetchIstioObjectDetailsFromProps(this.props.match.params);
@@ -312,38 +299,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     );
   };
 
-  renderBreadcrumbs = (): any => {
-    return (
-      <Breadcrumb title={true}>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link to={`/${Paths.ISTIO}`} title={'Istio config'}>
-            Istio Config
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link
-            to={`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`}
-            title={`Istio configs of ${this.props.match.params.namespace}`}
-          >
-            Namespace: {this.props.match.params.namespace}
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass={'span'}>
-          <Link
-            to={`/${Paths.ISTIO}?namespaces=${this.props.match.params.namespace}`}
-            title={`Istio configs of ${this.props.match.params.namespace}`}
-            onClick={this.updateTypeFilter}
-          >
-            Istio Object Type: {dicIstioType[this.props.match.params.objectType]}
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item key={'breadcrumb_' + this.props.match.params.object} active={true}>
-          Istio Object: {this.props.match.params.object}
-        </Breadcrumb.Item>
-      </Breadcrumb>
-    );
-  };
-
   // Not all Istio types have components to render an overview tab
   hasOverview = (): boolean => {
     return (
@@ -412,7 +367,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   render() {
     return (
       <>
-        {this.renderBreadcrumbs()}
+        <BreadcrumbView location={this.props.location} />
         {this.renderRightToolbar()}
         {this.renderTabs()}
         <Prompt

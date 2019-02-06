@@ -1,25 +1,21 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { AppId, App } from '../../types/App';
 import { authentication } from '../../utils/Authentication';
-import { Breadcrumb, TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
+import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import AppMetricsContainer from '../../containers/AppMetricsContainer';
 import { AppHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { Paths } from '../../config';
+import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 
 type AppDetailsState = {
   app: App;
   health?: AppHealth;
 };
-interface ParsedSearch {
-  type?: string;
-  name?: string;
-}
 
 class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsState> {
   constructor(props: RouteComponentProps<AppId>) {
@@ -34,10 +30,6 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       }
     };
     this.fetchApp();
-  }
-
-  appPageURL(parsedSearch?: ParsedSearch) {
-    return '/namespaces/' + this.props.match.params.namespace + '/applications/' + this.props.match.params.app;
   }
 
   fetchApp = () => {
@@ -62,45 +54,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       });
   };
 
-  renderBreadcrumbs = () => {
-    const urlParams = new URLSearchParams(this.props.location.search);
-    const to = this.appPageURL();
-    let tab = 'Info';
-    switch (urlParams.get('tab')) {
-      case 'info':
-        tab = 'Info';
-        break;
-      case 'in_metrics':
-        tab = 'Inbound Metrics';
-        break;
-      case 'out_metrics':
-        tab = 'Outbound Metrics';
-        break;
-      default:
-        tab = 'Info';
-    }
-    return (
-      <Breadcrumb title={true}>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={`/${Paths.APPLICATIONS}`}>Applications</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={`/${Paths.APPLICATIONS}?namespaces=${this.props.match.params.namespace}`}>
-            Namespace: {this.props.match.params.namespace}
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item componentClass="span">
-          <Link to={to}>App: {this.props.match.params.app}</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active={true}>App {tab}</Breadcrumb.Item>
-      </Breadcrumb>
-    );
-  };
-
   render() {
     return (
       <>
-        {this.renderBreadcrumbs()}
+        <BreadcrumbView location={this.props.location} />
         <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
