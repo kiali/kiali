@@ -2855,7 +2855,7 @@
           "x-go-name": "Id"
         },
         "isMTLS": {
-          "type": "boolean",
+          "type": "string",
           "x-go-name": "IsMTLS"
         },
         "isUnused": {
