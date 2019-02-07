@@ -18,17 +18,19 @@ import (
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
-	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
-	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
+	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
 	FetchRange(metricName, labels, grouping, aggregator string, q *BaseMetricsQuery) *Metric
 	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
-	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
+	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetConfiguration() (v1.ConfigResult, error)
+	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
+	GetFlags() (v1.FlagsResult, error)
 	GetMetrics(query *IstioMetricsQuery) Metrics
+	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
+	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
+	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 }
 
 // Client for Prometheus API.
@@ -232,4 +234,20 @@ func (in *Client) API() v1.API {
 // Address return the configured Prometheus service URL
 func (in *Client) Address() string {
 	return config.Get().ExternalServices.PrometheusServiceURL
+}
+
+func (in *Client) GetConfiguration() (v1.ConfigResult, error) {
+	config, err := in.API().Config(context.Background())
+	if err != nil {
+		return v1.ConfigResult{}, err
+	}
+	return config, nil
+}
+
+func (in *Client) GetFlags() (v1.FlagsResult, error) {
+	flags, err := in.API().Flags(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return flags, nil
 }

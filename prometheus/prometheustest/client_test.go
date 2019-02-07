@@ -5,13 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	pv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -510,6 +509,32 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
 
+func TestConfig(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockConfig(api, pv1.ConfigResult{
+		YAML: `{"status":"success","data":{"yaml":"global:\n  scrape_interval: 15s\n"}}`,
+	})
+
+	config, err := client.GetConfiguration()
+	assert.Contains(t, config.YAML, "scrape_interval")
+}
+
+func TestFlags(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockFlags(api, pv1.FlagsResult{"storage.tsdb.retention": "6h"})
+
+	flags, err := client.GetFlags()
+	assert.Equal(t, flags["storage.tsdb.retention"], "6h")
+}
+
 func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {
 	api.On(
 		"Query",
@@ -612,13 +637,21 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 }
 
 func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
-	namespace := v1.Namespace{
+	namespace := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
 			CreationTimestamp: metav1.Time{Time: creationTime},
 		},
 	}
 	k8s.On("GetNamespace", name).Return(&namespace, nil)
+}
+
+func mockConfig(api *PromAPIMock, ret pv1.ConfigResult) {
+	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
+}
+
+func mockFlags(api *PromAPIMock, ret pv1.FlagsResult) {
+	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
 }
 
 func setupExternal() (*prometheus.Client, error) {
