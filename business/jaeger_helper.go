@@ -43,13 +43,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 		} else {
 			q := u.Query()
 			q.Set("lookback", "1h")
-			// Workaround Tracing request to .default namespace
-			serv, err := workaroundJaegerService(namespace, service)
-			if err != nil {
-				log.Errorf("Error Workaround Jaeger: %s", err)
-				return -1, err
-			}
-			q.Set("service", fmt.Sprintf("%s", serv))
+			q.Set("service", fmt.Sprintf("%s.%s", service, namespace))
 			t := time.Now().UnixNano() / 1000
 			q.Set("start", fmt.Sprintf("%d", t-60*60*1000*1000))
 			q.Set("end", fmt.Sprintf("%d", t))
@@ -81,28 +75,6 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 		}
 	}
 	return errorTraces, err
-}
-
-func workaroundJaegerService(namespace string, service string) (string, error) {
-	services, err := GetServices()
-	candidate := fmt.Sprintf("%s.%s", service, namespace)
-	if err != nil {
-		log.Errorf("Error fetching Services: %s", err)
-		return "", err
-	}
-
-	if contains(services.Services, candidate) {
-		return candidate, nil
-	}
-
-	/*Workaround default, if the service not exist jaeger returns object type:
-
-	{"data":[],"total":0,"limit":0,"offset":0,"errors":null}
-
-	  so the result of the errorTraces will be 0
-	*/
-	candidate = fmt.Sprintf("%s.%s", service, "default")
-	return candidate, nil
 }
 
 func GetServices() (services JaegerServices, err error) {
