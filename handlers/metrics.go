@@ -45,6 +45,10 @@ func extractCustomMetricsQueryParams(r *http.Request, q *prometheus.CustomMetric
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	q.Version = queryParams.Get("version")
+	op := queryParams.Get("rawAggregationOperator")
+	if op != "" {
+		q.RawAggregationOperator = queryParams.Get("rawAggregationOperator")
+	}
 	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
 }
 

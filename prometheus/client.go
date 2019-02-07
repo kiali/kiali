@@ -25,7 +25,7 @@ type ClientInterface interface {
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
 	GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]Service, error)
-	FetchRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
+	FetchRange(metricName, labels, grouping, aggOp string, q *BaseMetricsQuery) *Metric
 	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *BaseMetricsQuery) Histogram
 	GetMetrics(query *IstioMetricsQuery) Metrics
@@ -205,8 +205,8 @@ func (in *Client) GetWorkloadRequestRates(namespace, workload, ratesInterval str
 }
 
 // FetchRange fetches a simple metric (gauge or counter) in given range
-func (in *Client) FetchRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
-	query := fmt.Sprintf("sum(%s%s)", metricName, labels)
+func (in *Client) FetchRange(metricName, labels, grouping, aggOp string, q *BaseMetricsQuery) *Metric {
+	query := fmt.Sprintf("%s(%s%s)", aggOp, metricName, labels)
 	if grouping != "" {
 		query += fmt.Sprintf(" by (%s)", grouping)
 	}

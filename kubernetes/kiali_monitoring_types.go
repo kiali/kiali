@@ -29,12 +29,13 @@ type MonitoringDashboardSpec struct {
 }
 
 type MonitoringDashboardChart struct {
-	Name         string
-	Unit         string
-	Spans        int
-	MetricName   string
-	DataType     string // MetricType is either "raw", "rate" or "histogram"
-	Aggregations []MonitoringDashboardAggregation
+	Name                string
+	Unit                string
+	Spans               int
+	MetricName          string
+	DataType            string // MetricType is either "raw", "rate" or "histogram"
+	AggregationOperator string // AggregationOperator can be set for raw data. Ex: "sum", "avg". See https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
+	Aggregations        []MonitoringDashboardAggregation
 }
 
 type MonitoringDashboardAggregation struct {
