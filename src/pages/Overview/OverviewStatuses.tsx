@@ -33,9 +33,7 @@ class OverviewStatuses extends React.Component<Props> {
     }
     return (
       <>
-        <Link to={`/${targetPage}?namespaces=${name}`} >
-          {text}
-        </Link>
+        <Link to={`/${targetPage}?namespaces=${name}`}>{text}</Link>
         <AggregateStatusNotifications>
           {status.inError.length > 0 && (
             <OverviewStatus
