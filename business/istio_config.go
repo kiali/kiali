@@ -228,7 +228,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t, pc kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -292,6 +292,11 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if pc, err = in.k8s.GetPolicy(namespace, object); err == nil {
 			istioConfigDetail.Policy = &models.Policy{}
 			istioConfigDetail.Policy.Parse(pc)
+		}
+	case MeshPolicies:
+		if mp, err = in.k8s.GetMeshPolicy(namespace, object); err == nil {
+			istioConfigDetail.MeshPolicy = &models.Policy{}
+			istioConfigDetail.MeshPolicy.Parse(mp)
 		}
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
