@@ -8,7 +8,7 @@ import { DurationInSeconds, PollIntervalInMs, TimeInSeconds, TimeInMilliseconds 
 import Namespace from '../../types/Namespace';
 import { SummaryData, NodeParamsType, NodeType, GraphType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
-import { computePrometheusQueryInterval } from '../../services/Prometheus';
+import { computePrometheusRateParams } from '../../services/Prometheus';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
@@ -330,7 +330,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                 queryTime={this.props.graphTimestamp}
                 duration={this.props.graphDuration}
                 isPageVisible={this.props.isPageVisible}
-                {...computePrometheusQueryInterval(this.props.duration, NUMBER_OF_DATAPOINTS)}
+                {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             )}
             {this.props.showLegend && (

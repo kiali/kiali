@@ -1,26 +1,32 @@
-// Hard-coded 20s minimum. It makes some assumption about prometheus scraping interval, default config in Istio
-// being 5s. We assume 4*scrape_interval is a good minimum.
-// In any way, the rate interval should never go beyond scrape interval.
-//  Eventually TODO: make this minRateInterval configurable or deduced from actual scrape interval.
-const minRateInterval = 20;
-const defaultExpectedDataPoints = 50;
+import { DurationInSeconds } from '../types/Common';
+import { serverConfig } from '../config';
 
-export interface PrometheusQueryOptions {
-  step: number;
+// The step needs to minimally cover 2 datapoints to get any sort of average. So 2*scrape is the bare
+// minimum.  We set rateInterval=step which basically gives us the rate() of each disjoint set.
+// (note, another approach could be to set rateInterval=step+scrape, the overlap could produce some
+// smoothing). The rateInterval should typically not be < step or you're just omitting datapoints.
+const defaultDataPoints = 50;
+const minDataPoints = 2;
+
+export interface PrometheusRateParams {
   rateInterval: string;
+  step: number;
 }
 
-// Step is duration / expected datapoints
-// Make rateInterval aligned with step
-export const computePrometheusQueryInterval = (
-  duration: number,
-  expectedDataPoints?: number
-): PrometheusQueryOptions => {
-  const expectedDp = expectedDataPoints || defaultExpectedDataPoints;
-  let step = Math.floor(duration / expectedDp);
-  if (step < minRateInterval) {
-    step = minRateInterval;
+export const computePrometheusRateParams = (
+  duration: DurationInSeconds,
+  dataPoints?: number,
+  scrapeInterval?: DurationInSeconds
+): PrometheusRateParams => {
+  let actualDataPoints = dataPoints || defaultDataPoints;
+  if (actualDataPoints < minDataPoints) {
+    actualDataPoints = defaultDataPoints;
   }
+  // TODO: should the scrape interval really be in serverConfig?
+  const actualScrapeInterval = scrapeInterval || serverConfig().istioScrapeInterval || 15;
+  const minStep = 2 * actualScrapeInterval;
+  let step = Math.floor(duration / actualDataPoints);
+  step = step < minStep ? minStep : step;
   return {
     step: step,
     rateInterval: step + 's'

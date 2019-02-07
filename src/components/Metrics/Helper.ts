@@ -13,7 +13,7 @@ import { BaseMetricsOptions } from '../../types/MetricsOptions';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import { DurationInSeconds } from '../../types/Common';
-import { computePrometheusQueryInterval } from '../../services/Prometheus';
+import { computePrometheusRateParams } from '../../services/Prometheus';
 
 namespace MetricsHelper {
   export const extractLabelValuesOnSeries = (
@@ -120,7 +120,7 @@ namespace MetricsHelper {
 
   export const durationToOptions = (duration: DurationInSeconds, opts: BaseMetricsOptions) => {
     opts.duration = duration;
-    const intervalOpts = computePrometheusQueryInterval(duration);
+    const intervalOpts = computePrometheusRateParams(duration);
     opts.step = intervalOpts.step;
     opts.rateInterval = intervalOpts.rateInterval;
   };
