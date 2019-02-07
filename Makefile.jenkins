@@ -32,6 +32,11 @@ ifneq ($(RELEASE_TYPE),edge)
   PUSH_GITHUB_TAG = y
 endif
 
+# Block edge releases on npm
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_TO_NPM = y
+endif
+
 # For "major" and "minor" releases, the "master" branch must be
 # updated to be prepared for the next major/minor release.
 # WARN: process for "major" releases is not tested yet
@@ -51,13 +56,8 @@ endif
 
 # Determine if an end-of-week snapshot is being released and
 # set the "bumped version" accordingly.
-# Edge versions are set to $(UI_VERSION)-edge-${BUILD_NUMBER}
-# BUILD_NUMBER being the internal jenkins build_number to avoid
-# duplicating the same npm version.
-ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
+ifeq ($(findstring $(RELEASE_TYPE), snapshot edge),$(RELEASE_TYPE))
   UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
-else ifeq ($(findstring edge, $(RELEASE_TYPE)),edge)
-  UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)-${BUILD_NUMBER}
 else
   UI_BUMPED_VERSION ?= $(shell semver bump $(RELEASE_TYPE) $(UI_VERSION))
 endif
@@ -95,6 +95,7 @@ ui-test:
 	CI=true yarn test --maxWorkers=4
 
 ui-npm-publish:
+ifeq ($(PUSH_TO_NPM), y)
 ifdef NPM_TOKEN
 	@echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
 endif
@@ -105,6 +106,7 @@ else
 endif
 ifdef NPM_TOKEN
 	rm .npmrc
+endif
 endif
 
 ui-push-version-tag:
