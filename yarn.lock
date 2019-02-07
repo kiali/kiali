@@ -6907,11 +6907,6 @@ npm-run-path@^2.0.0:
   dependencies:
     path-key "^2.0.0"
 
-npm-snapshot@1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/npm-snapshot/-/npm-snapshot-1.0.3.tgz#18930aea89d1dd8c8ed5a256711068a1daaf7c0f"
-  integrity sha1-GJMK6onR3YyO1aJWcRBoodqvfA8=
-
 "npmlog@0 || 1 || 2 || 3 || 4", npmlog@^4.0.0, npmlog@^4.0.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/npmlog/-/npmlog-4.1.2.tgz#08a7f2a8bf734604779a9efa4ad5cc717abb954b"

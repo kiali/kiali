@@ -11,19 +11,6 @@ script:
   - yarn prettier --list-different &&
     yarn build:dev &&
     yarn test --forceExit --maxWorkers=4
-before_deploy:
-  - 'yarn set-snapshot-version $TRAVIS_BUILD_NUMBER'
-deploy:
-  skip_cleanup: true
-  provider: npm
-  email: jmartine@redhat.com
-  api_key:
-    secure: Jo2WZnjFwm5quz269BLETozmEED9GwXBRECtk15gQOu9kRBdb+lyqt/c+ulucD9o4XVGfrtPJIqki8XCNHKNkgq4iWU/B2uXlIFH1ZefbeaHJTsPiQmeZ790PdY9SrjJRz9Tpv/Ev1IPWtT4RJiHN2ydandbjIAdPoNDJmMRUkezqFSYnhB4UcLRR8PzuO6TcmUQToHkaiQ5DUTmaewjQhaT8IK1Npg25pn6FXHhe7jy+FnuXSKLBhm51PO9KPohv/CGISVJvG5BLX4az/l2iH1zrS/Ji5u5U5J7ukp7NH7TfP9/JqSJ58Zm+zgC+NNsuUjy2p8fEb4kK/LgwP54yjhZWCVs+gvTMxIfaxukTCyCTqinGmSK+xgEMOyGMyUQkETsQhdo7wRMEJZ7cTkge1IKrdOsMEZulOIaGblMyY5eSpg2xHVyshSO7JdQiKWpeKA6KI2lV6qUIafFmIpLDt9p392bsnwU6YODE0THVer0Ql4yYlJBdjPIoYp8igSeILp2CoQ5I45l0ZOsJQq+KnkVPC/qWcH8eU0ykSsBTiA4lmqOPZ4nnGXJ18BEcxh6BEEmQV3p3WP+u84cBwg/upiszKlLKSy0TURGJUG5mf08NOT3Z8PIL8klmM8R5jnTFBnKYpE2BcczSIOrwv5RwpTyOvbb7u/jHh4HghQnQn8=
-  on:
-    branch: master
-    repo: kiali/kiali-ui
-after_deploy:
-  - 'curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "Travis-API-Version: 3" -H "Authorization: token $TRAVIS_TOKEN" -d "{\"request\":{\"message\": \"Triggered by kiali-ui change: $TRAVIS_COMMIT\", \"branch\":\"master\"}}" https://api.travis-ci.org/repo/kiali%2Fkiali/requests'
 env:
   global:
     - secure: aI1uMj0h6xjzp2Xl8VeG4Eibnmz77OaTs8vYyOwgf4L5eN59Rz21oJE4j4AFkDBELUJvYHJix/EKWoIGszDFN/XCoOcB39h9MFyrHT74dwmjH1CHDg97e8KZU8oKpvpJ6D5c1tYUrbuzeK+pxqGptMi3zi9Cx8UpN9CavVa1QkcfEf0VfVdGpHIf+EbP9imEnArfPkUMfx0Schp761gySOvgtzzjIUwFLrrszSWM5s5KA8Z2BWMKN4877uey2HCYqfju9TrjWv396QxWxdnzqGvTQCO5jabcxSuK3N5IC76mlkuT/w0rxHVwULDU9JyBQo6gYGkHavKq5vvTOrWzEZwhL5mY6RvCwPg4GJma+O6DWZQRLEbF18Ubu2pm8BbLp+EUdgQMN+rBhTcbhX/om+tZkyODoVmxSEibSo6LcDJ3ZiS8pzlFVQiUbQ3wiQqcIPoDwlhhahwUutd35zt26HJvSs4HuRZ1R6TU3xtsHFVQULbIOMWcWd5dFnzTdBJW3aNu45vkWOE7wtANiAKmpkFowq0lRoKj6GdHgDEk9L0xy/QmoiCmCnrqtSsIill0GjmPpXWzIBQmS4uPUkjGveIqIGfrRqnSyRa6+f0wY4GQ0vkbF4DFbCTvRVcfvvph2R3MS/Tjhvt5L5Bhw52lg/DiWib2Synle1WyIjhXTLk=
