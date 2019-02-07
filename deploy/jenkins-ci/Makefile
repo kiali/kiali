@@ -20,9 +20,9 @@ ifeq ($(RELEASE_TYPE),minor)
   # For minor, remove the -SNAPSHOT suffix from the Makefile
   BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump release $(BACKEND_VERSION))
 endif
-ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
-  # For end-of-week snapshot release, substitute the -SNAPSHOT prefix in the Makefile with
-  # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X}
+ifeq ($(findstring $(RELEASE_TYPE),snapshot edge),$(RELEASE_TYPE))
+  # For end-of-week snapshot and edge release, substitute the -SNAPSHOT prefix in the Makefile with
+  # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X} or edge
   BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump prerel $(RELEASE_TYPE) $(BACKEND_VERSION))
 endif
 
@@ -45,11 +45,16 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
 
-ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+ifeq ($(findstring $(RELEASE_TYPE),snapshot edge),$(RELEASE_TYPE))
   IS_SNAPSHOT ?= y
   OMIT_VERSION_BRANCH ?= y
 else
   IS_SNAPSHOT ?= n
+endif
+
+# Block edge releases on github
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_GITHUB_TAG = y
 endif
 
 # JENKINS_URL is an environment variable that is set when this
@@ -118,6 +123,7 @@ endif
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION)"
 
 backend-push-version-tag:
+ifeq ($(PUSH_GITHUB_TAG),y)
 	sed -i "s/^CONSOLE_VERSION ?=.*/CONSOLE_VERSION ?= $$(cat _output/docker/console/version.txt)/" Makefile
 	git add Makefile
 	git commit -m "Release $(BACKEND_VERSION)"
@@ -135,6 +141,9 @@ else
 	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)"}' \
 	  -X POST $(BACKEND_RELEASE_URI)
 endif
+endif
+else
+	@echo "Skipped push version tag"
 endif
 
 backend-prepare-next-patch-version:

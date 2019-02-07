@@ -4,7 +4,7 @@ properties([
     string(name: 'RELEASE_TYPE',
       defaultValue: 'auto',
       trim: true,
-      description: 'Valid values are: auto, minor, snapshot.0, snapshot.1. When "auto" is\n' +
+      description: 'Valid values are: auto, minor, snapshot.0, snapshot.1, edge. When "auto" is\n' +
                     'specified, the type of the release will be determined based on the current date.'),
     string(name: 'BACKEND_RELEASING_BRANCH',
       defaultValue: 'refs/heads/master',
