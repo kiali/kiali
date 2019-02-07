@@ -188,7 +188,13 @@ def __test_service_health_endpoint(kiali_client):
 def test_service_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
-    service_validations = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params={'validate': 'true'}).json()
+    result = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}, params={'validate': 'true', 'gateway': 'true'})
+
+    service_validations = result.json()
     assert service_validations != None
     assert service_validations.get('validations') != None
-    assert service_validations.get('validations').get('gateway') != None
+    gateway = service_validations.get('validations').get('gateway')
+    if gateway != None:
+        for g in gateway:
+            assert gateway.get(g).get('valid')
+
