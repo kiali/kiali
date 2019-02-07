@@ -1,11 +1,11 @@
 import { DurationInSeconds } from '../types/Common';
-import { serverConfig } from '../config';
 
 // The step needs to minimally cover 2 datapoints to get any sort of average. So 2*scrape is the bare
 // minimum.  We set rateInterval=step which basically gives us the rate() of each disjoint set.
 // (note, another approach could be to set rateInterval=step+scrape, the overlap could produce some
 // smoothing). The rateInterval should typically not be < step or you're just omitting datapoints.
 const defaultDataPoints = 50;
+const defaultScrapeInterval = 15; // seconds
 const minDataPoints = 2;
 
 export interface PrometheusRateParams {
@@ -23,7 +23,7 @@ export const computePrometheusRateParams = (
     actualDataPoints = defaultDataPoints;
   }
   // TODO: should the scrape interval really be in serverConfig?
-  const actualScrapeInterval = scrapeInterval || serverConfig().istioScrapeInterval || 15;
+  const actualScrapeInterval = scrapeInterval || defaultScrapeInterval;
   const minStep = 2 * actualScrapeInterval;
   let step = Math.floor(duration / actualDataPoints);
   step = step < minStep ? minStep : step;
