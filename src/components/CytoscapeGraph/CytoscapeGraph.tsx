@@ -594,7 +594,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         return;
       }
       const namespace = ele.data(CyNode.namespace);
-      const nodeType = ele.data(CyNode.nodeType);
+      const namespaceOk = namespace && namespace !== '' && namespace !== 'unknown';
+      // incomplete telemetry can result in an unknown namespace, if so set nodeType UNKNOWN
+      const nodeType = namespaceOk ? ele.data(CyNode.nodeType) : NodeType.UNKNOWN;
       const workload = ele.data(CyNode.workload);
       const workloadOk = workload && workload !== '' && workload !== 'unknown';
       // use workload health when workload is set and valid (workload nodes or versionApp nodes)
