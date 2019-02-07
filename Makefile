@@ -246,10 +246,41 @@ docker-push:
 	@${OC} get project ${NAMESPACE} > /dev/null
 
 .openshift-find-addons: .openshift-validate
-	@$(eval JAEGER_URL ?= $(shell echo http://$$(${OC} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}'):80))
-	@echo "Found Jaeger at: ${JAEGER_URL}"
-	@$(eval GRAFANA_URL ?= $(shell echo http://$$(${OC} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}'):3000))
-	@echo "Found Grafana at: ${GRAFANA_URL}"
+	@# Check if JAEGER_URL is defined
+	@if [[ -z "${JAEGER_URL}" ]]; then \
+	    # JAEGER_URL is not defined try to get it \
+	    # Check if there is a tracing service in istio-system \
+	    $(eval JAEGER_IP = $(shell $${OC} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}')) \
+	    if [[ -z "${JAEGER_IP}" ]]; then \
+	        # tracing service is not defined, check if there is a jaeger-service \
+	        $(eval JAEGER_IP = $(shell ${OC} get svc jaeger-query -n istio-system -o jsonpath='{.spec.clusterIP}')) \
+	        if [[ ! -z "${JAEGER_IP}" ]]; then \
+	            # found jaeger-query service \
+	            $(eval JAEGER_URL = $(shell echo http://${JAEGER_IP}:80)) \
+	            echo "Found Jaeger in jaeger-query service at: ${JAEGER_URL}" ; \
+	        else \
+                echo "Tracing/Jaeger-query service NOT found"; \
+	        fi \
+	    else \
+	        $(eval JAEGER_URL = $(shell echo http://${JAEGER_IP}:80)) \
+	        echo "Found Jaeger in tracing service at: ${JAEGER_URL}" ; \
+	    fi \
+	fi ;
+
+	@# Check if GRAFANA_URL is defined
+	@if [[ -z "${GRAFANA_URL}" ]]; then \
+	   # GRAFANA_URL is not defined try to get it \
+       $(eval GRAFANA_IP = $(shell $${OC} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}')) \
+       if [[ ! -z "${GRAFANA_IP}" ]]; then \
+           # found grafana service \
+           $(eval GRAFANA_URL ?= $(shell echo http://${GRAFANA_URL}:3000)) \
+           echo "Found Grafana at: ${GRAFANA_URL}"; \
+       else \
+           echo "Grafana service NOT found"; \
+       fi \
+    fi \
+
+
 
 ## openshift-deploy: Deploy docker image in Openshift project.
 openshift-deploy: openshift-undeploy .openshift-find-addons
