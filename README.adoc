@@ -341,6 +341,14 @@ server:
   cors_allow_all: (true\|false)
 ----
 
+|`SERVER_AUDIT_LOG`
+|When true, allows additional audit logging on Write operations.
+[source,yaml]
+----
+server:
+  audit_log: (true\|false)
+----
+
 |`SERVER_STATIC_CONTENT_ROOT_DIRECTORY`
 |The file server will serve all static content found under this root directory.
 [source,yaml]
