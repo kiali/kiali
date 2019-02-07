@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/kiali/kiali/config"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -232,6 +233,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 		}
 	} else {
+		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object)
 		RespondWithCode(w, http.StatusOK)
 	}
 	return
@@ -275,6 +277,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	audit(r, "UPDATE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 }
 
@@ -315,9 +318,17 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	audit(r, "CREATE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Object: "+string(body))
 	RespondWithJSON(w, http.StatusOK, createdConfigDetails)
 }
 
 func checkObjectType(objectType string) bool {
 	return business.GetIstioAPI(objectType) != ""
+}
+
+func audit(r *http.Request, message string) {
+	if config.Get().Server.AuditLog {
+		user := r.Header.Get("Kiali-User")
+		log.Infof("AUDIT User [%s] Msg [%s]", user, message)
+	}
 }

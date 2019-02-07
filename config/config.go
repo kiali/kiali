@@ -36,6 +36,7 @@ const (
 	EnvWebRoot                          = "SERVER_WEB_ROOT"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
+	EnvServerAuditLog                   = "SERVER_AUDIT_LOG"
 
 	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
 	EnvGrafanaURL                      = "GRAFANA_URL"
@@ -82,6 +83,7 @@ type Server struct {
 	WebRoot                    string               `yaml:"web_root,omitempty"`
 	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
 	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
+	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -193,6 +195,7 @@ func NewConfig() (c *Config) {
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/opt/kiali/console"))
 	c.Server.CORSAllowAll = getDefaultBool(EnvServerCORSAllowAll, false)
+	c.Server.AuditLog = getDefaultBool(EnvServerAuditLog, true)
 
 	// Prometheus configuration
 	c.ExternalServices.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))

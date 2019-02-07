@@ -56,18 +56,22 @@ func GenerateToken(username string) (TokenGenerated, error) {
 }
 
 // ValidateToken checks if the input token is still valid
-func ValidateToken(tokenString string) error {
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+func ValidateToken(tokenString string) (string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &TokenClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return Get().LoginToken.SigningKey, nil
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return fmt.Errorf("Unexpected signing method: %s", token.Header["alg"])
+		return "", fmt.Errorf("Unexpected signing method: %s", token.Header["alg"])
 	}
 	if token.Valid {
-		return nil
+		user := ""
+		if sToken, ok := token.Claims.(*TokenClaim); ok {
+			user = sToken.User
+		}
+		return user, nil
 	}
-	return errors.New("Invalid token")
+	return "", errors.New("Invalid token")
 }
