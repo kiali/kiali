@@ -342,7 +342,7 @@ server:
 ----
 
 |`SERVER_AUDIT_LOG`
-|When true, allows additional audit logging on Write operations.
+|When true, allows additional audit logging on Write operations. (default is true)
 [source,yaml]
 ----
 server:
