@@ -58,3 +58,11 @@ func CreateMTLSTrafficPolicyForDestinationRules() map[string]interface{} {
 		},
 	}
 }
+
+func CreateLoadBalancerTrafficPolicyForDestinationRules() map[string]interface{} {
+	return map[string]interface{}{
+		"loadBalancer": map[string]interface{}{
+			"simple": "ROUND_ROBIN",
+		},
+	}
+}
