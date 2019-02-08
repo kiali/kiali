@@ -113,7 +113,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[2];
     const isAscending = true;
 
-    IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
+    return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
       expect(sorted.length).toBe(33);
 
@@ -125,7 +125,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.virtualService).toBeDefined();
       expect(second.virtualService!.metadata.name).toBe('blue1');
 
-      const last = sorted[26];
+      const last = sorted[29];
       expect(last.quotaSpecBinding).toBeDefined();
       expect(last.quotaSpecBinding!.metadata.name).toBe('white8');
     });
@@ -137,7 +137,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     const isAscending = false;
 
     // Descending
-    IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
+    return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
       expect(sorted.length).toBe(33);
 
@@ -145,7 +145,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(first.quotaSpecBinding).toBeDefined();
       expect(first.quotaSpecBinding!.metadata.name).toBe('white8');
 
-      const last = sorted[26];
+      const last = sorted[29];
       expect(last.gateway).toBeDefined();
       expect(last.gateway!.metadata.name).toBe('blue0');
     });
@@ -156,7 +156,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[1];
     const isAscending = true;
 
-    IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
+    return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
       expect(sorted.length).toBe(33);
 
@@ -168,7 +168,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.destinationRule).toBeDefined();
       expect(second.destinationRule!.metadata.name).toBe('blue2');
 
-      const last = sorted[26];
+      const last = sorted[29];
       expect(last.virtualService).toBeDefined();
       expect(last.virtualService!.metadata.name).toBe('white1');
     });
