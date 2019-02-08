@@ -246,8 +246,8 @@ export interface ConsistentHashLB {
 }
 
 export interface LoadBalancerSettings {
-  simple: string;
-  consistentHash: ConsistentHashLB;
+  simple?: string;
+  consistentHash?: ConsistentHashLB;
 }
 
 export interface ConnectionPoolSettingsTCPSettings {
@@ -280,18 +280,18 @@ export interface OutlierDetection {
 
 export interface TLSSettings {
   mode: string;
-  clientCertificate: string;
-  privateKey: string;
-  caCertificates: string;
-  subjectAltNames: string[];
-  sni: string;
+  clientCertificate?: string;
+  privateKey?: string;
+  caCertificates?: string;
+  subjectAltNames?: string[];
+  sni?: string;
 }
 
 export interface TrafficPolicy {
-  loadBalancer: LoadBalancerSettings;
-  connectionPool: ConnectionPoolSettings;
-  outlierDetection: OutlierDetection;
-  tls: TLSSettings;
+  loadBalancer?: LoadBalancerSettings;
+  connectionPool?: ConnectionPoolSettings;
+  outlierDetection?: OutlierDetection;
+  tls?: TLSSettings;
 }
 
 export interface Subset {

@@ -1,5 +1,17 @@
 import * as React from 'react';
-import { Button, Label, ListView, ListViewIcon, ListViewItem, Wizard } from 'patternfly-react';
+import {
+  Button,
+  Col,
+  ControlLabel,
+  DropdownButton,
+  Label,
+  ListView,
+  ListViewIcon,
+  ListViewItem,
+  MenuItem,
+  Row,
+  Wizard
+} from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import Slider from './Slider/Slider';
 import { DestinationRule, VirtualService } from '../../types/IstioObjects';
@@ -7,6 +19,7 @@ import { serverConfig } from '../../config';
 import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
+import { style } from 'typestyle';
 
 type Props = {
   show: boolean;
@@ -24,14 +37,34 @@ type WorkloadTraffic = {
 type State = {
   showWizard: boolean;
   workloads: WorkloadTraffic[];
+  mtlsMode: string;
+  loadBalancer: string;
 };
+
+const tlsStyle = style({
+  marginLeft: 20,
+  marginRight: 20
+});
+
+const lbStyle = style({
+  marginLeft: 40,
+  marginRight: 20
+});
+
+const NONE = 'NONE';
+
+const loadBalancerSimple: string[] = [NONE, 'ROUND_ROBIN', 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
+
+const mTLSMode: string[] = [NONE, 'ISTIO_MUTUAL', 'MUTUAL', 'SIMPLE', 'DISABLE'];
 
 class IstioWizard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
       showWizard: false,
-      workloads: []
+      workloads: [],
+      mtlsMode: NONE,
+      loadBalancer: NONE
     };
   }
 
@@ -103,6 +136,20 @@ class IstioWizard extends React.Component<Props, State> {
       }
     };
 
+    if (this.state.mtlsMode !== NONE || this.state.loadBalancer !== NONE) {
+      wizardDR.spec.trafficPolicy = {};
+      if (this.state.mtlsMode !== NONE) {
+        wizardDR.spec.trafficPolicy.tls = {
+          mode: this.state.mtlsMode
+        };
+      }
+      if (this.state.loadBalancer !== NONE) {
+        wizardDR.spec.trafficPolicy.loadBalancer = {
+          simple: this.state.loadBalancer
+        };
+      }
+    }
+
     // VirtualService from the weights
     const wizardVS: VirtualService = {
       metadata: {
@@ -157,6 +204,18 @@ class IstioWizard extends React.Component<Props, State> {
       });
   };
 
+  onTLS = (mTLS: string) => {
+    this.setState({
+      mtlsMode: mTLS
+    });
+  };
+
+  onLoadBalancer = (simple: string) => {
+    this.setState({
+      loadBalancer: simple
+    });
+  };
+
   onWeight = (workloadName: string, newWeight: number) => {
     this.setState(prevState => {
       const nodeId: number[] = [];
@@ -168,18 +227,21 @@ class IstioWizard extends React.Component<Props, State> {
           nodeId.push(i);
         }
       }
-      // Distribute pending weights
-      const maxWeights = 100 - newWeight;
-      let sumWeights = 0;
-      for (let j = 0; j < nodeId.length; j++) {
-        if (sumWeights + prevState.workloads[nodeId[j]].traffic > maxWeights) {
-          prevState.workloads[nodeId[j]].traffic = maxWeights - sumWeights;
+      // Just let auto sliders adjusment per 2 workloads as when >2 some corner cases are not clear
+      if (prevState.workloads.length === 2) {
+        // Distribute pending weights
+        const maxWeights = 100 - newWeight;
+        let sumWeights = 0;
+        for (let j = 0; j < nodeId.length; j++) {
+          if (sumWeights + prevState.workloads[nodeId[j]].traffic > maxWeights) {
+            prevState.workloads[nodeId[j]].traffic = maxWeights - sumWeights;
+          }
+          sumWeights += prevState.workloads[nodeId[j]].traffic;
         }
-        sumWeights += prevState.workloads[nodeId[j]].traffic;
-      }
-      // Adjust last element
-      if (nodeId.length > 0 && sumWeights < maxWeights) {
-        prevState.workloads[nodeId[nodeId.length - 1]].traffic += maxWeights - sumWeights;
+        // Adjust last element
+        if (nodeId.length > 0 && sumWeights < maxWeights) {
+          prevState.workloads[nodeId[nodeId.length - 1]].traffic += maxWeights - sumWeights;
+        }
       }
       return {
         workloads: prevState.workloads
@@ -227,10 +289,43 @@ class IstioWizard extends React.Component<Props, State> {
     });
   };
 
+  renderTrafficPolicy = () => {
+    const tlsMenuItems: any[] = mTLSMode.map(mode => (
+      <MenuItem key={mode} eventKey={mode} active={mode === this.state.mtlsMode}>
+        {mode}
+      </MenuItem>
+    ));
+    const lbMenuItems: any[] = loadBalancerSimple.map(simple => (
+      <MenuItem key={simple} eventKey={simple} active={simple === this.state.loadBalancer}>
+        {simple}
+      </MenuItem>
+    ));
+    return (
+      <Row>
+        <Col sm={12}>
+          <ControlLabel className={tlsStyle}>TLS</ControlLabel>
+          <DropdownButton bsStyle="default" title={this.state.mtlsMode} id="trafficPolicy-tls" onSelect={this.onTLS}>
+            {tlsMenuItems}
+          </DropdownButton>
+          <ControlLabel className={lbStyle}>LoadBalancer</ControlLabel>
+          <DropdownButton
+            bsStyle="default"
+            title={this.state.loadBalancer}
+            id="trafficPolicy-lb"
+            onSelect={this.onLoadBalancer}
+          >
+            {lbMenuItems}
+          </DropdownButton>
+        </Col>
+      </Row>
+    );
+  };
+
   renderContent = () => {
     return (
       <Wizard.Contents stepIndex={0} activeStepIndex={0}>
         <ListView>{this.renderWorkloads()}</ListView>
+        {this.renderTrafficPolicy()}
       </Wizard.Contents>
     );
   };
