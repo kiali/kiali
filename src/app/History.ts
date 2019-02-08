@@ -7,6 +7,7 @@ const history = createBrowserHistory({ basename: baseName });
 export default history;
 
 export enum URLParams {
+  AGGREGATOR = 'aggregator',
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
   DURATION = 'duration',

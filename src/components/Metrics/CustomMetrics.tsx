@@ -8,7 +8,7 @@ import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
-import { CustomMetricsOptions } from '../../types/MetricsOptions';
+import { CustomMetricsOptions, Aggregator } from '../../types/MetricsOptions';
 import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 
@@ -16,6 +16,7 @@ import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -89,6 +90,11 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     this.fetchMetrics();
   };
 
+  onRawAggregationChanged = (aggregator: Aggregator) => {
+    this.options.rawDataAggregator = aggregator;
+    this.fetchMetrics();
+  };
+
   render() {
     if (!this.props.isPageVisible) {
       return null;
@@ -118,6 +124,9 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
             onLabelsFiltersChanged={this.onLabelsFiltersChanged}
             labelValues={this.state.labelValues}
           />
+        </FormGroup>
+        <FormGroup>
+          <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
         </FormGroup>
         <ToolbarRightContent>
           <MetricsDuration onChanged={this.onDurationChanged} />
