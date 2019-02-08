@@ -45,9 +45,11 @@ func extractCustomMetricsQueryParams(r *http.Request, q *prometheus.CustomMetric
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	q.Version = queryParams.Get("version")
-	op := queryParams.Get("rawAggregationOperator")
-	if op != "" {
-		q.RawAggregationOperator = queryParams.Get("rawAggregationOperator")
+	op := queryParams.Get("rawDataAggregator")
+	// Explicit white-listing operators to prevent any kind of injection
+	// For a list of operators, see https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
+	if op == "sum" || op == "min" || op == "max" || op == "avg" || op == "stddev" || op == "stdvar" {
+		q.RawDataAggregator = op
 	}
 	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
 }
