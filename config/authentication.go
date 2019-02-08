@@ -13,13 +13,17 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 		errMsg := ""
 		conf := Get()
 		if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
-			err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+			user, err := ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", user)
 			if err != nil {
 				log.Warning("Token error: ", err)
 				statusCode = http.StatusUnauthorized
 			}
 		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {
 			u, p, ok := r.BasicAuth()
+			// Internal header used to propagate the subject of the request for audit purposes
+			r.Header.Add("Kiali-User", u)
 			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
 				statusCode = http.StatusUnauthorized
 			}
