@@ -38,7 +38,7 @@ func TestProcStat(t *testing.T) {
 		{name: "user time", want: 1677, have: int(s.UTime)},
 		{name: "system time", want: 44, have: int(s.STime)},
 		{name: "start time", want: 82375, have: int(s.Starttime)},
-		{name: "virtual memory size", want: 56274944, have: s.VSize},
+		{name: "virtual memory size", want: 56274944, have: int(s.VSize)},
 		{name: "resident set size", want: 1981, have: s.RSS},
 	} {
 		if test.want != test.have {
@@ -71,7 +71,7 @@ func TestProcStatVirtualMemory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if want, have := 56274944, s.VirtualMemory(); want != have {
+	if want, have := 56274944, int(s.VirtualMemory()); want != have {
 		t.Errorf("want virtual memory %d, have %d", want, have)
 	}
 }

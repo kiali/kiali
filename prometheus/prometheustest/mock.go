@@ -15,6 +15,36 @@ type PromAPIMock struct {
 	mock.Mock
 }
 
+func (o *PromAPIMock) AlertManagers(ctx context.Context) (v1.AlertManagersResult, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(v1.AlertManagersResult), args.Error(1)
+}
+
+func (o *PromAPIMock) CleanTombstones(ctx context.Context) error {
+	args := o.Called(ctx)
+	return args.Error(0)
+}
+
+func (o *PromAPIMock) Config(ctx context.Context) (v1.ConfigResult, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(v1.ConfigResult), args.Error(1)
+}
+
+func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
+	args := o.Called(ctx, matches, startTime, endTime)
+	return args.Error(0)
+}
+
+func (o *PromAPIMock) Flags(ctx context.Context) (v1.FlagsResult, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(v1.FlagsResult), args.Error(1)
+}
+
+func (o *PromAPIMock) LabelValues(ctx context.Context, label string) (model.LabelValues, error) {
+	args := o.Called(ctx, label)
+	return args.Get(0).(model.LabelValues), args.Error(1)
+}
+
 func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (model.Value, error) {
 	args := o.Called(ctx, query, ts)
 	return args.Get(0).(model.Value), args.Error(1)
@@ -25,14 +55,19 @@ func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r v1.Range) 
 	return args.Get(0).(model.Value), args.Error(1)
 }
 
-func (o *PromAPIMock) LabelValues(ctx context.Context, label string) (model.LabelValues, error) {
-	args := o.Called(ctx, label)
-	return args.Get(0).(model.LabelValues), args.Error(1)
-}
-
 func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]model.LabelSet, error) {
 	args := o.Called(ctx, matches, startTime, endTime)
 	return args.Get(0).([]model.LabelSet), args.Error(1)
+}
+
+func (o *PromAPIMock) Snapshot(ctx context.Context, skipHead bool) (v1.SnapshotResult, error) {
+	args := o.Called(ctx, skipHead)
+	return args.Get(0).(v1.SnapshotResult), args.Error(1)
+}
+
+func (o *PromAPIMock) Targets(ctx context.Context) (v1.TargetsResult, error) {
+	args := o.Called(ctx)
+	return args.Get(0).(v1.TargetsResult), args.Error(1)
 }
 
 // AlwaysReturnEmpty mocks all possible queries to return empty result
