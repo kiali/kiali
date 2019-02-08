@@ -9,6 +9,7 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -195,7 +196,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
-		if criteria.IncludeMeshPolicies {
+		// MeshPolicies are not namespaced. They will be only listed for the namespace
+		// where istio is deployed.
+		if criteria.IncludeMeshPolicies && criteria.Namespace == config.Get().IstioNamespace {
 			if mp, mpErr = in.k8s.GetMeshPolicies(criteria.Namespace); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
 			}
@@ -295,7 +298,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		}
 	case MeshPolicies:
 		if mp, err = in.k8s.GetMeshPolicy(namespace, object); err == nil {
-			istioConfigDetail.MeshPolicy = &models.Policy{}
+			istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 			istioConfigDetail.MeshPolicy.Parse(mp)
 		}
 	default:
@@ -358,7 +361,7 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 		istioConfigDetail.Policy = &models.Policy{}
 		err = json.Unmarshal(body, istioConfigDetail.Policy)
 	case MeshPolicies:
-		istioConfigDetail.MeshPolicy = &models.Policy{}
+		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
@@ -454,7 +457,7 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 		istioConfigDetail.Policy = &models.Policy{}
 		istioConfigDetail.Policy.Parse(result)
 	case MeshPolicies:
-		istioConfigDetail.MeshPolicy = &models.Policy{}
+		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		istioConfigDetail.MeshPolicy.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)

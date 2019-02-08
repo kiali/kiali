@@ -3066,7 +3066,7 @@
           "$ref": "#/definitions/Gateway"
         },
         "meshPolicy": {
-          "$ref": "#/definitions/Policy"
+          "$ref": "#/definitions/MeshPolicy"
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
@@ -3215,6 +3215,45 @@
         "$ref": "#/definitions/SampleStream"
       },
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "MeshPolicy": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "originIsOptional": {
+              "type": "object",
+              "x-go-name": "OriginIsOptional"
+            },
+            "origins": {
+              "type": "object",
+              "x-go-name": "Origins"
+            },
+            "peerIsOptional": {
+              "type": "object",
+              "x-go-name": "PeerIsOptional"
+            },
+            "peers": {
+              "type": "object",
+              "x-go-name": "Peers"
+            },
+            "principalBinding": {
+              "type": "object",
+              "x-go-name": "PrincipalBinding"
+            },
+            "targets": {
+              "type": "object",
+              "x-go-name": "Targets"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "Metric": {
       "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",

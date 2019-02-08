@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -138,10 +137,7 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	if checkType(types, business.Policies) {
 		criteria.IncludePolicies = true
 	}
-
-	// MeshPolicies are not namespaced. They will be only listed for the namespace
-	// where istio is deployed.
-	if checkType(types, business.MeshPolicies) && namespace == config.Get().IstioNamespace {
+	if checkType(types, business.MeshPolicies) {
 		criteria.IncludeMeshPolicies = true
 	}
 	return criteria
