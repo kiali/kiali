@@ -357,6 +357,9 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case Policies:
 		istioConfigDetail.Policy = &models.Policy{}
 		err = json.Unmarshal(body, istioConfigDetail.Policy)
+	case MeshPolicies:
+		istioConfigDetail.MeshPolicy = &models.Policy{}
+		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}
@@ -450,6 +453,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case Policies:
 		istioConfigDetail.Policy = &models.Policy{}
 		istioConfigDetail.Policy.Parse(result)
+	case MeshPolicies:
+		istioConfigDetail.MeshPolicy = &models.Policy{}
+		istioConfigDetail.MeshPolicy.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}
