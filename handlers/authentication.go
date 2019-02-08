@@ -36,7 +36,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 			}
 		case "login":
 			if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
-				err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+				_, err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 
 				if err != nil {
 					log.Warning("Token error: ", err)
