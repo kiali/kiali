@@ -56,7 +56,9 @@ endif
 
 # Determine if an end-of-week snapshot is being released and
 # set the "bumped version" accordingly.
-ifeq ($(findstring $(RELEASE_TYPE), snapshot edge),$(RELEASE_TYPE))
+ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
+  UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
+else ifeq ($(findstring $(RELEASE_TYPE),edge),$(RELEASE_TYPE))
   UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
 else
   UI_BUMPED_VERSION ?= $(shell semver bump $(RELEASE_TYPE) $(UI_VERSION))
