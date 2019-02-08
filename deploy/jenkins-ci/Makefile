@@ -20,7 +20,16 @@ ifeq ($(RELEASE_TYPE),minor)
   # For minor, remove the -SNAPSHOT suffix from the Makefile
   BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump release $(BACKEND_VERSION))
 endif
-ifeq ($(findstring $(RELEASE_TYPE),snapshot edge),$(RELEASE_TYPE))
+
+ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else ifeq ($(RELEASE_TYPE),edge)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = n
+endif
+
+ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   # For end-of-week snapshot and edge release, substitute the -SNAPSHOT prefix in the Makefile with
   # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X} or edge
   BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump prerel $(RELEASE_TYPE) $(BACKEND_VERSION))
@@ -45,7 +54,7 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
 
-ifeq ($(findstring $(RELEASE_TYPE),snapshot edge),$(RELEASE_TYPE))
+ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
   OMIT_VERSION_BRANCH ?= y
 else
