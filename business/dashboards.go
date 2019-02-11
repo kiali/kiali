@@ -62,7 +62,11 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 			defer wg.Done()
 			filledCharts[idx] = models.ConvertChart(chart)
 			if chart.DataType == kubernetes.Raw {
-				filledCharts[idx].Metric = in.prom.FetchRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
+				aggregator := params.RawDataAggregator
+				if chart.Aggregator != "" {
+					aggregator = chart.Aggregator
+				}
+				filledCharts[idx].Metric = in.prom.FetchRange(chart.MetricName, labels, grouping, aggregator, &params.BaseMetricsQuery)
 			} else if chart.DataType == kubernetes.Rate {
 				filledCharts[idx].Metric = in.prom.FetchRateRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			} else {

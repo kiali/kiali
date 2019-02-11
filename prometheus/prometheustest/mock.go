@@ -173,8 +173,8 @@ func (o *PromClientMock) GetDestinationServices(namespace string, namespaceCreat
 	return args.Get(0).([]prometheus.Service), args.Error(1)
 }
 
-func (o *PromClientMock) FetchRange(metricName, labels, grouping string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
-	args := o.Called(metricName, labels, grouping, q)
+func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
+	args := o.Called(metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(*prometheus.Metric)
 }
 

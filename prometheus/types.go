@@ -50,14 +50,16 @@ func (q *IstioMetricsQuery) FillDefaults() {
 // CustomMetricsQuery holds query parameters for a custom metrics query
 type CustomMetricsQuery struct {
 	BaseMetricsQuery
-	Namespace string
-	App       string
-	Version   string
+	Namespace         string
+	App               string
+	Version           string
+	RawDataAggregator string
 }
 
 // FillDefaults fills the struct with default parameters
 func (q *CustomMetricsQuery) FillDefaults() {
 	q.BaseMetricsQuery.fillDefaults()
+	q.RawDataAggregator = "sum"
 }
 
 // Metrics contains all simple metrics and histograms data

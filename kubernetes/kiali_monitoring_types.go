@@ -34,6 +34,7 @@ type MonitoringDashboardChart struct {
 	Spans        int
 	MetricName   string
 	DataType     string // MetricType is either "raw", "rate" or "histogram"
+	Aggregator   string // Aggregator can be set for raw data. Ex: "sum", "avg". See https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
 	Aggregations []MonitoringDashboardAggregation
 }
 
