@@ -3,6 +3,7 @@ package virtual_services
 import (
 	"testing"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -29,6 +30,25 @@ func TestFoundGateway(t *testing.T) {
 	assert := assert.New(t)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
+	gatewayNames := kubernetes.GatewayNames([]kubernetes.IstioObject{data.CreateEmptyGateway("my-gateway", make(map[string]string))})
+
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
+	}
+
+	validations, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestFQDNFoundGateway(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test.svc.cluster.local", "mesh"}, data.CreateVirtualService())
 	gatewayNames := kubernetes.GatewayNames([]kubernetes.IstioObject{data.CreateEmptyGateway("my-gateway", make(map[string]string))})
 
 	checker := NoGatewayChecker{
