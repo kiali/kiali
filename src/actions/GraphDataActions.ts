@@ -1,4 +1,6 @@
 import { ActionType, createAction } from 'typesafe-actions';
+import { GraphElements } from '../types/Graph';
+import { DurationInSeconds, TimeInSeconds } from '../types/Common';
 
 enum GraphDataActionKeys {
   GET_GRAPH_DATA_START = 'GET_GRAPH_DATA_START',
@@ -12,7 +14,7 @@ export const GraphDataActions = {
   getGraphDataStart: createAction(GraphDataActionKeys.GET_GRAPH_DATA_START),
   getGraphDataSuccess: createAction(
     GraphDataActionKeys.GET_GRAPH_DATA_SUCCESS,
-    resolve => (timestamp: number, graphDuration: number, graphData: any) =>
+    resolve => (timestamp: TimeInSeconds, graphDuration: DurationInSeconds, graphData: GraphElements) =>
       resolve({
         timestamp: timestamp,
         graphDuration: graphDuration,

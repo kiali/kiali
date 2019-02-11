@@ -32,7 +32,8 @@ import {
   NodeParamsType,
   NodeType,
   GraphType,
-  CyData
+  CyData,
+  DecoratedGraphElements
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
@@ -49,7 +50,7 @@ import * as MessageCenterUtils from '../../utils/MessageCenter';
 type ReduxProps = {
   activeNamespaces: Namespace[];
   duration: DurationInSeconds;
-  elements?: any;
+  elements?: DecoratedGraphElements;
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   layout: Layout;

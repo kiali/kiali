@@ -82,3 +82,94 @@ export interface CytoscapeBaseEvent {
 export interface CytoscapeClickEvent extends CytoscapeBaseEvent {}
 export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
 export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
+
+// Graph Structures
+export interface ProtocolTraffic {
+  protocol: string;
+  rates: any;
+}
+
+export interface GraphNodeData {
+  id: string;
+  parent?: string;
+  nodeType: NodeType;
+  namespace: string;
+  workload?: string;
+  app?: string;
+  version?: string;
+  service?: string;
+  destServices?: any;
+  traffic?: ProtocolTraffic[];
+  hasCB?: boolean;
+  hasMissingSC?: boolean;
+  hasVS?: boolean;
+  isDead?: boolean;
+  isGroup?: string;
+  isInaccessible?: boolean;
+  isMisconfigured?: string;
+  isOutside?: boolean;
+  isRoot?: boolean;
+  isServiceEntry?: string;
+  isUnused?: boolean;
+}
+
+export interface GraphEdgeData {
+  id: string;
+  source: string;
+  target: string;
+  traffic?: ProtocolTraffic;
+  responseTime?: string;
+  isMTLS?: string;
+  isUnused?: string;
+}
+
+export interface GraphNodeWrapper {
+  data: GraphNodeData;
+}
+
+export interface GraphEdgeWrapper {
+  data: GraphEdgeData;
+}
+
+export interface GraphElements {
+  nodes?: GraphNodeWrapper[];
+  edges?: GraphEdgeWrapper[];
+}
+
+export interface DecoratedGraphNodeData extends GraphNodeData {
+  grpcIn: string;
+  grpcInErr: string;
+  grpcOut: string;
+  httpIn: string;
+  httpIn3xx: string;
+  httpIn4xx: string;
+  httpIn5xx: string;
+  httpOut: string;
+  tcpIn: string;
+  tcpOut: string;
+}
+
+export interface DecoratedGraphEdgeData extends GraphEdgeData {
+  grpc: string;
+  grpcErr: string;
+  http: string;
+  http3xx: string;
+  http4xx: string;
+  http5xx: string;
+  httpPercentErr: string;
+  httpPercentReq: string;
+  tcp: string;
+}
+
+export interface DecoratedGraphNodeWrapper {
+  data: DecoratedGraphNodeData;
+}
+
+export interface DecoratedGraphEdgeWrapper {
+  data: DecoratedGraphEdgeData;
+}
+
+export interface DecoratedGraphElements {
+  nodes?: DecoratedGraphNodeWrapper[];
+  edges?: DecoratedGraphEdgeWrapper[];
+}

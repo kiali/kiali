@@ -1,4 +1,5 @@
 import { PfColors } from '../../components/Pf/PfColors';
+import { NodeType } from '../../types/Graph';
 
 export const TEST = {
   elements: {
@@ -9,8 +10,8 @@ export const TEST = {
           text: 'details (v1)',
           service: 'details.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22details.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -19,8 +20,8 @@ export const TEST = {
           text: 'productpage (v1)',
           service: 'productpage.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22productpage.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -29,8 +30,8 @@ export const TEST = {
           text: 'reviews (v1)',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -39,8 +40,8 @@ export const TEST = {
           text: 'unknown',
           service: 'unknown',
           version: 'unknown',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22unknown%22%2Csource_version%3D%22unknown%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       }
     ],
@@ -85,8 +86,8 @@ export const ISTIO_SYSTEM = {
           text: 'details (v1)',
           service: 'details.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22details.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -95,8 +96,8 @@ export const ISTIO_SYSTEM = {
           text: 'productpage (v1)',
           service: 'productpage.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22productpage.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -105,15 +106,17 @@ export const ISTIO_SYSTEM = {
           text: 'ratings (v1)',
           service: 'ratings.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22ratings.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
         data: {
           id: 'n7',
           text: 'reviews',
-          service: 'reviews.istio-system.svc.cluster.local'
+          service: 'reviews.istio-system.svc.cluster.local',
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -123,8 +126,8 @@ export const ISTIO_SYSTEM = {
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v1',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v1%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -134,19 +137,19 @@ export const ISTIO_SYSTEM = {
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v2',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v2%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
         data: {
           id: 'n6',
-          text: 'reviews (v3)',
+          text: 'reviews ( v3 )',
           parent: 'n7',
           service: 'reviews.istio-system.svc.cluster.local',
           version: 'v3',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bdestination_service%3D%22reviews.istio-system.svc.cluster.local%22%2Cdestination_version%3D%22v3%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       },
       {
@@ -155,8 +158,8 @@ export const ISTIO_SYSTEM = {
           text: 'unknown',
           service: 'unknown',
           version: 'unknown',
-          link_prom_graph:
-            'http://prometheus:9090/graph?g0.range_input=1h\u0026g0.tab=0\u0026g0.expr=istio_request_count%7Bsource_service%3D%22unknown%22%2Csource_version%3D%22unknown%22%7D'
+          namespace: 'istio-system',
+          nodeType: NodeType.APP
         }
       }
     ],

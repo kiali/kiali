@@ -47,7 +47,7 @@ describe('GraphDataState', () => {
   });
 
   it('should handle GET_GRAPH_DATA_SUCCESS', () => {
-    const action = GraphDataActions.getGraphDataSuccess(100, 10, []);
+    const action = GraphDataActions.getGraphDataSuccess(100, 10, {});
     const updatedState = graphDataState(undefined, action);
 
     expect(updatedState.isLoading).toBeFalsy();
@@ -57,7 +57,7 @@ describe('GraphDataState', () => {
       isLoading: false,
       graphDataTimestamp: 100,
       graphDataDuration: 10,
-      graphData: []
+      graphData: {}
     });
   });
 

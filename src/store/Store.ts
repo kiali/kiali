@@ -2,7 +2,7 @@ import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
 import { DurationInSeconds, PollIntervalInMs, TimeInSeconds } from '../types/Common';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
-import { GraphType, NodeParamsType, SummaryData, CyData } from '../types/Graph';
+import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 
 // Store is the Redux Data store
 
@@ -55,7 +55,7 @@ export interface GraphState {
   error?: string; // the error message to show from loading graph
   graphDataDuration: DurationInSeconds;
   graphDataTimestamp: TimeInSeconds;
-  graphData: any;
+  graphData: GraphElements;
   filterState: GraphFilterState;
   layout: Layout;
   node?: NodeParamsType;

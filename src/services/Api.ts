@@ -19,7 +19,7 @@ import {
 import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
-import { NodeParamsType, NodeType } from '../types/Graph';
+import { NodeParamsType, NodeType, GraphElements } from '../types/Graph';
 import { config } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
 import { ServerConfig } from '../config/Config';
@@ -352,7 +352,7 @@ export const getJaegerInfo = (auth: AuthToken) => {
 };
 
 export const getGraphElements = (auth: AuthToken, params: any) => {
-  return newRequest(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
+  return newRequest<GraphElements>(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
 };
 
 export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, params: any) => {

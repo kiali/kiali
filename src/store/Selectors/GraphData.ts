@@ -3,11 +3,21 @@
 // Put default values for all fields that are omitted.
 import { KialiAppState } from '../Store';
 import { createSelector } from 'reselect';
+import {
+  DecoratedGraphEdgeData,
+  DecoratedGraphEdgeWrapper,
+  DecoratedGraphElements,
+  DecoratedGraphNodeData,
+  DecoratedGraphNodeWrapper,
+  GraphEdgeWrapper,
+  GraphElements,
+  GraphNodeWrapper
+} from '../../types/Graph';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non provided values are taken as "this didn't change", similar as setState does.
 // Put default values for all fields that are omitted.
-const decorateGraphData = (graphData: any) => {
+export const decorateGraphData = (graphData: GraphElements): DecoratedGraphElements => {
   const elementsDefaults = {
     edges: {
       grpc: 'NaN',
@@ -55,40 +65,43 @@ const decorateGraphData = (graphData: any) => {
       workload: undefined
     }
   };
+  const decoratedGraph: DecoratedGraphElements = {};
   if (graphData) {
     if (graphData.nodes) {
-      graphData.nodes = graphData.nodes.map(node => {
+      decoratedGraph.nodes = graphData.nodes.map((node: GraphNodeWrapper) => {
         const decoratedNode = { ...node };
         // parse out the traffic data into top level fields for the various protocols. This is done
         // to be back compatible with our existing ui code that expects the explicit http and tcp fields.
         // We can then set the 'traffic' field undefined because it is unused in the cy element handling.
-        // TODO: refactor the code to use the traffic structure.
-        if (node.data.traffic) {
-          const traffic = node.data.traffic;
-          node.data.traffic = undefined;
+        if (decoratedNode.data.traffic) {
+          const traffic = decoratedNode.data.traffic;
+          decoratedNode.data.traffic = undefined;
           traffic.map(protocol => {
             decoratedNode.data = { ...protocol.rates, ...decoratedNode.data };
           });
         }
-        decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data };
-        return decoratedNode;
+        // prettier-ignore
+        decoratedNode.data = <DecoratedGraphNodeData> { ...elementsDefaults.nodes, ...decoratedNode.data };
+        // prettier-ignore
+        return <DecoratedGraphNodeWrapper> decoratedNode;
       });
     }
     if (graphData.edges) {
-      graphData.edges = graphData.edges.map(edge => {
+      decoratedGraph.edges = graphData.edges.map((edge: GraphEdgeWrapper) => {
         const decoratedEdge = { ...edge };
+        const { traffic, ...edgeData } = edge.data;
         // see comment above about the 'traffic' data handling
-        if (edge.data.traffic) {
-          const traffic = edge.data.traffic;
-          edge.data.traffic = undefined;
-          decoratedEdge.data = { protocol: traffic.protocol, ...traffic.rates, ...decoratedEdge.data };
+        if (traffic) {
+          decoratedEdge.data = { protocol: traffic.protocol, ...traffic.rates, ...edgeData };
         }
-        decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data };
-        return decoratedEdge;
+        // prettier-ignore
+        decoratedEdge.data = <DecoratedGraphEdgeData> { ...elementsDefaults.edges, ...decoratedEdge.data };
+        // prettier-ignore
+        return <DecoratedGraphEdgeWrapper> decoratedEdge;
       });
     }
   }
-  return graphData;
+  return decoratedGraph;
 };
 
 const getGraphData = (state: KialiAppState) => state.graph.graphData;

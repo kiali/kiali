@@ -6,6 +6,7 @@ import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Layout, EdgeLabelMode } from '../../../types/GraphFilter';
 import EmptyGraphLayout from '../../../containers/EmptyGraphLayoutContainer';
 import { GraphType } from '../../../types/Graph';
+import { decorateGraphData } from '../../../store/Selectors/GraphData';
 
 jest.mock('../../../services/Api');
 
@@ -33,7 +34,7 @@ describe('CytoscapeGraph component test', () => {
         activeNamespaces={[{ name: testNamespace }]}
         duration={60}
         edgeLabelMode={myEdgeLabelMode}
-        elements={GRAPH_DATA[testNamespace].elements}
+        elements={decorateGraphData(GRAPH_DATA[testNamespace].elements)}
         layout={myLayout}
         updateGraph={testClickHandler}
         updateSummary={testClickHandler}
@@ -56,7 +57,8 @@ describe('CytoscapeGraph component test', () => {
       />
     );
     const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);
-    expect(emptyGraphLayoutWrapper.prop('elements')['nodes']).toEqual(GRAPH_DATA[testNamespace].elements.nodes);
-    expect(emptyGraphLayoutWrapper.prop('elements')['edges']).toEqual(GRAPH_DATA[testNamespace].elements.edges);
+    const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
+    expect(emptyGraphLayoutWrapper.prop('elements')['nodes']).toEqual(emptyGraphDecorated.nodes);
+    expect(emptyGraphLayoutWrapper.prop('elements')['edges']).toEqual(emptyGraphDecorated.edges);
   });
 });
