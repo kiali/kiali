@@ -125,9 +125,9 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.virtualService).toBeDefined();
       expect(second.virtualService!.metadata.name).toBe('blue1');
 
-      const last = sorted[29];
-      expect(last.quotaSpecBinding).toBeDefined();
-      expect(last.quotaSpecBinding!.metadata.name).toBe('white8');
+      const last = sorted[32];
+      expect(last.policy).toBeDefined();
+      expect(last.policy!.metadata.name).toBe('white9');
     });
   });
 
@@ -142,10 +142,10 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(sorted.length).toBe(33);
 
       const first = sorted[0];
-      expect(first.quotaSpecBinding).toBeDefined();
-      expect(first.quotaSpecBinding!.metadata.name).toBe('white8');
+      expect(first.policy).toBeDefined();
+      expect(first.policy!.metadata.name).toBe('white9');
 
-      const last = sorted[29];
+      const last = sorted[32];
       expect(last.gateway).toBeDefined();
       expect(last.gateway!.metadata.name).toBe('blue0');
     });
@@ -168,7 +168,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.destinationRule).toBeDefined();
       expect(second.destinationRule!.metadata.name).toBe('blue2');
 
-      const last = sorted[29];
+      const last = sorted[32];
       expect(last.virtualService).toBeDefined();
       expect(last.virtualService!.metadata.name).toBe('white1');
     });
