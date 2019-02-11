@@ -349,6 +349,20 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 	return policies, nil
 }
 
+func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (IstioObject, error) {
+	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(meshPolicies).SubResource(policyName).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	mp, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a MeshPolicy object", namespace)
+	}
+
+	return mp.DeepCopyIstioObject(), nil
+}
+
 // UpdateIstioObject updates an Istio object from either config api or networking api
 func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
 	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)

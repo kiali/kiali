@@ -52,7 +52,6 @@ type IstioClientInterface interface {
 	GetIstioRule(namespace string, istiorule string) (IstioObject, error)
 	GetIstioRules(namespace string) ([]IstioObject, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
-	GetMeshPolicies(namespace string) ([]IstioObject, error)
 	GetNamespace(namespace string) (*v1.Namespace, error)
 	GetNamespaces() ([]v1.Namespace, error)
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
@@ -75,6 +74,8 @@ type IstioClientInterface interface {
 	GetTemplates(namespace string) ([]IstioObject, error)
 	GetPolicy(namespace string, policyName string) (IstioObject, error)
 	GetPolicies(namespace string) ([]IstioObject, error)
+	GetMeshPolicy(namespace string, policyName string) (IstioObject, error)
+	GetMeshPolicies(namespace string) ([]IstioObject, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool

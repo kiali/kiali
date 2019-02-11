@@ -9,6 +9,7 @@ import (
 
 	errors2 "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -31,6 +32,7 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecs        bool
 	IncludeQuotaSpecBindings bool
 	IncludePolicies          bool
+	IncludeMeshPolicies      bool
 }
 
 const (
@@ -44,6 +46,7 @@ const (
 	QuotaSpecs        = "quotaspecs"
 	QuotaSpecBindings = "quotaspecbindings"
 	Policies          = "policies"
+	MeshPolicies      = "meshpolicies"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -57,6 +60,7 @@ var resourceTypesToAPI = map[string]string{
 	QuotaSpecs:        kubernetes.ConfigGroupVersion.Group,
 	QuotaSpecBindings: kubernetes.ConfigGroupVersion.Group,
 	Policies:          kubernetes.AuthenticationGroupVersion.Group,
+	MeshPolicies:      kubernetes.AuthenticationGroupVersion.Group,
 }
 
 var apiToVersion = map[string]string{
@@ -93,11 +97,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		QuotaSpecs:        models.QuotaSpecs{},
 		QuotaSpecBindings: models.QuotaSpecBindings{},
 		Policies:          models.Policies{},
+		MeshPolicies:      models.Policies{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr error
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(11)
 
 	go func() {
 		defer wg.Done()
@@ -189,6 +194,17 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		// MeshPolicies are not namespaced. They will be only listed for the namespace
+		// where istio is deployed.
+		if criteria.IncludeMeshPolicies && criteria.Namespace == config.Get().IstioNamespace {
+			if mp, mpErr = in.k8s.GetMeshPolicies(criteria.Namespace); mpErr == nil {
+				(&istioConfigList.MeshPolicies).Parse(mp)
+			}
+		}
+	}()
+
 	wg.Wait()
 
 	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr} {
@@ -215,7 +231,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t, pc kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -280,6 +296,11 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			istioConfigDetail.Policy = &models.Policy{}
 			istioConfigDetail.Policy.Parse(pc)
 		}
+	case MeshPolicies:
+		if mp, err = in.k8s.GetMeshPolicy(namespace, object); err == nil {
+			istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
+			istioConfigDetail.MeshPolicy.Parse(mp)
+		}
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}
@@ -339,6 +360,9 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case Policies:
 		istioConfigDetail.Policy = &models.Policy{}
 		err = json.Unmarshal(body, istioConfigDetail.Policy)
+	case MeshPolicies:
+		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
+		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}
@@ -432,6 +456,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case Policies:
 		istioConfigDetail.Policy = &models.Policy{}
 		istioConfigDetail.Policy.Parse(result)
+	case MeshPolicies:
+		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
+		istioConfigDetail.MeshPolicy.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}
