@@ -179,7 +179,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     const sortField: SortField<IstioConfigItem> = IstioConfigListFilters.sortFields[1];
     const isAscending = false;
 
-    IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
+    return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
       expect(sorted.length).toBe(33);
 
