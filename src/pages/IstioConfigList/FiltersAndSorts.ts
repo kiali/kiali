@@ -128,6 +128,10 @@ export namespace IstioConfigListFilters {
       {
         id: 'Policy',
         title: 'Policy'
+      },
+      {
+        id: 'MeshPolicy',
+        title: 'MeshPolicy'
       }
     ]
   };

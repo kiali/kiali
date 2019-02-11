@@ -229,7 +229,12 @@ class IstioConfigListComponent extends ListComponent.Component<
       iconName = 'locked';
       iconType = 'pf';
       type = 'Policy';
+    } else if (istioItem.type === 'meshpolicy') {
+      iconName = 'locked';
+      iconType = 'pf';
+      type = 'MeshPolicy';
     }
+
     // Adapters and Templates need to pass subtype
     if (istioItem.type === 'adapter' || istioItem.type === 'template') {
       // Build a /adapters/<adapter_type_plural>/<adapter_name> or

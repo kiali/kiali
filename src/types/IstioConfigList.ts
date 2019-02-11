@@ -31,6 +31,7 @@ export interface IstioConfigItem {
   quotaSpec?: QuotaSpec;
   quotaSpecBinding?: QuotaSpecBinding;
   policy?: Policy;
+  meshPolicy?: Policy;
   validation?: ObjectValidation;
 }
 
@@ -46,6 +47,7 @@ export interface IstioConfigList {
   quotaSpecs: QuotaSpec[];
   quotaSpecBindings: QuotaSpecBinding[];
   policies: Policy[];
+  meshPolicies: Policy[];
   permissions: { [key: string]: ResourcePermissions };
   validations: Validations;
 }
@@ -69,6 +71,7 @@ export const dicIstioType = {
   QuotaSpec: 'quotaspecs',
   QuotaSpecBinding: 'quotaspecbindings',
   Policy: 'policies',
+  MeshPolicy: 'meshpolicies',
   gateways: 'Gateway',
   virtualservices: 'VirtualService',
   destinationrules: 'DestinationRule',
@@ -80,7 +83,8 @@ export const dicIstioType = {
   quotaspecbindings: 'QuotaSpecBinding',
   instance: 'Instance',
   handler: 'Handler',
-  policies: 'Policy'
+  policies: 'Policy',
+  meshpolicies: 'MeshPolicy'
 };
 
 const includeName = (name: string, names: string[]) => {
@@ -114,6 +118,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     quotaSpecs: unfiltered.quotaSpecs.filter(qs => includeName(qs.metadata.name, names)),
     quotaSpecBindings: unfiltered.quotaSpecBindings.filter(qsb => includeName(qsb.metadata.name, names)),
     policies: unfiltered.policies.filter(p => includeName(p.metadata.name, names)),
+    meshPolicies: unfiltered.meshPolicies.filter(p => includeName(p.metadata.name, names)),
     validations: unfiltered.validations,
     permissions: unfiltered.permissions
   };
@@ -229,6 +234,14 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     istioItems.push({
       namespace: istioConfigList.namespace.name,
       type: 'policy',
+      name: p.metadata.name,
+      policy: p
+    })
+  );
+  istioConfigList.meshPolicies.forEach(p =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'meshpolicy',
       name: p.metadata.name,
       policy: p
     })

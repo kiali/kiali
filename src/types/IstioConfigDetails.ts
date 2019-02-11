@@ -38,6 +38,7 @@ export interface IstioConfigDetails {
   quotaSpec: QuotaSpec;
   quotaSpecBinding: QuotaSpecBinding;
   policy: Policy;
+  meshPolicy: Policy;
   permissions: ResourcePermissions;
   validation: ObjectValidation;
 }

@@ -222,6 +222,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.quotaSpecBinding;
       } else if (this.state.istioObjectDetails.policy) {
         istioObject = this.state.istioObjectDetails.policy;
+      } else if (this.state.istioObjectDetails.meshPolicy) {
+        istioObject = this.state.istioObjectDetails.meshPolicy;
       }
     }
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
