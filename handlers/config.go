@@ -95,7 +95,7 @@ func getPrometheusConfig() PrometheusConfig {
 
 func checkErr(err error, message string) bool {
 	if err != nil {
-		log.Errorf("%s: ", message, err)
+		log.Errorf("%s: %v", message, err)
 		return false
 	}
 	return true
