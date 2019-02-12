@@ -105,6 +105,7 @@ node('kiali-build') {
         returnStdout: true,
         script: "${backendDir}/deploy/jenkins-ci/bin/determine-release-type.sh").trim()
     }
+    echo "Resolved release type: ${releaseType}"
 
     withEnv(["PATH+TOOLS=${env.WORKSPACE}/${backendDir}/deploy/jenkins-ci/bin",
             "GOPATH=${env.WORKSPACE}",
