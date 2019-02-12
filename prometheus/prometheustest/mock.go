@@ -143,6 +143,16 @@ func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, que
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
+func (o *PromClientMock) GetConfiguration() (v1.ConfigResult, error) {
+	args := o.Called()
+	return args.Get(0).(v1.ConfigResult), args.Error(1)
+}
+
+func (o *PromClientMock) GetFlags() (v1.FlagsResult, error) {
+	args := o.Called()
+	return args.Get(0).(v1.FlagsResult), args.Error(1)
+}
+
 func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
