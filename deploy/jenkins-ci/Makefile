@@ -34,8 +34,8 @@ ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
   # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X}
   BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump prerel $(RELEASE_TYPE) $(BACKEND_VERSION))
 else ifeq ($(RELEASE_TYPE),edge)
-  # For edge releases, substitute -SNAPSHOT prefix in the Makefile with 'latest'
-  BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump prerel 'latest' $(BACKEND_VERSION))
+  # Use 'latest' for edge releases
+  BACKEND_VERSION_TO_RELEASE ?= latest
 endif
 
 # NOTE: The value fo BACKEND_BUMPED_VERSION and BACKEND_VERSION_BRANCH will only be valid
