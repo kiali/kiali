@@ -32,6 +32,21 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     this.fetchWorkload();
   }
 
+  componentDidUpdate(prevProps: RouteComponentProps<WorkloadId>) {
+    if (
+      this.props.match.params.namespace !== prevProps.match.params.namespace ||
+      this.props.match.params.workload !== prevProps.match.params.workload
+    ) {
+      this.setState({
+        workload: emptyWorkload,
+        validations: {},
+        istioEnabled: false,
+        health: undefined
+      });
+      this.fetchWorkload();
+    }
+  }
+
   // All information for validations is fetched in the workload, no need to add another call
   workloadValidations(workload: Workload): Validations {
     const noIstiosidecar: ObjectCheck = { message: 'Pod has no Istio sidecar', severity: 'warning', path: '' };
