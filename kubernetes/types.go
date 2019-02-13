@@ -50,6 +50,19 @@ const (
 	meshPolicyType     = "MeshPolicy"
 	meshPolicyTypeList = "MeshPolicyList"
 
+	// Rbac
+	rbacconfigs        = "rbacconfigs"
+	rbacconfigType     = "RbacConfig"
+	rbacconfigTypeList = "RbacConfigList"
+
+	serviceroles        = "serviceroles"
+	serviceroleType     = "ServiceRole"
+	serviceroleTypeList = "ServiceRoleList"
+
+	servicerolebindings        = "servicerolebindings"
+	servicerolebindingType     = "ServiceRoleBinding"
+	servicerolebindingTypeList = "ServiceRoleBindingList"
+
 	// Config - Rules
 
 	rules        = "rules"
@@ -180,6 +193,12 @@ var (
 		Version: "v1alpha1",
 	}
 	ApiAuthenticationVersion = AuthenticationGroupVersion.Group + "/" + AuthenticationGroupVersion.Version
+
+	RbacGroupVersion = schema.GroupVersion{
+		Group:   "rbac.istio.io",
+		Version: "v1alpha1",
+	}
+	ApiRbacVersion = RbacGroupVersion.Group + "/" + RbacGroupVersion.Version
 
 	networkingTypes = []struct {
 		objectKind     string
@@ -350,6 +369,24 @@ var (
 		},
 	}
 
+	rbacTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     rbacconfigType,
+			collectionKind: rbacconfigTypeList,
+		},
+		{
+			objectKind:     serviceroleType,
+			collectionKind: serviceroleTypeList,
+		},
+		{
+			objectKind:     servicerolebindingType,
+			collectionKind: servicerolebindingTypeList,
+		},
+	}
+
 	// A map to get the plural for a Istio type using the singlar type
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
@@ -426,7 +463,13 @@ var (
 		servicecontrolreports: servicecontrolreportType,
 
 		// Policies
-		policies: policyType,
+		policies:     policyType,
+		meshPolicies: meshPolicyType,
+
+		// Rbac
+		rbacconfigs:         rbacconfigType,
+		serviceroles:        serviceroleType,
+		servicerolebindings: servicerolebindingType,
 	}
 )
 

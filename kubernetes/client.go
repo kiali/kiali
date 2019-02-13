@@ -76,6 +76,12 @@ type IstioClientInterface interface {
 	GetPolicies(namespace string) ([]IstioObject, error)
 	GetMeshPolicy(namespace string, policyName string) (IstioObject, error)
 	GetMeshPolicies(namespace string) ([]IstioObject, error)
+	GetRbacConfig(namespace string, name string) (IstioObject, error)
+	GetRbacConfigs(namespace string) ([]IstioObject, error)
+	GetServiceRole(namespace string, name string) (IstioObject, error)
+	GetServiceRoles(namespace string) ([]IstioObject, error)
+	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
+	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool
@@ -91,6 +97,7 @@ type IstioClient struct {
 	istioConfigApi         *rest.RESTClient
 	istioNetworkingApi     *rest.RESTClient
 	istioAuthenticationApi *rest.RESTClient
+	istioRbacApi           *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
@@ -114,6 +121,11 @@ func (client *IstioClient) GetIstioConfigApi() *rest.RESTClient {
 // GetIstioNetworkingApi returns the istio config rest client
 func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
 	return client.istioNetworkingApi
+}
+
+// GetIstioRbacApi returns the istio rbac rest client
+func (client *IstioClient) GetIstioRbacApi() *rest.RESTClient {
+	return client.istioRbacApi
 }
 
 // ConfigClient return a client with the correct configuration
@@ -211,9 +223,16 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
 			}
+			// Register rbac types
+			for _, rt := range rbacTypes {
+				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
+
+			}
 			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, AuthenticationGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, RbacGroupVersion)
 			return nil
 		})
 
@@ -238,9 +257,15 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	istioRbacApi, err := newClientForAPI(config, RbacGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioAuthenticationApi = istioAuthenticationAPI
+	client.istioRbacApi = istioRbacApi
 	return &client, nil
 }
 

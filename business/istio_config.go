@@ -21,52 +21,62 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
-	Namespace                string
-	IncludeGateways          bool
-	IncludeVirtualServices   bool
-	IncludeDestinationRules  bool
-	IncludeServiceEntries    bool
-	IncludeRules             bool
-	IncludeAdapters          bool
-	IncludeTemplates         bool
-	IncludeQuotaSpecs        bool
-	IncludeQuotaSpecBindings bool
-	IncludePolicies          bool
-	IncludeMeshPolicies      bool
+	Namespace                  string
+	IncludeGateways            bool
+	IncludeVirtualServices     bool
+	IncludeDestinationRules    bool
+	IncludeServiceEntries      bool
+	IncludeRules               bool
+	IncludeAdapters            bool
+	IncludeTemplates           bool
+	IncludeQuotaSpecs          bool
+	IncludeQuotaSpecBindings   bool
+	IncludePolicies            bool
+	IncludeMeshPolicies        bool
+	IncludeRbacConfigs         bool
+	IncludeServiceRoles        bool
+	IncludeServiceRoleBindings bool
 }
 
 const (
-	VirtualServices   = "virtualservices"
-	DestinationRules  = "destinationrules"
-	ServiceEntries    = "serviceentries"
-	Gateways          = "gateways"
-	Rules             = "rules"
-	Adapters          = "adapters"
-	Templates         = "templates"
-	QuotaSpecs        = "quotaspecs"
-	QuotaSpecBindings = "quotaspecbindings"
-	Policies          = "policies"
-	MeshPolicies      = "meshpolicies"
+	VirtualServices     = "virtualservices"
+	DestinationRules    = "destinationrules"
+	ServiceEntries      = "serviceentries"
+	Gateways            = "gateways"
+	Rules               = "rules"
+	Adapters            = "adapters"
+	Templates           = "templates"
+	QuotaSpecs          = "quotaspecs"
+	QuotaSpecBindings   = "quotaspecbindings"
+	Policies            = "policies"
+	MeshPolicies        = "meshpolicies"
+	RbacConfigs         = "rbacconfigs"
+	ServiceRoles        = "serviceroles"
+	ServiceRoleBindings = "servicerolebindings"
 )
 
 var resourceTypesToAPI = map[string]string{
-	DestinationRules:  kubernetes.NetworkingGroupVersion.Group,
-	VirtualServices:   kubernetes.NetworkingGroupVersion.Group,
-	ServiceEntries:    kubernetes.NetworkingGroupVersion.Group,
-	Gateways:          kubernetes.NetworkingGroupVersion.Group,
-	Adapters:          kubernetes.ConfigGroupVersion.Group,
-	Templates:         kubernetes.ConfigGroupVersion.Group,
-	Rules:             kubernetes.ConfigGroupVersion.Group,
-	QuotaSpecs:        kubernetes.ConfigGroupVersion.Group,
-	QuotaSpecBindings: kubernetes.ConfigGroupVersion.Group,
-	Policies:          kubernetes.AuthenticationGroupVersion.Group,
-	MeshPolicies:      kubernetes.AuthenticationGroupVersion.Group,
+	DestinationRules:    kubernetes.NetworkingGroupVersion.Group,
+	VirtualServices:     kubernetes.NetworkingGroupVersion.Group,
+	ServiceEntries:      kubernetes.NetworkingGroupVersion.Group,
+	Gateways:            kubernetes.NetworkingGroupVersion.Group,
+	Adapters:            kubernetes.ConfigGroupVersion.Group,
+	Templates:           kubernetes.ConfigGroupVersion.Group,
+	Rules:               kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecs:          kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecBindings:   kubernetes.ConfigGroupVersion.Group,
+	Policies:            kubernetes.AuthenticationGroupVersion.Group,
+	MeshPolicies:        kubernetes.AuthenticationGroupVersion.Group,
+	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
+	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
+	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
 }
 
 var apiToVersion = map[string]string{
 	kubernetes.NetworkingGroupVersion.Group: kubernetes.ApiNetworkingVersion,
 	kubernetes.ConfigGroupVersion.Group:     kubernetes.ApiConfigVersion,
 	kubernetes.ApiAuthenticationVersion:     kubernetes.ApiAuthenticationVersion,
+	kubernetes.RbacGroupVersion.Group:       kubernetes.ApiRbacVersion,
 }
 
 const (
@@ -86,23 +96,26 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
-		Namespace:         models.Namespace{Name: criteria.Namespace},
-		Gateways:          models.Gateways{},
-		VirtualServices:   models.VirtualServices{Items: []models.VirtualService{}},
-		DestinationRules:  models.DestinationRules{Items: []models.DestinationRule{}},
-		ServiceEntries:    models.ServiceEntries{},
-		Rules:             models.IstioRules{},
-		Adapters:          models.IstioAdapters{},
-		Templates:         models.IstioTemplates{},
-		QuotaSpecs:        models.QuotaSpecs{},
-		QuotaSpecBindings: models.QuotaSpecBindings{},
-		Policies:          models.Policies{},
-		MeshPolicies:      models.Policies{},
+		Namespace:           models.Namespace{Name: criteria.Namespace},
+		Gateways:            models.Gateways{},
+		VirtualServices:     models.VirtualServices{Items: []models.VirtualService{}},
+		DestinationRules:    models.DestinationRules{Items: []models.DestinationRule{}},
+		ServiceEntries:      models.ServiceEntries{},
+		Rules:               models.IstioRules{},
+		Adapters:            models.IstioAdapters{},
+		Templates:           models.IstioTemplates{},
+		QuotaSpecs:          models.QuotaSpecs{},
+		QuotaSpecBindings:   models.QuotaSpecBindings{},
+		Policies:            models.Policies{},
+		MeshPolicies:        models.MeshPolicies{},
+		RbacConfigs:         models.RbacConfigs{},
+		ServiceRoles:        models.ServiceRoles{},
+		ServiceRoleBindings: models.ServiceRoleBindings{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp, rc, sr, srb []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr, rcErr, srErr, srbErr error
 	var wg sync.WaitGroup
-	wg.Add(11)
+	wg.Add(14)
 
 	go func() {
 		defer wg.Done()
@@ -205,9 +218,36 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeRbacConfigs {
+			if rc, rcErr = in.k8s.GetRbacConfigs(criteria.Namespace); rcErr == nil {
+				(&istioConfigList.RbacConfigs).Parse(rc)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeServiceRoles {
+			if sr, srErr = in.k8s.GetServiceRoles(criteria.Namespace); srErr == nil {
+				(&istioConfigList.ServiceRoles).Parse(sr)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeServiceRoleBindings {
+			if srb, srbErr = in.k8s.GetServiceRoleBindings(criteria.Namespace); srbErr == nil {
+				(&istioConfigList.ServiceRoleBindings).Parse(srb)
+			}
+		}
+	}()
+
 	wg.Wait()
 
-	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr} {
+	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, mpErr, pcErr, rcErr, srErr, srbErr} {
 		if genErr != nil {
 			err = genErr
 			return models.IstioConfigList{}, err
@@ -231,7 +271,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp, rc, sr, srb kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -300,6 +340,21 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if mp, err = in.k8s.GetMeshPolicy(namespace, object); err == nil {
 			istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 			istioConfigDetail.MeshPolicy.Parse(mp)
+		}
+	case RbacConfigs:
+		if rc, err = in.k8s.GetRbacConfig(namespace, object); err == nil {
+			istioConfigDetail.RbacConfig = &models.RbacConfig{}
+			istioConfigDetail.RbacConfig.Parse(rc)
+		}
+	case ServiceRoles:
+		if sr, err = in.k8s.GetServiceRole(namespace, object); err == nil {
+			istioConfigDetail.ServiceRole = &models.ServiceRole{}
+			istioConfigDetail.ServiceRole.Parse(sr)
+		}
+	case ServiceRoleBindings:
+		if srb, err = in.k8s.GetServiceRoleBinding(namespace, object); err == nil {
+			istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
+			istioConfigDetail.ServiceRoleBinding.Parse(srb)
 		}
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)

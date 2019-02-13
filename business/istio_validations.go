@@ -137,6 +137,14 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecBindings are not yet in place
 	case Policies:
 		// Validations on Policies are not yet in place
+	case MeshPolicies:
+		// Validations on MeshPolicies are not yet in place
+	case RbacConfigs:
+		// Validations on RbacConfigs are not yet in place
+	case ServiceRoles:
+		// Validations on ServiceRoles are not yet in place
+	case ServiceRoleBindings:
+		// Validations on ServiceRoleBindings are not yet in place
 	default:
 		err = fmt.Errorf("Object type not found: %v", objectType)
 	}

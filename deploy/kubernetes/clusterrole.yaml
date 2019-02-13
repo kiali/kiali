@@ -104,6 +104,18 @@ rules:
   - list
   - patch
   - watch
+- apiGroups: ["rbac.istio.io"]
+  resources:
+  - serviceroles
+  - servicerolebindings
+  - rbacconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups: ["monitoring.kiali.io"]
   resources:
   - monitoringdashboards
