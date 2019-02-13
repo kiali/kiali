@@ -8,7 +8,8 @@ describe('Namespaces reducer', () => {
       isFetching: false,
       activeNamespaces: [],
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     });
   });
 
@@ -17,14 +18,35 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.setActiveNamespaces([{ name: 'istio' }]);
     const expectedState = {
       activeNamespaces: [{ name: 'istio' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
+    };
+    expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
+  });
+
+  it('should handle SET_FILTER', () => {
+    const currentState = {
+      activeNamespaces: [{ name: 'my-namespace' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined,
+      filter: ''
+    };
+    const requestStartedAction = NamespaceActions.setFilter('istio');
+    const expectedState = {
+      activeNamespaces: [{ name: 'my-namespace' }],
+      isFetching: false,
+      items: [],
+      lastUpdated: undefined,
+      filter: 'istio'
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });
@@ -34,14 +56,16 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.toggleActiveNamespace({ name: 'my-namespace' });
     const expectedState = {
       activeNamespaces: [{ name: 'my-namespace-2' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });
@@ -51,14 +75,16 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.toggleActiveNamespace({ name: 'my-namespace-3' });
     const expectedState = {
       activeNamespaces: [{ name: 'my-namespace' }, { name: 'my-namespace-2' }, { name: 'my-namespace-3' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });
@@ -68,14 +94,16 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.requestStarted();
     const expectedState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
       items: [],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });
@@ -101,7 +129,8 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
       items: [{ name: 'old' }, { name: 'my-namespace' }],
-      lastUpdated: undefined
+      lastUpdated: undefined,
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.receiveList(
       [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
@@ -111,7 +140,8 @@ describe('Namespaces reducer', () => {
       activeNamespaces: [],
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
-      lastUpdated: currentDate
+      lastUpdated: currentDate,
+      filter: ''
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });

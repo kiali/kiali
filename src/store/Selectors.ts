@@ -3,14 +3,17 @@ import * as GraphData from './Selectors/GraphData';
 import { KialiAppState } from './Store';
 // These memoized selectors are from Redux Reselect package
 
+const createIdentitySelector = selector =>
+  createSelector(
+    selector,
+    x => x
+  );
+
 // select the proper field from Redux State
 const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamespaces;
 
 // Select from the above field(s) and the last function is the formatter
-export const activeNamespacesSelector = createSelector(
-  activeNamespaces,
-  namespaces => namespaces // identity function in this case, but as a Namespace[] type
-);
+export const activeNamespacesSelector = createIdentitySelector(activeNamespaces);
 
 /**
  * Gets a comma separated list of the namespaces for displaying
@@ -23,58 +26,38 @@ export const activeNamespacesAsStringSelector = createSelector(
 
 const duration = (state: KialiAppState) => state.userSettings.duration;
 
-export const durationSelector = createSelector(
-  duration,
-  x => x // identity function
-);
+export const durationSelector = createIdentitySelector(duration);
+
+const namespaceFilter = (state: KialiAppState) => state.namespaces.filter;
+
+export const namespaceFilterSelector = createIdentitySelector(namespaceFilter);
 
 const edgeLabelMode = (state: KialiAppState) => state.graph.filterState.edgeLabelMode;
 
-export const edgeLabelModeSelector = createSelector(
-  edgeLabelMode,
-  x => x // identity function
-);
+export const edgeLabelModeSelector = createIdentitySelector(edgeLabelMode);
 
 const findValue = (state: KialiAppState) => state.graph.filterState.findValue;
 
-export const findValueSelector = createSelector(
-  findValue,
-  x => x // identity function
-);
+export const findValueSelector = createIdentitySelector(findValue);
 
 const graphType = (state: KialiAppState) => state.graph.filterState.graphType;
 
-export const graphTypeSelector = createSelector(
-  graphType,
-  x => x // identity function
-);
+export const graphTypeSelector = createIdentitySelector(graphType);
 
 const hideValue = (state: KialiAppState) => state.graph.filterState.hideValue;
 
-export const hideValueSelector = createSelector(
-  hideValue,
-  x => x // identity function
-);
+export const hideValueSelector = createIdentitySelector(hideValue);
 
 const namespaceItems = (state: KialiAppState) => state.namespaces.items;
 
-export const namespaceItemsSelector = createSelector(
-  namespaceItems,
-  x => x // identity function
-);
+export const namespaceItemsSelector = createIdentitySelector(namespaceItems);
 
 const refreshInterval = (state: KialiAppState) => state.userSettings.refreshInterval;
 
-export const refreshIntervalSelector = createSelector(
-  refreshInterval,
-  x => x // identity function
-);
+export const refreshIntervalSelector = createIdentitySelector(refreshInterval);
 
 const showServiceNodes = (state: KialiAppState) => state.graph.filterState.showServiceNodes;
 
-export const showServiceNodesSelector = createSelector(
-  showServiceNodes,
-  x => x // identity function
-);
+export const showServiceNodesSelector = createIdentitySelector(showServiceNodes);
 
 export const graphDataSelector = GraphData.graphDataSelector;

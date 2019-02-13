@@ -3,9 +3,9 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _ from 'lodash';
 import { style } from 'typestyle';
-import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { Button, Icon, OverlayTrigger, Popover, FormControl, InputGroup } from 'patternfly-react';
 import { KialiAppState } from '../store/Store';
-import { activeNamespacesSelector, namespaceItemsSelector } from '../store/Selectors';
+import { activeNamespacesSelector, namespaceItemsSelector, namespaceFilterSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
@@ -43,10 +43,12 @@ const namespaceValueStyle = style({
 
 interface NamespaceListType {
   disabled: boolean;
+  filter: string;
   activeNamespaces: Namespace[];
   items: Namespace[];
   toggleNamespace: (namespace: Namespace) => void;
   setNamespaces: (namespaces: Namespace[]) => void;
+  setFilter: (filter: string) => void;
   refresh: () => void;
   clearAll: () => void;
 }
@@ -86,6 +88,14 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
     this.props.toggleNamespace({ name: a.target.value });
   };
 
+  onFilterChange = (event: any) => {
+    this.props.setFilter(event.target.value);
+  };
+
+  clearFilter = () => {
+    this.props.setFilter('');
+  };
+
   namespaceButtonText() {
     if (this.props.activeNamespaces.length === 0) {
       return <span className={namespaceValueStyle}>Select a namespace</span>;
@@ -115,22 +125,42 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
         return map;
       }, {});
       const checkboxStyle = style({ marginLeft: 5 });
-      const namespaces = this.props.items.map((namespace: Namespace) => (
-        <div id={`namespace-list-item[${namespace.name}]`} key={`namespace-list-item[${namespace.name}]`}>
-          <label>
-            <input
-              type="checkbox"
-              value={namespace.name}
-              checked={!!activeMap[namespace.name]}
-              onChange={this.onNamespaceToggled}
-            />
-            <span className={checkboxStyle}>{namespace.name}</span>
-          </label>
-        </div>
-      ));
+      const namespaces = this.props.items
+        .filter((namespace: Namespace) => namespace.name.includes(this.props.filter))
+        .map((namespace: Namespace) => (
+          <div id={`namespace-list-item[${namespace.name}]`} key={`namespace-list-item[${namespace.name}]`}>
+            <label>
+              <input
+                type="checkbox"
+                value={namespace.name}
+                checked={!!activeMap[namespace.name]}
+                onChange={this.onNamespaceToggled}
+              />
+              <span className={checkboxStyle}>{namespace.name}</span>
+            </label>
+          </div>
+        ));
 
       return (
         <>
+          <div>
+            <InputGroup>
+              <FormControl
+                type="text"
+                name="namespace-filter"
+                placeholder="Filter by keyword..."
+                value={this.props.filter}
+                onChange={this.onFilterChange}
+              />
+              {this.props.filter !== '' && (
+                <InputGroup.Button>
+                  <Button onClick={this.clearFilter}>
+                    <Icon name="close" />
+                  </Button>
+                </InputGroup.Button>
+              )}
+            </InputGroup>
+          </div>
           <div className="text-right">
             <Button disabled={this.props.activeNamespaces.length === 0} bsStyle="link" onClick={this.props.clearAll}>
               Clear all
@@ -164,7 +194,8 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
 const mapStateToProps = (state: KialiAppState) => {
   return {
     items: namespaceItemsSelector(state)!,
-    activeNamespaces: activeNamespacesSelector(state)
+    activeNamespaces: activeNamespacesSelector(state),
+    filter: namespaceFilterSelector(state)
   };
 };
 
@@ -181,6 +212,9 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     },
     setNamespaces: (namespaces: Namespace[]) => {
       dispatch(NamespaceActions.setActiveNamespaces(namespaces));
+    },
+    setFilter: (filter: string) => {
+      dispatch(NamespaceActions.setFilter(filter));
     }
   };
 };

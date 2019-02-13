@@ -29,6 +29,10 @@ describe('NamespaceActions', () => {
     expect(NamespaceActions.toggleActiveNamespace({ name: 'istio' }).payload).toEqual({ name: 'istio' });
   });
 
+  it('should set filter', () => {
+    expect(NamespaceActions.setFilter('istio').payload).toEqual('istio');
+  });
+
   it('request is success', () => {
     const currentDate = new Date();
     const expectedAction = {

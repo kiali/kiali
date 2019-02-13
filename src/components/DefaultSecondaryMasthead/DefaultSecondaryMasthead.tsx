@@ -1,7 +1,7 @@
 import React from 'react';
 
 import SecondaryMasthead from '../Nav/SecondaryMasthead';
-import NamespaceDropdownContainer from '../../components/NamespaceDropdown';
+import NamespaceDropdownContainer from '../NamespaceDropdown';
 
 export default class DefaultSecondaryMasthead extends React.PureComponent {
   render() {

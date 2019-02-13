@@ -8,7 +8,8 @@ export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespaces: [],
   isFetching: false,
   items: [],
-  lastUpdated: undefined
+  lastUpdated: undefined,
+  filter: ''
 };
 
 const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: KialiAppAction): NamespaceState => {
@@ -27,6 +28,9 @@ const namespaces = (state: NamespaceState = INITIAL_NAMESPACE_STATE, action: Kia
 
     case getType(NamespaceActions.setActiveNamespaces):
       return updateState(state, { activeNamespaces: action.payload });
+
+    case getType(NamespaceActions.setFilter):
+      return updateState(state, { filter: action.payload });
 
     case getType(NamespaceActions.requestStarted):
       return updateState(state, {
