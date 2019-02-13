@@ -26,7 +26,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
     const imageName = runtimes[name];
     if (imageName) {
       const logo = require('../../../assets/img/' + imageName);
-      return (<img src={logo} alt={name}/>);
+      return <img src={logo} alt={name} />;
     }
     return <>{name}</>;
   }
@@ -67,10 +67,10 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               </div>
               {workload.runtimes.length > 0 && (
                 <div>
-                  <strong>Runtime(s)</strong> {
-                    workload.runtimes.map(rt => this.renderLogo(rt.name))
-                      .reduce((list: JSX.Element[], elem) => list ? [...list, (<>, </>), elem] : [elem], undefined)
-                    }
+                  <strong>Runtime(s)</strong>{' '}
+                  {workload.runtimes
+                    .map(rt => this.renderLogo(rt.name))
+                    .reduce((list: JSX.Element[], elem) => (list ? [...list, <> / </>, elem] : [elem]), undefined)}
                 </div>
               )}
             </Col>
