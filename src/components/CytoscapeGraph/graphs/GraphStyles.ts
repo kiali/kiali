@@ -3,7 +3,7 @@ import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 import { COMPOUND_PARENT_NODE_CLASS } from '../Layout/GroupCompoundLayout';
-import { ICONS } from '../../../config';
+import { icons } from '../../../config';
 import { CyEdge, CyNode } from '../CytoscapeGraphUtils';
 
 export const DimClass = 'mousedim';
@@ -34,9 +34,9 @@ const NodeColorFillHover = PfColors.Blue50;
 const NodeColorFillHoverDegraded = '#fdf2e5';
 const NodeColorFillHoverFailure = '#ffe6e6';
 const NodeHeight = '10px';
-const NodeIconCB = ICONS().ISTIO.CIRCUIT_BREAKER.ascii; // bolt
-const NodeIconMS = ICONS().ISTIO.MISSING_SIDECAR.ascii; // exclamation
-const NodeIconVS = ICONS().ISTIO.VIRTUALSERVICE.ascii; // code-branch
+const NodeIconCB = icons.istio.circuitBreaker.ascii; // bolt
+const NodeIconMS = icons.istio.missingSidecar.ascii; // exclamation
+const NodeIconVS = icons.istio.virtualService.ascii; // code-branch
 const NodeImageTopology = require('../../../assets/img/node-background-topology.png');
 const NodeImageKey = require('../../../assets/img/node-background-key.png');
 const NodeTextOutlineColor = PfColors.White;

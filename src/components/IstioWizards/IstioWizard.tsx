@@ -15,7 +15,7 @@ import {
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import Slider from './Slider/Slider';
 import { DestinationRule, VirtualService } from '../../types/IstioObjects';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/serverConfig';
 import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -122,7 +122,7 @@ class IstioWizard extends React.Component<Props, State> {
         host: this.props.serviceName,
         subsets: this.props.workloads.map(workload => {
           // Using version
-          const versionLabelName = serverConfig().istioLabels.VersionLabelName;
+          const versionLabelName = serverConfig().istioLabels.versionLabelName;
           const versionValue = workload.labels![versionLabelName];
           const labels: { [key: string]: string } = {};
           labels[versionLabelName] = versionValue;

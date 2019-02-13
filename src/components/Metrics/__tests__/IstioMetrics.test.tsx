@@ -45,7 +45,7 @@ const mockGrafanaInfo = (info: any): Promise<any> => {
 const mockServerConfig = () => {
   const config: ServerConfig = {
     istioNamespace: 'istio-system',
-    istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+    istioLabels: { appLabelName: 'app', versionLabelName: 'version' },
     prometheus: { storageTsdbRetention: 31 * 24 * 60 * 60 }
   };
   store.dispatch(ServerConfigActions.setServerConfig(config));

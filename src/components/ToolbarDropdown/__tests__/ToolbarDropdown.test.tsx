@@ -9,15 +9,15 @@ const optionsChanged = jest.fn();
 const data = [
   {
     id: 'graph_filter_interval_duration',
-    default: config().toolbar.defaultDuration,
-    options: config().toolbar.intervalDuration
+    default: config.toolbar.defaultDuration,
+    options: config.toolbar.intervalDuration
   },
   {
     id: 'metrics_filter_poll_interval',
-    default: config().toolbar.defaultPollInterval,
-    options: config().toolbar.pollInterval
+    default: config.toolbar.defaultPollInterval,
+    options: config.toolbar.pollInterval
   },
-  { id: 'graph_filter_layouts', default: 'cola', options: config().toolbar.graphLayouts }
+  { id: 'graph_filter_layouts', default: 'cola', options: config.toolbar.graphLayouts }
 ];
 
 describe('ToolbarDropdown', () => {
@@ -62,9 +62,9 @@ describe('ToolbarDropdown', () => {
         disabled={false}
         handleSelect={optionsChanged}
         nameDropdown={'Duration'}
-        initialValue={config().toolbar.defaultDuration}
-        initialLabel={config().toolbar.intervalDuration[config().toolbar.defaultDuration]}
-        options={config().toolbar.intervalDuration}
+        initialValue={config.toolbar.defaultDuration}
+        initialLabel={config.toolbar.intervalDuration[config.toolbar.defaultDuration]}
+        options={config.toolbar.intervalDuration}
       />
     );
     const elt = wrapper

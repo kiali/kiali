@@ -30,8 +30,8 @@ import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
-import { ICONS } from '../../config/Icons';
-import { serverConfig } from '../../config/ServerConfig';
+import { icons } from '../../config/icons';
+import { serverConfig } from '../../config/serverConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelStateType = {
@@ -510,8 +510,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         {hasCB && (
           <div>
             <Icon
-              name={ICONS().ISTIO.CIRCUIT_BREAKER.name}
-              type={ICONS().ISTIO.CIRCUIT_BREAKER.type}
+              name={icons.istio.circuitBreaker.name}
+              type={icons.istio.circuitBreaker.type}
               style={{ width: '10px' }}
             />
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
@@ -520,8 +520,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         {hasVS && (
           <div>
             <Icon
-              name={ICONS().ISTIO.VIRTUALSERVICE.name}
-              type={ICONS().ISTIO.VIRTUALSERVICE.type}
+              name={icons.istio.virtualService.name}
+              type={icons.istio.virtualService.type}
               style={{ width: '10px' }}
             />
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
@@ -530,8 +530,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         {hasMissingSC && (
           <div>
             <Icon
-              name={ICONS().ISTIO.MISSING_SIDECAR.name}
-              type={ICONS().ISTIO.MISSING_SIDECAR.type}
+              name={icons.istio.missingSidecar.name}
+              type={icons.istio.missingSidecar.type}
               style={{ width: '10px', marginRight: '5px' }}
             />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>

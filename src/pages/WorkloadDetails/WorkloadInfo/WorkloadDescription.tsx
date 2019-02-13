@@ -6,7 +6,7 @@ import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
-import { runtimesLogoProviders } from '../../../config/Logos';
+import { runtimesLogoProviders } from '../../../config/logos';
 
 type WorkloadDescriptionProps = {
   workload: Workload;

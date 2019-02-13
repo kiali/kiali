@@ -7,8 +7,8 @@ import { UserSettingsActions } from '../actions/UserSettingsActions';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   interface: { navCollapse: false },
-  duration: config().toolbar.defaultDuration,
-  refreshInterval: config().toolbar.defaultPollInterval
+  duration: config.toolbar.defaultDuration,
+  refreshInterval: config.toolbar.defaultPollInterval
 };
 
 const UserSettingsState = (state: UserSettings = INITIAL_USER_SETTINGS_STATE, action: KialiAppAction): UserSettings => {

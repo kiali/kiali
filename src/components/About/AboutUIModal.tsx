@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { AboutModal, Icon } from 'patternfly-react';
 import { Component } from '../../store/Store';
-import { config, KialiLogo } from '../../config';
+import { config, kialiLogo } from '../../config';
 
 const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
 const KIALI_CORE_VERSION = 'Kiali core version';
@@ -40,7 +40,7 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         : `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`;
 
     return (
-      <AboutModal show={this.state.showModal} onHide={this.close} productTitle={<img src={KialiLogo} />}>
+      <AboutModal show={this.state.showModal} onHide={this.close} productTitle={<img src={kialiLogo} />}>
         <AboutModal.Versions>
           <AboutModal.VersionItem label="kiali-ui" versionText={uiVersion!} />
           <AboutModal.VersionItem label="kiali" versionText={coreVersion!} />
@@ -63,17 +63,17 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
   }
 
   private renderWebsiteLink = () => {
-    if (config().about && config().about.website) {
+    if (config.about && config.about.website) {
       return (
         <div>
-          <a href={config().about.website.url} target="_blank" rel="noopener noreferrer">
+          <a href={config.about.website.url} target="_blank" rel="noopener noreferrer">
             <Icon
-              name={config().about.website.iconName}
-              type={config().about.website.iconType}
+              name={config.about.website.iconName}
+              type={config.about.website.iconType}
               size="lg"
               style={{ color: 'white' }}
             />{' '}
-            {config().about.website.linkText}
+            {config.about.website.linkText}
           </a>
         </div>
       );
@@ -83,17 +83,17 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
   };
 
   private renderProjectLink = () => {
-    if (config().about && config().about.project) {
+    if (config.about && config.about.project) {
       return (
         <div>
-          <a href={config().about.project.url} target="_blank" rel="noopener noreferrer">
+          <a href={config.about.project.url} target="_blank" rel="noopener noreferrer">
             <Icon
-              name={config().about.project.iconName}
-              type={config().about.project.iconType}
+              name={config.about.project.iconName}
+              type={config.about.project.iconType}
               size="lg"
               style={{ color: 'white' }}
             />{' '}
-            {config().about.project.linkText}
+            {config.about.project.linkText}
           </a>
         </div>
       );

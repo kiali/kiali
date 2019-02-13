@@ -20,7 +20,7 @@ import { HistoryManager, URLParams } from '../../app/History';
 import RefreshContainer from '../../containers/RefreshContainer';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ThunkDispatch } from 'redux-thunk';
-import { getValidDurations, getValidDuration } from '../../config/ServerConfig';
+import { getValidDurations, getValidDuration } from '../../config/serverConfig';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -50,7 +50,7 @@ type State = {
   sortField: SortField<NamespaceInfo>;
 };
 
-const DURATIONS = config().toolbar.intervalDuration;
+const DURATIONS = config.toolbar.intervalDuration;
 
 export class OverviewToolbar extends React.Component<Props, State> {
   static currentOverviewType(): OverviewType {

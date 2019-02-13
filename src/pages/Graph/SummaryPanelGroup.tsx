@@ -22,7 +22,7 @@ import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/serverConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelGroupState = {
@@ -213,7 +213,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .map((c, i) => (
         <Label
           key={c.data(CyNode.version)}
-          name={serverConfig().istioLabels['VersionLabelName']}
+          name={serverConfig().istioLabels.versionLabelName}
           value={c.data(CyNode.version)}
         />
       ));

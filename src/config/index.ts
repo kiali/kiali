@@ -1,16 +1,14 @@
 // Configuration
 
-import { config } from './Config';
+import { config } from './config';
 
 // Icons
-
-import { ICONS } from './Icons';
+import { icons } from './icons';
 
 // Logos
-import { IstioLogo, KialiLogo } from './Logos';
+import { kialiLogo } from './logos';
 
 // Paths
-
 import { Paths } from './Paths';
 
-export { config, Paths, ICONS, IstioLogo, KialiLogo };
+export { config, Paths, icons, kialiLogo };

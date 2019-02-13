@@ -12,7 +12,7 @@ import GlobalMTLSStatus from '../../containers/GlobalMTLSContainer';
 import LoginPage from '../../containers/LoginPageContainer';
 import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
-import { KialiLogo } from '../../config';
+import { kialiLogo } from '../../config';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 
 export const istioConfigTitle = 'Istio Config';
@@ -110,7 +110,7 @@ class Navigation extends React.Component<PropsType> {
           navCollapsed={this.props.navCollapsed}
         >
           <VerticalNav.Masthead title="Kiali">
-            <VerticalNav.Brand iconImg={KialiLogo} />
+            <VerticalNav.Brand iconImg={kialiLogo} />
             <PfSpinnerContainer />
             <VerticalNav.IconBar>
               <GlobalMTLSStatus />

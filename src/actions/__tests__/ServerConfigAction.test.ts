@@ -1,11 +1,11 @@
 import { ServerConfigActions } from '../ServerConfigActions';
 import { ServerConfig } from '../../store/Store';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/serverConfig';
 import { store } from '../../store/ConfigStore';
 
 const config: ServerConfig = {
   istioNamespace: 'istio-system',
-  istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+  istioLabels: { appLabelName: 'app', versionLabelName: 'version' },
   prometheus: { globalScrapeInterval: 15, storageTsdbRetention: 21600 }
 };
 

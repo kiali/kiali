@@ -126,6 +126,4 @@ const conf = {
   }
 };
 
-export const config = () => {
-  return deepFreeze(conf) as typeof conf;
-};
+export const config = deepFreeze(conf) as typeof conf;

@@ -5,7 +5,7 @@ import { store } from '../../store/ConfigStore';
 
 const mockServerConfig: ServerConfig = {
   istioNamespace: 'istio-system',
-  istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+  istioLabels: { appLabelName: 'app', versionLabelName: 'version' },
   prometheus: { globalScrapeInterval: 15 }
 };
 
