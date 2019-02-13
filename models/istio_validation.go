@@ -86,8 +86,8 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This subset's labels are not found from any matching host",
 		Severity: ErrorSeverity,
 	},
-	"destinationrules.trafficpolicy.meshmtls": {
-		Message:  "This DestinationRule disables mTLS specified by another mesh-wide DestinationRule.",
+	"destinationrules.trafficpolicy.notlssettings": {
+		Message:  "mTLS settings of a non-local Destination Rule are overridden",
 		Severity: WarningSeverity,
 	},
 	"gateways.multimatch": {

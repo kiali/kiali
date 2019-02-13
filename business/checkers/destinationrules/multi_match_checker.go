@@ -76,10 +76,10 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 }
 
 func enablesNonLocalmTLSForService(dr kubernetes.IstioObject, service string) bool {
-	return service == "*" && enablesNonLocalmTLS(dr)
+	return service == "*" && enablesmTLS(dr)
 }
 
-func enablesNonLocalmTLS(dr kubernetes.IstioObject) bool {
+func enablesmTLS(dr kubernetes.IstioObject) bool {
 	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if tls, found := trafficCasted["tls"]; found {

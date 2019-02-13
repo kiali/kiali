@@ -89,6 +89,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
+	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
@@ -120,14 +121,21 @@ func getGateway(name string) []kubernetes.IstioObject {
 		}))}
 }
 
+func fakeMeshPolicies() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{
+		data.CreateEmptyMeshPolicy("default", nil),
+		data.CreateEmptyMeshPolicy("test", nil),
+	}
+}
+
 func fakeNamespaces() []v1.Namespace {
 	return []v1.Namespace{
-		v1.Namespace{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test",
 			},
 		},
-		v1.Namespace{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test2",
 			},
@@ -155,7 +163,7 @@ func fakeCombinedServices(services []string) []v1.Service {
 func fakePods() *v1.PodList {
 	return &v1.PodList{
 		Items: []v1.Pod{
-			v1.Pod{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "reviews-12345-hello",
 					Labels: map[string]string{
@@ -164,7 +172,7 @@ func fakePods() *v1.PodList {
 					},
 				},
 			},
-			v1.Pod{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "reviews-54321-hello",
 					Labels: map[string]string{

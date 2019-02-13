@@ -8,6 +8,7 @@ import (
 
 type DestinationRulesChecker struct {
 	DestinationRules []kubernetes.IstioObject
+	MTLSDetails      kubernetes.MTLSDetails
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -15,6 +16,7 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 
 	enabledDRCheckers := []GroupChecker{
 		destinationrules.MultiMatchChecker{DestinationRules: in.DestinationRules},
+		destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails},
 	}
 
 	for _, checker := range enabledDRCheckers {
