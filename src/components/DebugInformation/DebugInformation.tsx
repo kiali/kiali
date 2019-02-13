@@ -10,8 +10,7 @@ import beautify from 'json-beautify';
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
   COPIED, // Current output is in the clipboard
-  OLD_COPY, // We copied the prev output, but there are changes in the KialiAppState
-  FAILED_COPY // For some reason we failed to copy and we need to suggest to use ctrl+c
+  OLD_COPY // We copied the prev output, but there are changes in the KialiAppState
 }
 
 type DebugInformationProps = {
@@ -25,12 +24,18 @@ type DebugInformationState = {
 
 const textAreaStyle = style({
   width: '100%',
-  height: '200px'
+  height: '200px',
+  minHeight: '200px',
+  resize: 'vertical'
 });
 
 type DebugInformationData = {
   currentURL: string;
   reduxState: KialiAppState;
+};
+
+const copyToClipboardOptions = {
+  message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
 
 export default class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
@@ -52,7 +57,7 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
 
   copyCallback = (text: string, result: boolean) => {
     this.textareaRef.current.select();
-    this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.FAILED_COPY });
+    this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED });
   };
 
   hideAlert = () => {
@@ -107,13 +112,8 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
               received by auto refresh timers.
             </Alert>
           )}
-          {this.state.copyStatus === CopyStatus.FAILED_COPY && (
-            <Alert type="error" onDismiss={this.hideAlert}>
-              We failed to automatically copy the text, please use ctrl + c.
-            </Alert>
-          )}
           <span>Please include this information when opening a bug.</span>
-          <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()}>
+          <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
             <textarea
               ref={this.textareaRef}
               className={textAreaStyle}
@@ -124,7 +124,7 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={this.close}>Close</Button>
-          <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()}>
+          <CopyToClipboard onCopy={this.copyCallback} text={renderDebugInformation()} options={copyToClipboardOptions}>
             <Button bsStyle="primary">Copy</Button>
           </CopyToClipboard>
         </Modal.Footer>
