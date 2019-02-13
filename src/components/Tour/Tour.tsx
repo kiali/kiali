@@ -127,7 +127,14 @@ export default class Tour extends React.PureComponent<TourProps> {
 
     return (
       <>
-        {this.props.show && <ReactResizeDetector handleWidth={true} handleHeight={true} onResize={this.onResize} />}
+        <ReactResizeDetector
+          refreshMode={'debounce'}
+          refreshRate={100}
+          skipOnMount={true}
+          handleWidth={true}
+          handleHeight={true}
+          onResize={this.onResize}
+        />
         <Floater
           getPopper={popper => {
             this.popperRef = popper;
