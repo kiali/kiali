@@ -14,8 +14,8 @@ import (
 )
 
 type IstioValidationsService struct {
-	k8s kubernetes.IstioClientInterface
-	ws  WorkloadService
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 type ObjectChecker interface {
@@ -227,7 +227,7 @@ func (in *IstioValidationsService) fetchServices(rValue *[]v1.Service, namespace
 func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		workloadList, err := in.ws.GetWorkloadList(namespace)
+		workloadList, err := in.businessLayer.Workload.GetWorkloadList(namespace)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -265,20 +265,25 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 
 	meshPolicies, err := in.k8s.GetMeshPolicies(istioNamespace)
 	if err != nil {
-		select {
-		case errChan <- err:
-		default:
-		}
+		errChan <- err
 	} else {
 		mtlsDetails.MeshPolicies = meshPolicies
 	}
 
-	destinationRules, err := in.k8s.GetDestinationRules(istioNamespace, "")
+	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
 	if err != nil {
-		select {
-		case errChan <- err:
-		default:
-		}
+		errChan <- err
+		return
+	}
+
+	nsNames := make([]string, 0, len(namespaces))
+	for _, ns := range namespaces {
+		nsNames = append(nsNames, ns.Name)
+	}
+
+	destinationRules, err := in.businessLayer.IstioConfig.getAllDestinationRules(nsNames)
+	if err != nil {
+		errChan <- err
 	} else {
 		mtlsDetails.DestinationRules = destinationRules
 	}
