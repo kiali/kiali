@@ -57,6 +57,9 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
 
+# All tags of versions must start with v, except for the edge release "latest"
+DOCKER_TAG = $(shell if [ "latest" = "$(BACKEND_VERSION)" ]; then echo "latest"; else echo "v$(BACKEND_VERSION)"; fi;)
+
 ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
   OMIT_VERSION_BRANCH ?= y
@@ -123,12 +126,12 @@ ifdef DOCKER_PASSWORD
 	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
 endif
 endif
-	DOCKER_VERSION="v$(BACKEND_VERSION)" \
+	DOCKER_VERSION="$(DOCKER_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
 	  make docker-build docker-push
 ifneq ($(IS_SNAPSHOT),y)
-	docker tag "$(DOCKER_NAME):v$(BACKEND_VERSION)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker tag "$(DOCKER_NAME):$(DOCKER_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
