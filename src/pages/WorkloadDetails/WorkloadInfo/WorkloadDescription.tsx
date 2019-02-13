@@ -6,6 +6,7 @@ import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
+import { runtimes } from '../../../config/Logos';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -19,6 +20,15 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
   constructor(props: WorkloadDescriptionProps) {
     super(props);
     this.state = {};
+  }
+
+  renderLogo(name: string): JSX.Element {
+    const imageName = runtimes[name];
+    if (imageName) {
+      const logo = require('../../../assets/img/' + imageName);
+      return (<img src={logo} alt={name}/>);
+    }
+    return <>{name}</>;
   }
 
   render() {
@@ -57,7 +67,10 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               </div>
               {workload.runtimes.length > 0 && (
                 <div>
-                  <strong>Runtime(s)</strong> {workload.runtimes.map(rt => rt.name).join(', ')}
+                  <strong>Runtime(s)</strong> {
+                    workload.runtimes.map(rt => this.renderLogo(rt.name))
+                      .reduce((list: JSX.Element[], elem) => list ? [...list, (<>, </>), elem] : [elem], undefined)
+                    }
                 </div>
               )}
             </Col>
