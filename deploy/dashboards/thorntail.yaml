@@ -1,0 +1,54 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: thorntail
+  labels:
+    runtime: Thorntail
+spec:
+  title: Thorntail Metrics
+  charts:
+    - name: "Current loaded classes"
+      unit: ""
+      spans: 4
+      metricName: "base:classloader_current_loaded_class_count"
+      dataType: "raw"
+    - name: "Unloaded classes"
+      unit: ""
+      spans: 4
+      metricName: "base:classloader_total_unloaded_class_count"
+      dataType: "raw"
+    - name: "Loaded modules"
+      unit: ""
+      spans: 4
+      metricName: "vendor:loaded_modules"
+      dataType: "raw"
+    - name: "Thread count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_count"
+      dataType: "raw"
+    - name: "Thread max count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_max_count"
+      dataType: "raw"
+    - name: "Thread daemon count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_daemon_count"
+      dataType: "raw"
+    - name: "Committed heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_committed_heap_bytes"
+      dataType: "raw"
+    - name: "Max heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_max_heap_bytes"
+      dataType: "raw"
+    - name: "Used heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_used_heap_bytes"
+      dataType: "raw"
