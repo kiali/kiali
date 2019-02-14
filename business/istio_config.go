@@ -514,6 +514,15 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		istioConfigDetail.MeshPolicy.Parse(result)
+	case RbacConfigs:
+		istioConfigDetail.RbacConfig = &models.RbacConfig{}
+		istioConfigDetail.RbacConfig.Parse(result)
+	case ServiceRoles:
+		istioConfigDetail.ServiceRole = &models.ServiceRole{}
+		istioConfigDetail.ServiceRole.Parse(result)
+	case ServiceRoleBindings:
+		istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
+		istioConfigDetail.ServiceRoleBinding.Parse(result)
 	default:
 		err = fmt.Errorf("Object type not found: %v", resourceType)
 	}

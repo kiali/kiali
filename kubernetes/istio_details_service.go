@@ -103,6 +103,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	} else if api == AuthenticationGroupVersion.Group {
 		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	} else {
+		result, err = in.istioRbacApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	}
 	if err != nil {
 		return nil, err

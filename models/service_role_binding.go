@@ -15,16 +15,16 @@ type ServiceRoleBinding struct {
 	} `json:"spec"`
 }
 
-func (srbs *ServiceRoleBindings) Parse(serviceRoles []kubernetes.IstioObject) {
-	for _, srb := range serviceRoles {
+func (srbs *ServiceRoleBindings) Parse(serviceRoleBindings []kubernetes.IstioObject) {
+	for _, srb := range serviceRoleBindings {
 		serviceRoleBinding := ServiceRoleBinding{}
 		serviceRoleBinding.Parse(srb)
 		*srbs = append(*srbs, serviceRoleBinding)
 	}
 }
 
-func (srb *ServiceRoleBinding) Parse(serviceRole kubernetes.IstioObject) {
-	srb.Metadata = serviceRole.GetObjectMeta()
-	srb.Spec.Subjects = serviceRole.GetSpec()["subjects"]
-	srb.Spec.RoleRef = serviceRole.GetSpec()["roleRef"]
+func (srb *ServiceRoleBinding) Parse(serviceRoleBinding kubernetes.IstioObject) {
+	srb.Metadata = serviceRoleBinding.GetObjectMeta()
+	srb.Spec.Subjects = serviceRoleBinding.GetSpec()["subjects"]
+	srb.Spec.RoleRef = serviceRoleBinding.GetSpec()["roleRef"]
 }

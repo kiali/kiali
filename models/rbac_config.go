@@ -24,9 +24,9 @@ func (rcs *RbacConfigs) Parse(rbacConfigs []kubernetes.IstioObject) {
 	}
 }
 
-func (rc *RbacConfig) Parse(policy kubernetes.IstioObject) {
-	rc.Metadata = policy.GetObjectMeta()
-	rc.Spec.Mode = policy.GetSpec()["mode"]
-	rc.Spec.Inclusion = policy.GetSpec()["inclusion"]
-	rc.Spec.Exclusion = policy.GetSpec()["exclusion"]
+func (rc *RbacConfig) Parse(rbacConfig kubernetes.IstioObject) {
+	rc.Metadata = rbacConfig.GetObjectMeta()
+	rc.Spec.Mode = rbacConfig.GetSpec()["mode"]
+	rc.Spec.Inclusion = rbacConfig.GetSpec()["inclusion"]
+	rc.Spec.Exclusion = rbacConfig.GetSpec()["exclusion"]
 }
