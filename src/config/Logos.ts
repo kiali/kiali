@@ -7,8 +7,8 @@ export const IstioLogo = require('../assets/img/istio-logo.svg');
 export const KialiLogo = require('../assets/img/logo-alt.svg');
 
 // Runtimes
-export const runtimes = {
-  'Vert.x': 'vertx-logo.png',
-  'Node.js': 'nodejs-logo.png',
-  'Thorntail': 'thorntail-logo.png'
+export const runtimesLogoProviders = {
+  'Vert.x': () => require('../assets/img/vertx-logo.png'),
+  'Node.js': () => require('../assets/img/nodejs-logo.png'),
+  Thorntail: () => require('../assets/img/thorntail-logo.png')
 };

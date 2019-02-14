@@ -100,12 +100,12 @@ ShallowWrapper {
               alt="Vert.x"
               src="vertx-logo.png"
             />
-            <UNDEFINED>
+            <span>
                | 
-            </UNDEFINED>
-            <UNDEFINED>
+            </span>
+            <span>
               42
-            </UNDEFINED>
+            </span>
           </div>
         </Col>
         <Col
@@ -205,12 +205,12 @@ ShallowWrapper {
                 alt="Vert.x"
                 src="vertx-logo.png"
               />
-              <UNDEFINED>
+              <span>
                  | 
-              </UNDEFINED>
-              <UNDEFINED>
+              </span>
+              <span>
                 42
-              </UNDEFINED>
+              </span>
             </div>
           </Col>
           <Col

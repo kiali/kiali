@@ -6,7 +6,7 @@ import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
-import { runtimes } from '../../../config/Logos';
+import { runtimesLogoProviders } from '../../../config/Logos';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -23,12 +23,11 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
   }
 
   renderLogo(name: string, idx: number): JSX.Element {
-    const imageName = runtimes[name];
-    if (imageName) {
-      const logo = require('../../../assets/img/' + imageName);
-      return <img key={'logo-' + idx} src={logo} alt={name} />;
+    const logoProvider = runtimesLogoProviders[name];
+    if (logoProvider) {
+      return <img key={'logo-' + idx} src={logoProvider()} alt={name} />;
     }
-    return <>{name}</>;
+    return <span key={'runtime-' + idx}>{name}</span>;
   }
 
   render() {
@@ -70,7 +69,10 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                   <br />
                   {workload.runtimes
                     .map((rt, idx) => this.renderLogo(rt.name, idx))
-                    .reduce((list: JSX.Element[], elem) => (list ? [...list, <> | </>, elem] : [elem]), undefined)}
+                    .reduce(
+                      (list: JSX.Element[], elem) => (list ? [...list, <span key="sep"> | </span>, elem] : [elem]),
+                      undefined
+                    )}
                 </div>
               )}
             </Col>
