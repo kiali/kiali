@@ -6,6 +6,7 @@ import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
+import { runtimesLogoProviders } from '../../../config/Logos';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -19,6 +20,14 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
   constructor(props: WorkloadDescriptionProps) {
     super(props);
     this.state = {};
+  }
+
+  renderLogo(name: string, idx: number): JSX.Element {
+    const logoProvider = runtimesLogoProviders[name];
+    if (logoProvider) {
+      return <img key={'logo-' + idx} src={logoProvider()} alt={name} />;
+    }
+    return <span key={'runtime-' + idx}>{name}</span>;
   }
 
   render() {
@@ -57,7 +66,13 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               </div>
               {workload.runtimes.length > 0 && (
                 <div>
-                  <strong>Runtime(s)</strong> {workload.runtimes.map(rt => rt.name).join(', ')}
+                  <br />
+                  {workload.runtimes
+                    .map((rt, idx) => this.renderLogo(rt.name, idx))
+                    .reduce(
+                      (list: JSX.Element[], elem) => (list ? [...list, <span key="sep"> | </span>, elem] : [elem]),
+                      undefined
+                    )}
                 </div>
               )}
             </Col>
