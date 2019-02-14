@@ -1,0 +1,272 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`WorkloadDescription should render with runtimes 1`] = `
+ShallowWrapper {
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <WorkloadDescription
+    istioEnabled={false}
+    workload={
+      Object {
+        "appLabel": false,
+        "availableReplicas": 1,
+        "createdAt": "42",
+        "destinationServices": Array [],
+        "istioSidecar": false,
+        "labels": Object {},
+        "name": "myworkload",
+        "pods": Array [],
+        "replicas": 1,
+        "resourceVersion": "42",
+        "runtimes": Array [
+          Object {
+            "dashboardRefs": Array [],
+            "name": "Vert.x",
+          },
+          Object {
+            "dashboardRefs": Array [],
+            "name": "42",
+          },
+        ],
+        "services": Array [],
+        "type": "Deployment",
+        "versionLabel": false,
+      }
+    }
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateError": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "iconName": "bundle",
+      "iconType": "pf",
+      "istio": false,
+      "items": <Row
+        bsClass="row"
+        componentClass="div"
+      >
+        <Col
+          bsClass="col"
+          componentClass="div"
+          lg={6}
+          md={6}
+          sm={8}
+          xs={12}
+        >
+          <div
+            className="progress-description"
+          >
+            <strong>
+              Template Labels
+            </strong>
+          </div>
+          <div
+            className="label-collection"
+          />
+          <div>
+            <strong>
+              Type
+            </strong>
+             
+            Deployment
+          </div>
+          <div>
+            <strong>
+              Created at
+            </strong>
+             
+            <LocalTime
+              time="42"
+            />
+          </div>
+          <div>
+            <strong>
+              Resource Version
+            </strong>
+             
+            42
+          </div>
+          <div>
+            <br />
+            <img
+              alt="Vert.x"
+              src="vertx-logo.png"
+            />
+            <UNDEFINED>
+               | 
+            </UNDEFINED>
+            <UNDEFINED>
+              42
+            </UNDEFINED>
+          </div>
+        </Col>
+        <Col
+          bsClass="col"
+          componentClass="div"
+          lg={3}
+          md={3}
+          sm={4}
+          xs={12}
+        />
+        <Col
+          bsClass="col"
+          componentClass="div"
+          lg={3}
+          md={3}
+          sm={4}
+          xs={12}
+        >
+          <div
+            className="progress-description"
+          >
+            <strong>
+              Health
+            </strong>
+          </div>
+          <HealthIndicator
+            health={undefined}
+            id="myworkload"
+            mode={0}
+            tooltipPlacement="left"
+          />
+        </Col>
+      </Row>,
+      "title": "myworkload",
+    },
+    "ref": null,
+    "rendered": null,
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "iconName": "bundle",
+        "iconType": "pf",
+        "istio": false,
+        "items": <Row
+          bsClass="row"
+          componentClass="div"
+        >
+          <Col
+            bsClass="col"
+            componentClass="div"
+            lg={6}
+            md={6}
+            sm={8}
+            xs={12}
+          >
+            <div
+              className="progress-description"
+            >
+              <strong>
+                Template Labels
+              </strong>
+            </div>
+            <div
+              className="label-collection"
+            />
+            <div>
+              <strong>
+                Type
+              </strong>
+               
+              Deployment
+            </div>
+            <div>
+              <strong>
+                Created at
+              </strong>
+               
+              <LocalTime
+                time="42"
+              />
+            </div>
+            <div>
+              <strong>
+                Resource Version
+              </strong>
+               
+              42
+            </div>
+            <div>
+              <br />
+              <img
+                alt="Vert.x"
+                src="vertx-logo.png"
+              />
+              <UNDEFINED>
+                 | 
+              </UNDEFINED>
+              <UNDEFINED>
+                42
+              </UNDEFINED>
+            </div>
+          </Col>
+          <Col
+            bsClass="col"
+            componentClass="div"
+            lg={3}
+            md={3}
+            sm={4}
+            xs={12}
+          />
+          <Col
+            bsClass="col"
+            componentClass="div"
+            lg={3}
+            md={3}
+            sm={4}
+            xs={12}
+          >
+            <div
+              className="progress-description"
+            >
+              <strong>
+                Health
+              </strong>
+            </div>
+            <HealthIndicator
+              health={undefined}
+              id="myworkload"
+              mode={0}
+              tooltipPlacement="left"
+            />
+          </Col>
+        </Row>,
+        "title": "myworkload",
+      },
+      "ref": null,
+      "rendered": null,
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+        "lifecycles": Object {
+          "componentDidUpdate": Object {
+            "onSetState": true,
+          },
+          "getDerivedStateFromProps": true,
+          "getSnapshotBeforeUpdate": true,
+          "setState": Object {
+            "skipsComponentDidUpdateOnNullish": true,
+          },
+        },
+      },
+    },
+  },
+}
+`;
