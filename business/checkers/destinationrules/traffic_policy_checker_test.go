@@ -19,6 +19,8 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicy(t *testing.T) {
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -39,6 +41,8 @@ func TestMTLSMeshWideEnabledDRWithoutmTLSOptions(t *testing.T) {
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -60,6 +64,8 @@ func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptions(t *testing.T) {
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -81,6 +87,8 @@ func TestMTLSMeshWideEnabledDRWithTrafficPolicy(t *testing.T) {
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -102,6 +110,8 @@ func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicy(t *testing.T) {
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -123,6 +133,8 @@ func TestNamespacemTLSEnabledDRWithoutTrafficPolicy(t *testing.T) {
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -143,6 +155,8 @@ func TestNamespacemTLSEnabledDRWithoutmTLSOptions(t *testing.T) {
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 
@@ -164,6 +178,8 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicy(t *testing.T) {
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 		},
 	}
 

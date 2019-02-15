@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/kiali/kiali/business/checkers"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -49,7 +48,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
 
-	wg.Add(5) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
 	// NoServiceChecker is not necessary if we target a single service - those components with validation errors won't show up in the query
 	go in.fetchServices(&services, namespace, service, errChan, &wg)
@@ -58,7 +57,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan)
 
 	wg.Wait()
 	close(errChan)
@@ -101,12 +100,12 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 	// Get all the Istio objects from a Namespace
 	if objectType != Gateways {
-		wg.Add(4)
+		wg.Add(3)
 		// Gateways has limited fetching, others will require this information currently
 		go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 		go in.fetchServices(&services, namespace, "", errChan, &wg)
 		go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
-		go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+		in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan)
 	} else {
 		wg.Add(1)
 		go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
@@ -254,20 +253,9 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 	}
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, errChan chan error) {
 	if len(errChan) > 0 {
 		return
-	}
-
-	istioNamespace := config.Get().IstioNamespace
-
-	meshPolicies, err := in.k8s.GetMeshPolicies(istioNamespace)
-	if err != nil {
-		errChan <- err
-	} else {
-		mtlsDetails.MeshPolicies = meshPolicies
 	}
 
 	namespaces, err := in.businessLayer.Namespace.GetNamespaces()

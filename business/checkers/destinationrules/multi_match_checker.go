@@ -38,7 +38,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				fqdn := FormatHostnameForPrefixSearch(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
 				// Skip DR validation if it enables mTLS either namespace or mesh-wide
-				if enablesNonLocalmTLSForService(dr, fqdn.Service) {
+				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
 					continue
 				}
 
@@ -75,11 +75,11 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func enablesNonLocalmTLSForService(dr kubernetes.IstioObject, service string) bool {
-	return service == "*" && enablesmTLS(dr)
+func isNonLocalmTLSForServiceEnabled(dr kubernetes.IstioObject, service string) bool {
+	return service == "*" && ismTLSEnabled(dr)
 }
 
-func enablesmTLS(dr kubernetes.IstioObject) bool {
+func ismTLSEnabled(dr kubernetes.IstioObject) bool {
 	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if tls, found := trafficCasted["tls"]; found {

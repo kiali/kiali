@@ -14,13 +14,13 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	// When mTLS is not enabled, there is no validation to be added.
-	if !t.hasEnablingmTLSDR() {
+	if !t.isNonLocalmTLSEnabled() {
 		return validations
 	}
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
-		if !hasTrafficPolicy(dr) || !hasmTLSSettings(dr) {
+		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
 			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name)
 			validation := buildDestinationRuleValidation(dr, check, true)
@@ -34,17 +34,18 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (t TrafficPolicyChecker) hasEnablingmTLSDR() bool {
-	enablesTLS := false
-
+func (t TrafficPolicyChecker) isNonLocalmTLSEnabled() bool {
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		enablesTLS = enablesmTLS(dr)
-		if enablesTLS {
-			break
+		if host, ok := dr.GetSpec()["host"]; ok {
+			if dHost, ok := host.(string); ok {
+				fqdn := FormatHostnameForPrefixSearch(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
+					return true
+				}
+			}
 		}
 	}
-
-	return enablesTLS
+	return false
 }
 
 func hasTrafficPolicy(dr kubernetes.IstioObject) bool {
@@ -52,12 +53,12 @@ func hasTrafficPolicy(dr kubernetes.IstioObject) bool {
 	return trafficPresent
 }
 
-func hasmTLSSettings(dr kubernetes.IstioObject) bool {
-	return enablesAnyTLS(dr) || enablesPortTLS(dr)
+func hasTLSSettings(dr kubernetes.IstioObject) bool {
+	return hasTrafficPolicyTLS(dr) || hasPortTLS(dr)
 }
 
-// enablesPortTLS returns true when there is one port that specifies any TLS settings
-func enablesPortTLS(dr kubernetes.IstioObject) bool {
+// hasPortTLS returns true when there is one port that specifies any TLS settings
+func hasPortTLS(dr kubernetes.IstioObject) bool {
 	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if portsSettings, found := trafficCasted["portLevelSettings"]; found {
@@ -76,8 +77,8 @@ func enablesPortTLS(dr kubernetes.IstioObject) bool {
 	return false
 }
 
-// enablesAnyTLS returns true when there is a trafficPolicy specifying any tls mode
-func enablesAnyTLS(dr kubernetes.IstioObject) bool {
+// hasTrafficPolicyTLS returns true when there is a trafficPolicy specifying any tls mode
+func hasTrafficPolicyTLS(dr kubernetes.IstioObject) bool {
 	if trafficPolicy, trafficPresent := dr.GetSpec()["trafficPolicy"]; trafficPresent {
 		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
 			if _, found := trafficCasted["tls"]; found {
