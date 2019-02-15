@@ -542,8 +542,6 @@ func (in *IstioConfigService) hasMeshPolicyEnabled(namespaces []string) (bool, e
 		return false, err
 	}
 
-	mtlsEnabled := false
-
 	for _, mp := range mps {
 
 		// It is mandatory to have default as a name
@@ -566,14 +564,21 @@ func (in *IstioConfigService) hasMeshPolicyEnabled(namespaces []string) (bool, e
 
 		for _, peer := range peers.([]interface{}) {
 			peerMap := peer.(map[string]interface{})
-			if _, present := peerMap["mtls"]; present {
-				mtlsEnabled = true
-				break
+			if mtls, present := peerMap["mtls"]; present {
+				if mtlsMap, ok := mtls.(map[string]interface{}); ok {
+					// mTLS enabled in case there is an empty map or mode is STRICT
+					if mode, found := mtlsMap["mode"]; !found || mode == "STRICT" {
+						return true, nil
+					}
+				} else {
+					// mTLS enabled in case mtls object is empty
+					return true, nil
+				}
 			}
 		}
 	}
 
-	return mtlsEnabled, nil
+	return false, nil
 }
 
 func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bool, error) {
