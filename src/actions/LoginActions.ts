@@ -1,6 +1,6 @@
 import { ActionType, createAction } from 'typesafe-actions';
 import { Token } from '../store/Store';
-import { config } from '../config';
+import { config } from '../config/Config';
 
 enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',

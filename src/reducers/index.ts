@@ -7,19 +7,21 @@ import HelpDropdownState from './HelpDropdownState';
 import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
 import namespaceState from './NamespaceState';
+import serverConfig from './ServerConfigState';
 import UserSettingsState from './UserSettingsState';
 import GrafanaState from './GrafanaState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: loginState,
-  statusState: HelpDropdownState,
+  globalState: globalState,
+  grafanaInfo: GrafanaState,
+  graph: graphDataState,
   messageCenter,
   namespaces: namespaceState,
-  globalState: globalState,
-  graph: graphDataState,
-  userSettings: UserSettingsState,
-  grafanaInfo: GrafanaState
+  serverConfig: serverConfig,
+  statusState: HelpDropdownState,
+  userSettings: UserSettingsState
 });
 
 export default rootReducer;

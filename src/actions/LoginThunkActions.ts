@@ -1,14 +1,53 @@
 import { ThunkDispatch } from 'redux-thunk';
-import { setServerConfig } from '../config';
 import { HTTP_CODES } from '../types/Common';
-import { KialiAppState } from '../store/Store';
+import { KialiAppState, Token, ServerConfig } from '../store/Store';
 import { KialiAppAction } from './KialiAppAction';
 import HelpDropdownThunkActions from './HelpDropdownThunkActions';
 import GrafanaThunkActions from './GrafanaThunkActions';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
-import { ServerConfig } from '../config/Config';
+import { ServerConfigActions } from './ServerConfigActions';
 
+const ANONYMOUS: string = 'anonymous';
+
+// completeLogin performs any initialization required prior to declaring the login complete. This
+// prevents early rendering for components waiting on a login.
+const completeLogin = (
+  dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,
+  token: Token,
+  username: string,
+  timeout?: number
+) => {
+  const auth = `Bearer ${token['token']}`;
+  API.getServerConfig(auth).then(
+    response => {
+      // set the serverConfig before completing login so that it is available for
+      // anything needing it to render properly.
+      const serverConfig: ServerConfig = {
+        istioNamespace: response.data.istioNamespace,
+        istioLabels: response.data.istioLabels,
+        prometheus: response.data.prometheus
+      };
+      dispatch(ServerConfigActions.setServerConfig(serverConfig));
+
+      // complete the login process
+      dispatch(LoginActions.loginSuccess(token, username, timeout));
+
+      // dispatch requests to be done now but not necessarily requiring immediate completion
+      dispatch(HelpDropdownThunkActions.refresh());
+      dispatch(GrafanaThunkActions.getInfo(auth));
+    },
+    error => {
+      /** Logout user */
+      if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
+        dispatch(LoginActions.logoutSuccess());
+      }
+    }
+  );
+};
+
+// performLogin performs only the authentication part of login. If successful
+// we call completeLogin to perform any initialization required for the user session.
 const performLogin = (
   dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,
   username?: string,
@@ -16,19 +55,15 @@ const performLogin = (
 ) => {
   dispatch(LoginActions.loginRequest());
 
-  const anonymous = username === undefined;
-  const loginUser: string = username === undefined ? 'anonymous' : username;
-  const loginPass: string = password === undefined ? 'anonymous' : password;
+  const loginUser: string = username === undefined ? ANONYMOUS : username;
+  const loginPass: string = password === undefined ? ANONYMOUS : password;
 
   API.login(loginUser, loginPass).then(
     token => {
-      dispatch(LoginActions.loginSuccess(token['data'], loginUser));
-      const auth = `Bearer ${token['data']['token']}`;
-      dispatch(HelpDropdownThunkActions.refresh());
-      dispatch(GrafanaThunkActions.getInfo(auth));
+      completeLogin(dispatch, token['data'], loginUser);
     },
     error => {
-      if (anonymous) {
+      if (loginUser === ANONYMOUS) {
         dispatch(LoginActions.logoutSuccess());
       } else {
         dispatch(LoginActions.loginFailure(error));
@@ -53,45 +88,21 @@ const LoginThunkActions = {
   checkCredentials: () => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
       const actualState = getState() || {};
+      const token = actualState['authentication']['token'];
+      const username = actualState['authentication']['username'];
+      const sessionTimeout = actualState['authentication']['sessionTimeOut'];
+
       /** Check if there is a token in session */
-      if (actualState['authentication']['token'] === undefined) {
+      if (!token) {
         /** log in as anonymous user - this will logout the user if no anonymous access is allowed */
         performLogin(dispatch);
       } else {
         /** Check the session timeout */
-        if (new Date().getTime() > getState().authentication.sessionTimeOut!) {
+        if (new Date().getTime() > sessionTimeout!) {
           // if anonymous access is allowed, re-login automatically; otherwise, log out
           performLogin(dispatch);
         } else {
-          /** Get the token storage in redux-store */
-          const token = getState().authentication.token!.token;
-          /** Check if the token is valid */
-          const auth = `Bearer ${token}`;
-          API.getServerConfig(auth).then(
-            response => {
-              /** Login success */
-              dispatch(
-                LoginActions.loginSuccess(
-                  actualState['authentication']['token']!,
-                  actualState['authentication']['username']!,
-                  actualState['authentication']['sessionTimeOut']!
-                )
-              );
-              dispatch(HelpDropdownThunkActions.refresh());
-              dispatch(GrafanaThunkActions.getInfo(auth));
-              const serverConfig: ServerConfig = {
-                istioNamespace: response.data.istioNamespace,
-                istioLabels: response.data.istioLabels
-              };
-              setServerConfig(serverConfig);
-            },
-            error => {
-              /** Logout user */
-              if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
-                dispatch(LoginActions.logoutSuccess());
-              }
-            }
-          );
+          completeLogin(dispatch, token, username!, sessionTimeout!);
         }
       }
     };

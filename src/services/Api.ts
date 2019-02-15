@@ -7,7 +7,7 @@ import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
-import { GrafanaInfo } from '../store/Store';
+import { GrafanaInfo, ServerConfig } from '../store/Store';
 import {
   AppHealth,
   ServiceHealth,
@@ -22,7 +22,6 @@ import { App } from '../types/App';
 import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
 import { config } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
-import { ServerConfig } from '../config/Config';
 
 export interface Response<T> {
   data: T;

@@ -15,7 +15,7 @@ import {
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import Slider from './Slider/Slider';
 import { DestinationRule, VirtualService } from '../../types/IstioObjects';
-import { serverConfig } from '../../config';
+import { serverConfig } from '../../config/ServerConfig';
 import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';

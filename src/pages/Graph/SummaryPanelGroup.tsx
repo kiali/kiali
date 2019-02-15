@@ -22,7 +22,7 @@ import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { serverConfig } from '../../config';
+import { serverConfig } from '../../config/ServerConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelGroupState = {

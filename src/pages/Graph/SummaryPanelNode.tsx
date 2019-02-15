@@ -30,7 +30,8 @@ import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
-import { serverConfig, ICONS } from '../../config';
+import { ICONS } from '../../config/Icons';
+import { serverConfig } from '../../config/ServerConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelStateType = {

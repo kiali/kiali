@@ -8,6 +8,7 @@ import { LoginAction } from './LoginActions';
 import { MessageCenterAction } from './MessageCenterActions';
 import { NamespaceAction } from './NamespaceAction';
 import { UserSettingsAction } from './UserSettingsActions';
+import { ServerConfigAction } from './ServerConfigActions';
 
 export type KialiAppAction =
   | GlobalAction
@@ -19,4 +20,5 @@ export type KialiAppAction =
   | LoginAction
   | MessageCenterAction
   | NamespaceAction
+  | ServerConfigAction
   | UserSettingsAction;

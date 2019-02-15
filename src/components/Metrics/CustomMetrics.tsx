@@ -15,8 +15,8 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
+import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -129,7 +129,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
           <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
         </FormGroup>
         <ToolbarRightContent>
-          <MetricsDuration onChanged={this.onDurationChanged} />
+          <MetricsDurationContainer onChanged={this.onDurationChanged} />
           <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
         </ToolbarRightContent>
       </Toolbar>

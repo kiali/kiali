@@ -7,6 +7,8 @@ import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { MetricsObjectTypes, MonitoringDashboard, Chart } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
+import { ServerConfig } from '../../../store/Store';
+import { ServerConfigActions } from '../../../actions/ServerConfigActions';
 
 window['SVGPathElement'] = a => a;
 let mounted: ReactWrapper<any, any> | null;
@@ -38,6 +40,15 @@ const mockWorkloadDashboard = (dashboard: MonitoringDashboard): Promise<void> =>
 
 const mockGrafanaInfo = (info: any): Promise<any> => {
   return mockAPIToPromise('getGrafanaInfo', info);
+};
+
+const mockServerConfig = () => {
+  const config: ServerConfig = {
+    istioNamespace: 'istio-system',
+    istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+    prometheus: { storageTsdbRetention: 31 * 24 * 60 * 60 }
+  };
+  store.dispatch(ServerConfigActions.setServerConfig(config));
 };
 
 const createMetricChart = (name: string): Chart => {
@@ -114,6 +125,7 @@ describe('Metrics for a service', () => {
   });
 
   it('renders initial layout', () => {
+    mockServerConfig();
     mockGrafanaInfo({});
     const wrapper = shallow(
       <Provider store={store}>
@@ -145,6 +157,7 @@ describe('Metrics for a service', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
+      mockServerConfig(),
       mockServiceDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
@@ -183,6 +196,7 @@ describe('Metrics for a service', () => {
 
   it('mounts and loads full metrics', done => {
     const allMocksDone = [
+      mockServerConfig(),
       mockServiceDashboard({
         title: 'foo',
         aggregations: [],
@@ -267,6 +281,7 @@ describe('Inbound Metrics for a workload', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
+      mockServerConfig(),
       mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
@@ -305,6 +320,7 @@ describe('Inbound Metrics for a workload', () => {
 
   it('mounts and loads full metrics', done => {
     const allMocksDone = [
+      mockServerConfig(),
       mockWorkloadDashboard({
         title: 'foo',
         aggregations: [],

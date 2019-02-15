@@ -129,24 +129,3 @@ const conf = {
 export const config = () => {
   return deepFreeze(conf) as typeof conf;
 };
-
-export interface ServerConfig {
-  istioNamespace: string;
-  istioLabels: { [key: string]: string };
-}
-
-let serverConf: ServerConfig = {
-  istioNamespace: 'istio-system',
-  istioLabels: {
-    AppLabelName: 'app',
-    VersionLabelName: 'version'
-  }
-};
-
-export const setServerConfig = (newServerConf: ServerConfig) => {
-  serverConf = newServerConf;
-};
-
-export const serverConfig = (): ServerConfig => {
-  return deepFreeze(serverConf);
-};

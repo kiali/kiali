@@ -7,6 +7,8 @@ import CustomMetrics from '../CustomMetrics';
 import * as API from '../../../services/Api';
 import { MonitoringDashboard } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
+import { ServerConfig } from '../../../store/Store';
+import { ServerConfigActions } from '../../../actions/ServerConfigActions';
 
 window['SVGPathElement'] = a => a;
 let mounted: ReactWrapper<any, any> | null;
@@ -32,6 +34,15 @@ const mockCustomDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
   return mockAPIToPromise('getCustomDashboard', dashboard);
 };
 
+const mockServerConfig = () => {
+  const config: ServerConfig = {
+    istioNamespace: 'istio-system',
+    istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+    prometheus: { storageTsdbRetention: 31 * 24 * 60 * 60 }
+  };
+  store.dispatch(ServerConfigActions.setServerConfig(config));
+};
+
 describe('Custom metrics', () => {
   beforeEach(() => {
     mounted = null;
@@ -43,6 +54,7 @@ describe('Custom metrics', () => {
   });
 
   it('mounts and loads empty metrics', done => {
+    mockServerConfig();
     mockCustomDashboard({ title: 'foo', aggregations: [], charts: [] })
       .then(() => {
         mounted!.update();

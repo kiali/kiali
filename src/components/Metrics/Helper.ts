@@ -11,7 +11,7 @@ import {
 } from '../../types/Metrics';
 import { BaseMetricsOptions } from '../../types/MetricsOptions';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { MetricsDuration } from '../MetricsOptions/MetricsDuration';
 import { DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 

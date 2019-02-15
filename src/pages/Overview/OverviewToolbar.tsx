@@ -2,8 +2,8 @@ import * as React from 'react';
 import { FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
 import { connect } from 'react-redux';
 
-import { KialiAppState } from '../../store/Store';
-import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { KialiAppState, ServerConfig } from '../../store/Store';
+import { durationSelector, refreshIntervalSelector, serverConfigSelector } from '../../store/Selectors';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
@@ -20,10 +20,12 @@ import { HistoryManager, URLParams } from '../../app/History';
 import RefreshContainer from '../../containers/RefreshContainer';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ThunkDispatch } from 'redux-thunk';
+import { getValidDurations, getValidDuration } from '../../config/ServerConfig';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: PollIntervalInMs;
+  serverConfig: ServerConfig;
   setDuration: (duration: DurationInSeconds) => void;
   setRefreshInterval: (refresh: PollIntervalInMs) => void;
 };
@@ -125,6 +127,10 @@ export class OverviewToolbar extends React.Component<Props, State> {
   };
 
   render() {
+    const retention = this.props.serverConfig.prometheus.storageTsdbRetention;
+    const validDurations = getValidDurations(DURATIONS, retention);
+    const validDuration = getValidDuration(validDurations, this.props.duration);
+
     return (
       <StatefulFilters initialFilters={FiltersAndSorts.availableFilters} onFilterChange={this.props.onRefresh}>
         <Sort>
@@ -154,9 +160,9 @@ export class OverviewToolbar extends React.Component<Props, State> {
             disabled={false}
             handleSelect={this.updateDuration}
             nameDropdown="Displaying"
-            value={this.props.duration}
-            label={DURATIONS[this.props.duration]}
-            options={DURATIONS}
+            value={validDuration}
+            label={validDurations[validDuration]}
+            options={validDurations}
           />
         </FormGroup>
         <ToolbarRightContent>
@@ -169,7 +175,8 @@ export class OverviewToolbar extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   duration: durationSelector(state),
-  refreshInterval: refreshIntervalSelector(state)
+  refreshInterval: refreshIntervalSelector(state),
+  serverConfig: serverConfigSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {

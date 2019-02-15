@@ -14,8 +14,8 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
 import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
-import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
+import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -176,7 +176,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           </FormGroup>
         )}
         <ToolbarRightContent>
-          <MetricsDuration onChanged={this.onDurationChanged} />
+          <MetricsDurationContainer onChanged={this.onDurationChanged} />
           <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
         </ToolbarRightContent>
       </Toolbar>

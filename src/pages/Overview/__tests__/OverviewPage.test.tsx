@@ -8,6 +8,8 @@ import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
+import { ServerConfigActions } from '../../../actions/ServerConfigActions';
+import { ServerConfig } from '../../../store/Store';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -36,6 +38,15 @@ const mockNamespaces = (names: string[]): Promise<void> => {
 
 const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
   return mockAPIToPromise('getNamespaceAppHealth', obj, false);
+};
+
+const mockServerConfig = () => {
+  const config: ServerConfig = {
+    istioNamespace: 'istio-system',
+    istioLabels: { AppLabelName: 'app', VersionLabelName: 'version' },
+    prometheus: { storageTsdbRetention: 31 * 24 * 60 * 60 }
+  };
+  store.dispatch(ServerConfigActions.setServerConfig(config));
 };
 
 let mounted: ReactWrapper<any, any> | null;
@@ -68,6 +79,7 @@ describe('Overview page', () => {
   it('renders all without filters', done => {
     FilterSelected.setSelected([]);
     Promise.all([
+      mockServerConfig(),
       mockNamespaces(['a', 'b', 'c']),
       mockNamespaceHealth({
         app1: {

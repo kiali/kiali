@@ -17,6 +17,7 @@ import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_GRAFANA_STATE } from '../reducers/GrafanaState';
+import { INITIAL_SERVER_CONFIG } from '../reducers/ServerConfigState';
 
 declare const window;
 
@@ -40,7 +41,7 @@ const namespacePersistFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'statusState', 'namespaces'],
+  whitelist: ['authentication', 'statusState', 'namespaces', 'serverConfig'],
   transforms: [namespacePersistFilter]
 };
 
@@ -69,7 +70,8 @@ const initialStore: KialiAppState = {
   messageCenter: INITIAL_MESSAGE_CENTER_STATE,
   graph: INITIAL_GRAPH_STATE,
   userSettings: INITIAL_USER_SETTINGS_STATE,
-  grafanaInfo: INITIAL_GRAFANA_STATE
+  grafanaInfo: INITIAL_GRAFANA_STATE,
+  serverConfig: INITIAL_SERVER_CONFIG
 };
 
 // pass an optional param to rehydrate state on app start
