@@ -58,7 +58,7 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 DOCKER_NAME ?= docker.io/kiali/kiali
 
 # All tags of versions must start with v, except for the edge release "latest"
-DOCKER_TAG = $(shell if [ "latest" = "$(BACKEND_VERSION)" ]; then echo "latest"; else echo "v$(BACKEND_VERSION)"; fi;)
+VERSION_TAG = $(shell if [ "latest" = "$(BACKEND_VERSION)" ]; then echo "latest"; else echo "v$(BACKEND_VERSION)"; fi;)
 
 ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
@@ -126,34 +126,34 @@ ifdef DOCKER_PASSWORD
 	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
 endif
 endif
-	DOCKER_VERSION="$(DOCKER_TAG)" \
+	DOCKER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
 	  make docker-build docker-push
 ifneq ($(IS_SNAPSHOT),y)
-	docker tag "$(DOCKER_NAME):$(DOCKER_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker tag "$(DOCKER_NAME):$(VERSION_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
-	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION)"
+	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
 
 backend-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
 	sed -i "s/^CONSOLE_VERSION ?=.*/CONSOLE_VERSION ?= $$(cat _output/docker/console/version.txt)/" Makefile
 	git add Makefile
 	git commit -m "Release $(BACKEND_VERSION)"
-	git push $(BACKEND_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(BACKEND_VERSION)
+	git push $(BACKEND_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
 ifdef GH_TOKEN
 	@echo "Creating GitHub release..."
 ifeq ($(IS_SNAPSHOT),y)
 	@curl -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
-	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)", "prerelease": true}' \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "$(VERSION_TAG)", "prerelease": true}' \
 	  -X POST $(BACKEND_RELEASE_URI)
 else
 	@curl -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
-	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)"}' \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "$(VERSION_TAG)"}' \
 	  -X POST $(BACKEND_RELEASE_URI)
 endif
 endif
