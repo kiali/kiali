@@ -52,7 +52,7 @@ type OAuthRouteTLSSpec struct {
 	Termination string `json:"termination"`
 }
 
-const serverPrefix = "https://openshift.default.svc/"
+const serverPrefix = "https://kubernetes.default.svc/"
 
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
 	var server *OAuthAuthorizationServer
