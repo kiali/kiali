@@ -84,10 +84,35 @@ export interface CytoscapeMouseInEvent extends CytoscapeBaseEvent {}
 export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
 // Graph Structures
-export interface ProtocolTraffic {
-  protocol: string;
-  rates: any;
+
+export interface ProtocolTrafficNoData {
+  protocol: '';
 }
+
+export interface ProtocolTrafficHttp {
+  protocol: 'http';
+  rates: {
+    http: string;
+    httpPercentErr?: string;
+  };
+}
+
+export interface ProtocolTrafficGrpc {
+  protocol: 'grpc';
+  rates: {
+    grpc: string;
+    grpcPercentErr?: string;
+  };
+}
+
+export interface ProtocolTrafficTcp {
+  protocol: 'tcp';
+  rates: {
+    tcp: string;
+  };
+}
+
+export type ProtocolTraffic = ProtocolTrafficHttp | ProtocolTrafficTcp | ProtocolTrafficGrpc | ProtocolTrafficNoData;
 
 export interface GraphNodeData {
   id: string;
@@ -134,6 +159,13 @@ export interface GraphEdgeWrapper {
 export interface GraphElements {
   nodes?: GraphNodeWrapper[];
   edges?: GraphEdgeWrapper[];
+}
+
+export interface GraphDefinition {
+  duration: number;
+  elements: GraphElements;
+  graphType: GraphType;
+  timestamp: number;
 }
 
 export interface DecoratedGraphNodeData extends GraphNodeData {

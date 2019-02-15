@@ -13,12 +13,16 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
+import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
+import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
+import TrafficDetails from '../../components/Metrics/TrafficDetails';
 
 type WorkloadDetailsState = {
   workload: Workload;
   validations: Validations;
   istioEnabled: boolean;
   health?: WorkloadHealth;
+  trafficData: GraphDefinition | null;
 };
 
 class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, WorkloadDetailsState> {
@@ -27,9 +31,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     this.state = {
       workload: emptyWorkload,
       validations: {},
-      istioEnabled: false
+      istioEnabled: false,
+      trafficData: null
     };
-    this.fetchWorkload();
+    this.doRefresh();
   }
 
   componentDidUpdate(prevProps: RouteComponentProps<WorkloadId>) {
@@ -37,13 +42,15 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.workload !== prevProps.match.params.workload
     ) {
-      this.setState({
-        workload: emptyWorkload,
-        validations: {},
-        istioEnabled: false,
-        health: undefined
-      });
-      this.fetchWorkload();
+      this.setState(
+        {
+          workload: emptyWorkload,
+          validations: {},
+          istioEnabled: false,
+          health: undefined
+        },
+        () => this.doRefresh()
+      );
     }
   }
 
@@ -82,6 +89,44 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     }
     return validations;
   }
+
+  doRefresh = () => {
+    const currentTab = this.activeTab('tab', 'info');
+
+    if (this.state.workload === emptyWorkload || currentTab === 'info') {
+      this.setState({ trafficData: null });
+      this.fetchWorkload();
+    }
+
+    if (currentTab === 'traffic') {
+      this.fetchTrafficData();
+    }
+  };
+
+  fetchTrafficData = () => {
+    const node: NodeParamsType = {
+      workload: this.props.match.params.workload,
+      namespace: { name: this.props.match.params.namespace },
+      nodeType: NodeType.WORKLOAD,
+
+      // unneeded
+      app: '',
+      service: '',
+      version: ''
+    };
+    const restParams = {
+      duration: '600s',
+      graphType: GraphType.WORKLOAD,
+      injectServiceNodes: true,
+      appenders: 'deadNode'
+    };
+
+    fetchTrafficDetails(node, restParams).then(trafficData => {
+      if (trafficData !== undefined) {
+        this.setState({ trafficData: trafficData });
+      }
+    });
+  };
 
   fetchWorkload = () => {
     const promiseDetails = API.getWorkload(
@@ -128,14 +173,22 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     const app = this.state.workload.labels[cfg.istioLabels['AppLabelName']];
     const version = this.state.workload.labels[cfg.istioLabels['VersionLabelName']];
     const isLabeled = app && version;
+
     return (
       <>
         <BreadcrumbView location={this.props.location} />
-        <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
+        <TabContainer
+          id="basic-tabs"
+          activeKey={this.activeTab('tab', 'info')}
+          onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
+        >
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
               <NavItem eventKey="info">
                 <div>Info</div>
+              </NavItem>
+              <NavItem eventKey="traffic">
+                <div>Traffic</div>
               </NavItem>
               <NavItem eventKey="in_metrics">
                 <div>Inbound Metrics</div>
@@ -160,11 +213,21 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   workload={this.state.workload}
                   namespace={this.props.match.params.namespace}
                   validations={this.state.validations}
-                  onRefresh={this.fetchWorkload}
+                  onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
                   istioEnabled={this.state.istioEnabled}
                   health={this.state.health}
+                />
+              </TabPane>
+              <TabPane eventKey={'traffic'}>
+                <TrafficDetails
+                  rateInterval={600}
+                  trafficData={this.state.trafficData}
+                  itemType={MetricsObjectTypes.WORKLOAD}
+                  namespace={this.props.match.params.namespace}
+                  workloadName={this.state.workload.name}
+                  onRefresh={this.doRefresh}
                 />
               </TabPane>
               <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
@@ -214,7 +277,13 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
   };
 
-  private tabSelectHandler = (tabName: string) => {
+  private tabChangeHandler = (tabName: string) => {
+    if (tabName === 'traffic' && this.state.trafficData === null) {
+      this.fetchTrafficData();
+    }
+  };
+
+  private tabSelectHandler = (tabName: string, postHandler?: (tabName: string) => void) => {
     return (tabKey?: string) => {
       if (!tabKey) {
         return;
@@ -224,6 +293,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       urlParams.set(tabName, tabKey);
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+
+      if (postHandler) {
+        postHandler(tabKey);
+      }
     };
   };
 }

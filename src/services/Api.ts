@@ -19,7 +19,7 @@ import {
 import { ServiceList } from '../types/ServiceList';
 import { AppList } from '../types/AppList';
 import { App } from '../types/App';
-import { NodeParamsType, NodeType, GraphElements } from '../types/Graph';
+import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
 import { config } from '../config';
 import { AuthToken, HTTP_VERBS } from '../types/Common';
 import { ServerConfig } from '../config/Config';
@@ -352,13 +352,13 @@ export const getJaegerInfo = (auth: AuthToken) => {
 };
 
 export const getGraphElements = (auth: AuthToken, params: any) => {
-  return newRequest<GraphElements>(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
+  return newRequest<GraphDefinition>(HTTP_VERBS.GET, urls.namespacesGraphElements, params, {}, auth);
 };
 
 export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, params: any) => {
   switch (node.nodeType) {
     case NodeType.APP:
-      return newRequest(
+      return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
         urls.appGraphElements(node.namespace.name, node.app, node.version),
         params,
@@ -366,9 +366,15 @@ export const getNodeGraphElements = (auth: AuthToken, node: NodeParamsType, para
         auth
       );
     case NodeType.SERVICE:
-      return newRequest(HTTP_VERBS.GET, urls.serviceGraphElements(node.namespace.name, node.service), params, {}, auth);
+      return newRequest<GraphDefinition>(
+        HTTP_VERBS.GET,
+        urls.serviceGraphElements(node.namespace.name, node.service),
+        params,
+        {},
+        auth
+      );
     case NodeType.WORKLOAD:
-      return newRequest(
+      return newRequest<GraphDefinition>(
         HTTP_VERBS.GET,
         urls.workloadGraphElements(node.namespace.name, node.workload),
         params,

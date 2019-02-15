@@ -69,7 +69,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
   if (graphData) {
     if (graphData.nodes) {
       decoratedGraph.nodes = graphData.nodes.map((node: GraphNodeWrapper) => {
-        const decoratedNode = { ...node };
+        const decoratedNode: any = { ...node };
         // parse out the traffic data into top level fields for the various protocols. This is done
         // to be back compatible with our existing ui code that expects the explicit http and tcp fields.
         // We can then set the 'traffic' field undefined because it is unused in the cy element handling.
@@ -88,10 +88,10 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
     }
     if (graphData.edges) {
       decoratedGraph.edges = graphData.edges.map((edge: GraphEdgeWrapper) => {
-        const decoratedEdge = { ...edge };
+        const decoratedEdge: any = { ...edge };
         const { traffic, ...edgeData } = edge.data;
         // see comment above about the 'traffic' data handling
-        if (traffic) {
+        if (traffic && traffic.protocol !== '') {
           decoratedEdge.data = { protocol: traffic.protocol, ...traffic.rates, ...edgeData };
         }
         // prettier-ignore
