@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -55,9 +54,22 @@ func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, query
 func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
+	// Perf: do not bother fetching request rate if not a single workload has sidecar
+	hasSidecar := false
+	for _, w := range ws {
+		if w.IstioSidecar {
+			hasSidecar = true
+			break
+		}
+	}
+
 	// Fetch services requests rates
-	rate, errRate := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
-	health.Requests = rate
+	var errRate error
+	if hasSidecar {
+		rate, err := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
+		health.Requests = rate
+		errRate = err
+	}
 
 	// Deployment status
 	health.WorkloadStatuses = castWorkloadStatuses(ws)
@@ -75,15 +87,24 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}
+	status := models.WorkloadStatus{
+		Name:              w.Name,
+		Replicas:          w.Replicas,
+		AvailableReplicas: w.AvailableReplicas,
+	}
+
+	// Perf: do not bother fetching request rate if workload has no sidecar
+	if !w.IstioSidecar {
+		return models.WorkloadHealth{
+			WorkloadStatus: status,
+			Requests:       models.NewEmptyRequestHealth(),
+		}, nil
+	}
 
 	rate, err := in.getWorkloadRequestsHealth(namespace, workload, rateInterval, queryTime)
 	return models.WorkloadHealth{
-		WorkloadStatus: models.WorkloadStatus{
-			Name:              w.Name,
-			Replicas:          w.Replicas,
-			AvailableReplicas: w.AvailableReplicas,
-		},
-		Requests: rate,
+		WorkloadStatus: status,
+		Requests:       rate,
 	}, err
 }
 
@@ -103,6 +124,9 @@ func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, q
 func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities namespaceApps, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
 	allHealth := make(models.NamespaceAppHealth)
 
+	// Perf: do not bother fetching request rate if not a single workload has sidecar
+	hasSidecar := false
+
 	// Prepare all data
 	for app, entities := range appEntities {
 		if app != "" {
@@ -110,15 +134,24 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 			allHealth[app] = &h
 			if entities != nil {
 				h.WorkloadStatuses = castWorkloadStatuses(entities.Workloads)
+				for _, w := range entities.Workloads {
+					if w.IstioSidecar {
+						hasSidecar = true
+						break
+					}
+				}
 			}
 		}
 	}
 
-	// Fetch services requests rates
-	rates, errRate := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
-
-	// Fill with collected request rates
-	fillAppRequestRates(allHealth, rates)
+	var errRate error
+	if hasSidecar {
+		// Fetch services requests rates
+		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		errRate = err
+		// Fill with collected request rates
+		fillAppRequestRates(allHealth, rates)
+	}
 
 	return allHealth, errRate
 }
@@ -129,27 +162,25 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
 	defer promtimer.ObserveNow(&err)
 
-	services, err := in.k8s.GetServices(namespace, nil)
-	if err != nil {
-		return nil, err
-	}
-	return in.getNamespaceServiceHealth(namespace, services, rateInterval, queryTime), nil
+	return in.getNamespaceServiceHealth(namespace, rateInterval, queryTime), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(namespace string, services []v1.Service, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(namespace string, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
 	allHealth := make(models.NamespaceServiceHealth)
-
-	// Prepare all data
-	for _, service := range services {
-		h := models.EmptyServiceHealth()
-		allHealth[service.Name] = &h
-	}
 
 	// Fetch services requests rates
 	rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval, queryTime)
-
 	// Fill with collected request rates
-	fillServiceRequestRates(allHealth, rates)
+	lblDestSvc := model.LabelName("destination_service_name")
+	for _, sample := range rates {
+		service := string(sample.Metric[lblDestSvc])
+		health, ok := allHealth[service]
+		if !ok {
+			health = &models.ServiceHealth{Requests: models.NewEmptyRequestHealth()}
+			allHealth[service] = health
+		}
+		health.Requests.AggregateInbound(sample)
+	}
 
 	return allHealth
 }
@@ -169,6 +200,9 @@ func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval stri
 }
 
 func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.Workloads, rateInterval string, queryTime time.Time) models.NamespaceWorkloadHealth {
+	// Perf: do not bother fetching request rate if not a single workload has sidecar
+	hasSidecar := false
+
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
 		allHealth[w.Name] = &models.WorkloadHealth{}
@@ -177,13 +211,17 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 			Replicas:          w.Replicas,
 			AvailableReplicas: w.AvailableReplicas,
 		}
+		if w.IstioSidecar {
+			hasSidecar = true
+		}
 	}
 
-	// Fetch services requests rates
-	rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
-
-	// Fill with collected request rates
-	fillWorkloadRequestRates(allHealth, rates)
+	if hasSidecar {
+		// Fetch services requests rates
+		rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
+		// Fill with collected request rates
+		fillWorkloadRequestRates(allHealth, rates)
+	}
 
 	return allHealth
 }
@@ -200,18 +238,6 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 		name = string(sample.Metric[lblSrc])
 		if health, ok := allHealth[name]; ok {
 			health.Requests.AggregateOutbound(sample)
-		}
-	}
-}
-
-// fillServiceRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-// note that these are source-reported metrics, which loses certain requests (like from unknown) but has the health advantage of including source-reported failures
-func fillServiceRequestRates(allHealth models.NamespaceServiceHealth, rates model.Vector) {
-	lblDestSvc := model.LabelName("destination_service_name")
-	for _, sample := range rates {
-		service := string(sample.Metric[lblDestSvc])
-		if health, ok := allHealth[service]; ok {
-			health.Requests.AggregateInbound(sample)
 		}
 	}
 }
