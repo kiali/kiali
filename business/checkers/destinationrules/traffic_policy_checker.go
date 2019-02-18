@@ -38,7 +38,7 @@ func (t TrafficPolicyChecker) isNonLocalmTLSEnabled() bool {
 	for _, dr := range t.MTLSDetails.DestinationRules {
 		if host, ok := dr.GetSpec()["host"]; ok {
 			if dHost, ok := host.(string); ok {
-				fqdn := FormatHostnameForPrefixSearch(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
 					return true
 				}

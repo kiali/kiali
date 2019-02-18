@@ -1,8 +1,6 @@
 package destinationrules
 
 import (
-	"strings"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -11,12 +9,6 @@ const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
 	DestinationRules []kubernetes.IstioObject
-}
-
-type Host struct {
-	Service   string
-	Namespace string
-	Cluster   string
 }
 
 type subset struct {
@@ -35,7 +27,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		if host, ok := dr.GetSpec()["host"]; ok {
 			destinationRulesName := dr.GetObjectMeta().Name
 			if dHost, ok := host.(string); ok {
-				fqdn := FormatHostnameForPrefixSearch(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
+				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
 				// Skip DR validation if it enables mTLS either namespace or mesh-wide
 				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
@@ -155,29 +147,4 @@ func addError(validations models.IstioValidations, destinationRuleNames []string
 		}
 	}
 	return validations
-}
-
-// FormatHostnameForPrefixSearch formats given DR host information to a FQDN format
-func FormatHostnameForPrefixSearch(hostName, namespace, clusterName string) Host {
-	domainParts := strings.Split(hostName, ".")
-	host := Host{
-		Service: domainParts[0],
-	}
-	if len(domainParts) > 1 {
-		host.Namespace = domainParts[1]
-
-		if len(domainParts) > 2 {
-			host.Cluster = strings.Join(domainParts[2:], ".")
-		}
-	}
-
-	// Fill in missing details, we take precedence from the full hostname and not from DestinationRule details
-	if host.Cluster == "" {
-		host.Cluster = clusterName
-	}
-
-	if host.Namespace == "" {
-		host.Namespace = namespace
-	}
-	return host
 }

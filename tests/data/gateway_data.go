@@ -1,18 +1,21 @@
 package data
 
 import (
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateEmptyGateway(name string, selector map[string]string) kubernetes.IstioObject {
+func CreateEmptyGateway(name, namespace string, selector map[string]string) kubernetes.IstioObject {
 	iSelector := make(map[string]interface{}, len(selector))
 	for k, v := range selector {
 		iSelector[k] = v
 	}
 	gateway := kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: name,
+			Name:        name,
+			Namespace:   namespace,
+			ClusterName: config.Get().ExternalServices.Istio.IstioIdentityDomain,
 		},
 		Spec: map[string]interface{}{
 			"selector": iSelector,

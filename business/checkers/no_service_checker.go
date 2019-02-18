@@ -9,10 +9,11 @@ import (
 )
 
 type NoServiceChecker struct {
-	Namespace    string
-	IstioDetails *kubernetes.IstioDetails
-	Services     []v1.Service
-	WorkloadList models.WorkloadList
+	Namespace            string
+	IstioDetails         *kubernetes.IstioDetails
+	Services             []v1.Service
+	WorkloadList         models.WorkloadList
+	GatewaysPerNamespace [][]kubernetes.IstioObject
 }
 
 func (in NoServiceChecker) Check() models.IstioValidations {
@@ -24,7 +25,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 
 	serviceNames := getServiceNames(in.Services)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
-	gatewayNames := kubernetes.GatewayNames(in.IstioDetails.Gateways)
+	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
 
 	for _, virtualService := range in.IstioDetails.VirtualServices {
 		validations.MergeValidations(runVirtualServiceCheck(virtualService, in.Namespace, serviceNames, serviceHosts))
