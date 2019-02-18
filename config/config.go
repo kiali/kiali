@@ -131,8 +131,8 @@ type LoginToken struct {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AppLabelName     string `yaml:"app_label_name,omitempty"`
-	VersionLabelName string `yaml:"version_label_name,omitempty"`
+	AppLabelName     string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // Kubernetes client configuration
