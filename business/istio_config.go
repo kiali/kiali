@@ -614,10 +614,9 @@ func (in *IstioConfigService) hasDestinationRuleEnabled(namespaces []string) (bo
 }
 
 func (in *IstioConfigService) getAllDestinationRules(namespaces []string) ([]kubernetes.IstioObject, error) {
-	allDestinationRules := make([]kubernetes.IstioObject, 0)
-
-	wg := sync.WaitGroup{}
+	drChan := make(chan []kubernetes.IstioObject, len(namespaces))
 	errChan := make(chan error, 1)
+	wg := sync.WaitGroup{}
 
 	wg.Add(len(namespaces))
 
@@ -631,17 +630,23 @@ func (in *IstioConfigService) getAllDestinationRules(namespaces []string) ([]kub
 				return
 			}
 
-			allDestinationRules = append(allDestinationRules, drs...)
+			drChan <- drs
 		}(namespace)
 	}
 
 	wg.Wait()
 	close(errChan)
+	close(drChan)
 
 	for err := range errChan {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	allDestinationRules := make([]kubernetes.IstioObject, 0)
+	for drs := range drChan {
+		allDestinationRules = append(allDestinationRules, drs...)
 	}
 
 	return allDestinationRules, nil

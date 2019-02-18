@@ -86,6 +86,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This subset's labels are not found from any matching host",
 		Severity: ErrorSeverity,
 	},
+	"destinationrules.trafficpolicy.notlssettings": {
+		Message:  "mTLS settings of a non-local Destination Rule are overridden",
+		Severity: WarningSeverity,
+	},
 	"gateways.multimatch": {
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
@@ -136,6 +140,10 @@ func Build(checkId string, path string) IstioCheck {
 	check := checkDescriptors[checkId]
 	check.Path = path
 	return check
+}
+
+func BuildKey(objectType, name string) IstioValidationKey {
+	return IstioValidationKey{ObjectType: objectType, Name: name}
 }
 
 func CheckMessage(checkId string) string {

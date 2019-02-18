@@ -58,3 +58,41 @@ func CreateMTLSTrafficPolicyForDestinationRules() map[string]interface{} {
 		},
 	}
 }
+
+func CreateLoadBalancerTrafficPolicyForDestinationRules() map[string]interface{} {
+	return map[string]interface{}{
+		"loadBalancer": map[string]interface{}{
+			"simple": "ROUND_ROBIN",
+		},
+	}
+}
+
+func CreatePortLevelTrafficPolicyForDestinationRules() map[string]interface{} {
+	return map[string]interface{}{
+		"portLevelSettings": []interface{}{
+			map[string]interface{}{
+				"port": map[string]interface{}{
+					"number": 9080,
+				},
+				"loadBalancer": map[string]interface{}{
+					"simple": "ROUND_ROBIN",
+				},
+			},
+		},
+	}
+}
+
+func CreateTLSPortLevelTrafficPolicyForDestinationRules() map[string]interface{} {
+	return map[string]interface{}{
+		"portLevelSettings": []interface{}{
+			map[string]interface{}{
+				"port": map[string]interface{}{
+					"number": 9080,
+				},
+				"tls": map[string]interface{}{
+					"mode": "SIMPLE",
+				},
+			},
+		},
+	}
+}

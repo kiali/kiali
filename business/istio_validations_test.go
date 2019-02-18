@@ -54,9 +54,8 @@ func TestGatewayValidation(t *testing.T) {
 	assert.NotEmpty(validations)
 }
 
-func mockWorkLoadService() WorkloadService {
+func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	// Setup mocks
-	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
@@ -73,11 +72,13 @@ func mockWorkLoadService() WorkloadService {
 
 func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(false)
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
 	k8s.On("GetNamespaces").Return(fakeNamespaces(), nil)
+	mockWorkLoadService(k8s)
 
-	return IstioValidationsService{k8s: k8s, ws: mockWorkLoadService()}
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 }
 
 func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *v1.PodList) IstioValidationsService {
@@ -89,13 +90,17 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().ServiceEntries, nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
+	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
+	k8s.On("IsOpenShift").Return(false)
 
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespaces").Return(fakeNamespaces(), nil)
 
-	return IstioValidationsService{k8s: k8s, ws: mockWorkLoadService()}
+	mockWorkLoadService(k8s)
+
+	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 }
 
 func fakeCombinedIstioDetails() *kubernetes.IstioDetails {
@@ -120,14 +125,21 @@ func getGateway(name string) []kubernetes.IstioObject {
 		}))}
 }
 
+func fakeMeshPolicies() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{
+		data.CreateEmptyMeshPolicy("default", nil),
+		data.CreateEmptyMeshPolicy("test", nil),
+	}
+}
+
 func fakeNamespaces() []v1.Namespace {
 	return []v1.Namespace{
-		v1.Namespace{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test",
 			},
 		},
-		v1.Namespace{
+		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test2",
 			},
@@ -155,7 +167,7 @@ func fakeCombinedServices(services []string) []v1.Service {
 func fakePods() *v1.PodList {
 	return &v1.PodList{
 		Items: []v1.Pod{
-			v1.Pod{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "reviews-12345-hello",
 					Labels: map[string]string{
@@ -164,7 +176,7 @@ func fakePods() *v1.PodList {
 					},
 				},
 			},
-			v1.Pod{
+			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "reviews-54321-hello",
 					Labels: map[string]string{

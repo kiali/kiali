@@ -474,6 +474,12 @@ type IstioDetails struct {
 	Gateways         []IstioObject `json:"gateways"`
 }
 
+// MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
+type MTLSDetails struct {
+	DestinationRules []IstioObject `json:"destinationrules"`
+	MeshPolicies     []IstioObject `json:"meshpolicies"`
+}
+
 type istioResponse struct {
 	result  IstioObject
 	results []IstioObject
