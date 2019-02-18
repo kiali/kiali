@@ -16,7 +16,7 @@ type NoGatewayChecker struct {
 func (s NoGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
-	valid, index := kubernetes.ValidateVirtualServiceGateways(s.VirtualService.GetSpec(), s.GatewayNames, s.VirtualService.GetObjectMeta().Namespace)
+	valid, index := kubernetes.ValidateVirtualServiceGateways(s.VirtualService.GetSpec(), s.GatewayNames, s.VirtualService.GetObjectMeta().Namespace, s.VirtualService.GetObjectMeta().ClusterName)
 	if !valid {
 		path := "spec/gateways[" + strconv.Itoa(index) + "]"
 		validation := models.Build("virtualservices.nogateway", path)

@@ -505,18 +505,24 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways []IstioObject) map[string]struct{} {
+func GatewayNames(gateways [][]IstioObject) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
-	for _, v := range gateways {
-		v := v
-		names[v.GetObjectMeta().Name] = empty
+	for _, ns := range gateways {
+		for _, gw := range ns {
+			gw := gw
+			clusterName := gw.GetObjectMeta().ClusterName
+			if clusterName == "" {
+				clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+			}
+			names[ParseHost(gw.GetObjectMeta().Name, gw.GetObjectMeta().Namespace, clusterName).String()] = empty
+		}
 	}
 	return names
 }
 
 // ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames. Also return index of missing gatways to show clearer error path in editor
-func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}, namespace string) (bool, int) {
+func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}, namespace, clusterName string) (bool, int) {
 	if gatewaysSpec, found := spec["gateways"]; found {
 		if gateways, ok := gatewaysSpec.([]interface{}); ok {
 			for index, g := range gateways {
@@ -524,8 +530,9 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 					if gate == "mesh" {
 						return true, -1
 					}
+					hostname := ParseHost(gate, namespace, clusterName).String()
 					for gw := range gatewayNames {
-						if found := FilterByHost(gate, gw, namespace); found {
+						if found := FilterByHost(hostname, gw, namespace); found {
 							return true, -1
 						}
 					}

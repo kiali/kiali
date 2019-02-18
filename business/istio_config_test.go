@@ -262,7 +262,7 @@ func mockGetIstioConfigList() IstioConfigService {
 }
 
 func fakeGetGateways() []kubernetes.IstioObject {
-	gw1 := data.CreateEmptyGateway("gw-1", map[string]string{
+	gw1 := data.CreateEmptyGateway("gw-1", "test", map[string]string{
 		"app": "my-gateway1-controller",
 	})
 
@@ -283,7 +283,7 @@ func fakeGetGateways() []kubernetes.IstioObject {
 		},
 	}
 
-	gw2 := data.CreateEmptyGateway("gw-2", map[string]string{
+	gw2 := data.CreateEmptyGateway("gw-2", "test", map[string]string{
 		"app": "my-gateway2-controller",
 	})
 

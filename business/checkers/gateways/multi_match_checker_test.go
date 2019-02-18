@@ -17,7 +17,7 @@ func TestCorrectGateways(t *testing.T) {
 	assert := assert.New(t)
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
-		data.CreateEmptyGateway("validgateway", map[string]string{
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
 			"app": "real",
 		}))
 
@@ -39,13 +39,13 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	assert := assert.New(t)
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
-		data.CreateEmptyGateway("validgateway", map[string]string{
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
 			"app": "real",
 		}))
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
-		data.CreateEmptyGateway("stillvalid", map[string]string{
+		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
 			"app": "someother",
 		}))
 
@@ -69,19 +69,19 @@ func TestWildCardMatchingHost(t *testing.T) {
 	assert := assert.New(t)
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
-		data.CreateEmptyGateway("validgateway", map[string]string{
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
 			"app": "real",
 		}))
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
-		data.CreateEmptyGateway("stillvalid", map[string]string{
+		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
 			"app": "someother",
 		}))
 
 	// Another namespace
 	gwObject3 := data.AddServerToGateway(data.CreateServer([]string{"*.justhost.com"}, 80, "http", "http"),
-		data.CreateEmptyGateway("keepsvalid", map[string]string{
+		data.CreateEmptyGateway("keepsvalid", "test", map[string]string{
 			"app": "someother",
 		}))
 
@@ -106,13 +106,13 @@ func TestTwoWildCardsMatching(t *testing.T) {
 	assert := assert.New(t)
 
 	gwObject := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
-		data.CreateEmptyGateway("validgateway", map[string]string{
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
 			"app": "real",
 		}))
 
 	// Another namespace
 	gwObject2 := data.AddServerToGateway(data.CreateServer([]string{"*"}, 80, "http", "http"),
-		data.CreateEmptyGateway("stillvalid", map[string]string{
+		data.CreateEmptyGateway("stillvalid", "test", map[string]string{
 			"app": "someother",
 		}))
 

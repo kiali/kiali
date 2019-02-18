@@ -23,7 +23,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
-			fqdn := FormatHostnameForPrefixSearch(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
+			fqdn := kubernetes.ParseHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
 			if !n.hasMatchingService(fqdn.Service) {
 				validation := models.Build("destinationrules.nodest.matchingworkload", "spec/host")
 				validations = append(validations, &validation)

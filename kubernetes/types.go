@@ -1,9 +1,13 @@
 package kubernetes
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/kiali/kiali/config"
 	"k8s.io/api/apps/v1beta1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -593,4 +597,45 @@ func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
 		return c
 	}
 	return nil
+}
+
+// Host represents the FQDN format for Istio hostnames
+type Host struct {
+	Service   string
+	Namespace string
+	Cluster   string
+}
+
+// Parse takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
+func ParseHost(hostName, namespace, cluster string) Host {
+	domainParts := strings.Split(hostName, ".")
+	host := Host{
+		Service: domainParts[0],
+	}
+	if len(domainParts) > 1 {
+		host.Namespace = domainParts[1]
+
+		if len(domainParts) > 2 {
+			host.Cluster = strings.Join(domainParts[2:], ".")
+		}
+	}
+
+	// Fill in missing details, we take precedence from the full hostname and not from DestinationRule details
+	if host.Cluster == "" {
+		if cluster != "" {
+			host.Cluster = cluster
+		} else {
+			host.Cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+		}
+	}
+
+	if host.Namespace == "" {
+		host.Namespace = namespace
+	}
+	return host
+}
+
+// String outputs a full FQDN version of the Host
+func (h Host) String() string {
+	return fmt.Sprintf("%s.%s.%s", h.Service, h.Namespace, h.Cluster)
 }
