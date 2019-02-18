@@ -7,25 +7,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/config"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/gorilla/mux"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/util"
-	osappsv1 "github.com/openshift/api/apps/v1"
-	osv1 "github.com/openshift/api/project/v1"
-	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 )
 
 // TestNamespaceAppHealth is unit test (testing request handling, not the prometheus client behaviour)
@@ -37,36 +30,12 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/health"
 
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return(kubetest.FakeServiceList(), nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1.Pod{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta1.Deployment{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta2.StatefulSet{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return(kubetest.FakeServiceList(), nil)
+	k8s.On("GetPods", "ns", mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
+	k8s.MockEmptyWorkloads("ns")
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
-	prom.On("GetAllRequestRates", mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, nil)
+	prom.On("GetAllRequestRates", "ns", "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -105,31 +74,8 @@ func TestAppHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/apps/reviews/health"
 
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-		assert.Equal(t, "app=reviews", args[1])
-	}).Return([]v1.Pod{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta1.Deployment{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]v1beta2.StatefulSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal(t, "ns", args[0])
-	}).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.On("GetPods", "ns", "app=reviews").Return(kubetest.FakePodList(), nil)
+	k8s.MockEmptyWorkloads("ns")
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
 	prom.On("GetAppRequestRates", mock.AnythingOfType("string"), mock.AnythingOfType("string"), "17s", util.Clock.Now()).Return(model.Vector{}, model.Vector{}, nil)
