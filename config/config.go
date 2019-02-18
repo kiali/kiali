@@ -224,7 +224,7 @@ func NewConfig() (c *Config) {
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
-	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:9093/version"))
+	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
 
 	// Token-based authentication Configuration
 	c.LoginToken.SigningKey = []byte(strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali")))
