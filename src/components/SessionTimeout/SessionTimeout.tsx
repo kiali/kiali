@@ -16,8 +16,8 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   }
 
   render() {
-    const extendedTime = config().session.extendedSessionTimeOut
-      ? config().session.extendedSessionTimeOut / (MILLISECONDS * UNIT_TIME.MINUTE)
+    const extendedTime = config.session.extendedSessionTimeOut
+      ? config.session.extendedSessionTimeOut / (MILLISECONDS * UNIT_TIME.MINUTE)
       : 30;
     return (
       <Modal

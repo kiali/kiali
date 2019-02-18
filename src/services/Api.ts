@@ -29,11 +29,11 @@ export interface Response<T> {
 
 /** API URLs */
 
-const urls = config().api.urls;
+const urls = config.api.urls;
 
 /**  Headers Definitions */
 
-const loginHeaders = config().login.headers;
+const loginHeaders = config.login.headers;
 const authHeader = (auth: AuthToken) => ({ Authorization: auth });
 
 /**  Helpers to Requests */

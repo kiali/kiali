@@ -1,6 +1,6 @@
 import { ActionType, createAction } from 'typesafe-actions';
 import { Token } from '../store/Store';
-import { config } from '../config/Config';
+import { config } from '../config/config';
 
 enum LoginActionKeys {
   LOGIN_REQUEST = 'LOGIN_REQUEST',
@@ -30,7 +30,7 @@ export const LoginActions = {
       resolve({
         token: token,
         username: username,
-        sessionTimeOut: currentTimeOut + config().session.extendedSessionTimeOut
+        sessionTimeOut: currentTimeOut + config.session.extendedSessionTimeOut
       } as LoginPayload)
   ),
   loginSuccess: createAction(
@@ -40,7 +40,7 @@ export const LoginActions = {
         token: token,
         username: username,
         logged: true,
-        sessionTimeOut: currentTimeOut || new Date().getTime() + config().session.sessionTimeOut
+        sessionTimeOut: currentTimeOut || new Date().getTime() + config.session.sessionTimeOut
       } as LoginPayload)
   ),
   loginFailure: createAction(LoginActionKeys.LOGIN_FAILURE, resolve => (error: any) =>

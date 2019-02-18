@@ -59,7 +59,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
   };
 
   checkSession = () => {
-    if (this.timeLeft() < config().session.timeOutforWarningUser) {
+    if (this.timeLeft() < config.session.timeOutforWarningUser) {
       this.setState({ showSessionTimeOut: true });
     }
   };

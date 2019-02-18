@@ -11,7 +11,7 @@ import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer'
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/serverConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
@@ -170,8 +170,8 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
 
   render() {
     const cfg = serverConfig();
-    const app = this.state.workload.labels[cfg.istioLabels['AppLabelName']];
-    const version = this.state.workload.labels[cfg.istioLabels['VersionLabelName']];
+    const app = this.state.workload.labels[cfg.istioLabels.appLabelName];
+    const version = this.state.workload.labels[cfg.istioLabels.versionLabelName];
     const isLabeled = app && version;
 
     return (

@@ -108,7 +108,7 @@ export interface GrafanaInfo {
   varWorkload: string;
 }
 
-export type IstioLabelKey = 'AppLabelName' | 'VersionLabelName';
+export type IstioLabelKey = 'appLabelName' | 'versionLabelName';
 
 export interface ServerConfig {
   istioNamespace: string;

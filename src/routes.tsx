@@ -9,7 +9,7 @@ import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import OverviewPage from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './containers/GraphPageContainer';
-import { ICONS, Paths } from './config';
+import { icons, Paths } from './config';
 import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
@@ -19,43 +19,43 @@ import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/Defa
  */
 const navItems: MenuItem[] = [
   {
-    iconClass: ICONS().MENU.OVERVIEW,
+    iconClass: icons.menu.overview,
     title: 'Overview',
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    iconClass: ICONS().MENU.GRAPH,
+    iconClass: icons.menu.graph,
     title: 'Graph',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    iconClass: ICONS().MENU.APPLICATIONS,
+    iconClass: icons.menu.applications,
     title: 'Applications',
     to: '/' + Paths.APPLICATIONS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
   },
   {
-    iconClass: ICONS().MENU.WORKLOADS,
+    iconClass: icons.menu.workloads,
     title: 'Workloads',
     to: '/' + Paths.WORKLOADS,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
   },
   {
-    iconClass: ICONS().MENU.SERVICES,
+    iconClass: icons.menu.services,
     title: 'Services',
     to: '/' + Paths.SERVICES,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
   },
   {
-    iconClass: ICONS().MENU.ISTIO_CONFIG,
+    iconClass: icons.menu.istioConfig,
     title: 'Istio Config',
     to: '/' + Paths.ISTIO,
     pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)')]
   },
   {
-    iconClass: ICONS().MENU.DISTRIBUTED_TRACING,
+    iconClass: icons.menu.distributedTracing,
     title: 'Distributed Tracing',
     to: '/jaeger'
   }

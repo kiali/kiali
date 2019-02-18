@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
-import { ICONS } from '../../config';
+import { icons } from '../../config';
 
 const MissingSidecar = props => {
   const { style, text, textTooltip, type, name, color, tooltip, ...otherProps } = props;
@@ -43,9 +43,9 @@ MissingSidecar.defaultProps = {
   text: 'Missing Sidecar',
   textTooltip: 'Missing Sidecar',
   tooltip: false,
-  type: ICONS().ISTIO.MISSING_SIDECAR.type,
-  name: ICONS().ISTIO.MISSING_SIDECAR.name,
-  color: ICONS().ISTIO.MISSING_SIDECAR.color
+  type: icons.istio.missingSidecar.type,
+  name: icons.istio.missingSidecar.name,
+  color: icons.istio.missingSidecar.color
 };
 
 export default MissingSidecar;

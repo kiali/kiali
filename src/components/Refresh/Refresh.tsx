@@ -21,7 +21,7 @@ type State = {
   pollerRef?: number;
 };
 
-const POLL_INTERVALS = config().toolbar.pollInterval;
+const POLL_INTERVALS = config.toolbar.pollInterval;
 
 class Refresh extends React.Component<Props, State> {
   constructor(props: Props) {

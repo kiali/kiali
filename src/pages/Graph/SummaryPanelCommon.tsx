@@ -10,7 +10,7 @@ import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import Label from '../../components/Label/Label';
-import { serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/serverConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export interface NodeData {
@@ -178,7 +178,7 @@ export const renderLabels = (data: NodeData) => {
     <>
       <div className="label-collection" style={{ paddingTop: '3px' }}>
         {hasNamespace && <Label name="namespace" value={data.namespace} />}
-        {hasVersion && <Label name={serverConfig().istioLabels['VersionLabelName']} value={data.version} />}
+        {hasVersion && <Label name={serverConfig().istioLabels.versionLabelName} value={data.version} />}
       </div>
     </>
   );

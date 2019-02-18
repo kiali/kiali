@@ -7,7 +7,7 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState, ServerConfig } from '../../store/Store';
 import { serverConfigSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import { getValidDurations, getValidDuration } from '../../config/ServerConfig';
+import { getValidDurations, getValidDuration } from '../../config/serverConfig';
 
 type ReduxProps = {
   serverConfig: ServerConfig;
@@ -18,7 +18,7 @@ type Props = ReduxProps & {
 };
 
 export class MetricsDuration extends React.Component<Props> {
-  static Durations = config().toolbar.intervalDuration;
+  static Durations = config.toolbar.intervalDuration;
   // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
   static DefaultDuration = 600;
 

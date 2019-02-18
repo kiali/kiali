@@ -8,7 +8,7 @@ import * as MessageCenter from '../../utils/MessageCenter';
 export namespace ListPagesHelper {
   export const perPageOptions: number[] = [5, 10, 15];
   const defaultDuration = 600;
-  const defaultPollInterval = config().toolbar.defaultPollInterval;
+  const defaultPollInterval = config.toolbar.defaultPollInterval;
 
   export const handleError = (error: string) => {
     MessageCenter.add(error);

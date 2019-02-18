@@ -12,11 +12,11 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 
-import { config } from '../../config/Config';
+import { config } from '../../config/config';
 import { HistoryManager, URLParams } from '../../app/History';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import { getValidDurations, getValidDuration } from '../../config/ServerConfig';
+import { getValidDurations, getValidDuration } from '../../config/serverConfig';
 
 //
 // GraphRefresh actually handles the Duration dropdown, the RefreshInterval dropdown and the Refresh button.
@@ -38,8 +38,8 @@ type GraphRefreshProps = ReduxProps & {
 };
 
 export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
-  static readonly DURATION_LIST = config().toolbar.intervalDuration;
-  static readonly POLL_INTERVAL_LIST = config().toolbar.pollInterval;
+  static readonly DURATION_LIST = config.toolbar.intervalDuration;
+  static readonly POLL_INTERVAL_LIST = config.toolbar.pollInterval;
 
   static readonly durationLabelStyle = style({
     paddingRight: '0.5em',
