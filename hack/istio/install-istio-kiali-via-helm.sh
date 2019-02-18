@@ -28,7 +28,7 @@ KIALI_ENABLED="false"
 DASHBOARDS_ENABLED="false"
 USE_DEMO_VALUES="false"
 USE_DEMO_AUTH_VALUES="false"
-HELM_REPO_TO_ADD="https://storage.googleapis.com/istio-prerelease/daily-build/master-latest-daily/charts"
+HELM_REPO_TO_ADD="https://gcsweb.istio.io/gcs/istio-prerelease/daily-build/release-1.1-latest-daily/charts/"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -313,17 +313,19 @@ else
   if [ "${KIALI_TAG}" != "" ]; then
     _KIALI_TAG_ARG="--set kiali.tag=${KIALI_TAG}"
   fi
-  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS}"
+  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS} --set global.controlPlaneSecurityEnabled=${MTLS}"
 fi
 
 # Create the install yaml via the helm template command
 if [ ! -f "/tmp/istio.yaml" ]; then
   echo Initializing client-side helm...
   ${HELM_EXE} init --client-only
-  echo Adding Helm repo: ${HELM_REPO_TO_ADD}
-  ${HELM_EXE} repo add istio.io ${HELM_REPO_TO_ADD}
-  echo Updating Helm dependencies...
-  ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
+  if [ ! -z "${HELM_REPO_TO_ADD}" ]; then
+    echo Adding Helm repo: ${HELM_REPO_TO_ADD}
+    ${HELM_EXE} repo add istio.io ${HELM_REPO_TO_ADD}
+    echo Updating Helm dependencies...
+    ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
+  fi
   echo Building Helm yaml for Istio...
   ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
 fi
