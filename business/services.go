@@ -105,8 +105,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var ws models.Workloads
 
 	wg := sync.WaitGroup{}
-	wg.Add(8)
-	errChan := make(chan error, 7)
+	wg.Add(9)
+	errChan := make(chan error, 8)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -184,6 +184,13 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		drCreate, drUpdate, drDelete = getPermissions(in.k8s, namespace, DestinationRules, "")
 	}()
 
+	var eTraces int
+	go func() {
+		// Maybe a future jaeger business layer
+		defer wg.Done()
+		eTraces, err = getErrorTracesFromJaeger(namespace, service)
+	}()
+
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
@@ -204,6 +211,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
 	s.SetSourceWorkloads(sWk)
+	s.SetErrorTraces(eTraces)
 	return &s, nil
 }
 

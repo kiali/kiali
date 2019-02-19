@@ -3937,6 +3937,11 @@
         "endpoints": {
           "$ref": "#/definitions/Endpoints"
         },
+        "errorTraces": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ErrorTraces"
+        },
         "health": {
           "$ref": "#/definitions/ServiceHealth"
         },

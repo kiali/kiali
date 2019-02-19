@@ -462,7 +462,7 @@ external_services:
 ----
 
 |`GRAFANA_SERVICE`
-|The Kubernetes service name for Grafana. (default is `grafana`)
+|The Kubernetes service name for Grafana. (default is `grafana`). Kiali uses GRAFANA_SERVICE to connect internally (within the cluster) to Grafana service.
 [source,yaml]
 ----
 external_services:
@@ -513,6 +513,15 @@ external_services:
 external_services:
   grafana:
     var_workload: VALUE
+----
+
+|`JAEGER_SERVICE`
+|The name of the Jaeger service.(default is `jaeger-query`). Kiali uses JAEGER_SERVICE to connect internally (within the cluster) to Jaeger service to query the error traces.
+[source,yaml]
+----
+external_services:
+  jaeger:
+    service: VALUE
 ----
 
 |`JAEGER_URL`
