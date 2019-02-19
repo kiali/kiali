@@ -146,7 +146,7 @@ func validateConfig() error {
 
 	// log some messages to let the administrator know when credentials are configured certain ways
 	creds := config.Get().Server.Credentials
-	if creds.Anonymous {
+	if creds.AllowAnonymous {
 		log.Warningf("Kiali is configured for anonymous access - users will not be authenticated.")
 	} else if creds.Username == "" && creds.Password == "" {
 		// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning

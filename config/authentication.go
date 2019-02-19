@@ -26,8 +26,13 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 			r.Header.Add("Kiali-User", u)
 			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
 				statusCode = http.StatusUnauthorized
+				if conf.Server.Credentials.AllowAnonymous {
+					// we really should never get here - the credentials config should not have validated at startup
+					// if anonymous access is allowed with non-empty username/password. But just in case, log a message.
+					log.Debugf("Access to the server endpoint allows anonymous access - but user [%v] provided invalid credentials. Request denied.", u)
+				}
 			}
-		} else if conf.Server.Credentials.Anonymous {
+		} else if conf.Server.Credentials.AllowAnonymous {
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
 		} else {
 			statusCode = 520 // our specific error code that indicates to the client that we are missing the secret
