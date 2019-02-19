@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane, Icon } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -8,6 +8,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
+import ServiceTracesContainer from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
@@ -20,6 +21,7 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   jaegerUrl: string;
+  getErrorTraces: (service: string) => void;
 }
 
 interface ParsedSearch {
@@ -157,6 +159,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 
   render() {
+    const errorTraces = this.state.serviceDetailsInfo.errorTraces || 0;
     return (
       <>
         <BreadcrumbView location={this.props.location} />
@@ -169,9 +172,20 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               <NavItem eventKey="metrics">
                 <div>Inbound Metrics</div>
               </NavItem>
-              <NavItem onClick={this.navigateToJaeger}>
-                <div>Traces</div>
-              </NavItem>
+              {this.props.jaegerUrl && (
+                <NavItem eventKey="traces">
+                  <div>
+                    Error Traces{' '}
+                    <span>
+                      ({errorTraces}
+                      {errorTraces > 0 && (
+                        <Icon type={'fa'} name={'exclamation-circle'} style={{ color: 'red', marginLeft: '2px' }} />
+                      )}
+                      )
+                    </span>
+                  </div>
+                </NavItem>
+              )}
             </Nav>
             <TabContent>
               <TabPane eventKey="info">
@@ -193,6 +207,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   direction={'inbound'}
                 />
               </TabPane>
+              {this.props.jaegerUrl && (
+                <TabPane eventKey="traces" mountOnEnter={true} unmountOnExit={true}>
+                  <ServiceTracesContainer
+                    namespace={this.props.match.params.namespace}
+                    service={this.props.match.params.service}
+                  />
+                </TabPane>
+              )}
             </TabContent>
           </div>
         </TabContainer>

@@ -52,6 +52,9 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
       case 'out_metrics':
         return 'Outbound Metrics';
         break;
+      case 'traces':
+        return 'Traces';
+        break;
       default:
         return 'Info';
     }

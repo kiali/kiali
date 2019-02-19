@@ -119,6 +119,32 @@ export interface ServerConfig {
   };
 }
 
+export interface JaegerState {
+  toolbar: {
+    services: string[];
+    isFetchingService: boolean;
+  };
+  search: {
+    namespaceSelected: string;
+    serviceSelected: string;
+    hideGraph: boolean;
+    limit: number;
+    start: string;
+    end: string;
+    minDuration: string;
+    maxDuration: string;
+    lookback: string;
+    url: string;
+    tags: string;
+  };
+  trace: {
+    collapseTitle: boolean;
+    hideSummary: boolean;
+    hideMinimap: boolean;
+  };
+  jaegerURL: string;
+}
+
 // This defines the Kiali Global Application State
 export interface KialiAppState {
   // Global state === across multiple pages
@@ -134,4 +160,6 @@ export interface KialiAppState {
   graph: GraphState;
   /** User Settings */
   userSettings: UserSettings;
+  /** Jaeger Integration */
+  jaegerState: JaegerState;
 }

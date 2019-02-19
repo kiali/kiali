@@ -11,4 +11,7 @@ import { kialiLogo } from './logos';
 // Paths
 import { Paths } from './Paths';
 
-export { config, Paths, icons, kialiLogo };
+// Jaeger Query
+import { JAEGER_QUERY } from './jaegerQuery';
+
+export { config, Paths, icons, kialiLogo, JAEGER_QUERY };

@@ -1,0 +1,2399 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LookBack renders JaegerToolbar correctly 1`] = `
+ShallowWrapper {
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <JaegerToolbar
+    disableSelector={false}
+    disabled={false}
+    limit={0}
+    requestSearchURL={[MockFunction]}
+    setDetails={[MockFunction]}
+    setGraph={[MockFunction]}
+    setMinimap={[MockFunction]}
+    showGraph={false}
+    showMinimap={false}
+    showSummary={false}
+    tagsValue=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateError": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <withContext(ContextualToolbar)>
+          <span>
+            <Connect(NamespaceDropdown) />
+             
+            <Connect(ServiceDropdown) />
+          </span>
+          <Connect(LookBack)
+            onChangeCustom={[Function]}
+          />
+          <RightToolbar
+            disabled={false}
+            graph={false}
+            minimap={false}
+            onGraphClick={[MockFunction]}
+            onMinimapClick={[MockFunction]}
+            onSubmit={[Function]}
+            onSummaryClick={[MockFunction]}
+            summary={false}
+          />
+        </withContext(ContextualToolbar)>,
+        <withContext(ContextualToolbar)>
+          <Connect(TagsControl)
+            onChange={[Function]}
+          />
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Min Duration
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={false}
+              onChange={[Function]}
+              placeholder="e.g. 1.2s, 100ms, 500us"
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "200px",
+                }
+              }
+              type="text"
+            />
+          </FormGroup>
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Max Duration
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={false}
+              onChange={[Function]}
+              placeholder="e.g. 1.1s"
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "200px",
+                }
+              }
+              type="text"
+            />
+          </FormGroup>
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Limit Results
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              defaultValue={0}
+              disabled={false}
+              onChange={[Function]}
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "80px",
+                }
+              }
+              type="number"
+            />
+          </FormGroup>
+        </withContext(ContextualToolbar)>,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": Array [
+            <span>
+              <Connect(NamespaceDropdown) />
+               
+              <Connect(ServiceDropdown) />
+            </span>,
+            <Connect(LookBack)
+              onChangeCustom={[Function]}
+            />,
+            <RightToolbar
+              disabled={false}
+              graph={false}
+              minimap={false}
+              onGraphClick={[MockFunction]}
+              onMinimapClick={[MockFunction]}
+              onSubmit={[Function]}
+              onSummaryClick={[MockFunction]}
+              summary={false}
+            />,
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <Connect(NamespaceDropdown) />,
+                " ",
+                <Connect(ServiceDropdown) />,
+              ],
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {},
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+              " ",
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {},
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": "span",
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "onChangeCustom": [Function],
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "disabled": false,
+              "graph": false,
+              "minimap": false,
+              "onGraphClick": [MockFunction],
+              "onMinimapClick": [MockFunction],
+              "onSubmit": [Function],
+              "onSummaryClick": [MockFunction],
+              "summary": false,
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": Array [
+            <Connect(TagsControl)
+              onChange={[Function]}
+            />,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Min Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.2s, 100ms, 500us"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Max Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.1s"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Limit Results
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                defaultValue={0}
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  }
+                }
+                type="number"
+              />
+            </FormGroup>,
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "onChange": [Function],
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Min Duration
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.2s, 100ms, 500us"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Min Duration",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Min Duration",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "disabled": false,
+                  "onChange": [Function],
+                  "placeholder": "e.g. 1.2s, 100ms, 500us",
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  },
+                  "type": "text",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Max Duration
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.1s"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Max Duration",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Max Duration",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "disabled": false,
+                  "onChange": [Function],
+                  "placeholder": "e.g. 1.1s",
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  },
+                  "type": "text",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Limit Results
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  defaultValue={0}
+                  disabled={false}
+                  onChange={[Function]}
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    }
+                  }
+                  type="number"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Limit Results",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Limit Results",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "defaultValue": 0,
+                  "disabled": false,
+                  "onChange": [Function],
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  },
+                  "type": "number",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <withContext(ContextualToolbar)>
+            <span>
+              <Connect(NamespaceDropdown) />
+               
+              <Connect(ServiceDropdown) />
+            </span>
+            <Connect(LookBack)
+              onChangeCustom={[Function]}
+            />
+            <RightToolbar
+              disabled={false}
+              graph={false}
+              minimap={false}
+              onGraphClick={[MockFunction]}
+              onMinimapClick={[MockFunction]}
+              onSubmit={[Function]}
+              onSummaryClick={[MockFunction]}
+              summary={false}
+            />
+          </withContext(ContextualToolbar)>,
+          <withContext(ContextualToolbar)>
+            <Connect(TagsControl)
+              onChange={[Function]}
+            />
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Min Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.2s, 100ms, 500us"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Max Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.1s"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Limit Results
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                defaultValue={0}
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  }
+                }
+                type="number"
+              />
+            </FormGroup>
+          </withContext(ContextualToolbar)>,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": Array [
+              <span>
+                <Connect(NamespaceDropdown) />
+                 
+                <Connect(ServiceDropdown) />
+              </span>,
+              <Connect(LookBack)
+                onChangeCustom={[Function]}
+              />,
+              <RightToolbar
+                disabled={false}
+                graph={false}
+                minimap={false}
+                onGraphClick={[MockFunction]}
+                onMinimapClick={[MockFunction]}
+                onSubmit={[Function]}
+                onSummaryClick={[MockFunction]}
+                summary={false}
+              />,
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  <Connect(NamespaceDropdown) />,
+                  " ",
+                  <Connect(ServiceDropdown) />,
+                ],
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {},
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+                " ",
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {},
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": "span",
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "onChangeCustom": [Function],
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "disabled": false,
+                "graph": false,
+                "minimap": false,
+                "onGraphClick": [MockFunction],
+                "onMinimapClick": [MockFunction],
+                "onSubmit": [Function],
+                "onSummaryClick": [MockFunction],
+                "summary": false,
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": Array [
+              <Connect(TagsControl)
+                onChange={[Function]}
+              />,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Min Duration
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.2s, 100ms, 500us"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />
+              </FormGroup>,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Max Duration
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.1s"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />
+              </FormGroup>,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Limit Results
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  defaultValue={0}
+                  disabled={false}
+                  onChange={[Function]}
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    }
+                  }
+                  type="number"
+                />
+              </FormGroup>,
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "onChange": [Function],
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Min Duration
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    disabled={false}
+                    onChange={[Function]}
+                    placeholder="e.g. 1.2s, 100ms, 500us"
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "200px",
+                      }
+                    }
+                    type="text"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Min Duration",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Min Duration",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "disabled": false,
+                    "onChange": [Function],
+                    "placeholder": "e.g. 1.2s, 100ms, 500us",
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    },
+                    "type": "text",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Max Duration
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    disabled={false}
+                    onChange={[Function]}
+                    placeholder="e.g. 1.1s"
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "200px",
+                      }
+                    }
+                    type="text"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Max Duration",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Max Duration",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "disabled": false,
+                    "onChange": [Function],
+                    "placeholder": "e.g. 1.1s",
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    },
+                    "type": "text",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Limit Results
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    defaultValue={0}
+                    disabled={false}
+                    onChange={[Function]}
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "80px",
+                      }
+                    }
+                    type="number"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Limit Results",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Limit Results",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "defaultValue": 0,
+                    "disabled": false,
+                    "onChange": [Function],
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    },
+                    "type": "number",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+        "lifecycles": Object {
+          "componentDidUpdate": Object {
+            "onSetState": true,
+          },
+          "getDerivedStateFromProps": true,
+          "getSnapshotBeforeUpdate": true,
+          "setState": Object {
+            "skipsComponentDidUpdateOnNullish": true,
+          },
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`LookBack renders JaegerToolbar correctly without namespace selector 1`] = `
+ShallowWrapper {
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <JaegerToolbar
+    disableSelector={true}
+    disabled={false}
+    limit={0}
+    requestSearchURL={[MockFunction]}
+    setDetails={[MockFunction]}
+    setGraph={[MockFunction]}
+    setMinimap={[MockFunction]}
+    showGraph={false}
+    showMinimap={false}
+    showSummary={false}
+    tagsValue=""
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateError": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <withContext(ContextualToolbar)>
+          <Connect(LookBack)
+            onChangeCustom={[Function]}
+          />
+          <RightToolbar
+            disabled={false}
+            graph={false}
+            minimap={false}
+            onGraphClick={[MockFunction]}
+            onMinimapClick={[MockFunction]}
+            onSubmit={[Function]}
+            onSummaryClick={[MockFunction]}
+            summary={false}
+          />
+        </withContext(ContextualToolbar)>,
+        <withContext(ContextualToolbar)>
+          <Connect(TagsControl)
+            onChange={[Function]}
+          />
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Min Duration
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={false}
+              onChange={[Function]}
+              placeholder="e.g. 1.2s, 100ms, 500us"
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "200px",
+                }
+              }
+              type="text"
+            />
+          </FormGroup>
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Max Duration
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              disabled={false}
+              onChange={[Function]}
+              placeholder="e.g. 1.1s"
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "200px",
+                }
+              }
+              type="text"
+            />
+          </FormGroup>
+          <FormGroup
+            bsClass="form-group"
+            style={
+              Object {
+                "display": "inline-flex",
+              }
+            }
+          >
+            <Col
+              bsClass="col"
+              componentClass={[Function]}
+              style={
+                Object {
+                  "marginTop": "4px",
+                }
+              }
+            >
+              Limit Results
+            </Col>
+            <FormControl
+              bsClass="form-control"
+              componentClass="input"
+              defaultValue={0}
+              disabled={false}
+              onChange={[Function]}
+              style={
+                Object {
+                  "marginLeft": "10px",
+                  "width": "80px",
+                }
+              }
+              type="number"
+            />
+          </FormGroup>
+        </withContext(ContextualToolbar)>,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": Array [
+            false,
+            <Connect(LookBack)
+              onChangeCustom={[Function]}
+            />,
+            <RightToolbar
+              disabled={false}
+              graph={false}
+              minimap={false}
+              onGraphClick={[MockFunction]}
+              onMinimapClick={[MockFunction]}
+              onSubmit={[Function]}
+              onSummaryClick={[MockFunction]}
+              summary={false}
+            />,
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          false,
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "onChangeCustom": [Function],
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "disabled": false,
+              "graph": false,
+              "minimap": false,
+              "onGraphClick": [MockFunction],
+              "onMinimapClick": [MockFunction],
+              "onSubmit": [Function],
+              "onSummaryClick": [MockFunction],
+              "summary": false,
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": Array [
+            <Connect(TagsControl)
+              onChange={[Function]}
+            />,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Min Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.2s, 100ms, 500us"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Max Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.1s"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>,
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Limit Results
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                defaultValue={0}
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  }
+                }
+                type="number"
+              />
+            </FormGroup>,
+          ],
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "onChange": [Function],
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Min Duration
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.2s, 100ms, 500us"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Min Duration",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Min Duration",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "disabled": false,
+                  "onChange": [Function],
+                  "placeholder": "e.g. 1.2s, 100ms, 500us",
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  },
+                  "type": "text",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Max Duration
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.1s"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Max Duration",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Max Duration",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "disabled": false,
+                  "onChange": [Function],
+                  "placeholder": "e.g. 1.1s",
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  },
+                  "type": "text",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "bsClass": "form-group",
+              "children": Array [
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Limit Results
+                </Col>,
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  defaultValue={0}
+                  disabled={false}
+                  onChange={[Function]}
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    }
+                  }
+                  type="number"
+                />,
+              ],
+              "style": Object {
+                "display": "inline-flex",
+              },
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "col",
+                  "children": "Limit Results",
+                  "componentClass": [Function],
+                  "style": Object {
+                    "marginTop": "4px",
+                  },
+                },
+                "ref": null,
+                "rendered": "Limit Results",
+                "type": [Function],
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "class",
+                "props": Object {
+                  "bsClass": "form-control",
+                  "componentClass": "input",
+                  "defaultValue": 0,
+                  "disabled": false,
+                  "onChange": [Function],
+                  "style": Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  },
+                  "type": "number",
+                },
+                "ref": null,
+                "rendered": null,
+                "type": [Function],
+              },
+            ],
+            "type": [Function],
+          },
+        ],
+        "type": [Function],
+      },
+    ],
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <withContext(ContextualToolbar)>
+            <Connect(LookBack)
+              onChangeCustom={[Function]}
+            />
+            <RightToolbar
+              disabled={false}
+              graph={false}
+              minimap={false}
+              onGraphClick={[MockFunction]}
+              onMinimapClick={[MockFunction]}
+              onSubmit={[Function]}
+              onSummaryClick={[MockFunction]}
+              summary={false}
+            />
+          </withContext(ContextualToolbar)>,
+          <withContext(ContextualToolbar)>
+            <Connect(TagsControl)
+              onChange={[Function]}
+            />
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Min Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.2s, 100ms, 500us"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Max Duration
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                disabled={false}
+                onChange={[Function]}
+                placeholder="e.g. 1.1s"
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "200px",
+                  }
+                }
+                type="text"
+              />
+            </FormGroup>
+            <FormGroup
+              bsClass="form-group"
+              style={
+                Object {
+                  "display": "inline-flex",
+                }
+              }
+            >
+              <Col
+                bsClass="col"
+                componentClass={[Function]}
+                style={
+                  Object {
+                    "marginTop": "4px",
+                  }
+                }
+              >
+                Limit Results
+              </Col>
+              <FormControl
+                bsClass="form-control"
+                componentClass="input"
+                defaultValue={0}
+                disabled={false}
+                onChange={[Function]}
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                    "width": "80px",
+                  }
+                }
+                type="number"
+              />
+            </FormGroup>
+          </withContext(ContextualToolbar)>,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": Array [
+              false,
+              <Connect(LookBack)
+                onChangeCustom={[Function]}
+              />,
+              <RightToolbar
+                disabled={false}
+                graph={false}
+                minimap={false}
+                onGraphClick={[MockFunction]}
+                onMinimapClick={[MockFunction]}
+                onSubmit={[Function]}
+                onSummaryClick={[MockFunction]}
+                summary={false}
+              />,
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            false,
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "onChangeCustom": [Function],
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "disabled": false,
+                "graph": false,
+                "minimap": false,
+                "onGraphClick": [MockFunction],
+                "onMinimapClick": [MockFunction],
+                "onSubmit": [Function],
+                "onSummaryClick": [MockFunction],
+                "summary": false,
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": Array [
+              <Connect(TagsControl)
+                onChange={[Function]}
+              />,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Min Duration
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.2s, 100ms, 500us"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />
+              </FormGroup>,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Max Duration
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  disabled={false}
+                  onChange={[Function]}
+                  placeholder="e.g. 1.1s"
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    }
+                  }
+                  type="text"
+                />
+              </FormGroup>,
+              <FormGroup
+                bsClass="form-group"
+                style={
+                  Object {
+                    "display": "inline-flex",
+                  }
+                }
+              >
+                <Col
+                  bsClass="col"
+                  componentClass={[Function]}
+                  style={
+                    Object {
+                      "marginTop": "4px",
+                    }
+                  }
+                >
+                  Limit Results
+                </Col>
+                <FormControl
+                  bsClass="form-control"
+                  componentClass="input"
+                  defaultValue={0}
+                  disabled={false}
+                  onChange={[Function]}
+                  style={
+                    Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    }
+                  }
+                  type="number"
+                />
+              </FormGroup>,
+            ],
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "onChange": [Function],
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Min Duration
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    disabled={false}
+                    onChange={[Function]}
+                    placeholder="e.g. 1.2s, 100ms, 500us"
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "200px",
+                      }
+                    }
+                    type="text"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Min Duration",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Min Duration",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "disabled": false,
+                    "onChange": [Function],
+                    "placeholder": "e.g. 1.2s, 100ms, 500us",
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    },
+                    "type": "text",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Max Duration
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    disabled={false}
+                    onChange={[Function]}
+                    placeholder="e.g. 1.1s"
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "200px",
+                      }
+                    }
+                    type="text"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Max Duration",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Max Duration",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "disabled": false,
+                    "onChange": [Function],
+                    "placeholder": "e.g. 1.1s",
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "200px",
+                    },
+                    "type": "text",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "bsClass": "form-group",
+                "children": Array [
+                  <Col
+                    bsClass="col"
+                    componentClass={[Function]}
+                    style={
+                      Object {
+                        "marginTop": "4px",
+                      }
+                    }
+                  >
+                    Limit Results
+                  </Col>,
+                  <FormControl
+                    bsClass="form-control"
+                    componentClass="input"
+                    defaultValue={0}
+                    disabled={false}
+                    onChange={[Function]}
+                    style={
+                      Object {
+                        "marginLeft": "10px",
+                        "width": "80px",
+                      }
+                    }
+                    type="number"
+                  />,
+                ],
+                "style": Object {
+                  "display": "inline-flex",
+                },
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "col",
+                    "children": "Limit Results",
+                    "componentClass": [Function],
+                    "style": Object {
+                      "marginTop": "4px",
+                    },
+                  },
+                  "ref": null,
+                  "rendered": "Limit Results",
+                  "type": [Function],
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "class",
+                  "props": Object {
+                    "bsClass": "form-control",
+                    "componentClass": "input",
+                    "defaultValue": 0,
+                    "disabled": false,
+                    "onChange": [Function],
+                    "style": Object {
+                      "marginLeft": "10px",
+                      "width": "80px",
+                    },
+                    "type": "number",
+                  },
+                  "ref": null,
+                  "rendered": null,
+                  "type": [Function],
+                },
+              ],
+              "type": [Function],
+            },
+          ],
+          "type": [Function],
+        },
+      ],
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+        "lifecycles": Object {
+          "componentDidUpdate": Object {
+            "onSetState": true,
+          },
+          "getDerivedStateFromProps": true,
+          "getSnapshotBeforeUpdate": true,
+          "setState": Object {
+            "skipsComponentDidUpdateOnNullish": true,
+          },
+        },
+      },
+    },
+  },
+}
+`;

@@ -64,6 +64,7 @@ export interface ServiceDetailsInfo {
   dependencies?: { [key: string]: Route[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
+  errorTraces?: number;
   validations: Validations;
 }
 

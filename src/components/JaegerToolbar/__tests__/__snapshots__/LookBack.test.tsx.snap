@@ -1,0 +1,258 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LookBack renders LookBack correctly without custom 1`] = `
+ShallowWrapper {
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <LookBack
+    fetching={false}
+    lookback=""
+    onChangeCustom={[MockFunction]}
+    setLookback={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "",
+          ],
+        ],
+      }
+    }
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateError": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <Col
+          bsClass="col"
+          componentClass={[Function]}
+          style={
+            Object {
+              "marginRight": "10px",
+            }
+          }
+        >
+          Lookback
+        </Col>,
+        <ToolbarDropdown
+          disabled={false}
+          handleSelect={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  "",
+                ],
+              ],
+            }
+          }
+          id="lookback-selector"
+          label={undefined}
+          options={
+            Object {
+              "12h": "Last 12 Hours",
+              "1h": "Last Hour",
+              "24h": "Last 24 Hours",
+              "2d": "Last 2 Days",
+              "2h": "Last 2 Hours",
+              "3h": "Last 3 Hours",
+              "6h": "Last 6 Hours",
+              "custom": "Custom Time Range",
+            }
+          }
+          useName={false}
+          value=""
+        />,
+        null,
+      ],
+      "style": Object {
+        "marginLeft": "10px",
+      },
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "bsClass": "col",
+          "children": "Lookback",
+          "componentClass": [Function],
+          "style": Object {
+            "marginRight": "10px",
+          },
+        },
+        "ref": null,
+        "rendered": "Lookback",
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "disabled": false,
+          "handleSelect": [MockFunction] {
+            "calls": Array [
+              Array [
+                "",
+              ],
+            ],
+          },
+          "id": "lookback-selector",
+          "label": undefined,
+          "options": Object {
+            "12h": "Last 12 Hours",
+            "1h": "Last Hour",
+            "24h": "Last 24 Hours",
+            "2d": "Last 2 Days",
+            "2h": "Last 2 Hours",
+            "3h": "Last 3 Hours",
+            "6h": "Last 6 Hours",
+            "custom": "Custom Time Range",
+          },
+          "useName": false,
+          "value": "",
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      null,
+    ],
+    "type": "span",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <Col
+            bsClass="col"
+            componentClass={[Function]}
+            style={
+              Object {
+                "marginRight": "10px",
+              }
+            }
+          >
+            Lookback
+          </Col>,
+          <ToolbarDropdown
+            disabled={false}
+            handleSelect={
+              [MockFunction] {
+                "calls": Array [
+                  Array [
+                    "",
+                  ],
+                ],
+              }
+            }
+            id="lookback-selector"
+            label={undefined}
+            options={
+              Object {
+                "12h": "Last 12 Hours",
+                "1h": "Last Hour",
+                "24h": "Last 24 Hours",
+                "2d": "Last 2 Days",
+                "2h": "Last 2 Hours",
+                "3h": "Last 3 Hours",
+                "6h": "Last 6 Hours",
+                "custom": "Custom Time Range",
+              }
+            }
+            useName={false}
+            value=""
+          />,
+          null,
+        ],
+        "style": Object {
+          "marginLeft": "10px",
+        },
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "bsClass": "col",
+            "children": "Lookback",
+            "componentClass": [Function],
+            "style": Object {
+              "marginRight": "10px",
+            },
+          },
+          "ref": null,
+          "rendered": "Lookback",
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "disabled": false,
+            "handleSelect": [MockFunction] {
+              "calls": Array [
+                Array [
+                  "",
+                ],
+              ],
+            },
+            "id": "lookback-selector",
+            "label": undefined,
+            "options": Object {
+              "12h": "Last 12 Hours",
+              "1h": "Last Hour",
+              "24h": "Last 24 Hours",
+              "2d": "Last 2 Days",
+              "2h": "Last 2 Hours",
+              "3h": "Last 3 Hours",
+              "6h": "Last 6 Hours",
+              "custom": "Custom Time Range",
+            },
+            "useName": false,
+            "value": "",
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        null,
+      ],
+      "type": "span",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+        "lifecycles": Object {
+          "componentDidUpdate": Object {
+            "onSetState": true,
+          },
+          "getDerivedStateFromProps": true,
+          "getSnapshotBeforeUpdate": true,
+          "setState": Object {
+            "skipsComponentDidUpdateOnNullish": true,
+          },
+        },
+      },
+    },
+  },
+}
+`;

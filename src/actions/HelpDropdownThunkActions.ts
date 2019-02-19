@@ -2,6 +2,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../store/Store';
 import { MessageType } from '../types/MessageCenter';
 import { HelpDropdownActions } from './HelpDropdownActions';
+import { JaegerActions } from './JaegerActions';
 import { KialiAppAction } from './KialiAppAction';
 import { MessageCenterActions } from './MessageCenterActions';
 import * as API from '../services/Api';
@@ -18,6 +19,13 @@ const HelpDropdownThunkActions = {
               status['data']['warningMessages']
             )
           );
+
+          // Get the jaeger URL
+          const hasJaeger = status['data']['externalServices'].filter(item => item['name'] === 'Jaeger');
+          if (hasJaeger.length === 1) {
+            dispatch(JaegerActions.setUrl(hasJaeger[0]['url']));
+          }
+
           status['data']['warningMessages'].forEach(wMsg => {
             dispatch(MessageCenterActions.addMessage(wMsg, 'systemErrors', MessageType.WARNING));
           });

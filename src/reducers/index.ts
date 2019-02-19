@@ -10,6 +10,7 @@ import namespaceState from './NamespaceState';
 import serverConfig from './ServerConfigState';
 import UserSettingsState from './UserSettingsState';
 import GrafanaState from './GrafanaState';
+import JaegerState from './JaegerState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
@@ -21,7 +22,8 @@ const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   namespaces: namespaceState,
   serverConfig: serverConfig,
   statusState: HelpDropdownState,
-  userSettings: UserSettingsState
+  userSettings: UserSettingsState,
+  jaegerState: JaegerState
 });
 
 export default rootReducer;

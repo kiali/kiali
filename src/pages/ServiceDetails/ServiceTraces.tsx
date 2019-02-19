@@ -1,28 +1,35 @@
 import * as React from 'react';
 import Iframe from 'react-iframe';
-import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import { JaegerToolbar } from '../../components/JaegerToolbar';
+import { KialiAppState } from '../../store/Store';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from '../../actions/KialiAppAction';
+import { JaegerToolbar } from '../../components/JaegerToolbar';
 import { JaegerActions } from '../../actions/JaegerActions';
+import { JaegerThunkActions } from '../../actions/JaegerThunkActions';
 
-type ServiceJaegerProps = {
+interface ServiceTracesProps {
+  namespace: string;
+  service: string;
   url: string;
-  setOptions: () => void;
-};
+  setOptions: (ns: string, service: string) => void;
+}
 
-class ServiceJaegerPage extends React.Component<ServiceJaegerProps> {
-  constructor(props: ServiceJaegerProps) {
+class ServiceTraces extends React.Component<ServiceTracesProps> {
+  constructor(props: ServiceTracesProps) {
     super(props);
-    this.props.setOptions();
   }
+
+  componentDidMount = () => {
+    this.props.setOptions(this.props.namespace, this.props.service);
+  };
 
   render() {
     const { url } = this.props;
+
     return (
       <>
-        <JaegerToolbar />
+        <JaegerToolbar tagsValue={'error=true'} disableSelector={true} />
         <div className="container-fluid container-cards-pf" style={{ height: 'calc(100vh - 100px)' }}>
           <Iframe id={'jaeger-iframe'} url={url} position="inherit" allowFullScreen={true} />
         </div>
@@ -39,20 +46,20 @@ const mapStateToProps = (state: KialiAppState) => {
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setOptions: () => {
-      dispatch(JaegerActions.setNamespace(''));
-      dispatch(JaegerActions.setService(''));
-      dispatch(JaegerActions.setTags(''));
+    setOptions: (namespace: string, service: string) => {
+      dispatch(JaegerActions.setNamespace(namespace));
+      dispatch(JaegerActions.setService(service));
+      dispatch(JaegerActions.setTags('error=true'));
       dispatch(JaegerActions.setLookback('1h'));
       dispatch(JaegerActions.setDurations('', ''));
-      dispatch(JaegerActions.setSearchRequest(''));
+      dispatch(JaegerThunkActions.getSearchURL());
     }
   };
 };
 
-const ServiceJaegerPageContainer = connect(
+const ServiceTracesContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(ServiceJaegerPage);
+)(ServiceTraces);
 
-export default ServiceJaegerPageContainer;
+export default ServiceTracesContainer;

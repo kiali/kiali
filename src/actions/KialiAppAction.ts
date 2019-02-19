@@ -9,6 +9,7 @@ import { MessageCenterAction } from './MessageCenterActions';
 import { NamespaceAction } from './NamespaceAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { ServerConfigAction } from './ServerConfigActions';
+import { JaegerAction } from './JaegerActions';
 
 export type KialiAppAction =
   | GlobalAction
@@ -21,4 +22,5 @@ export type KialiAppAction =
   | MessageCenterAction
   | NamespaceAction
   | ServerConfigAction
-  | UserSettingsAction;
+  | UserSettingsAction
+  | JaegerAction;
