@@ -29,6 +29,25 @@
       },
       {
         "data": {
+          "id": "7b1032e9c5683c53fb50ed8831fbd61b",
+          "nodeType": "workload",
+          "namespace": "bookinfo",
+          "workload": "kiali-2412",
+          "destServices": {
+            "": true
+          },
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "50.00"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "data": {
           "id": "5cd385c1ee3309ae40828b5702ae57fb",
           "nodeType": "workload",
           "namespace": "bookinfo",
@@ -227,7 +246,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "50.00"
+                "httpOut": "100.00"
               }
             },
             {
@@ -413,7 +432,21 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "100.0"
+              "httpPercentReq": "50.0"
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "53c67fb349dcfbd2327e3162a0e338aa",
+          "source": "b30b0078325bf2e1adb4d57c4c0c2665",
+          "target": "7b1032e9c5683c53fb50ed8831fbd61b",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "50.00",
+              "httpPercentReq": "50.0"
             }
           }
         }

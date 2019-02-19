@@ -170,7 +170,7 @@
             {
               "protocol": "http",
               "rates": {
-                "httpOut": "50.00"
+                "httpOut": "100.00"
               }
             },
             {
@@ -254,7 +254,7 @@
             "protocol": "http",
             "rates": {
               "http": "50.00",
-              "httpPercentReq": "100.0"
+              "httpPercentReq": "50.0"
             }
           }
         }
