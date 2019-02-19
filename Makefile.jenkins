@@ -27,6 +27,16 @@ ifneq ($(RELEASE_TYPE),minor)
   UPDATE_VERSION_BEFORE_BUILD = y
 endif
 
+# Block edge releases on github
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_GITHUB_TAG = y
+endif
+
+# Block edge releases on npm
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_TO_NPM = y
+endif
+
 # For "major" and "minor" releases, the "master" branch must be
 # updated to be prepared for the next major/minor release.
 # WARN: process for "major" releases is not tested yet
@@ -48,6 +58,8 @@ endif
 # set the "bumped version" accordingly.
 ifeq ($(findstring snapshot, $(RELEASE_TYPE)),snapshot)
   UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
+else ifeq ($(findstring $(RELEASE_TYPE),edge),$(RELEASE_TYPE))
+  UI_BUMPED_VERSION ?= $(UI_VERSION)-$(RELEASE_TYPE)
 else
   UI_BUMPED_VERSION ?= $(shell semver bump $(RELEASE_TYPE) $(UI_VERSION))
 endif
@@ -67,7 +79,6 @@ ui-check-clean-workspace:
 	  (echo 'Your working path must be clean. Please, commit your changes or reset your working path.' && exit 1)
 
 ui-fix-version:
-	# (Not implemented yet) For "edge snapshots": yarn set-snapshot-version $(git rev-parse --short HEAD)
 ifeq ($(UPDATE_VERSION_BEFORE_BUILD),y)
 	jq -r '.version |= "$(UI_BUMPED_VERSION)"' package.json > package.json.typed
 	mv package.json.typed package.json
@@ -86,6 +97,7 @@ ui-test:
 	CI=true yarn test --maxWorkers=4
 
 ui-npm-publish:
+ifeq ($(PUSH_TO_NPM), y)
 ifdef NPM_TOKEN
 	@echo '//registry.npmjs.org/:_authToken=$(NPM_TOKEN)' > .npmrc
 endif
@@ -97,8 +109,10 @@ endif
 ifdef NPM_TOKEN
 	rm .npmrc
 endif
+endif
 
 ui-push-version-tag:
+ifeq ($(PUSH_GITHUB_TAG),y)
 ifeq ($(UPDATE_VERSION_BEFORE_BUILD),y)
 	# If the version string was updated before publishing, the updated
 	# version string must be present in the git tag.
@@ -106,6 +120,7 @@ ifeq ($(UPDATE_VERSION_BEFORE_BUILD),y)
 	git commit --no-verify -m "Release $(UI_VERSION)"
 endif
 	git push $(UI_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(UI_VERSION)
+endif
 
 ui-prepare-next-patch-version:
 ifndef OMIT_VERSION_BRANCH

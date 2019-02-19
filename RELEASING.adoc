@@ -72,7 +72,7 @@ kiali-ui repository.
 
 By default, it's assumed that you are doing a _minor_ release.
 If want to do another type of release, you can run the release process specifying
-the RELEASE_TYPE variable. Valid values are "major", "minor", "patch" and
+the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" and
 "snapshot._X_". For example:
 
 * `RELEASE_TYPE="snapshot.1" make -f Makefile.jenkins release`
