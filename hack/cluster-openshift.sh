@@ -45,10 +45,10 @@ get_downloader() {
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # The default version of the istiooc command to be downloaded
-DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.7.0"
+DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.8.0"
 
 # The default installation custom resource used to define what to install
-DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.7/istio/cr-minimal.yaml"
+DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.8/istio/cr-minimal.yaml"
 
 # set the default openshift address here so that it can be used for the usage text
 #
