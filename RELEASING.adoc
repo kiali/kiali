@@ -181,13 +181,13 @@ If you released kiali-ui (step 1), you should specify the version you just relea
 Else, you should specify whatever version you need packaged. If you don't specify
 a kiali-ui version, the console version specified in the main `Makefile`
 will be downloaded from NPM and packaged in the release. If the main `Makefile`
-specifies `latest` as the cosole version, the latest version *published* in NPM
+specifies `latest` as the console version, the latest version *published* in NPM
 will be used, which is not necessarily the latest _released_ version
 (most likely it will be a snapshot).
 
 By default, it's assumed that you are doing a _minor_ release.
 If want to do another type of release, you can run the release process specifying
-the RELEASE_TYPE variable. Valid values are "major", "minor", "patch" and
+the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" and
 "snapshot._X_". For example:
 
 * `RELEASE_TYPE="snapshot.1" make -f deploy/jenkins-ci/Makefile release`

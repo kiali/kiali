@@ -6,6 +6,10 @@ CONSOLE_LOCAL_DIR ?= ../kiali-ui
 
 BACKEND_VERSION ?= $(shell sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
 
+# Take the version as-is without filtering out the 'v' (if it exists)
+# This will take 'latest' as is or vX.Y.Z-type.
+VERSION_TAG ?= $(shell sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+
 # Determine what's the version to release, according to the RELEASE_TYPE
 # NOTE: BACKEND_VERSION_TO_RELEASE variable will only be used to update the main Makefile
 # with the version string to publish. Once the main Makefile is updated, all other parts
@@ -14,22 +18,39 @@ BACKEND_VERSION ?= $(shell sed -rn 's/^VERSION \?= v(.*)/\1/p' Makefile)
 ifeq ($(findstring $(RELEASE_TYPE),major patch),$(RELEASE_TYPE))
   # For major and patch, bump the version that is present in Makefile. This will be the
   # version string to use for the release.
-  BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump $(RELEASE_TYPE) $(BACKEND_VERSION))
+  BACKEND_VERSION_TO_RELEASE ?= v$(shell semver bump $(RELEASE_TYPE) $(BACKEND_VERSION))
 endif
 ifeq ($(RELEASE_TYPE),minor)
   # For minor, remove the -SNAPSHOT suffix from the Makefile
-  BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump release $(BACKEND_VERSION))
+  BACKEND_VERSION_TO_RELEASE ?= v$(shell semver bump release $(BACKEND_VERSION))
 endif
+
+ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else ifeq ($(RELEASE_TYPE),edge)
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = y
+else
+  RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE = n
+endif
+
 ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
   # For end-of-week snapshot release, substitute the -SNAPSHOT prefix in the Makefile with
   # the value of $(RELEASE_TYPE) -- assuming value will be snapshot.{X}
-  BACKEND_VERSION_TO_RELEASE ?= $(shell semver bump prerel $(RELEASE_TYPE) $(BACKEND_VERSION))
+  BACKEND_VERSION_TO_RELEASE ?= v$(shell semver bump prerel $(RELEASE_TYPE) $(BACKEND_VERSION))
+else ifeq ($(RELEASE_TYPE),edge)
+  # Use 'latest' for edge releases
+  BACKEND_VERSION_TO_RELEASE ?= latest
 endif
 
-# NOTE: The value fo BACKEND_BUMPED_VERSION and BACKEND_VERSION_BRANCH will only be valid
-# after the main Makefile has been modified with the version being released.
-BACKEND_BUMPED_VERSION ?= $(shell semver bump minor $(BACKEND_VERSION))
-BACKEND_VERSION_BRANCH ?= $(shell semver bump release $(BACKEND_VERSION) | sed 's/\.[[:digit:]]\+$$//')
+ifeq ($(RELEASE_TYPE),edge)
+  # Avoid semver error, as BACKEND_VERSION will return empty string when using 'latest' as the version
+  # By not setting these variable, we avoid a semver error when expanding a rule that uses $(BACKEND_BUMPED_VERSION)
+else
+  # NOTE: The value fo BACKEND_BUMPED_VERSION and BACKEND_VERSION_BRANCH will only be valid
+  # after the main Makefile has been modified with the version being released.
+  BACKEND_BUMPED_VERSION ?= $(shell semver bump minor $(BACKEND_VERSION))
+  BACKEND_VERSION_BRANCH ?= $(shell semver bump release $(BACKEND_VERSION) | sed 's/\.[[:digit:]]\+$$//')
+endif
 
 BACKEND_GITHUB_URI ?= git@github.com:kiali/kiali.git
 BACKEND_PULL_URI ?= https://api.github.com/repos/kiali/kiali/pulls
@@ -45,11 +66,17 @@ BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
 
-ifeq ($(findstring snapshot,$(RELEASE_TYPE)),snapshot)
+
+ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
   OMIT_VERSION_BRANCH ?= y
 else
   IS_SNAPSHOT ?= n
+endif
+
+# Block edge releases on github
+ifneq ($(RELEASE_TYPE),edge)
+  PUSH_GITHUB_TAG = y
 endif
 
 # JENKINS_URL is an environment variable that is set when this
@@ -93,7 +120,7 @@ all:
 
 backend-build-release:
 	@echo "Will build version: $(BACKEND_VERSION_TO_RELEASE)"
-	sed -i -r 's/^VERSION \?= v.*/VERSION \?= v$(BACKEND_VERSION_TO_RELEASE)/' Makefile
+	sed -i -r 's/^VERSION \?= v.*/VERSION \?= $(BACKEND_VERSION_TO_RELEASE)/' Makefile
 	$(MAKE) clean build
 
 backend-test:
@@ -106,35 +133,39 @@ ifdef DOCKER_PASSWORD
 	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
 endif
 endif
-	DOCKER_VERSION="v$(BACKEND_VERSION)" \
+	DOCKER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
 	  make docker-build docker-push
 ifneq ($(IS_SNAPSHOT),y)
-	docker tag "$(DOCKER_NAME):v$(BACKEND_VERSION)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker tag "$(DOCKER_NAME):$(VERSION_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
-	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION)"
+	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
 
 backend-push-version-tag:
+ifeq ($(PUSH_GITHUB_TAG),y)
 	sed -i "s/^CONSOLE_VERSION ?=.*/CONSOLE_VERSION ?= $$(cat _output/docker/console/version.txt)/" Makefile
 	git add Makefile
 	git commit -m "Release $(BACKEND_VERSION)"
-	git push $(BACKEND_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/v$(BACKEND_VERSION)
+	git push $(BACKEND_GITHUB_URI) $$(git rev-parse HEAD):refs/tags/$(VERSION_TAG)
 ifdef GH_TOKEN
 	@echo "Creating GitHub release..."
 ifeq ($(IS_SNAPSHOT),y)
 	@curl -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
-	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)", "prerelease": true}' \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "$(VERSION_TAG)", "prerelease": true}' \
 	  -X POST $(BACKEND_RELEASE_URI)
 else
 	@curl -H "Authorization: token $(GH_TOKEN)" \
 	  -H "Content-Type: application/json" \
-	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "v$(BACKEND_VERSION)"}' \
+	  -d '{"name": "Kiali $(BACKEND_VERSION)", "tag_name": "$(VERSION_TAG)"}' \
 	  -X POST $(BACKEND_RELEASE_URI)
 endif
+endif
+else
+	@echo "Skipped push version tag"
 endif
 
 backend-prepare-next-patch-version:
