@@ -106,9 +106,9 @@ rules:
   - watch
 - apiGroups: ["rbac.istio.io"]
   resources:
+  - clusterrbacconfigs
   - serviceroles
   - servicerolebindings
-  - rbacconfigs
   verbs:
   - create
   - delete

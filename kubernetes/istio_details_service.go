@@ -391,37 +391,37 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 	return mp.DeepCopyIstioObject(), nil
 }
 
-func (in *IstioClient) GetRbacConfigs(namespace string) ([]IstioObject, error) {
-	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).Do().Get()
+func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 
-	rbacConfigList, ok := result.(*GenericIstioObjectList)
+	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
 	}
 
-	rbacConfigs := make([]IstioObject, 0)
-	for _, ps := range rbacConfigList.GetItems() {
-		rbacConfigs = append(rbacConfigs, ps.DeepCopyIstioObject())
+	clusterRbacConfigs := make([]IstioObject, 0)
+	for _, crc := range clusterRbacConfigList.GetItems() {
+		clusterRbacConfigs = append(clusterRbacConfigs, crc.DeepCopyIstioObject())
 	}
 
-	return rbacConfigs, nil
+	return clusterRbacConfigs, nil
 }
 
-func (in *IstioClient) GetRbacConfig(namespace string, name string) (IstioObject, error) {
-	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).SubResource(name).Do().Get()
+func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).SubResource(name).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 
-	rbacConfig, ok := result.(*GenericIstioObject)
+	clusterRbacConfig, ok := result.(*GenericIstioObject)
 	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a RbacConfig object", namespace)
+		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", namespace)
 	}
 
-	return rbacConfig.DeepCopyIstioObject(), nil
+	return clusterRbacConfig.DeepCopyIstioObject(), nil
 }
 
 func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) {

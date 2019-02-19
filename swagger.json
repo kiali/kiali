@@ -2778,6 +2778,40 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ClusterRbacConfig": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "exclusion": {
+              "type": "object",
+              "x-go-name": "Exclusion"
+            },
+            "inclusion": {
+              "type": "object",
+              "x-go-name": "Inclusion"
+            },
+            "mode": {
+              "type": "object",
+              "x-go-name": "Mode"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ClusterRbacConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ClusterRbacConfig"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Config": {
       "type": "object",
       "properties": {
@@ -3059,6 +3093,9 @@
         "adapter": {
           "$ref": "#/definitions/istioAdapter"
         },
+        "clusterRbacConfig": {
+          "$ref": "#/definitions/ClusterRbacConfig"
+        },
         "destinationRule": {
           "$ref": "#/definitions/destinationRule"
         },
@@ -3086,9 +3123,6 @@
         },
         "quotaSpecBinding": {
           "$ref": "#/definitions/QuotaSpecBinding"
-        },
-        "rbacConfig": {
-          "$ref": "#/definitions/RbacConfig"
         },
         "rule": {
           "$ref": "#/definitions/istioRule"
@@ -3125,6 +3159,9 @@
         "adapters": {
           "$ref": "#/definitions/istioAdapters"
         },
+        "clusterRbacConfigs": {
+          "$ref": "#/definitions/ClusterRbacConfigs"
+        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -3145,9 +3182,6 @@
         },
         "quotaSpecs": {
           "$ref": "#/definitions/QuotaSpecs"
-        },
-        "rbacConfigs": {
-          "$ref": "#/definitions/RbacConfigs"
         },
         "rules": {
           "$ref": "#/definitions/istioRules"
@@ -3791,40 +3825,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/QuotaSpec"
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "RbacConfig": {
-      "type": "object",
-      "properties": {
-        "metadata": {
-          "$ref": "#/definitions/ObjectMeta"
-        },
-        "spec": {
-          "type": "object",
-          "properties": {
-            "exclusion": {
-              "type": "object",
-              "x-go-name": "Exclusion"
-            },
-            "inclusion": {
-              "type": "object",
-              "x-go-name": "Inclusion"
-            },
-            "mode": {
-              "type": "object",
-              "x-go-name": "Mode"
-            }
-          },
-          "x-go-name": "Spec"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "RbacConfigs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/RbacConfig"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },

@@ -51,9 +51,9 @@ const (
 	meshPolicyTypeList = "MeshPolicyList"
 
 	// Rbac
-	rbacconfigs        = "rbacconfigs"
-	rbacconfigType     = "RbacConfig"
-	rbacconfigTypeList = "RbacConfigList"
+	clusterrbacconfigs        = "clusterrbacconfigs"
+	clusterrbacconfigType     = "ClusterRbacConfig"
+	clusterrbacconfigTypeList = "ClusterRbacConfigList"
 
 	serviceroles        = "serviceroles"
 	serviceroleType     = "ServiceRole"
@@ -374,8 +374,8 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     rbacconfigType,
-			collectionKind: rbacconfigTypeList,
+			objectKind:     clusterrbacconfigType,
+			collectionKind: clusterrbacconfigTypeList,
 		},
 		{
 			objectKind:     serviceroleType,
@@ -467,7 +467,7 @@ var (
 		meshPolicies: meshPolicyType,
 
 		// Rbac
-		rbacconfigs:         rbacconfigType,
+		clusterrbacconfigs:  clusterrbacconfigType,
 		serviceroles:        serviceroleType,
 		servicerolebindings: servicerolebindingType,
 	}

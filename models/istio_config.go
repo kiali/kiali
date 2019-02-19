@@ -21,7 +21,7 @@ type IstioConfigList struct {
 	QuotaSpecBindings   QuotaSpecBindings   `json:"quotaSpecBindings"`
 	Policies            Policies            `json:"policies"`
 	MeshPolicies        MeshPolicies        `json:"meshPolicies"`
-	RbacConfigs         RbacConfigs         `json:"rbacConfigs"`
+	ClusterRbacConfigs  ClusterRbacConfigs  `json:"clusterRbacConfigs"`
 	ServiceRoles        ServiceRoles        `json:"serviceRoles"`
 	ServiceRoleBindings ServiceRoleBindings `json:"serviceRoleBindings"`
 	IstioValidations    IstioValidations    `json:"validations"`
@@ -41,7 +41,7 @@ type IstioConfigDetails struct {
 	QuotaSpecBinding   *QuotaSpecBinding   `json:"quotaSpecBinding"`
 	Policy             *Policy             `json:"policy"`
 	MeshPolicy         *MeshPolicy         `json:"meshPolicy"`
-	RbacConfig         *RbacConfig         `json:"rbacConfig"`
+	ClusterRbacConfig  *ClusterRbacConfig  `json:"clusterRbacConfig"`
 	ServiceRole        *ServiceRole        `json:"serviceRole"`
 	ServiceRoleBinding *ServiceRoleBinding `json:"serviceRoleBinding"`
 	Permissions        ResourcePermissions `json:"permissions"`

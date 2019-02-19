@@ -33,7 +33,7 @@ type IstioConfigCriteria struct {
 	IncludeQuotaSpecBindings   bool
 	IncludePolicies            bool
 	IncludeMeshPolicies        bool
-	IncludeRbacConfigs         bool
+	IncludeClusterRbacConfigs  bool
 	IncludeServiceRoles        bool
 	IncludeServiceRoleBindings bool
 }
@@ -50,7 +50,7 @@ const (
 	QuotaSpecBindings   = "quotaspecbindings"
 	Policies            = "policies"
 	MeshPolicies        = "meshpolicies"
-	RbacConfigs         = "rbacconfigs"
+	ClusterRbacConfigs  = "clusterrbacconfigs"
 	ServiceRoles        = "serviceroles"
 	ServiceRoleBindings = "servicerolebindings"
 )
@@ -67,7 +67,7 @@ var resourceTypesToAPI = map[string]string{
 	QuotaSpecBindings:   kubernetes.ConfigGroupVersion.Group,
 	Policies:            kubernetes.AuthenticationGroupVersion.Group,
 	MeshPolicies:        kubernetes.AuthenticationGroupVersion.Group,
-	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
+	ClusterRbacConfigs:  kubernetes.RbacGroupVersion.Group,
 	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
 	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
 }
@@ -108,7 +108,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		QuotaSpecBindings:   models.QuotaSpecBindings{},
 		Policies:            models.Policies{},
 		MeshPolicies:        models.MeshPolicies{},
-		RbacConfigs:         models.RbacConfigs{},
+		ClusterRbacConfigs:  models.ClusterRbacConfigs{},
 		ServiceRoles:        models.ServiceRoles{},
 		ServiceRoleBindings: models.ServiceRoleBindings{},
 	}
@@ -220,9 +220,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
-		if criteria.IncludeRbacConfigs {
-			if rc, rcErr = in.k8s.GetRbacConfigs(criteria.Namespace); rcErr == nil {
-				(&istioConfigList.RbacConfigs).Parse(rc)
+		if criteria.IncludeClusterRbacConfigs {
+			if rc, rcErr = in.k8s.GetClusterRbacConfigs(criteria.Namespace); rcErr == nil {
+				(&istioConfigList.ClusterRbacConfigs).Parse(rc)
 			}
 		}
 	}()
@@ -341,10 +341,10 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 			istioConfigDetail.MeshPolicy.Parse(mp)
 		}
-	case RbacConfigs:
-		if rc, err = in.k8s.GetRbacConfig(namespace, object); err == nil {
-			istioConfigDetail.RbacConfig = &models.RbacConfig{}
-			istioConfigDetail.RbacConfig.Parse(rc)
+	case ClusterRbacConfigs:
+		if rc, err = in.k8s.GetClusterRbacConfig(namespace, object); err == nil {
+			istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
+			istioConfigDetail.ClusterRbacConfig.Parse(rc)
 		}
 	case ServiceRoles:
 		if sr, err = in.k8s.GetServiceRole(namespace, object); err == nil {
@@ -514,9 +514,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		istioConfigDetail.MeshPolicy.Parse(result)
-	case RbacConfigs:
-		istioConfigDetail.RbacConfig = &models.RbacConfig{}
-		istioConfigDetail.RbacConfig.Parse(result)
+	case ClusterRbacConfigs:
+		istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
+		istioConfigDetail.ClusterRbacConfig.Parse(result)
 	case ServiceRoles:
 		istioConfigDetail.ServiceRole = &models.ServiceRole{}
 		istioConfigDetail.ServiceRole.Parse(result)

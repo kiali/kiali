@@ -250,12 +250,12 @@ func (o *K8SClientMock) GetMeshPolicy(namespace string, policyName string) (kube
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
+func (o *K8SClientMock) GetClusterRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
+func (o *K8SClientMock) GetClusterRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
