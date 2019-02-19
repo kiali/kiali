@@ -33,6 +33,7 @@ const (
 	EnvServerPort                       = "SERVER_PORT"
 	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
 	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
+	EnvServerAllowAnonymousAccess       = "SERVER_ALLOW_ANONYMOUS_ACCESS"
 	EnvWebRoot                          = "SERVER_WEB_ROOT"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
@@ -182,14 +183,9 @@ func NewConfig() (c *Config) {
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
-		Username: getDefaultString(EnvServerCredentialsUsername, ""),
-		Password: getDefaultString(EnvServerCredentialsPassword, ""),
-	}
-	// anonymous access is allowed if username and password were explicitly set to empty string
-	if c.Server.Credentials.Username == "" && c.Server.Credentials.Password == "" {
-		_, unameOK := os.LookupEnv(EnvServerCredentialsUsername)
-		_, pwordOK := os.LookupEnv(EnvServerCredentialsPassword)
-		c.Server.Credentials.Anonymous = unameOK && pwordOK
+		Username:       getDefaultString(EnvServerCredentialsUsername, ""),
+		Password:       getDefaultString(EnvServerCredentialsPassword, ""),
+		AllowAnonymous: getDefaultBool(EnvServerAllowAnonymousAccess, false),
 	}
 
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
