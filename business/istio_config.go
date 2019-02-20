@@ -220,7 +220,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
-		if criteria.IncludeClusterRbacConfigs {
+		if criteria.IncludeClusterRbacConfigs && criteria.Namespace == config.Get().IstioNamespace {
 			if rc, rcErr = in.k8s.GetClusterRbacConfigs(criteria.Namespace); rcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(rc)
 			}
