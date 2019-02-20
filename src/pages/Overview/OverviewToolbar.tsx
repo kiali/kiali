@@ -115,8 +115,8 @@ export class OverviewToolbar extends React.Component<Props, State> {
     this.setState({ isSortAscending: newDir });
   };
 
-  updateDuration = (duration: DurationInSeconds) => {
-    this.props.setDuration(duration);
+  updateDuration = (duration: string) => {
+    this.props.setDuration(Number(duration));
     this.props.onRefresh();
   };
 

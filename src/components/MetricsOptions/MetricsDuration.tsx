@@ -47,9 +47,9 @@ export class MetricsDuration extends React.Component<Props> {
     }
   }
 
-  onDurationChanged = (key: number) => {
-    sessionStorage.setItem(URLParams.DURATION, String(key));
-    HistoryManager.setParam(URLParams.DURATION, String(key));
+  onDurationChanged = (key: string) => {
+    sessionStorage.setItem(URLParams.DURATION, key);
+    HistoryManager.setParam(URLParams.DURATION, key);
   };
 
   render() {

@@ -10,8 +10,8 @@ type ToolbarDropdownProps = {
   label?: string;
   initialValue?: number | string;
   initialLabel?: string;
-  handleSelect: Function;
-  options: { [key: string]: string };
+  handleSelect: (value: string) => void;
+  options: object;
   onToggle?: (isOpen: boolean) => void;
 };
 

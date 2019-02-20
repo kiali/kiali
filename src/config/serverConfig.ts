@@ -14,23 +14,23 @@ export const serverConfig = (): ServerConfig => {
 
 // getValidDurations returns a new object with only the durations <= retention
 export const getValidDurations = (
-  durations: { [key: string]: string },
+  durations: { [key: number]: string },
   retention?: DurationInSeconds
-): { [key: string]: string } => {
-  const validDurations = pickBy(durations, (_, key) => {
-    return !retention || Number(key) <= retention;
+): { [key: number]: string } => {
+  const validDurations = pickBy(durations, (_, key: number) => {
+    return !retention || key <= retention;
   });
-  return validDurations;
+  return validDurations as { [key: number]: string };
 };
 
 // getValidDuration returns duration if it is a valid property key in durations, otherwise it return the first property
 // key in durations.  It is assumed that durations has at least one property.
 export const getValidDuration = (
-  durations: { [key: string]: string },
+  durations: { [key: number]: string },
   duration: DurationInSeconds
 ): DurationInSeconds => {
   let validDuration = 0;
-  forOwn(durations, (value, key) => {
+  forOwn(durations, (_, key) => {
     const d = Number(key);
     if (d === duration) {
       validDuration = d;

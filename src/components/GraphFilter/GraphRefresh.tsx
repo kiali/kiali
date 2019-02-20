@@ -83,7 +83,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
         <ToolbarDropdown
           id={'graph_filter_duration'}
           disabled={this.props.disabled}
-          handleSelect={this.props.setDuration}
+          handleSelect={this.handleDurationChange}
           value={validDuration}
           label={String(validDurations[validDuration])}
           options={validDurations}
@@ -114,6 +114,10 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
       </>
     );
   }
+
+  private handleDurationChange = (duration: string) => {
+    this.props.setDuration(Number(duration));
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
