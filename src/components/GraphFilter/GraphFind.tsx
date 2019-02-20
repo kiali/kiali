@@ -57,14 +57,18 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
   // that applying the find/hide on update is sufficient because  we will be updated after the cy is loaded
   // due to a change notification for this.props.cyData.
   componentDidUpdate(prevProps: GraphFindProps) {
-    // make sure the input box reflects the redux value
-    this.findInputRef.value = this.props.findValue;
-    this.hideInputRef.value = this.props.hideValue;
-
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged =
       this.props.cyData && prevProps.cyData && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp;
+
+    // make sure the value is updated if there was a change
+    if (findChanged) {
+      this.findInputValue = this.props.findValue;
+    }
+    if (hideChanged) {
+      this.hideInputValue = this.props.hideValue;
+    }
 
     if (findChanged || (graphChanged && this.props.findValue)) {
       this.handleFind();
@@ -87,6 +91,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
                   this.findInputRef = ref;
                 }}
                 onChange={this.updateFind}
+                defaultValue={this.findInputValue !== undefined ? this.findInputValue : this.props.findValue}
                 onKeyPress={this.checkSubmitFind}
                 placeholder="Find..."
               />
@@ -102,6 +107,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
                   this.hideInputRef = ref;
                 }}
                 onChange={this.updateHide}
+                defaultValue={this.hideInputValue !== undefined ? this.hideInputValue : this.props.hideValue}
                 onKeyPress={this.checkSubmitHide}
                 placeholder="Hide..."
               />
