@@ -222,9 +222,9 @@ apply_yaml() {
   fi
 }
 
-# Now deploy all the Kiali components to kubernetes
+# Now deploy all the Kiali components to Kubernetes
 # If we are missing one or more of the yaml files, download them
-echo "Deploying Kiali to kubernetes project ${NAMESPACE}"
+echo "Deploying Kiali to Kubernetes namespace ${NAMESPACE}"
 for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
 do
   apply_yaml ${yaml}
@@ -232,5 +232,25 @@ do
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to Kubernetes. Aborting."
     exit 1
+  fi
+done
+
+# Deploy Kiali MonitoringDashboards to Kubernetes
+# Note for undeploy script: dashboards are implicitly undeployed when the related CRD is removed
+echo "Deploying Kiali dashboards to Kubernetes namespace ${NAMESPACE}"
+for dashboard in nodejs thorntail vertx-client vertx-eventbus vertx-pool vertx-server
+do
+  yaml_path="${YAML_DIR}/../dashboards/${dashboard}.yaml"
+  if [ -f "${yaml_path}" ]; then
+    echo "Using YAML file: ${yaml_path}"
+    cat ${yaml_path} | envsubst | kubectl apply -n ${NAMESPACE} -f -
+  else
+    get_downloader
+    yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/${dashboard}.yaml"
+    echo "Downloading YAML via: ${downloader} ${yaml_url}"
+    ${downloader} ${yaml_url} | envsubst | kubectl apply -n ${NAMESPACE} -f -
+  fi
+  if [ "$?" != "0" ]; then
+    echo "WARNING: Failed to deploy runtimes dashboards. They are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
   fi
 done
