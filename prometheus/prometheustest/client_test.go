@@ -448,7 +448,7 @@ func TestGetAllRequestRates(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -480,7 +480,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("istio-system", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("istio-system", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -504,7 +504,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m])`, queryTime, &vectorQ1)
 
-	rates, err := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
@@ -519,7 +519,7 @@ func TestConfig(t *testing.T) {
 		YAML: `{"status":"success","data":{"yaml":"global:\n  scrape_interval: 15s\n"}}`,
 	})
 
-	config, err := client.GetConfiguration()
+	config, _ := client.GetConfiguration()
 	assert.Contains(t, config.YAML, "scrape_interval")
 }
 
@@ -531,7 +531,7 @@ func TestFlags(t *testing.T) {
 	}
 	mockFlags(api, pv1.FlagsResult{"storage.tsdb.retention": "6h"})
 
-	flags, err := client.GetFlags()
+	flags, _ := client.GetFlags()
 	assert.Equal(t, flags["storage.tsdb.retention"], "6h")
 }
 

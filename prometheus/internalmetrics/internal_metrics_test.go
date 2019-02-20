@@ -29,7 +29,7 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 
 	// simulate a failure - our failure counter metric should increment to 1
 	doSomeWork(true)
-	metrics, err = registry.Gather()
+	metrics, _ = registry.Gather()
 	if len(metrics) != 2 {
 		t.Errorf("Should have metrics now")
 	}
@@ -49,7 +49,7 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 
 	// simulate a success
 	doSomeWork(false)
-	metrics, err = registry.Gather()
+	metrics, _ = registry.Gather()
 
 	for _, m := range metrics {
 		if m.GetName() == "kiali_go_function_failures_total" {

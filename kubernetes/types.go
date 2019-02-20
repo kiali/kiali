@@ -484,7 +484,6 @@ type MTLSDetails struct {
 }
 
 type istioResponse struct {
-	result  IstioObject
 	results []IstioObject
 	err     error
 }

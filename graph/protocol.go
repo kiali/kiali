@@ -98,7 +98,7 @@ func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, e
 
 	// Istio telemetry may use HTTP codes for gRPC, so if it quacks like a duck...
 	isHttpCode := len(code) == 3
-	isErr := false
+	var isErr bool
 	if isHttpCode {
 		isErr = strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5")
 	} else {
