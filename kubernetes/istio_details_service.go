@@ -5,10 +5,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 // GetIstioDetails returns Istio details for a given namespace,
