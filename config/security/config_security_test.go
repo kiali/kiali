@@ -5,9 +5,7 @@ import (
 )
 
 func TestValidateCredentials(t *testing.T) {
-	var creds *Credentials
-
-	creds = &Credentials{}
+	creds := &Credentials{}
 	if err := creds.ValidateCredentials(); err != nil {
 		t.Errorf("Empty credentials should be valid: %v", err)
 	}

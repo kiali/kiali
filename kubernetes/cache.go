@@ -70,9 +70,7 @@ func init() {
 func setupErrorHandlers() {
 	nErrFunc := len(utilruntime.ErrorHandlers)
 	customErrorHandler := make([]func(error), nErrFunc+1)
-	for i, errorFunc := range utilruntime.ErrorHandlers {
-		customErrorHandler[i] = errorFunc
-	}
+	copy(customErrorHandler, utilruntime.ErrorHandlers)
 	customErrorHandler[nErrFunc] = func(err error) {
 		for _, callback := range errorCallbacks {
 			callback(err)
@@ -165,7 +163,7 @@ func (c *controllerImpl) Stop() {
 }
 
 func (c *controllerImpl) ErrorCallback(err error) {
-	if c.isErrorState == false {
+	if !c.isErrorState {
 		log.Warningf("Error callback received: %s", err)
 		c.lastErrorLock.Lock()
 		c.isErrorState = true
@@ -176,13 +174,13 @@ func (c *controllerImpl) ErrorCallback(err error) {
 }
 
 func (c *controllerImpl) checkStateAndRetry() error {
-	if c.isErrorState == false {
+	if !c.isErrorState {
 		return nil
 	}
 
 	// Retry of the cache is hold by one single goroutine
 	c.lastErrorLock.Lock()
-	if c.isErrorState == true {
+	if c.isErrorState {
 		// ping to check if backend is still unavailable (used namespace endpoint)
 		_, err := c.clientset.CoreV1().Namespaces().List(emptyListOptions)
 		if err != nil {

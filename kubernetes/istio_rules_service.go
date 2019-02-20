@@ -91,9 +91,7 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 	for i := 0; i < len(pluralsMap); i++ {
 		adapterTemplate := <-resultsChan
 		if adapterTemplate.err == nil {
-			for _, istioObject := range adapterTemplate.results {
-				results = append(results, istioObject)
-			}
+			results = append(results, adapterTemplate.results...)
 		} else {
 			log.Warningf("Querying %s got an error: %s", itemType, adapterTemplate.err)
 		}

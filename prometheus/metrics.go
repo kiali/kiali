@@ -80,7 +80,7 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 		definition istioMetric
 	}
 	maxResults := len(istioMetrics)
-	results := make([]*resultHolder, maxResults, maxResults)
+	results := make([]*resultHolder, maxResults)
 
 	for i, istioMetric := range istioMetrics {
 		// if filters is empty, fetch all anyway

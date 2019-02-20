@@ -19,7 +19,7 @@ func TestMissingGateway(t *testing.T) {
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
 	checker := NoGatewayChecker{
 		VirtualService: virtualService,
-		GatewayNames:   make(map[string]struct{}, 0),
+		GatewayNames:   make(map[string]struct{}),
 	}
 
 	validations, valid := checker.Check()
