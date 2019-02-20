@@ -224,8 +224,21 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 
 	for id, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
-			// if node isRoot then keep it to better understand traffic flow
+			// if node isRoot then keep it to better understand traffic flow.
 			if val, ok := n.Metadata["isRoot"]; ok && val.(bool) {
+				// Remove any edge to a non-service node.  The service graph only shows non-service root
+				// nodes, all other nodes are service nodes.  The use case is direct workload-to-workload
+				// traffic, which is unusual but possible.  This can lead to nodes with outgoing traffic
+				// not represented by an outgoing edge, but that is the nature of the graph type.
+				serviceEdges := []*graph.Edge{}
+				for _, e := range n.Edges {
+					if e.Dest.NodeType == graph.NodeTypeService {
+						serviceEdges = append(serviceEdges, e)
+					} else {
+						log.Debugf("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
+					}
+				}
+				n.Edges = serviceEdges
 				reducedTrafficMap[id] = n
 			}
 			continue
@@ -239,8 +252,12 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 			workload := workloadEdge.Dest
 			checkNodeType(graph.NodeTypeWorkload, workload)
 			for _, serviceEdge := range workload.Edges {
+				// As above, ignore edges to non-service destinations
+				if serviceEdge.Dest.NodeType != graph.NodeTypeService {
+					log.Debugf("Service graph ignoring non-service destination [%s]", serviceEdge.Dest.Workload)
+					continue
+				}
 				childService := serviceEdge.Dest
-				checkNodeType(graph.NodeTypeService, childService)
 				var edge *graph.Edge
 				for _, e := range n.Edges {
 					if childService.ID == e.Dest.ID && serviceEdge.Metadata["protocol"] == e.Metadata["protocol"] {
@@ -260,8 +277,8 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 	return reducedTrafficMap
 }
 
-func addServiceGraphTraffic(target, source *graph.Edge) {
-	graph.AddServiceGraphTraffic(target, source)
+func addServiceGraphTraffic(toEdge, fromEdge *graph.Edge) {
+	graph.AddServiceGraphTraffic(toEdge, fromEdge)
 
 	// handle any appender-based edge data (nothing currently)
 	// note: We used to average response times of the aggregated edges but realized that
@@ -420,6 +437,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+			destSvcNameOk = graph.IsOK(destSvcName)
 			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, o.GraphType)
 			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				addTraffic(trafficMap, val, protocol, code, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName, o)

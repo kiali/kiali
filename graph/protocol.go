@@ -148,29 +148,29 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface
 	}
 }
 
-func AddServiceGraphTraffic(target, source *Edge) {
-	protocol := target.Metadata["protocol"]
+func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
+	protocol := toEdge.Metadata["protocol"]
 	switch protocol {
 	case "grpc":
-		addToMetadataValue(target.Metadata, "grpc", source.Metadata["grpc"].(float64))
-		if val, ok := source.Metadata["grpcErr"]; ok {
-			addToMetadataValue(target.Metadata, "grpcErr", val.(float64))
+		addToMetadataValue(toEdge.Metadata, "grpc", fromEdge.Metadata["grpc"].(float64))
+		if val, ok := fromEdge.Metadata["grpcErr"]; ok {
+			addToMetadataValue(toEdge.Metadata, "grpcErr", val.(float64))
 		}
 	case "http":
-		addToMetadataValue(target.Metadata, "http", source.Metadata["http"].(float64))
-		if val, ok := source.Metadata["http3xx"]; ok {
-			addToMetadataValue(target.Metadata, "http3xx", val.(float64))
+		addToMetadataValue(toEdge.Metadata, "http", fromEdge.Metadata["http"].(float64))
+		if val, ok := fromEdge.Metadata["http3xx"]; ok {
+			addToMetadataValue(toEdge.Metadata, "http3xx", val.(float64))
 		}
-		if val, ok := source.Metadata["http4xx"]; ok {
-			addToMetadataValue(target.Metadata, "http4xx", val.(float64))
+		if val, ok := fromEdge.Metadata["http4xx"]; ok {
+			addToMetadataValue(toEdge.Metadata, "http4xx", val.(float64))
 		}
-		if val, ok := source.Metadata["http5xx"]; ok {
-			addToMetadataValue(target.Metadata, "http5xx", val.(float64))
+		if val, ok := fromEdge.Metadata["http5xx"]; ok {
+			addToMetadataValue(toEdge.Metadata, "http5xx", val.(float64))
 		}
 	case "tcp":
-		addToMetadataValue(target.Metadata, "tcp", source.Metadata["tcp"].(float64))
+		addToMetadataValue(toEdge.Metadata, "tcp", fromEdge.Metadata["tcp"].(float64))
 	default:
-		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, target))
+		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, toEdge))
 	}
 
 	// handle any appender-based edge data (nothing currently)

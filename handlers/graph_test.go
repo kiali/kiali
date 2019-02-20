@@ -101,9 +101,24 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"destination_version":           "v1",
 		"request_protocol":              "http",
 		"response_code":                 "200"}
+	q0m1 := model.Metric{
+		"source_workload_namespace":     "unknown",
+		"source_workload":               "unknown",
+		"source_app":                    "unknown",
+		"source_version":                "unknown",
+		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "",
+		"destination_workload":          "kiali-2412", // test case when there is no destination_service_name
+		"destination_app":               "",
+		"destination_version":           "",
+		"request_protocol":              "http",
+		"response_code":                 "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
+			Value:  50},
+		&model.Sample{
+			Metric: q0m1,
 			Value:  50}}
 
 	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
