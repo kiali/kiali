@@ -122,11 +122,13 @@ func hasSubsetDefined(destinationRule kubernetes.IstioObject, subsetTarget strin
 		if dSubsets, ok := subsets.([]interface{}); ok {
 			for _, subset := range dSubsets {
 				if innerSubset, ok := subset.(map[string]interface{}); ok {
-					subsetName := innerSubset["name"].(string)
-					if subsetName == subsetTarget {
-						if labels, ok := innerSubset["labels"]; ok {
-							if _, ok := labels.(map[string]interface{}); ok {
-								return true
+					if sSubsetName := innerSubset["name"]; ok {
+						subsetName := sSubsetName.(string)
+						if subsetName == subsetTarget {
+							if labels, ok := innerSubset["labels"]; ok {
+								if _, ok := labels.(map[string]interface{}); ok {
+									return true
+								}
 							}
 						}
 					}
