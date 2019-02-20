@@ -317,7 +317,7 @@ gometalinter-install:
 ## lint. Runs gometalinter
 lint:
 	gometalinter --disable-all  --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
-	--enable=ineffassign --tests  --vendor ./...
+	--enable=ineffassign --enable=unconvert --enable=goimports --tests  --vendor ./...
 
 ## lint-all. Runs gometalinter with items from good to have list but does not run during travis
 lint-all:

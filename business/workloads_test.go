@@ -2,7 +2,6 @@ package business
 
 import (
 	"fmt"
-	"k8s.io/api/core/v1"
 	"testing"
 
 	osappsv1 "github.com/openshift/api/apps/v1"
@@ -12,6 +11,7 @@ import (
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"

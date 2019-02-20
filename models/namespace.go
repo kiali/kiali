@@ -1,10 +1,10 @@
 package models
 
 import (
-	"k8s.io/api/core/v1"
 	"time"
 
 	osv1 "github.com/openshift/api/project/v1"
+	"k8s.io/api/core/v1"
 )
 
 // A Namespace provide a scope for names
