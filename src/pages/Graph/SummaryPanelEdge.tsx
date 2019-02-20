@@ -35,6 +35,19 @@ type SummaryPanelEdgeState = {
   metricsLoadError: string | null;
 };
 
+const defaultSummaryPanelState: SummaryPanelEdgeState = {
+  loading: true,
+  reqRates: null,
+  errRates: [],
+  rtAvg: [],
+  rtMed: [],
+  rt95: [],
+  rt99: [],
+  tcpSent: [],
+  tcpReceived: [],
+  metricsLoadError: null
+};
+
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
   static readonly panelStyle = {
     width: '25em',
@@ -47,18 +60,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   constructor(props: SummaryPanelPropType) {
     super(props);
 
-    this.state = {
-      loading: true,
-      reqRates: null,
-      errRates: [],
-      rtAvg: [],
-      rtMed: [],
-      rt95: [],
-      rt99: [],
-      tcpSent: [],
-      tcpReceived: [],
-      metricsLoadError: null
-    };
+    this.state = { ...defaultSummaryPanelState };
   }
 
   componentDidMount() {
@@ -262,7 +264,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       .then(response => {
         const metrics = response.data.metrics;
         const histograms = response.data.histograms;
-        let reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSentRates, tcpReceivedRates;
+        let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived } = defaultSummaryPanelState;
         if (isGrpc || isHttp) {
           reqRates = this.getNodeDataPoints(
             metrics['request_count'],
@@ -308,14 +310,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           );
         } else {
           // TCP
-          tcpSentRates = this.getNodeDataPoints(
-            metrics['tcp_sent'],
-            'Sent',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
-          tcpReceivedRates = this.getNodeDataPoints(
+          tcpSent = this.getNodeDataPoints(metrics['tcp_sent'], 'Sent', sourceMetricType, destMetricType, sourceData);
+          tcpReceived = this.getNodeDataPoints(
             metrics['tcp_received'],
             'Received',
             sourceMetricType,
@@ -332,8 +328,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           rtMed: rtMed,
           rt95: rt95,
           rt99: rt99,
-          tcpSent: tcpSentRates,
-          tcpReceived: tcpReceivedRates
+          tcpSent: tcpSent,
+          tcpReceived: tcpReceived
         });
       })
       .catch(error => {
