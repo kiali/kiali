@@ -50,7 +50,7 @@ func TestGetDashboard(t *testing.T) {
 	assert.Nil(err)
 	k8s.AssertNumberOfCalls(t, "GetDashboard", 1)
 	assert.Equal("Dashboard 1", dashboard.Title)
-	assert.Len(dashboard.Aggregations, 2)
+	assert.Len(dashboard.Aggregations, 3)
 	assert.Len(dashboard.Charts, 2)
 	assert.Equal("My chart 1", dashboard.Charts[0].Name)
 	assert.Equal("My chart 2", dashboard.Charts[1].Name)

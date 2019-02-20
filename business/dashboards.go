@@ -46,9 +46,17 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 		return nil, err
 	}
 
+	aggLabels := models.ConvertAggregations(dashboard.Spec)
 	labels := fmt.Sprintf(`{namespace="%s",app="%s"`, params.Namespace, params.App)
 	if params.Version != "" {
 		labels += fmt.Sprintf(`,version="%s"`, params.Version)
+	} else {
+		// For app-based dashboards, we automatically add a possible aggregation/grouping over versions
+		versionsAgg := models.Aggregation{
+			Label:       "version",
+			DisplayName: "Version",
+		}
+		aggLabels = append([]models.Aggregation{versionsAgg}, aggLabels...)
 	}
 	labels += "}"
 	grouping := strings.Join(params.ByLabels, ",")
@@ -79,7 +87,7 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 	return &models.MonitoringDashboard{
 		Title:        dashboard.Spec.Title,
 		Charts:       filledCharts,
-		Aggregations: models.ConvertAggregations(dashboard.Spec),
+		Aggregations: aggLabels,
 	}, nil
 }
 
