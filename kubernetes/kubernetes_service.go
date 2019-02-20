@@ -82,17 +82,9 @@ func (in *IstioClient) IsOpenShift() bool {
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.
 func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error) {
-	var allServices []v1.Service
-	var err error
-	if in.k8sCache != nil {
-		allServices, err = in.k8sCache.GetServices(namespace)
-	} else {
-		if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions); err == nil {
-			allServices = allServicesList.Items
-		}
-	}
+	allServices, err := in.getAllServices(namespace)
 	if err != nil {
-		return []v1.Service{}, err
+		return allServices, err
 	}
 	if selectorLabels == nil {
 		return allServices, nil
@@ -105,6 +97,17 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 		}
 	}
 	return services, nil
+}
+
+func (in *IstioClient) getAllServices(namespace string) ([]v1.Service, error) {
+	if in.k8sCache != nil {
+		return in.k8sCache.GetServices(namespace)
+	}
+	allServicesList, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions)
+	if err == nil {
+		return allServicesList.Items, nil
+	}
+	return []v1.Service{}, err
 }
 
 // GetDeployment returns the definition of a specific deployment.

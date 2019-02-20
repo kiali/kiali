@@ -30,11 +30,11 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 
 	// Ensure the service or namespace exists.. do we need to block with this?
 	if service != "" {
-		if _, err := in.k8s.GetService(namespace, service); err != nil {
+		if _, err = in.k8s.GetService(namespace, service); err != nil {
 			return nil, err
 		}
 	} else {
-		if _, err := in.k8s.GetNamespace(namespace); err != nil {
+		if _, err = in.k8s.GetNamespace(namespace); err != nil {
 			return nil, err
 		}
 	}

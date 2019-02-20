@@ -24,7 +24,6 @@ import (
 const (
 	authorizedUsername = "theUser"
 	authorizedPassword = "thePassword"
-	authorizedToken    = "theToken"
 )
 
 const (
@@ -133,7 +132,8 @@ func TestSecureComm(t *testing.T) {
 	}
 
 	// this makes sure the Prometheus metrics endpoint can start (we made an API call above; there should be metrics)
-	if s, err := getRequestResults(t, httpClient, metricsURL, basicCredentials); err != nil {
+	var s string
+	if s, err = getRequestResults(t, httpClient, metricsURL, basicCredentials); err != nil {
 		t.Fatalf("Failed: Basic Auth Metrics URL: %v", err)
 	} else {
 		// makes sure we did get the metrics endpoint

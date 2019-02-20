@@ -73,8 +73,8 @@ func getPrometheusConfig() PrometheusConfig {
 		var config PrometheusPartialConfig
 		if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration") {
 			scrapeIntervalString := config.Global.Scrape_interval
-			scrapeInterval, err := time.ParseDuration(scrapeIntervalString)
-			if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
+			scrapeInterval, err2 := time.ParseDuration(scrapeIntervalString)
+			if checkErr(err2, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
 				promConfig.GlobalScrapeInterval = int64(scrapeInterval.Seconds())
 			}
 		}
@@ -83,8 +83,8 @@ func getPrometheusConfig() PrometheusConfig {
 	flags, err := client.GetFlags()
 	if checkErr(err, "Failed to fetch Prometheus flags") {
 		if retentionString, ok := flags["storage.tsdb.retention"]; ok {
-			retention, err := time.ParseDuration(retentionString)
-			if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
+			retention, err2 := time.ParseDuration(retentionString)
+			if checkErr(err2, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
 				promConfig.StorageTsdbRetention = int64(retention.Seconds())
 			}
 		}

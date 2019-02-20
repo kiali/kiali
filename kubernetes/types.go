@@ -73,7 +73,6 @@ const (
 	fluentds        = "fluentds"
 	fluentdType     = "fluentd"
 	fluentdTypeList = "fluentdList"
-	fluentdLabel    = "fluentd"
 
 	handlers        = "handlers"
 	handlerType     = "handler"
