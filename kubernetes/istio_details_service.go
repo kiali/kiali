@@ -58,8 +58,10 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	} else if api == NetworkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-	} else {
+	} else if api == AuthenticationGroupVersion.Group {
 		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+	} else {
+		result, err = in.istioRbacApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	}
 
 	if err != nil {
@@ -81,10 +83,37 @@ func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name stri
 		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	} else if api == NetworkingGroupVersion.Group {
 		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else {
+	} else if api == AuthenticationGroupVersion.Group {
 		_, err = in.istioAuthenticationApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	} else {
+		_, err = in.istioRbacApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	}
 	return err
+}
+
+// UpdateIstioObject updates an Istio object from either config api or networking api
+func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
+	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
+	var result runtime.Object
+	var err error
+	bytePatch := []byte(jsonPatch)
+	if api == ConfigGroupVersion.Group {
+		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else if api == NetworkingGroupVersion.Group {
+		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else if api == AuthenticationGroupVersion.Group {
+		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else {
+		result, err = in.istioRbacApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	}
+	if err != nil {
+		return nil, err
+	}
+	istioObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
+	}
+	return istioObject, err
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
@@ -363,27 +392,103 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 	return mp.DeepCopyIstioObject(), nil
 }
 
-// UpdateIstioObject updates an Istio object from either config api or networking api
-func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error) {
-	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
-	var result runtime.Object
-	var err error
-	bytePatch := []byte(jsonPatch)
-	if api == ConfigGroupVersion.Group {
-		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	} else if api == NetworkingGroupVersion.Group {
-		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	} else {
-		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-	}
+func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).Do().Get()
 	if err != nil {
 		return nil, err
 	}
-	istioObject, ok := result.(*GenericIstioObject)
+
+	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
 	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
+		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
 	}
-	return istioObject, err
+
+	clusterRbacConfigs := make([]IstioObject, 0)
+	for _, crc := range clusterRbacConfigList.GetItems() {
+		clusterRbacConfigs = append(clusterRbacConfigs, crc.DeepCopyIstioObject())
+	}
+
+	return clusterRbacConfigs, nil
+}
+
+func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	clusterRbacConfig, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", namespace)
+	}
+
+	return clusterRbacConfig.DeepCopyIstioObject(), nil
+}
+
+func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(serviceroles).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceRoleList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceRoleList list", namespace)
+	}
+
+	serviceRoles := make([]IstioObject, 0)
+	for _, sr := range serviceRoleList.GetItems() {
+		serviceRoles = append(serviceRoles, sr.DeepCopyIstioObject())
+	}
+
+	return serviceRoles, nil
+}
+
+func (in *IstioClient) GetServiceRole(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(serviceroles).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceRole, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceRole object", namespace)
+	}
+
+	return serviceRole.DeepCopyIstioObject(), nil
+}
+
+func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(servicerolebindings).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceRoleBindingList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceRoleBindingList list", namespace)
+	}
+
+	serviceRoleBindings := make([]IstioObject, 0)
+	for _, sr := range serviceRoleBindingList.GetItems() {
+		serviceRoleBindings = append(serviceRoleBindings, sr.DeepCopyIstioObject())
+	}
+
+	return serviceRoleBindings, nil
+}
+
+func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(servicerolebindings).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceRoleBinding, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceRoleBinding object", namespace)
+	}
+
+	return serviceRoleBinding.DeepCopyIstioObject(), nil
 }
 
 func FilterByHost(host, serviceName, namespace string) bool {

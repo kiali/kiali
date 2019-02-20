@@ -2778,6 +2778,40 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ClusterRbacConfig": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "exclusion": {
+              "type": "object",
+              "x-go-name": "Exclusion"
+            },
+            "inclusion": {
+              "type": "object",
+              "x-go-name": "Inclusion"
+            },
+            "mode": {
+              "type": "object",
+              "x-go-name": "Mode"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ClusterRbacConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ClusterRbacConfig"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Config": {
       "type": "object",
       "properties": {
@@ -3059,6 +3093,9 @@
         "adapter": {
           "$ref": "#/definitions/istioAdapter"
         },
+        "clusterRbacConfig": {
+          "$ref": "#/definitions/ClusterRbacConfig"
+        },
         "destinationRule": {
           "$ref": "#/definitions/destinationRule"
         },
@@ -3093,6 +3130,12 @@
         "serviceEntry": {
           "$ref": "#/definitions/ServiceEntry"
         },
+        "serviceRole": {
+          "$ref": "#/definitions/ServiceRole"
+        },
+        "serviceRoleBinding": {
+          "$ref": "#/definitions/ServiceRoleBinding"
+        },
         "template": {
           "$ref": "#/definitions/istioTemplate"
         },
@@ -3116,6 +3159,9 @@
         "adapters": {
           "$ref": "#/definitions/istioAdapters"
         },
+        "clusterRbacConfigs": {
+          "$ref": "#/definitions/ClusterRbacConfigs"
+        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -3123,7 +3169,7 @@
           "$ref": "#/definitions/Gateways"
         },
         "meshPolicies": {
-          "$ref": "#/definitions/Policies"
+          "$ref": "#/definitions/MeshPolicies"
         },
         "namespace": {
           "$ref": "#/definitions/namespace"
@@ -3142,6 +3188,12 @@
         },
         "serviceEntries": {
           "$ref": "#/definitions/ServiceEntries"
+        },
+        "serviceRoleBindings": {
+          "$ref": "#/definitions/ServiceRoleBindings"
+        },
+        "serviceRoles": {
+          "$ref": "#/definitions/ServiceRoles"
         },
         "templates": {
           "$ref": "#/definitions/istioTemplates"
@@ -3215,6 +3267,13 @@
         "$ref": "#/definitions/SampleStream"
       },
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/prometheus/common/model"
+    },
+    "MeshPolicies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MeshPolicy"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
     },
     "MeshPolicy": {
       "type": "object",
@@ -4062,6 +4121,62 @@
           "x-go-name": "Name",
           "example": "reviews-v1"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceRole": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "type": "object",
+              "x-go-name": "Rules"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceRoleBinding": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "roleRef": {
+              "type": "object",
+              "x-go-name": "RoleRef"
+            },
+            "subjects": {
+              "type": "object",
+              "x-go-name": "Subjects"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceRoleBindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceRoleBinding"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceRoles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceRole"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },

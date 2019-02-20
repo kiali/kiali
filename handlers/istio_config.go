@@ -102,6 +102,9 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeQuotaSpecBindings = defaultInclude
 	criteria.IncludePolicies = defaultInclude
 	criteria.IncludeMeshPolicies = defaultInclude
+	criteria.IncludeClusterRbacConfigs = defaultInclude
+	criteria.IncludeServiceRoles = defaultInclude
+	criteria.IncludeServiceRoleBindings = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -140,6 +143,15 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, business.MeshPolicies) {
 		criteria.IncludeMeshPolicies = true
+	}
+	if checkType(types, business.ClusterRbacConfigs) {
+		criteria.IncludeClusterRbacConfigs = true
+	}
+	if checkType(types, business.ServiceRoles) {
+		criteria.IncludeServiceRoles = true
+	}
+	if checkType(types, business.ServiceRoleBindings) {
+		criteria.IncludeServiceRoleBindings = true
 	}
 	return criteria
 }
