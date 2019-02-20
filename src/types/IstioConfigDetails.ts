@@ -14,7 +14,10 @@ import {
   RouteRule,
   ServiceEntry,
   VirtualService,
-  ObjectValidation
+  ObjectValidation,
+  ClusterRbacConfig,
+  ServiceRole,
+  ServiceRoleBinding
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -39,6 +42,9 @@ export interface IstioConfigDetails {
   quotaSpecBinding: QuotaSpecBinding;
   policy: Policy;
   meshPolicy: Policy;
+  clusterRbacConfig: ClusterRbacConfig;
+  serviceRole: ServiceRole;
+  serviceRoleBinding: ServiceRoleBinding;
   permissions: ResourcePermissions;
   validation: ObjectValidation;
 }

@@ -224,6 +224,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.policy;
       } else if (this.state.istioObjectDetails.meshPolicy) {
         istioObject = this.state.istioObjectDetails.meshPolicy;
+      } else if (this.state.istioObjectDetails.clusterRbacConfig) {
+        istioObject = this.state.istioObjectDetails.clusterRbacConfig;
+      } else if (this.state.istioObjectDetails.serviceRole) {
+        istioObject = this.state.istioObjectDetails.serviceRole;
+      } else if (this.state.istioObjectDetails.serviceRoleBinding) {
+        istioObject = this.state.istioObjectDetails.serviceRoleBinding;
       }
     }
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';

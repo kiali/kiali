@@ -595,3 +595,55 @@ export interface Policy {
   metadata: K8sMetadata;
   spec: PolicySpec;
 }
+
+export interface ClusterRbacConfig {
+  metadata: K8sMetadata;
+  spec: ClusterRbacConfigSpec;
+}
+
+export interface ClusterRbacConfigSpec {
+  mode?: string;
+  inclusion?: RbacConfigTarget;
+  exclusion?: RbacConfigTarget;
+}
+
+export interface RbacConfigTarget {
+  services: string[];
+  namespaces: string[];
+}
+
+export interface ServiceRole {
+  metadata: K8sMetadata;
+  spec: ServiceRoleSpec;
+}
+
+export interface ServiceRoleSpec {
+  rules?: AccessRules[];
+}
+
+export interface AccessRules {
+  service: string[];
+  path: string[];
+  methods: string[];
+  constraints: AccessRuleConstraint;
+}
+
+export interface AccessRuleConstraint {
+  key: string;
+  values: string[];
+}
+
+export interface ServiceRoleBinding {
+  metadata: K8sMetadata;
+  spec: ServiceRoleBindingSpec;
+}
+
+export interface ServiceRoleBindingSpec {
+  subjects?: ServiceRoleBindingSubject[];
+  roleRef?: Reference;
+}
+
+export interface ServiceRoleBindingSubject {
+  user: string;
+  properties: Map<string, string>;
+}
