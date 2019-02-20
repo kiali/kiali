@@ -90,10 +90,12 @@ func CreateExternalServiceEntry() kubernetes.IstioObject {
 				"wikipedia.org",
 			},
 			"location": "MESH_EXTERNAL",
-			"ports": map[string]interface{}{
-				"number":   uint64(80),
-				"name":     "example-http",
-				"protocol": "HTTP",
+			"ports": []interface{}{
+				map[string]interface{}{
+					"number":   uint64(80),
+					"name":     "example-http",
+					"protocol": "HTTP",
+				},
 			},
 			"resolution": "DNS",
 		},

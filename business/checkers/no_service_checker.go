@@ -4,6 +4,7 @@ import (
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	v1 "k8s.io/api/core/v1"
 )
@@ -23,6 +24,8 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 		return validations
 	}
 
+	log.Infof("ServiceEntries: %v\n", in.IstioDetails.ServiceEntries)
+
 	serviceNames := getServiceNames(in.Services)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
 	gatewayNames := kubernetes.GatewayNames(in.GatewaysPerNamespace)
@@ -38,7 +41,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string]struct{}) models.IstioValidations {
+func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string) models.IstioValidations {
 	result, valid := virtual_services.NoHostChecker{
 		Namespace:         namespace,
 		ServiceNames:      serviceNames,
@@ -76,7 +79,7 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 	return vsvalidations
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, serviceNames []string, serviceHosts map[string]struct{}) models.IstioValidations {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, serviceNames []string, serviceHosts map[string][]string) models.IstioValidations {
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
 		WorkloadList:    workloads,

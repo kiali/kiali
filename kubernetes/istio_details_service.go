@@ -455,23 +455,30 @@ func FilterByRoute(spec map[string]interface{}, protocols []string, service stri
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
 // exported for test
-func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {
-	var empty struct{}
-	hostnames := make(map[string]struct{})
+func ServiceEntryHostnames(serviceEntries []IstioObject) map[string][]string {
+	hostnames := make(map[string][]string)
 
 	for _, v := range serviceEntries {
 		if hostsSpec, found := v.GetSpec()["hosts"]; found {
 			if hosts, ok := hostsSpec.([]interface{}); ok {
 				// Seek the protocol
-				if portsSpec, found := v.GetSpec()["ports"]; found {
-					if ports, ok := portsSpec.(map[string]interface{}); ok {
+				for _, h := range hosts {
+					if hostname, ok := h.(string); ok {
+						hostnames[hostname] = make([]string, 0, 1)
+					}
+				}
+			}
+		}
+		if portsSpec, found := v.GetSpec()["ports"]; found {
+			if portsArray, ok := portsSpec.([]interface{}); ok {
+				for _, portDef := range portsArray {
+					if ports, ok := portDef.(map[string]interface{}); ok {
 						if proto, found := ports["protocol"]; found {
 							if protocol, ok := proto.(string); ok {
 								protocol = mapPortToVirtualServiceProtocol(protocol)
-								for _, v := range hosts {
-									hostnames[fmt.Sprintf("%v%v", protocol, v)] = empty
+								for host := range hostnames {
+									hostnames[host] = append(hostnames[host], protocol)
 								}
-
 							}
 						}
 					}
@@ -479,6 +486,7 @@ func ServiceEntryHostnames(serviceEntries []IstioObject) map[string]struct{} {
 			}
 		}
 	}
+
 	return hostnames
 }
 

@@ -12,7 +12,7 @@ type NoDestinationChecker struct {
 	Namespace       string
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
-	ServiceEntries  map[string]struct{}
+	ServiceEntries  map[string][]string
 	ServiceNames    []string
 }
 
@@ -24,7 +24,7 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := kubernetes.ParseHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
-			if !n.hasMatchingService(fqdn.Service) {
+			if !n.hasMatchingService(fqdn.Service, dHost) {
 				validation := models.Build("destinationrules.nodest.matchingworkload", "spec/host")
 				validations = append(validations, &validation)
 				valid = false
@@ -88,7 +88,7 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[str
 	return false
 }
 
-func (n NoDestinationChecker) hasMatchingService(service string) bool {
+func (n NoDestinationChecker) hasMatchingService(service, origHost string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
 
 	// Check wildcard hosts
@@ -109,7 +109,7 @@ func (n NoDestinationChecker) hasMatchingService(service string) bool {
 		}
 	}
 	// Check ServiceEntries
-	if _, found := n.ServiceEntries[service]; found {
+	if _, found := n.ServiceEntries[origHost]; found {
 		return true
 	}
 	return false
