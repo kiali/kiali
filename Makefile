@@ -316,11 +316,12 @@ gometalinter-install:
 
 ## lint. Runs gometalinter
 lint:
-	gometalinter --disable-all  --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
-	--enable=ineffassign --enable=unconvert --enable=goimports --enable=gosimple --enable=staticcheck --tests  --vendor ./...
+	gometalinter --disable-all  --enable=vet --enable=varcheck --enable=structcheck \
+	--enable=ineffassign --enable=unconvert --enable=goimports \
+	--tests  --vendor --deadline=60s ./...
 
 ## lint-all. Runs gometalinter with items from good to have list but does not run during travis
 lint-all:
 	gometalinter --disable-all --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
-	--enable=ineffassign --enable=unconvert --enable=goimports --enable=gosimple --enable=staticcheck \
-	--enable=nakedret --tests  --vendor ./...
+	--enable=ineffassign --enable=unconvert --enable=goimports --enable=staticcheck \
+	--tests  --vendor --deadline=60s ./...

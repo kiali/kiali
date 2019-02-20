@@ -3,18 +3,14 @@ package intutil
 import "errors"
 
 func Convert(subject interface{}) (int, error) {
-	var result int
-
-	switch subject.(type) {
+	switch s := subject.(type) {
 	case uint64:
-		result = int(subject.(uint64))
+		return int(s), nil
 	case int64:
-		result = int(subject.(int64))
+		return int(s), nil
 	case int:
-		result = subject.(int)
+		return s, nil
 	default:
 		return 0, errors.New("It is not a numeric input")
 	}
-
-	return result, nil
 }

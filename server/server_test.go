@@ -199,7 +199,7 @@ func generateStaticFile(t *testing.T, filename string, content string) {
 		t.Fatalf("Cannot create file [%v]: %v", filename, err)
 	}
 	defer file.Close()
-	fmt.Fprintf(file, content)
+	fmt.Fprint(file, content)
 }
 
 func generateCertificate(t *testing.T, certPath string, keyPath string, host string) error {

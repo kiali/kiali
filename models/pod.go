@@ -51,10 +51,8 @@ func (pods *Pods) Parse(list []v1.Pod) {
 	}
 }
 
-// Below types are used for unmarshalling json
-type createdBy struct {
-	Reference Reference `json:"reference"`
-}
+// Below type is used for unmarshalling json
+
 type sideCarStatus struct {
 	Containers     []string `json:"containers"`
 	InitContainers []string `json:"initContainers"`

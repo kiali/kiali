@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 type Trace struct {
@@ -49,7 +49,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 			q.Set("end", fmt.Sprintf("%d", t))
 			q.Set("tags", "{\"error\":\"true\"}")
 			u.RawQuery = q.Encode()
-			timeout := time.Duration(1000 * time.Millisecond)
+			timeout := 1000 * time.Millisecond
 			client := http.Client{
 				Timeout: timeout,
 			}
@@ -65,7 +65,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 					return -1, err
 				}
 				var traces RequestTrace
-				if errMarshal := json.Unmarshal([]byte(body), &traces); errMarshal != nil {
+				if errMarshal := json.Unmarshal(body, &traces); errMarshal != nil {
 					log.Errorf("Error Unmarshal Jaeger Response fetching Error Traces: %s", errRead)
 					err = errMarshal
 					return -1, err
@@ -85,7 +85,7 @@ func GetServices() (services JaegerServices, err error) {
 		log.Errorf("Error parse Jaeger URL fetching Services: %s", err)
 		return services, err
 	}
-	timeout := time.Duration(1000 * time.Millisecond)
+	timeout := 1000 * time.Millisecond
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -100,20 +100,11 @@ func GetServices() (services JaegerServices, err error) {
 			err = errRead
 			return services, err
 		}
-		if errMarshal := json.Unmarshal([]byte(body), &services); errMarshal != nil {
+		if errMarshal := json.Unmarshal(body, &services); errMarshal != nil {
 			log.Errorf("Error Unmarshal Jaeger Response fetching Services: %s", errRead)
 			err = errMarshal
 			return services, err
 		}
 	}
 	return services, err
-}
-
-func contains(a []string, x string) bool {
-	for _, n := range a {
-		if x == n {
-			return true
-		}
-	}
-	return false
 }

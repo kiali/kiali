@@ -185,19 +185,3 @@ func addToMetadataValue(md map[string]interface{}, k string, v float64) {
 		md[k] = v
 	}
 }
-
-func averageMetadataValue(md map[string]interface{}, k string, v float64) {
-	total := v
-	count := 1.0
-	kTotal := k + "_total"
-	kCount := k + "_count"
-	if prevTotal, ok := md[kTotal]; ok {
-		total += prevTotal.(float64)
-	}
-	if prevCount, ok := md[kCount]; ok {
-		count += prevCount.(float64)
-	}
-	md[kTotal] = total
-	md[kCount] = count
-	md[k] = total / count
-}

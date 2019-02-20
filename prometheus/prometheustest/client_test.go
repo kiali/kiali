@@ -9,11 +9,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
@@ -553,18 +550,6 @@ func mockQueryWithTime(api *PromAPIMock, query string, queryTime time.Time, ret 
 		Return(*ret, nil)
 }
 
-func mockSingle(api *PromAPIMock, query string, ret model.SampleValue) {
-	metric := model.Metric{
-		"__name__": "whatever",
-		"instance": "whatever",
-		"job":      "whatever"}
-	vector := model.Vector{
-		&model.Sample{
-			Metric: metric,
-			Value:  ret}}
-	mockQuery(api, query, &vector)
-}
-
 func mockQueryRange(api *PromAPIMock, query string, ret *model.Matrix) {
 	api.On(
 		"QueryRange",
@@ -636,27 +621,10 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 	mockEmptyRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"))
 }
 
-func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
-	namespace := corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			CreationTimestamp: metav1.Time{Time: creationTime},
-		},
-	}
-	k8s.On("GetNamespace", name).Return(&namespace, nil)
-}
-
 func mockConfig(api *PromAPIMock, ret pv1.ConfigResult) {
 	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
 }
 
 func mockFlags(api *PromAPIMock, ret pv1.FlagsResult) {
 	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
-}
-
-func setupExternal() (*prometheus.Client, error) {
-	conf := config.NewConfig()
-	conf.ExternalServices.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
-	config.Set(conf)
-	return prometheus.NewClient()
 }

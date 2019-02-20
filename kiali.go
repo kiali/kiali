@@ -18,7 +18,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kiali/kiali/business"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -27,6 +26,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
