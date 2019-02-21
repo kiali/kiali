@@ -6,6 +6,7 @@ import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
+import { serverConfig } from '../../config/serverConfig';
 
 type Props = {
   namespace: string;
@@ -116,7 +117,11 @@ class IstioWizardDropdown extends React.Component<Props, State> {
           show={this.state.showWizard}
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
-          workloads={this.props.workloads}
+          workloads={this.props.workloads.filter(workload => {
+            const appLabelName = serverConfig().istioLabels.versionLabelName;
+            const versionLabelName = serverConfig().istioLabels.versionLabelName;
+            return workload.labels && workload.labels[appLabelName] && workload.labels[versionLabelName];
+          })}
           onClose={this.onClose}
         />
         <MessageDialog
