@@ -1,14 +1,16 @@
 package business
 
 import (
+	"time"
+
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 // Consolidate fake/mock data used in tests per package
@@ -559,7 +561,8 @@ func FakePodsSyncedWithDeployments() []v1.Pod {
 					Kind:       "ReplicaSet",
 					Name:       "details-v1-3618568057",
 				}},
-				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					v1.Container{Name: "details", Image: "whatever"},
@@ -592,7 +595,8 @@ func FakePodsSyncedWithDuplicated() []v1.Pod {
 					Kind:       "StatefulSet",
 					Name:       "duplicated-v1",
 				}},
-				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					v1.Container{Name: "details", Image: "whatever"},
@@ -614,7 +618,8 @@ func FakePodsSyncedWithDuplicated() []v1.Pod {
 					Kind:       "StatefulSet",
 					Name:       "duplicated-v1",
 				}},
-				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					v1.Container{Name: "details", Image: "whatever"},
@@ -645,7 +650,8 @@ func FakePodsNoController() []v1.Pod {
 				Name:              "orphan-pod",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
-				Annotations:       map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+				Annotations:       kubetest.FakeIstioAnnotations(),
+			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					v1.Container{Name: "details", Image: "whatever"},
@@ -678,7 +684,8 @@ func FakePodsFromDaemonSet() []v1.Pod {
 					Kind:       "DaemonSet",
 					Name:       "daemon-controller",
 				}},
-				Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					v1.Container{Name: "details", Image: "whatever"},

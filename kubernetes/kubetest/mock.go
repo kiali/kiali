@@ -1,6 +1,10 @@
 package kubetest
 
 import (
+	"fmt"
+
+	osappsv1 "github.com/openshift/api/apps/v1"
+	osv1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
@@ -11,9 +15,6 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
-
-	osappsv1 "github.com/openshift/api/apps/v1"
-	osv1 "github.com/openshift/api/project/v1"
 )
 
 type K8SClientMock struct {
@@ -29,6 +30,29 @@ func NewK8SClientMock() *K8SClientMock {
 }
 
 // Business methods
+
+// MockEmptyWorkloads setup the current mock to return empty workloads for every type of workloads (deployment, dc, rs, jobs, etc.)
+func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
+	o.On("GetDeployments", namespace).Return([]v1beta1.Deployment{}, nil)
+	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
+	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
+	o.On("GetDeploymentConfigs", namespace).Return([]osappsv1.DeploymentConfig{}, nil)
+	o.On("GetStatefulSets", namespace).Return([]v1beta2.StatefulSet{}, nil)
+	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
+}
+
+// MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
+func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interface{}) {
+	notfound := fmt.Errorf("not found")
+	o.On("GetDeployment", namespace, workload).Return(&v1beta1.Deployment{}, notfound)
+	o.On("GetStatefulSet", namespace, workload).Return(&v1beta2.StatefulSet{}, notfound)
+	o.On("GetDeploymentConfig", namespace, workload).Return(&osappsv1.DeploymentConfig{}, notfound)
+	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
+	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
+	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
+}
 
 func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, json string) (kubernetes.IstioObject, error) {
 	args := o.Called(api, namespace, resourceType, json)
@@ -362,7 +386,7 @@ func FakeServiceList() []v1.Service {
 	}
 }
 
-func FakePodList() []v1.Pod {
+func FakePodListWithoutSidecar() []v1.Pod {
 	return []v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -377,6 +401,36 @@ func FakePodList() []v1.Pod {
 				Name:   "httpbin-v1",
 				Labels: map[string]string{"app": "httpbin", "version": "v1"}}},
 	}
+}
+
+func FakePodList() []v1.Pod {
+	return []v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "reviews-v1",
+				Labels:      map[string]string{"app": "reviews", "version": "v1"},
+				Annotations: FakeIstioAnnotations(),
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "reviews-v2",
+				Labels:      map[string]string{"app": "reviews", "version": "v2"},
+				Annotations: FakeIstioAnnotations(),
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "httpbin-v1",
+				Labels:      map[string]string{"app": "httpbin", "version": "v1"},
+				Annotations: FakeIstioAnnotations(),
+			},
+		},
+	}
+}
+
+func FakeIstioAnnotations() map[string]string {
+	return map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}
 }
 
 func FakeNamespace(name string) *v1.Namespace {

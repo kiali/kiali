@@ -1,25 +1,19 @@
 package business
 
 import (
-	"fmt"
-
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
-	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-
 	"testing"
 	"time"
+
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetServiceHealth(t *testing.T) {
@@ -55,15 +49,9 @@ func TestGetAppHealth(t *testing.T) {
 	hs := HealthService{k8s: k8s, prom: prom}
 
 	k8s.On("IsOpenShift").Return(true)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeServicesHealthReview(), nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePodsHealthReview(), nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeDeploymentsHealthReview(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
+	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
+	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReview(), nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
@@ -81,25 +69,15 @@ func TestGetWorkloadHealth(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	notfound := fmt.Errorf("not found")
 	k8s := new(kubetest.K8SClientMock)
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
 	hs := HealthService{k8s: k8s, prom: prom}
 	k8s.On("IsOpenShift").Return(true)
-	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Run(func(args mock.Arguments) {
-		assert.Equal("ns", args[0])
-		assert.Equal("reviews-v1", args[1])
-	}).Return(&fakeDeploymentsHealthReview()[0], nil)
-	k8s.On("GetDeploymentConfig", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&osappsv1.DeploymentConfig{}, notfound)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSet", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&v1beta2.StatefulSet{}, notfound)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodsFromDaemonSet(), nil)
-	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
-	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.Pod{}, nil)
+	k8s.MockEmptyWorkload("ns", "reviews-v1")
+	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
+	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReview(), nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
@@ -112,6 +90,73 @@ func TestGetWorkloadHealth(t *testing.T) {
 	assert.Equal(float64((1.6+3.5)/(1.6+5+3.5)), health.Requests.ErrorRatio)
 	assert.Equal(float64(1), health.Requests.InboundErrorRatio)
 	assert.Equal(float64(3.5/(5+3.5)), health.Requests.OutboundErrorRatio)
+}
+
+func TestGetAppHealthWithoutIstio(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+	hs := HealthService{k8s: k8s, prom: prom}
+
+	k8s.On("IsOpenShift").Return(true)
+	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
+	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReviewWithoutIstio(), nil)
+
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
+
+	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
+
+	prom.AssertNumberOfCalls(t, "GetAppRequestRates", 0)
+	assert.Equal(float64(-1), health.Requests.ErrorRatio)
+}
+
+func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+	hs := HealthService{k8s: k8s, prom: prom}
+	k8s.On("IsOpenShift").Return(true)
+	k8s.MockEmptyWorkload("ns", "reviews-v1")
+	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
+	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
+
+	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
+	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
+
+	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
+
+	prom.AssertNumberOfCalls(t, "GetWorkloadRequestRates", 0)
+	assert.Equal(float64(-1), health.Requests.ErrorRatio)
+}
+
+func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+	hs := HealthService{k8s: k8s, prom: prom}
+
+	k8s.On("IsOpenShift").Return(false)
+	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]v1.Service{}, nil)
+	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
+	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
+
+	hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+
+	// Make sure unnecessary call isn't performed
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
 }
 
 var (
@@ -201,12 +246,36 @@ func fakePodsHealthReview() []v1.Pod {
 	return []v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "reviews-v1",
+				Labels:      map[string]string{"app": "reviews", "version": "v1"},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:        "reviews-v2",
+				Labels:      map[string]string{"app": "reviews", "version": "v2"},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
+		},
+	}
+}
+
+func fakePodsHealthReviewWithoutIstio() []v1.Pod {
+	return []v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "reviews-v1",
-				Labels: map[string]string{"app": "reviews", "version": "v1"}}},
+				Labels: map[string]string{"app": "reviews", "version": "v1"},
+			},
+		},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "reviews-v2",
-				Labels: map[string]string{"app": "reviews", "version": "v2"}}}}
+				Labels: map[string]string{"app": "reviews", "version": "v2"},
+			},
+		},
+	}
 }
 
 func fakeDeploymentsHealthReview() []v1beta1.Deployment {
