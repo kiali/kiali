@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { NodeType, ProtocolTraffic } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
+import { REQUESTS_THRESHOLDS } from '../../types/Health';
 
 type DetailedTrafficProps = {
   direction: Direction;
@@ -51,21 +52,17 @@ export interface TrafficItem {
   traffic: ProtocolTraffic;
 }
 
-const minichartColumnSizes = {
-  md: 3,
-  sm: 3,
-  xs: 3
+const statusColumnSizes = {
+  md: 1,
+  sm: 1,
+  xs: 1
 };
 const workloadColumnSizes = {
   md: 3,
   sm: 3,
   xs: 3
 };
-const typeColumnSizes = {
-  md: 1,
-  sm: 1,
-  xs: 1
-};
+const typeColumnSizes = statusColumnSizes;
 const trafficColumnSizes = workloadColumnSizes;
 
 class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
@@ -75,6 +72,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     return (
       <TableGrid id="table-grid" bordered={true} selectType="none" style={{ clear: 'both' }}>
         <TableGrid.Head>
+          <TableGrid.ColumnHeader {...statusColumnSizes}>Status</TableGrid.ColumnHeader>
           <TableGrid.ColumnHeader {...workloadColumnSizes}>
             {this.props.direction === 'inbound' ? 'Source' : 'Destination'}
           </TableGrid.ColumnHeader>
@@ -92,10 +90,10 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
           {sortedTraffic.map(item => {
             return (
               <TableGrid.Row key={item.node.id}>
+                {this.renderStatusColumn(item.traffic)}
                 {this.renderWorkloadColumn(item.node)}
                 {this.renderTypeColumn(item.traffic)}
                 {this.renderTrafficColumn(item.traffic)}
-                {this.renderMinichartColumn(item.traffic)}
               </TableGrid.Row>
             );
           })}
@@ -104,26 +102,31 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     );
   }
 
-  private renderMinichartColumn = (traffic: ProtocolTraffic) => {
-    if (traffic.protocol !== 'http' && traffic.protocol !== 'grpc') {
-      return <TableGrid.Col {...minichartColumnSizes} />;
-    }
-
-    let percentError: number;
-    if (traffic.protocol === 'http') {
-      percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
+  private renderStatusColumn = (traffic: ProtocolTraffic) => {
+    if (traffic.protocol === 'tcp' || traffic.protocol === '') {
+      return (
+        <TableGrid.Col {...statusColumnSizes}>
+          <Icon type="pf" name="unknown" />
+        </TableGrid.Col>
+      );
     } else {
-      percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
-    }
+      let percentError: number;
+      if (traffic.protocol === 'http') {
+        percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
+      } else {
+        percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
+      }
 
-    return (
-      <TableGrid.Col {...minichartColumnSizes}>
-        <svg width="100%" height="1.5em">
-          <rect x="0" y="20%" width="100%" height="60%" fill="green" />
-          <rect x={`${100 - percentError}%`} y="20%" width={`${percentError}%`} height="60%" fill="red" />
-        </svg>
-      </TableGrid.Col>
-    );
+      let healthIcon = <Icon type="pf" name="ok" />;
+
+      if (percentError > REQUESTS_THRESHOLDS.failure) {
+        healthIcon = <Icon type="pf" name="error-circle-o" />;
+      } else if (percentError > REQUESTS_THRESHOLDS.degraded) {
+        healthIcon = <Icon type="pf" name="warning-triangle-o" />;
+      }
+
+      return <TableGrid.Col {...statusColumnSizes}>{healthIcon}</TableGrid.Col>;
+    }
   };
 
   private renderWorkloadColumn = (node: TrafficNode) => {
