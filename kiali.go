@@ -18,7 +18,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/kiali/kiali/business"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -27,6 +26,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -88,19 +88,23 @@ func main() {
 	status.Put(status.CoreVersion, version)
 	status.Put(status.CoreCommitHash, commitHash)
 
-	if webRoot := config.Get().Server.WebRoot; webRoot != "/" {
-		util.UpdateBaseURL(webRoot)
-		util.ConfigToJS()
-	}
-
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
+	publicConfig := business.GetPublicConfig()
+	if publicConfig.WebRoot != "" {
+		util.UpdateBaseURL(publicConfig.WebRoot)
+	}
+	err := publicConfig.ToEnvJS()
+	if err != nil {
+		log.Errorf("Could not generate env.js from public config: %s", err)
+	}
+
 	// check if Jaeger is available
-	_, err := business.GetServices()
+	_, err = business.GetServices()
 	if err != nil {
 		business.JaegerAvailable = false
-		log.Errorf("Jaeger is not available : %s", err)
+		log.Errorf("Jaeger is not available: %s", err)
 	}
 
 	// Start listening to requests
