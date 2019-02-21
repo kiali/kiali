@@ -94,6 +94,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
 	},
+	"port.name.mismatch": {
+		Message:  "Port name must follow <protocol>[-suffix] form",
+		Severity: ErrorSeverity,
+	},
 	"virtualservices.nogateway": {
 		Message:  "VirtualService is pointing to a non-existent gateway",
 		Severity: ErrorSeverity,

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
+
+var portNameMatcher = regexp.MustCompile("^[\\-].*")
 
 // GetIstioDetails returns Istio details for a given namespace,
 // on this version it collects the VirtualServices and DestinationRules defined for a namespace.
@@ -615,6 +618,53 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 	default:
 		return "tcp"
 	}
+}
+
+// ValidaPort parses the Istio Port definition and validates the naming scheme
+func ValidatePort(portDef interface{}) bool {
+	return matchPortNameRule(parsePort(portDef))
+}
+
+func parsePort(portDef interface{}) (string, string) {
+	var name, proto string
+	if port, ok := portDef.(map[string]interface{}); ok {
+		if portNameDef, found := port["name"]; found {
+			if portName, ok := portNameDef.(string); ok {
+				name = portName
+			}
+		}
+		if protocolDef, found := port["protocol"]; found {
+			if protocol, ok := protocolDef.(string); ok {
+				proto = protocol
+			}
+		}
+	}
+
+	return name, proto
+}
+
+func matchPortNameRule(portName, protocol string) bool {
+	protocol = strings.ToLower(protocol)
+	// Check that portName begins with the protocol
+
+	if protocol == "tcp" || protocol == "udp" {
+		// TCP and UDP protocols do not care about the name
+		return true
+	}
+
+	if !strings.HasPrefix(portName, protocol) {
+		return false
+	}
+
+	// If longer than protocol, then it must adhere to <protocol>[-suffix]
+	// and if there's -, then there must be a suffix ..
+	if len(portName) > len(protocol) {
+		restPortName := portName[len(protocol):]
+		return portNameMatcher.MatchString(restPortName)
+	}
+
+	// Case portName == protocolName
+	return true
 }
 
 // GatewayNames extracts the gateway names for easier matching
