@@ -23,10 +23,11 @@ import (
 	"os/signal"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 
-	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/jobs"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -91,21 +92,7 @@ func main() {
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
-	publicConfig := business.GetPublicConfig()
-	if publicConfig.WebRoot != "" {
-		util.UpdateBaseURL(publicConfig.WebRoot)
-	}
-	err := publicConfig.ToEnvJS()
-	if err != nil {
-		log.Errorf("Could not generate env.js from public config: %s", err)
-	}
-
-	// check if Jaeger is available
-	_, err = business.GetServices()
-	if err != nil {
-		business.JaegerAvailable = false
-		log.Errorf("Jaeger is not available: %s", err)
-	}
+	stopChecker := jobs.StartPeriodicJob(time.Minute, jobs.CheckPublicConfig, jobs.CheckJaeger)
 
 	// Start listening to requests
 	server := server.NewServer()
@@ -116,6 +103,7 @@ func main() {
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
+	stopChecker <- true
 	server.Stop()
 }
 

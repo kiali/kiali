@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/kiali/kiali/log"
 
 	"github.com/kiali/kiali/config"
 )
@@ -77,7 +78,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 	return errorTraces, err
 }
 
-func GetServices() (services JaegerServices, err error) {
+func GetJaegerServices() (services JaegerServices, err error) {
 	services = JaegerServices{Services: []string{}}
 	err = nil
 	u, err := url.Parse(fmt.Sprintf("http://%s/api/services", config.Get().ExternalServices.Jaeger.Service))
