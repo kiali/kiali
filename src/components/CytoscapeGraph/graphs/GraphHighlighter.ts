@@ -28,12 +28,19 @@ export class GraphHighlighter {
     }
 
     this.selected = event;
-    this.hovered = undefined;
+    this.clearHover();
     this.unhighlight();
 
     // only highlight when selecting something other than the graph background
     if (this.selected.summaryType !== 'graph') {
       this.refresh();
+    }
+  };
+
+  clearHover = () => {
+    if (this.hovered) {
+      this.hovered.summaryTarget.removeClass(HOVERED_CLASS);
+      this.hovered = undefined;
     }
   };
 
@@ -49,8 +56,7 @@ export class GraphHighlighter {
 
   onMouseOut = (event: CytoscapeMouseOutEvent) => {
     if (this.hovered && this.hovered.summaryTarget === event.summaryTarget) {
-      this.hovered.summaryTarget.removeClass(HOVERED_CLASS);
-      this.hovered = undefined;
+      this.clearHover();
       this.unhighlight();
     }
   };
