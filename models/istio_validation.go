@@ -83,7 +83,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.nodest.subsetlabels": {
-		Message:  "This subset's labels are not found from any matching host",
+		Message:  "This subset's labels are not found in any matching host",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.trafficpolicy.notlssettings": {
