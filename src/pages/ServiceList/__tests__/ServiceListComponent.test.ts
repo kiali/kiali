@@ -4,7 +4,10 @@ import { ServiceListFilters } from '../FiltersAndSorts';
 
 const makeService = (name: string, errRatio: number): ServiceListItem & { health: ServiceHealth } => {
   const reqErrs: RequestHealth = { errorRatio: errRatio, inboundErrorRatio: errRatio, outboundErrorRatio: -1 };
-  return { name: name, health: new ServiceHealth(reqErrs, 60) } as ServiceListItem & {
+  return {
+    name: name,
+    health: new ServiceHealth(reqErrs, { rateInterval: 60, hasSidecar: true })
+  } as ServiceListItem & {
     health: ServiceHealth;
   };
 };

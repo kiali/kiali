@@ -129,28 +129,22 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   };
 
   fetchWorkload = () => {
-    const promiseDetails = API.getWorkload(
-      authentication(),
-      this.props.match.params.namespace,
-      this.props.match.params.workload
-    );
-
-    const promiseHealth = API.getWorkloadHealth(
-      authentication(),
-      this.props.match.params.namespace,
-      this.props.match.params.workload,
-      600
-    );
-
-    Promise.all([promiseDetails, promiseHealth])
-      .then(([resultDetails, resultHealth]) => {
+    API.getWorkload(authentication(), this.props.match.params.namespace, this.props.match.params.workload)
+      .then(details => {
         this.setState({
-          workload: resultDetails.data,
-          validations: this.workloadValidations(resultDetails.data),
-          istioEnabled: resultDetails.data.istioSidecar,
-          health: resultHealth
+          workload: details.data,
+          validations: this.workloadValidations(details.data),
+          istioEnabled: details.data.istioSidecar
         });
+        return API.getWorkloadHealth(
+          authentication(),
+          this.props.match.params.namespace,
+          this.props.match.params.workload,
+          600,
+          details.data.istioSidecar
+        );
       })
+      .then(health => this.setState({ health: health }))
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Workload', error));
       });

@@ -134,7 +134,13 @@ class ServiceListComponent extends ListComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
-        healthPromise: API.getServiceHealth(authentication(), data.namespace.name, service.name, rateInterval)
+        healthPromise: API.getServiceHealth(
+          authentication(),
+          data.namespace.name,
+          service.name,
+          rateInterval,
+          service.istioSidecar
+        )
       }));
     }
     return [];

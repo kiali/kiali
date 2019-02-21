@@ -6,6 +6,10 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthDetails
     health={
       ServiceHealth {
+        "ctx": Object {
+          "hasSidecar": true,
+          "rateInterval": 60,
+        },
         "items": Array [
           Object {
             "status": Object {
@@ -18,7 +22,6 @@ ShallowWrapper {
             "title": "Error Rate",
           },
         ],
-        "rateInterval": 60,
         "requests": Object {
           "errorRatio": -1,
           "inboundErrorRatio": -1,
@@ -197,6 +200,10 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthDetails
     health={
       ServiceHealth {
+        "ctx": Object {
+          "hasSidecar": true,
+          "rateInterval": 60,
+        },
         "items": Array [
           Object {
             "status": Object {
@@ -209,7 +216,6 @@ ShallowWrapper {
             "title": "Error Rate",
           },
         ],
-        "rateInterval": 60,
         "requests": Object {
           "errorRatio": -1,
           "inboundErrorRatio": -1,

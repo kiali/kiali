@@ -118,7 +118,8 @@ class WorkloadListComponent extends ListComponent.Component<
           authentication(),
           data.namespace.name,
           deployment.name,
-          this.state.rateInterval
+          this.state.rateInterval,
+          deployment.istioSidecar
         )
       }));
     }

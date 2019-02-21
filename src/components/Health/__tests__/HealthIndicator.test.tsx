@@ -19,7 +19,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
-      600
+      { rateInterval: 600, hasSidecar: true }
     );
 
     // SMALL
@@ -38,7 +38,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
-      600
+      { rateInterval: 600, hasSidecar: true }
     );
 
     // SMALL
@@ -57,7 +57,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 2, replicas: 2 }],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
-      600
+      { rateInterval: 600, hasSidecar: true }
     );
 
     // SMALL
@@ -76,7 +76,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
-      600
+      { rateInterval: 600, hasSidecar: true }
     );
 
     // SMALL
@@ -94,7 +94,7 @@ describe('HealthIndicator', () => {
     const health = new AppHealth(
       [{ name: 'A', available: 1, replicas: 1 }],
       { errorRatio: 0.3, inboundErrorRatio: 0.1, outboundErrorRatio: 0.2 },
-      600
+      { rateInterval: 600, hasSidecar: true }
     );
 
     // SMALL

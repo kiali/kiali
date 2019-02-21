@@ -14,7 +14,7 @@ export namespace AppListClass {
         namespace: data.namespace.name,
         name: app.name,
         istioSidecar: app.istioSidecar,
-        healthPromise: API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval)
+        healthPromise: API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval, app.istioSidecar)
       }));
     }
     return [];
