@@ -172,7 +172,7 @@ func NewClient() (*IstioClient, error) {
 // It returns an error on any problem.
 func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 	client := IstioClient{}
-	log.Infof("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
+	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
 
 	k8s, err := kube.NewForConfig(config)
 	if err != nil {
