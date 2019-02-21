@@ -138,7 +138,8 @@ export class GraphStyles {
       }
 
       if (includeProtocol) {
-        content = ele.data(CyEdge.protocol) + ' ' + content;
+        const protocol = ele.data(CyEdge.protocol);
+        content = protocol ? `${protocol} ${content}` : content;
       }
 
       if (cyGlobal.showSecurity && ele.data(CyEdge.isMTLS)) {
