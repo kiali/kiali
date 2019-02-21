@@ -78,7 +78,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
-		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace},
+		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 	}
 }
 
@@ -110,7 +110,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	switch objectType {
 	case Gateways:
 		objectCheckers = []ObjectChecker{
-			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace},
+			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		}
 	case VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
