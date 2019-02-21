@@ -12,7 +12,7 @@ type NoHostChecker struct {
 	Namespace         string
 	ServiceNames      []string
 	VirtualService    kubernetes.IstioObject
-	ServiceEntryHosts map[string]struct{}
+	ServiceEntryHosts map[string][]string
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -62,10 +62,12 @@ func (n NoHostChecker) checkDestination(destination interface{}, protocol string
 								return true
 							}
 						}
-						if n.ServiceEntryHosts != nil {
+						if protocols, found := n.ServiceEntryHosts[sHost]; found {
 							// We have ServiceEntry to check
-							if _, found := n.ServiceEntryHosts[strings.ToLower(protocol)+sHost]; found {
-								return true
+							for _, prot := range protocols {
+								if prot == strings.ToLower(protocol) {
+									return true
+								}
 							}
 						}
 					}
