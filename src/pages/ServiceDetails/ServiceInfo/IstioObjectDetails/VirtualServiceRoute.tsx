@@ -220,11 +220,15 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
   destinationFrom(destinationWeight: DestinationWeight, i: number, isValid: boolean) {
     const destination = destinationWeight.destination;
-    return {
-      host: this.serviceLink(this.props.namespace, destination.host, isValid),
-      subset: destination.subset || '-',
-      port: destination.port ? destination.port.number || '-' : '-'
-    };
+    if (destination) {
+      return {
+        host: this.serviceLink(this.props.namespace, destination.host, isValid),
+        subset: destination.subset || '-',
+        port: destination.port ? destination.port.number || '-' : '-'
+      };
+    } else {
+      return { host: '-', subset: '-', port: '-' };
+    }
   }
 
   infotipContent(checks: ObjectCheck[]) {
@@ -267,13 +271,17 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   renderDestination(destination: Destination) {
-    return (
-      <ul style={{ listStyleType: 'none', paddingLeft: '15px' }}>
-        <li>Host: {destination.host || '-'} </li>
-        <li>Subset: {destination.subset || '-'} </li>
-        <li>Port: {destination.port ? destination.port.number : '-'} </li>
-      </ul>
-    );
+    if (destination) {
+      return (
+        <ul style={{ listStyleType: 'none', paddingLeft: '15px' }}>
+          <li>Host: {destination.host || '-'} </li>
+          <li>Subset: {destination.subset || '-'} </li>
+          <li>Port: {destination.port ? destination.port.number : '-'} </li>
+        </ul>
+      );
+    } else {
+      return undefined;
+    }
   }
 
   renderTable(route: any, i: number) {
