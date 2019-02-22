@@ -13,10 +13,10 @@ import (
 func TestSecurityPolicy(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace=\"bookinfo\",destination_service_namespace!=\"istio-system\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
@@ -28,9 +28,23 @@ func TestSecurityPolicy(t *testing.T) {
 		"destination_app":               "productpage",
 		"destination_version":           "v1",
 		"connection_security_policy":    "mutual_tls"}
+	q1m1 := model.Metric{
+		"source_workload_namespace":     "istio-system",
+		"source_workload":               "ingressgateway-unknown",
+		"source_app":                    "ingressgateway",
+		"source_version":                model.LabelValue(graph.Unknown),
+		"destination_service_namespace": "bookinfo",
+		"destination_service_name":      "productpage",
+		"destination_workload":          "productpage-v1",
+		"destination_app":               "productpage",
+		"destination_version":           "v1",
+		"connection_security_policy":    "none"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
+			Value:  10.0},
+		&model.Sample{
+			Metric: q1m1,
 			Value:  10.0}}
 
 	client, api, err := setupMocked()
@@ -69,7 +83,7 @@ func TestSecurityPolicy(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(true, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(50.0, ingress.Edges[0].Metadata["isMTLS"])
 
 	productpage := ingress.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)
@@ -79,10 +93,10 @@ func TestSecurityPolicy(t *testing.T) {
 func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace!=\"bookinfo\",destination_service_namespace=\"bookinfo\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := "round(sum(rate(istio_requests_total{reporter=\"destination\",source_workload_namespace=\"bookinfo\",destination_service_namespace!=\"istio-system\",connection_security_policy!=\"none\",response_code=~\"[2345][0-9][0-9]\"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)"
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":     "istio-system",
 		"source_workload":               "ingressgateway-unknown",
@@ -135,12 +149,12 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(true, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(100.0, ingress.Edges[0].Metadata["isMTLS"])
 
 	productpagesvc := ingress.Edges[0].Dest
 	assert.Equal("productpage", productpagesvc.Service)
 	assert.Equal(1, len(productpagesvc.Edges))
-	assert.Equal(true, productpagesvc.Edges[0].Metadata["isMTLS"])
+	assert.Equal(100.0, productpagesvc.Edges[0].Metadata["isMTLS"])
 
 	productpage := productpagesvc.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)

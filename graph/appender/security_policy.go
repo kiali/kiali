@@ -12,7 +12,10 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-const SecurityPolicyAppenderName = "securityPolicy"
+const (
+	SecurityPolicyAppenderName = "securityPolicy"
+	policyMTLS                 = "mutual_tls"
+)
 
 // SecurityPolicyAppender is responsible for adding securityPolicy information to the graph.
 // The appender currently reports only mutual_tls security although is written in a generic way.
@@ -24,6 +27,8 @@ type SecurityPolicyAppender struct {
 	Namespaces         map[string]graph.NamespaceInfo
 	QueryTime          int64 // unix time in seconds
 }
+
+type PolicyRates map[string]float64
 
 // Name implements Appender
 func (a SecurityPolicyAppender) Name() string {
@@ -49,57 +54,39 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	log.Debugf("Resolving security policy for namespace = %v", namespace)
 	duration := a.Namespaces[namespace].Duration
 
-	// query prometheus for mutual_tls info in two queries:
-	// 1) query for active security originating from a workload outside the namespace
+	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
+	// 1) query for requests originating from a workload outside the namespace
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy"
-	query := fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace!=\"%v\",destination_service_namespace=\"%v\",connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs]) > 0) by (%s)",
+	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",
 		namespace,
 		namespace,
-		"[2345][0-9][0-9]",      // regex for valid response_codes
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
-	// 2) query for active_security originating from a workload inside of the namespace
+	// 2) query for requests originating from a workload inside of the namespace
 	istioCondition := ""
 	if !a.IncludeIstio {
-		istioCondition = fmt.Sprintf(",destination_service_namespace!=\"%s\"", config.Get().IstioNamespace)
+		istioCondition = fmt.Sprintf(`,destination_service_namespace!="%s"`, config.Get().IstioNamespace)
 	}
-	query = fmt.Sprintf("sum(rate(%s{reporter=\"destination\",source_workload_namespace=\"%v\"%s,connection_security_policy!=\"none\",response_code=~\"%v\"}[%vs]) > 0) by (%s)",
+	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",
 		namespace,
 		istioCondition,
-		"[2345][0-9][0-9]",      // regex for valid response_codes
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
 	// create map to quickly look up securityPolicy
-	securityPolicyMap := make(map[string]string)
+	securityPolicyMap := make(map[string]PolicyRates)
 	a.populateSecurityPolicyMap(securityPolicyMap, &outVector)
 	a.populateSecurityPolicyMap(securityPolicyMap, &inVector)
 
 	applySecurityPolicy(trafficMap, securityPolicyMap)
 }
 
-func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[string]string) {
-	for _, s := range trafficMap {
-		for _, e := range s.Edges {
-			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
-			if securityPolicy, ok := securityPolicyMap[key]; ok {
-				switch securityPolicy {
-				case "mutual_tls":
-					e.Metadata["isMTLS"] = true
-				default:
-					log.Debugf("Skipping unhandled security policy [%s]", securityPolicy)
-				}
-			}
-		}
-	}
-}
-
-func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]string, vector *model.Vector) {
+func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[string]PolicyRates, vector *model.Vector) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -128,25 +115,54 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		destVer := string(lDestVer)
 		csp := string(lCsp)
 
+		val := float64(s.Value)
+
 		if a.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
 			_, destNodeType := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
 			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName)
-				a.addSecurityPolicy(securityPolicyMap, csp, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName)
+				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, "", "", "", destSvcName)
+				a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, "", "", "", destSvcName, destSvcNs, destWl, destApp, destVer, destSvcName)
 			} else {
-				a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
 			}
 		} else {
-			a.addSecurityPolicy(securityPolicyMap, csp, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
+			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, sourceWl, sourceApp, sourceVer, "", destSvcNs, destWl, destApp, destVer, destSvcName)
 		}
 	}
 }
 
-func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]string, val string, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string) {
+func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]PolicyRates, csp string, val float64, sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, destSvcNs, destWl, destApp, destVer, destSvcName string) {
 	sourceId, _ := graph.Id(sourceWlNs, sourceWl, sourceApp, sourceVer, sourceSvcName, a.GraphType)
 	destId, _ := graph.Id(destSvcNs, destWl, destApp, destVer, destSvcName, a.GraphType)
 	key := fmt.Sprintf("%s %s", sourceId, destId)
-	fmt.Printf("%s=%v\n", key, val)
-	securityPolicyMap[key] = val
+	var policyRates PolicyRates
+	var ok bool
+	if policyRates, ok = securityPolicyMap[key]; !ok {
+		policyRates = make(PolicyRates)
+		securityPolicyMap[key] = policyRates
+	}
+	policyRates[csp] = val
+}
+
+func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[string]PolicyRates) {
+	for _, s := range trafficMap {
+		for _, e := range s.Edges {
+			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
+			if policyRates, ok := securityPolicyMap[key]; ok {
+				mtls := 0.0
+				other := 0.0
+				for policy, rate := range policyRates {
+					if policy == policyMTLS {
+						mtls = rate
+					} else {
+						other += rate
+					}
+				}
+				if percentMtls := mtls / (mtls + other) * 100; percentMtls > 0 {
+					e.Metadata["isMTLS"] = percentMtls
+				}
+			}
+		}
+	}
 }

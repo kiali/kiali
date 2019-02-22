@@ -63,7 +63,7 @@ type EdgeData struct {
 	// App Fields (not required by Cytoscape)
 	Traffic      ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
 	ResponseTime string          `json:"responseTime,omitempty"` // in millis
-	IsMTLS       bool            `json:"isMTLS,omitempty"`       // true (mutual TLS connection) | false
+	IsMTLS       string          `json:"isMTLS,omitempty"`       // set to the percentage of traffic using a mutual TLS connection
 	IsUnused     bool            `json:"isUnused,omitempty"`     // true | false
 }
 
@@ -274,7 +274,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 
 func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 	if val, ok := e.Metadata["isMTLS"]; ok {
-		ed.IsMTLS = val.(bool)
+		ed.IsMTLS = fmt.Sprintf("%.0f", val.(float64))
 	}
 	if val, ok := e.Metadata["responseTime"]; ok {
 		responseTime := val.(float64)
