@@ -1,9 +1,11 @@
 import * as React from 'react';
 
 import { Component } from '../../store/Store';
-import { Icon, Tooltip, OverlayTrigger } from 'patternfly-react';
+import { OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
-import { PfColors } from '../Pf/PfColors';
+
+const partialIcon = require('../../assets/img/mtls-status-partial.svg');
+const fullIcon = require('../../assets/img/mtls-status-full.svg');
 
 type Props = {
   status: { [key: string]: string };
@@ -22,14 +24,12 @@ enum MTLSStatus {
 type StatusDescriptor = {
   message: string;
   icon: string;
-  iconColor: string;
   showStatus: boolean;
 };
 
 const emptyDescriptor = {
   message: '',
   icon: '',
-  iconColor: '',
   showStatus: false
 };
 
@@ -38,8 +38,7 @@ const StatusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatus.ENABLED,
     {
       message: 'Mesh-wide mTLS is enabled',
-      icon: 'locked',
-      iconColor: PfColors.Green,
+      icon: fullIcon,
       showStatus: true
     }
   ],
@@ -47,8 +46,7 @@ const StatusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatus.PARTIALLY,
     {
       message: 'Mesh-wide TLS is partially enabled',
-      icon: 'unlocked',
-      iconColor: PfColors.Orange400,
+      icon: partialIcon,
       showStatus: true
     }
   ],
@@ -64,10 +62,6 @@ class MeshMTLSStatus extends React.Component<Props> {
     return this.statusDescriptor().icon;
   }
 
-  iconColor() {
-    return this.statusDescriptor().iconColor;
-  }
-
   message() {
     return this.statusDescriptor().message;
   }
@@ -78,9 +72,9 @@ class MeshMTLSStatus extends React.Component<Props> {
 
   iconStyle() {
     return style({
-      marginTop: 20,
+      marginTop: 18,
       marginRight: 8,
-      color: this.iconColor()
+      width: 13
     });
   }
 
@@ -98,7 +92,7 @@ class MeshMTLSStatus extends React.Component<Props> {
             trigger={['hover', 'focus']}
             rootClose={false}
           >
-            <Icon type="pf" name={this.icon()} />
+            <img src={this.icon()} alt={this.message()} />
           </OverlayTrigger>
         </li>
       );
