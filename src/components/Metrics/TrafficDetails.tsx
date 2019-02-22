@@ -19,7 +19,7 @@ type AppProps = {
 };
 
 type TrafficDetailsProps = {
-  rateInterval: DurationInSeconds;
+  duration: DurationInSeconds;
   trafficData: GraphDefinition | null;
   onRefresh: () => void;
 } & (AppProps | WorkloadProps);
@@ -34,6 +34,8 @@ type ServiceTraffic = {
 };
 
 class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
+  static readonly defaultDuration = 600;
+
   constructor(props: TrafficDetailsProps) {
     super(props);
     this.state = {
@@ -58,7 +60,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   }
 
   render() {
-    const rateIntervalName = getName(this.props.rateInterval).toLowerCase();
+    const durationName = getName(this.props.duration).toLowerCase();
 
     if (this.props.trafficData === null) {
       return null;
@@ -71,11 +73,11 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
             <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
               <Icon name="refresh" />
             </Button>
-            <strong>Inbound ({rateIntervalName})</strong>
+            <strong>Inbound ({durationName})</strong>
           </div>
           <DetailedTrafficList direction="inbound" traffic={this.state.inboundTraffic} />
           <div style={{ marginTop: '2em' }}>
-            <strong>Outbound ({rateIntervalName})</strong>
+            <strong>Outbound ({durationName})</strong>
           </div>
           <DetailedTrafficList direction="outbound" traffic={this.state.outboundTraffic} />
         </Col>

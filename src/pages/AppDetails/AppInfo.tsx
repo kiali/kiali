@@ -9,7 +9,7 @@ type AppInfoProps = {
   app: App;
   namespace: string;
   onRefresh: () => void;
-  onSelectTab: (tabName: string, tabKey?: string) => void;
+  onSelectTab: (tabName: string, postHandler?: (k: string) => void) => ((tabKey: string) => void);
   activeTab: (tabName: string, whenEmpty: string) => string;
   health?: AppHealth;
 };

@@ -230,7 +230,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
           return proxyItem === a ? -1 : 1;
         }
 
-        const cmp = proxyItem.node.name.localeCompare(proxyedItem.proxy!.node.namespace);
+        const cmp = proxyItem.node.name.localeCompare(proxyedItem.proxy!.node.name);
         return proxyItem === a ? cmp : -cmp;
       }
     };

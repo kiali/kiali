@@ -115,7 +115,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       version: ''
     };
     const restParams = {
-      duration: '600s',
+      duration: `${TrafficDetails.defaultDuration}s`,
       graphType: GraphType.WORKLOAD,
       injectServiceNodes: true,
       appenders: 'deadNode'
@@ -216,7 +216,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
               </TabPane>
               <TabPane eventKey={'traffic'}>
                 <TrafficDetails
-                  rateInterval={600}
+                  duration={TrafficDetails.defaultDuration}
                   trafficData={this.state.trafficData}
                   itemType={MetricsObjectTypes.WORKLOAD}
                   namespace={this.props.match.params.namespace}
