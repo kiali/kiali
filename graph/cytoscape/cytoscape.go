@@ -39,7 +39,7 @@ type NodeData struct {
 	App             string            `json:"app,omitempty"`
 	Version         string            `json:"version,omitempty"`
 	Service         string            `json:"service,omitempty"`         // requested service for NodeTypeService
-	DestServices    map[string]bool   `json:"destServices,omitempty"`    // requested services for [dest] node
+	DestServices    []graph.Service   `json:"destServices,omitempty"`    // requested services for [dest] node
 	Traffic         []ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for all detected protocols
 	HasCB           bool              `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
 	HasMissingSC    bool              `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
@@ -217,7 +217,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node may have destination service info
 		if val, ok := n.Metadata["destServices"]; ok {
-			nd.DestServices = val.(map[string]bool)
+			nd.DestServices = val.([]graph.Service)
 		}
 
 		// node may be a service entry

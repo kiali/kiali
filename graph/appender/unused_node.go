@@ -75,7 +75,7 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		if v, ok := labels[versionLabel]; ok {
 			version = v
 		}
-		id, nodeType := graph.Id(namespace, w.Name, app, version, "", a.GraphType)
+		id, nodeType := graph.Id("", "", namespace, w.Name, app, version, a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = unusedTrafficMap[id]; !found {
 				log.Debugf("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
