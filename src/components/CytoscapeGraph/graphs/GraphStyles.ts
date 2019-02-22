@@ -13,7 +13,7 @@ const EdgeColor = PfColors.Green400;
 const EdgeColorDead = PfColors.Black500;
 const EdgeColorDegraded = PfColors.Orange;
 const EdgeColorFailure = PfColors.Red;
-const EdgeIconLock = '\ue923'; // lock
+const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
 const EdgeTextOutlineColor = PfColors.White;
 const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,FontAwesome,PatternFlyIcons-webfont';
@@ -143,7 +143,7 @@ export class GraphStyles {
       }
 
       if (cyGlobal.showSecurity && ele.data(CyEdge.isMTLS)) {
-        content = EdgeIconLock + ' ' + content;
+        content = EdgeIconMTLS + ' ' + content;
       }
 
       return content;
