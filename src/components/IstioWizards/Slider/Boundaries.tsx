@@ -18,7 +18,6 @@ const Boundaries = props => {
       rightBoundary = maxElement;
     }
   }
-
   return (
     <div className="slider-pf">
       {leftBoundary}

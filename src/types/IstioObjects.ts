@@ -107,7 +107,11 @@ export interface TLSMatchAttributes {
 }
 
 export interface MatchRequest {
-  headers: { [key: string]: StringMatch };
+  headers?: { [key: string]: StringMatch };
+  uri?: StringMatch;
+  scheme?: StringMatch;
+  method?: StringMatch;
+  authority?: StringMatch;
 }
 
 export interface StringMatch {
@@ -330,14 +334,14 @@ export interface Destination {
 }
 
 export interface HTTPMatchRequest {
-  uri: StringMatch;
-  scheme: StringMatch;
-  method: StringMatch;
-  authority: StringMatch;
-  headers: { [key: string]: StringMatch };
-  port: PortSelector;
-  sourceLabels: { [key: string]: string };
-  gateways: string[];
+  uri?: StringMatch;
+  scheme?: StringMatch;
+  method?: StringMatch;
+  authority?: StringMatch;
+  headers?: { [key: string]: StringMatch };
+  port?: PortSelector;
+  sourceLabels?: { [key: string]: string };
+  gateways?: string[];
 }
 
 export interface HTTPRoute {

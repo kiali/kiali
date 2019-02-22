@@ -14,6 +14,9 @@ type Props = {
   onSlide: (event: any) => any;
   orientation: string;
   ticks_labels: [];
+  locked: boolean;
+  min: number;
+  max: number;
 };
 
 class BootstrapSlider extends React.Component<Props> {
@@ -21,7 +24,8 @@ class BootstrapSlider extends React.Component<Props> {
     formatter: value => value,
     onSlide: event => event,
     orientation: 'horizontal',
-    ticks_labels: []
+    ticks_labels: [],
+    locked: false
   };
   slider: Slider;
   sliderDiv: any;
@@ -35,17 +39,38 @@ class BootstrapSlider extends React.Component<Props> {
       this.props.onSlide(value);
       this.slider.setValue(value);
     };
-
     this.slider.on('slide', onSlide);
     this.slider.on('slideStop', onSlide);
+    this.slider.setAttribute('min', this.props.min);
+    this.slider.setAttribute('max', this.props.max);
+    if (this.props.locked) {
+      this.slider.disable();
+    } else {
+      this.slider.enable();
+    }
   }
 
   // Instead of rendering the slider element again and again,
   // we took advantage of the bootstrap-slider library
   // and only update the new value or format when new props arrive.
   componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.locked) {
+      this.slider.disable();
+    } else {
+      this.slider.enable();
+    }
+    if (this.props.min !== nextProps.min || this.props.max !== nextProps.max) {
+      this.slider.setAttribute('min', nextProps.min);
+      this.slider.setAttribute('max', nextProps.max);
+      this.slider.refresh();
+      const onSlide = value => {
+        this.props.onSlide(value);
+        this.slider.setValue(value);
+      };
+      this.slider.on('slide', onSlide);
+      this.slider.on('slideStop', onSlide);
+    }
     this.slider.setValue(nextProps.value);
-    // Sets the tooltip format.
     this.slider.setAttribute('formatter', nextProps.formatter);
     // Adjust the tooltip to "sit" ontop of the slider's handle. #LibraryBug
     // check

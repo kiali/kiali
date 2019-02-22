@@ -19,3 +19,6 @@ const mutIcons = {
 };
 
 export const icons = deepFreeze(mutIcons) as typeof mutIcons;
+
+export const solidPinIcon = require('../assets/img/solid-pin.png');
+export const hollowPinIcon = require('../assets/img/hollow-pin.png');

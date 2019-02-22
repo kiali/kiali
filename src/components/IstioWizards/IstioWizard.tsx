@@ -1,61 +1,49 @@
 import * as React from 'react';
-import {
-  Button,
-  Col,
-  ControlLabel,
-  DropdownButton,
-  Label,
-  ListView,
-  ListViewIcon,
-  ListViewItem,
-  MenuItem,
-  Row,
-  Wizard
-} from 'patternfly-react';
+import { Button, Wizard } from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import Slider from './Slider/Slider';
-import { DestinationRule, VirtualService } from '../../types/IstioObjects';
+import {
+  DestinationRule,
+  DestinationWeight,
+  HTTPMatchRequest,
+  HTTPRoute,
+  VirtualService
+} from '../../types/IstioObjects';
 import { serverConfig } from '../../config/serverConfig';
 import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import { style } from 'typestyle';
+import MatchingRouting, { ROUTE_TYPE, Rule } from './MatchingRouting';
+import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
+import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
 
 type Props = {
   show: boolean;
+  type: string;
   namespace: string;
   serviceName: string;
   workloads: WorkloadOverview[];
   onClose: (changed: boolean) => void;
 };
 
-type WorkloadTraffic = {
-  name: string;
-  traffic: number;
-};
-
 type State = {
   showWizard: boolean;
-  workloads: WorkloadTraffic[];
+  workloads: WorkloadWeight[];
+  rules: Rule[];
+  valid: boolean;
   mtlsMode: string;
   loadBalancer: string;
+  modified: boolean;
 };
 
-const tlsStyle = style({
-  marginLeft: 20,
-  marginRight: 20
-});
+export const WIZARD_WEIGHTED_ROUTING = 'create_weighted_routing';
+export const WIZARD_MATCHING_ROUTING = 'create_matching_routing';
 
-const lbStyle = style({
-  marginLeft: 40,
-  marginRight: 20
-});
+export const WIZARD_TITLES = {
+  [WIZARD_WEIGHTED_ROUTING]: 'Create Weighted Routing',
+  [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing'
+};
 
 const NONE = 'NONE';
-
-const loadBalancerSimple: string[] = [NONE, 'ROUND_ROBIN', 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
-
-const mTLSMode: string[] = [NONE, 'ISTIO_MUTUAL', 'MUTUAL', 'SIMPLE', 'DISABLE'];
 
 class IstioWizard extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -63,29 +51,27 @@ class IstioWizard extends React.Component<Props, State> {
     this.state = {
       showWizard: false,
       workloads: [],
+      rules: [],
+      valid: true,
       mtlsMode: NONE,
-      loadBalancer: NONE
+      loadBalancer: NONE,
+      modified: false
     };
   }
 
-  resetState = () => {
-    if (this.props.workloads.length === 0) {
-      return;
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+      this.setState({
+        showWizard: this.props.show,
+        workloads: [],
+        rules: [],
+        valid: true,
+        mtlsMode: NONE,
+        loadBalancer: NONE,
+        modified: false
+      });
     }
-    const wkTraffic = this.props.workloads.length < 100 ? Math.round(100 / this.props.workloads.length) : 0;
-    const remainTraffic = this.props.workloads.length < 100 ? 100 % this.props.workloads.length : 0;
-    const workloads: WorkloadTraffic[] = this.props.workloads.map(workload => ({
-      name: workload.name,
-      traffic: wkTraffic
-    }));
-    if (remainTraffic > 0) {
-      workloads[workloads.length - 1].traffic = workloads[workloads.length - 1].traffic + remainTraffic;
-    }
-    this.setState({
-      showWizard: this.props.show,
-      workloads: workloads
-    });
-  };
+  }
 
   compareWorkloads = (prev: WorkloadOverview[], current: WorkloadOverview[]): boolean => {
     if (prev.length !== current.length) {
@@ -99,15 +85,44 @@ class IstioWizard extends React.Component<Props, State> {
     return true;
   };
 
-  componentDidMount() {
-    this.resetState();
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
-      this.resetState();
+  buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
+    const matchRequests: HTTPMatchRequest[] = [];
+    const matchHeaders: HTTPMatchRequest = { headers: {} };
+    // Headers are grouped
+    matches
+      .filter(match => match.startsWith('headers'))
+      .forEach(match => {
+        // match follows format:  headers [<header-name>] <op> <value>
+        const i0 = match.indexOf('[');
+        const j0 = match.indexOf(']');
+        const headerName = match.substring(i0 + 1, j0);
+        const i1 = match.indexOf(' ', j0 + 1);
+        const j1 = match.indexOf(' ', i1 + 1);
+        const op = match.substring(i1 + 1, j1);
+        const value = match.substring(j1 + 1);
+        matchHeaders.headers![headerName] = { [op]: value };
+      });
+    if (Object.keys(matchHeaders.headers || {}).length > 0) {
+      matchRequests.push(matchHeaders);
     }
-  }
+    // Rest of matches
+    matches
+      .filter(match => !match.startsWith('headers'))
+      .forEach(match => {
+        // match follows format: <name> <op> <value>
+        const i = match.indexOf(' ');
+        const j = match.indexOf(' ', i + 1);
+        const name = match.substring(0, i);
+        const op = match.substring(i, j);
+        const value = match.substring(j);
+        matchRequests.push({
+          [name]: {
+            [op]: value
+          }
+        });
+      });
+    return matchRequests;
+  };
 
   createIstioTraffic = (): [DestinationRule, VirtualService] => {
     const wkdNameVersion: { [key: string]: string } = {};
@@ -126,7 +141,7 @@ class IstioWizard extends React.Component<Props, State> {
           const versionValue = workload.labels![versionLabelName];
           const labels: { [key: string]: string } = {};
           labels[versionLabelName] = versionValue;
-          // Populate helper table
+          // Populate helper table workloadName -> version
           wkdNameVersion[workload.name] = versionValue;
           return {
             name: versionValue,
@@ -135,6 +150,62 @@ class IstioWizard extends React.Component<Props, State> {
         })
       }
     };
+
+    const wizardVS: VirtualService = {
+      metadata: {
+        namespace: this.props.namespace,
+        name: this.props.serviceName
+      },
+      spec: {}
+    };
+
+    switch (this.props.type) {
+      case WIZARD_WEIGHTED_ROUTING: {
+        // VirtualService from the weights
+        wizardVS.spec = {
+          hosts: [this.props.serviceName],
+          http: [
+            {
+              route: this.state.workloads.map(workload => {
+                return {
+                  destination: {
+                    host: this.props.serviceName,
+                    subset: wkdNameVersion[workload.name]
+                  },
+                  weight: workload.weight
+                };
+              })
+            }
+          ]
+        };
+        break;
+      }
+      case WIZARD_MATCHING_ROUTING: {
+        // VirtualService from the routes
+        wizardVS.spec = {
+          hosts: [this.props.serviceName],
+          http: this.state.rules.map(rule => {
+            const httpRoute: HTTPRoute = {};
+            const destW: DestinationWeight = {
+              destination: {
+                host: this.props.serviceName
+              }
+            };
+            if (rule.routeType === ROUTE_TYPE.WORKLOAD) {
+              destW.destination.subset = wkdNameVersion[rule.route];
+            }
+            httpRoute.route = [destW];
+            if (rule.matches.length > 0) {
+              httpRoute.match = this.buildHTTPMatchRequest(rule.matches);
+            }
+            return httpRoute;
+          })
+        };
+        break;
+      }
+      default:
+        console.log('Unrecognized type');
+    }
 
     if (this.state.mtlsMode !== NONE || this.state.loadBalancer !== NONE) {
       wizardDR.spec.trafficPolicy = {};
@@ -150,34 +221,14 @@ class IstioWizard extends React.Component<Props, State> {
       }
     }
 
-    // VirtualService from the weights
-    const wizardVS: VirtualService = {
-      metadata: {
-        namespace: this.props.namespace,
-        name: this.props.serviceName
-      },
-      spec: {
-        hosts: [this.props.serviceName],
-        http: [
-          {
-            route: this.state.workloads.map(workload => {
-              return {
-                destination: {
-                  host: this.props.serviceName,
-                  subset: wkdNameVersion[workload.name]
-                },
-                weight: workload.traffic
-              };
-            })
-          }
-        ]
-      }
-    };
     return [wizardDR, wizardVS];
   };
 
   onClose = () => {
-    this.setState({ showWizard: false });
+    this.setState({
+      showWizard: false,
+      modified: false
+    });
     this.props.onClose(false);
   };
 
@@ -206,149 +257,72 @@ class IstioWizard extends React.Component<Props, State> {
 
   onTLS = (mTLS: string) => {
     this.setState({
-      mtlsMode: mTLS
+      mtlsMode: mTLS,
+      modified: true
     });
   };
 
   onLoadBalancer = (simple: string) => {
     this.setState({
-      loadBalancer: simple
+      loadBalancer: simple,
+      modified: true
     });
   };
 
-  onWeight = (workloadName: string, newWeight: number) => {
-    this.setState(prevState => {
-      const nodeId: number[] = [];
-      // Set new weight, remember rest of the list
-      for (let i = 0; i < prevState.workloads.length; i++) {
-        if (prevState.workloads[i].name === workloadName) {
-          prevState.workloads[i].traffic = newWeight;
-        } else {
-          nodeId.push(i);
-        }
-      }
-      // Just let auto sliders adjusment per 2 workloads as when >2 some corner cases are not clear
-      if (prevState.workloads.length === 2) {
-        // Distribute pending weights
-        const maxWeights = 100 - newWeight;
-        let sumWeights = 0;
-        for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.workloads[nodeId[j]].traffic > maxWeights) {
-            prevState.workloads[nodeId[j]].traffic = maxWeights - sumWeights;
-          }
-          sumWeights += prevState.workloads[nodeId[j]].traffic;
-        }
-        // Adjust last element
-        if (nodeId.length > 0 && sumWeights < maxWeights) {
-          prevState.workloads[nodeId[nodeId.length - 1]].traffic += maxWeights - sumWeights;
-        }
-      }
-      return {
-        workloads: prevState.workloads
-      };
+  onWeightsChange = (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => {
+    this.setState({
+      valid: valid,
+      workloads: workloads,
+      modified: !reset
     });
   };
 
-  checkWeight = (): boolean => {
-    // Check all weights are equal to 100
-    return this.state.workloads.map(w => w.traffic).reduce((a, b) => a + b, 0) === 100;
-  };
-
-  renderWorkloads = () => {
-    const iconType = 'pf';
-    const iconName = 'bundle';
-    return this.state.workloads.map((workload, id) => {
-      return (
-        <ListViewItem
-          key={'workload-' + id}
-          leftContent={<ListViewIcon type={iconType} name={iconName} />}
-          heading={workload.name}
-          description={
-            <Slider
-              id={'slider-' + workload.name}
-              key={'slider-' + workload.name}
-              tooltip={true}
-              input={true}
-              inputFormat="%"
-              label={'Traffic Weight'}
-              value={workload.traffic}
-              onSlide={value => {
-                value = Math.round((value as number) || 0);
-                if (value > 100) {
-                  value = 100;
-                }
-                if (value < 0) {
-                  value = 0;
-                }
-                this.onWeight(workload.name, value as number);
-              }}
-            />
-          }
-        />
-      );
+  onRulesChange = (valid: boolean, rules: Rule[]) => {
+    this.setState({
+      valid: valid,
+      rules: rules,
+      modified: true
     });
-  };
-
-  renderTrafficPolicy = () => {
-    const tlsMenuItems: any[] = mTLSMode.map(mode => (
-      <MenuItem key={mode} eventKey={mode} active={mode === this.state.mtlsMode}>
-        {mode}
-      </MenuItem>
-    ));
-    const lbMenuItems: any[] = loadBalancerSimple.map(simple => (
-      <MenuItem key={simple} eventKey={simple} active={simple === this.state.loadBalancer}>
-        {simple}
-      </MenuItem>
-    ));
-    return (
-      <Row>
-        <Col sm={12}>
-          <ControlLabel className={tlsStyle}>TLS</ControlLabel>
-          <DropdownButton bsStyle="default" title={this.state.mtlsMode} id="trafficPolicy-tls" onSelect={this.onTLS}>
-            {tlsMenuItems}
-          </DropdownButton>
-          <ControlLabel className={lbStyle}>LoadBalancer</ControlLabel>
-          <DropdownButton
-            bsStyle="default"
-            title={this.state.loadBalancer}
-            id="trafficPolicy-lb"
-            onSelect={this.onLoadBalancer}
-          >
-            {lbMenuItems}
-          </DropdownButton>
-        </Col>
-      </Row>
-    );
-  };
-
-  renderContent = () => {
-    return (
-      <Wizard.Contents stepIndex={0} activeStepIndex={0}>
-        <ListView>{this.renderWorkloads()}</ListView>
-        {this.renderTrafficPolicy()}
-      </Wizard.Contents>
-    );
   };
 
   render() {
     return (
       <Wizard show={this.state.showWizard} onHide={this.onClose}>
-        <Wizard.Header onClose={this.onClose} title="Create Traffic Routing" />
+        <Wizard.Header onClose={this.onClose} title={WIZARD_TITLES[this.props.type]} />
         <Wizard.Body>
           <Wizard.Row>
-            <Wizard.Main>{this.renderContent()}</Wizard.Main>
+            <Wizard.Main>
+              <Wizard.Contents stepIndex={0} activeStepIndex={0}>
+                {this.props.type === WIZARD_WEIGHTED_ROUTING && (
+                  <WeightedRouting
+                    serviceName={this.props.serviceName}
+                    workloads={this.props.workloads}
+                    onChange={this.onWeightsChange}
+                  />
+                )}
+                {this.props.type === WIZARD_MATCHING_ROUTING && (
+                  <MatchingRouting
+                    serviceName={this.props.serviceName}
+                    workloads={this.props.workloads}
+                    onChange={this.onRulesChange}
+                  />
+                )}
+                <TrafficPolicyConnected
+                  mtlsMode={this.state.mtlsMode}
+                  loadBalancer={this.state.loadBalancer}
+                  onTlsChange={this.onTLS}
+                  onLoadbalancerChange={this.onLoadBalancer}
+                  modified={this.state.modified}
+                />
+              </Wizard.Contents>
+            </Wizard.Main>
           </Wizard.Row>
         </Wizard.Body>
         <Wizard.Footer>
-          {!this.checkWeight() && (
-            <Label style={{ margin: '0 15px 0 0', paddingTop: '6px' }} bsStyle="danger">
-              Traffic Weights must sum 100%
-            </Label>
-          )}
           <Button bsStyle="default" className="btn-cancel" onClick={this.onClose}>
             Cancel
           </Button>
-          <Button disabled={!this.checkWeight()} bsStyle="primary" onClick={this.onCreate}>
+          <Button disabled={!this.state.valid} bsStyle="primary" onClick={this.onCreate}>
             Create
           </Button>
         </Wizard.Footer>

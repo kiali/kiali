@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DropdownButton, MenuItem, MessageDialog } from 'patternfly-react';
-import IstioWizard from './IstioWizard';
+import IstioWizard, { WIZARD_MATCHING_ROUTING, WIZARD_TITLES, WIZARD_WEIGHTED_ROUTING } from './IstioWizard';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
 import { authentication } from '../../utils/Authentication';
@@ -20,13 +20,16 @@ type Props = {
 
 type State = {
   showWizard: boolean;
+  wizardType: string;
   showConfirmDelete: boolean;
 };
+
+const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
 class IstioWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { showWizard: props.show, showConfirmDelete: false };
+    this.state = { showWizard: props.show, wizardType: '', showConfirmDelete: false };
   }
 
   // Wizard can be opened when there are not existing VS & DR and there are update permissions
@@ -48,11 +51,18 @@ class IstioWizardDropdown extends React.Component<Props, State> {
   };
 
   onAction = (key: string) => {
-    if (key === 'create_traffic_routing') {
-      this.setState({ showWizard: true });
-    }
-    if (key === 'delete_traffic_routing') {
-      this.setState({ showConfirmDelete: true });
+    switch (key) {
+      case WIZARD_WEIGHTED_ROUTING:
+      case WIZARD_MATCHING_ROUTING: {
+        this.setState({ showWizard: true, wizardType: key });
+        break;
+      }
+      case DELETE_TRAFFIC_ROUTING: {
+        this.setState({ showConfirmDelete: true });
+        break;
+      }
+      default:
+        console.log('Unrecognized key');
     }
   };
 
@@ -105,16 +115,20 @@ class IstioWizardDropdown extends React.Component<Props, State> {
     return (
       <>
         <DropdownButton id="service_actions" title="Actions" onSelect={this.onAction} pullRight={true}>
-          <MenuItem disabled={!this.canCreate()} key="create_traffic_routing" eventKey="create_traffic_routing">
-            Create Traffic Routing
+          <MenuItem disabled={!this.canCreate()} key={WIZARD_WEIGHTED_ROUTING} eventKey={WIZARD_WEIGHTED_ROUTING}>
+            {WIZARD_TITLES[WIZARD_WEIGHTED_ROUTING]}
+          </MenuItem>
+          <MenuItem disabled={!this.canCreate()} key={WIZARD_MATCHING_ROUTING} eventKey={WIZARD_MATCHING_ROUTING}>
+            {WIZARD_TITLES[WIZARD_MATCHING_ROUTING]}
           </MenuItem>
           <MenuItem divider={true} />
-          <MenuItem disabled={!this.canDelete()} key="delete_traffic_routing" eventKey="delete_traffic_routing">
+          <MenuItem disabled={!this.canDelete()} key={DELETE_TRAFFIC_ROUTING} eventKey={DELETE_TRAFFIC_ROUTING}>
             Delete ALL Traffic Routing
           </MenuItem>
         </DropdownButton>
         <IstioWizard
           show={this.state.showWizard}
+          type={this.state.wizardType}
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
           workloads={this.props.workloads.filter(workload => {

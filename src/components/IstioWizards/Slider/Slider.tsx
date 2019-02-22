@@ -2,9 +2,11 @@
 
 import React from 'react';
 import BootstrapSlider from './BootstrapSlider';
-import { Icon, ControlLabel, FormControl } from 'patternfly-react';
+import { Button, Icon, ControlLabel, FormControl } from 'patternfly-react';
 import Boundaries from './Boundaries';
 import DropdownMenu from './DropdownMenu';
+import { style } from 'typestyle';
+import { hollowPinIcon, solidPinIcon } from '../../../config/icons';
 
 export const noop = Function.prototype;
 
@@ -24,12 +26,23 @@ type Props = {
   sliderClass: string;
   dropdownList: string[];
   inputFormat: string;
+  locked: boolean;
+  showLock: boolean;
+  onLock: (locked: boolean) => void;
 };
 
 type State = {
   value: number[] | number;
   tooltipFormat: string;
 };
+
+const lockStyle = style({
+  display: 'block',
+  maxHeight: 18,
+  padding: 2,
+  width: 'auto',
+  height: 'auto'
+});
 
 class Slider extends React.Component<Props, State> {
   static defaultProps = {
@@ -47,7 +60,10 @@ class Slider extends React.Component<Props, State> {
     sliderClass: null,
     icon: null,
     dropdownList: null,
-    inputFormat: ''
+    inputFormat: '',
+    locked: false,
+    showLock: true,
+    onLock: noop
   };
 
   constructor(props: Props) {
@@ -69,8 +85,28 @@ class Slider extends React.Component<Props, State> {
     this.setState({ value }, () => this.props.onSlide(value));
   };
 
+  onPlus = () => {
+    const newValue = Number(this.state.value || 0);
+    this.updateNewValue(newValue + 1);
+  };
+
+  onMinus = () => {
+    const newValue = Number(this.state.value || 0);
+    this.updateNewValue(newValue - 1);
+  };
+
   onInputChange = event => {
     const newValue = Number(event.target.value || 0);
+    this.updateNewValue(newValue);
+  };
+
+  updateNewValue = (newValue: number) => {
+    if (newValue > this.props.max) {
+      newValue = this.props.max;
+    }
+    if (newValue < 0) {
+      newValue = 0;
+    }
     this.setState({ value: newValue }, () => this.props.onSlide(newValue));
   };
 
@@ -107,28 +143,59 @@ class Slider extends React.Component<Props, State> {
       );
     }
 
+    const leftButton = this.props.input && (
+      <Button bsSize="xsmall" style={{ marginLeft: 5 }} onClick={() => this.onMinus()}>
+        <Icon type="fa" name="minus" />
+      </Button>
+    );
+
     const inputElement = this.props.input && (
       <FormControl
         bsClass="slider-input-pf"
-        type="number"
+        type="text"
         value={this.state.value}
-        min={this.props.min}
-        max={this.props.max}
+        // Trick to fix InputText when slider is locked and refreshed/resized
+        style={{ width: '3.5em' }}
         onChange={this.onInputChange}
+        disabled={this.props.locked}
       />
     );
 
-    const BSSlider = (
-      <BootstrapSlider {...this.props} formatter={this.formatter} value={this.state.value} onSlide={this.onSlide} />
+    const rightButton = this.props.input && (
+      <Button bsSize="xsmall" onClick={() => this.onPlus()}>
+        <Icon type="fa" name="plus" />
+      </Button>
     );
 
+    const lockElement = (
+      <Button bsSize="xsmall" onClick={() => this.props.onLock(!this.props.locked)}>
+        {this.props.locked ? (
+          <img src={solidPinIcon} className={lockStyle} />
+        ) : (
+          <img src={hollowPinIcon} className={lockStyle} />
+        )}
+      </Button>
+    );
+
+    const BSSlider = (
+      <BootstrapSlider
+        {...this.props}
+        locked={this.props.locked}
+        formatter={this.formatter}
+        value={this.state.value}
+        onSlide={this.onSlide}
+      />
+    );
     return (
       <div>
         {label}
         <div className={sliderClass}>
           <Boundaries slider={BSSlider} {...this.props}>
+            {leftButton}
             {inputElement}
             {formatElement}
+            {rightButton}
+            {this.props.showLock && lockElement}
           </Boundaries>
         </div>
       </div>
