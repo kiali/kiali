@@ -168,10 +168,17 @@ fi
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${IMAGE_VERSION}" == "lastrelease" ]; then
   get_downloader
-  kiali_version_we_want=$(${downloader} https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null |\
+  github_api_url="https://api.github.com/repos/kiali/kiali/releases/latest"
+  kiali_version_we_want=$(${downloader} ${github_api_url} 2> /dev/null |\
     grep  "tag_name" | \
     sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-  echo "Will use the last Kiali release: $kiali_version_we_want"
+  if [ -z "${kiali_version_we_want}" ]; then
+    echo "ERROR: Failed to determine the version of the last Kiali release."
+    echo "Make sure this URL is accessible and returning valid results:"
+    echo ${github_api_url}
+    exit 1
+  fi
+  echo "Will use the last Kiali release: ${kiali_version_we_want}"
   IMAGE_VERSION=${kiali_version_we_want}
   if [ "${VERSION_LABEL}" == "lastrelease" ]; then
     VERSION_LABEL=${kiali_version_we_want}
@@ -185,7 +192,7 @@ fi
 
 echo "=== SETTINGS ==="
 echo IMAGE_NAME=$IMAGE_NAME
-echo IMAGE_VESRION=$IMAGE_VERSION
+echo IMAGE_VERSION=$IMAGE_VERSION
 echo VERSION_LABEL=$VERSION_LABEL
 echo IMAGE_PULL_POLICY_TOKEN=$IMAGE_PULL_POLICY_TOKEN
 echo NAMESPACE=$NAMESPACE
