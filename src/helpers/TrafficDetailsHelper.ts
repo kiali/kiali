@@ -15,11 +15,6 @@ export const fetchTrafficDetails = (
         return;
       }
 
-      // Check that there is traffic data.
-      if (response.data.elements.nodes.length === 0 || response.data.elements.edges.length === 0) {
-        return null;
-      }
-
       return response.data;
     },
     error => {

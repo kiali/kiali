@@ -191,7 +191,13 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   };
 
   private processTrafficData = (traffic: GraphDefinition | null) => {
-    if (!traffic || !traffic.elements.nodes) {
+    if (
+      !traffic ||
+      !traffic.elements.nodes ||
+      !traffic.elements.edges ||
+      traffic.elements.nodes.length === 0 ||
+      traffic.elements.edges.length === 0
+    ) {
       this.setState({ inboundTraffic: [], outboundTraffic: [] });
       return;
     }
