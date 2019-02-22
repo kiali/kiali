@@ -152,7 +152,7 @@ func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *Bas
 		query := fmt.Sprintf("sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s",
 			metricName, labels, q.RateInterval, groupingAvg, metricName, labels, q.RateInterval, groupingAvg)
 		query = roundSignificant(query, 0.001)
-		log.Infof("Query: %s\n", query)
+		log.Debugf("Query: %s\n", query)
 		histogram["avg"] = fetchRange(api, query, q.Range)
 	}
 
@@ -166,7 +166,7 @@ func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *Bas
 			quantile, metricName, labels, q.RateInterval, groupingQuantile)
 		query = roundSignificant(query, 0.001)
 		histogram[quantile] = fetchRange(api, query, q.Range)
-		log.Infof("Query: %s\n", query)
+		log.Debugf("Query: %s\n", query)
 	}
 
 	return histogram

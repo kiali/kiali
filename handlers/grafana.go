@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -132,7 +133,10 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 }
 
 func findDashboard(url, searchPattern string, credentials string) ([]byte, int, error) {
-	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
+	if !strings.HasSuffix(url, "/") {
+		url = url + "/"
+	}
+	req, err := http.NewRequest(http.MethodGet, url+"api/search?query="+searchPattern, nil)
 	if err != nil {
 		return nil, 0, err
 	}
