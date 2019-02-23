@@ -43,7 +43,7 @@ const namespacePersistFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'statusState', 'namespaces', 'serverConfig'],
+  whitelist: ['authentication', 'namespaces', 'serverConfig'],
   transforms: [namespacePersistFilter]
 };
 
