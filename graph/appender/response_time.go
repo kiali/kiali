@@ -155,7 +155,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
 		lDestSvc, destSvcOk := m["destination_service_name"]
-		lDestWlNs, destWlNsOk := m["destination_workload"]
+		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]

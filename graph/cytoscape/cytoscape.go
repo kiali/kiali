@@ -217,7 +217,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node may have destination service info
 		if val, ok := n.Metadata["destServices"]; ok {
-			nd.DestServices = val.([]graph.Service)
+			nd.DestServices = []graph.Service{}
+			for _, val := range val.(map[string]graph.Service) {
+				nd.DestServices = append(nd.DestServices, val)
+			}
 		}
 
 		// node may be a service entry

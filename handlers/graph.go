@@ -572,14 +572,16 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, sourceNs, sourceSvc
 }
 
 func addToDestServices(md map[string]interface{}, namespace, service string) {
-	destServices, ok := md["destServices"]
-	destService := graph.Service{Namespace: namespace, Name: service}
-	if !ok {
-		destServices = []graph.Service{}
-	} else {
-		destServices = append(destServices.([]graph.Service), destService)
+	if !graph.IsOK(service) {
+		return
 	}
-	md["destServices"] = destServices
+	destServices, ok := md["destServices"]
+	if !ok {
+		destServices = make(map[string]graph.Service)
+		md["destServices"] = destServices
+	}
+	destService := graph.Service{Namespace: namespace, Name: service}
+	destServices.(map[string]graph.Service)[destService.Key()] = destService
 }
 
 func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o options.Options) {

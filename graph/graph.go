@@ -48,6 +48,10 @@ type Service struct {
 	Name      string `json:"name"`
 }
 
+func (s *Service) Key() string {
+	return fmt.Sprintf("%s %s", s.Namespace, s.Name)
+}
+
 // TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
 // is a general purpose map for holding any desired node or edge information.
 // Each app node should have a unique namespace+workload.  Note that it is feasible
