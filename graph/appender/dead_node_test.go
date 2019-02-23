@@ -110,13 +110,13 @@ func TestDeadNode(t *testing.T) {
 	trafficMap := testTrafficMap()
 
 	assert.Equal(12, len(trafficMap))
-	unknownId, _ := graph.Id(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
+	unknownId, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	unknownNode, found := trafficMap[unknownId]
 	assert.Equal(true, found)
 	assert.Equal(graph.Unknown, unknownNode.Workload)
 	assert.Equal(10, len(unknownNode.Edges))
 
-	ingressId, _ := graph.Id("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id(graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingressNode, found := trafficMap[ingressId]
 	assert.Equal(true, found)
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
@@ -149,7 +149,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("testNodeWithTcpSentTraffic-v1", ingressNode.Edges[5].Dest.Workload)
 	assert.Equal("testNodeWithTcpSentOutTraffic-v1", ingressNode.Edges[6].Dest.Workload)
 
-	id, _ := graph.Id("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
+	id, _ := graph.Id("testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 	noPodsNoTraffic, ok := trafficMap[id]
 	assert.Equal(true, ok)
 	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
@@ -157,7 +157,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal(true, isDead)
 
 	// Check that external services are not removed
-	id, _ = graph.Id("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
+	id, _ = graph.Id("testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	_, okExternal := trafficMap[id]
 	assert.Equal(true, okExternal)
 }
@@ -165,37 +165,37 @@ func TestDeadNode(t *testing.T) {
 func testTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0 := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
+	n0 := graph.NewNode(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
-	n00 := graph.NewNode("istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	n00 := graph.NewNode(graph.Unknown, "", "istio-system", "istio-ingressgateway", "istio-ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	n00.Metadata["httpOut"] = 4.8
 
-	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", "testPodsWithTraffic", graph.GraphTypeVersionedApp)
+	n1 := graph.NewNode("testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n1.Metadata["httpIn"] = 0.8
 
-	n2 := graph.NewNode("testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", "testPodsNoTraffic", graph.GraphTypeVersionedApp)
+	n2 := graph.NewNode("testNamespace", "testPodsNoTraffic", "testNamespace", "testPodsNoTraffic-v1", "testPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n3 := graph.NewNode("testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", "testNoPodsWithTraffic", graph.GraphTypeVersionedApp)
+	n3 := graph.NewNode("testNamespace", "testNoPodsWithTraffic", "testNamespace", "testNoPodsWithTraffic-v1", "testNoPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n3.Metadata["httpIn"] = 0.8
 
-	n4 := graph.NewNode("testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", "testNoPodsNoTraffic", graph.GraphTypeVersionedApp)
+	n4 := graph.NewNode("testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n5 := graph.NewNode("testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", "testNoDeploymentWithTraffic", graph.GraphTypeVersionedApp)
+	n5 := graph.NewNode("testNamespace", "testNoDeploymentWithTraffic", "testNamespace", "testNoDeploymentWithTraffic-v1", "testNoDeploymentWithTraffic", "v1", graph.GraphTypeVersionedApp)
 	n5.Metadata["httpIn"] = 0.8
 
-	n6 := graph.NewNode("testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", "testNoDeploymentNoTraffic", graph.GraphTypeVersionedApp)
+	n6 := graph.NewNode("testNamespace", "testNoDeploymentNoTraffic", "testNamespace", "testNoDeploymentNoTraffic-v1", "testNoDeploymentNoTraffic", "v1", graph.GraphTypeVersionedApp)
 
-	n7 := graph.NewNode("testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", "testNodeWithTcpSentTraffic", graph.GraphTypeVersionedApp)
+	n7 := graph.NewNode("testNamespace", "testNodeWithTcpSentTraffic", "testNamespace", "testNodeWithTcpSentTraffic-v1", "testNodeWithTcpSentTraffic", "v1", graph.GraphTypeVersionedApp)
 	n7.Metadata["tcpIn"] = 74.1
 
-	n8 := graph.NewNode("testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", "testNodeWithTcpSentOutTraffic", graph.GraphTypeVersionedApp)
+	n8 := graph.NewNode("testNamespace", "testNodeWithTcpSentOutTraffic", "testNamespace", "testNodeWithTcpSentOutTraffic-v1", "testNodeWithTcpSentOutTraffic", "v1", graph.GraphTypeVersionedApp)
 	n8.Metadata["tcpOut"] = 74.1
 
-	n9 := graph.NewNode("testNamespace", "", "", "", "egress.io", graph.GraphTypeVersionedApp)
+	n9 := graph.NewNode("testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n9.Metadata["httpIn"] = 0.8
 	n9.Metadata["isServiceEntry"] = "MESH_EXTERNAL"
 
-	n10 := graph.NewNode("testNamespace", "", "", "", "egress.not.defined", graph.GraphTypeVersionedApp)
+	n10 := graph.NewNode("testNamespace", "egress.not.defined", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n10.Metadata["httpIn"] = 0.8
 
 	trafficMap[n0.ID] = &n0

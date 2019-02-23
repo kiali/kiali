@@ -332,7 +332,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_version":                 "v3",
 		"destination_service_namespace":  "bankapp",
 		"destination_service_name":       "pricing",
-		"destination_workload_namespace": "bookinfo",
+		"destination_workload_namespace": "bankapp",
 		"destination_workload":           "pricing-v1",
 		"destination_app":                "pricing",
 		"destination_version":            "v1",
@@ -393,10 +393,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "unknown",
 		"source_version":                 "unknown",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcp",
+		"destination_service_name":       "tcptest",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcp-v1",
-		"destination_app":                "tcp",
+		"destination_workload":           "tcptest-v1",
+		"destination_app":                "tcptest",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -410,10 +410,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "ingressgateway",
 		"source_version":                 "unknown",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcp",
+		"destination_service_name":       "tcptest",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcp-v1",
-		"destination_app":                "tcp",
+		"destination_workload":           "tcptest-v1",
+		"destination_app":                "tcptest",
 		"destination_version":            "v1"}
 	v4 := model.Vector{
 		&model.Sample{
@@ -427,10 +427,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcp",
+		"destination_service_name":       "tcptest",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcp-v1",
-		"destination_app":                "tcp",
+		"destination_workload":           "tcptest-v1",
+		"destination_app":                "tcptest",
 		"destination_version":            "v1"}
 
 	v5 := model.Vector{
@@ -766,9 +766,9 @@ func TestAppNodeGraph(t *testing.T) {
 		"source_app":                    "productpage",
 		"source_version":                "v1",
 		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
+		"destination_service_name":      "tcptest",
+		"destination_workload":          "tcptest-v1",
+		"destination_app":               "tcptest",
 		"destination_version":           "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -990,10 +990,10 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcp",
+		"destination_service_name":       "tcptest",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcp-v1",
-		"destination_app":                "tcp",
+		"destination_workload":           "tcptest-v1",
+		"destination_app":                "tcptest",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -1214,10 +1214,10 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcp",
+		"destination_service_name":       "tcptest",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcp-v1",
-		"destination_app":                "tcp",
+		"destination_workload":           "tcptest-v1",
+		"destination_app":                "tcptest",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{

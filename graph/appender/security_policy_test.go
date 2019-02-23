@@ -56,7 +56,7 @@ func TestSecurityPolicy(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -122,7 +122,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	mockQuery(api, q1, &v1)
 
 	trafficMap := securityPolicyTestTrafficWithServiceNodes()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -162,8 +162,8 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 }
 
 func securityPolicyTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode("bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpage.ID] = &productpage
@@ -174,9 +174,9 @@ func securityPolicyTestTraffic() graph.TrafficMap {
 }
 
 func securityPolicyTestTrafficWithServiceNodes() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
-	productpagesvc := graph.NewNode("bookinfo", "", "", "", "productpage", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpagesvc := graph.NewNode("bookinfo", "productpage", "bookinfo", "", "", "", graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode("bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpagesvc.ID] = &productpagesvc

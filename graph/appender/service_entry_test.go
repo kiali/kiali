@@ -49,25 +49,25 @@ func TestServiceEntry(t *testing.T) {
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
-	notServiceEntryId, _ := graph.Id("testNamespace", "", "", "", "NotServiceEntry", graph.GraphTypeVersionedApp)
+	notServiceEntryId, _ := graph.Id("testNamespace", "NotServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	notServiceEntryNode, found := trafficMap[notServiceEntryId]
 	assert.Equal(true, found)
 	assert.Equal(1, len(notServiceEntryNode.Edges))
 	assert.Equal(nil, notServiceEntryNode.Metadata["isServiceEntry"])
 
-	extServiceEntryId, _ := graph.Id("testNamespace", "", "", "", "ExternalServiceEntry", graph.GraphTypeVersionedApp)
+	extServiceEntryId, _ := graph.Id("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	extServiceEntryNode, found2 := trafficMap[extServiceEntryId]
 	assert.Equal(true, found2)
 	assert.Equal(0, len(extServiceEntryNode.Edges))
 	assert.Equal(nil, extServiceEntryNode.Metadata["isServiceEntry"])
 
-	intServiceEntryId, _ := graph.Id("testNamespace", "", "", "", "InternalServiceEntry", graph.GraphTypeVersionedApp)
+	intServiceEntryId, _ := graph.Id("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	intServiceEntryNode, found3 := trafficMap[intServiceEntryId]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(intServiceEntryNode.Edges))
 	assert.Equal(nil, extServiceEntryNode.Metadata["isServiceEntry"])
 
-	defaultServiceEntryId, _ := graph.Id("testNamespace", "", "", "", "DefaultServiceEntry", graph.GraphTypeVersionedApp)
+	defaultServiceEntryId, _ := graph.Id("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	defaultServiceEntryNode, found4 := trafficMap[defaultServiceEntryId]
 	assert.Equal(true, found4)
 	assert.Equal(0, len(defaultServiceEntryNode.Edges))
@@ -94,17 +94,17 @@ func TestServiceEntry(t *testing.T) {
 func serviceEntriesTrafficMap() map[string]*graph.Node {
 	trafficMap := make(map[string]*graph.Node)
 
-	n0 := graph.NewNode(graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, "", graph.GraphTypeVersionedApp)
+	n0 := graph.NewNode(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 
-	n1 := graph.NewNode("testNamespace", "", "", "", "NotServiceEntry", graph.GraphTypeVersionedApp)
+	n1 := graph.NewNode("testNamespace", "NotServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
-	n2 := graph.NewNode("testNamespace", "TestWorkload-v1", "TestApp", "v1", "NotServiceEntry", graph.GraphTypeVersionedApp)
+	n2 := graph.NewNode("testNamespace", "NotServiceEntry", "testNamespace", "TestWorkload-v1", "TestApp", "v1", graph.GraphTypeVersionedApp)
 
-	n3 := graph.NewNode("testNamespace", "", "", "", "ExternalServiceEntry", graph.GraphTypeVersionedApp)
+	n3 := graph.NewNode("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
-	n4 := graph.NewNode("testNamespace", "", "", "", "InternalServiceEntry", graph.GraphTypeVersionedApp)
+	n4 := graph.NewNode("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
-	n5 := graph.NewNode("testNamespace", "", "", "", "DefaultServiceEntry", graph.GraphTypeVersionedApp)
+	n5 := graph.NewNode("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1
