@@ -12,9 +12,12 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "destServices": {
-            "productpage": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",

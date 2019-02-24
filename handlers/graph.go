@@ -692,7 +692,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	// query prometheus for request traffic in two queries:
 	// 1) query for incoming traffic
 	var query string
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code"
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -826,7 +826,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	// Section for TCP services
 	tcpMetric := "istio_tcp_sent_bytes_total"
 
-	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version"
+	tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version"
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,

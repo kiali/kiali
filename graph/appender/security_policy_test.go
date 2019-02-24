@@ -13,32 +13,34 @@ import (
 func TestSecurityPolicy(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.Unknown),
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"connection_security_policy":    "mutual_tls"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 model.LabelValue(graph.Unknown),
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"connection_security_policy":     "mutual_tls"}
 	q1m1 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.Unknown),
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"connection_security_policy":    "none"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 model.LabelValue(graph.Unknown),
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"connection_security_policy":     "none"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
@@ -93,21 +95,22 @@ func TestSecurityPolicy(t *testing.T) {
 func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.Unknown),
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"connection_security_policy":    "mutual_tls"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 model.LabelValue(graph.Unknown),
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"connection_security_policy":     "mutual_tls"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,

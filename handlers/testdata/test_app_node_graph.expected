@@ -21,9 +21,12 @@
           "workload": "details-v1",
           "app": "details",
           "version": "v1",
-          "destServices": {
-            "details": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "details"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -45,9 +48,12 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "destServices": {
-            "productpage": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -74,9 +80,12 @@
           "workload": "reviews-v1",
           "app": "reviews",
           "version": "v1",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -96,9 +105,12 @@
           "workload": "reviews-v2",
           "app": "reviews",
           "version": "v2",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -118,9 +130,12 @@
           "workload": "reviews-v3",
           "app": "reviews",
           "version": "v3",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -139,9 +154,12 @@
           "workload": "tcp-v1",
           "app": "tcp",
           "version": "v1",
-          "destServices": {
-            "tcp": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "tcp"
+            }
+          ],
           "traffic": [
             {
               "protocol": "tcp",

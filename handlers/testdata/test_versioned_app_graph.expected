@@ -12,9 +12,12 @@
           "workload": "pricing-v1",
           "app": "pricing",
           "version": "v1",
-          "destServices": {
-            "pricing": true
-          },
+          "destServices": [
+            {
+              "namespace": "bankapp",
+              "name": "pricing"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -42,9 +45,6 @@
           "nodeType": "workload",
           "namespace": "bookinfo",
           "workload": "kiali-2412",
-          "destServices": {
-            "": true
-          },
           "traffic": [
             {
               "protocol": "http",
@@ -63,9 +63,12 @@
           "workload": "details-v1",
           "app": "details",
           "version": "v1",
-          "destServices": {
-            "details": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "details"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -87,9 +90,12 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "destServices": {
-            "productpage": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -115,9 +121,12 @@
           "workload": "ratings-v1",
           "app": "ratings",
           "version": "v1",
-          "destServices": {
-            "ratings": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "ratings"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -138,9 +147,12 @@
           "workload": "reviews-v1",
           "app": "reviews",
           "version": "v1",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -160,9 +172,12 @@
           "workload": "reviews-v2",
           "app": "reviews",
           "version": "v2",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -183,9 +198,12 @@
           "workload": "reviews-v3",
           "app": "reviews",
           "version": "v3",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -205,9 +223,12 @@
           "workload": "tcp-v1",
           "app": "tcp",
           "version": "v1",
-          "destServices": {
-            "tcp": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "tcp"
+            }
+          ],
           "traffic": [
             {
               "protocol": "tcp",

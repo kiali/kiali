@@ -393,10 +393,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "unknown",
 		"source_version":                 "unknown",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcptest",
+		"destination_service_name":       "tcp",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcptest-v1",
-		"destination_app":                "tcptest",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -410,10 +410,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "ingressgateway",
 		"source_version":                 "unknown",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcptest",
+		"destination_service_name":       "tcp",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcptest-v1",
-		"destination_app":                "tcptest",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
 		"destination_version":            "v1"}
 	v4 := model.Vector{
 		&model.Sample{
@@ -427,10 +427,10 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcptest",
+		"destination_service_name":       "tcp",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcptest-v1",
-		"destination_app":                "tcptest",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
 		"destination_version":            "v1"}
 
 	v5 := model.Vector{
@@ -640,17 +640,18 @@ func TestAppNodeGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200"}
 	q1m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m2 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -761,15 +762,16 @@ func TestAppNodeGraph(t *testing.T) {
 
 	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q3m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcptest",
-		"destination_workload":          "tcptest-v1",
-		"destination_app":               "tcptest",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
 			Metric: q3m0,
@@ -990,10 +992,10 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcptest",
+		"destination_service_name":       "tcp",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcptest-v1",
-		"destination_app":                "tcptest",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -1114,17 +1116,18 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"request_protocol":               "http",
 		"response_code":                  "200"}
 	q1m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "300"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "300"}
 	q1m4 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -1214,10 +1217,10 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		"source_app":                     "productpage",
 		"source_version":                 "v1",
 		"destination_service_namespace":  "bookinfo",
-		"destination_service_name":       "tcptest",
+		"destination_service_name":       "tcp",
 		"destination_workload_namespace": "bookinfo",
-		"destination_workload":           "tcptest-v1",
-		"destination_app":                "tcptest",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
 		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
@@ -1367,7 +1370,7 @@ func TestComplexGraph(t *testing.T) {
 	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	v2 := model.Vector{}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v3 := model.Vector{}
 
 	q4 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
@@ -1417,7 +1420,7 @@ func TestComplexGraph(t *testing.T) {
 			Metric: q8m0,
 			Value:  50}}
 
-	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
+	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v9 := model.Vector{}
 
 	q10 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
