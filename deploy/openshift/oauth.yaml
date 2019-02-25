@@ -4,7 +4,6 @@ metadata:
   name: kiali
   labels:
     app: kiali
-secret: ${OAUTH_SECRET}
 redirectURIs:
   - ${REDIRECT_URL}
   - localhost:3000

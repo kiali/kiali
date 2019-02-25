@@ -20,10 +20,6 @@ CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 # Possible Values: anonymous, login, openshift
 AUTH_STRATEGY ?= login
 
-# Secret for OAuth implementations
-DEFAULT_OAUTH_SECRET ?= kiali-oauth
-OAUTH_SECRET ?= ${DEFAULT_OAUTH_SECRET}
-
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
@@ -272,7 +268,6 @@ VERBOSE_MODE="${VERBOSE_MODE}" \
 KIALI_USERNAME="admin" \
 KIALI_PASSPHRASE="admin" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
-OAUTH_SECRET="${OAUTH_SECRET}" \
 deploy/openshift/deploy-kiali-to-openshift.sh
 
 ## openshift-undeploy: Undeploy from Openshift project.

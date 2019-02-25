@@ -66,7 +66,6 @@ const (
 	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
 
 	EnvAuthStrategy = "AUTH_STRATEGY"
-	EnvAuthSecret   = "OAUTH_SECRET"
 )
 
 // The versions that Kiali requires
@@ -159,7 +158,6 @@ type ApiNamespacesConfig struct {
 // Authentication configuration
 type AuthConfig struct {
 	Strategy string `yaml:"strategy,omitempty"`
-	Secret   string `yaml:"secret,omitempty"`
 }
 
 // Config defines full YAML configuration.
@@ -258,7 +256,8 @@ func NewConfig() (c *Config) {
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
 	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, "login")
-	c.Auth.Secret = getDefaultString(EnvAuthSecret, "kiali-oauth")
+
+        log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
 
 	return
 }

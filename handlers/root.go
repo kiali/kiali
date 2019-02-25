@@ -29,10 +29,10 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, error := config.GenerateToken(u)
+	token, err := config.GenerateToken(u)
 
-	if error != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, error)
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
 		return
 	}
 

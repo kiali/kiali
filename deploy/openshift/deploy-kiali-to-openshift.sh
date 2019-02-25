@@ -147,7 +147,6 @@ export VERBOSE_MODE="${VERBOSE_MODE:-3}"
 export KIALI_USERNAME_BASE64
 export KIALI_PASSPHRASE_BASE64
 export AUTH_STRATEGY="${AUTH_STRATEGY:-login}"
-export OAUTH_SECRET="${OAUTH_SECRET:-kiali-oauth}"
 
 # Make sure we have access to all required tools
 

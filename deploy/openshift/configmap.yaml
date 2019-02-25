@@ -18,7 +18,6 @@ data:
         url: ${GRAFANA_URL}
     auth:
       strategy: ${AUTH_STRATEGY}
-      secret: ${OAUTH_SECRET}
     identity:
       cert_file: /kiali-cert/tls.crt
       private_key_file: /kiali-cert/tls.key
