@@ -74,6 +74,8 @@ const conf = {
   /** API configuration */
   api: {
     urls: {
+      authInfo: 'api/auth/info',
+      checkOpenshiftAuth: 'api/auth/openshift-token',
       apps: (namespace: string) => `api/namespaces/${namespace}/apps`,
       app: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}`,
       appGraphElements: (namespace: string, app: string, version?: string) => {

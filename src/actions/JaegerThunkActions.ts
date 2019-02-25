@@ -63,7 +63,7 @@ export const JaegerThunkActions = {
         return Promise.resolve();
       }
       /** Get the token storage in redux-store */
-      const token = getState().authentication.token!.token;
+      const token = getState().authentication.session!.token;
       /** generate Token */
       const auth = `Bearer ${token}`;
 

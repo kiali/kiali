@@ -8,6 +8,10 @@ export type AuthToken = string;
 
 export type AppenderString = string;
 
+export type UserName = string;
+export type Password = string;
+export type RawDate = string;
+
 export const HTTP_CODES = {
   OK: 200,
   ACCEPTED: 202,

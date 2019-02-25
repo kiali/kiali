@@ -1,6 +1,7 @@
+import moment from 'moment';
 import { ThunkDispatch } from 'redux-thunk';
 import { HTTP_CODES } from '../types/Common';
-import { KialiAppState, Token, ServerConfig } from '../store/Store';
+import { KialiAppState, LoginState, LoginSession } from '../store/Store';
 import { KialiAppAction } from './KialiAppAction';
 import HelpDropdownThunkActions from './HelpDropdownThunkActions';
 import GrafanaThunkActions from './GrafanaThunkActions';
@@ -8,108 +9,81 @@ import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
 import { ServerConfigActions } from './ServerConfigActions';
 
-const ANONYMOUS: string = 'anonymous';
+import * as Login from '../services/Login';
+import { AuthResult } from '../types/Auth';
 
-// completeLogin performs any initialization required prior to declaring the login complete. This
-// prevents early rendering for components waiting on a login.
-const completeLogin = (
-  dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,
-  token: Token,
-  username: string,
-  timeout?: number
-) => {
-  const auth = `Bearer ${token['token']}`;
-  API.getServerConfig(auth).then(
-    response => {
-      // set the serverConfig before completing login so that it is available for
-      // anything needing it to render properly.
-      const serverConfig: ServerConfig = {
-        istioNamespace: response.data.istioNamespace,
-        istioLabels: response.data.istioLabels,
-        prometheus: response.data.prometheus
-      };
-      dispatch(ServerConfigActions.setServerConfig(serverConfig));
+type KialiDispatch = ThunkDispatch<KialiAppState, void, KialiAppAction>;
 
-      // complete the login process
-      dispatch(LoginActions.loginSuccess(token, username, timeout));
+const Dispatcher = new Login.LoginDispatcher();
 
-      // dispatch requests to be done now but not necessarily requiring immediate completion
-      dispatch(HelpDropdownThunkActions.refresh());
-      dispatch(GrafanaThunkActions.getInfo(auth));
-    },
-    error => {
-      /** Logout user */
-      if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
-        dispatch(LoginActions.logoutSuccess());
-      }
+const shouldRelogin = (state?: LoginState): boolean =>
+  !state ||
+  !state.session ||
+  moment(state.session!.expiresOn).diff(moment()) > 0 ||
+  moment(state.uiExpiresOn).diff(moment()) > 0;
+
+const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession) => {
+  const authHeader = `Bearer ${session.token}`;
+
+  try {
+    dispatch(LoginActions.loginSuccess(session));
+
+    dispatch(HelpDropdownThunkActions.refresh());
+    dispatch(GrafanaThunkActions.getInfo(authHeader));
+
+    const response = await API.getServerConfig(authHeader);
+
+    dispatch(ServerConfigActions.setServerConfig(response.data));
+  } catch (error) {
+    if (error.response && error.response.status === HTTP_CODES.UNAUTHORIZED) {
+      dispatch(LoginActions.logoutSuccess());
     }
-  );
+  }
 };
 
-// performLogin performs only the authentication part of login. If successful
-// we call completeLogin to perform any initialization required for the user session.
-const performLogin = (
-  dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>,
-  username?: string,
-  password?: string
-) => {
-  dispatch(LoginActions.loginRequest());
+// Performs the user login, dispatching to the proper login implementations.
+// The `data` argument is defined as `any` because the dispatchers receive
+// different kinds of data (such as e-mail/password, tokens).
+const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any) => {
+  const bail = (loginResult: Login.LoginResult) =>
+    data ? dispatch(LoginActions.loginFailure(loginResult.error)) : dispatch(LoginActions.logoutSuccess());
 
-  const loginUser: string = username === undefined ? ANONYMOUS : username;
-  const loginPass: string = password === undefined ? ANONYMOUS : password;
-
-  API.login(loginUser, loginPass).then(
-    token => {
-      completeLogin(dispatch, token['data'], loginUser);
-    },
-    error => {
-      if (loginUser === ANONYMOUS) {
-        dispatch(LoginActions.logoutSuccess());
-      } else {
-        dispatch(LoginActions.loginFailure(error));
-      }
+  Dispatcher.prepare().then((result: AuthResult) => {
+    if (result === AuthResult.CONTINUE) {
+      Dispatcher.perform({ dispatch, state, data }).then(
+        loginResult => loginSuccess(dispatch, loginResult.session!),
+        error => bail(error)
+      );
+    } else {
+      bail({ status: AuthResult.FAILURE, error: 'Preparation for login failed, try again.' });
     }
-  );
+  });
 };
 
 const LoginThunkActions = {
   extendSession: () => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
-      const actualState = getState() || {};
-      dispatch(
-        LoginActions.loginExtend(
-          actualState.authentication.token!,
-          actualState.authentication.username!,
-          actualState.authentication.sessionTimeOut!
-        )
-      );
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
+      const session = getState().authentication!.session!;
+      dispatch(LoginActions.loginExtend(session));
     };
   },
   checkCredentials: () => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
-      const actualState = getState() || {};
-      const token = actualState['authentication']['token'];
-      const username = actualState['authentication']['username'];
-      const sessionTimeout = actualState['authentication']['sessionTimeOut'];
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
+      const state: KialiAppState = getState();
 
-      /** Check if there is a token in session */
-      if (!token) {
-        /** log in as anonymous user - this will logout the user if no anonymous access is allowed */
-        performLogin(dispatch);
+      dispatch(LoginActions.loginRequest());
+
+      if (shouldRelogin(state.authentication)) {
+        performLogin(dispatch, state);
       } else {
-        /** Check the session timeout */
-        if (new Date().getTime() > sessionTimeout!) {
-          // if anonymous access is allowed, re-login automatically; otherwise, log out
-          performLogin(dispatch);
-        } else {
-          completeLogin(dispatch, token, username!, sessionTimeout!);
-        }
+        loginSuccess(dispatch, state.authentication!.session!);
       }
     };
   },
   // action creator that performs the async request
   authenticate: (username: string, password: string) => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => performLogin(dispatch, username, password);
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) =>
+      performLogin(dispatch, getState(), { username, password });
   }
 };
 

@@ -4,12 +4,15 @@ import { SessionTimeout } from '../SessionTimeout/SessionTimeout';
 import { config } from '../../config';
 import { MILLISECONDS } from '../../types/Common';
 import Timer = NodeJS.Timer;
+import { LoginSession } from 'src/store/Store';
+
+import moment from 'moment';
 
 type UserProps = {
-  username: string;
+  session: LoginSession;
   logout: () => void;
   extendSession: () => void;
-  sessionTimeOut: number;
+  checkCredentials: () => void;
 };
 
 type UserState = {
@@ -51,11 +54,13 @@ class UserDropdown extends React.Component<UserProps, UserState> {
   }
 
   timeLeft = (): number => {
-    const nowDate = new Date().getTime();
-    if (this.props.sessionTimeOut - nowDate < 1) {
+    const expiresOn = moment(this.props.session.expiresOn);
+
+    if (expiresOn <= moment()) {
       this.handleLogout();
     }
-    return this.props.sessionTimeOut - nowDate;
+
+    return expiresOn.diff(moment(), 'seconds');
   };
 
   checkSession = () => {
@@ -66,6 +71,10 @@ class UserDropdown extends React.Component<UserProps, UserState> {
 
   handleLogout() {
     this.props.logout();
+
+    // Force login dispatcher to run
+    this.props.checkCredentials();
+
     const el = document.documentElement;
     if (el) {
       el.className = 'login-pf';
@@ -88,7 +97,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
         />
         <Dropdown componentClass="li" id="user">
           <Dropdown.Toggle useAnchor={true} className="nav-item-iconic">
-            <Icon type="pf" name="user" /> {this.props.username}
+            <Icon type="pf" name="user" /> {this.props.session.username}
           </Dropdown.Toggle>
           <Dropdown.Menu>
             <MenuItem id="usermenu_logout" onClick={() => this.handleLogout()}>

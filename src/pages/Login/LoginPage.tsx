@@ -1,13 +1,15 @@
 import React from 'react';
 import { Alert, Row, Col, Form, FormGroup, FormControl, Button, HelpBlock } from 'patternfly-react';
 import { KEY_CODES } from '../../types/Common';
+import { LoginStatus, LoginSession } from '../../store/Store';
 
 const kialiTitle = require('../../assets/img/logo-login.svg');
 
 type LoginProps = {
-  logging: boolean;
-  error: any;
-  message: string;
+  status: LoginStatus;
+  session?: LoginSession;
+  message?: string;
+  error?: any;
   authenticate: (username: string, password: string) => void;
 };
 
@@ -70,7 +72,7 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                 <Col sm={10} smOffset={1} md={8} mdOffset={2} lg={8} lgOffset={2}>
                   <div className={'card-pf'}>
                     <header className={'login-pf-header'} />
-                    {this.props.error && <Alert>{this.props.message}</Alert>}
+                    {this.props.status === LoginStatus.error && <Alert>{this.props.message}</Alert>}
                     <Form onSubmit={e => this.handleSubmit(e)} id={'kiali-login'}>
                       <FormGroup>
                         <FormControl
@@ -83,7 +85,9 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                           required={true}
                           onKeyPress={this.handleKeyPress}
                         />
-                        {this.props.logging && !this.state.username && <HelpBlock>Username is required</HelpBlock>}
+                        {this.props.status === LoginStatus.logging && !this.state.username && (
+                          <HelpBlock>Username is required</HelpBlock>
+                        )}
                       </FormGroup>
                       <FormGroup>
                         <FormControl
@@ -95,7 +99,9 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                           required={true}
                           onKeyPress={this.handleKeyPress}
                         />
-                        {this.props.logging && !this.state.password && <HelpBlock>Password is required</HelpBlock>}
+                        {this.props.status === LoginStatus.logging && !this.state.password && (
+                          <HelpBlock>Password is required</HelpBlock>
+                        )}
                       </FormGroup>
                       <Button
                         type="submit"

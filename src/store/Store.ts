@@ -1,6 +1,6 @@
 import { NotificationGroup } from '../types/MessageCenter';
 import Namespace from '../types/Namespace';
-import { DurationInSeconds, PollIntervalInMs, TimeInSeconds } from '../types/Common';
+import { DurationInSeconds, PollIntervalInMs, TimeInSeconds, UserName, RawDate, AuthToken } from '../types/Common';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 
@@ -63,18 +63,24 @@ export interface GraphState {
   summaryData: SummaryData | null;
 }
 
-export interface Token {
-  token: string;
-  expired_at: string;
+export enum LoginStatus {
+  logging,
+  loggedIn,
+  loggedOut,
+  error
 }
+
+export interface LoginSession {
+  token: AuthToken;
+  expiresOn: RawDate;
+  username: UserName;
+}
+
 export interface LoginState {
-  token?: Token;
-  username?: string;
-  error: any;
+  status: LoginStatus;
+  session?: LoginSession;
   message: string;
-  logged: boolean;
-  logging: boolean;
-  sessionTimeOut?: number;
+  uiExpiresOn: RawDate;
 }
 
 export interface Component {

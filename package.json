@@ -72,6 +72,7 @@
     "json-beautify": "1.0.1",
     "lodash": "4.17.11",
     "logfmt": "^1.2.1",
+    "moment": "2.23.0",
     "patternfly": "3.59.1",
     "patternfly-react": "2.25.3",
     "patternfly-react-extensions": "2.16.8",

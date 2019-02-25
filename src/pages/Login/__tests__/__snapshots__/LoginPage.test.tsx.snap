@@ -5,10 +5,7 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <LoginPage
     authenticate={[MockFunction]}
-    error={undefined}
-    logging={false}
-    message=""
-    user={undefined}
+    status={2}
   />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
@@ -634,7 +631,7 @@ ShallowWrapper {
                       <header
                         className="login-pf-header"
                       />,
-                      undefined,
+                      false,
                       <Form
                         bsClass="form"
                         componentClass="form"
@@ -703,7 +700,7 @@ ShallowWrapper {
                       "rendered": null,
                       "type": "header",
                     },
-                    undefined,
+                    false,
                     Object {
                       "instance": null,
                       "key": undefined,
@@ -1512,7 +1509,7 @@ ShallowWrapper {
                         <header
                           className="login-pf-header"
                         />,
-                        undefined,
+                        false,
                         <Form
                           bsClass="form"
                           componentClass="form"
@@ -1581,7 +1578,7 @@ ShallowWrapper {
                         "rendered": null,
                         "type": "header",
                       },
-                      undefined,
+                      false,
                       Object {
                         "instance": null,
                         "key": undefined,
