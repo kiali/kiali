@@ -138,6 +138,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
+	"meshpolicies.mtls.destinationrulemissing": {
+		Message:  "Mesh-wide Destination Rule missing enabling mTLS",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {
