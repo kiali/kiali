@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-        kube "k8s.io/client-go/kubernetes"
+	kube "k8s.io/client-go/kubernetes"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"

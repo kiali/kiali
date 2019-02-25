@@ -257,7 +257,7 @@ func NewConfig() (c *Config) {
 
 	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, "login")
 
-        log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
+	log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
 
 	return
 }

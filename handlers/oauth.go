@@ -54,9 +54,9 @@ func OauthCheck(w http.ResponseWriter, r *http.Request) {
 	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber)).String()
 
 	business, err := business.Get()
-        if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.");
-        }
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.")
+	}
 
 	err = business.OpenshiftOAuth.ValidateToken(token)
 
