@@ -530,6 +530,13 @@ type JaegerInfoResponse struct {
 	Body models.JaegerInfo
 }
 
+// Return the information necessary to handle login
+// swagger:response authenticationInfo
+type AuthenticationInfoResponse struct {
+	Strategy              string
+	AuthorizationEndpoint string
+}
+
 //////////////////
 // SWAGGER MODELS
 //////////////////

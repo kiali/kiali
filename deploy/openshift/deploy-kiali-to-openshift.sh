@@ -146,6 +146,7 @@ export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
 export KIALI_USERNAME_BASE64
 export KIALI_PASSPHRASE_BASE64
+export AUTH_STRATEGY="${AUTH_STRATEGY:-login}"
 
 # Make sure we have access to all required tools
 
@@ -208,24 +209,36 @@ echo "=== SETTINGS ==="
 
 YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 
-# Now deploy all the Kiali components to OpenShift
-# If we are missing one or more of the yaml files, download them
-echo "Deploying Kiali to OpenShift project ${NAMESPACE}"
-for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
-do
-  yaml_file="${yaml}.yaml"
-  yaml_path="${YAML_DIR}/${yaml}.yaml"
+apply_yaml() {
+  local yaml_file="${1}.yaml"
+  local yaml_path="${YAML_DIR}/${yaml_file}"
+  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
+
   if [ -f "${yaml_path}" ]; then
     echo "Using YAML file: ${yaml_path}"
     cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   else
     get_downloader
-    yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
     echo "Downloading YAML via: ${downloader} ${yaml_url}"
     ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   fi
+}
+
+# Now deploy all the Kiali components to OpenShift
+# If we are missing one or more of the yaml files, download them
+echo "Deploying Kiali to OpenShift project ${NAMESPACE}"
+for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
+do
+  apply_yaml ${yaml}
+
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to OpenShift. Aborting."
     exit 1
   fi
 done
+
+# As a last step, we enable oAuth, because we need stuff like routes to be well
+# defined before creating the OAuthClients.
+PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" \
+  REDIRECT_URL="${PROTOCOL}://$(oc get routes -n ${NAMESPACE} kiali -o jsonpath={.spec.host})" \
+  apply_yaml "oauth"

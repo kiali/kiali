@@ -66,6 +66,8 @@ const (
 	EnvKubernetesQPS           = "KUBERNETES_QPS"
 	EnvKubernetesCacheEnabled  = "KUBERNETES_CACHE_ENABLED"
 	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
+
+	EnvAuthStrategy = "AUTH_STRATEGY"
 )
 
 // The versions that Kiali requires
@@ -156,6 +158,11 @@ type ApiNamespacesConfig struct {
 	Exclude []string
 }
 
+// Authentication configuration
+type AuthConfig struct {
+	Strategy string `yaml:"strategy,omitempty"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -167,6 +174,7 @@ type Config struct {
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
+	Auth             AuthConfig        `yaml:"auth,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -245,6 +253,10 @@ func NewConfig() (c *Config) {
 		}
 	}
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
+
+	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, "login")
+
+	log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
 
 	return
 }

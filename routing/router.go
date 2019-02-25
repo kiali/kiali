@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -38,7 +39,7 @@ func NewRouter() *mux.Router {
 		var handlerFunction http.Handler = route.HandlerFunc
 		handlerFunction = metricHandler(handlerFunction, route)
 		if route.Authenticated {
-			handlerFunction = config.AuthenticationHandler(handlerFunction)
+			handlerFunction = handlers.AuthenticationHandler(handlerFunction)
 		}
 		appRouter.
 			Methods(route.Method).

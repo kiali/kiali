@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // Structured version of Claims Section, as referenced at
@@ -22,6 +22,12 @@ type TokenClaim struct {
 //
 // swagger:model TokenGenerated
 type TokenGenerated struct {
+	// The username for the token
+	// A string with the user's username
+	//
+	// example: admin
+	// required: true
+	Username string `json:"username"`
 	// The authentication token
 	// A string with the authentication token for the user
 	//
@@ -33,7 +39,7 @@ type TokenGenerated struct {
 	//
 	// example: 2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603
 	// required: true
-	ExpiredAt string `json:"expired_at"`
+	ExpiresOn string `json:"expiresOn"`
 }
 
 // GenerateToken generates a signed token with an expiration of <ExpirationSeconds> seconds
@@ -48,11 +54,12 @@ func GenerateToken(username string) (TokenGenerated, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
 	ss, err := token.SignedString(Get().LoginToken.SigningKey)
+
 	if err != nil {
 		return TokenGenerated{}, err
 	}
 
-	return TokenGenerated{Token: ss, ExpiredAt: timeExpire.String()}, nil
+	return TokenGenerated{Token: ss, ExpiresOn: timeExpire.String(), Username: username}, nil
 }
 
 // ValidateToken checks if the input token is still valid
@@ -60,12 +67,15 @@ func ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return Get().LoginToken.SigningKey, nil
 	})
+
 	if err != nil {
 		return "", err
 	}
+
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return "", fmt.Errorf("Unexpected signing method: %s", token.Header["alg"])
 	}
+
 	if token.Valid {
 		user := ""
 		if sToken, ok := token.Claims.(*TokenClaim); ok {
@@ -73,5 +83,6 @@ func ValidateToken(tokenString string) (string, error) {
 		}
 		return user, nil
 	}
+
 	return "", errors.New("Invalid token")
 }

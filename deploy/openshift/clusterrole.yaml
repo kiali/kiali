@@ -19,6 +19,13 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["route.openshift.io"]
+  resources:
+  - routes
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups: ["extensions", "apps"]
   resources:
   - deployments
