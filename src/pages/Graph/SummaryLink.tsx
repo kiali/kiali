@@ -101,7 +101,7 @@ export const renderDestServicesLinks = (node: any) => {
     return links;
   }
 
-  Object.keys(destServices).forEach((k, index) => {
+  destServices.forEach((ds, index) => {
     const serviceNodeData: NodeData = {
       app: '',
       hasParent: false,
@@ -109,14 +109,14 @@ export const renderDestServicesLinks = (node: any) => {
       isOutsider: data.isOutsider,
       isRoot: data.isRoot,
       isServiceEntry: data.isServiceEntry,
-      namespace: data.namespace,
+      namespace: ds.namespace,
       nodeType: NodeType.SERVICE,
-      service: k,
+      service: ds.name,
       version: '',
       workload: ''
     };
     links.push(<RenderLink key={`service-${index}`} data={serviceNodeData} nodeType={NodeType.SERVICE} />);
-    links.push(<span key={`comma-after-${k}`}>, </span>);
+    links.push(<span key={`comma-after-${ds.name}`}>, </span>);
   });
 
   if (links.length > 0) {
