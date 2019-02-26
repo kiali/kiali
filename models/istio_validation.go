@@ -71,6 +71,7 @@ var ObjectTypeSingular = map[string]string{
 	"rules":             "rule",
 	"quotaspecs":        "quotaspec",
 	"quotaspecbindings": "quotaspecbinding",
+	"meshpolicies":      "meshpolicy",
 }
 
 var checkDescriptors = map[string]IstioCheck{

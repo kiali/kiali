@@ -128,35 +128,30 @@ func TestMeshPolicymTLSDisabledDestinationRuleMissing(t *testing.T) {
 func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations := MtlsChecker{
+	validations, valid := MtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
 	assert.NotEmpty(validations)
 	assert.Equal(1, len(validations))
+	assert.False(valid)
 
-	validation, ok := validations[models.BuildKey(MeshPolicyCheckerType, "default")]
-	assert.True(ok)
-	assert.False(validation.Valid)
-
-	assert.NotEmpty(validation.Checks)
-	assert.Equal(models.ErrorSeverity, validation.Checks[0].Severity)
-	assert.Equal("", validation.Checks[0].Path)
-	assert.Equal(models.CheckMessage("meshpolicies.mtls.destinationrulemissing"), validation.Checks[0].Message)
+	validation := validations[0]
+	assert.NotNil(validation)
+	assert.Equal(models.ErrorSeverity, validation.Severity)
+	assert.Equal("spec/peers/mtls", validation.Path)
+	assert.Equal(models.CheckMessage("meshpolicies.mtls.destinationrulemissing"), validation.Message)
 }
 
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations := MtlsChecker{
+	validations, valid := MtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.BuildKey(MeshPolicyCheckerType, "default")]
-
-	assert.False(ok)
-	assert.Nil(validation)
+	assert.True(valid)
 }

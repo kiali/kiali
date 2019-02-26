@@ -708,6 +708,71 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 	return true, -1
 }
 
+func MeshPolicyHasMTLSEnabled(meshPolicy IstioObject) bool {
+
+	// It is mandatory to have default as a name
+	if meshMeta := meshPolicy.GetObjectMeta(); meshMeta.Name != "default" {
+		return false
+	}
+
+	// It is no globally enabled when has targets
+	targets, targetPresent := meshPolicy.GetSpec()["targets"]
+	specificTarget := targetPresent && len(targets.([]interface{})) > 0
+	if specificTarget {
+		return false
+	}
+
+	// It is globally enabled when a peer has mtls enabled
+	peers, peersPresent := meshPolicy.GetSpec()["peers"]
+	if !peersPresent {
+		return false
+	}
+
+	for _, peer := range peers.([]interface{}) {
+		peerMap := peer.(map[string]interface{})
+		if mtls, present := peerMap["mtls"]; present {
+			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
+				// mTLS enabled in case there is an empty map or mode is STRICT
+				if mode, found := mtlsMap["mode"]; !found || mode == "STRICT" {
+					return true
+				}
+			} else {
+				// mTLS enabled in case mtls object is empty
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) bool {
+	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
+	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
+	host, hostPresent := destinationRule.GetSpec()["host"]
+	if !hostPresent || host != "*.local" {
+		return false
+	}
+
+	if trafficPolicy, trafficPresent := destinationRule.GetSpec()["trafficPolicy"]; trafficPresent {
+		if trafficCasted, ok := trafficPolicy.(map[string]interface{}); ok {
+			if tls, found := trafficCasted["tls"]; found {
+				if tlsCasted, ok := tls.(map[string]interface{}); ok {
+					if mode, found := tlsCasted["mode"]; found {
+						if modeCasted, ok := mode.(string); ok {
+							if modeCasted == "ISTIO_MUTUAL" {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 func fetch(rValue *[]IstioObject, namespace string, service string, fetcher func(string, string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {
 	defer wg.Done()
 	fetched, err := fetcher(namespace, service)

@@ -1,7 +1,6 @@
 package meshpolicies
 
 import (
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -13,31 +12,23 @@ type MtlsChecker struct {
 	MTLSDetails kubernetes.MTLSDetails
 }
 
-func (t MtlsChecker) Check() models.IstioValidations {
-	validations := models.IstioValidations{}
+func (t MtlsChecker) Check() ([]*models.IstioCheck, bool) {
+	validations := make([]*models.IstioCheck, 0)
 
 	// if MeshPolicy doesn't enables mTLS, stop validation with any check.
-	if !business.MeshPolicyHasMTLSEnabled(t.MeshPolicy) {
-		return validations
+	if !kubernetes.MeshPolicyHasMTLSEnabled(t.MeshPolicy) {
+		return validations, true
 	}
 
 	// otherwise, check among Destination Rules for a rule enabling mTLS mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		if business.DestinationRuleHasMeshWideMTLSEnabled(dr) {
-			return validations
+		if kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr) {
+			return validations, true
 		}
 	}
 
-	check := models.Build("meshpolicies.mtls.destinationrulemissing", "")
-	key := models.BuildKey(MeshPolicyCheckerType, t.MeshPolicy.GetObjectMeta().Name)
-	validations[key] = &models.IstioValidation{
-		Name:       t.MeshPolicy.GetObjectMeta().Name,
-		ObjectType: MeshPolicyCheckerType,
-		Valid:      false,
-		Checks: []*models.IstioCheck{
-			&check,
-		},
-	}
+	check := models.Build("meshpolicies.mtls.destinationrulemissing", "spec/peers/mtls")
+	validations = append(validations, &check)
 
-	return validations
+	return validations, false
 }
