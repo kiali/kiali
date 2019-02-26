@@ -6,7 +6,7 @@ import { ServiceOverview } from '../types/ServiceList';
 import { KialiAppState } from '../store/Store';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from './KialiAppAction';
-import { JAEGER_QUERY } from '../config';
+import { jaegerQuery } from '../config';
 import logfmtParser from 'logfmt/lib/logfmt_parser';
 import moment from 'moment';
 
@@ -30,7 +30,7 @@ export class JaegerURLSearch {
   url: string;
 
   constructor(url: string) {
-    this.url = `${url}${JAEGER_QUERY().PATH}?${JAEGER_QUERY().EMBED.UI_EMBED}=${JAEGER_QUERY().EMBED.VERSION}`;
+    this.url = `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${jaegerQuery().embed.version}`;
   }
 
   addQueryParam(param: string, value: string | number) {
@@ -84,39 +84,39 @@ export const JaegerThunkActions = {
   getSearchURL: () => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
       const searchOptions = getState().jaegerState.search;
-      const jaegerOptions = JAEGER_QUERY().OPTIONS;
+      const jaegerOptions = jaegerQuery().options;
       const urlRequest = new JaegerURLSearch(getState().jaegerState.jaegerURL);
 
       // Search options
-      urlRequest.addQueryParam(jaegerOptions.START_TIME, searchOptions.start);
-      urlRequest.addQueryParam(jaegerOptions.END_TIME, searchOptions.end);
-      urlRequest.addQueryParam(jaegerOptions.LIMIT_TRACES, searchOptions.limit);
-      urlRequest.addQueryParam(jaegerOptions.LOOKBACK, searchOptions.lookback);
-      urlRequest.addQueryParam(jaegerOptions.MAX_DURATION, searchOptions.maxDuration);
-      urlRequest.addQueryParam(jaegerOptions.MIN_DURATION, searchOptions.minDuration);
+      urlRequest.addQueryParam(jaegerOptions.startTime, searchOptions.start);
+      urlRequest.addQueryParam(jaegerOptions.endTime, searchOptions.end);
+      urlRequest.addQueryParam(jaegerOptions.limitTraces, searchOptions.limit);
+      urlRequest.addQueryParam(jaegerOptions.lookback, searchOptions.lookback);
+      urlRequest.addQueryParam(jaegerOptions.maxDuration, searchOptions.maxDuration);
+      urlRequest.addQueryParam(jaegerOptions.minDuration, searchOptions.minDuration);
       urlRequest.addQueryParam(
-        jaegerOptions.SERVICE_SELECTOR,
+        jaegerOptions.serviceSelector,
         searchOptions.serviceSelected + '.' + searchOptions.namespaceSelected
       );
       const logfmtTags = convTagsLogfmt(searchOptions.tags);
       if (logfmtTags) {
-        urlRequest.addQueryParam(jaegerOptions.TAGS, logfmtTags);
+        urlRequest.addQueryParam(jaegerOptions.tags, logfmtTags);
       }
 
       // Embed Options
       const traceOptions = getState().jaegerState.trace;
 
       // Rename query params for 1.9 Jaeger
-      urlRequest.addQueryParam(JAEGER_QUERY().EMBED.UI_TRACE_HIDE_MINIMAP, traceOptions.hideMinimap ? '1' : '0');
-      urlRequest.addQueryParam(JAEGER_QUERY().EMBED.UI_SEARCH_HIDE_GRAPH, searchOptions.hideGraph ? '1' : '0');
-      urlRequest.addQueryParam(JAEGER_QUERY().EMBED.UI_TRACE_HIDE_SUMMARY, traceOptions.hideSummary ? '1' : '0');
+      urlRequest.addQueryParam(jaegerQuery().embed.uiTraceHideMinimap, traceOptions.hideMinimap ? '1' : '0');
+      urlRequest.addQueryParam(jaegerQuery().embed.uiSearchHideGraph, searchOptions.hideGraph ? '1' : '0');
+      urlRequest.addQueryParam(jaegerQuery().embed.uiTraceHideSummary, traceOptions.hideSummary ? '1' : '0');
 
       return dispatch(JaegerActions.setSearchRequest(urlRequest.url));
     };
   },
   setCustomLookback: (startDate: string, startTime: string, endDate: string, endTime: string) => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
-      if (getState().jaegerState.search.lookback === 'custom') {
+      if (getState().jaegerState.search.lookback <= 0) {
         const toTimestamp = getUnixTimeStampInMSFromForm(startDate, startTime, endDate, endTime);
         dispatch(JaegerActions.setCustomLookback(toTimestamp.start, toTimestamp.end));
       }

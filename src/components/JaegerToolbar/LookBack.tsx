@@ -6,38 +6,29 @@ import ToolbarDropdown from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { JaegerActions } from '../../actions/JaegerActions';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from '../../actions/KialiAppAction';
+import { config } from '../../config';
 
 interface LookBackProps {
   fetching: boolean;
   setLookback: (lookback: string) => void;
-  lookback: string;
+  lookback: number;
   onChangeCustom: (when: string, dateField: string, timeField: string) => void;
 }
 
 export class LookBack extends React.PureComponent<LookBackProps, {}> {
-  lookBackOptions = {
-    '1h': 'Last Hour',
-    '2h': 'Last 2 Hours',
-    '3h': 'Last 3 Hours',
-    '6h': 'Last 6 Hours',
-    '12h': 'Last 12 Hours',
-    '24h': 'Last 24 Hours',
-    '2d': 'Last 2 Days',
-    custom: 'Custom Time Range'
-  };
+  lookBackOptions = { ...config.toolbar.intervalDuration, ...{ 0: 'Custom Time Range' } };
 
   constructor(props: LookBackProps) {
     super(props);
   }
 
   componentDidMount() {
-    this.props.setLookback(this.props.lookback);
+    this.props.setLookback(String(this.props.lookback));
   }
 
   render() {
     const { lookback, fetching, setLookback, onChangeCustom } = this.props;
-    const tz = lookback === 'custom' ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
-
+    const tz = lookback === 0 ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
     return (
       <span style={{ marginLeft: '10px' }}>
         <Col componentClass={Form.ControlLabel} style={{ marginRight: '10px' }}>
@@ -117,7 +108,7 @@ const mapStateToProps = (state: KialiAppState) => {
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
     setLookback: (lookback: string) => {
-      dispatch(JaegerActions.setLookback(lookback));
+      dispatch(JaegerActions.setLookback(Number(lookback)));
     }
   };
 };

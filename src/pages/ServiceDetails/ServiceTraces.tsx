@@ -50,7 +50,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
       dispatch(JaegerActions.setNamespace(namespace));
       dispatch(JaegerActions.setService(service));
       dispatch(JaegerActions.setTags('error=true'));
-      dispatch(JaegerActions.setLookback('1h'));
+      dispatch(JaegerActions.setLookback(3600));
       dispatch(JaegerActions.setDurations('', ''));
       dispatch(JaegerThunkActions.getSearchURL());
     }

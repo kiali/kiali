@@ -56,6 +56,7 @@ const _tester = (path: string, expectedMenuPath: string) => {
       navCollapsed={false}
       setNavCollapsed={jest.fn()}
       jaegerUrl={''}
+      enableIntegration={false}
       {...routerProps}
     />
   );

@@ -14,7 +14,8 @@ const getJaegerUrl = (components: Component[]) => {
 const mapStateToProps = (state: KialiAppState) => ({
   authenticated: state.authentication.status === LoginStatus.loggedIn,
   navCollapsed: state.userSettings.interface.navCollapse,
-  jaegerUrl: getJaegerUrl(state.statusState.components)
+  jaegerUrl: getJaegerUrl(state.statusState.components),
+  enableIntegration: state.jaegerState.enableIntegration
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

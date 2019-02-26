@@ -50,7 +50,7 @@ const basicAuth = (username: UserName, password: Password) => {
   return { username: username, password: password };
 };
 
-export const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any, auth?: AuthToken) =>
+const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any, auth?: AuthToken) =>
   axios.request<P>({
     method: method,
     url: url,

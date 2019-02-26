@@ -1,5 +1,5 @@
 import { convTagsLogfmt, getUnixTimeStampInMSFromForm, JaegerURLSearch } from '../JaegerThunkActions';
-import { JAEGER_QUERY } from '../../config';
+import { jaegerQuery } from '../../config';
 import moment from 'moment-timezone';
 
 describe('JaegerThunkActions', () => {
@@ -38,21 +38,21 @@ describe('JaegerThunkActions', () => {
 
       it('JaegerURLSearch constructor', () => {
         expect(jaegerURLclass.url).toEqual(
-          `${url}${JAEGER_QUERY().PATH}?${JAEGER_QUERY().EMBED.UI_EMBED}=${JAEGER_QUERY().EMBED.VERSION}`
+          `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${jaegerQuery().embed.version}`
         );
       });
 
       it('JaegerURLSearch addQueryParam method with number value', () => {
         jaegerURLclass.addQueryParam('uiTimelineHideMinimap', 1);
         expect(jaegerURLclass.url).toEqual(
-          `${url}${JAEGER_QUERY().PATH}?${JAEGER_QUERY().EMBED.UI_EMBED}=${
-            JAEGER_QUERY().EMBED.VERSION
+          `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${
+            jaegerQuery().embed.version
           }&uiTimelineHideMinimap=1`
         );
         jaegerURLclass.addQueryParam('uiTimelineHideSummary', '0');
         expect(jaegerURLclass.url).toEqual(
-          `${url}${JAEGER_QUERY().PATH}?${JAEGER_QUERY().EMBED.UI_EMBED}=${
-            JAEGER_QUERY().EMBED.VERSION
+          `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${
+            jaegerQuery().embed.version
           }&uiTimelineHideMinimap=1&uiTimelineHideSummary=0`
         );
       });
@@ -60,8 +60,8 @@ describe('JaegerThunkActions', () => {
       it('JaegerURLSearch addParam method', () => {
         jaegerURLclass.addParam('uiTimelineHideMinimap');
         expect(jaegerURLclass.url).toEqual(
-          `${url}${JAEGER_QUERY().PATH}?${JAEGER_QUERY().EMBED.UI_EMBED}=${
-            JAEGER_QUERY().EMBED.VERSION
+          `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${
+            jaegerQuery().embed.version
           }&uiTimelineHideMinimap`
         );
       });

@@ -18,7 +18,7 @@ export const INITIAL_JAEGER_STATE: JaegerState = {
     end: '',
     minDuration: '',
     maxDuration: '',
-    lookback: '1h',
+    lookback: 3600,
     url: '',
     tags: ''
   },
@@ -27,19 +27,21 @@ export const INITIAL_JAEGER_STATE: JaegerState = {
     hideSummary: false,
     hideMinimap: false
   },
-  jaegerURL: ''
+  jaegerURL: '',
+  enableIntegration: false
 };
 
-export const converToTimestamp = (lookback: string): number => {
-  let multiplier = 60 * 60 * 1000 * 1000;
-  if (lookback.slice(-1) === 'd') {
-    multiplier *= 24;
-  }
-  return Number(lookback.slice(0, -1)) * multiplier;
+export const converToTimestamp = (lookback: number): number => {
+  const multiplier = 1000 * 1000;
+  return lookback * multiplier;
 };
 
 const JaegerState = (state: JaegerState = INITIAL_JAEGER_STATE, action: KialiAppAction): JaegerState => {
   switch (action.type) {
+    case getType(JaegerActions.setEnableIntegration):
+      return updateState(state, {
+        enableIntegration: action.payload
+      });
     case getType(JaegerActions.setUrl):
       return updateState(state, {
         jaegerURL: action.payload.url
@@ -133,9 +135,8 @@ const JaegerState = (state: JaegerState = INITIAL_JAEGER_STATE, action: KialiApp
       });
     case getType(JaegerActions.setLookback): {
       const nowTime = Date.now() * 1000;
-      const endTime = action.payload !== 'custom' ? `${nowTime}` : state.search.start;
-      const startTime =
-        action.payload !== 'custom' ? `${nowTime - converToTimestamp(action.payload)}` : state.search.end;
+      const endTime = action.payload > 0 ? `${nowTime}` : state.search.start;
+      const startTime = action.payload > 0 ? `${nowTime - converToTimestamp(action.payload)}` : state.search.end;
       return updateState(state, {
         search: {
           namespaceSelected: state.search.namespaceSelected,

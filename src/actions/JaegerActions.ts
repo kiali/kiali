@@ -14,6 +14,8 @@ enum JaegerActionKeys {
   SET_LIMIT = 'SET_LIMIT',
   SET_DURATIONS = 'SET_DURATIONS',
 
+  // ENABLE INTEGRAION WITH JAEGER
+  SET_ENABLE_INTEGRATION = 'SET_ENABLE_INTEGRATION',
   // RESULTS VISUALZIATION OPTIONS
   SET_SEARCH_GRAPH_TO_HIDE = 'SET_SEARCH_GRAPH_TO_HIDE',
 
@@ -36,9 +38,10 @@ export const JaegerActions = {
       list: newList
     })
   ),
+  setEnableIntegration: createStandardAction(JaegerActionKeys.SET_ENABLE_INTEGRATION)<boolean>(),
   setService: createStandardAction(JaegerActionKeys.SET_SERVICE)<string>(),
   setNamespace: createStandardAction(JaegerActionKeys.SET_NAMESPACE)<string>(),
-  setLookback: createStandardAction(JaegerActionKeys.SET_LOOKBACK)<string>(),
+  setLookback: createStandardAction(JaegerActionKeys.SET_LOOKBACK)<number>(),
   setTags: createStandardAction(JaegerActionKeys.SET_TAGS)<string>(),
   setLimit: createStandardAction(JaegerActionKeys.SET_LIMIT)<number>(),
   setSearchRequest: createStandardAction(JaegerActionKeys.SET_SEARCH_REQUEST)<string>(),

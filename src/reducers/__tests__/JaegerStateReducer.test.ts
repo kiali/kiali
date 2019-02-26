@@ -1,5 +1,6 @@
 import JaegerState, { converToTimestamp } from '../JaegerState';
 import { JaegerActions } from '../../actions/JaegerActions';
+import { config } from '../../config';
 
 const initialState = {
   toolbar: {
@@ -15,7 +16,7 @@ const initialState = {
     end: '',
     minDuration: '',
     maxDuration: '',
-    lookback: '1h',
+    lookback: 3600,
     url: '',
     tags: ''
   },
@@ -24,7 +25,8 @@ const initialState = {
     hideSummary: false,
     hideMinimap: false
   },
-  jaegerURL: ''
+  jaegerURL: '',
+  enableIntegration: false
 };
 
 describe('JaegerState reducer', () => {
@@ -81,19 +83,14 @@ describe('JaegerState reducer', () => {
 
   describe('should set Lookback', () => {
     it('method converToTimestamp', () => {
-      const useCases = ['1h', '2h', '3h', '6h', '12h', '24h', '2d'];
-      const multiplier = 60 * 60 * 1000 * 1000;
-      useCases.forEach(c => {
-        let mul = multiplier;
-        if (c.slice(-1) === 'd') {
-          mul *= 24;
-        }
-        expect(converToTimestamp(c)).toEqual(Number(c.slice(0, -1)) * mul);
+      const multiplier = 1000 * 1000;
+      Object.keys(config.toolbar.intervalDuration).forEach(key => {
+        expect(converToTimestamp(Number(key))).toEqual(Number(key) * multiplier);
       });
     });
 
     it('lookback with custom', () => {
-      const lookback = 'custom';
+      const lookback = 0;
       expectedState.search.lookback = lookback;
       expect(JaegerState(initialState, JaegerActions.setLookback(lookback))).toEqual(expectedState);
     });

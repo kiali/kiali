@@ -3,17 +3,9 @@ import { shallow } from 'enzyme';
 import { LookBack } from '../LookBack';
 import { Form, FormGroup } from 'patternfly-react';
 import ToolbarDropdown from '../../../components/ToolbarDropdown/ToolbarDropdown';
+import { config } from '../../../config';
 
-const lookBackOptions = {
-  '1h': 'Last Hour',
-  '2h': 'Last 2 Hours',
-  '3h': 'Last 3 Hours',
-  '6h': 'Last 6 Hours',
-  '12h': 'Last 12 Hours',
-  '24h': 'Last 24 Hours',
-  '2d': 'Last 2 Days',
-  custom: 'Custom Time Range'
-};
+const lookBackOptions = { ...config.toolbar.intervalDuration, ...{ 0: 'Custom Time Range' } };
 
 describe('LookBack', () => {
   let wrapper, onChangeCustom, setLookback;
@@ -22,7 +14,7 @@ describe('LookBack', () => {
     onChangeCustom = jest.fn();
     setLookback = jest.fn();
     wrapper = shallow(
-      <LookBack onChangeCustom={onChangeCustom} setLookback={setLookback} fetching={false} lookback={''} />
+      <LookBack onChangeCustom={onChangeCustom} setLookback={setLookback} fetching={false} lookback={3600} />
     );
   });
 
@@ -33,7 +25,7 @@ describe('LookBack', () => {
 
   it('renders Extra forms when lookback is custom', () => {
     expect(wrapper.find(Form).length).toEqual(0);
-    wrapper.setProps({ lookback: 'custom' });
+    wrapper.setProps({ lookback: 0 });
     expect(wrapper.find(Form).length).toEqual(1);
     expect(wrapper.find(FormGroup).length).toEqual(2);
   });

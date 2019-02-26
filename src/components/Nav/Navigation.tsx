@@ -24,6 +24,7 @@ type PropsType = RouteComponentProps & {
   checkCredentials: () => void;
   setNavCollapsed: (collapse: boolean) => void;
   jaegerUrl: string;
+  enableIntegration: boolean;
 };
 
 class Navigation extends React.Component<PropsType> {
@@ -71,6 +72,17 @@ class Navigation extends React.Component<PropsType> {
       return isRoute;
     });
     return navItems.map(item => {
+      if (item.title === 'Distributed Tracing' && !this.props.enableIntegration && this.props.jaegerUrl !== '') {
+        return (
+          <VerticalNav.Item
+            key={item.to}
+            title={item.title}
+            iconClass={item.iconClass}
+            active={item === activeItem}
+            onClick={() => this.goTojaeger()}
+          />
+        );
+      }
       return item.title === 'Distributed Tracing' && this.props.jaegerUrl === '' ? (
         ''
       ) : (

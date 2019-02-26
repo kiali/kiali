@@ -19,7 +19,7 @@ export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
       <Card>
         <Card.Title>
           Values should be in the{' '}
-          <a href="https://brandur.org/logfmt" target="_blank">
+          <a rel="noopener noreferrer" href="https://brandur.org/logfmt" target="_blank">
             logfmt
           </a>{' '}
           format.

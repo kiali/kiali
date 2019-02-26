@@ -21,6 +21,7 @@ type ServiceDetailsState = {
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
   jaegerUrl: string;
+  enableIntegration: boolean;
   getErrorTraces: (service: string) => void;
 }
 
@@ -155,7 +156,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   navigateToJaeger = () => {
-    window.open(this.props.jaegerUrl + `/search?service=${this.props.match.params.service}`, '_blank');
+    window.open(
+      this.props.jaegerUrl + `/search?service=${this.props.match.params.service}.${this.props.match.params.namespace}`,
+      '_blank'
+    );
   };
 
   render() {
@@ -172,9 +176,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               <NavItem eventKey="metrics">
                 <div>Inbound Metrics</div>
               </NavItem>
-              {this.props.jaegerUrl && (
+              {this.props.enableIntegration ? (
                 <NavItem eventKey="traces">
-                  <div>
+                  <>
                     Error Traces{' '}
                     <span>
                       ({errorTraces}
@@ -183,7 +187,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                       )}
                       )
                     </span>
-                  </div>
+                  </>
+                </NavItem>
+              ) : (
+                <NavItem onClick={this.navigateToJaeger}>
+                  <>
+                    <Icon type={'fa'} name={'external-link'} /> Traces
+                  </>
                 </NavItem>
               )}
             </Nav>
@@ -207,7 +217,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   direction={'inbound'}
                 />
               </TabPane>
-              {this.props.jaegerUrl && (
+              {this.props.enableIntegration && (
                 <TabPane eventKey="traces" mountOnEnter={true} unmountOnExit={true}>
                   <ServiceTracesContainer
                     namespace={this.props.match.params.namespace}

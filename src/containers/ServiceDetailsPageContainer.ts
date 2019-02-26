@@ -8,7 +8,8 @@ const getJaegerUrl = (components: Component[]) => {
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerUrl: getJaegerUrl(state.statusState.components)
+  jaegerUrl: getJaegerUrl(state.statusState.components),
+  enableIntegration: state.jaegerState.enableIntegration
 });
 
 const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetailsPage);

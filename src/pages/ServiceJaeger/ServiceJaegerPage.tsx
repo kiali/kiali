@@ -43,7 +43,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
       dispatch(JaegerActions.setNamespace(''));
       dispatch(JaegerActions.setService(''));
       dispatch(JaegerActions.setTags(''));
-      dispatch(JaegerActions.setLookback('1h'));
+      dispatch(JaegerActions.setLookback(3600));
       dispatch(JaegerActions.setDurations('', ''));
       dispatch(JaegerActions.setSearchRequest(''));
     }

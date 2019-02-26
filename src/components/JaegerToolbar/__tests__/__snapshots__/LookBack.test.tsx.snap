@@ -5,13 +5,13 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <LookBack
     fetching={false}
-    lookback=""
+    lookback={3600}
     onChangeCustom={[MockFunction]}
     setLookback={
       [MockFunction] {
         "calls": Array [
           Array [
-            "",
+            "3600",
           ],
         ],
       }
@@ -48,27 +48,31 @@ ShallowWrapper {
             [MockFunction] {
               "calls": Array [
                 Array [
-                  "",
+                  "3600",
                 ],
               ],
             }
           }
           id="lookback-selector"
-          label={undefined}
+          label="Last hour"
           options={
             Object {
-              "12h": "Last 12 Hours",
-              "1h": "Last Hour",
-              "24h": "Last 24 Hours",
-              "2d": "Last 2 Days",
-              "2h": "Last 2 Hours",
-              "3h": "Last 3 Hours",
-              "6h": "Last 6 Hours",
-              "custom": "Custom Time Range",
+              "0": "Custom Time Range",
+              "10800": "Last 3 hours",
+              "1800": "Last 30 min",
+              "21600": "Last 6 hours",
+              "2592000": "Last 30 days",
+              "300": "Last 5 min",
+              "3600": "Last hour",
+              "43200": "Last 12 hours",
+              "60": "Last min",
+              "600": "Last 10 min",
+              "604800": "Last 7 days",
+              "86400": "Last day",
             }
           }
           useName={false}
-          value=""
+          value={3600}
         />,
         null,
       ],
@@ -103,24 +107,28 @@ ShallowWrapper {
           "handleSelect": [MockFunction] {
             "calls": Array [
               Array [
-                "",
+                "3600",
               ],
             ],
           },
           "id": "lookback-selector",
-          "label": undefined,
+          "label": "Last hour",
           "options": Object {
-            "12h": "Last 12 Hours",
-            "1h": "Last Hour",
-            "24h": "Last 24 Hours",
-            "2d": "Last 2 Days",
-            "2h": "Last 2 Hours",
-            "3h": "Last 3 Hours",
-            "6h": "Last 6 Hours",
-            "custom": "Custom Time Range",
+            "0": "Custom Time Range",
+            "10800": "Last 3 hours",
+            "1800": "Last 30 min",
+            "21600": "Last 6 hours",
+            "2592000": "Last 30 days",
+            "300": "Last 5 min",
+            "3600": "Last hour",
+            "43200": "Last 12 hours",
+            "60": "Last min",
+            "600": "Last 10 min",
+            "604800": "Last 7 days",
+            "86400": "Last day",
           },
           "useName": false,
-          "value": "",
+          "value": 3600,
         },
         "ref": null,
         "rendered": null,
@@ -154,27 +162,31 @@ ShallowWrapper {
               [MockFunction] {
                 "calls": Array [
                   Array [
-                    "",
+                    "3600",
                   ],
                 ],
               }
             }
             id="lookback-selector"
-            label={undefined}
+            label="Last hour"
             options={
               Object {
-                "12h": "Last 12 Hours",
-                "1h": "Last Hour",
-                "24h": "Last 24 Hours",
-                "2d": "Last 2 Days",
-                "2h": "Last 2 Hours",
-                "3h": "Last 3 Hours",
-                "6h": "Last 6 Hours",
-                "custom": "Custom Time Range",
+                "0": "Custom Time Range",
+                "10800": "Last 3 hours",
+                "1800": "Last 30 min",
+                "21600": "Last 6 hours",
+                "2592000": "Last 30 days",
+                "300": "Last 5 min",
+                "3600": "Last hour",
+                "43200": "Last 12 hours",
+                "60": "Last min",
+                "600": "Last 10 min",
+                "604800": "Last 7 days",
+                "86400": "Last day",
               }
             }
             useName={false}
-            value=""
+            value={3600}
           />,
           null,
         ],
@@ -209,24 +221,28 @@ ShallowWrapper {
             "handleSelect": [MockFunction] {
               "calls": Array [
                 Array [
-                  "",
+                  "3600",
                 ],
               ],
             },
             "id": "lookback-selector",
-            "label": undefined,
+            "label": "Last hour",
             "options": Object {
-              "12h": "Last 12 Hours",
-              "1h": "Last Hour",
-              "24h": "Last 24 Hours",
-              "2d": "Last 2 Days",
-              "2h": "Last 2 Hours",
-              "3h": "Last 3 Hours",
-              "6h": "Last 6 Hours",
-              "custom": "Custom Time Range",
+              "0": "Custom Time Range",
+              "10800": "Last 3 hours",
+              "1800": "Last 30 min",
+              "21600": "Last 6 hours",
+              "2592000": "Last 30 days",
+              "300": "Last 5 min",
+              "3600": "Last hour",
+              "43200": "Last 12 hours",
+              "60": "Last min",
+              "600": "Last 10 min",
+              "604800": "Last 7 days",
+              "86400": "Last day",
             },
             "useName": false,
-            "value": "",
+            "value": 3600,
           },
           "ref": null,
           "rendered": null,

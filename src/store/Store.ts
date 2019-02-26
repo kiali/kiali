@@ -139,7 +139,7 @@ export interface JaegerState {
     end: string;
     minDuration: string;
     maxDuration: string;
-    lookback: string;
+    lookback: number;
     url: string;
     tags: string;
   };
@@ -149,6 +149,7 @@ export interface JaegerState {
     hideMinimap: boolean;
   };
   jaegerURL: string;
+  enableIntegration: boolean;
 }
 
 // This defines the Kiali Global Application State

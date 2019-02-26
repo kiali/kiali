@@ -24,6 +24,10 @@ const HelpDropdownThunkActions = {
           const hasJaeger = status['data']['externalServices'].filter(item => item['name'] === 'Jaeger');
           if (hasJaeger.length === 1) {
             dispatch(JaegerActions.setUrl(hasJaeger[0]['url']));
+            // If same protocol enable integration
+            if (hasJaeger[0]['url'].startsWith(window.location.protocol)) {
+              dispatch(JaegerActions.setEnableIntegration(true));
+            }
           }
 
           status['data']['warningMessages'].forEach(wMsg => {
