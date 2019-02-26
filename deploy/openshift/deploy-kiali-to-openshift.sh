@@ -237,8 +237,28 @@ do
   fi
 done
 
-# As a last step, we enable oAuth, because we need stuff like routes to be well
+# Next step, we enable oAuth, because we need stuff like routes to be well
 # defined before creating the OAuthClients.
 PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" \
   REDIRECT_URL="${PROTOCOL}://$(oc get routes -n ${NAMESPACE} kiali -o jsonpath={.spec.host})" \
   apply_yaml "oauth"
+
+# Deploy Kiali MonitoringDashboards to OpenShift
+# Note for undeploy script: dashboards are implicitly undeployed when the related CRD is removed
+echo "Deploying Kiali dashboards to OpenShift project ${NAMESPACE}"
+for dashboard in nodejs thorntail vertx-client vertx-eventbus vertx-pool vertx-server
+do
+  yaml_path="${YAML_DIR}/../dashboards/${dashboard}.yaml"
+  if [ -f "${yaml_path}" ]; then
+    echo "Using YAML file: ${yaml_path}"
+    cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+  else
+    get_downloader
+    yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/${dashboard}.yaml"
+    echo "Downloading YAML via: ${downloader} ${yaml_url}"
+    ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+  fi
+  if [ "$?" != "0" ]; then
+    echo "WARNING: Failed to deploy runtimes dashboards. They are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
+  fi
+done
