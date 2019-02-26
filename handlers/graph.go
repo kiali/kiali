@@ -379,7 +379,6 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	populateTrafficMapTcp(trafficMap, &tcpUnkVector, o)
 
 	// 2) query for traffic originating from a workload outside of the namespace. Exclude any "unknown" source telemetry (an unusual corner case)
-	// tcpGroupBy = "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version"
 	query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",source_workload!="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
 		tcpMetric,
 		namespace,
@@ -498,12 +497,6 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
-
-		// TCP queries doesn't use destination_service_namespace for the unknown node.
-		// Check if this is the case and use destination_workload_namespace
-		// if !destSvcNsOk {
-		//	lDestSvcNs, destSvcNsOk = m["destination_workload_namespace"]
-		// }
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
