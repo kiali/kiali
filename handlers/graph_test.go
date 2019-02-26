@@ -88,31 +88,33 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 
 // mockNamespaceGraph provides the same single-namespace mocks to be used for different graph types
 func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q0m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q0m1 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "",
-		"destination_workload":          "kiali-2412", // test case when there is no destination_service_name
-		"destination_app":               "",
-		"destination_version":           "",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "kiali-2412", // test case when there is no destination_service_name
+		"destination_app":                "",
+		"destination_version":            "",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
@@ -121,205 +123,221 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Metric: q0m1,
 			Value:  50}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
 			Value:  100}}
 
-	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q2m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v1",
-		"destination_app":               "reviews",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_app":                "reviews",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m2 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v3",
-		"destination_app":               "reviews",
-		"destination_version":           "v3",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v3",
+		"destination_app":                "reviews",
+		"destination_version":            "v3",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "300"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "300"}
 	q2m4 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "400"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "400"}
 	q2m5 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q2m6 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m7 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m8 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v2",
-		"source_app":                    "reviews",
-		"source_version":                "v2",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v2",
+		"source_app":                     "reviews",
+		"source_version":                 "v2",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m9 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v2",
-		"source_app":                    "reviews",
-		"source_version":                "v2",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v2",
+		"source_app":                     "reviews",
+		"source_version":                 "v2",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q2m10 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v2",
-		"source_app":                    "reviews",
-		"source_version":                "v2",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v2",
+		"source_app":                     "reviews",
+		"source_version":                 "v2",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m11 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v3",
-		"source_app":                    "reviews",
-		"source_version":                "v3",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v3",
+		"source_app":                     "reviews",
+		"source_version":                 "v3",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m12 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v3",
-		"source_app":                    "reviews",
-		"source_version":                "v3",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v3",
+		"source_app":                     "reviews",
+		"source_version":                 "v3",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q2m13 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v3",
-		"source_app":                    "reviews",
-		"source_version":                "v3",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v3",
-		"destination_app":               "reviews",
-		"destination_version":           "v3",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v3",
+		"source_app":                     "reviews",
+		"source_version":                 "v3",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v3",
+		"destination_app":                "reviews",
+		"destination_version":            "v3",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q2m14 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v3",
-		"source_app":                    "reviews",
-		"source_version":                "v3",
-		"destination_service_namespace": "bankapp",
-		"destination_service_name":      "pricing",
-		"destination_workload":          "pricing-v1",
-		"destination_app":               "pricing",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v3",
+		"source_app":                     "reviews",
+		"source_version":                 "v3",
+		"destination_service_namespace":  "bankapp",
+		"destination_service_name":       "pricing",
+		"destination_workload_namespace": "bankapp",
+		"destination_workload":           "pricing-v1",
+		"destination_app":                "pricing",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 
 	v2 := model.Vector{
 		&model.Sample{
@@ -368,14 +386,15 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Metric: q2m14,
 			Value:  20}}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q3m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
 		"source_app":                     "unknown",
 		"source_version":                 "unknown",
-		"destination_workload_namespace": "bookinfo",
+		"destination_service_namespace":  "bookinfo",
 		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
 		"destination_workload":           "tcp-v1",
 		"destination_app":                "tcp",
 		"destination_version":            "v1"}
@@ -384,33 +403,35 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
 			Metric: q3m0,
 			Value:  400}}
 
-	q4 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q4 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q4m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 	v4 := model.Vector{
 		&model.Sample{
 			Metric: q4m0,
 			Value:  150}}
 
-	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q5m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 
 	v5 := model.Vector{
 		&model.Sample{
@@ -569,31 +590,33 @@ func TestWorkloadGraph(t *testing.T) {
 }
 
 func TestAppNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q0m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q0m1 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
@@ -602,103 +625,111 @@ func TestAppNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v1",
-		"destination_app":               "reviews",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_app":                "reviews",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m2 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v3",
-		"destination_app":               "reviews",
-		"destination_version":           "v3",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v3",
+		"destination_app":                "reviews",
+		"destination_version":            "v3",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "300"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "300"}
 	q1m4 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "400"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "400"}
 	q1m5 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q1m6 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m7 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 
 	v1 := model.Vector{
 		&model.Sample{
@@ -726,20 +757,21 @@ func TestAppNodeGraph(t *testing.T) {
 			Metric: q1m7,
 			Value:  20}}
 
-	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v2 := model.Vector{}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q3m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
 			Metric: q3m0,
@@ -783,31 +815,33 @@ func TestAppNodeGraph(t *testing.T) {
 }
 
 func TestVersionedAppNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q0m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q0m1 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
@@ -816,103 +850,111 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v1",
-		"destination_app":               "reviews",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_app":                "reviews",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m2 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v3",
-		"destination_app":               "reviews",
-		"destination_version":           "v3",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v3",
+		"destination_app":                "reviews",
+		"destination_version":            "v3",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "300"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "300"}
 	q1m4 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "400"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "400"}
 	q1m5 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q1m6 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m7 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 
 	v1 := model.Vector{
 		&model.Sample{
@@ -940,20 +982,21 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 			Metric: q1m7,
 			Value:  20}}
 
-	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_app="productpage",destination_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v2 := model.Vector{}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_app="productpage",source_version="v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q3m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
 			Metric: q3m0,
@@ -997,31 +1040,33 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 }
 
 func TestWorkloadNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q0m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q0m1 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
@@ -1030,103 +1075,111 @@ func TestWorkloadNodeGraph(t *testing.T) {
 			Metric: q0m1,
 			Value:  100}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v1",
-		"destination_app":               "reviews",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_app":                "reviews",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m2 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v3",
-		"destination_app":               "reviews",
-		"destination_version":           "v3",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v3",
+		"destination_app":                "reviews",
+		"destination_version":            "v3",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "300"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "300"}
 	q1m4 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "400"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "400"}
 	q1m5 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "500"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "500"}
 	q1m6 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "details",
-		"destination_workload":          "details-v1",
-		"destination_app":               "details",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_app":                "details",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	q1m7 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 
 	v1 := model.Vector{
 		&model.Sample{
@@ -1154,20 +1207,21 @@ func TestWorkloadNodeGraph(t *testing.T) {
 			Metric: q1m7,
 			Value:  20}}
 
-	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_workload_namespace="bookinfo",destination_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v2 := model.Vector{}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo",source_workload="productpage-v1"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q3m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "tcp",
-		"destination_workload":          "tcp-v1",
-		"destination_app":               "tcp",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "tcp",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "tcp-v1",
+		"destination_app":                "tcp",
+		"destination_version":            "v1"}
 	v3 := model.Vector{
 		&model.Sample{
 			Metric: q3m0,
@@ -1211,38 +1265,40 @@ func TestWorkloadNodeGraph(t *testing.T) {
 }
 
 func TestServiceNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
 			Value:  100}}
 
-	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q2 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	q2m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1"}
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
@@ -1289,85 +1345,88 @@ func TestServiceNodeGraph(t *testing.T) {
 // - a "shared" node (internal in ns-1, outsider in ns-2)
 // note: this is still not particularly robust, not sure how to include appenders in unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q0m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v0 := model.Vector{
 		&model.Sample{
 			Metric: q0m0,
 			Value:  50}}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	v1 := model.Vector{}
 
-	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q2 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	v2 := model.Vector{}
 
-	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q3 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v3 := model.Vector{}
 
-	q4 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q4 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v4 := model.Vector{}
 
-	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v5 := model.Vector{}
 
-	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q6m0 := model.Metric{
-		"source_workload_namespace":     "unknown",
-		"source_workload":               "unknown",
-		"source_app":                    "unknown",
-		"source_version":                "unknown",
-		"destination_service_namespace": "tutorial",
-		"destination_service_name":      "customer",
-		"destination_workload":          "customer-v1",
-		"destination_app":               "customer",
-		"destination_version":           "v1",
-		"request_protocol":              "grpc",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "unknown",
+		"source_workload":                "unknown",
+		"source_app":                     "unknown",
+		"source_version":                 "unknown",
+		"destination_service_namespace":  "tutorial",
+		"destination_service_name":       "customer",
+		"destination_workload_namespace": "tutorial",
+		"destination_workload":           "customer-v1",
+		"destination_app":                "customer",
+		"destination_version":            "v1",
+		"request_protocol":               "grpc",
+		"response_code":                  "200"}
 	v6 := model.Vector{
 		&model.Sample{
 			Metric: q6m0,
 			Value:  50}}
 
-	q7 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q7 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	v7 := model.Vector{}
 
-	q8 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
+	q8 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code),0.001)`
 	q8m0 := model.Metric{
-		"source_workload_namespace":     "tutorial",
-		"source_workload":               "customer-v1",
-		"source_app":                    "customer",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1",
-		"request_protocol":              "http",
-		"response_code":                 "200"}
+		"source_workload_namespace":      "tutorial",
+		"source_workload":                "customer-v1",
+		"source_app":                     "customer",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200"}
 	v8 := model.Vector{
 		&model.Sample{
 			Metric: q8m0,
 			Value:  50}}
 
-	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_workload_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q9 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v9 := model.Vector{}
 
-	q10 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q10 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace!="tutorial",source_workload!="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v10 := model.Vector{}
 
-	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version),0.001)`
+	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version),0.001)`
 	v11 := model.Vector{}
 
 	client, api, _, err := setupMocked()

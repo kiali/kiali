@@ -10,9 +10,12 @@
           "nodeType": "app",
           "namespace": "bankapp",
           "app": "pricing",
-          "destServices": {
-            "pricing": true
-          },
+          "destServices": [
+            {
+              "namespace": "bankapp",
+              "name": "pricing"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -31,9 +34,6 @@
           "nodeType": "workload",
           "namespace": "bookinfo",
           "workload": "kiali-2412",
-          "destServices": {
-            "": true
-          },
           "traffic": [
             {
               "protocol": "http",
@@ -50,9 +50,12 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "details",
-          "destServices": {
-            "details": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "details"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -72,9 +75,12 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "productpage",
-          "destServices": {
-            "productpage": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -98,9 +104,12 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "ratings",
-          "destServices": {
-            "ratings": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "ratings"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -118,9 +127,12 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "reviews",
-          "destServices": {
-            "reviews": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -138,9 +150,12 @@
           "nodeType": "app",
           "namespace": "bookinfo",
           "app": "tcp",
-          "destServices": {
-            "tcp": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "tcp"
+            }
+          ],
           "traffic": [
             {
               "protocol": "tcp",

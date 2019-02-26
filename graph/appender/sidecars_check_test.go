@@ -11,7 +11,7 @@ import (
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
@@ -149,7 +149,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", "workload-1", graph.Unknown, graph.Unknown, "", graph.GraphTypeWorkload)
+	node := graph.NewNode("testing", "", "testing", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -158,7 +158,7 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 func buildAppTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", graph.Unknown, "myTest", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testing", "", "testing", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -167,7 +167,7 @@ func buildAppTrafficMap() graph.TrafficMap {
 func buildServiceTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", graph.Unknown, graph.Unknown, graph.Unknown, "svc", graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testing", "svc", "testing", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap

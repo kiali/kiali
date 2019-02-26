@@ -3434,9 +3434,9 @@
           "x-go-name": "App"
         },
         "destServices": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "boolean"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Service"
           },
           "x-go-name": "DestServices"
         },

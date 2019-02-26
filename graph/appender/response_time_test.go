@@ -13,66 +13,71 @@ import (
 func TestResponseTime(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version)),0.001)`
+	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version)),0.001)`
+	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
 	q1m0 := model.Metric{
-		"source_workload_namespace":     "istio-system",
-		"source_workload":               "ingressgateway-unknown",
-		"source_app":                    "ingressgateway",
-		"source_version":                model.LabelValue(graph.Unknown),
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "productpage",
-		"destination_workload":          "productpage-v1",
-		"destination_app":               "productpage",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_app":                     "ingressgateway",
+		"source_version":                 model.LabelValue(graph.Unknown),
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_app":                "productpage",
+		"destination_version":            "v1"}
 	v1 := model.Vector{
 		&model.Sample{
 			Metric: q1m0,
 			Value:  0.010}}
 
-	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload,destination_app,destination_version)),0.001)`
+	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
 	q2m0 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v1",
-		"destination_app":               "reviews",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_app":                "reviews",
+		"destination_version":            "v1"}
 	q2m1 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "productpage-v1",
-		"source_app":                    "productpage",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "reviews",
-		"destination_workload":          "reviews-v2",
-		"destination_app":               "reviews",
-		"destination_version":           "v2"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_app":                     "productpage",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v2",
+		"destination_app":                "reviews",
+		"destination_version":            "v2"}
 	q2m2 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v1",
-		"source_app":                    "reviews",
-		"source_version":                "v1",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v1",
+		"source_app":                     "reviews",
+		"source_version":                 "v1",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1"}
 	q2m3 := model.Metric{
-		"source_workload_namespace":     "bookinfo",
-		"source_workload":               "reviews-v2",
-		"source_app":                    "reviews",
-		"source_version":                "v2",
-		"destination_service_namespace": "bookinfo",
-		"destination_service_name":      "ratings",
-		"destination_workload":          "ratings-v1",
-		"destination_app":               "ratings",
-		"destination_version":           "v1"}
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "reviews-v2",
+		"source_app":                     "reviews",
+		"source_version":                 "v2",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "ratings",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "ratings-v1",
+		"destination_app":                "ratings",
+		"destination_version":            "v1"}
 	v2 := model.Vector{
 		&model.Sample{
 			Metric: q2m0,
@@ -97,7 +102,7 @@ func TestResponseTime(t *testing.T) {
 	mockQuery(api, q2, &v2)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
+	ingressId, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
 	ingress, ok := trafficMap[ingressId]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
@@ -164,12 +169,12 @@ func TestResponseTime(t *testing.T) {
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
-	ingress := graph.NewNode("istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, "", graph.GraphTypeVersionedApp)
-	productpage := graph.NewNode("bookinfo", "productpage-v1", "productpage", "v1", "productpage", graph.GraphTypeVersionedApp)
-	reviewsV1 := graph.NewNode("bookinfo", "reviews-v1", "reviews", "v1", "reviews", graph.GraphTypeVersionedApp)
-	reviewsV2 := graph.NewNode("bookinfo", "reviews-v2", "reviews", "v2", "reviews", graph.GraphTypeVersionedApp)
-	ratingsPath1 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", "ratings", graph.GraphTypeVersionedApp)
-	ratingsPath2 := graph.NewNode("bookinfo", "ratings-v1", "ratings", "v1", "ratings", graph.GraphTypeVersionedApp)
+	ingress := graph.NewNode("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpage := graph.NewNode("bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	reviewsV1 := graph.NewNode("bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
+	reviewsV2 := graph.NewNode("bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
+	ratingsPath1 := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	ratingsPath2 := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
 	trafficMap[productpage.ID] = &productpage

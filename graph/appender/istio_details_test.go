@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	coreV1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -19,23 +19,23 @@ import (
 func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
-	appNode := graph.NewNode("testNamespace", graph.Unknown, "ratings", "", "ratings", graph.GraphTypeVersionedApp)
-	appNode.Metadata["destServices"] = map[string]bool{"ratings": true}
+	appNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
+	appNode.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNode.ID] = &appNode
 
-	appNodeV1 := graph.NewNode("testNamespace", "ratings-v1", "ratings", "v1", "ratings", graph.GraphTypeVersionedApp)
-	appNodeV1.Metadata["destServices"] = map[string]bool{"ratings": true}
+	appNodeV1 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	appNodeV1.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNodeV1.ID] = &appNodeV1
 
-	appNodeV2 := graph.NewNode("testNamespace", "ratings-v2", "ratings", "v2", "ratings", graph.GraphTypeVersionedApp)
-	appNodeV2.Metadata["destServices"] = map[string]bool{"ratings": true}
+	appNodeV2 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
+	appNodeV2.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNodeV2.ID] = &appNodeV2
 
-	serviceNode := graph.NewNode("testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, "ratings", graph.GraphTypeVersionedApp)
+	serviceNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = &serviceNode
 
-	workloadNode := graph.NewNode("testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, "ratings", graph.GraphTypeWorkload)
-	workloadNode.Metadata["destServices"] = map[string]bool{"ratings": true}
+	workloadNode := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	workloadNode.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[workloadNode.ID] = &workloadNode
 
 	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID

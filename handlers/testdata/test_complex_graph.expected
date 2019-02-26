@@ -12,9 +12,12 @@
           "workload": "productpage-v1",
           "app": "productpage",
           "version": "v1",
-          "destServices": {
-            "productpage": true
-          },
+          "destServices": [
+            {
+              "namespace": "bookinfo",
+              "name": "productpage"
+            }
+          ],
           "traffic": [
             {
               "protocol": "http",
@@ -33,9 +36,12 @@
           "workload": "customer-v1",
           "app": "customer",
           "version": "v1",
-          "destServices": {
-            "customer": true
-          },
+          "destServices": [
+            {
+              "namespace": "tutorial",
+              "name": "customer"
+            }
+          ],
           "traffic": [
             {
               "protocol": "grpc",

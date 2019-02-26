@@ -43,6 +43,15 @@ type NamespaceInfo struct {
 	Duration time.Duration
 }
 
+type Service struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+func (s *Service) Key() string {
+	return fmt.Sprintf("%s %s", s.Namespace, s.Name)
+}
+
 // TrafficMap is a map of app Nodes, each optionally holding Edge data. Metadata
 // is a general purpose map for holding any desired node or edge information.
 // Each app node should have a unique namespace+workload.  Note that it is feasible
@@ -50,8 +59,12 @@ type NamespaceInfo struct {
 // namespace.
 type TrafficMap map[string]*Node
 
-func NewNode(namespace, workload, app, version, service, graphType string) Node {
-	id, nodeType := Id(namespace, workload, app, version, service, graphType)
+func NewNode(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
+	id, nodeType := Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
+	namespace := workloadNamespace
+	if IsOK(namespace) {
+		namespace = serviceNamespace
+	}
 
 	return NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType)
 }
@@ -115,9 +128,15 @@ func NewTrafficMap() TrafficMap {
 	return make(map[string]*Node)
 }
 
-func Id(namespace, workload, app, version, service, graphType string) (id, nodeType string) {
+func Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) (id, nodeType string) {
+	// prefer the workload namespace
+	namespace := workloadNamespace
+	if !IsOK(namespace) {
+		namespace = serviceNamespace
+	}
+
 	// first, check for the special-case "unknown" source node
-	if Unknown == namespace && Unknown == workload && Unknown == app && "" == service {
+	if Unknown == namespace && Unknown == workload && Unknown == app && service == "" {
 		return fmt.Sprintf("unknown_source"), NodeTypeUnknown
 	}
 
