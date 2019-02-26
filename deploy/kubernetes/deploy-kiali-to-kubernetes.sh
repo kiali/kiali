@@ -210,11 +210,11 @@ YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 apply_yaml() {
   local yaml_file="${1}.yaml"
   local yaml_path="${YAML_DIR}/${yaml_file}"
-  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
+  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/kubernetes/${yaml_file}"
 
   if [ -f "${yaml_path}" ]; then
     echo "Using YAML file: ${yaml_path}"
-    cat ${yaml_path}
+    cat ${yaml_path} | envsubst | kubectl apply -n ${NAMESPACE} -f -
   else
     get_downloader
     echo "Downloading YAML via: ${downloader} ${yaml_url}"
