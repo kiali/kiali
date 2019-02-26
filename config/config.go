@@ -76,11 +76,15 @@ const (
 	MaistraVersionSupported = ">= 0.1.0"
 )
 
-// The valid auth strategies
+// The valid auth strategies and values for cookie handling
 const (
 	AuthStrategyOpenshift = "openshift"
 	AuthStrategyLogin     = "login"
 	AuthStrategyAnonymous = "anonymous"
+
+	TokenCookieName   = "kiali-token"
+	AuthStrategyOpenshiftIssuer = "kiali-openshift"
+	AuthStrategyLoginIssuer     = "kiali-login"
 )
 
 // Global configuration for the application.

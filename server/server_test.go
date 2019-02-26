@@ -76,7 +76,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Auth.Strategy = "login"
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
-	apiURLWithAuthentication := serverURL + "/api/token"
+	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 	metricsURL := serverURL + "/metrics"
 

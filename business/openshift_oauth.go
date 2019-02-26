@@ -140,11 +140,13 @@ func getKialiRoutePath() (*string, error) {
 	}
 
 	response, err := request("GET", fmt.Sprintf("oapi/v1/namespaces/%s/routes/kiali", namespace), &conf.BearerToken)
-
-	err = json.Unmarshal(response, &route)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
+	}
+
+	err = json.Unmarshal(response, &route)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse Kiali route: %v", err)
 	}
 
 	if route.Spec.TLS == nil {
@@ -199,7 +201,9 @@ func request(method string, url string, auth *string) ([]byte, error) {
 		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, err)
 	}
 
-	fmt.Printf("[%s] %s (%v) - %s\n", method, url, auth == nil, string(body))
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, string(body))
+	}
 
 	return body, nil
 }
