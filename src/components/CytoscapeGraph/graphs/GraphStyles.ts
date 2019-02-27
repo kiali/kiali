@@ -198,7 +198,7 @@ export class GraphStyles {
               } else if (version && version !== 'unknown') {
                 content = version;
               } else {
-                content = workload ? `unknown\n${workload}` : 'unknown';
+                content = workload ? `${workload}` : `${app}`;
               }
               break;
             case NodeType.SERVICE:
