@@ -1,6 +1,7 @@
-import { Step, StepPlacement } from '../../components/Tour/Tour';
+import { StepPlacement } from '../../components/Tour/Tour';
+import { StatefulStep } from '../../components/Tour/StatefulTour';
 
-const GraphHelpTour: Array<Step> = [
+const GraphHelpTour: Array<StatefulStep> = [
   {
     placement: StepPlacement.BOTTOM_START,
     target: '#namespace-selector',
@@ -28,6 +29,9 @@ const GraphHelpTour: Array<Step> = [
     placement: StepPlacement.RIGHT,
     offset: 0,
     target: '#cytoscape-container',
+    isVisible: target => {
+      return target.contains(document.querySelector('#cy'));
+    },
     name: 'Graph',
     description:
       "Single click a node to see it's summary in the side panel.  Double click a node to see a graph focused on that node.\nDouble click an 'external namespace' node to navigate directly to the namespace in the node's text label."

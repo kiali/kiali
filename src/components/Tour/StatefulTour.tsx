@@ -1,8 +1,12 @@
 import * as React from 'react';
 import Tour, { Step } from './Tour';
 
+export interface StatefulStep extends Step {
+  isVisible?: (target: any) => boolean;
+}
+
 interface StatefulTourProps {
-  steps: Array<Step>;
+  steps: Array<StatefulStep>;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -49,9 +53,12 @@ export default class StatefulTour extends React.Component<StatefulTourProps, Sta
     }
   }
 
-  isStepVisible(step: Step) {
+  isStepVisible(step: StatefulStep) {
     const element = document.querySelector(step.target);
-    return element && element.parentElement;
+    if (element && step.isVisible) {
+      return step.isVisible(element);
+    }
+    return !!element;
   }
 
   isLast() {
@@ -84,7 +91,7 @@ export default class StatefulTour extends React.Component<StatefulTourProps, Sta
 
   render() {
     // Determine de step number depending if the elements are available or not.
-    const stepNumber = this.props.steps.slice(0, this.state.currentStep).reduce((count: number, step: Step) => {
+    const stepNumber = this.props.steps.slice(0, this.state.currentStep).reduce((count: number, step: StatefulStep) => {
       if (this.isStepVisible(step)) {
         return count + 1;
       }
