@@ -265,13 +265,17 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		return
 	}
 
-	meshPolicies, err := in.k8s.GetMeshPolicies(config.Get().IstioNamespace)
-	if err != nil {
-		errChan <- err
-		return
-	} else {
-		mtlsDetails.MeshPolicies = meshPolicies
-	}
+	mpChan := make(chan []kubernetes.IstioObject)
+	mpErrChan := make(chan error)
+	go func() {
+		meshPolicies, err := in.k8s.GetMeshPolicies(config.Get().IstioNamespace)
+		if err != nil {
+			mpErrChan <- err
+			errChan <- err
+		} else {
+			mpChan <- meshPolicies
+		}
+	}()
 
 	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
 	if err != nil {
@@ -289,5 +293,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		errChan <- err
 	} else {
 		mtlsDetails.DestinationRules = destinationRules
+	}
+
+	if len(mpErrChan) == 0 {
+		mtlsDetails.MeshPolicies = <-mpChan
 	}
 }

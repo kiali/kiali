@@ -23,7 +23,7 @@ func (m MeshPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-// runChecks runs all the individual checks for a single virtual service and appends the result into validations.
+// runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (m MeshPolicyChecker) runChecks(meshPolicy kubernetes.IstioObject) models.IstioValidations {
 	meshPolicyName := meshPolicy.GetObjectMeta().Name
 	key := models.IstioValidationKey{Name: meshPolicyName, ObjectType: MeshPolicyCheckerType}
