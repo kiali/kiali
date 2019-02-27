@@ -1,6 +1,7 @@
 package business
 
 import (
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -22,12 +23,40 @@ type HealthService struct {
 
 // GetServiceHealth returns a service health (service request error rate)
 func (in *HealthService) GetServiceHealth(namespace, service, rateInterval string, queryTime time.Time) (models.ServiceHealth, error) {
+	var rqHealth models.RequestHealth
+	var eTraces int
 	var err error
+	var errFunc error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetServiceHealth")
 	defer promtimer.ObserveNow(&err)
 
-	rqHealth, err := in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
-	return models.ServiceHealth{Requests: rqHealth}, err
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	errChan := make(chan error, 2)
+	go func() {
+		defer wg.Done()
+		var errRqHealth error
+		rqHealth, errRqHealth = in.getServiceRequestsHealth(namespace, service, rateInterval, queryTime)
+		if errRqHealth != nil {
+			errChan <- errRqHealth
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var errReqTraces error
+		eTraces, errReqTraces = getErrorTracesFromJaeger(namespace, service)
+		if errReqTraces != nil {
+			errChan <- errReqTraces
+		}
+	}()
+	wg.Wait()
+	if len(errChan) != 0 {
+		errFunc = <-errChan
+		return models.ServiceHealth{}, errFunc
+	}
+
+	return models.ServiceHealth{Requests: rqHealth, ErrorTraces: eTraces}, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)

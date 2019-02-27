@@ -15,7 +15,8 @@ type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
-	Requests RequestHealth `json:"requests"`
+	Requests    RequestHealth `json:"requests"`
+	ErrorTraces int           `json:"errorTraces"`
 }
 
 // AppHealth contains aggregated health from various sources, for a given app
