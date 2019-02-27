@@ -89,7 +89,7 @@ export class GraphStyles {
       let content = '';
 
       switch (edgeLabelMode) {
-        case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND: {
+        case EdgeLabelMode.REQUESTS_PER_SECOND: {
           let rate = 0;
           let pErr = 0;
           if (ele.data(CyEdge.http) > 0) {
@@ -120,7 +120,7 @@ export class GraphStyles {
           }
           break;
         }
-        case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL: {
+        case EdgeLabelMode.REQUESTS_PERCENTAGE: {
           let pReq;
           if (ele.data(CyEdge.httpPercentReq) > 0) {
             pReq = Number(ele.data(CyEdge.httpPercentReq));

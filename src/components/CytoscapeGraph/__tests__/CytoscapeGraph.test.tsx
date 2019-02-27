@@ -27,7 +27,7 @@ const testSetHandler = () => {
 describe('CytoscapeGraph component test', () => {
   it('should set correct elements data', () => {
     const myLayout: Layout = { name: 'breadthfirst' };
-    const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.HIDE;
+    const myEdgeLabelMode: EdgeLabelMode = EdgeLabelMode.NONE;
 
     const wrapper = shallow(
       <CytoscapeGraph

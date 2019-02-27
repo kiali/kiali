@@ -175,7 +175,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       </Popover>
     );
 
-    const alignWithGraphHeaderStyle = style({ marginLeft: -40 });
+    const alignWithGraphHeaderStyle = style({ marginLeft: -40, paddingRight: '0.8em' });
 
     return (
       <span className={alignWithGraphHeaderStyle}>

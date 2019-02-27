@@ -57,7 +57,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
    *
    *  Example:  GraphType => {'APP': 'App', 'VERSIONED_APP': 'VersionedApp'}
    */
-  static readonly GRAPH_TYPES = _.mapValues(GraphType, val => _.capitalize(_.startCase(val)));
+  static readonly GRAPH_TYPES = _.mapValues(GraphType, val => `${_.capitalize(_.startCase(val))} graph`);
 
   /**
    *  Key-value pair object representation of EdgeLabelMode
@@ -145,14 +145,13 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
               disabled={false}
               handleSelect={this.setEdgeLabelMode}
               value={edgeLabelModeKey}
-              label="Edge Labels"
+              label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
               options={GraphFilter.EDGE_LABEL_MODES}
             />
             <ToolbarDropdown
               id={'graph_filter_view_type'}
               disabled={this.props.node !== undefined || this.props.disabled}
               handleSelect={this.setGraphType}
-              nameDropdown={'Graph Type'}
               value={graphTypeKey}
               label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
               options={GraphFilter.GRAPH_TYPES}

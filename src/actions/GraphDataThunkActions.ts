@@ -69,9 +69,9 @@ const GraphDataThunkActions = {
           appenders += ',responseTime';
           break;
 
-        case EdgeLabelMode.TRAFFIC_RATE_PER_SECOND:
-        case EdgeLabelMode.REQUESTS_PERCENT_OF_TOTAL:
-        case EdgeLabelMode.HIDE:
+        case EdgeLabelMode.REQUESTS_PER_SECOND:
+        case EdgeLabelMode.REQUESTS_PERCENTAGE:
+        case EdgeLabelMode.NONE:
         default:
           break;
       }

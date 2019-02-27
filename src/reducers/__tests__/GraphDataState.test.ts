@@ -14,7 +14,7 @@ describe('GraphDataState', () => {
       isLoading: false,
       isError: false,
       filterState: {
-        edgeLabelMode: EdgeLabelMode.HIDE,
+        edgeLabelMode: EdgeLabelMode.NONE,
         findValue: '',
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',

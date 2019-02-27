@@ -20,7 +20,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   node: undefined,
   summaryData: null,
   filterState: {
-    edgeLabelMode: EdgeLabelMode.HIDE,
+    edgeLabelMode: EdgeLabelMode.NONE,
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
     hideValue: '',

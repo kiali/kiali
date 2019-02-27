@@ -15,7 +15,8 @@ const GraphHelpTour: Array<Step> = [
   {
     target: '#graph_filter_edge_labels',
     name: 'Edge Labels',
-    description: 'Select the information to show on the edges between nodes.'
+    description:
+      'Select the information to show on the edges between nodes. Response times reflect the 95th percentile.'
   },
   {
     target: '#graph_filter_view_type',
