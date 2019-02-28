@@ -76,6 +76,13 @@ const (
 	MaistraVersionSupported = ">= 0.1.0"
 )
 
+// The valid auth strategies
+const (
+	AuthStrategyOpenshift = "openshift"
+	AuthStrategyLogin     = "login"
+	AuthStrategyAnonymous = "anonymous"
+)
+
 // Global configuration for the application.
 var configuration *Config
 
@@ -254,7 +261,7 @@ func NewConfig() (c *Config) {
 	}
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
-	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, "login")
+	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, AuthStrategyLogin)
 
 	log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
 

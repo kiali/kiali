@@ -24,12 +24,12 @@ type UserResponse struct {
 	ExpiresOn string `json:"expiresOn"`
 }
 
-// Checks if the token is working correctly.
+// OauthCheck checks if the token is working correctly.
 // This endpoint is more strict than the one on business/openshift_oauth.go
 // because it is not going to be requested as often, so we can request some
 // more fine-grained permissions.
 func OauthCheck(w http.ResponseWriter, r *http.Request) {
-	if config.Get().Auth.Strategy != "openshift" {
+	if config.Get().Auth.Strategy != config.AuthStrategyOpenshift {
 		RespondWithJSONIndent(w, http.StatusInternalServerError, "Openshift OAuth is not enabled for this deployment")
 		return
 	}
