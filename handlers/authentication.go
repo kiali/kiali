@@ -20,7 +20,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 		conf := config.Get()
 
 		switch conf.Auth.Strategy {
-		case "openshift":
+		case config.AuthStrategyOpenshift:
 			business, err := business.Get()
 
 			if err != nil {
@@ -34,7 +34,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 					statusCode = http.StatusUnauthorized
 				}
 			}
-		case "login":
+		case config.AuthStrategyLogin:
 			if strings.Contains(r.Header.Get("Authorization"), "Bearer") {
 				_, err := config.ValidateToken(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 
@@ -48,7 +48,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 					statusCode = http.StatusUnauthorized
 				}
 			}
-		case "anonymous":
+		case config.AuthStrategyAnonymous:
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
 		}
 
@@ -79,7 +79,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 	response.Strategy = conf.Auth.Strategy
 
 	switch conf.Auth.Strategy {
-	case "openshift":
+	case config.AuthStrategyOpenshift:
 		business, err := business.Get()
 
 		if err != nil {
