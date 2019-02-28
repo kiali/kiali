@@ -62,12 +62,17 @@
         }
       }
     },
-    "/auth/openshift-token": {
-      "post": {
-        "description": "Endpoint to check if a token from Openshift is working correctly",
-        "consumes": [
-          "application/json"
+    "/authenticate": {
+      "get": {
+        "security": [
+          {
+            "authorization": [
+              "user",
+              "password"
+            ]
+          }
         ],
+        "description": "Endpoint to authenticate the user",
         "produces": [
           "application/json"
         ],
@@ -75,7 +80,26 @@
           "http",
           "https"
         ],
-        "operationId": "OpenshiftToken",
+        "operationId": "Authenticate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenGenerated"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      },
+      "post": {
+        "description": "Endpoint to check if a token from Openshift is working correctly",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "Authenticate",
         "responses": {
           "200": {
             "$ref": "#/responses/tokenGenerated"
@@ -2617,35 +2641,6 @@
           }
         }
       }
-    },
-    "/token": {
-      "get": {
-        "security": [
-          {
-            "authorization": [
-              "user",
-              "password"
-            ]
-          }
-        ],
-        "description": "Endpoint to get the authentication token",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "operationId": "GetToken",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/tokenGenerated"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -4428,6 +4423,7 @@
         "expiresOn": {
           "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
           "type": "string",
+          "format": "date-time",
           "x-go-name": "ExpiresOn",
           "example": "2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603"
         },

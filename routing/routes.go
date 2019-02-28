@@ -68,21 +68,18 @@ func NewRoutes() (r *Routes) {
 		},
 		// swagger:route POST /authenticate Authenticate
 		// ---
-		// Endpoint to authenticate the user
+		// Endpoint to check if a token from Openshift is working correctly
 		//
 		//     Produces:
 		//     - application/json
 		//
 		//     Schemes: http, https
 		//
-		//    Security:
-		//     authorization: user, password
-		//
 		// responses:
 		//      500: internalError
 		//      200: tokenGenerated
 		{
-			"Authenticate OAuth",
+			"OpenshiftCheckToken",
 			"POST",
 			"/api/authenticate",
 			handlers.Authenticate,
