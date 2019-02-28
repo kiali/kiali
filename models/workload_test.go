@@ -116,7 +116,7 @@ func TestParsePodsToWorkload(t *testing.T) {
 
 func fakeDeployment() *v1beta1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-
+	replicas := int32(1)
 	return &v1beta1.Deployment{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "Deployment",
@@ -132,9 +132,9 @@ func fakeDeployment() *v1beta1.Deployment {
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
+			Replicas: &replicas,
 		},
 		Status: v1beta1.DeploymentStatus{
-			Replicas:            1,
 			AvailableReplicas:   1,
 			UnavailableReplicas: 0,
 		},
@@ -143,7 +143,7 @@ func fakeDeployment() *v1beta1.Deployment {
 
 func fakeReplicaSet() *v1beta2.ReplicaSet {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-
+	replicas := int32(1)
 	return &v1beta2.ReplicaSet{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "ReplicaSet",
@@ -159,9 +159,9 @@ func fakeReplicaSet() *v1beta2.ReplicaSet {
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
+			Replicas: &replicas,
 		},
 		Status: v1beta2.ReplicaSetStatus{
-			Replicas:          1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -169,7 +169,7 @@ func fakeReplicaSet() *v1beta2.ReplicaSet {
 
 func fakeReplicationController() *v1.ReplicationController {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-
+	replicas := int32(1)
 	return &v1.ReplicationController{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "ReplicationController",
@@ -185,9 +185,9 @@ func fakeReplicationController() *v1.ReplicationController {
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
+			Replicas: &replicas,
 		},
 		Status: v1.ReplicationControllerStatus{
-			Replicas:          1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -195,7 +195,6 @@ func fakeReplicationController() *v1.ReplicationController {
 
 func fakeDeploymentConfig() *osappsv1.DeploymentConfig {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-
 	return &osappsv1.DeploymentConfig{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "DeploymentConfig",
@@ -211,9 +210,9 @@ func fakeDeploymentConfig() *osappsv1.DeploymentConfig {
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
+			Replicas: 1,
 		},
 		Status: osappsv1.DeploymentConfigStatus{
-			Replicas:            1,
 			AvailableReplicas:   1,
 			UnavailableReplicas: 0,
 		},

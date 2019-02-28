@@ -137,7 +137,9 @@ func (workload *Workload) ParseDeployment(d *v1beta1.Deployment) {
 
 	workload.CreatedAt = formatTime(d.CreationTimestamp.Time)
 	workload.ResourceVersion = d.ResourceVersion
-	workload.Replicas = d.Status.Replicas
+	if d.Spec.Replicas != nil {
+		workload.Replicas = *d.Spec.Replicas
+	}
 	workload.AvailableReplicas = d.Status.AvailableReplicas
 	// Deployments/ReplicaSets have a different parameters to indicate unavailable
 	// calculate "desired" - "current" sounds reasonable on this context
@@ -156,7 +158,9 @@ func (workload *Workload) ParseReplicaSet(r *v1beta2.ReplicaSet) {
 
 	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
 	workload.ResourceVersion = r.ResourceVersion
-	workload.Replicas = r.Status.Replicas
+	if r.Spec.Replicas != nil {
+		workload.Replicas = *r.Spec.Replicas
+	}
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 	// Deployments/ReplicaSets have a different parameters to indicate unavailable
 	// calculate "desired" - "current" sounds reasonable on this context
@@ -175,7 +179,9 @@ func (workload *Workload) ParseReplicationController(r *v1.ReplicationController
 
 	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
 	workload.ResourceVersion = r.ResourceVersion
-	workload.Replicas = r.Status.Replicas
+	if r.Spec.Replicas != nil {
+		workload.Replicas = *r.Spec.Replicas
+	}
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 	// Deployments/ReplicaSets have a different parameters to indicate unavailable
 	// calculate "desired" - "current" sounds reasonable on this context
@@ -188,7 +194,7 @@ func (workload *Workload) ParseDeploymentConfig(dc *osappsv1.DeploymentConfig) {
 	workload.Labels = dc.Spec.Template.Labels
 	workload.CreatedAt = formatTime(dc.CreationTimestamp.Time)
 	workload.ResourceVersion = dc.ResourceVersion
-	workload.Replicas = dc.Status.Replicas
+	workload.Replicas = dc.Spec.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
 	// Deployments/ReplicaSets have a different parameters to indicate unavailable
 	// calculate "desired" - "current" sounds reasonable on this context
@@ -207,7 +213,9 @@ func (workload *Workload) ParseStatefulSet(s *v1beta2.StatefulSet) {
 
 	workload.CreatedAt = formatTime(s.CreationTimestamp.Time)
 	workload.ResourceVersion = s.ResourceVersion
-	workload.Replicas = s.Status.Replicas
+	if s.Spec.Replicas != nil {
+		workload.Replicas = *s.Spec.Replicas
+	}
 	workload.AvailableReplicas = s.Status.ReadyReplicas
 	// Deployments/ReplicaSets have a different parameters to indicate unavailable
 	// calculate "desired" - "current" sounds reasonable on this context
