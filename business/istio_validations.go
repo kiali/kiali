@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"sync"
 
+	"k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/business/checkers"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-
-	v1 "k8s.io/api/core/v1"
 )
 
 type IstioValidationsService struct {
@@ -79,6 +80,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
+		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
 	}
 }
 
@@ -120,6 +122,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails}
 		noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
+	case MeshPolicies:
+		mtlsChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{mtlsChecker}
 	case ServiceEntries:
 		// Validations on ServiceEntries are not yet in place
 	case Rules:
@@ -136,8 +141,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecBindings are not yet in place
 	case Policies:
 		// Validations on Policies are not yet in place
-	case MeshPolicies:
-		// Validations on MeshPolicies are not yet in place
 	case ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
 	case ServiceRoles:
@@ -261,6 +264,19 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	if len(errChan) > 0 {
 		return
 	}
+
+	wg.Add(1)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
+		meshPolicies, err := in.k8s.GetMeshPolicies(config.Get().IstioNamespace)
+		if err != nil {
+			errChan <- err
+		} else {
+			details.MeshPolicies = meshPolicies
+		}
+	}(mtlsDetails)
 
 	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
 	if err != nil {

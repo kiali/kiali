@@ -71,6 +71,7 @@ var ObjectTypeSingular = map[string]string{
 	"rules":             "rule",
 	"quotaspecs":        "quotaspec",
 	"quotaspecbindings": "quotaspecbinding",
+	"meshpolicies":      "meshpolicy",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -137,6 +138,10 @@ var checkDescriptors = map[string]IstioCheck{
 	"virtualservices.subsetpresent.subsetnotfound": {
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
+	},
+	"meshpolicies.mtls.destinationrulemissing": {
+		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
+		Severity: ErrorSeverity,
 	},
 }
 
