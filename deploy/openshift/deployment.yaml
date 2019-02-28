@@ -39,23 +39,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: SERVER_CREDENTIALS_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: kiali
-              key: username
-              optional: true
-        - name: SERVER_CREDENTIALS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: kiali
-              key: passphrase
-              optional: true
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"
         - name: kiali-cert
           mountPath: "/kiali-cert"
+        - name: kiali-secret
+          mountPath: "/kiali-secret"
       volumes:
       - name: kiali-configuration
         configMap:
@@ -63,3 +53,7 @@ spec:
       - name: kiali-cert
         secret:
           secretName: kiali-cert-secret
+      - name: kiali-secret
+        secret:
+          secretName: kiali
+          optional: true

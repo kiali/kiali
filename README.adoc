@@ -309,23 +309,6 @@ server:
   port: VALUE
 ----
 
-|`SERVER_CREDENTIALS_USERNAME`
-|If this (and password) is set, these credentials are required in order to get content from the server.
-[source,yaml]
-----
-server:
-  credentials:
-    username: VALUE
-----
-
-|`SERVER_CREDENTIALS_PASSWORD`
-|If this (and username) is set, these credentials are required in order to get content from the server.
-[source,yaml]
-----
-server:
-  credentials:
-    password: VALUE
-----
 |`SERVER_WEB_ROOT`
 |Context root path to serve Kiali API and webapp from. (Default: /)
 [source,yaml]
@@ -333,6 +316,7 @@ server:
 server:
   web_root: /VALUE
 ----
+
 |`SERVER_CORS_ALLOW_ALL`
 |When true, allows the web console to send requests to other domains other than where the console came from. Typically used for development environments only.
 [source,yaml]

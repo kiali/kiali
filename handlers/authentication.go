@@ -52,9 +52,13 @@ type TokenResponse struct {
 
 func checkKialiCredentials(r *http.Request) string {
 	conf := config.Get()
-	u, p, ok := r.BasicAuth()
 
-	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Password == p {
+	if conf.Server.Credentials.Username == "" || conf.Server.Credentials.Passphrase == "" {
+		return ""
+	}
+
+	u, p, ok := r.BasicAuth()
+	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Passphrase == p {
 		return u
 	}
 
@@ -209,7 +213,18 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	} else {
 		user := checkKialiCredentials(r)
 		if len(user) == 0 {
-			return http.StatusUnauthorized
+			conf := config.Get()
+			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+				if conf.Server.Credentials.AllowAnonymous {
+					log.Trace("Access to the server endpoint is not secured with credentials - letting anonymous request come in")
+					user = "anonymous"
+				} else {
+					log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+					return 520 // our specific error code that indicates to the client that we are missing the secret
+				}
+			} else {
+				return http.StatusUnauthorized
+			}
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes

@@ -23,11 +23,13 @@ import (
 	"os/signal"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
@@ -107,12 +109,47 @@ func main() {
 	server := server.NewServer()
 	server.Start()
 
+	// wait for the secret when a secret is required
+	if config.Get().Auth.Strategy == config.AuthStrategyLogin && !config.Get().Server.Credentials.AllowAnonymous {
+		waitForSecret()
+	}
+
 	// wait forever, or at least until we are told to exit
 	waitForTermination()
 
 	// Shutdown internal components
 	log.Info("Shutting down internal components")
 	server.Stop()
+}
+
+func waitForSecret() {
+	foundSecretChan := make(chan security.Credentials)
+	go func() {
+		errs := 0
+		for true {
+			username, uErr := ioutil.ReadFile(config.LoginSecretUsername)
+			passphrase, pErr := ioutil.ReadFile(config.LoginSecretPassphrase)
+			if uErr == nil && pErr == nil {
+				if string(username) != "" && string(passphrase) != "" {
+					log.Info("Secret is now available.")
+					foundSecretChan <- security.Credentials{
+						Username:   string(username),
+						Passphrase: string(passphrase),
+					}
+					break
+				}
+			}
+			errs++
+			if (errs % 5) == 0 {
+				log.Warning("Kiali is missing a secret that contains both 'username' and 'passphrase'")
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
+	secret := <-foundSecretChan
+	config.Get().Server.Credentials.Username = secret.Username
+	config.Get().Server.Credentials.Passphrase = secret.Passphrase
+	config.Get().Server.Credentials.AllowAnonymous = false
 }
 
 func waitForTermination() {
@@ -153,12 +190,16 @@ func validateConfig() error {
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
-	creds := config.Get().Server.Credentials
-	if creds.AllowAnonymous {
-		log.Warningf("Kiali is configured for anonymous access - users will not be authenticated.")
-	} else if creds.Username == "" && creds.Password == "" {
-		// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning
-		log.Warningf("Credentials are missing. Create a secret and restart Kiali. Please refer to the documentation for more details.")
+	if config.Get().Auth.Strategy == config.AuthStrategyLogin {
+		creds := config.Get().Server.Credentials
+		if creds.AllowAnonymous {
+			log.Warningf("Kiali is configured for anonymous access - users will not be authenticated.")
+		} else if creds.Username == "" && creds.Passphrase == "" {
+			// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning
+			log.Warningf("Credentials are missing. Create a proper secret. Please refer to the documentation for more details.")
+		}
+	} else if config.Get().Auth.Strategy == config.AuthStrategyAnonymous {
+		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
 	}
 
 	return nil

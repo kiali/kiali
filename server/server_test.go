@@ -72,7 +72,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Credentials.Username = authorizedUsername
-	conf.Server.Credentials.Password = authorizedPassword
+	conf.Server.Credentials.Passphrase = authorizedPassword
 	conf.Auth.Strategy = "login"
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
@@ -107,14 +107,14 @@ func TestSecureComm(t *testing.T) {
 
 	// the good basic credentials
 	basicCredentials := &security.Credentials{
-		Username: authorizedUsername,
-		Password: authorizedPassword,
+		Username:   authorizedUsername,
+		Passphrase: authorizedPassword,
 	}
 
 	// bad basic credentials
 	badBasicCredentials := &security.Credentials{
-		Username: "invalid username",
-		Password: "invalid password",
+		Username:   "invalid username",
+		Passphrase: "invalid password",
 	}
 
 	// no credentials

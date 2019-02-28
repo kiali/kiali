@@ -20,11 +20,11 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 				log.Warning("Token error: ", err)
 				statusCode = http.StatusUnauthorized
 			}
-		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Password != "" {
+		} else if conf.Server.Credentials.Username != "" || conf.Server.Credentials.Passphrase != "" {
 			u, p, ok := r.BasicAuth()
 			// Internal header used to propagate the subject of the request for audit purposes
 			r.Header.Add("Kiali-User", u)
-			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Password != p {
+			if !ok || conf.Server.Credentials.Username != u || conf.Server.Credentials.Passphrase != p {
 				statusCode = http.StatusUnauthorized
 				if conf.Server.Credentials.AllowAnonymous {
 					// we really should never get here - the credentials config should not have validated at startup
@@ -36,7 +36,7 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
 		} else {
 			statusCode = 520 // our specific error code that indicates to the client that we are missing the secret
-			errMsg = "Credentials are missing. Create a secret and restart Kiali. Please refer to the documentation for more details."
+			errMsg = "Credentials are missing. Create a secret with the desired username and passphrase. Please refer to the documentation for more details."
 		}
 
 		if statusCode != http.StatusOK && errMsg == "" {

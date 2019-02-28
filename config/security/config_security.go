@@ -15,7 +15,7 @@ type Identity struct {
 // Credentials are either a username/password or a bearer token, but not both.
 type Credentials struct {
 	Username       string `yaml:",omitempty"`
-	Password       string `yaml:",omitempty"`
+	Passphrase     string `yaml:",omitempty"`
 	Token          string `yaml:",omitempty"`
 	AllowAnonymous bool   `yaml:"allow_anonymous,omitempty"`
 }
@@ -26,24 +26,24 @@ type TLS struct {
 	SkipCertificateValidation bool `yaml:"skip_certificate_validation,omitempty"`
 }
 
-// ValidateCredentials makes sure that if username is provided, so is password (and vice versa)
-// and also makes sure if username/password is provided that token is not (and vice versa).
-// It is valid to have nothing defined (no username, password, nor token), but if nothing is
+// ValidateCredentials makes sure that if username is provided, so is passphrase (and vice versa)
+// and also makes sure if username/passphrase is provided that token is not (and vice versa).
+// It is valid to have nothing defined (no username, passphrase, nor token), but if nothing is
 // defined and the "AllowAnonymous" flag is false, this usually means the person who
 // installed Kiali most likely forgot to set credentials - therefore access should always be denied.
 // If nothing is defined and the "AllowAnonymous" flag is true, this means anonymous access is specifically allowed.
 // If the "AllowAnonymous" flag is true but non-empty credentials are defined, an error results.
 func (c *Credentials) ValidateCredentials() error {
-	if c.Username != "" && c.Password == "" {
-		return fmt.Errorf("A password must be provided if a username is set")
+	if c.Username != "" && c.Passphrase == "" {
+		return fmt.Errorf("A passphrase must be provided if a username is set")
 	}
 
-	if c.Username == "" && c.Password != "" {
+	if c.Username == "" && c.Passphrase != "" {
 		return fmt.Errorf("A username must be provided if a password is set")
 	}
 
 	if c.Username != "" && c.Token != "" {
-		return fmt.Errorf("Username/password cannot be specified if a token is specified also. Only Username/Password or Token can be set but not both")
+		return fmt.Errorf("Username/passphrase cannot be specified if a token is specified also. Only Username/Passphrase or Token can be set but not both")
 	}
 
 	if c.AllowAnonymous && (c.Username != "" || c.Token != "") {
@@ -68,7 +68,7 @@ func (c *Credentials) GetHTTPAuthHeader() (headerName string, headerValue string
 		headerName = "Authorization"
 		headerValue = fmt.Sprintf("Bearer %s", c.Token)
 	} else if c.Username != "" {
-		creds := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.Username, c.Password)))
+		creds := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.Username, c.Passphrase)))
 		headerName = "Authorization"
 		headerValue = fmt.Sprintf("Basic %s", creds)
 	} else {
