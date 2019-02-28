@@ -140,7 +140,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"meshpolicies.mtls.destinationrulemissing": {
-		Message:  "Mesh-wide Destination Rule enabling mTLS missing",
+		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 }

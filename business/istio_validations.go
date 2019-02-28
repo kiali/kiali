@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"sync"
 
+	"k8s.io/api/core/v1"
+
 	"github.com/kiali/kiali/business/checkers"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-
-	"github.com/kiali/kiali/config"
-	v1 "k8s.io/api/core/v1"
 )
 
 type IstioValidationsService struct {
@@ -265,17 +265,18 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		return
 	}
 
-	mpChan := make(chan []kubernetes.IstioObject)
-	mpErrChan := make(chan error)
-	go func() {
+	wg.Add(1)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
 		meshPolicies, err := in.k8s.GetMeshPolicies(config.Get().IstioNamespace)
 		if err != nil {
-			mpErrChan <- err
 			errChan <- err
 		} else {
-			mpChan <- meshPolicies
+			details.MeshPolicies = meshPolicies
 		}
-	}()
+	}(mtlsDetails)
 
 	namespaces, err := in.businessLayer.Namespace.GetNamespaces()
 	if err != nil {
@@ -293,9 +294,5 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		errChan <- err
 	} else {
 		mtlsDetails.DestinationRules = destinationRules
-	}
-
-	if len(mpErrChan) == 0 {
-		mtlsDetails.MeshPolicies = <-mpChan
 	}
 }
