@@ -8,7 +8,7 @@ import {
   severityToIconName,
   validationToSeverity
 } from '../../../../types/ServiceInfo';
-import { ObjectValidation, VirtualService } from '../../../../types/IstioObjects';
+import { ObjectValidation, VirtualService, Host } from '../../../../types/IstioObjects';
 import LocalTime from '../../../../components/Time/LocalTime';
 import DetailObject from '../../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
@@ -67,19 +67,34 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     };
   }
 
+  parseHost(host: string): Host {
+    const hostParts = host.split('.');
+    const h = {
+      service: hostParts[0],
+      namespace: this.props.namespace
+    };
+
+    if (hostParts.length > 1) {
+      h.namespace = hostParts[1];
+    }
+
+    return h;
+  }
+
   generateGatewaysList(gateways: string[]) {
     const childrenList: any = [];
-    Object.keys(gateways).forEach((key, j) =>
+    Object.keys(gateways).forEach((key, j) => {
+      const host = this.parseHost(gateways[key]);
       childrenList.push(
-        <li key={'gateway_' + gateways[key] + '_' + j}>
-          {gateways[key] === 'mesh' ? (
-            gateways[key]
+        <li key={'gateway_' + host.service + '_' + j}>
+          {host.service === 'mesh' ? (
+            host.service
           ) : (
-            <Link to={`/namespaces/${this.props.namespace}/istio/gateways/${gateways[key]}`}>{gateways[key]}</Link>
+            <Link to={`/namespaces/${host.namespace}/istio/gateways/${host.service}`}>{gateways[key]}</Link>
           )}
         </li>
-      )
-    );
+      );
+    });
 
     return (
       <div>

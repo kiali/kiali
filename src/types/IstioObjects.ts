@@ -56,6 +56,12 @@ export interface Service {
   ports?: Port[];
 }
 
+export interface Host {
+  service: string;
+  namespace: string;
+  cluster?: string;
+}
+
 // RouteRule type
 
 export interface RouteRule {
