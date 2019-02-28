@@ -78,7 +78,7 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 		Value:    token.Token,
 		Expires:  token.ExpiresOn,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -144,7 +144,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 		Value:    tokenString,
 		Expires:  expiresOn,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
 	}
 	http.SetCookie(w, &tokenCookie)
 
@@ -303,7 +303,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 			Value:    "",
 			Expires:  time.Unix(0, 0),
 			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
+			// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
 		}
 		http.SetCookie(w, &tokenCookie)
 	}

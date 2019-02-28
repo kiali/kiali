@@ -60,7 +60,7 @@ func GenerateToken(username string) (TokenGenerated, error) {
 		StandardClaims: jwt.StandardClaims{
 			Subject:   username,
 			ExpiresAt: timeExpire.Unix(),
-			Issuer:    StrategyLoginIssuer,
+			Issuer:    AuthStrategyLoginIssuer,
 		},
 	}
 
@@ -98,13 +98,13 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		cfg := Get()
 		claims := token.Claims.(*IanaClaims)
 
-		if claims.Issuer != StrategyLoginIssuer && claims.Issuer != StrategyOpenshiftIssuer {
+		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer {
 			return nil, errors.New("token has invalid issuer (auth strategy)")
 		}
-		if claims.Issuer == StrategyLoginIssuer && cfg.Auth.Strategy != StrategyLogin {
+		if claims.Issuer == AuthStrategyLoginIssuer && cfg.Auth.Strategy != AuthStrategyLogin {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
-		if claims.Issuer == StrategyOpenshiftIssuer && cfg.Auth.Strategy != StrategyOpenshift {
+		if claims.Issuer == AuthStrategyOpenshiftIssuer && cfg.Auth.Strategy != AuthStrategyOpenshift {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
 

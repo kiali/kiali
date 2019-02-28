@@ -82,7 +82,7 @@ const (
 	AuthStrategyLogin     = "login"
 	AuthStrategyAnonymous = "anonymous"
 
-	TokenCookieName   = "kiali-token"
+	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
 )
