@@ -1,0 +1,58 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-tomcat
+  labels:
+    runtime: SpringBoot
+spec:
+  title: Tomcat Metrics
+  charts:
+    - name: "Sessions created"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_created_total"
+      dataType: "raw"
+    - name: "Active sessions"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_active_current"
+      dataType: "raw"
+    - name: "Sessions rejected"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_rejected_total"
+      dataType: "raw"
+
+    - name: "Bytes sent"
+      unit: "bps"
+      spans: 6
+      metricName: "tomcat_global_sent_bytes_total"
+      dataType: "rate"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+    - name: "Bytes received"
+      unit: "bps"
+      spans: 6
+      metricName: "tomcat_global_received_bytes_total"
+      dataType: "rate"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+
+    - name: "Global errors"
+      unit: ""
+      spans: 6
+      metricName: "tomcat_global_error_total"
+      dataType: "raw"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+    - name: "Servlet errors"
+      unit: ""
+      spans: 6
+      metricName: "tomcat_servlet_error_total"
+      dataType: "raw"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
