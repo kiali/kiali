@@ -8,6 +8,7 @@ import (
 
 type ServiceEntries []ServiceEntry
 type ServiceEntry struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Hosts      interface{} `json:"hosts"`
@@ -28,6 +29,7 @@ func (ses *ServiceEntries) Parse(serviceEntries []kubernetes.IstioObject) {
 }
 
 func (se *ServiceEntry) Parse(serviceEntry kubernetes.IstioObject) {
+	se.TypeMeta = serviceEntry.GetTypeMeta()
 	se.Metadata = serviceEntry.GetObjectMeta()
 	se.Spec.Hosts = serviceEntry.GetSpec()["hosts"]
 	se.Spec.Addresses = serviceEntry.GetSpec()["addresses"]

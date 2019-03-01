@@ -483,6 +483,8 @@ type IstioObject interface {
 	runtime.Object
 	GetSpec() map[string]interface{}
 	SetSpec(map[string]interface{})
+	GetTypeMeta() meta_v1.TypeMeta
+	SetTypeMeta(meta_v1.TypeMeta)
 	GetObjectMeta() meta_v1.ObjectMeta
 	SetObjectMeta(meta_v1.ObjectMeta)
 	DeepCopyIstioObject() IstioObject
@@ -555,6 +557,16 @@ func (in *GenericIstioObject) GetSpec() map[string]interface{} {
 // SetSpec for a wrapper
 func (in *GenericIstioObject) SetSpec(spec map[string]interface{}) {
 	in.Spec = spec
+}
+
+// GetTypeMeta from a wrapper
+func (in *GenericIstioObject) GetTypeMeta() meta_v1.TypeMeta {
+	return in.TypeMeta
+}
+
+// SetObjectMeta for a wrapper
+func (in *GenericIstioObject) SetTypeMeta(typemeta meta_v1.TypeMeta) {
+	in.TypeMeta = typemeta
 }
 
 // GetObjectMeta from a wrapper

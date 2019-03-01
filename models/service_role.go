@@ -8,6 +8,7 @@ import (
 
 type ServiceRoles []ServiceRole
 type ServiceRole struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Rules interface{} `json:"rules"`
@@ -23,6 +24,7 @@ func (srs *ServiceRoles) Parse(serviceRoles []kubernetes.IstioObject) {
 }
 
 func (sr *ServiceRole) Parse(serviceRole kubernetes.IstioObject) {
+	sr.TypeMeta = serviceRole.GetTypeMeta()
 	sr.Metadata = serviceRole.GetObjectMeta()
 	sr.Spec.Rules = serviceRole.GetSpec()["rules"]
 }

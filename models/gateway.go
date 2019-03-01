@@ -8,6 +8,7 @@ import (
 
 type Gateways []Gateway
 type Gateway struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Servers  interface{} `json:"servers"`
@@ -24,6 +25,7 @@ func (gws *Gateways) Parse(gateways []kubernetes.IstioObject) {
 }
 
 func (gw *Gateway) Parse(gateway kubernetes.IstioObject) {
+	gw.TypeMeta = gateway.GetTypeMeta()
 	gw.Metadata = gateway.GetObjectMeta()
 	gw.Spec.Servers = gateway.GetSpec()["servers"]
 	gw.Spec.Selector = gateway.GetSpec()["selector"]

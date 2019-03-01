@@ -2,6 +2,9 @@ package kubernetes
 
 import (
 	"fmt"
+
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/log"
 )
 
@@ -11,14 +14,19 @@ func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind: PluralType[rules],
+		APIVersion: ApiConfigVersion,
+	}
 	ruleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a rules list", namespace)
 	}
-
 	istioRules := make([]IstioObject, 0)
 	for _, rule := range ruleList.Items {
-		istioRules = append(istioRules, rule.DeepCopyIstioObject())
+		r := rule.DeepCopyIstioObject()
+		r.SetTypeMeta(typeMeta)
+		istioRules = append(istioRules, r)
 	}
 	return istioRules, nil
 }
@@ -36,11 +44,17 @@ func (in *IstioClient) GetIstioRule(namespace string, istiorule string) (IstioOb
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind: PluralType[rules],
+		APIVersion: ApiConfigVersion,
+	}
 	mRule, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a Rule", namespace, istiorule)
 	}
-	return mRule.DeepCopyIstioObject(), nil
+	r := mRule.DeepCopyIstioObject()
+	r.SetTypeMeta(typeMeta)
+	return r, nil
 }
 
 func (in *IstioClient) GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error) {
@@ -57,6 +71,10 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 		go func(name, plural string) {
 			results, err := in.istioConfigApi.Get().Namespace(namespace).Resource(plural).Do().Get()
 			istioObjects := istioResponse{}
+			typeMeta := meta_v1.TypeMeta{
+				Kind: PluralType[plural],
+				APIVersion: ApiConfigVersion,
+			}
 			resultList, ok := results.(*GenericIstioObjectList)
 			if !ok {
 				err = fmt.Errorf("%s doesn't return a %s list", namespace, plural)
@@ -75,6 +93,7 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 					// To support plural, we have only adapter/template -> adapters/templates
 					adapter.GetObjectMeta().Labels[itemType] = name
 					adapter.GetObjectMeta().Labels[itemType+"s"] = plural
+					adapter.SetTypeMeta(typeMeta)
 					istioObjects.results = append(istioObjects.results, adapter)
 					istioObjects.err = nil
 				}
@@ -113,7 +132,10 @@ func (in *IstioClient) getAdapterTemplate(namespace string, itemType string, ite
 	if !ok {
 		return nil, fmt.Errorf("%s is not supported", itemSubtype)
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind: PluralType[itemSubtype],
+		APIVersion: ApiConfigVersion,
+	}
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(itemSubtype).SubResource(itemName).Do().Get()
 	istioObject, ok := result.(IstioObject)
 	if !ok {
@@ -133,5 +155,6 @@ func (in *IstioClient) getAdapterTemplate(namespace string, itemType string, ite
 	// Adding the singular name of the adapter/template to propagate it into the Kiali model
 	istioObject.GetObjectMeta().Labels[itemType] = subtype
 	istioObject.GetObjectMeta().Labels[itemType+"s"] = itemSubtype
+	istioObject.SetTypeMeta(typeMeta)
 	return istioObject, nil
 }

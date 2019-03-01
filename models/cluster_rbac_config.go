@@ -8,6 +8,7 @@ import (
 
 type ClusterRbacConfigs []ClusterRbacConfig
 type ClusterRbacConfig struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Mode      interface{} `json:"mode"`
@@ -25,6 +26,7 @@ func (rcs *ClusterRbacConfigs) Parse(clusterRbacConfigs []kubernetes.IstioObject
 }
 
 func (rc *ClusterRbacConfig) Parse(clusterRbacConfig kubernetes.IstioObject) {
+	rc.TypeMeta = clusterRbacConfig.GetTypeMeta()
 	rc.Metadata = clusterRbacConfig.GetObjectMeta()
 	rc.Spec.Mode = clusterRbacConfig.GetSpec()["mode"]
 	rc.Spec.Inclusion = clusterRbacConfig.GetSpec()["inclusion"]

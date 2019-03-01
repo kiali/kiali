@@ -25,6 +25,7 @@ type DestinationRules struct {
 //
 // swagger:model destinationRule
 type DestinationRule struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Host          interface{} `json:"host"`
@@ -43,6 +44,7 @@ func (dRules *DestinationRules) Parse(destinationRules []kubernetes.IstioObject)
 }
 
 func (dRule *DestinationRule) Parse(destinationRule kubernetes.IstioObject) {
+	dRule.TypeMeta = destinationRule.GetTypeMeta()
 	dRule.Metadata = destinationRule.GetObjectMeta()
 	dRule.Spec.Host = destinationRule.GetSpec()["host"]
 	dRule.Spec.TrafficPolicy = destinationRule.GetSpec()["trafficPolicy"]

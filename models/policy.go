@@ -8,6 +8,7 @@ import (
 
 type Policies []Policy
 type Policy struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Targets          interface{} `json:"targets"`
@@ -28,6 +29,7 @@ func (ps *Policies) Parse(policies []kubernetes.IstioObject) {
 }
 
 func (p *Policy) Parse(policy kubernetes.IstioObject) {
+	p.TypeMeta = policy.GetTypeMeta()
 	p.Metadata = policy.GetObjectMeta()
 	p.Spec.Targets = policy.GetSpec()["targets"]
 	p.Spec.Peers = policy.GetSpec()["peers"]
