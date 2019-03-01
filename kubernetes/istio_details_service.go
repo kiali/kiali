@@ -58,7 +58,7 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 	var err error
 
 	typeMeta := meta_v1.TypeMeta{
-		Kind: "",
+		Kind:       "",
 		APIVersion: "",
 	}
 	typeMeta.Kind = PluralType[resourceType]
@@ -112,7 +112,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	var err error
 
 	typeMeta := meta_v1.TypeMeta{
-		Kind: "",
+		Kind:       "",
 		APIVersion: "",
 	}
 	typeMeta.Kind = PluralType[resourceType]
@@ -153,7 +153,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[virtualServices],
+		Kind:       PluralType[virtualServices],
 		APIVersion: ApiNetworkingVersion,
 	}
 	virtualServices := make([]IstioObject, 0)
@@ -178,7 +178,7 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[virtualServices],
+		Kind:       PluralType[virtualServices],
 		APIVersion: ApiNetworkingVersion,
 	}
 	virtualService, ok := result.(*GenericIstioObject)
@@ -202,7 +202,7 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 		return nil, fmt.Errorf("%s doesn't return a Gateway list", namespace)
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[gateways],
+		Kind:       PluralType[gateways],
 		APIVersion: ApiNetworkingVersion,
 	}
 	gateways := make([]IstioObject, 0)
@@ -220,7 +220,7 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[gateways],
+		Kind:       PluralType[gateways],
 		APIVersion: ApiNetworkingVersion,
 	}
 	gatewayObject, ok := result.(*GenericIstioObject)
@@ -240,7 +240,7 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[serviceentries],
+		Kind:       PluralType[serviceentries],
 		APIVersion: ApiNetworkingVersion,
 	}
 	serviceEntriesList, ok := result.(*GenericIstioObjectList)
@@ -263,7 +263,7 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[serviceentries],
+		Kind:       PluralType[serviceentries],
 		APIVersion: ApiNetworkingVersion,
 	}
 	serviceEntry, ok := result.(*GenericIstioObject)
@@ -284,7 +284,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[destinationRules],
+		Kind:       PluralType[destinationRules],
 		APIVersion: ApiNetworkingVersion,
 	}
 	destinationRuleList, ok := result.(*GenericIstioObjectList)
@@ -315,7 +315,7 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[destinationRules],
+		Kind:       PluralType[destinationRules],
 		APIVersion: ApiNetworkingVersion,
 	}
 	destinationRule, ok := result.(*GenericIstioObject)
@@ -335,7 +335,7 @@ func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[quotaspecs],
+		Kind:       PluralType[quotaspecs],
 		APIVersion: ApiConfigVersion,
 	}
 	quotaSpecList, ok := result.(*GenericIstioObjectList)
@@ -358,7 +358,7 @@ func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (Ist
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[quotaspecs],
+		Kind:       PluralType[quotaspecs],
 		APIVersion: ApiConfigVersion,
 	}
 	quotaSpec, ok := result.(*GenericIstioObject)
@@ -378,7 +378,7 @@ func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, er
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[quotaspecbindings],
+		Kind:       PluralType[quotaspecbindings],
 		APIVersion: ApiConfigVersion,
 	}
 	quotaSpecBindingList, ok := result.(*GenericIstioObjectList)
@@ -401,7 +401,7 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[quotaspecbindings],
+		Kind:       PluralType[quotaspecbindings],
 		APIVersion: ApiConfigVersion,
 	}
 	quotaSpecBinding, ok := result.(*GenericIstioObject)
@@ -419,7 +419,7 @@ func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[policies],
+		Kind:       PluralType[policies],
 		APIVersion: ApiAuthenticationVersion,
 	}
 	policyList, ok := result.(*GenericIstioObjectList)
@@ -443,7 +443,7 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[policies],
+		Kind:       PluralType[policies],
 		APIVersion: ApiAuthenticationVersion,
 	}
 	policy, ok := result.(*GenericIstioObject)
@@ -463,7 +463,7 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[meshPolicies],
+		Kind:       PluralType[meshPolicies],
 		APIVersion: ApiAuthenticationVersion,
 	}
 	policyList, ok := result.(*GenericIstioObjectList)
@@ -487,7 +487,7 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[meshPolicies],
+		Kind:       PluralType[meshPolicies],
 		APIVersion: ApiAuthenticationVersion,
 	}
 	mp, ok := result.(*GenericIstioObject)
@@ -505,7 +505,7 @@ func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, e
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[clusterrbacconfigs],
+		Kind:       PluralType[clusterrbacconfigs],
 		APIVersion: ApiRbacVersion,
 	}
 	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
@@ -528,7 +528,7 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[clusterrbacconfigs],
+		Kind:       PluralType[clusterrbacconfigs],
 		APIVersion: ApiRbacVersion,
 	}
 	clusterRbacConfig, ok := result.(*GenericIstioObject)
@@ -546,7 +546,7 @@ func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) 
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[serviceroles],
+		Kind:       PluralType[serviceroles],
 		APIVersion: ApiRbacVersion,
 	}
 	serviceRoleList, ok := result.(*GenericIstioObjectList)
@@ -569,7 +569,7 @@ func (in *IstioClient) GetServiceRole(namespace string, name string) (IstioObjec
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[serviceroles],
+		Kind:       PluralType[serviceroles],
 		APIVersion: ApiRbacVersion,
 	}
 	serviceRole, ok := result.(*GenericIstioObject)
@@ -587,7 +587,7 @@ func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, 
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[servicerolebindings],
+		Kind:       PluralType[servicerolebindings],
 		APIVersion: ApiRbacVersion,
 	}
 	serviceRoleBindingList, ok := result.(*GenericIstioObjectList)
@@ -610,7 +610,7 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[servicerolebindings],
+		Kind:       PluralType[servicerolebindings],
 		APIVersion: ApiRbacVersion,
 	}
 	serviceRoleBinding, ok := result.(*GenericIstioObject)

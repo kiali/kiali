@@ -15,7 +15,7 @@ func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[rules],
+		Kind:       PluralType[rules],
 		APIVersion: ApiConfigVersion,
 	}
 	ruleList, ok := result.(*GenericIstioObjectList)
@@ -45,7 +45,7 @@ func (in *IstioClient) GetIstioRule(namespace string, istiorule string) (IstioOb
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[rules],
+		Kind:       PluralType[rules],
 		APIVersion: ApiConfigVersion,
 	}
 	mRule, ok := result.(*GenericIstioObject)
@@ -72,7 +72,7 @@ func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, p
 			results, err := in.istioConfigApi.Get().Namespace(namespace).Resource(plural).Do().Get()
 			istioObjects := istioResponse{}
 			typeMeta := meta_v1.TypeMeta{
-				Kind: PluralType[plural],
+				Kind:       PluralType[plural],
 				APIVersion: ApiConfigVersion,
 			}
 			resultList, ok := results.(*GenericIstioObjectList)
@@ -133,7 +133,7 @@ func (in *IstioClient) getAdapterTemplate(namespace string, itemType string, ite
 		return nil, fmt.Errorf("%s is not supported", itemSubtype)
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind: PluralType[itemSubtype],
+		Kind:       PluralType[itemSubtype],
 		APIVersion: ApiConfigVersion,
 	}
 	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(itemSubtype).SubResource(itemName).Do().Get()
