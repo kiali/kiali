@@ -16,29 +16,9 @@ type IanaClaims struct {
 	jwt.StandardClaims
 }
 
-// TokenGenerated tokenGenerated
-//
-// This is used for returning the token
-//
-// swagger:model TokenGenerated
 type TokenGenerated struct {
-	// The username for the token
-	// A string with the user's username
-	//
-	// example: admin
-	// required: true
-	Username string `json:"username"`
-	// The authentication token
-	// A string with the authentication token for the user
-	//
-	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
-	// required: true
-	Token string `json:"token"`
-	// The expired time for the token
-	// A string with the Datetime when the token will be expired
-	//
-	// example: 2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603
-	// required: true
+	Username  string    `json:"username"`
+	Token     string    `json:"token"`
 	ExpiresOn time.Time `json:"expiresOn"`
 }
 

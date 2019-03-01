@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/cytoscape"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/status"
@@ -398,10 +398,10 @@ type swaggStatusInfoResp struct {
 }
 
 // HTTP status code 200 and tokenGenerated model in data
-// swagger:response tokenGenerated
+// swagger:response tokenResponse
 type swaggTokenGeneratedResp struct {
 	// in:body
-	Body config.TokenGenerated
+	Body handlers.TokenResponse
 }
 
 // HTTP status code 200 and cytoscapejs Config in data

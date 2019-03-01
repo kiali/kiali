@@ -24,9 +24,29 @@ type sessionInfo struct {
 	ExpiresOn string `json:"expiresOn,omitempty"`
 }
 
+// TokenResponse tokenResponse
+//
+// This is used for returning the token
+//
+// swagger:model TokenResponse
 type TokenResponse struct {
-	Username  string `json:"username"`
-	Token     string `json:"token"`
+	// The username for the token
+	// A string with the user's username
+	//
+	// example: admin
+	// required: true
+	Username string `json:"username"`
+	// The authentication token
+	// A string with the authentication token for the user
+	//
+	// example: zI1NiIsIsR5cCI6IkpXVCJ9.ezJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI5NTIzNjU0fQ.PPZvRGnR6VA4v7FmgSfQcGQr-VD
+	// required: true
+	Token string `json:"token"`
+	// The expired time for the token
+	// A string with the Datetime when the token will be expired
+	//
+	// example: 2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603
+	// required: true
 	ExpiresOn string `json:"expiresOn"`
 }
 
@@ -44,15 +64,13 @@ func checkKialiCredentials(r *http.Request) string {
 func getTokenStringFromRequest(r *http.Request) string {
 	tokenString := "" // Default to no token.
 
-	// Token can be provided in an authorization HTTP header
-	if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
-		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
-	}
-
-	// Token can also be provided by a browser in a Cookie.
-	// Checked at second. Thus, the token in the cookie has priority.
+	// Token can be provided by a browser in a Cookie or
+	// in an authorization HTTP header.
+	// The token in the cookie has priority.
 	if authCookie, err := r.Cookie(config.TokenCookieName); err != http.ErrNoCookie {
 		tokenString = authCookie.Value
+	} else if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
+		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
 	}
 
 	return tokenString

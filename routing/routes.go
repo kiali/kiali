@@ -58,7 +58,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
-		//      200: tokenGenerated
+		//      200: tokenResponse
 		{
 			"Authenticate",
 			"GET",
@@ -66,7 +66,7 @@ func NewRoutes() (r *Routes) {
 			handlers.Authenticate,
 			false,
 		},
-		// swagger:route POST /authenticate Authenticate
+		// swagger:route POST /authenticate OpenshiftCheckToken
 		// ---
 		// Endpoint to check if a token from Openshift is working correctly
 		//
@@ -77,7 +77,7 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
-		//      200: tokenGenerated
+		//      200: tokenResponse
 		{
 			"OpenshiftCheckToken",
 			"POST",
@@ -85,6 +85,14 @@ func NewRoutes() (r *Routes) {
 			handlers.Authenticate,
 			false,
 		},
+		// swagger:route GET /logout Logout
+		// ---
+		// Endpoint to logout an user (unset the session cookie)
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      204: noContent
 		{
 			"Logout",
 			"GET",

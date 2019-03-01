@@ -83,7 +83,7 @@
         "operationId": "Authenticate",
         "responses": {
           "200": {
-            "$ref": "#/responses/tokenGenerated"
+            "$ref": "#/responses/tokenResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -99,10 +99,10 @@
           "http",
           "https"
         ],
-        "operationId": "Authenticate",
+        "operationId": "OpenshiftCheckToken",
         "responses": {
           "200": {
-            "$ref": "#/responses/tokenGenerated"
+            "$ref": "#/responses/tokenResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -178,6 +178,21 @@
           },
           "406": {
             "$ref": "#/responses/notAcceptableError"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "description": "Endpoint to logout an user (unset the session cookie)",
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "Logout",
+        "responses": {
+          "204": {
+            "$ref": "#/responses/noContent"
           }
         }
       }
@@ -4410,10 +4425,10 @@
       "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
-    "TokenGenerated": {
+    "TokenResponse": {
       "description": "This is used for returning the token",
       "type": "object",
-      "title": "TokenGenerated tokenGenerated",
+      "title": "TokenResponse tokenResponse",
       "required": [
         "username",
         "token",
@@ -4423,7 +4438,6 @@
         "expiresOn": {
           "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
           "type": "string",
-          "format": "date-time",
           "x-go-name": "ExpiresOn",
           "example": "2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603"
         },
@@ -4440,7 +4454,7 @@
           "example": "admin"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/config"
+      "x-go-package": "github.com/kiali/kiali/handlers"
     },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
@@ -5215,10 +5229,10 @@
         "$ref": "#/definitions/StatusInfo"
       }
     },
-    "tokenGenerated": {
+    "tokenResponse": {
       "description": "HTTP status code 200 and tokenGenerated model in data",
       "schema": {
-        "$ref": "#/definitions/TokenGenerated"
+        "$ref": "#/definitions/TokenResponse"
       }
     },
     "workloadDetails": {

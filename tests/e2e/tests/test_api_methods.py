@@ -8,7 +8,7 @@ def before_all_tests(kiali_client):
     global swagger_method_list, tested_method_list
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
-    tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'GetToken',
+    tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'Authenticate',
                           'namespaceList', 'namespaceMetrics','namespaceHealth',
                           'istioConfigList', 'istioConfigDetails', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
@@ -73,7 +73,7 @@ def test_get_config(kiali_client):
 
 
 def test_get_token(kiali_client):
-    evaluate_response(kiali_client, method_name='GetToken')
+    evaluate_response(kiali_client, method_name='Authenticate')
 
 
 def test_namespace_list(kiali_client):
