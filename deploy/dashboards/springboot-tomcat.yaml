@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: springboot-tomcat
-  labels:
-    runtime: SpringBoot
 spec:
   title: Tomcat Metrics
+  runtime: Spring Boot
   charts:
     - name: "Sessions created"
       unit: ""

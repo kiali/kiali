@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: vertx-eventbus
-  labels:
-    runtime: Vert.x
 spec:
   title: Vert.x Eventbus Metrics
+  runtime: Vert.x
   charts:
     - name: "Event bus handlers"
       unit: ""

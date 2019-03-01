@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: thorntail
-  labels:
-    runtime: Thorntail
 spec:
   title: Thorntail Metrics
+  runtime: Thorntail
   charts:
     - name: "Current loaded classes"
       unit: ""

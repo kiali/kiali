@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: vertx-client
-  labels:
-    runtime: Vert.x
 spec:
   title: Vert.x Client Metrics
+  runtime: Vert.x
   charts:
     - name: "Client response time"
       unit: "s"

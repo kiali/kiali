@@ -24,8 +24,9 @@ type MonitoringDashboard struct {
 }
 
 type MonitoringDashboardSpec struct {
-	Title  string
-	Charts []MonitoringDashboardChart
+	Title   string
+	Runtime string
+	Charts  []MonitoringDashboardChart
 }
 
 type MonitoringDashboardChart struct {
