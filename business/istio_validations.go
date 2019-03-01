@@ -18,10 +18,6 @@ type IstioValidationsService struct {
 	businessLayer *Layer
 }
 
-type ObjectChecker interface {
-	Check() models.IstioValidations
-}
-
 // GetValidations returns an IstioValidations object with all the checks found when running
 // all the enabled checkers. If service is "" then the whole namespace is validated.
 func (in *IstioValidationsService) GetValidations(namespace, service string) (models.IstioValidations, error) {
@@ -75,7 +71,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 }
 
 func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails) []ObjectChecker {
-	return []ObjectChecker{
+	return []checkers.ObjectChecker{
 		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},

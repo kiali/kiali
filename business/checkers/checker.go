@@ -5,6 +5,14 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+type ObjectChecker interface {
+	GetType() string
+	GetGroupCheckers() []GroupChecker
+	GetIndividualCheckers() []IndividualChecker
+	GetObjects() []kubernetes.IstioObject
+	Check() models.IstioValidations
+}
+
 type IndividualChecker interface {
 	Check() ([]*models.IstioCheck, bool)
 }
