@@ -19,7 +19,7 @@ func prepareTestForVirtualService(istioObject kubernetes.IstioObject) models.Ist
 		data.CreateTestDestinationRule("test", "reviewsrule", "reviews"),
 	}
 
-	virtualServiceChecker := VirtualServiceChecker{"bookinfo", destinationList, istioObjects}
+	virtualServiceChecker := VirtualServiceChecker{Namespace: "bookinfo", DestinationRules: destinationList, VirtualServices: istioObjects}
 
 	return virtualServiceChecker.Check()
 }
@@ -82,8 +82,8 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 		data.CreateTestDestinationRule("test", "reviewsrule1", "reviews"),
 	}
 
-	virtualServiceChecker := VirtualServiceChecker{"bookinfo",
-		destinationList, fakeVirtualServiceMultipleIstioObjects()}
+	virtualServiceChecker := VirtualServiceChecker{Namespace: "bookinfo",
+		DestinationRules: destinationList, VirtualServices: fakeVirtualServiceMultipleIstioObjects()}
 
 	validations := virtualServiceChecker.Check()
 	assert.NotEmpty(validations)
