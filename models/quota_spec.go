@@ -8,6 +8,7 @@ import (
 
 type QuotaSpecs []QuotaSpec
 type QuotaSpec struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Rules interface{} `json:"rules"`
@@ -23,6 +24,7 @@ func (qss *QuotaSpecs) Parse(quotaSpecs []kubernetes.IstioObject) {
 }
 
 func (qs *QuotaSpec) Parse(quotaSpec kubernetes.IstioObject) {
+	qs.TypeMeta = quotaSpec.GetTypeMeta()
 	qs.Metadata = quotaSpec.GetObjectMeta()
 	qs.Spec.Rules = quotaSpec.GetSpec()["rules"]
 }

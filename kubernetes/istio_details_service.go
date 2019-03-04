@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -56,15 +57,24 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 	var result runtime.Object
 	var err error
 
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       "",
+		APIVersion: "",
+	}
+	typeMeta.Kind = PluralType[resourceType]
 	byteJson := []byte(json)
 	if api == ConfigGroupVersion.Group {
 		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+		typeMeta.APIVersion = ApiConfigVersion
 	} else if api == NetworkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+		typeMeta.APIVersion = ApiNetworkingVersion
 	} else if api == AuthenticationGroupVersion.Group {
 		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+		typeMeta.APIVersion = ApiAuthenticationVersion
 	} else {
 		result, err = in.istioRbacApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+		typeMeta.APIVersion = ApiRbacVersion
 	}
 
 	if err != nil {
@@ -75,6 +85,7 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, resourceType)
 	}
+	istioObject.SetTypeMeta(typeMeta)
 	return istioObject, err
 }
 
@@ -99,15 +110,25 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	log.Debugf("UpdateIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var result runtime.Object
 	var err error
+
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       "",
+		APIVersion: "",
+	}
+	typeMeta.Kind = PluralType[resourceType]
 	bytePatch := []byte(jsonPatch)
 	if api == ConfigGroupVersion.Group {
 		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+		typeMeta.APIVersion = ApiConfigVersion
 	} else if api == NetworkingGroupVersion.Group {
 		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+		typeMeta.APIVersion = ApiNetworkingVersion
 	} else if api == AuthenticationGroupVersion.Group {
 		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+		typeMeta.APIVersion = ApiAuthenticationVersion
 	} else {
 		result, err = in.istioRbacApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+		typeMeta.APIVersion = ApiRbacVersion
 	}
 	if err != nil {
 		return nil, err
@@ -116,6 +137,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
 	}
+	istioObject.SetTypeMeta(typeMeta)
 	return istioObject, err
 }
 
@@ -131,7 +153,10 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[virtualServices],
+		APIVersion: ApiNetworkingVersion,
+	}
 	virtualServices := make([]IstioObject, 0)
 	for _, virtualService := range virtualServiceList.GetItems() {
 		appendVirtualService := serviceName == ""
@@ -140,7 +165,9 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 			appendVirtualService = true
 		}
 		if appendVirtualService {
-			virtualServices = append(virtualServices, virtualService.DeepCopyIstioObject())
+			vs := virtualService.DeepCopyIstioObject()
+			vs.SetTypeMeta(typeMeta)
+			virtualServices = append(virtualServices, vs)
 		}
 	}
 	return virtualServices, nil
@@ -151,12 +178,17 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[virtualServices],
+		APIVersion: ApiNetworkingVersion,
+	}
 	virtualService, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService object", namespace, virtualservice)
 	}
-	return virtualService.DeepCopyIstioObject(), nil
+	vs := virtualService.DeepCopyIstioObject()
+	vs.SetTypeMeta(typeMeta)
+	return vs, nil
 }
 
 // GetGateways return all Gateways for a given namespace.
@@ -170,10 +202,15 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a Gateway list", namespace)
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[gateways],
+		APIVersion: ApiNetworkingVersion,
+	}
 	gateways := make([]IstioObject, 0)
 	for _, gateway := range gatewayList.GetItems() {
-		gateways = append(gateways, gateway.DeepCopyIstioObject())
+		gw := gateway.DeepCopyIstioObject()
+		gw.SetTypeMeta(typeMeta)
+		gateways = append(gateways, gw)
 	}
 	return gateways, nil
 }
@@ -183,12 +220,17 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[gateways],
+		APIVersion: ApiNetworkingVersion,
+	}
 	gatewayObject, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a Gateway object", namespace, gateway)
 	}
-	return gatewayObject.DeepCopyIstioObject(), nil
+	gw := gatewayObject.DeepCopyIstioObject()
+	gw.SetTypeMeta(typeMeta)
+	return gw, nil
 }
 
 // GetServiceEntries return all ServiceEntry objects for a given namespace.
@@ -198,6 +240,10 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceentries],
+		APIVersion: ApiNetworkingVersion,
+	}
 	serviceEntriesList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceEntry list", namespace)
@@ -205,7 +251,9 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 
 	serviceEntries := make([]IstioObject, 0)
 	for _, serviceEntry := range serviceEntriesList.GetItems() {
-		serviceEntries = append(serviceEntries, serviceEntry.DeepCopyIstioObject())
+		se := serviceEntry.DeepCopyIstioObject()
+		se.SetTypeMeta(typeMeta)
+		serviceEntries = append(serviceEntries, se)
 	}
 	return serviceEntries, nil
 }
@@ -215,12 +263,17 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceentries],
+		APIVersion: ApiNetworkingVersion,
+	}
 	serviceEntry, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%v doesn't return a ServiceEntry object", namespace, serviceEntry)
 	}
-	return serviceEntry.DeepCopyIstioObject(), nil
+	se := serviceEntry.DeepCopyIstioObject()
+	se.SetTypeMeta(typeMeta)
+	return se, nil
 }
 
 // GetDestinationRules returns all DestinationRules for a given namespace.
@@ -230,6 +283,10 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).Do().Get()
 	if err != nil {
 		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[destinationRules],
+		APIVersion: ApiNetworkingVersion,
 	}
 	destinationRuleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
@@ -245,7 +302,9 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 			}
 		}
 		if appendDestinationRule {
-			destinationRules = append(destinationRules, destinationRule.DeepCopyIstioObject())
+			dr := destinationRule.DeepCopyIstioObject()
+			dr.SetTypeMeta(typeMeta)
+			destinationRules = append(destinationRules, dr)
 		}
 	}
 	return destinationRules, nil
@@ -256,11 +315,17 @@ func (in *IstioClient) GetDestinationRule(namespace string, destinationrule stri
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[destinationRules],
+		APIVersion: ApiNetworkingVersion,
+	}
 	destinationRule, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule object", namespace, destinationrule)
 	}
-	return destinationRule.DeepCopyIstioObject(), nil
+	dr := destinationRule.DeepCopyIstioObject()
+	dr.SetTypeMeta(typeMeta)
+	return dr, nil
 }
 
 // GetQuotaSpecs returns all QuotaSpecs objects for a given namespace.
@@ -270,6 +335,10 @@ func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[quotaspecs],
+		APIVersion: ApiConfigVersion,
+	}
 	quotaSpecList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a QuotaSpecList list", namespace)
@@ -277,7 +346,9 @@ func (in *IstioClient) GetQuotaSpecs(namespace string) ([]IstioObject, error) {
 
 	quotaSpecs := make([]IstioObject, 0)
 	for _, qs := range quotaSpecList.GetItems() {
-		quotaSpecs = append(quotaSpecs, qs.DeepCopyIstioObject())
+		q := qs.DeepCopyIstioObject()
+		q.SetTypeMeta(typeMeta)
+		quotaSpecs = append(quotaSpecs, q)
 	}
 	return quotaSpecs, nil
 }
@@ -287,12 +358,17 @@ func (in *IstioClient) GetQuotaSpec(namespace string, quotaSpecName string) (Ist
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[quotaspecs],
+		APIVersion: ApiConfigVersion,
+	}
 	quotaSpec, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpec object", namespace, quotaSpecName)
 	}
-	return quotaSpec.DeepCopyIstioObject(), nil
+	qs := quotaSpec.DeepCopyIstioObject()
+	qs.SetTypeMeta(typeMeta)
+	return qs, nil
 }
 
 // GetQuotaSpecBindings returns all QuotaSpecBindings objects for a given namespace.
@@ -302,6 +378,10 @@ func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, er
 	if err != nil {
 		return nil, err
 	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[quotaspecbindings],
+		APIVersion: ApiConfigVersion,
+	}
 	quotaSpecBindingList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a QuotaSpecBindingList list", namespace)
@@ -309,7 +389,9 @@ func (in *IstioClient) GetQuotaSpecBindings(namespace string) ([]IstioObject, er
 
 	quotaSpecBindings := make([]IstioObject, 0)
 	for _, qs := range quotaSpecBindingList.GetItems() {
-		quotaSpecBindings = append(quotaSpecBindings, qs.DeepCopyIstioObject())
+		q := qs.DeepCopyIstioObject()
+		q.SetTypeMeta(typeMeta)
+		quotaSpecBindings = append(quotaSpecBindings, q)
 	}
 	return quotaSpecBindings, nil
 }
@@ -319,12 +401,17 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[quotaspecbindings],
+		APIVersion: ApiConfigVersion,
+	}
 	quotaSpecBinding, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a QuotaSpecBinding object", namespace, quotaSpecBindingName)
 	}
-	return quotaSpecBinding.DeepCopyIstioObject(), nil
+	qs := quotaSpecBinding.DeepCopyIstioObject()
+	qs.SetTypeMeta(typeMeta)
+	return qs, nil
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
@@ -332,7 +419,10 @@ func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[policies],
+		APIVersion: ApiAuthenticationVersion,
+	}
 	policyList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a PolicyList list", namespace)
@@ -340,7 +430,9 @@ func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
 
 	policies := make([]IstioObject, 0)
 	for _, ps := range policyList.GetItems() {
-		policies = append(policies, ps.DeepCopyIstioObject())
+		p := ps.DeepCopyIstioObject()
+		p.SetTypeMeta(typeMeta)
+		policies = append(policies, p)
 	}
 
 	return policies, nil
@@ -351,13 +443,17 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[policies],
+		APIVersion: ApiAuthenticationVersion,
+	}
 	policy, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a Policy object", namespace)
 	}
-
-	return policy.DeepCopyIstioObject(), nil
+	p := policy.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
 }
 
 func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) {
@@ -367,7 +463,10 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[meshPolicies],
+		APIVersion: ApiAuthenticationVersion,
+	}
 	policyList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("it doesn't return a PolicyList list")
@@ -375,7 +474,9 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 
 	policies := make([]IstioObject, 0)
 	for _, ps := range policyList.GetItems() {
-		policies = append(policies, ps.DeepCopyIstioObject())
+		p := ps.DeepCopyIstioObject()
+		p.SetTypeMeta(typeMeta)
+		policies = append(policies, p)
 	}
 
 	return policies, nil
@@ -386,13 +487,17 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[meshPolicies],
+		APIVersion: ApiAuthenticationVersion,
+	}
 	mp, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a MeshPolicy object", namespace)
 	}
-
-	return mp.DeepCopyIstioObject(), nil
+	p := mp.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
 }
 
 func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
@@ -400,7 +505,10 @@ func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, e
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[clusterrbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
 	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
@@ -408,9 +516,10 @@ func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, e
 
 	clusterRbacConfigs := make([]IstioObject, 0)
 	for _, crc := range clusterRbacConfigList.GetItems() {
-		clusterRbacConfigs = append(clusterRbacConfigs, crc.DeepCopyIstioObject())
+		c := crc.DeepCopyIstioObject()
+		c.SetTypeMeta(typeMeta)
+		clusterRbacConfigs = append(clusterRbacConfigs, c)
 	}
-
 	return clusterRbacConfigs, nil
 }
 
@@ -419,13 +528,17 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[clusterrbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
 	clusterRbacConfig, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", namespace)
 	}
-
-	return clusterRbacConfig.DeepCopyIstioObject(), nil
+	c := clusterRbacConfig.DeepCopyIstioObject()
+	c.SetTypeMeta(typeMeta)
+	return c, nil
 }
 
 func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) {
@@ -433,7 +546,10 @@ func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceroles],
+		APIVersion: ApiRbacVersion,
+	}
 	serviceRoleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceRoleList list", namespace)
@@ -441,9 +557,10 @@ func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) 
 
 	serviceRoles := make([]IstioObject, 0)
 	for _, sr := range serviceRoleList.GetItems() {
-		serviceRoles = append(serviceRoles, sr.DeepCopyIstioObject())
+		s := sr.DeepCopyIstioObject()
+		s.SetTypeMeta(typeMeta)
+		serviceRoles = append(serviceRoles, s)
 	}
-
 	return serviceRoles, nil
 }
 
@@ -452,13 +569,17 @@ func (in *IstioClient) GetServiceRole(namespace string, name string) (IstioObjec
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceroles],
+		APIVersion: ApiRbacVersion,
+	}
 	serviceRole, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceRole object", namespace)
 	}
-
-	return serviceRole.DeepCopyIstioObject(), nil
+	s := serviceRole.DeepCopyIstioObject()
+	s.SetTypeMeta(typeMeta)
+	return s, nil
 }
 
 func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, error) {
@@ -466,7 +587,10 @@ func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, 
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[servicerolebindings],
+		APIVersion: ApiRbacVersion,
+	}
 	serviceRoleBindingList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceRoleBindingList list", namespace)
@@ -474,9 +598,10 @@ func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, 
 
 	serviceRoleBindings := make([]IstioObject, 0)
 	for _, sr := range serviceRoleBindingList.GetItems() {
-		serviceRoleBindings = append(serviceRoleBindings, sr.DeepCopyIstioObject())
+		s := sr.DeepCopyIstioObject()
+		s.SetTypeMeta(typeMeta)
+		serviceRoleBindings = append(serviceRoleBindings, s)
 	}
-
 	return serviceRoleBindings, nil
 }
 
@@ -485,13 +610,17 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 	if err != nil {
 		return nil, err
 	}
-
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[servicerolebindings],
+		APIVersion: ApiRbacVersion,
+	}
 	serviceRoleBinding, ok := result.(*GenericIstioObject)
 	if !ok {
 		return nil, fmt.Errorf("%s doesn't return a ServiceRoleBinding object", namespace)
 	}
-
-	return serviceRoleBinding.DeepCopyIstioObject(), nil
+	s := serviceRoleBinding.DeepCopyIstioObject()
+	s.SetTypeMeta(typeMeta)
+	return s, nil
 }
 
 func FilterByHost(host, serviceName, namespace string) bool {

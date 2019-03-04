@@ -8,6 +8,7 @@ import (
 
 type MeshPolicies []MeshPolicy
 type MeshPolicy struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Targets          interface{} `json:"targets"`
@@ -28,6 +29,7 @@ func (mps *MeshPolicies) Parse(meshPolicies []kubernetes.IstioObject) {
 }
 
 func (mp *MeshPolicy) Parse(meshPolicy kubernetes.IstioObject) {
+	mp.TypeMeta = meshPolicy.GetTypeMeta()
 	mp.Metadata = meshPolicy.GetObjectMeta()
 	mp.Spec.Targets = meshPolicy.GetSpec()["targets"]
 	mp.Spec.Peers = meshPolicy.GetSpec()["peers"]

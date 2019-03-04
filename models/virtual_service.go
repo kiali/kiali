@@ -24,6 +24,7 @@ type VirtualServices struct {
 //
 // swagger:model virtualService
 type VirtualService struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Hosts    interface{} `json:"hosts"`
@@ -44,6 +45,7 @@ func (vServices *VirtualServices) Parse(virtualServices []kubernetes.IstioObject
 }
 
 func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
+	vService.TypeMeta = virtualService.GetTypeMeta()
 	vService.Metadata = virtualService.GetObjectMeta()
 	vService.Spec.Hosts = virtualService.GetSpec()["hosts"]
 	vService.Spec.Gateways = virtualService.GetSpec()["gateways"]
