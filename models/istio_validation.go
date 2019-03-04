@@ -91,6 +91,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "mTLS settings of a non-local Destination Rule are overridden",
 		Severity: WarningSeverity,
 	},
+	"destinationrules.mtls.meshpolicymissing": {
+		Message:  "MeshPolicy enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
 	"gateways.multimatch": {
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,

@@ -16,7 +16,7 @@ import (
 // Context: MeshPolicy enables mTLS
 // Context: There is one Destination Rule enabling mTLS mesh-wide
 // It doesn't return any validation
-func TestMeshPolicymTLSDisabled(t *testing.T) {
+func TestMeshPolicymTLSEnabled(t *testing.T) {
 	meshPolicy := data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT"))
 	mTLSDetails := kubernetes.MTLSDetails{
 		DestinationRules: []kubernetes.IstioObject{
