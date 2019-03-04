@@ -70,7 +70,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	return runObjectCheckers(objectCheckers), nil
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails) []checkers.ObjectChecker {
 	return []checkers.ObjectChecker{
 		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace},
@@ -91,7 +91,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
 
-	var objectCheckers []ObjectChecker
+	var objectCheckers []checkers.ObjectChecker
 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
@@ -107,20 +107,20 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 
 	switch objectType {
 	case Gateways:
-		objectCheckers = []ObjectChecker{
+		objectCheckers = []checkers.ObjectChecker{
 			checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		}
 	case VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Namespace: namespace, VirtualServices: istioDetails.VirtualServices, DestinationRules: istioDetails.DestinationRules}
 		noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace}
-		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
+		objectCheckers = []checkers.ObjectChecker{noServiceChecker, virtualServiceChecker}
 	case DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails}
 		noServiceChecker := checkers.NoServiceChecker{Namespace: namespace, Services: services, IstioDetails: &istioDetails, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace}
-		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
+		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker}
 	case MeshPolicies:
 		mtlsChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{mtlsChecker}
+		objectCheckers = []checkers.ObjectChecker{mtlsChecker}
 	case ServiceEntries:
 		// Validations on ServiceEntries are not yet in place
 	case Rules:
@@ -161,7 +161,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), nil
 }
 
-func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
+func runObjectCheckers(objectCheckers []checkers.ObjectChecker) models.IstioValidations {
 	objectTypeValidations := models.IstioValidations{}
 
 	// Run checks for each IstioObject type

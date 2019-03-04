@@ -10,6 +10,7 @@ import (
 )
 
 type NoServiceChecker struct {
+	ObjectCheck
 	Namespace            string
 	IstioDetails         *kubernetes.IstioDetails
 	Services             []v1.Service

@@ -8,7 +8,7 @@ import (
 type ObjectChecker interface {
 	GetType() string
 	GetGroupCheckers() []GroupChecker
-	GetIndividualCheckers() []IndividualChecker
+	GetIndividualCheckers(object kubernetes.IstioObject) []IndividualChecker
 	GetObjects() []kubernetes.IstioObject
 	Check() models.IstioValidations
 }

@@ -28,6 +28,15 @@ func (g GatewayChecker) GetIndividualCheckers(object kubernetes.IstioObject) []I
 	}
 }
 
+func (oc GatewayChecker) Check() models.IstioValidations {
+	validations := models.IstioValidations{}
+
+	validations = validations.MergeValidations(oc.runIndividualChecks())
+	validations = validations.MergeValidations(oc.runGroupChecks())
+
+	return validations
+}
+
 func (g GatewayChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
