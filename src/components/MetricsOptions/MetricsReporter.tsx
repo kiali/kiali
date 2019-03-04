@@ -15,7 +15,6 @@ export default class MetricsReporter extends React.Component<Props> {
     source: 'Source'
   };
 
-  private shouldReportOptions: boolean;
   private reporter: Reporter;
 
   static initialReporter = (direction: Direction): Reporter => {
@@ -29,21 +28,16 @@ export default class MetricsReporter extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props);
-  }
-
-  componentDidUpdate() {
-    if (this.shouldReportOptions) {
-      this.shouldReportOptions = false;
-      this.props.onChanged(this.reporter);
-    }
+    this.reporter = MetricsReporter.initialReporter(props.direction);
   }
 
   onReporterChanged = (reporter: string) => {
     HistoryManager.setParam(URLParams.REPORTER, reporter);
+    this.reporter = reporter as Reporter;
+    this.props.onChanged(this.reporter);
   };
 
   render() {
-    this.processUrlParams();
     return (
       <ToolbarDropdown
         id={'metrics_filter_reporter'}
@@ -55,11 +49,5 @@ export default class MetricsReporter extends React.Component<Props> {
         options={MetricsReporter.ReporterOptions}
       />
     );
-  }
-
-  processUrlParams() {
-    const reporter = MetricsReporter.initialReporter(this.props.direction);
-    this.shouldReportOptions = reporter !== this.reporter;
-    this.reporter = reporter;
   }
 }

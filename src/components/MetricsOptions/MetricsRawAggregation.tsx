@@ -18,7 +18,6 @@ export default class MetricsRawAggregation extends React.Component<Props> {
     stdvar: 'Standard variance'
   };
 
-  private shouldReportOptions: boolean;
   private aggregator: Aggregator;
 
   static initialAggregator = (): Aggregator => {
@@ -32,21 +31,16 @@ export default class MetricsRawAggregation extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props);
-  }
-
-  componentDidUpdate() {
-    if (this.shouldReportOptions) {
-      this.shouldReportOptions = false;
-      this.props.onChanged(this.aggregator);
-    }
+    this.aggregator = MetricsRawAggregation.initialAggregator();
   }
 
   onAggregatorChanged = (aggregator: string) => {
     HistoryManager.setParam(URLParams.AGGREGATOR, aggregator);
+    this.aggregator = aggregator as Aggregator;
+    this.props.onChanged(this.aggregator);
   };
 
   render() {
-    this.processUrlParams();
     return (
       <ToolbarDropdown
         id={'metrics_filter_aggregator'}
@@ -58,11 +52,5 @@ export default class MetricsRawAggregation extends React.Component<Props> {
         options={MetricsRawAggregation.Aggregators}
       />
     );
-  }
-
-  processUrlParams() {
-    const op = MetricsRawAggregation.initialAggregator();
-    this.shouldReportOptions = op !== this.aggregator;
-    this.aggregator = op;
   }
 }

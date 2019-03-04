@@ -22,7 +22,6 @@ export class MetricsDuration extends React.Component<Props> {
   // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
   static DefaultDuration = 600;
 
-  private shouldReportOptions: boolean;
   private duration: DurationInSeconds;
 
   static initialDuration = (): DurationInSeconds => {
@@ -38,22 +37,17 @@ export class MetricsDuration extends React.Component<Props> {
 
   constructor(props: Props) {
     super(props);
-  }
-
-  componentDidUpdate() {
-    if (this.shouldReportOptions) {
-      this.shouldReportOptions = false;
-      this.props.onChanged(this.duration);
-    }
+    this.duration = MetricsDuration.initialDuration();
   }
 
   onDurationChanged = (key: string) => {
     sessionStorage.setItem(URLParams.DURATION, key);
     HistoryManager.setParam(URLParams.DURATION, key);
+    this.duration = Number(key);
+    this.props.onChanged(this.duration);
   };
 
   render() {
-    this.processUrlParams();
     const retention = this.props.serverConfig.prometheus.storageTsdbRetention;
     const validDurations = getValidDurations(MetricsDuration.Durations, retention);
     const validDuration = getValidDuration(validDurations, this.duration);
@@ -69,12 +63,6 @@ export class MetricsDuration extends React.Component<Props> {
         options={validDurations}
       />
     );
-  }
-
-  processUrlParams() {
-    const duration = MetricsDuration.initialDuration();
-    this.shouldReportOptions = duration !== this.duration;
-    this.duration = duration;
   }
 }
 
