@@ -246,19 +246,16 @@ PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls
 # Deploy Kiali MonitoringDashboards to OpenShift
 # Note for undeploy script: dashboards are implicitly undeployed when the related CRD is removed
 echo "Deploying Kiali dashboards to OpenShift project ${NAMESPACE}"
-for dashboard in nodejs thorntail vertx-client vertx-eventbus vertx-pool vertx-server springboot-jvm springboot-tomcat
-do
-  yaml_path="${YAML_DIR}/../dashboards/${dashboard}.yaml"
-  if [ -f "${yaml_path}" ]; then
-    echo "Using YAML file: ${yaml_path}"
-    cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
-  else
-    get_downloader
-    yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/${dashboard}.yaml"
-    echo "Downloading YAML via: ${downloader} ${yaml_url}"
-    ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
-  fi
-  if [ "$?" != "0" ]; then
-    echo "WARNING: Failed to deploy runtimes dashboards. They are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
-  fi
-done
+yaml_path="${YAML_DIR}/../dashboards/all.yaml"
+if [ -f "${yaml_path}" ]; then
+  echo "Using YAML file: ${yaml_path}"
+  cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+else
+  get_downloader
+  yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/all.yaml"
+  echo "Downloading YAML via: ${downloader} ${yaml_url}"
+  ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+fi
+if [ "$?" != "0" ]; then
+  echo "NOTE: Could not deploy the runtimes dashboards. They are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
+fi
