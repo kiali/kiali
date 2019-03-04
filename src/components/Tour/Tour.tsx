@@ -55,7 +55,7 @@ const stepNumberStyle = style({
   marginRight: '10px',
   color: PfColors.White
 });
-const modalContent = style({ width: '20em' });
+const modalContent = style({ width: '25em' });
 const modalHeader = style({ padding: '5px 10px' });
 const modalBody = style({ fontSize: '0.95em', padding: '10px 15px' });
 const modalFooter = style({ paddingTop: 0, marginTop: 0 });

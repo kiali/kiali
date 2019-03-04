@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { StackedBarChart } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
+import { LegendPosition, SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 
 type RateChartGrpcPropType = {
   height?: number;
-  legendPos?: string; // e.g. right, left
+  legendPos?: LegendPosition;
   percentErr: number;
   percentOK: number;
   showLegend?: boolean;
+  width?: number;
 };
 
 export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
@@ -16,7 +18,8 @@ export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
     legendPos: 'bottom',
     percentErr: 0,
     percentOK: 0,
-    showLegend: true
+    showLegend: true,
+    width: SUMMARY_PANEL_CHART_WIDTH
   };
 
   constructor(props: RateChartGrpcPropType) {
@@ -26,7 +29,7 @@ export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
   render() {
     return (
       <StackedBarChart
-        size={{ height: this.props.height }}
+        size={{ height: this.props.height, width: this.props.width }}
         legend={{ show: this.props.showLegend, position: this.props.legendPos }}
         grid={{
           x: {
@@ -75,24 +78,26 @@ export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
 }
 
 type RateChartHttpPropType = {
+  height?: number;
+  legendPos?: string; // e.g. right, left
   percent2xx: number;
   percent3xx: number;
   percent4xx: number;
   percent5xx: number;
-  height?: number;
   showLegend?: boolean;
-  legendPos?: string; // e.g. right, left
+  width?: number;
 };
 
 export class RateChartHttp extends React.Component<RateChartHttpPropType> {
   static defaultProps: RateChartHttpPropType = {
+    height: 100,
+    legendPos: 'bottom',
     percent2xx: 0,
     percent3xx: 0,
     percent4xx: 0,
     percent5xx: 0,
-    height: 100,
     showLegend: true,
-    legendPos: 'bottom'
+    width: SUMMARY_PANEL_CHART_WIDTH
   };
 
   constructor(props: RateChartHttpPropType) {
@@ -102,7 +107,7 @@ export class RateChartHttp extends React.Component<RateChartHttpPropType> {
   render() {
     return (
       <StackedBarChart
-        size={{ height: this.props.height }}
+        size={{ height: this.props.height, width: this.props.width }}
         legend={{ show: this.props.showLegend, position: this.props.legendPos }}
         grid={{
           x: {

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AreaChart, Icon } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
+import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 
 type ResponseTimeChartTypeProp = {
   label: string;
@@ -74,7 +75,7 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
             </div>
             {this.thereIsTrafficData() ? (
               <AreaChart
-                size={{ height: 80 }}
+                size={{ height: 80, width: SUMMARY_PANEL_CHART_WIDTH }}
                 color={{ pattern: [PfColors.Black, PfColors.Green400, PfColors.Blue, PfColors.Orange400] }}
                 legend={{ show: true }}
                 grid={{ y: { show: false } }}

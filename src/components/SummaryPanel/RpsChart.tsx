@@ -2,6 +2,7 @@ import * as React from 'react';
 import { AreaChart, Icon } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 import { style } from 'typestyle';
+import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 
 type RpsChartTypeProp = {
   label: string;
@@ -79,7 +80,7 @@ const renderSparkline = (series: [string | number][], colors: PfColors[], yTickF
 
   return (
     <AreaChart
-      size={{ height: 45 }}
+      size={{ height: 45, width: SUMMARY_PANEL_CHART_WIDTH }}
       color={{ pattern: colors }}
       legend={{ show: false }}
       grid={{ y: { show: false } }}

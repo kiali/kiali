@@ -26,8 +26,8 @@ const GraphHelpTour: Array<StatefulStep> = [
       'Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.'
   },
   {
-    placement: StepPlacement.RIGHT,
-    offset: 0,
+    placement: StepPlacement.BOTTOM,
+    offset: -80,
     target: '#cytoscape-container',
     isVisible: target => {
       return target.contains(document.querySelector('#cy'));

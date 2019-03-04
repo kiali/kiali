@@ -55,9 +55,11 @@ type SummaryPanelStateType = {
 
 export default class SummaryPanelNode extends React.Component<SummaryPanelPropType, SummaryPanelStateType> {
   static readonly panelStyle = {
-    width: '25em',
+    height: '100%',
+    margin: 0,
     minWidth: '25em',
-    overflowY: 'auto' as 'auto'
+    overflowY: 'auto' as 'auto',
+    width: '25em'
   };
 
   private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
