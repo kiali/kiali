@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -162,11 +163,22 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
 	defer promtimer.ObserveNow(&err)
 
-	return in.getNamespaceServiceHealth(namespace, rateInterval, queryTime), nil
+	services, err := in.k8s.GetServices(namespace, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return in.getNamespaceServiceHealth(namespace, services, rateInterval, queryTime), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(namespace string, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(namespace string, services []v1.Service, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
 	allHealth := make(models.NamespaceServiceHealth)
+
+	// Prepare all data (note that it's important to provide data for all services, even those which may not have any health, for overview cards)
+	for _, service := range services {
+		h := models.EmptyServiceHealth()
+		allHealth[service.Name] = &h
+	}
 
 	// Fetch services requests rates
 	rates, _ := in.prom.GetNamespaceServicesRequestRates(namespace, rateInterval, queryTime)
