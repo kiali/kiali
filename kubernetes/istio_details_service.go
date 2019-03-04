@@ -137,6 +137,7 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return an IstioObject object", namespace, name)
 	}
+	istioObject.SetTypeMeta(typeMeta)
 	return istioObject, err
 }
 
