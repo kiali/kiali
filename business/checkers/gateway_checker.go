@@ -24,7 +24,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	for _, nssGw := range g.GatewaysPerNamespace {
 		for _, gw := range nssGw {
 			if gw.GetObjectMeta().Namespace == g.Namespace {
-				validations.MergeValidations(runSingleChecks(gw))
+				validations.MergeValidations(g.runSingleChecks(gw))
 			}
 		}
 	}
@@ -32,7 +32,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runSingleChecks(gw kubernetes.IstioObject) models.IstioValidations {
+func (g GatewayChecker) runSingleChecks(gw kubernetes.IstioObject) models.IstioValidations {
 	validations := models.IstioValidations{}
 	checks, valid := gateways.PortChecker{
 		Gateway: gw,

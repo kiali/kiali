@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -81,6 +81,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
+		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 	}
 }
 
@@ -126,7 +127,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		mtlsChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{mtlsChecker}
 	case ServiceEntries:
-		// Validations on ServiceEntries are not yet in place
+		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
+		objectCheckers = []ObjectChecker{serviceEntryChecker}
 	case Rules:
 		// Validations on Istio Rules are not yet in place
 	case Templates:
