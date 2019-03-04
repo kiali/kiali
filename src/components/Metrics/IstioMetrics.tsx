@@ -2,7 +2,7 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 
-import RefreshContainer from '../../containers/RefreshContainer';
+import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { GrafanaInfo } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';

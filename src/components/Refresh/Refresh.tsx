@@ -1,8 +1,13 @@
 import * as React from 'react';
 import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
-
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppState } from '../../store/Store';
+import { refreshIntervalSelector } from '../../store/Selectors';
 import { config } from '../../config';
 import { PollIntervalInMs } from '../../types/Common';
+import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { KialiAppAction } from '../../actions/KialiAppAction';
 
 type ComponentProps = {
   id: string;
@@ -95,4 +100,21 @@ class Refresh extends React.Component<Props, State> {
   }
 }
 
-export default Refresh;
+const mapStateToProps = (state: KialiAppState) => ({
+  refreshInterval: refreshIntervalSelector(state)
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+  return {
+    setRefreshInterval: (refresh: PollIntervalInMs) => {
+      dispatch(UserSettingsActions.setRefreshInterval(refresh));
+    }
+  };
+};
+
+const RefreshContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Refresh);
+
+export default RefreshContainer;

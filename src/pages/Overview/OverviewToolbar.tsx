@@ -8,6 +8,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { config } from '../../config';
 
@@ -17,7 +18,6 @@ import { SortField } from '../../types/SortFilters';
 import { FiltersAndSorts } from './FiltersAndSorts';
 import NamespaceInfo from './NamespaceInfo';
 import { HistoryManager, URLParams } from '../../app/History';
-import RefreshContainer from '../../containers/RefreshContainer';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ThunkDispatch } from 'redux-thunk';
 import { getValidDurations, getValidDuration } from '../../config/serverConfig';
@@ -155,18 +155,18 @@ export class OverviewToolbar extends React.Component<Props, State> {
             label={overviewTypes[this.state.overviewType]}
             options={overviewTypes}
           />
+        </FormGroup>
+        <ToolbarRightContent>
           <ToolbarDropdown
             id="overview-duration"
             disabled={false}
             handleSelect={this.updateDuration}
-            nameDropdown="Displaying"
+            nameDropdown="Display"
             value={validDuration}
             label={validDurations[validDuration]}
             options={validDurations}
           />
-        </FormGroup>
-        <ToolbarRightContent>
-          <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} />
+          <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />
         </ToolbarRightContent>
       </StatefulFilters>
     );
