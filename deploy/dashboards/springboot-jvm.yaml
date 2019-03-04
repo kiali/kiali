@@ -1,0 +1,80 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-jvm
+  labels:
+    runtime: SpringBoot
+spec:
+  title: JVM Metrics
+  charts:
+    - name: "Total live threads"
+      unit: ""
+      spans: 4
+      metricName: "jvm_threads_live"
+      dataType: "raw"
+    - name: "Daemon threads"
+      unit: ""
+      spans: 4
+      metricName: "jvm_threads_daemon"
+      dataType: "raw"
+    - name: "Loaded classes"
+      unit: ""
+      spans: 4
+      metricName: "jvm_classes_loaded"
+      dataType: "raw"
+
+    - name: "Memory used"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_used_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+    - name: "Memory commited"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_committed_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+    - name: "Memory max"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_max_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+
+    - name: "Pool buffer memory used"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_memory_used_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"
+    - name: "Pool buffer capacity"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_total_capacity_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"
+    - name: "Pool buffer count"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_count"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"

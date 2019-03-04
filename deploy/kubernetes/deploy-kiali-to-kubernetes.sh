@@ -238,7 +238,7 @@ done
 # Deploy Kiali MonitoringDashboards to Kubernetes
 # Note for undeploy script: dashboards are implicitly undeployed when the related CRD is removed
 echo "Deploying Kiali dashboards to Kubernetes namespace ${NAMESPACE}"
-for dashboard in nodejs thorntail vertx-client vertx-eventbus vertx-pool vertx-server
+for dashboard in nodejs thorntail vertx-client vertx-eventbus vertx-pool vertx-server springboot-jvm springboot-tomcat
 do
   yaml_path="${YAML_DIR}/../dashboards/${dashboard}.yaml"
   if [ -f "${yaml_path}" ]; then
