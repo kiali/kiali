@@ -68,6 +68,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                 <div>
                   <br />
                   {workload.runtimes
+                    .filter(r => r.name !== '')
                     .map((rt, idx) => this.renderLogo(rt.name, idx))
                     .reduce(
                       (list: JSX.Element[], elem) => (list ? [...list, <span key="sep"> | </span>, elem] : [elem]),
