@@ -233,7 +233,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     const conjunctive = validVal.includes(' AND ');
     const disjunctive = validVal.includes(' OR ');
     if (conjunctive && disjunctive) {
-      MessageCenterUtils.add(`Find value can not contain both 'and' and 'or'.`);
+      MessageCenterUtils.add(`Expression can not contain both 'AND' and 'OR'`);
       return undefined;
     }
     const separator = disjunctive ? ',' : '';
@@ -310,13 +310,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     }
     if (!op) {
       if (expression.split(' ').length > 1) {
-        MessageCenterUtils.add(`Invalid find expression or operator: [${expression}]`);
+        MessageCenterUtils.add(`Invalid operator [${op}]`);
         return undefined;
       }
 
       const unaryExpression = this.parseUnaryFindExpression(expression.trim(), false);
       if (!unaryExpression) {
-        MessageCenterUtils.add(`Invalid find expression or operator: [${expression}]`);
+        MessageCenterUtils.add(`Invalid operator [${op}]`);
       }
 
       return unaryExpression;
@@ -326,7 +326,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
       if (!unaryExpression) {
-        MessageCenterUtils.add(`Invalid find expression or operator: [${expression}]`);
+        MessageCenterUtils.add(`Invalid operator [${op}]`);
       }
 
       return unaryExpression;
@@ -360,10 +360,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case 'name': {
         const isNegation = op.startsWith('!');
         if (disjunctive && isNegation) {
-          MessageCenterUtils.add(`Find values do not allow OR expressions with "not find by name": [${expression}]`);
+          MessageCenterUtils.add(`Can not use 'OR' with negated 'name' operand`);
           return undefined;
         } else if (conjunctive) {
-          MessageCenterUtils.add(`Find values do not allow AND expressions with "find by name": [${expression}]`);
+          MessageCenterUtils.add(`Can not use 'AND' with 'name' operand`);
           return undefined;
         }
         const wl = `[${CyNode.workload} ${op} "${val}"]`;
@@ -390,7 +390,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
           case 'unknown':
             return { target: 'node', selector: `[${CyNode.nodeType} ${op} "${nodeType}"]` };
           default:
-            MessageCenterUtils.add(`Invalid node type. Expected app | service | unknown | workload : [${expression}]`);
+            MessageCenterUtils.add(`Invalid node type [${nodeType}]. Expected app | service | unknown | workload`);
         }
         return undefined;
       case 'ns':
@@ -454,7 +454,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
-        MessageCenterUtils.add(`Invalid find value: [${expression}]`);
+        MessageCenterUtils.add(`Invalid operand [${field}]`);
         return undefined;
     }
   };
@@ -466,21 +466,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case '>=':
       case '<=':
         if (isNaN(val)) {
-          MessageCenterUtils.add(`Invalid find value, expected a numeric value (use . for decimals):  [${expression}]`);
+          MessageCenterUtils.add(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`);
           return undefined;
         }
         return `[${field} ${op} ${val}]`;
       case '=':
       case '!=':
         if (val !== 'NaN' && isNaN(val)) {
-          MessageCenterUtils.add(
-            `Invalid find value, expected NaN or a numeric value (use . for decimals):  [${expression}]`
-          );
+          MessageCenterUtils.add(`Invalid value [${val}]. Expected NaN or a numeric value (use . for decimals)`);
           return undefined;
         }
         return Number(val) !== 0 ? `[${field} ${op} "${val}"]` : `[${field} ${op} "0"]`;
       default:
-        MessageCenterUtils.add(`Invalid operator for numeric condition: [${expression}]`);
+        MessageCenterUtils.add(`Invalid operator [${op}] for numeric condition`);
         return undefined;
     }
   }
@@ -533,7 +531,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return parsedExpression.target + parsedExpression.selector;
     }
     if (!selector.startsWith(parsedExpression.target)) {
-      MessageCenterUtils.add('Find value can not mix node and edge criteria.');
+      MessageCenterUtils.add('Invalid expression. Can not mix node and edge criteria.');
       return undefined;
     }
     return selector + separator + parsedExpression.selector;
