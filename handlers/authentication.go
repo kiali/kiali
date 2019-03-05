@@ -13,6 +13,10 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+const (
+	missingSecretStatusCode = 520
+)
+
 type AuthInfo struct {
 	Strategy              string      `json:"strategy"`
 	AuthorizationEndpoint string      `json:"authorizationEndpoint,omitempty"`
@@ -52,9 +56,13 @@ type TokenResponse struct {
 
 func checkKialiCredentials(r *http.Request) string {
 	conf := config.Get()
-	u, p, ok := r.BasicAuth()
 
-	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Password == p {
+	if conf.Server.Credentials.Username == "" || conf.Server.Credentials.Passphrase == "" {
+		return ""
+	}
+
+	u, p, ok := r.BasicAuth()
+	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Passphrase == p {
 		return u
 	}
 
@@ -80,8 +88,20 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	user := checkKialiCredentials(r)
 
 	if len(user) == 0 {
-		RespondWithCode(w, http.StatusUnauthorized)
-		return false
+		conf := config.Get()
+		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+			if conf.Server.Credentials.AllowAnonymous {
+				log.Trace("Access to the server endpoint is not secured with credentials - letting anonymous request come in")
+				user = "anonymous"
+			} else {
+				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+				RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
+				return false
+			}
+		} else {
+			RespondWithCode(w, http.StatusUnauthorized)
+			return false
+		}
 	}
 
 	token, err := config.GenerateToken(user)
@@ -209,7 +229,18 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	} else {
 		user := checkKialiCredentials(r)
 		if len(user) == 0 {
-			return http.StatusUnauthorized
+			conf := config.Get()
+			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+				if conf.Server.Credentials.AllowAnonymous {
+					log.Trace("Access to the server endpoint is not secured with credentials - letting anonymous request come in")
+					user = "anonymous"
+				} else {
+					log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+					return missingSecretStatusCode // our specific error code that indicates to the client that we are missing the secret
+				}
+			} else {
+				return http.StatusUnauthorized
+			}
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes
@@ -251,6 +282,8 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 				writeAuthenticateHeader(w, r)
 			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		case missingSecretStatusCode:
+			http.Error(w, "Credentials are missing. Create a secret. Please refer to the documentation for more details", statusCode)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
 			log.Errorf("Cannot send response to unauthorized user: %v", statusCode)

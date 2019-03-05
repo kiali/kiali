@@ -31,8 +31,6 @@ const (
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
-	EnvServerCredentialsUsername        = "SERVER_CREDENTIALS_USERNAME"
-	EnvServerCredentialsPassword        = "SERVER_CREDENTIALS_PASSWORD"
 	EnvServerAllowAnonymousAccess       = "SERVER_ALLOW_ANONYMOUS_ACCESS"
 	EnvWebRoot                          = "SERVER_WEB_ROOT"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
@@ -85,6 +83,12 @@ const (
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
+)
+
+// the paths we expect the login secret to be located
+const (
+	LoginSecretUsername   = "/kiali-secret/username"
+	LoginSecretPassphrase = "/kiali-secret/passphrase"
 )
 
 // Global configuration for the application.
@@ -204,8 +208,8 @@ func NewConfig() (c *Config) {
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
-		Username:       getDefaultString(EnvServerCredentialsUsername, ""),
-		Password:       getDefaultString(EnvServerCredentialsPassword, ""),
+		Username:       getDefaultStringFromFile(LoginSecretUsername, ""),
+		Passphrase:     getDefaultStringFromFile(LoginSecretPassphrase, ""),
 		AllowAnonymous: getDefaultBool(EnvServerAllowAnonymousAccess, false),
 	}
 
@@ -280,6 +284,15 @@ func Get() (conf *Config) {
 // Set the global Config
 func Set(conf *Config) {
 	configuration = conf
+}
+
+func getDefaultStringFromFile(filename string, defaultValue string) (retVal string) {
+	if fileContents, err := ioutil.ReadFile(filename); err == nil {
+		retVal = string(fileContents)
+	} else {
+		retVal = defaultValue
+	}
+	return
 }
 
 func getDefaultString(envvar string, defaultValue string) (retVal string) {

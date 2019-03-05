@@ -218,8 +218,8 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	testConf := Config{
 		Server: Server{
 			Credentials: security.Credentials{
-				Username: "foo",
-				Password: "bar",
+				Username:   "foo",
+				Passphrase: "bar",
 			},
 		},
 	}
@@ -238,7 +238,7 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if conf.Server.Credentials.Username != "foo" {
 		t.Errorf("Failed to unmarshal username credentials:\n%v", conf)
 	}
-	if conf.Server.Credentials.Password != "bar" {
+	if conf.Server.Credentials.Passphrase != "bar" {
 		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
 	}
 	if conf.Server.Credentials.AllowAnonymous {
@@ -250,7 +250,7 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 		Server: Server{
 			Credentials: security.Credentials{
 				Username:       "",
-				Password:       "",
+				Passphrase:     "",
 				AllowAnonymous: true,
 			},
 		},
@@ -270,7 +270,7 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if conf.Server.Credentials.Username != "" {
 		t.Errorf("Failed to unmarshal empty username credentials:\n%v", conf)
 	}
-	if conf.Server.Credentials.Password != "" {
+	if conf.Server.Credentials.Passphrase != "" {
 		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
 	}
 	if !conf.Server.Credentials.AllowAnonymous {

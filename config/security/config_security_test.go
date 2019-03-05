@@ -21,11 +21,11 @@ func TestValidateCredentials(t *testing.T) {
 	}
 
 	creds = &Credentials{
-		Username: "u",
-		Password: "p",
+		Username:   "u",
+		Passphrase: "p",
 	}
 	if err := creds.ValidateCredentials(); err != nil {
-		t.Errorf("Username/Password credentials should be valid: %v", err)
+		t.Errorf("Username/Passphrase credentials should be valid: %v", err)
 	}
 
 	if headerName, headerValue, err := creds.GetHTTPAuthHeader(); err != nil {
@@ -52,25 +52,25 @@ func TestValidateCredentials(t *testing.T) {
 	}
 
 	creds = &Credentials{
-		Username: "u",
-		Password: "p",
-		Token:    "t",
+		Username:   "u",
+		Passphrase: "p",
+		Token:      "t",
 	}
 	if err := creds.ValidateCredentials(); err == nil {
-		t.Error("Setting both Username/Password and Token should be invalid")
+		t.Error("Setting both Username/Passphrase and Token should be invalid")
 	}
 
 	creds = &Credentials{
 		Username: "u",
 	}
 	if err := creds.ValidateCredentials(); err == nil {
-		t.Error("Setting Username without Password should be invalid")
+		t.Error("Setting Username without Passphrase should be invalid")
 	}
 
 	creds = &Credentials{
-		Password: "p",
+		Passphrase: "p",
 	}
 	if err := creds.ValidateCredentials(); err == nil {
-		t.Error("Setting Password without Username should be invalid")
+		t.Error("Setting Passphrase without Username should be invalid")
 	}
 }
