@@ -61,11 +61,23 @@ class IstioWizard extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+      let isValid: boolean;
+      switch (this.props.type) {
+        // By default the rule of Weighted routing should be valid
+        case WIZARD_WEIGHTED_ROUTING:
+          isValid = true;
+          break;
+        // By default no rules is a no valid scenario
+        case WIZARD_MATCHING_ROUTING:
+        default:
+          isValid = false;
+          break;
+      }
       this.setState({
         showWizard: this.props.show,
         workloads: [],
         rules: [],
-        valid: true,
+        valid: isValid,
         mtlsMode: NONE,
         loadBalancer: NONE,
         modified: false

@@ -171,6 +171,10 @@ class MatchingRouting extends React.Component<Props, State> {
   };
 
   isValid = (rules: Rule[]): boolean => {
+    // Corner case, an empty rules shouldn't be a valid scenario to create a VS/DR
+    if (rules.length === 0) {
+      return false;
+    }
     const matchAll: number = this.matchAllIndex(rules);
     let isValid: boolean = true;
     for (let index = 0; index < this.state.rules.length; index++) {
