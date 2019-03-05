@@ -44,9 +44,9 @@ func NewRoutes() (r *Routes) {
 			handlers.Root,
 			false,
 		},
-		// swagger:route GET /token GetToken
+		// swagger:route GET /authenticate Authenticate
 		// ---
-		// Endpoint to get the authentication token
+		// Endpoint to authenticate the user
 		//
 		//     Produces:
 		//     - application/json
@@ -58,13 +58,47 @@ func NewRoutes() (r *Routes) {
 		//
 		// responses:
 		//      500: internalError
-		//      200: tokenGenerated
-		{ // Request the token
-			"Token",
+		//      200: tokenResponse
+		{
+			"Authenticate",
 			"GET",
-			"/api/token",
-			handlers.GetToken,
-			true,
+			"/api/authenticate",
+			handlers.Authenticate,
+			false,
+		},
+		// swagger:route POST /authenticate OpenshiftCheckToken
+		// ---
+		// Endpoint to check if a token from Openshift is working correctly
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: tokenResponse
+		{
+			"OpenshiftCheckToken",
+			"POST",
+			"/api/authenticate",
+			handlers.Authenticate,
+			false,
+		},
+		// swagger:route GET /logout Logout
+		// ---
+		// Endpoint to logout an user (unset the session cookie)
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      204: noContent
+		{
+			"Logout",
+			"GET",
+			"/api/logout",
+			handlers.Logout,
+			false,
 		},
 		// swagger:route GET /auth/info AuthenticationInfo
 		// ---
@@ -87,28 +121,6 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/auth/info",
 			handlers.AuthenticationInfo,
-			false,
-		},
-		// swagger:route POST /auth/openshift-token OpenshiftToken
-		// ---
-		// Endpoint to check if a token from Openshift is working correctly
-		//
-		//     Consumes:
-		//     - application/json
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      500: internalError
-		//      200: tokenGenerated
-		{
-			"OpenshiftCheckToken",
-			"POST",
-			"/api/auth/openshift-token",
-			handlers.OauthCheck,
 			false,
 		},
 		// swagger:route GET /status getStatus

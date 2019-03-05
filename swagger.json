@@ -62,12 +62,17 @@
         }
       }
     },
-    "/auth/openshift-token": {
-      "post": {
-        "description": "Endpoint to check if a token from Openshift is working correctly",
-        "consumes": [
-          "application/json"
+    "/authenticate": {
+      "get": {
+        "security": [
+          {
+            "authorization": [
+              "user",
+              "password"
+            ]
+          }
         ],
+        "description": "Endpoint to authenticate the user",
         "produces": [
           "application/json"
         ],
@@ -75,10 +80,29 @@
           "http",
           "https"
         ],
-        "operationId": "OpenshiftToken",
+        "operationId": "Authenticate",
         "responses": {
           "200": {
-            "$ref": "#/responses/tokenGenerated"
+            "$ref": "#/responses/tokenResponse"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      },
+      "post": {
+        "description": "Endpoint to check if a token from Openshift is working correctly",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "OpenshiftCheckToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenResponse"
           },
           "500": {
             "$ref": "#/responses/internalError"
@@ -154,6 +178,21 @@
           },
           "406": {
             "$ref": "#/responses/notAcceptableError"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "description": "Endpoint to logout an user (unset the session cookie)",
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "operationId": "Logout",
+        "responses": {
+          "204": {
+            "$ref": "#/responses/noContent"
           }
         }
       }
@@ -2617,35 +2656,6 @@
           }
         }
       }
-    },
-    "/token": {
-      "get": {
-        "security": [
-          {
-            "authorization": [
-              "user",
-              "password"
-            ]
-          }
-        ],
-        "description": "Endpoint to get the authentication token",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "operationId": "GetToken",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/tokenGenerated"
-          },
-          "500": {
-            "$ref": "#/responses/internalError"
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -4485,10 +4495,10 @@
       "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
-    "TokenGenerated": {
+    "TokenResponse": {
       "description": "This is used for returning the token",
       "type": "object",
-      "title": "TokenGenerated tokenGenerated",
+      "title": "TokenResponse tokenResponse",
       "required": [
         "username",
         "token",
@@ -4514,7 +4524,7 @@
           "example": "admin"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/config"
+      "x-go-package": "github.com/kiali/kiali/handlers"
     },
     "UID": {
       "description": "UID is a type that holds unique ID values, including UUIDs.  Because we\ndon't ONLY use UUIDs, this is an alias to string.  Being a type captures\nintent and helps make sure that UIDs and names do not get conflated.",
@@ -5339,10 +5349,10 @@
         "$ref": "#/definitions/StatusInfo"
       }
     },
-    "tokenGenerated": {
+    "tokenResponse": {
       "description": "HTTP status code 200 and tokenGenerated model in data",
       "schema": {
-        "$ref": "#/definitions/TokenGenerated"
+        "$ref": "#/definitions/TokenResponse"
       }
     },
     "workloadDetails": {
