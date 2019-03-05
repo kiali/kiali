@@ -1015,7 +1015,6 @@ ShallowWrapper {
         "15000": "Every 15 sec",
         "30000": "Every 30 sec",
         "300000": "Every 5 min",
-        "5000": "Every 5 sec",
         "60000": "Every 1 min",
         "900000": "Every 15 min",
       }
@@ -1061,16 +1060,6 @@ ShallowWrapper {
             header={false}
           >
             Pause
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="5000"
-            header={false}
-          >
-            Every 5 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -1173,16 +1162,6 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5000"
-              header={false}
-            >
-              Every 5 sec
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
               eventKey="10000"
               header={false}
             >
@@ -1262,23 +1241,6 @@ ShallowWrapper {
             },
             "ref": null,
             "rendered": "Pause",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "5000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 5 sec",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "5000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 5 sec",
             "type": [Function],
           },
           Object {
@@ -1428,16 +1390,6 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5000"
-              header={false}
-            >
-              Every 5 sec
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
               eventKey="10000"
               header={false}
             >
@@ -1534,16 +1486,6 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="5000"
-                header={false}
-              >
-                Every 5 sec
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
                 eventKey="10000"
                 header={false}
               >
@@ -1623,23 +1565,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Pause",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "5000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 5 sec",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "5000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 5 sec",
               "type": [Function],
             },
             Object {
@@ -3183,7 +3108,6 @@ ShallowWrapper {
         "15000": "Every 15 sec",
         "30000": "Every 30 sec",
         "300000": "Every 5 min",
-        "5000": "Every 5 sec",
         "60000": "Every 1 min",
         "900000": "Every 15 min",
       }
@@ -3230,16 +3154,6 @@ ShallowWrapper {
             header={false}
           >
             Pause
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="5000"
-            header={false}
-          >
-            Every 5 sec
           </MenuItem>
           <MenuItem
             active={false}
@@ -3342,16 +3256,6 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5000"
-              header={false}
-            >
-              Every 5 sec
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
               eventKey="10000"
               header={false}
             >
@@ -3431,23 +3335,6 @@ ShallowWrapper {
             },
             "ref": null,
             "rendered": "Pause",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "5000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 5 sec",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "5000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 5 sec",
             "type": [Function],
           },
           Object {
@@ -3597,16 +3484,6 @@ ShallowWrapper {
               bsClass="dropdown"
               disabled={false}
               divider={false}
-              eventKey="5000"
-              header={false}
-            >
-              Every 5 sec
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
               eventKey="10000"
               header={false}
             >
@@ -3703,16 +3580,6 @@ ShallowWrapper {
                 bsClass="dropdown"
                 disabled={false}
                 divider={false}
-                eventKey="5000"
-                header={false}
-              >
-                Every 5 sec
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
                 eventKey="10000"
                 header={false}
               >
@@ -3792,23 +3659,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Pause",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "5000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 5 sec",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "5000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 5 sec",
               "type": [Function],
             },
             Object {

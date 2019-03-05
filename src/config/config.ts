@@ -35,7 +35,6 @@ const conf = {
     /** Options in refresh */
     pollInterval: {
       0: 'Pause',
-      5000: 'Every 5 sec',
       10000: 'Every 10 sec',
       15000: 'Every 15 sec',
       30000: 'Every 30 sec',
