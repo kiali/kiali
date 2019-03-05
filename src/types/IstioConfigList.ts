@@ -223,6 +223,28 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
         : undefined
     })
   );
+  istioConfigList.meshPolicies.forEach(p =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'meshpolicy',
+      name: p.metadata.name,
+      policy: p,
+      validation: hasValidations('meshpolicy', p.metadata.name)
+        ? istioConfigList.validations['meshpolicy'][p.metadata.name]
+        : undefined
+    })
+  );
+  istioConfigList.policies.forEach(p =>
+    istioItems.push({
+      namespace: istioConfigList.namespace.name,
+      type: 'policy',
+      name: p.metadata.name,
+      policy: p,
+      validation: hasValidations('policy', p.metadata.name)
+        ? istioConfigList.validations['policy'][p.metadata.name]
+        : undefined
+    })
+  );
   istioConfigList.rules.forEach(r =>
     istioItems.push({ namespace: istioConfigList.namespace.name, type: 'rule', name: r.metadata.name, rule: r })
   );
@@ -246,22 +268,6 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
       type: 'quotaspecbinding',
       name: qsb.metadata.name,
       quotaSpecBinding: qsb
-    })
-  );
-  istioConfigList.policies.forEach(p =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'policy',
-      name: p.metadata.name,
-      policy: p
-    })
-  );
-  istioConfigList.meshPolicies.forEach(p =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'meshpolicy',
-      name: p.metadata.name,
-      policy: p
     })
   );
   istioConfigList.clusterRbacConfigs.forEach(rc =>
