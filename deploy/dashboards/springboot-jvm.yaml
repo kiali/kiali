@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: springboot-jvm
-  labels:
-    runtime: SpringBoot
 spec:
   title: JVM Metrics
+  runtime: Spring Boot
   charts:
     - name: "Total live threads"
       unit: ""

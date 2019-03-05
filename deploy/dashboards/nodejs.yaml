@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: nodejs
-  labels:
-    runtime: Node.js
 spec:
   title: Node.js Metrics
+  runtime: Node.js
   charts:
     - name: "Active handles"
       unit: ""

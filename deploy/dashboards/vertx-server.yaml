@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: vertx-server
-  labels:
-    runtime: Vert.x
 spec:
   title: Vert.x Server Metrics
+  runtime: Vert.x
   charts:
     - name: "Server response time"
       unit: "s"

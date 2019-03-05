@@ -196,7 +196,7 @@ func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames 
 		if dashboard == nil {
 			continue
 		}
-		runtime := getDashboardRuntime(dashboard)
+		runtime := dashboard.Spec.Runtime
 		ref := models.DashboardRef{
 			Template: dashboard.Metadata["name"].(string),
 			Title:    dashboard.Spec.Title,
@@ -218,15 +218,4 @@ func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames 
 		}
 	}
 	return runtimes
-}
-
-func getDashboardRuntime(dashboard *kubernetes.MonitoringDashboard) string {
-	if labels, ok := dashboard.Metadata["labels"]; ok {
-		if labelsMap, ok := labels.(map[string]interface{}); ok {
-			if runtime, ok := labelsMap["runtime"]; ok {
-				return runtime.(string)
-			}
-		}
-	}
-	return dashboard.Spec.Title
 }

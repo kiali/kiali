@@ -2,10 +2,9 @@ apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
   name: vertx-pool
-  labels:
-    runtime: Vert.x
 spec:
   title: Vert.x Pools Metrics
+  runtime: Vert.x
   charts:
     - name: "Usage duration"
       unit: "s"
