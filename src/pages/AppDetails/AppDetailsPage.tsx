@@ -13,6 +13,7 @@ import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
+import { MetricsDuration } from '../../components/MetricsOptions/MetricsDuration';
 
 type AppDetailsState = {
   app: App;
@@ -91,7 +92,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       version: ''
     };
     const restParams = {
-      duration: `${TrafficDetails.defaultDuration}s`,
+      duration: `${MetricsDuration.initialDuration()}s`,
       graphType: GraphType.APP,
       injectServiceNodes: true,
       appenders: 'deadNode'
@@ -150,11 +151,12 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
               </TabPane>
               <TabPane eventKey="traffic">
                 <TrafficDetails
-                  duration={TrafficDetails.defaultDuration}
+                  duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
                   itemType={MetricsObjectTypes.APP}
                   namespace={this.state.app.namespace.name}
                   appName={this.state.app.name}
+                  onDurationChanged={this.handleTrafficDurationChange}
                   onRefresh={this.doRefresh}
                 />
               </TabPane>
@@ -201,6 +203,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
 
   private activeTab = (tabName: string, whenEmpty: string) => {
     return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
+  };
+
+  private handleTrafficDurationChange = () => {
+    this.fetchTrafficData();
   };
 
   private tabChangeHandler = (tabName: string) => {

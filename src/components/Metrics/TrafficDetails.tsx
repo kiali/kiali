@@ -3,8 +3,8 @@ import * as React from 'react';
 import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
 import { DurationInSeconds } from '../../types/Common';
-import { getName } from '../../utils/RateIntervals';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
 
 type WorkloadProps = {
   itemType: MetricsObjectTypes.WORKLOAD;
@@ -20,8 +20,9 @@ type AppProps = {
 
 type TrafficDetailsProps = {
   duration: DurationInSeconds;
-  trafficData: GraphDefinition | null;
+  onDurationChanged: (duration: DurationInSeconds) => void;
   onRefresh: () => void;
+  trafficData: GraphDefinition | null;
 } & (AppProps | WorkloadProps);
 
 type TrafficDetailsState = {
@@ -34,8 +35,6 @@ type ServiceTraffic = {
 };
 
 class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetailsState> {
-  static readonly defaultDuration = 600;
-
   constructor(props: TrafficDetailsProps) {
     super(props);
     this.state = {
@@ -60,8 +59,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
   }
 
   render() {
-    const durationName = getName(this.props.duration).toLowerCase();
-
     if (this.props.trafficData === null) {
       return null;
     }
@@ -70,14 +67,17 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       <Row className="card-pf-body">
         <Col xs={12}>
           <div>
-            <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-              <Icon name="refresh" />
-            </Button>
-            <strong>Inbound ({durationName})</strong>
+            <div style={{ float: 'right', paddingRight: '2em' }}>
+              <MetricsDurationContainer onChanged={this.props.onDurationChanged} />{' '}
+              <Button onClick={this.props.onRefresh}>
+                <Icon name="refresh" />
+              </Button>
+            </div>
+            <strong>Inbound</strong>
           </div>
           <DetailedTrafficList direction="inbound" traffic={this.state.inboundTraffic} />
           <div style={{ marginTop: '2em' }}>
-            <strong>Outbound ({durationName})</strong>
+            <strong>Outbound</strong>
           </div>
           <DetailedTrafficList direction="outbound" traffic={this.state.outboundTraffic} />
         </Col>

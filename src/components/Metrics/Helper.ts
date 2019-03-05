@@ -125,8 +125,9 @@ namespace MetricsHelper {
     opts.rateInterval = intervalOpts.rateInterval;
   };
 
-  export const initDuration = (opts: BaseMetricsOptions) => {
+  export const initDuration = (opts: BaseMetricsOptions): BaseMetricsOptions => {
     durationToOptions(MetricsDuration.initialDuration(), opts);
+    return opts;
   };
 }
 
