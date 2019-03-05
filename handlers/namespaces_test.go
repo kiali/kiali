@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -144,10 +144,9 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			getNamespaceMetrics(w, r, func() (*prometheus.Client, error) {
+			context := context.WithValue(r.Context(), "token", "test")
+			getNamespaceMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return client, nil
-			}, func() (kubernetes.IstioClientInterface, error) {
-				return k8s, nil
 			})
 		}))
 

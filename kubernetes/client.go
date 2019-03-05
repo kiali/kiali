@@ -108,6 +108,17 @@ type IstioClient struct {
 	stopCache chan struct{}
 }
 
+// ClientFactory interface for the clientFactory object
+type ClientFactory interface {
+	NewClient(token string) (IstioClientInterface, error)
+}
+
+// clientFactory used to generate per users clients
+type clientFactory struct {
+	ClientFactory
+	baseIstioConfig *rest.Config
+}
+
 // GetK8sApi returns the clientset referencing all K8s rest clients
 func (client *IstioClient) GetK8sApi() *kube.Clientset {
 	return client.k8s
@@ -154,13 +165,33 @@ func ConfigClient() (*rest.Config, error) {
 	}, nil
 }
 
-// NewClient creates a new client to the Kubernetes and Istio APIs.
-func NewClient() (*IstioClient, error) {
-	config, err := ConfigClient()
+// NewClientFactory create a new ClientFactory that can be used to generate per user clients
+func NewClientFactory() (ClientFactory, error) {
 
+	// Get the normal configuration
+	config, err := ConfigClient()
 	if err != nil {
 		return nil, err
 	}
+
+	// Create a new config based on what was gathered above but don't specify the bearer token to use
+	istioConfig := rest.Config{
+		Host:            config.Host,
+		TLSClientConfig: config.TLSClientConfig,
+		QPS:             config.QPS,
+		Burst:           config.Burst,
+	}
+
+	return &clientFactory{
+		baseIstioConfig: &istioConfig,
+	}, nil
+}
+
+// NewClient creates a new IstioClientInterface based on a users k8s token
+func (uc *clientFactory) NewClient(token string) (IstioClientInterface, error) {
+	config := uc.baseIstioConfig
+
+	config.BearerToken = token
 
 	return NewClientFromConfig(config)
 }

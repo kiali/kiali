@@ -38,7 +38,7 @@ func setupServiceEntries() *business.Layer {
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{&externalServiceEntry, &internalServiceEntry, &defaultServiceEntry}, nil)
 	config.Set(config.NewConfig())
 
-	businessLayer := business.SetWithBackends(k8s, nil)
+	businessLayer := business.NewWithBackends(k8s, nil)
 	return businessLayer
 }
 

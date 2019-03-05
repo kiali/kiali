@@ -15,7 +15,30 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"k8s.io/client-go/rest"
 )
+
+//// Mock for the K8SClientFactory
+
+type K8SClientFactoryMock struct {
+	mock.Mock
+	baseIstioConfig *rest.Config
+	k8s             kubernetes.IstioClientInterface
+}
+
+// Constructor
+func NewK8SClientFactoryMock(k8s kubernetes.IstioClientInterface) *K8SClientFactoryMock {
+	k8sClientFactory := new(K8SClientFactoryMock)
+	k8sClientFactory.k8s = k8s
+	return k8sClientFactory
+}
+
+// Business Methods
+func (o *K8SClientFactoryMock) NewClient(token string) (kubernetes.IstioClientInterface, error) {
+	return o.k8s, nil
+}
+
+/////
 
 type K8SClientMock struct {
 	mock.Mock

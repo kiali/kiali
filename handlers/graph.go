@@ -69,14 +69,21 @@ func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
-	trafficMap := buildNamespacesTrafficMap(o, client)
+	// Create a 'global' object to store the business. Global only to the request.
+	globalInfo := appender.NewGlobalInfo()
+
+	business, err := getBusiness(r)
+	graph.CheckError(err)
+	globalInfo.Business = business
+
+	trafficMap := buildNamespacesTrafficMap(o, client, globalInfo)
 	generateGraph(trafficMap, w, o)
 
 	// update metrics
 	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
 }
 
-func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client, globalInfo *appender.GlobalInfo) graph.TrafficMap {
 	switch o.Vendor {
 	case "cytoscape":
 	default:
@@ -87,7 +94,6 @@ func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client) gra
 
 	trafficMap := graph.NewTrafficMap()
 
-	globalInfo := appender.NewGlobalInfo()
 	for _, namespace := range o.Namespaces {
 		log.Debugf("Build traffic map for namespace [%s]", namespace)
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
@@ -649,6 +655,11 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
 	globalInfo := appender.NewGlobalInfo()
+
+	business, err := getBusiness(r)
+	graph.CheckError(err)
+	globalInfo.Business = business
+
 	namespaceInfo := appender.NewNamespaceInfo(o.NodeOptions.Namespace)
 
 	for _, a := range o.Appenders {

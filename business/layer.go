@@ -18,33 +18,48 @@ type Layer struct {
 	OpenshiftOAuth OpenshiftOAuthService
 }
 
-// Global business.Layer; currently only used for tests to inject mocks,
-//	whereas production code recreates services in a stateless way
-var layer *Layer
+// Global clientfactory and prometheus clients.
+var clientFactory kubernetes.ClientFactory
+var prometheusClient prometheus.ClientInterface
 
-// Get the business.Layer, create it if necessary
-func Get() (*Layer, error) {
-	if layer != nil {
-		return layer, nil
-	}
-	k8s, err := kubernetes.NewClient()
-	if err != nil {
-		return nil, err
-	}
-	prom, err := prometheus.NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	// Business needs to maintain a minimal state as kubernetes package will maintain a cache
-	SetWithBackends(k8s, prom)
-	return layer, nil
+func GetUnauthenticated() (*Layer, error) {
+	return Get("")
 }
 
-// SetWithBackends creates all services with injected clients to external APIs
-func SetWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
-	layer = NewWithBackends(k8s, prom)
-	return layer
+// Get the business.Layer
+func Get(token string) (*Layer, error) {
+	// Use an existing client factory if it exists, otherwise create and use in the future
+	if clientFactory == nil {
+		userClient, err := kubernetes.NewClientFactory()
+		if err != nil {
+			return nil, err
+		}
+		clientFactory = userClient
+	}
+
+	// Creates a new k8s client based on the current users token
+	k8s, err := clientFactory.NewClient(token)
+	if err != nil {
+		return nil, err
+	}
+
+	// Use an existing Prometheus client if it exists, otherwise create and use in the future
+	if prometheusClient == nil {
+		prom, err := prometheus.NewClient()
+		if err != nil {
+			return nil, err
+		}
+		prometheusClient = prom
+	}
+
+	return NewWithBackends(k8s, prometheusClient), nil
+}
+
+// SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
+// Mock friendly. Used only with tests.
+func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface) {
+	clientFactory = cf
+	prometheusClient = prom
 }
 
 // NewWithBackends creates the business layer using the passed k8s and prom clients

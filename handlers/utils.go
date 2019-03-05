@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -14,15 +15,21 @@ import (
 )
 
 type promClientSupplier func() (*prometheus.Client, error)
-type k8sClientSupplier func() (kubernetes.IstioClientInterface, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
-var defaultK8SClientSupplier = func() (kubernetes.IstioClientInterface, error) {
-	return kubernetes.NewClient()
-}
 
-func getService(namespace string, service string) (*v1.ServiceSpec, error) {
-	client, err := kubernetes.NewClient()
+var clientFactory kubernetes.ClientFactory
+
+func getService(token string, namespace string, service string) (*v1.ServiceSpec, error) {
+	if clientFactory == nil {
+		userClientFactory, err := kubernetes.NewClientFactory()
+		if err != nil {
+			return nil, err
+		}
+		clientFactory = userClientFactory
+	}
+
+	client, err := clientFactory.NewClient(token)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +44,12 @@ func validateURL(serviceURL string) (*url.URL, error) {
 	return url.ParseRequestURI(serviceURL)
 }
 
-func checkNamespaceAccess(w http.ResponseWriter, k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface, namespace string) *models.Namespace {
-	layer := business.NewWithBackends(k8s, prom)
+func checkNamespaceAccess(w http.ResponseWriter, r *http.Request, prom prometheus.ClientInterface, namespace string) *models.Namespace {
+	layer, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil
+	}
 
 	if nsInfo, err := layer.Namespace.GetNamespace(namespace); err != nil {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
@@ -48,23 +59,41 @@ func checkNamespaceAccess(w http.ResponseWriter, k8s kubernetes.IstioClientInter
 	}
 }
 
-func initClientsForMetrics(w http.ResponseWriter, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier, namespace string) (*prometheus.Client, kubernetes.IstioClientInterface, *models.Namespace) {
-	k8s, err := k8sSupplier()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Kubernetes client error: "+err.Error())
-		return nil, nil, nil
-	}
+func initClientsForMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, namespace string) (*prometheus.Client, *models.Namespace) {
 	prom, err := promSupplier()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	nsInfo := checkNamespaceAccess(w, k8s, prom, namespace)
+	nsInfo := checkNamespaceAccess(w, r, prom, namespace)
 	if nsInfo == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
-	return prom, k8s, nsInfo
+	return prom, nsInfo
+}
+
+// getToken retrieves the token from the request's context
+func getToken(r *http.Request) (string, error) {
+	tokenContext := r.Context().Value("token")
+	if tokenContext != nil {
+		if token, ok := tokenContext.(string); ok {
+			return token, nil
+		} else {
+			return "", errors.New("Token is not of type string")
+		}
+	} else {
+		return "", errors.New("Token missing from the request context")
+	}
+}
+
+// getBusiness returns the business layer specific to the users's request
+func getBusiness(r *http.Request) (*business.Layer, error) {
+	token, err := getToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return business.Get(token)
 }

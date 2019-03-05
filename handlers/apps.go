@@ -17,7 +17,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 		return
@@ -38,7 +38,7 @@ func AppList(w http.ResponseWriter, r *http.Request) {
 func AppDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -62,16 +62,16 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(w http.ResponseWriter, r *http.Request) {
-	getAppMetrics(w, r, defaultPromClientSupplier, defaultK8SClientSupplier)
+	getAppMetrics(w, r, defaultPromClientSupplier)
 }
 
 // getAppMetrics (mock-friendly version)
-func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier) {
+func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	app := vars["app"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, promSupplier, k8sSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return
@@ -95,7 +95,7 @@ func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	app := vars["app"]
 	template := vars["template"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return
@@ -135,7 +135,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	app := vars["app"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,6 +18,10 @@ import (
 const (
 	missingSecretStatusCode = 520
 )
+
+type AuthenticationHandler struct {
+	saToken string
+}
 
 type AuthInfo struct {
 	Strategy              string      `json:"strategy"`
@@ -144,7 +150,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 
 	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
 
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.")
 	}
@@ -190,29 +196,28 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	return true
 }
 
-func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) int {
-	business, err := business.Get()
-
-	if err != nil {
-		log.Warning("Could not get business layer: ", err)
-		return http.StatusInternalServerError
+func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
 	} else {
-		tokenString := getTokenStringFromRequest(r)
-		if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
-			log.Warningf("Token is invalid: %s", err.Error())
-		} else {
-			err := business.OpenshiftOAuth.ValidateToken(claims.SessionId)
-			if err == nil {
-				// Internal header used to propagate the subject of the request for audit purposes
-				w.Header().Add("Kiali-User", claims.Subject)
-				return http.StatusOK
-			}
-
-			log.Warning("Token error: ", err)
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return http.StatusInternalServerError, ""
 		}
+
+		err = business.OpenshiftOAuth.ValidateToken(claims.SessionId)
+		if err == nil {
+			// Internal header used to propagate the subject of the request for audit purposes
+			w.Header().Add("Kiali-User", claims.Subject)
+			return http.StatusOK, claims.SessionId
+		}
+
+		log.Warning("Token error: ", err)
 	}
 
-	return http.StatusUnauthorized
+	return http.StatusUnauthorized, ""
 }
 
 func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
@@ -260,23 +265,40 @@ func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AuthenticationHandler(next http.Handler) http.Handler {
+func NewAuthenticationHandler() (AuthenticationHandler, error) {
+	// Read token from the filesystem
+	saToken, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	if err != nil {
+		return AuthenticationHandler{}, err
+	} else {
+		return AuthenticationHandler{
+			saToken: string(saToken),
+		}, nil
+	}
+}
+
+func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		statusCode := http.StatusOK
 		conf := config.Get()
 
+		var token string
+
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyOpenshift:
-			statusCode = checkOpenshiftSession(w, r)
+			statusCode, token = checkOpenshiftSession(w, r)
 		case config.AuthStrategyLogin:
 			statusCode = checkKialiSession(w, r)
+			token = aHandler.saToken
 		case config.AuthStrategyAnonymous:
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
+			token = aHandler.saToken
 		}
 
 		switch statusCode {
 		case http.StatusOK:
-			next.ServeHTTP(w, r)
+			context := context.WithValue(r.Context(), "token", token)
+			next.ServeHTTP(w, r.WithContext(context))
 		case http.StatusUnauthorized:
 			if conf.Auth.Strategy == config.AuthStrategyLogin {
 				writeAuthenticateHeader(w, r)
@@ -288,6 +310,13 @@ func AuthenticationHandler(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(statusCode), statusCode)
 			log.Errorf("Cannot send response to unauthorized user: %v", statusCode)
 		}
+	})
+}
+
+func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		context := context.WithValue(r.Context(), "token", "")
+		next.ServeHTTP(w, r.WithContext(context))
 	})
 }
 
@@ -317,7 +346,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
-		business, err := business.Get()
+		business, err := getBusiness(r)
 
 		if err != nil {
 			RespondWithJSONIndent(w, http.StatusInternalServerError, "Error trying to get business layer")

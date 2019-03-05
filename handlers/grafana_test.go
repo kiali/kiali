@@ -25,7 +25,7 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.DisplayLink = false
 	config.Set(conf)
-	info, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Ports: []v1.ServicePort{
@@ -40,7 +40,7 @@ func TestGetGrafanaInfoFromConfig(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	info, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []v1.ServicePort{
@@ -55,7 +55,7 @@ func TestGetGrafanaInfoFromConfig(t *testing.T) {
 func TestGetGrafanaInfoNoExternalIP(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	_, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{},
 			Ports: []v1.ServicePort{
@@ -69,7 +69,7 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []v1.ServicePort{
@@ -83,7 +83,7 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo(func(_, _ string) (*v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []v1.ServicePort{

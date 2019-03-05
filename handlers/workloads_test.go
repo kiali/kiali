@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -32,10 +32,17 @@ import (
 func setupWorkloadList() (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, prom)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads", WorkloadList)
+
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			context := context.WithValue(r.Context(), "token", "test")
+			WorkloadList(w, r.WithContext(context))
+		}))
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom
@@ -316,14 +323,16 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			getWorkloadMetrics(w, r, func() (*prometheus.Client, error) {
+			context := context.WithValue(r.Context(), "token", "test")
+			getWorkloadMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
 				return prom, nil
-			}, func() (kubernetes.IstioClientInterface, error) {
-				return k8s, nil
 			})
 		}))
 
 	ts := httptest.NewServer(mr)
-	business.SetWithBackends(nil, prom)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, prom)
+
 	return ts, api, k8s
 }

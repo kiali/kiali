@@ -28,12 +28,6 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	var err error
-	if globalInfo.Business == nil {
-		globalInfo.Business, err = business.Get()
-		graph.CheckError(err)
-	}
-
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 

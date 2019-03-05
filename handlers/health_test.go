@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -55,11 +56,19 @@ func TestNamespaceAppHealth(t *testing.T) {
 func setupNamespaceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, prom)
+
 	setupMockData(k8s)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/health", NamespaceHealth)
+
+	mr.HandleFunc("/api/namespaces/{namespace}/health", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			context := context.WithValue(r.Context(), "token", "test")
+			NamespaceHealth(w, r.WithContext(context))
+		}))
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom
@@ -97,11 +106,19 @@ func TestAppHealth(t *testing.T) {
 func setupAppHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, prom)
+
 	setupMockData(k8s)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/health", AppHealth)
+
+	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/health", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			context := context.WithValue(r.Context(), "token", "test")
+			AppHealth(w, r.WithContext(context))
+		}))
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom
@@ -133,11 +150,19 @@ func TestServiceHealth(t *testing.T) {
 func setupServiceHealthEndpoint(t *testing.T) (*httptest.Server, *kubetest.K8SClientMock, *prometheustest.PromClientMock) {
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	business.SetWithBackends(k8s, prom)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, prom)
+
 	setupMockData(k8s)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", ServiceHealth)
+
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/health", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			context := context.WithValue(r.Context(), "token", "test")
+			ServiceHealth(w, r.WithContext(context))
+		}))
 
 	ts := httptest.NewServer(mr)
 	return ts, k8s, prom

@@ -15,7 +15,7 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
@@ -37,7 +37,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Workloads initialization error: "+err.Error())
 		return
@@ -61,16 +61,16 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
 func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
-	getWorkloadMetrics(w, r, defaultPromClientSupplier, defaultK8SClientSupplier)
+	getWorkloadMetrics(w, r, defaultPromClientSupplier)
 }
 
 // getWorkloadMetrics (mock-friendly version)
-func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier) {
+func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	workload := vars["workload"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, promSupplier, k8sSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return
@@ -93,7 +93,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	workload := vars["workload"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return

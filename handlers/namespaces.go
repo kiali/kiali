@@ -5,14 +5,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
 func NamespaceList(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
 
-	business, err := business.Get()
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -32,15 +31,15 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 // NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in the namespace
 func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
-	getNamespaceMetrics(w, r, defaultPromClientSupplier, defaultK8SClientSupplier)
+	getNamespaceMetrics(w, r, defaultPromClientSupplier)
 }
 
 // getServiceMetrics (mock-friendly version)
-func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier) {
+func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, promSupplier, k8sSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return
