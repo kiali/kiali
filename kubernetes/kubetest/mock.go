@@ -316,73 +316,45 @@ func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, js
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-// Fake methods doesn't need an entry point
+func (o *K8SClientMock) MockService(namespace, name string) {
+	s := fakeService(namespace, name)
+	o.On("GetService", namespace, name).Return(&s, nil)
+}
 
-func FakeService() *v1.Service {
-	return &v1.Service{
+func (o *K8SClientMock) MockServices(namespace string, names []string) {
+	services := []v1.Service{}
+	for _, name := range names {
+		services = append(services, fakeService(namespace, name))
+	}
+	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
+}
+
+func fakeService(namespace, name string) v1.Service {
+	return v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "httpbin",
-			Namespace: "tutorial",
+			Name:      name,
+			Namespace: namespace,
 			Labels: map[string]string{
-				"app":     "httpbin",
-				"version": "v1"}},
+				"app": name,
+			},
+		},
 		Spec: v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Type:      "ClusterIP",
-			Selector:  map[string]string{"app": "httpbin"},
+			Selector:  map[string]string{"app": name},
 			Ports: []v1.ServicePort{
 				{
 					Name:     "http",
 					Protocol: "TCP",
-					Port:     3001},
+					Port:     3001,
+				},
 				{
 					Name:     "http",
 					Protocol: "TCP",
-					Port:     3000}}}}
-}
-
-func FakeServiceList() []v1.Service {
-	return []v1.Service{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "reviews",
-				Namespace: "tutorial",
-				Labels: map[string]string{
-					"app":     "reviews",
-					"version": "v1"}},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "fromservice",
-				Type:      "ClusterIP",
-				Selector:  map[string]string{"app": "reviews"},
-				Ports: []v1.ServicePort{
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3001},
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3000}}}},
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "httpbin",
-				Namespace: "tutorial",
-				Labels: map[string]string{
-					"app":     "httpbin",
-					"version": "v1"}},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "fromservice",
-				Type:      "ClusterIP",
-				Selector:  map[string]string{"app": "httpbin"},
-				Ports: []v1.ServicePort{
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3001},
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3000}}}},
+					Port:     3000,
+				},
+			},
+		},
 	}
 }
 

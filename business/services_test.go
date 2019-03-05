@@ -15,7 +15,7 @@ func TestServiceListParsing(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(kubetest.FakeServiceList(), nil)
+	k8s.MockServices("Namespace", []string{"reviews", "httpbin"})
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
 	conf := config.NewConfig()
 	config.Set(conf)
