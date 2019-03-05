@@ -30,7 +30,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/ns/health"
 
-	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return(kubetest.FakeServiceList(), nil)
+	k8s.MockServices("ns", []string{"reviews", "httpbin"})
 	k8s.On("GetPods", "ns", mock.AnythingOfType("string")).Return(kubetest.FakePodList(), nil)
 	k8s.MockEmptyWorkloads("ns")
 

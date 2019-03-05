@@ -159,6 +159,29 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
 }
 
+func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup mocks
+	k8s := new(kubetest.K8SClientMock)
+	prom := new(prometheustest.PromClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+	hs := HealthService{k8s: k8s, prom: prom}
+
+	k8s.On("IsOpenShift").Return(false)
+	k8s.MockServices("tutorial", []string{"reviews", "httpbin"})
+	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+
+	health, err := hs.GetNamespaceServiceHealth("tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+
+	assert.Nil(err)
+	// Make sure we get services with N/A health
+	assert.Len(health, 2)
+	assert.Equal(float64(-1), health["reviews"].Requests.ErrorRatio)
+	assert.InDelta(float64(0.09), health["httpbin"].Requests.ErrorRatio, 0.01)
+}
+
 var (
 	sampleReviewsToHttpbin200 = model.Sample{
 		Metric: model.Metric{
@@ -180,27 +203,30 @@ var (
 	}
 	sampleUnknownToHttpbin200 = model.Sample{
 		Metric: model.Metric{
-			"destination_service": "httpbin.tutorial.svc.cluster.local",
-			"source_service":      "unknown",
-			"response_code":       "200",
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"response_code":            "200",
 		},
 		Value:     model.SampleValue(14),
 		Timestamp: model.Now(),
 	}
 	sampleUnknownToHttpbin404 = model.Sample{
 		Metric: model.Metric{
-			"destination_service": "httpbin.tutorial.svc.cluster.local",
-			"source_service":      "unknown",
-			"response_code":       "404",
+			"destination_service":      "httpbin.tutorial.svc.cluster.local",
+			"destination_service_name": "httpbin",
+			"source_service":           "unknown",
+			"response_code":            "404",
 		},
 		Value:     model.SampleValue(1.4),
 		Timestamp: model.Now(),
 	}
 	sampleUnknownToReviews500 = model.Sample{
 		Metric: model.Metric{
-			"destination_service": "reviews.tutorial.svc.cluster.local",
-			"source_service":      "unknown",
-			"response_code":       "500",
+			"destination_service":      "reviews.tutorial.svc.cluster.local",
+			"destination_service_name": "reviews",
+			"source_service":           "unknown",
+			"response_code":            "500",
 		},
 		Value:     model.SampleValue(1.6),
 		Timestamp: model.Now(),
