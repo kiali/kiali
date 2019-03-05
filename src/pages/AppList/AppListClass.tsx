@@ -4,7 +4,6 @@ import { ListViewIcon, ListViewItem } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 import { AppList, AppListItem } from '../../types/AppList';
 import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import ItemDescription from './ItemDescription';
 
 export namespace AppListClass {
@@ -14,7 +13,7 @@ export namespace AppListClass {
         namespace: data.namespace.name,
         name: app.name,
         istioSidecar: app.istioSidecar,
-        healthPromise: API.getAppHealth(authentication(), data.namespace.name, app.name, rateInterval, app.istioSidecar)
+        healthPromise: API.getAppHealth(data.namespace.name, app.name, rateInterval, app.istioSidecar)
       }));
     }
     return [];

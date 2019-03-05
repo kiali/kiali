@@ -37,7 +37,6 @@ import {
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
-import { authentication } from '../../utils/Authentication';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
 import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
@@ -606,7 +605,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       if (useWorkloadHealth) {
         let promise = workloadHealthPerNamespace.get(namespace);
         if (!promise) {
-          promise = API.getNamespaceWorkloadHealth(authentication(), namespace, duration);
+          promise = API.getNamespaceWorkloadHealth(namespace, duration);
           workloadHealthPerNamespace.set(namespace, promise);
         }
         this.updateNodeHealth(ele, promise, workload);
@@ -614,7 +613,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         const app = ele.data(CyNode.app);
         let promise = appHealthPerNamespace.get(namespace);
         if (!promise) {
-          promise = API.getNamespaceAppHealth(authentication(), namespace, duration);
+          promise = API.getNamespaceAppHealth(namespace, duration);
           appHealthPerNamespace.set(namespace, promise);
         }
         this.updateNodeHealth(ele, promise, app);
@@ -625,7 +624,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
         let promise = serviceHealthPerNamespace.get(namespace);
         if (!promise) {
-          promise = API.getNamespaceServiceHealth(authentication(), namespace, duration);
+          promise = API.getNamespaceServiceHealth(namespace, duration);
           serviceHealthPerNamespace.set(namespace, promise);
         }
         this.updateNodeHealth(ele, promise, service);

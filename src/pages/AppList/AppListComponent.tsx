@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import Namespace from '../../types/Namespace';
 import { AppListItem } from '../../types/AppList';
 import { AppListFilters } from './FiltersAndSorts';
@@ -89,7 +88,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 
     if (namespacesSelected.length === 0) {
       this.promises
-        .register('namespaces', API.getNamespaces(authentication()))
+        .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchApps(
@@ -110,7 +109,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
-    const appsPromises = namespaces.map(namespace => API.getApps(authentication(), namespace));
+    const appsPromises = namespaces.map(namespace => API.getApps(namespace));
     this.promises
       .registerAll('apps', appsPromises)
       .then(responses => {

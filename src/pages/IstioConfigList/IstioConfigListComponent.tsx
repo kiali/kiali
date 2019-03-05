@@ -22,7 +22,6 @@ import {
 } from '../../types/IstioConfigList';
 import { Link } from 'react-router-dom';
 import { PfColors } from '../../components/Pf/PfColors';
-import { authentication } from '../../utils/Authentication';
 import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -107,7 +106,7 @@ class IstioConfigListComponent extends ListComponent.Component<
 
     if (namespacesSelected.length === 0) {
       this.promises
-        .register('namespaces', API.getNamespaces(authentication()))
+        .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchConfigs(
@@ -173,7 +172,7 @@ class IstioConfigListComponent extends ListComponent.Component<
   // Fetch the Istio configs, apply filters and map them into flattened list items
   fetchIstioConfigs(namespaces: string[], typeFilters: string[], istioNameFilters: string[]) {
     return this.promises
-      .registerAll('configs', namespaces.map(ns => API.getIstioConfig(authentication(), ns, typeFilters, true)))
+      .registerAll('configs', namespaces.map(ns => API.getIstioConfig(ns, typeFilters, true)))
       .then(responses => {
         let istioItems: IstioConfigItem[] = [];
         responses.forEach(response => {

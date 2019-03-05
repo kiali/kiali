@@ -2,7 +2,6 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
 import { AppId, App } from '../../types/App';
-import { authentication } from '../../utils/Authentication';
 import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -68,17 +67,11 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   };
 
   fetchApp = () => {
-    API.getApp(authentication(), this.props.match.params.namespace, this.props.match.params.app)
+    API.getApp(this.props.match.params.namespace, this.props.match.params.app)
       .then(details => {
         this.setState({ app: details.data });
         const hasSidecar = details.data.workloads.some(w => w.istioSidecar);
-        return API.getAppHealth(
-          authentication(),
-          this.props.match.params.namespace,
-          this.props.match.params.app,
-          600,
-          hasSidecar
-        );
+        return API.getAppHealth(this.props.match.params.namespace, this.props.match.params.app, 600, hasSidecar);
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {

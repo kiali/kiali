@@ -7,9 +7,9 @@ import { MessageCenterActions } from './MessageCenterActions';
 import * as API from '../services/Api';
 
 const GrafanaThunkActions = {
-  getInfo: (auth: string) => {
+  getInfo: () => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
-      API.getGrafanaInfo(auth)
+      API.getGrafanaInfo()
         .then(response => {
           dispatch(GrafanaActions.setinfo(response.data));
         })

@@ -4,8 +4,6 @@ export const KEY_CODES = {
   ESCAPE_KEY: 27
 };
 
-export type AuthToken = string;
-
 export type AppenderString = string;
 
 export type UserName = string;

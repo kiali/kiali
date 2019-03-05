@@ -3,7 +3,6 @@ import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
 import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
 import { ObjectCheck, Validations } from '../../types/IstioObjects';
-import { authentication } from '../../utils/Authentication';
 import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -129,7 +128,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   };
 
   fetchWorkload = () => {
-    API.getWorkload(authentication(), this.props.match.params.namespace, this.props.match.params.workload)
+    API.getWorkload(this.props.match.params.namespace, this.props.match.params.workload)
       .then(details => {
         this.setState({
           workload: details.data,
@@ -137,7 +136,6 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           istioEnabled: details.data.istioSidecar
         });
         return API.getWorkloadHealth(
-          authentication(),
           this.props.match.params.namespace,
           this.props.match.params.workload,
           600,

@@ -8,7 +8,6 @@ import { GrafanaInfo } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
 import { Direction, MetricsOptions, Reporter } from '../../types/MetricsOptions';
-import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
@@ -71,14 +70,14 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     let promise: Promise<API.Response<M.MonitoringDashboard>>;
     switch (this.props.objectType) {
       case M.MetricsObjectTypes.WORKLOAD:
-        promise = API.getWorkloadDashboard(authentication(), this.props.namespace, this.props.object, this.options);
+        promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, this.options);
         break;
       case M.MetricsObjectTypes.APP:
-        promise = API.getAppDashboard(authentication(), this.props.namespace, this.props.object, this.options);
+        promise = API.getAppDashboard(this.props.namespace, this.props.object, this.options);
         break;
       case M.MetricsObjectTypes.SERVICE:
       default:
-        promise = API.getServiceDashboard(authentication(), this.props.namespace, this.props.object, this.options);
+        promise = API.getServiceDashboard(this.props.namespace, this.props.object, this.options);
         break;
     }
     promise

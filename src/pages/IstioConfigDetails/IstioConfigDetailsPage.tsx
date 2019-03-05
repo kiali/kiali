@@ -13,7 +13,6 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { authentication } from '../../utils/Authentication';
 import { ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
@@ -50,14 +49,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId) => {
     const promiseConfigDetails = props.objectSubtype
-      ? API.getIstioConfigDetailSubtype(
-          authentication(),
-          props.namespace,
-          props.objectType,
-          props.objectSubtype,
-          props.object
-        )
-      : API.getIstioConfigDetail(authentication(), props.namespace, props.objectType, props.object, true);
+      ? API.getIstioConfigDetailSubtype(props.namespace, props.objectType, props.objectSubtype, props.object)
+      : API.getIstioConfigDetail(props.namespace, props.objectType, props.object, true);
 
     // Note that adapters/templates are not supported yet for validations
     promiseConfigDetails
@@ -127,14 +120,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   onDelete = () => {
     const deletePromise = this.props.match.params.objectSubtype
       ? API.deleteIstioConfigDetailSubtype(
-          authentication(),
           this.props.match.params.namespace,
           this.props.match.params.objectType,
           this.props.match.params.objectSubtype,
           this.props.match.params.object
         )
       : API.deleteIstioConfigDetail(
-          authentication(),
           this.props.match.params.namespace,
           this.props.match.params.objectType,
           this.props.match.params.object
@@ -151,7 +142,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       const jsonPatch = JSON.stringify(doc);
       const updatePromise = this.props.match.params.objectSubtype
         ? API.updateIstioConfigDetailSubtype(
-            authentication(),
             this.props.match.params.namespace,
             this.props.match.params.objectType,
             this.props.match.params.objectSubtype,
@@ -159,7 +149,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             jsonPatch
           )
         : API.updateIstioConfigDetail(
-            authentication(),
             this.props.match.params.namespace,
             this.props.match.params.objectType,
             this.props.match.params.object,

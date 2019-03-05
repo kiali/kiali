@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import { WorkloadListFilters } from './FiltersAndSorts';
@@ -94,7 +93,7 @@ class WorkloadListComponent extends ListComponent.Component<
 
     if (namespacesSelected.length === 0) {
       this.promises
-        .register('namespaces', API.getNamespaces(authentication()))
+        .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters, resetPagination);
@@ -115,7 +114,6 @@ class WorkloadListComponent extends ListComponent.Component<
         namespace: data.namespace.name,
         workload: deployment,
         healthPromise: API.getWorkloadHealth(
-          authentication(),
           data.namespace.name,
           deployment.name,
           this.state.rateInterval,
@@ -127,7 +125,7 @@ class WorkloadListComponent extends ListComponent.Component<
   };
 
   fetchWorkloads(namespaces: string[], filters: ActiveFilter[], resetPagination?: boolean) {
-    const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(authentication(), namespace));
+    const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(namespace));
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
       .then(responses => {

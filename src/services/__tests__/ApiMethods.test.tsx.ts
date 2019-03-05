@@ -1,6 +1,5 @@
 import * as API from '../Api';
 import { AxiosError } from 'axios';
-import { authentication } from '../../utils/Authentication';
 import { MetricsOptions } from '../../types/MetricsOptions';
 
 describe('#GetErrorMessage', () => {
@@ -74,47 +73,47 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getNamespaces', () => {
-    const result = API.getNamespaces(authentication());
+    const result = API.getNamespaces();
     evaluatePromise(result);
   });
 
   it('#getNamespaceMetrics', () => {
-    const result = API.getNamespaceMetrics(authentication(), 'istio-system', {} as MetricsOptions);
+    const result = API.getNamespaceMetrics('istio-system', {} as MetricsOptions);
     evaluatePromise(result);
   });
 
   it('#getServices', () => {
-    const result = API.getServices(authentication(), 'istio-system');
+    const result = API.getServices('istio-system');
     evaluatePromise(result);
   });
 
   it('#getAppMetrics', () => {
-    const result = API.getAppMetrics(authentication(), 'istio-system', 'book-info', {} as MetricsOptions);
+    const result = API.getAppMetrics('istio-system', 'book-info', {} as MetricsOptions);
     evaluatePromise(result);
   });
 
   it('#getServiceHealth', () => {
-    const result = API.getServiceHealth(authentication(), 'istio-system', 'book-info', 60, true);
+    const result = API.getServiceHealth('istio-system', 'book-info', 60, true);
     evaluatePromise(result);
   });
 
   it('#getGrafanaInfo', () => {
-    const result = API.getGrafanaInfo(authentication());
+    const result = API.getGrafanaInfo();
     evaluatePromise(result);
   });
 
   it('#getJaegerInfo', () => {
-    const result = API.getJaegerInfo(authentication());
+    const result = API.getJaegerInfo();
     evaluatePromise(result);
   });
 
   it('#getGraphElements', () => {
-    const result = API.getGraphElements(authentication(), { namespaces: 'istio-system' });
+    const result = API.getGraphElements({ namespaces: 'istio-system' });
     evaluatePromise(result);
   });
 
   it('#getServiceDetail', () => {
-    const result = API.getServiceDetail(authentication(), 'istio-system', '', false);
+    const result = API.getServiceDetail('istio-system', '', false);
     evaluatePromise(result);
   });
 });

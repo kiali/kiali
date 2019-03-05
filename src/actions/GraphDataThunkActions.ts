@@ -3,7 +3,6 @@ import { ThunkDispatch } from 'redux-thunk';
 import Namespace from '../types/Namespace';
 import { KialiAppState } from '../store/Store';
 import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
-import { authenticationToken } from '../utils/AuthenticationToken';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { KialiAppAction } from './KialiAppAction';
 import { GraphDataActions } from './GraphDataActions';
@@ -79,7 +78,7 @@ const GraphDataThunkActions = {
       console.debug('Fetching graph with appenders: ' + appenders);
 
       if (node) {
-        return setCurrentRequest(API.getNodeGraphElements(authenticationToken(getState()), node, restParams)).then(
+        return setCurrentRequest(API.getNodeGraphElements(node, restParams)).then(
           response => {
             const responseData: any = response['data'];
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
@@ -104,7 +103,7 @@ const GraphDataThunkActions = {
       }
 
       restParams['namespaces'] = namespaces.map(namespace => namespace.name).join(',');
-      return setCurrentRequest(API.getGraphElements(authenticationToken(getState()), restParams)).then(
+      return setCurrentRequest(API.getGraphElements(restParams)).then(
         response => {
           const responseData: any = response['data'];
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;

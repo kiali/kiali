@@ -6,7 +6,6 @@ import { SummaryPanelPropType, NodeType } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import { Icon } from 'patternfly-react';
-import { authentication } from '../../utils/Authentication';
 import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
@@ -142,7 +141,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       direction: 'inbound',
       reporter: 'destination'
     };
-    const promiseHTTP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, options);
+    const promiseHTTP = API.getNamespaceMetrics(props.namespaces[0].name, options);
     // TCP metrics are only available for reporter="source"
     const optionsTCP: MetricsOptions = {
       filters: ['tcp_sent', 'tcp_received'],
@@ -153,7 +152,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       direction: 'inbound',
       reporter: 'source'
     };
-    const promiseTCP = API.getNamespaceMetrics(authentication(), props.namespaces[0].name, optionsTCP);
+    const promiseTCP = API.getNamespaceMetrics(props.namespaces[0].name, optionsTCP);
     this.metricsPromise = makeCancelablePromise(mergeMetricsResponses([promiseHTTP, promiseTCP]));
 
     this.metricsPromise.promise

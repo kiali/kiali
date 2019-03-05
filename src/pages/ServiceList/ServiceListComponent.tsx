@@ -16,7 +16,6 @@ import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
-import { authentication } from '../../utils/Authentication';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -108,7 +107,7 @@ class ServiceListComponent extends ListComponent.Component<
 
     if (namespacesSelected.length === 0) {
       this.promises
-        .register('namespaces', API.getNamespaces(authentication()))
+        .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse['data'];
           this.fetchServices(
@@ -134,20 +133,14 @@ class ServiceListComponent extends ListComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
-        healthPromise: API.getServiceHealth(
-          authentication(),
-          data.namespace.name,
-          service.name,
-          rateInterval,
-          service.istioSidecar
-        )
+        healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar)
       }));
     }
     return [];
   }
 
   fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
-    const servicesPromises = namespaces.map(ns => API.getServices(authentication(), ns));
+    const servicesPromises = namespaces.map(ns => API.getServices(ns));
 
     this.promises
       .registerAll('services', servicesPromises)

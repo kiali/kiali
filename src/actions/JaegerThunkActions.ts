@@ -58,18 +58,10 @@ export const getUnixTimeStampInMSFromForm = (
 
 export const JaegerThunkActions = {
   asyncFetchServices: (ns: string) => {
-    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>, getState: () => KialiAppState) => {
-      if (getState()['authentication']['token'] === undefined) {
-        return Promise.resolve();
-      }
-      /** Get the token storage in redux-store */
-      const token = getState().authentication.session!.token;
-      /** generate Token */
-      const auth = `Bearer ${token}`;
-
+    return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
       // Dispatch a thunk from thunk!
       dispatch(JaegerActions.requestStarted());
-      return Api.getServices(auth, ns)
+      return Api.getServices(ns)
         .then(response => response['data'])
         .then(data => {
           const serviceList: string[] = [];

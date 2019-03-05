@@ -1,12 +1,16 @@
+export interface AuthConfig {
+  authorizationEndpoint?: string;
+  strategy: AuthStrategy;
+}
+
+export type AuthInfo = {
+  sessionInfo: SessionInfo;
+} & AuthConfig;
+
 export enum AuthStrategy {
   login = 'login',
   anonymous = 'anonymous',
   openshift = 'openshift'
-}
-
-export interface AuthInfo {
-  strategy: AuthStrategy;
-  authorizationEndpoint?: string;
 }
 
 // Stores the result of a computation:
@@ -19,4 +23,9 @@ export enum AuthResult {
   CONTINUE = 'continue',
   SUCCESS = 'success',
   FAILURE = 'failure'
+}
+
+export interface SessionInfo {
+  username?: string;
+  expiresOn?: string;
 }

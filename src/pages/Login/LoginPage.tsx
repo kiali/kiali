@@ -25,9 +25,6 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
   constructor(props: LoginProps) {
     super(props);
 
-    // reset login status
-    // this.props.dispatch(UserAction.logout());
-
     this.state = {
       username: '',
       password: ''

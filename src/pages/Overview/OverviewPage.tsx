@@ -18,7 +18,6 @@ import {
   NamespaceWorkloadHealth
 } from '../../types/Health';
 import { SortField } from '../../types/SortFilters';
-import { authentication } from '../../utils/Authentication';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
@@ -100,7 +99,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   load = () => {
     this.promises.cancelAll();
     this.promises
-      .register('namespaces', API.getNamespaces(authentication()))
+      .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
         const nameFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.nameFilter.title);
         const allNamespaces: NamespaceInfo[] = namespacesResponse['data']
@@ -153,7 +152,6 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     return Promise.all(
       chunk.map(nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
-          authentication(),
           nsInfo.name,
           rateInterval
         );

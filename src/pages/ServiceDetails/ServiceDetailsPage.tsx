@@ -6,7 +6,6 @@ import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
-import { authentication } from '../../utils/Authentication';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceTracesContainer from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
@@ -121,7 +120,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 
   fetchBackend = () => {
     const promiseDetails = API.getServiceDetail(
-      authentication(),
       this.props.match.params.namespace,
       this.props.match.params.service,
       true

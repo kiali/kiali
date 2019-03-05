@@ -34,9 +34,6 @@ class Navigation extends React.Component<PropsType> {
 
   constructor(props: PropsType) {
     super(props);
-
-    // handle initial path from the browser
-    this.props.checkCredentials();
   }
 
   setDocLayout = () => {
@@ -50,6 +47,11 @@ class Navigation extends React.Component<PropsType> {
 
   componentDidMount() {
     this.setDocLayout();
+
+    if (!this.props.authenticated) {
+      // handle initial path from the browser
+      this.props.checkCredentials();
+    }
   }
 
   setControlledState = event => {

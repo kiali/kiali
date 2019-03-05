@@ -3,7 +3,6 @@ import { DropdownButton, MenuItem, MessageDialog } from 'patternfly-react';
 import IstioWizard, { WIZARD_MATCHING_ROUTING, WIZARD_TITLES, WIZARD_WEIGHTED_ROUTING } from './IstioWizard';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
-import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
 import { serverConfig } from '../../config/serverConfig';
@@ -70,12 +69,12 @@ class IstioWizardDropdown extends React.Component<Props, State> {
     const deletePromises: Promise<any>[] = [];
     this.props.virtualServices.items.forEach(vs => {
       deletePromises.push(
-        API.deleteIstioConfigDetail(authentication(), vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
+        API.deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
       );
     });
     this.props.destinationRules.items.forEach(dr => {
       deletePromises.push(
-        API.deleteIstioConfigDetail(authentication(), dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
+        API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
       );
     });
     Promise.all(deletePromises)

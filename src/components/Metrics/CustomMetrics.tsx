@@ -9,7 +9,6 @@ import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
 import { CustomMetricsOptions, Aggregator } from '../../types/MetricsOptions';
-import { authentication } from '../../utils/Authentication';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
@@ -61,7 +60,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   }
 
   fetchMetrics = () => {
-    API.getCustomDashboard(authentication(), this.props.namespace, this.props.app, this.props.template, this.options)
+    API.getCustomDashboard(this.props.namespace, this.props.app, this.props.template, this.options)
       .then(response => {
         const labelValues = MetricsHelper.extractLabelValues(response.data, this.state.labelValues);
         this.setState({

@@ -53,7 +53,7 @@ describe('NamespaceActions', () => {
     axiosMock.onGet('/api/namespaces').reply(200, [{ name: 'a' }, { name: 'b' }, { name: 'c' }]);
 
     const store = mockStore({});
-    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces('dummy-token')).then(() => {
+    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -64,7 +64,7 @@ describe('NamespaceActions', () => {
     axiosMock.onGet('/api/namespaces').reply(404);
 
     const store = mockStore({});
-    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces('dummy-token')).then(() => {
+    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -72,7 +72,6 @@ describe('NamespaceActions', () => {
   it("it won't fetch a namespace if one is loading", () => {
     const expectedActions = [];
     const store = mockStore({
-      authentication: { token: { token: 'dummy-token' } },
       namespaces: {
         isFetching: true
       }

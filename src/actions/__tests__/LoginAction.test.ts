@@ -3,8 +3,6 @@ import { LoginActions } from '../LoginActions';
 import { LoginStatus } from '../../store/Store';
 
 const session = {
-  token:
-    'eyJ3bGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyr1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNTI3NjIzNTAwfQ.klBh7tDeuMgZbsNWsUJWAqOBkRG30vURzKF6sZ8soB4',
   expiresOn: '018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
   username: 'admin'
 };

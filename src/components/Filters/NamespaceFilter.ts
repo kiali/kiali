@@ -1,5 +1,4 @@
 import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import { FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 
 export class NamespaceFilter {
@@ -15,7 +14,7 @@ export class NamespaceFilter {
       action: FILTER_ACTION_APPEND,
       filterValues: [],
       loader: () =>
-        API.getNamespaces(authentication()).then(response => {
+        API.getNamespaces().then(response => {
           return response.data.map(ns => ({ title: ns.name, id: ns.name }));
         })
     };

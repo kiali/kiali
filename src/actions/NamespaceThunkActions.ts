@@ -3,7 +3,6 @@ import { KialiAppState } from '../store/Store';
 import * as Api from '../services/Api';
 import { KialiAppAction } from './KialiAppAction';
 import { NamespaceActions } from './NamespaceAction';
-import { authenticationToken } from '../utils/AuthenticationToken';
 
 const shouldFetchNamespaces = (state: KialiAppState) => {
   if (!state) {
@@ -14,10 +13,10 @@ const shouldFetchNamespaces = (state: KialiAppState) => {
 };
 
 const NamespaceThunkActions = {
-  asyncFetchNamespaces: (auth: any) => {
+  asyncFetchNamespaces: () => {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
       dispatch(NamespaceActions.requestStarted());
-      return Api.getNamespaces(auth)
+      return Api.getNamespaces()
         .then(response => response['data'])
         .then(data => {
           dispatch(NamespaceActions.receiveList([...data], new Date()));
@@ -40,7 +39,7 @@ const NamespaceThunkActions = {
         }
 
         // Dispatch a thunk from thunk!
-        return dispatch(NamespaceThunkActions.asyncFetchNamespaces(authenticationToken(getState())));
+        return dispatch(NamespaceThunkActions.asyncFetchNamespaces());
       } else {
         // Let the calling code know there's nothing to wait for.
         return Promise.resolve();

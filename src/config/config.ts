@@ -73,8 +73,8 @@ const conf = {
   /** API configuration */
   api: {
     urls: {
+      authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
-      checkOpenshiftAuth: 'api/auth/openshift-token',
       apps: (namespace: string) => `api/namespaces/${namespace}/apps`,
       app: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}`,
       appGraphElements: (namespace: string, app: string, version?: string) => {
@@ -86,6 +86,8 @@ const conf = {
       appHealth: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/health`,
       appMetrics: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/metrics`,
       appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
+      customDashboard: (namespace: string, app: string, template: string) =>
+        `api/namespaces/${namespace}/apps/${app}/customdashboard/${template}`,
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
@@ -96,12 +98,11 @@ const conf = {
       istioConfigDetailSubtype: (namespace: string, objectType: string, objectSubtype: string, object: string) =>
         `api/namespaces/${namespace}/istio/${objectType}/${objectSubtype}/${object}`,
       jaeger: 'api/jaeger',
+      logout: 'api/logout',
       namespaces: 'api/namespaces',
       namespacesGraphElements: `api/namespaces/graph`,
       namespaceHealth: (namespace: string) => `api/namespaces/${namespace}/health`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
-      customDashboard: (namespace: string, app: string, template: string) =>
-        `api/namespaces/${namespace}/apps/${app}/customdashboard/${template}`,
       serverConfig: `api/config`,
       services: (namespace: string) => `api/namespaces/${namespace}/services`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
@@ -112,7 +113,6 @@ const conf = {
       serviceDashboard: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/dashboard`,
       status: 'api/status',
-      token: 'api/token',
       workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,
       workload: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}`,
       workloadGraphElements: (namespace: string, workload: string) =>

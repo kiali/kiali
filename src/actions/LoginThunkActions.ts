@@ -1,8 +1,6 @@
 import moment from 'moment';
-import { ThunkDispatch } from 'redux-thunk';
 import { HTTP_CODES } from '../types/Common';
 import { KialiAppState, LoginState, LoginSession } from '../store/Store';
-import { KialiAppAction } from './KialiAppAction';
 import HelpDropdownThunkActions from './HelpDropdownThunkActions';
 import GrafanaThunkActions from './GrafanaThunkActions';
 import { LoginActions } from './LoginActions';
@@ -11,8 +9,8 @@ import { ServerConfigActions } from './ServerConfigActions';
 
 import * as Login from '../services/Login';
 import { AuthResult } from '../types/Auth';
-
-type KialiDispatch = ThunkDispatch<KialiAppState, void, KialiAppAction>;
+import { KialiDispatch } from '../types/Redux';
+import { MessageCenterActions } from './MessageCenterActions';
 
 const Dispatcher = new Login.LoginDispatcher();
 
@@ -23,15 +21,13 @@ const shouldRelogin = (state?: LoginState): boolean =>
   moment(state.uiExpiresOn).diff(moment()) > 0;
 
 const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession) => {
-  const authHeader = `Bearer ${session.token}`;
-
   try {
     dispatch(LoginActions.loginSuccess(session));
 
     dispatch(HelpDropdownThunkActions.refresh());
-    dispatch(GrafanaThunkActions.getInfo(authHeader));
+    dispatch(GrafanaThunkActions.getInfo());
 
-    const response = await API.getServerConfig(authHeader);
+    const response = await API.getServerConfig();
 
     dispatch(ServerConfigActions.setServerConfig(response.data));
   } catch (error) {
@@ -61,11 +57,9 @@ const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any)
 };
 
 const LoginThunkActions = {
-  extendSession: () => {
-    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
-      const session = getState().authentication!.session!;
-      dispatch(LoginActions.loginExtend(session));
-    };
+  authenticate: (username: string, password: string) => {
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) =>
+      performLogin(dispatch, getState(), { username, password });
   },
   checkCredentials: () => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
@@ -80,10 +74,25 @@ const LoginThunkActions = {
       }
     };
   },
-  // action creator that performs the async request
-  authenticate: (username: string, password: string) => {
-    return (dispatch: KialiDispatch, getState: () => KialiAppState) =>
-      performLogin(dispatch, getState(), { username, password });
+  extendSession: () => {
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
+      const session = getState().authentication!.session!;
+      dispatch(LoginActions.loginExtend(session));
+    };
+  },
+  logout: () => {
+    return async (dispatch: KialiDispatch) => {
+      try {
+        const response = await API.logout();
+
+        if (response.status === 204) {
+          dispatch(LoginActions.logoutSuccess());
+          dispatch(LoginThunkActions.checkCredentials());
+        }
+      } catch (err) {
+        dispatch(MessageCenterActions.addMessage(API.getErrorMsg('Logout failed', err)));
+      }
+    };
   }
 };
 

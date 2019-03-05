@@ -4,7 +4,6 @@ import { NodeType, SummaryPanelPropType, Protocol } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 import { MetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
-import { authentication } from '../../utils/Authentication';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
@@ -117,11 +116,11 @@ export const getNodeMetrics = (
 
   switch (nodeMetricType) {
     case NodeMetricType.APP:
-      return API.getAppMetrics(authentication(), data.namespace, data.app, options);
+      return API.getAppMetrics(data.namespace, data.app, options);
     case NodeMetricType.SERVICE:
-      return API.getServiceMetrics(authentication(), data.namespace, data.service, options);
+      return API.getServiceMetrics(data.namespace, data.service, options);
     case NodeMetricType.WORKLOAD:
-      return API.getWorkloadMetrics(authentication(), data.namespace, data.workload, options);
+      return API.getWorkloadMetrics(data.namespace, data.workload, options);
     default:
       return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
   }

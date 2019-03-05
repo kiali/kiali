@@ -9,7 +9,6 @@ import {
   VirtualService
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config/serverConfig';
-import { authentication } from '../../utils/Authentication';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import MatchingRouting, { ROUTE_TYPE, Rule } from './MatchingRouting';
@@ -246,18 +245,8 @@ class IstioWizard extends React.Component<Props, State> {
 
   onCreate = () => {
     const [dr, vr] = this.createIstioTraffic();
-    const createDR = API.createIstioConfigDetail(
-      authentication(),
-      this.props.namespace,
-      'destinationrules',
-      JSON.stringify(dr)
-    );
-    const createVS = API.createIstioConfigDetail(
-      authentication(),
-      this.props.namespace,
-      'virtualservices',
-      JSON.stringify(vr)
-    );
+    const createDR = API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr));
+    const createVS = API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vr));
     Promise.all([createDR, createVS])
       .then(results => {
         this.props.onClose(true);

@@ -1,10 +1,12 @@
 import * as API from './Api';
 import { ThunkDispatch } from 'redux-thunk';
+import moment from 'moment';
 
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { LoginSession, KialiAppState } from '../store/Store';
-import { AuthInfo, AuthStrategy, AuthResult } from '../types/Auth';
+import { AuthStrategy, AuthResult, AuthConfig } from '../types/Auth';
 import { TimeInMilliseconds } from '../types/Common';
+import AppConfigs from '../app/AppConfigs';
 
 type Dispatch = ThunkDispatch<KialiAppState, void, KialiAppAction>;
 
@@ -15,7 +17,7 @@ export interface LoginResult {
 }
 
 interface LoginStrategy<T = {}> {
-  prepare: (info: AuthInfo) => Promise<AuthResult>;
+  prepare: (info: AuthConfig) => Promise<AuthResult>;
   perform: (request: DispatchRequest<T>) => Promise<LoginResult>;
 }
 
@@ -28,16 +30,19 @@ interface DispatchRequest<T> {
 type NullDispatch = DispatchRequest<any>;
 
 class AnonymousLogin implements LoginStrategy {
-  public async prepare(info: AuthInfo) {
+  public async prepare(info: AuthConfig) {
     return AuthResult.CONTINUE;
   }
 
   public async perform(_request: NullDispatch): Promise<LoginResult> {
-    const session: LoginSession = (await API.login()).data;
-
     return {
-      status: AuthResult.SUCCESS,
-      session: session
+      status: AuthResult.FAILURE,
+      session: {
+        username: API.ANONYMOUS_USER,
+        expiresOn: moment()
+          .add(1, 'd')
+          .toISOString()
+      }
     };
   }
 }
@@ -48,7 +53,7 @@ interface WebLoginData {
 }
 
 class WebLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(info: AuthInfo) {
+  public async prepare(info: AuthConfig) {
     return AuthResult.CONTINUE;
   }
 
@@ -63,7 +68,7 @@ class WebLogin implements LoginStrategy<WebLoginData> {
 }
 
 class OpenshiftLogin implements LoginStrategy<any> {
-  public async prepare(info: AuthInfo) {
+  public async prepare(info: AuthConfig) {
     if (!info.authorizationEndpoint) {
       return AuthResult.FAILURE;
     }
@@ -89,7 +94,7 @@ class OpenshiftLogin implements LoginStrategy<any> {
 
 export class LoginDispatcher {
   strategyMapping: Map<AuthStrategy, LoginStrategy>;
-  info?: AuthInfo;
+  info?: AuthConfig;
 
   constructor() {
     this.strategyMapping = new Map<AuthStrategy, LoginStrategy>();
@@ -100,7 +105,7 @@ export class LoginDispatcher {
   }
 
   public async prepare(): Promise<AuthResult> {
-    const info = await this.getInfo();
+    const info = AppConfigs.authenticationConfig!;
     const strategy = this.strategyMapping.get(info.strategy)!;
 
     try {
@@ -132,22 +137,12 @@ export class LoginDispatcher {
   }
 
   public async perform(request: DispatchRequest<any>): Promise<LoginResult> {
-    const strategy = this.strategyMapping.get((await this.getInfo()).strategy)!;
+    const strategy = this.strategyMapping.get(AppConfigs.authenticationConfig!.strategy)!;
 
     try {
       return await strategy.perform(request);
     } catch (error) {
       return Promise.reject({ status: AuthResult.FAILURE, error });
     }
-  }
-
-  private async getInfo(): Promise<AuthInfo> {
-    if (this.info) {
-      return this.info;
-    }
-
-    this.info = await (await API.getAuthInfo()).data;
-
-    return this.info;
   }
 }

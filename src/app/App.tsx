@@ -9,6 +9,8 @@ import { GlobalActions } from '../actions/GlobalActions';
 import history from './History';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 import * as Visibility from 'visibilityjs';
+import InitializingScreen from './InitializingScreen';
+import StartupInitializer from './StartupInitializer';
 
 /**
  * Use the Patternfly RCUE productized css styles if set by the environment
@@ -76,24 +78,42 @@ axios.interceptors.response.use(
   }
 );
 
-const Loading = () => {
-  return <div>Loading</div>;
+type AppState = {
+  isInitialized: boolean;
 };
 
-class App extends React.Component {
-  render() {
+class App extends React.Component<{}, AppState> {
+  private navigator = withRouter(NavigationContainer);
+
+  constructor(props: {}) {
+    super(props);
+    this.state = {
+      isInitialized: false
+    };
+
     loadRcueCssIfNeeded();
-    const Sidebar = withRouter(NavigationContainer);
+  }
+
+  render() {
+    const Navigator = this.navigator;
     return (
       <Provider store={store}>
-        <PersistGate loading={<Loading />} persistor={persistor}>
-          <Router history={history}>
-            <Sidebar />
-          </Router>
+        <PersistGate loading={<InitializingScreen />} persistor={persistor}>
+          {this.state.isInitialized ? (
+            <Router history={history}>
+              <Navigator />
+            </Router>
+          ) : (
+            <StartupInitializer onInitializationFinished={this.initializationFinishedHandler} />
+          )}
         </PersistGate>
       </Provider>
     );
   }
+
+  private initializationFinishedHandler = () => {
+    this.setState({ isInitialized: true });
+  };
 }
 
 export default App;
