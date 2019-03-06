@@ -4509,7 +4509,7 @@
           "description": "The expired time for the token\nA string with the Datetime when the token will be expired",
           "type": "string",
           "x-go-name": "ExpiresOn",
-          "example": "2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603"
+          "example": "Thu, 07 Mar 2019 17:50:26 +0000"
         },
         "token": {
           "description": "The authentication token\nA string with the authentication token for the user",
