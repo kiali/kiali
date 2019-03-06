@@ -242,7 +242,6 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
 	}
 
-	// see that the AllowAnonymous flag can be true
 	testConf = Config{
 		Server: Server{
 			Credentials: security.Credentials{
