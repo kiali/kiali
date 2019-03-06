@@ -247,12 +247,17 @@ class IstioWizard extends React.Component<Props, State> {
     const [dr, vr] = this.createIstioTraffic();
     const createDR = API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr));
     const createVS = API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vr));
+    // Disable button before promise is completed. Then Wizard is closed.
+    this.setState({
+      valid: false
+    });
     Promise.all([createDR, createVS])
       .then(results => {
         this.props.onClose(true);
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not create Istio config objects', error));
+        this.props.onClose(true);
       });
   };
 

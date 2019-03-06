@@ -21,6 +21,7 @@ type State = {
   showWizard: boolean;
   wizardType: string;
   showConfirmDelete: boolean;
+  isDeleting: boolean;
 };
 
 const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
@@ -28,7 +29,7 @@ const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 class IstioWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { showWizard: props.show, wizardType: '', showConfirmDelete: false };
+    this.state = { showWizard: props.show, wizardType: '', showConfirmDelete: false, isDeleting: false };
   }
 
   // Wizard can be opened when there are not existing VS & DR and there are update permissions
@@ -66,6 +67,9 @@ class IstioWizardDropdown extends React.Component<Props, State> {
   };
 
   onDelete = () => {
+    this.setState({
+      isDeleting: true
+    });
     const deletePromises: Promise<any>[] = [];
     this.props.virtualServices.items.forEach(vs => {
       deletePromises.push(
@@ -77,13 +81,20 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
       );
     });
+    // For slow scenarios, dialog is hidden and Delete All action blocked until promises have finished
+    this.hideConfirmDelete();
     Promise.all(deletePromises)
       .then(results => {
-        this.hideConfirmDelete();
+        this.setState({
+          isDeleting: false
+        });
         this.props.onChange();
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not delete Istio config objects', error));
+        this.setState({
+          isDeleting: false
+        });
       });
   };
 
@@ -121,7 +132,11 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             {WIZARD_TITLES[WIZARD_MATCHING_ROUTING]}
           </MenuItem>
           <MenuItem divider={true} />
-          <MenuItem disabled={!this.canDelete()} key={DELETE_TRAFFIC_ROUTING} eventKey={DELETE_TRAFFIC_ROUTING}>
+          <MenuItem
+            disabled={!this.canDelete() || this.state.isDeleting}
+            key={DELETE_TRAFFIC_ROUTING}
+            eventKey={DELETE_TRAFFIC_ROUTING}
+          >
             Delete ALL Traffic Routing
           </MenuItem>
         </DropdownButton>
