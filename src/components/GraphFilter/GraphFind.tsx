@@ -10,7 +10,6 @@ import { findValueSelector, hideValueSelector } from '../../store/Selectors';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
 import { KialiAppAction } from '../../actions/KialiAppAction';
-import * as MessageCenterUtils from '../../utils/MessageCenter';
 import GraphHelpFind from '../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData } from '../../types/Graph';
@@ -28,12 +27,16 @@ type ReduxProps = {
 
 type GraphFindProps = ReduxProps;
 
+type GraphFindState = {
+  errorMessage?: string;
+};
+
 type ParsedExpression = {
   target: 'node' | 'edge';
   selector: string;
 };
 
-export class GraphFind extends React.PureComponent<GraphFindProps> {
+export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindState> {
   static contextTypes = {
     router: () => null
   };
@@ -46,7 +49,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
 
   constructor(props: GraphFindProps) {
     super(props);
-
+    this.state = {};
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -121,6 +124,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
               <Icon name="help" type="pf" title="Help Find/Hide..." />
             </Button>
           </span>
+          {this.state.errorMessage && (
+            <div>
+              <span style={{ color: 'red' }}>{this.state.errorMessage}</span>
+            </div>
+          )}
         </FormGroup>
         {this.props.showFindHelp && <GraphHelpFind onClose={this.toggleFindHelp} />}{' '}
       </>
@@ -133,10 +141,12 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
 
   private updateHide = event => {
     this.hideInputValue = event.target.value;
+    this.setErrorMsg();
   };
 
   private updateFind = event => {
     this.findInputValue = event.target.value;
+    this.setErrorMsg();
   };
 
   private checkSubmitHide = event => {
@@ -164,6 +174,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     this.hideInputRef.value = '';
     this.hideInputValue = '';
     this.props.setHideValue('');
+    this.setErrorMsg();
   };
 
   private clearFind = () => {
@@ -171,6 +182,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     this.findInputRef.value = '';
     this.findInputValue = '';
     this.props.setFindValue('');
+    this.setErrorMsg();
   };
 
   private handleHide = () => {
@@ -179,7 +191,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return;
     }
     const cy = this.props.cyData.cyRef;
-    const selector = this.parseFindValue(this.props.hideValue);
+    const selector = this.parseValue(this.props.hideValue);
     cy.startBatch();
     // this could also be done using cy remove/restore but we had better results
     // using visible/hidden.  The latter worked better when hiding animation, and
@@ -212,7 +224,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return;
     }
     const cy = this.props.cyData.cyRef;
-    const selector = this.parseFindValue(this.props.findValue);
+    const selector = this.parseValue(this.props.findValue);
     cy.startBatch();
     // unhighlight old find-hits
     cy.elements('*.find').removeClass('find');
@@ -223,21 +235,28 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     cy.endBatch();
   };
 
-  private parseFindValue = (val: string): string | undefined => {
-    let validVal = this.prepareFindValue(val);
-    if (!validVal) {
+  private setErrorMsg(errorMessage?: string): undefined {
+    if (errorMessage !== this.state.errorMessage) {
+      this.setState({ errorMessage: errorMessage });
+    }
+    return undefined;
+  }
+
+  private parseValue = (val: string): string | undefined => {
+    this.setErrorMsg();
+    let preparedVal = this.prepareValue(val);
+    if (!preparedVal) {
       return undefined;
     }
-    validVal = validVal.replace(/ and /gi, ' AND ');
-    validVal = validVal.replace(/ or /gi, ' OR ');
-    const conjunctive = validVal.includes(' AND ');
-    const disjunctive = validVal.includes(' OR ');
+    preparedVal = preparedVal.replace(/ and /gi, ' AND ');
+    preparedVal = preparedVal.replace(/ or /gi, ' OR ');
+    const conjunctive = preparedVal.includes(' AND ');
+    const disjunctive = preparedVal.includes(' OR ');
     if (conjunctive && disjunctive) {
-      MessageCenterUtils.add(`Expression can not contain both 'AND' and 'OR'`);
-      return undefined;
+      return this.setErrorMsg(`Expression can not contain both 'AND' and 'OR'`);
     }
     const separator = disjunctive ? ',' : '';
-    const expressions = disjunctive ? validVal.split(' OR ') : validVal.split(' AND ');
+    const expressions = disjunctive ? preparedVal.split(' OR ') : preparedVal.split(' AND ');
     let selector;
 
     for (const expression of expressions) {
@@ -253,7 +272,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     return selector;
   };
 
-  private prepareFindValue = (val: string): string => {
+  private prepareValue = (val: string): string => {
     // remove double spaces
     val = val.replace(/ +(?= )/g, '');
 
@@ -310,26 +329,17 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
     }
     if (!op) {
       if (expression.split(' ').length > 1) {
-        MessageCenterUtils.add(`Invalid operator [${op}]`);
-        return undefined;
+        return this.setErrorMsg(`No valid operator found in expression`);
       }
 
       const unaryExpression = this.parseUnaryFindExpression(expression.trim(), false);
-      if (!unaryExpression) {
-        MessageCenterUtils.add(`Invalid operator [${op}]`);
-      }
-
-      return unaryExpression;
+      return unaryExpression ? unaryExpression : this.setErrorMsg(`Invalid Node or Edge operand`);
     }
 
     const tokens = expression.split(op);
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
-      if (!unaryExpression) {
-        MessageCenterUtils.add(`Invalid operator [${op}]`);
-      }
-
-      return unaryExpression;
+      return unaryExpression ? unaryExpression : this.setErrorMsg(`Invalid Node or Edge operand`);
     }
 
     const field = tokens[0].trim();
@@ -360,11 +370,9 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case 'name': {
         const isNegation = op.startsWith('!');
         if (disjunctive && isNegation) {
-          MessageCenterUtils.add(`Can not use 'OR' with negated 'name' operand`);
-          return undefined;
+          return this.setErrorMsg(`Can not use 'OR' with negated 'name' operand`);
         } else if (conjunctive) {
-          MessageCenterUtils.add(`Can not use 'AND' with 'name' operand`);
-          return undefined;
+          return this.setErrorMsg(`Can not use 'AND' with 'name' operand`);
         }
         const wl = `[${CyNode.workload} ${op} "${val}"]`;
         const app = `[${CyNode.app} ${op} "${val}"]`;
@@ -390,7 +398,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
           case 'unknown':
             return { target: 'node', selector: `[${CyNode.nodeType} ${op} "${nodeType}"]` };
           default:
-            MessageCenterUtils.add(`Invalid node type [${nodeType}]. Expected app | service | unknown | workload`);
+            this.setErrorMsg(`Invalid node type [${nodeType}]. Expected app | service | unknown | workload`);
         }
         return undefined;
       case 'ns':
@@ -454,8 +462,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
         return s ? { target: 'edge', selector: s } : undefined;
       }
       default:
-        MessageCenterUtils.add(`Invalid operand [${field}]`);
-        return undefined;
+        return this.setErrorMsg(`Invalid operand [${field}]`);
     }
   };
 
@@ -466,20 +473,17 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       case '>=':
       case '<=':
         if (isNaN(val)) {
-          MessageCenterUtils.add(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`);
-          return undefined;
+          return this.setErrorMsg(`Invalid value [${val}]. Expected a numeric value (use . for decimals)`);
         }
         return `[${field} ${op} ${val}]`;
       case '=':
       case '!=':
         if (val !== 'NaN' && isNaN(val)) {
-          MessageCenterUtils.add(`Invalid value [${val}]. Expected NaN or a numeric value (use . for decimals)`);
-          return undefined;
+          return this.setErrorMsg(`Invalid value [${val}]. Expected NaN or a numeric value (use . for decimals)`);
         }
         return Number(val) !== 0 ? `[${field} ${op} "${val}"]` : `[${field} ${op} "0"]`;
       default:
-        MessageCenterUtils.add(`Invalid operator [${op}] for numeric condition`);
-        return undefined;
+        return this.setErrorMsg(`Invalid operator [${op}] for numeric condition`);
     }
   }
 
@@ -531,8 +535,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps> {
       return parsedExpression.target + parsedExpression.selector;
     }
     if (!selector.startsWith(parsedExpression.target)) {
-      MessageCenterUtils.add('Invalid expression. Can not mix node and edge criteria.');
-      return undefined;
+      return this.setErrorMsg('Invalid expression. Can not mix node and edge criteria.');
     }
     return selector + separator + parsedExpression.selector;
   };

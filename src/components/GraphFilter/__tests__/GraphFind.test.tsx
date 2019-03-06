@@ -30,188 +30,188 @@ describe('Parse find value test', () => {
 
     // check coverage of node operands
     // @ts-ignore
-    expect(instance.parseFindValue('httpin > 5.0')).toEqual('node[httpIn > 5.0]');
+    expect(instance.parseValue('httpin > 5.0')).toEqual('node[httpIn > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpout < 5.0')).toEqual('node[httpOut < 5.0]');
+    expect(instance.parseValue('httpout < 5.0')).toEqual('node[httpOut < 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace = foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('namespace = foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns = foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('ns = foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = app')).toEqual('node[nodeType = "app"]');
+    expect(instance.parseValue('node = app')).toEqual('node[nodeType = "app"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = service')).toEqual('node[nodeType = "service"]');
+    expect(instance.parseValue('node = service')).toEqual('node[nodeType = "service"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = svc')).toEqual('node[nodeType = "service"]');
+    expect(instance.parseValue('node = svc')).toEqual('node[nodeType = "service"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = unknown')).toEqual('node[nodeType = "unknown"]');
+    expect(instance.parseValue('node = unknown')).toEqual('node[nodeType = "unknown"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = workload')).toEqual('node[nodeType = "workload"]');
+    expect(instance.parseValue('node = workload')).toEqual('node[nodeType = "workload"]');
     // @ts-ignore
-    expect(instance.parseFindValue('node = wl')).toEqual('node[nodeType = "workload"]');
+    expect(instance.parseValue('node = wl')).toEqual('node[nodeType = "workload"]');
     // @ts-ignore
-    expect(instance.parseFindValue('service = foo')).toEqual('node[service = "foo"]');
+    expect(instance.parseValue('service = foo')).toEqual('node[service = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('svc = foo')).toEqual('node[service = "foo"]');
+    expect(instance.parseValue('svc = foo')).toEqual('node[service = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('version = foo')).toEqual('node[version = "foo"]');
+    expect(instance.parseValue('version = foo')).toEqual('node[version = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('tcpin > 5.0')).toEqual('node[tcpIn > 5.0]');
+    expect(instance.parseValue('tcpin > 5.0')).toEqual('node[tcpIn > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('tcpout < 5.0')).toEqual('node[tcpOut < 5.0]');
+    expect(instance.parseValue('tcpout < 5.0')).toEqual('node[tcpOut < 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('workload = foo')).toEqual('node[workload = "foo"]');
+    expect(instance.parseValue('workload = foo')).toEqual('node[workload = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('wl = foo')).toEqual('node[workload = "foo"]');
+    expect(instance.parseValue('wl = foo')).toEqual('node[workload = "foo"]');
 
     // @ts-ignore
-    expect(instance.parseFindValue('circuitBreaker')).toEqual('node[hasCB]');
+    expect(instance.parseValue('circuitBreaker')).toEqual('node[hasCB]');
     // @ts-ignore
-    expect(instance.parseFindValue('cb')).toEqual('node[hasCB]');
+    expect(instance.parseValue('cb')).toEqual('node[hasCB]');
     // @ts-ignore
-    expect(instance.parseFindValue('sidecar')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('sidecar')).toEqual('node[^hasMissingSC]');
     // @ts-ignore
-    expect(instance.parseFindValue('sc')).toEqual('node[^hasMissingSC]');
+    expect(instance.parseValue('sc')).toEqual('node[^hasMissingSC]');
     // @ts-ignore
-    expect(instance.parseFindValue('outside')).toEqual('node[isOutside]');
+    expect(instance.parseValue('outside')).toEqual('node[isOutside]');
     // @ts-ignore
-    expect(instance.parseFindValue('outsider')).toEqual('node[isOutside]');
+    expect(instance.parseValue('outsider')).toEqual('node[isOutside]');
     // @ts-ignore
-    expect(instance.parseFindValue('root')).toEqual('node[isRoot]');
+    expect(instance.parseValue('root')).toEqual('node[isRoot]');
     // @ts-ignore
-    expect(instance.parseFindValue('trafficsource')).toEqual('node[isRoot]');
+    expect(instance.parseValue('trafficsource')).toEqual('node[isRoot]');
     // @ts-ignore
-    expect(instance.parseFindValue('virtualService')).toEqual('node[hasVS]');
+    expect(instance.parseValue('virtualService')).toEqual('node[hasVS]');
     // @ts-ignore
-    expect(instance.parseFindValue('vs')).toEqual('node[hasVS]');
+    expect(instance.parseValue('vs')).toEqual('node[hasVS]');
 
     // check coverage of edge operands
     // @ts-ignore
-    expect(instance.parseFindValue('grpc > 5.0')).toEqual('edge[grpc > 5.0]');
+    expect(instance.parseValue('grpc > 5.0')).toEqual('edge[grpc > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('%grpcerror > 50')).toEqual('edge[grpcPercentErr > 50]');
+    expect(instance.parseValue('%grpcerror > 50')).toEqual('edge[grpcPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%grpcerr > 50')).toEqual('edge[grpcPercentErr > 50]');
+    expect(instance.parseValue('%grpcerr > 50')).toEqual('edge[grpcPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%grpctraffic > 50')).toEqual('edge[grpcPercentReq > 50]');
+    expect(instance.parseValue('%grpctraffic > 50')).toEqual('edge[grpcPercentReq > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('http > 5.0')).toEqual('edge[http > 5.0]');
+    expect(instance.parseValue('http > 5.0')).toEqual('edge[http > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('%httperror > 50')).toEqual('edge[httpPercentErr > 50]');
+    expect(instance.parseValue('%httperror > 50')).toEqual('edge[httpPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%httperr > 50')).toEqual('edge[httpPercentErr > 50]');
+    expect(instance.parseValue('%httperr > 50')).toEqual('edge[httpPercentErr > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('%httptraffic > 50')).toEqual('edge[httpPercentReq > 50]');
+    expect(instance.parseValue('%httptraffic > 50')).toEqual('edge[httpPercentReq > 50]');
     // @ts-ignore
-    expect(instance.parseFindValue('responseTime > 5.0')).toEqual('edge[responseTime > 5.0]');
+    expect(instance.parseValue('responseTime > 5.0')).toEqual('edge[responseTime > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('rt > 5.0')).toEqual('edge[responseTime > 5.0]');
+    expect(instance.parseValue('rt > 5.0')).toEqual('edge[responseTime > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('tcp > 5.0')).toEqual('edge[tcp > 5.0]');
+    expect(instance.parseValue('tcp > 5.0')).toEqual('edge[tcp > 5.0]');
 
     // @ts-ignore
-    expect(instance.parseFindValue('mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('mtls')).toEqual('edge[isMTLS]');
 
     // check all numeric operators
     // @ts-ignore
-    expect(instance.parseFindValue('httpin < 5.0')).toEqual('node[httpIn < 5.0]');
+    expect(instance.parseValue('httpin < 5.0')).toEqual('node[httpIn < 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpin <= 5.0')).toEqual('node[httpIn <= 5.0]');
+    expect(instance.parseValue('httpin <= 5.0')).toEqual('node[httpIn <= 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpin > 5.0')).toEqual('node[httpIn > 5.0]');
+    expect(instance.parseValue('httpin > 5.0')).toEqual('node[httpIn > 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpin >= 5.0')).toEqual('node[httpIn >= 5.0]');
+    expect(instance.parseValue('httpin >= 5.0')).toEqual('node[httpIn >= 5.0]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpin = 5.0')).toEqual('node[httpIn = "5.0"]');
+    expect(instance.parseValue('httpin = 5.0')).toEqual('node[httpIn = "5.0"]');
     // @ts-ignore
-    expect(instance.parseFindValue('httpin != 5.0')).toEqual('node[httpIn != "5.0"]');
+    expect(instance.parseValue('httpin != 5.0')).toEqual('node[httpIn != "5.0"]');
 
     // check all string operators
     // @ts-ignore
-    expect(instance.parseFindValue('namespace = foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('namespace = foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace *= foo')).toEqual('node[namespace *= "foo"]');
+    expect(instance.parseValue('namespace *= foo')).toEqual('node[namespace *= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace ^= foo')).toEqual('node[namespace ^= "foo"]');
+    expect(instance.parseValue('namespace ^= foo')).toEqual('node[namespace ^= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace $= foo')).toEqual('node[namespace $= "foo"]');
+    expect(instance.parseValue('namespace $= foo')).toEqual('node[namespace $= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace != foo')).toEqual('node[namespace != "foo"]');
+    expect(instance.parseValue('namespace != foo')).toEqual('node[namespace != "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace !*= foo')).toEqual('node[namespace !*= "foo"]');
+    expect(instance.parseValue('namespace !*= foo')).toEqual('node[namespace !*= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace !^= foo')).toEqual('node[namespace !^= "foo"]');
+    expect(instance.parseValue('namespace !^= foo')).toEqual('node[namespace !^= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace !$= foo')).toEqual('node[namespace !$= "foo"]');
+    expect(instance.parseValue('namespace !$= foo')).toEqual('node[namespace !$= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace contains foo')).toEqual('node[namespace *= "foo"]');
+    expect(instance.parseValue('namespace contains foo')).toEqual('node[namespace *= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace startsWith foo')).toEqual('node[namespace ^= "foo"]');
+    expect(instance.parseValue('namespace startsWith foo')).toEqual('node[namespace ^= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace endsWith foo')).toEqual('node[namespace $= "foo"]');
+    expect(instance.parseValue('namespace endsWith foo')).toEqual('node[namespace $= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace not contains foo')).toEqual('node[namespace !*= "foo"]');
+    expect(instance.parseValue('namespace not contains foo')).toEqual('node[namespace !*= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace not startswith foo')).toEqual('node[namespace !^= "foo"]');
+    expect(instance.parseValue('namespace not startswith foo')).toEqual('node[namespace !^= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('namespace not endswith foo')).toEqual('node[namespace !$= "foo"]');
+    expect(instance.parseValue('namespace not endswith foo')).toEqual('node[namespace !$= "foo"]');
 
     // check unary parsing
     // @ts-ignore
-    expect(instance.parseFindValue('is mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('is mtls')).toEqual('edge[isMTLS]');
     // @ts-ignore
-    expect(instance.parseFindValue('has mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('has mtls')).toEqual('edge[isMTLS]');
     // @ts-ignore
-    expect(instance.parseFindValue('! mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('! mtls')).toEqual('edge[^isMTLS]');
     // @ts-ignore
-    expect(instance.parseFindValue('!has mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('!has mtls')).toEqual('edge[^isMTLS]');
     // @ts-ignore
-    expect(instance.parseFindValue('!mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('!mtls')).toEqual('edge[^isMTLS]');
     // @ts-ignore
-    expect(instance.parseFindValue('not has mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('not has mtls')).toEqual('edge[^isMTLS]');
 
     // check binary parsing
     // @ts-ignore
-    expect(instance.parseFindValue('ns =foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('ns =foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns= foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('ns= foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns  =  foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('ns  =  foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns=foo')).toEqual('node[namespace = "foo"]');
+    expect(instance.parseValue('ns=foo')).toEqual('node[namespace = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns not =foo')).toEqual('node[namespace != "foo"]');
+    expect(instance.parseValue('ns not =foo')).toEqual('node[namespace != "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns!=foo')).toEqual('node[namespace != "foo"]');
+    expect(instance.parseValue('ns!=foo')).toEqual('node[namespace != "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns not contains foo')).toEqual('node[namespace !*= "foo"]');
+    expect(instance.parseValue('ns not contains foo')).toEqual('node[namespace !*= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns !contains foo')).toEqual('node[namespace !*= "foo"]');
+    expect(instance.parseValue('ns !contains foo')).toEqual('node[namespace !*= "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns ! contains foo')).toEqual('node[namespace !*= "foo"]');
+    expect(instance.parseValue('ns ! contains foo')).toEqual('node[namespace !*= "foo"]');
 
     // check composites
     // @ts-ignore
-    expect(instance.parseFindValue('ns=foo OR ns=bar')).toEqual('node[namespace = "foo"],[namespace = "bar"]');
+    expect(instance.parseValue('ns=foo OR ns=bar')).toEqual('node[namespace = "foo"],[namespace = "bar"]');
     // @ts-ignore
-    expect(instance.parseFindValue('ns=foo AND ns=bar')).toEqual('node[namespace = "foo"][namespace = "bar"]');
+    expect(instance.parseValue('ns=foo AND ns=bar')).toEqual('node[namespace = "foo"][namespace = "bar"]');
 
     // check find by name
     // @ts-ignore
-    expect(instance.parseFindValue('name = foo')).toEqual('node[workload = "foo"],[app = "foo"],[service = "foo"]');
+    expect(instance.parseValue('name = foo')).toEqual('node[workload = "foo"],[app = "foo"],[service = "foo"]');
     // @ts-ignore
-    expect(instance.parseFindValue('name != foo')).toEqual('node[workload != "foo"][app != "foo"][service != "foo"]');
+    expect(instance.parseValue('name != foo')).toEqual('node[workload != "foo"][app != "foo"][service != "foo"]');
 
     // check violations
     // @ts-ignore
-    expect(instance.parseFindValue('foo')).toEqual(undefined); // invalid unary
+    expect(instance.parseValue('foo')).toEqual(undefined); // invalid unary
     // @ts-ignore
-    expect(instance.parseFindValue('!foo')).toEqual(undefined); // invalid negated unary
+    expect(instance.parseValue('!foo')).toEqual(undefined); // invalid negated unary
     // @ts-ignore
-    expect(instance.parseFindValue('node = appp')).toEqual(undefined); // invalid node type
+    expect(instance.parseValue('node = appp')).toEqual(undefined); // invalid node type
     // @ts-ignore
-    expect(instance.parseFindValue('ns=foo OR ns=bar AND app=foo')).toEqual(undefined); // AND and OR
+    expect(instance.parseValue('ns=foo OR ns=bar AND app=foo')).toEqual(undefined); // AND and OR
     // @ts-ignore
-    expect(instance.parseFindValue('ns=foo AND http > 5.0')).toEqual(undefined); // Node and Edge
+    expect(instance.parseValue('ns=foo AND http > 5.0')).toEqual(undefined); // Node and Edge
   });
 });
