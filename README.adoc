@@ -254,6 +254,14 @@ Many configuration settings can optionally be set via environment variables. If 
 |===
 |Environment Variable Name|Description and YAML Setting
 
+|`AUTH_STRATEGY`
+|Defines how users are to be authenticated. There are three strategies available: "anonymous" (which allows anyone to log in without needing credentials), "login" (which requires users to log in with the credentials found in the Kiali secret), and "openshift" (which requires users to log in with valid OpenShift user credentials). (Default: login)
+[source,yaml]
+----
+auth:
+  strategy: VALUE
+----
+
 |`IDENTITY_CERT_FILE`
 |Certificate file used to identify the file server. If set, you must go over https to retrieve content from the file server.
 [source,yaml]
