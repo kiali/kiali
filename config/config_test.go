@@ -241,17 +241,12 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if conf.Server.Credentials.Passphrase != "bar" {
 		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
 	}
-	if conf.Server.Credentials.AllowAnonymous {
-		t.Errorf("Failed to unmarshal credentials - anonymous should be false:\n%v", conf)
-	}
 
-	// see that the AllowAnonymous flag can be true
 	testConf = Config{
 		Server: Server{
 			Credentials: security.Credentials{
-				Username:       "",
-				Passphrase:     "",
-				AllowAnonymous: true,
+				Username:   "",
+				Passphrase: "",
 			},
 		},
 	}
@@ -259,9 +254,6 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	yamlString, err = Marshal(&testConf)
 	if err != nil {
 		t.Errorf("Failed to marshal: %v", err)
-	}
-	if !strings.Contains(yamlString, "nonymous") {
-		t.Errorf("Should be marshalling Anonymous flag as true - [%v]", yamlString)
 	}
 	conf, err = Unmarshal(yamlString)
 	if err != nil {
@@ -272,8 +264,5 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	}
 	if conf.Server.Credentials.Passphrase != "" {
 		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
-	}
-	if !conf.Server.Credentials.AllowAnonymous {
-		t.Errorf("Failed to unmarshal credentials - anonymous should be true\n%v", conf)
 	}
 }

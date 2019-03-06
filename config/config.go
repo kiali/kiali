@@ -31,7 +31,6 @@ const (
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
-	EnvServerAllowAnonymousAccess       = "SERVER_ALLOW_ANONYMOUS_ACCESS"
 	EnvWebRoot                          = "SERVER_WEB_ROOT"
 	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
 	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
@@ -208,9 +207,8 @@ func NewConfig() (c *Config) {
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
-		Username:       getDefaultStringFromFile(LoginSecretUsername, ""),
-		Passphrase:     getDefaultStringFromFile(LoginSecretPassphrase, ""),
-		AllowAnonymous: getDefaultBool(EnvServerAllowAnonymousAccess, false),
+		Username:   getDefaultStringFromFile(LoginSecretUsername, ""),
+		Passphrase: getDefaultStringFromFile(LoginSecretPassphrase, ""),
 	}
 
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
@@ -270,8 +268,6 @@ func NewConfig() (c *Config) {
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
 	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, AuthStrategyLogin)
-
-	log.Infof("Using the '%v' authentication strategy", c.Auth.Strategy)
 
 	return
 }

@@ -33,6 +33,62 @@ const (
 
 var tmpDir = os.TempDir()
 
+func TestAnonymousMode(t *testing.T) {
+	testPort, err := getFreePort(testHostname)
+	if err != nil {
+		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
+	} else {
+		t.Logf("Will use free port [%v] on host [%v] for tests", testPort, testHostname)
+	}
+
+	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
+
+	conf := new(config.Config)
+	conf.Server.Address = testHostname
+	conf.Server.Port = testPort
+	conf.Server.StaticContentRootDirectory = tmpDir
+	conf.Server.Credentials.Username = "unused"
+	conf.Server.Credentials.Passphrase = "unused"
+	conf.Auth.Strategy = "anonymous"
+
+	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
+	apiURLWithAuthentication := serverURL + "/api/authenticate"
+	apiURL := serverURL + "/api"
+
+	config.Set(conf)
+
+	server := NewServer()
+	server.Start()
+	t.Logf("Started test http server: %v", serverURL)
+	defer func() {
+		server.Stop()
+		t.Logf("Stopped test server: %v", serverURL)
+	}()
+
+	// the client
+	httpConfig := httpClientConfig{}
+	httpClient, err := httpConfig.buildHTTPClient()
+	if err != nil {
+		t.Fatalf("Failed to create http client")
+	}
+
+	// no credentials
+	noCredentials := &security.Credentials{}
+
+	// wait for our test http server to come up
+	checkHTTPReady(httpClient, serverURL+"/status")
+
+	// TEST WITH NO USER
+
+	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, noCredentials); err != nil {
+		t.Fatalf("Failed: Basic Auth API URL shouldn't have failed with no credentials: %v", err)
+	}
+
+	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err != nil {
+		t.Fatalf("Failed: Basic API URL shouldn't have failed with no credentials: %v", err)
+	}
+}
+
 func TestSecureComm(t *testing.T) {
 	testPort, err := getFreePort(testHostname)
 	if err != nil {
@@ -60,10 +116,6 @@ func TestSecureComm(t *testing.T) {
 	}
 	defer os.Remove(testClientCertFile)
 	defer os.Remove(testClientKeyFile)
-
-	staticFile := tmpDir + "/static-file.txt"
-	generateStaticFile(t, staticFile, "static content")
-	defer os.Remove(staticFile)
 
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
@@ -130,7 +182,7 @@ func TestSecureComm(t *testing.T) {
 	}
 
 	if _, err = getRequestResults(t, httpClient, apiURL, basicCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth API URL: %v", err)
+		t.Fatalf("Failed: Basic API URL: %v", err)
 	}
 
 	// this makes sure the Prometheus metrics endpoint can start (we made an API call above; there should be metrics)
@@ -150,17 +202,17 @@ func TestSecureComm(t *testing.T) {
 	}
 
 	if _, err = getRequestResults(t, httpClient, apiURL, badBasicCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth API URL shouldn't have failed")
+		t.Fatalf("Failed: Basic API URL shouldn't have failed: %v", err)
 	}
 
 	// TEST WITH NO USER
 
 	if _, err = getRequestResults(t, httpClient, apiURLWithAuthentication, noCredentials); err == nil {
-		t.Fatalf("Failed: Basic Auth API URL should have failed with with no credentials")
+		t.Fatalf("Failed: Basic Auth API URL should have failed with no credentials")
 	}
 
 	if _, err = getRequestResults(t, httpClient, apiURL, noCredentials); err != nil {
-		t.Fatalf("Failed: Basic Auth API URL shouldn't have failed with with no credentials")
+		t.Fatalf("Failed: Basic API URL shouldn't have failed with no credentials: %v", err)
 	}
 }
 
@@ -192,15 +244,6 @@ func getRequestResults(t *testing.T, httpClient *http.Client, url string, creden
 			return "", fmt.Errorf("Bad status: %v", resp.StatusCode)
 		}
 	}
-}
-
-func generateStaticFile(t *testing.T, filename string, content string) {
-	file, err := os.Create(filename)
-	if err != nil {
-		t.Fatalf("Cannot create file [%v]: %v", filename, err)
-	}
-	defer file.Close()
-	fmt.Fprintf(file, content)
 }
 
 func generateCertificate(t *testing.T, certPath string, keyPath string, host string) error {

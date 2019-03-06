@@ -110,7 +110,7 @@ func main() {
 	server.Start()
 
 	// wait for the secret when a secret is required
-	if config.Get().Auth.Strategy == config.AuthStrategyLogin && !config.Get().Server.Credentials.AllowAnonymous {
+	if config.Get().Auth.Strategy == config.AuthStrategyLogin {
 		waitForSecret()
 	}
 
@@ -149,7 +149,6 @@ func waitForSecret() {
 	secret := <-foundSecretChan
 	config.Get().Server.Credentials.Username = secret.Username
 	config.Get().Server.Credentials.Passphrase = secret.Passphrase
-	config.Get().Server.Credentials.AllowAnonymous = false
 }
 
 func waitForTermination() {
@@ -190,15 +189,15 @@ func validateConfig() error {
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
-	if config.Get().Auth.Strategy == config.AuthStrategyLogin {
+	auth := config.Get().Auth
+	log.Infof("Using authentication strategy [%v]", auth.Strategy)
+	if auth.Strategy == config.AuthStrategyLogin {
 		creds := config.Get().Server.Credentials
-		if creds.AllowAnonymous {
-			log.Warningf("Kiali is configured for anonymous access - users will not be authenticated.")
-		} else if creds.Username == "" && creds.Passphrase == "" {
+		if creds.Username == "" && creds.Passphrase == "" {
 			// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning
 			log.Warningf("Credentials are missing. Create a proper secret. Please refer to the documentation for more details.")
 		}
-	} else if config.Get().Auth.Strategy == config.AuthStrategyAnonymous {
+	} else if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
 	}
 

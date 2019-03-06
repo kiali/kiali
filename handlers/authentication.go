@@ -90,14 +90,9 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	if len(user) == 0 {
 		conf := config.Get()
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-			if conf.Server.Credentials.AllowAnonymous {
-				log.Trace("Access to the server endpoint is not secured with credentials - letting anonymous request come in")
-				user = "anonymous"
-			} else {
-				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
-				RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
-				return false
-			}
+			log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+			RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
+			return false
 		} else {
 			RespondWithCode(w, http.StatusUnauthorized)
 			return false
@@ -231,13 +226,8 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		if len(user) == 0 {
 			conf := config.Get()
 			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-				if conf.Server.Credentials.AllowAnonymous {
-					log.Trace("Access to the server endpoint is not secured with credentials - letting anonymous request come in")
-					user = "anonymous"
-				} else {
-					log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
-					return missingSecretStatusCode // our specific error code that indicates to the client that we are missing the secret
-				}
+				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+				return missingSecretStatusCode // our specific error code that indicates to the client that we are missing the secret
 			} else {
 				return http.StatusUnauthorized
 			}

@@ -26,7 +26,13 @@ func NewServer() *Server {
 		router.Use(corsAllowed)
 	}
 
+	// The Kiali server has only a single http server ever during its lifetime. But to support
+	// testing that wants to start multiple servers over the lifetime of the process,
+	// we need to override the default server mux with a new one everytime.
+	mux := http.NewServeMux()
+	http.DefaultServeMux = mux
 	http.Handle("/", router)
+
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
 		Addr: fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),

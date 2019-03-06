@@ -14,10 +14,9 @@ type Identity struct {
 // Credentials provides information when needing to authenticate to remote endpoints.
 // Credentials are either a username/password or a bearer token, but not both.
 type Credentials struct {
-	Username       string `yaml:",omitempty"`
-	Passphrase     string `yaml:",omitempty"`
-	Token          string `yaml:",omitempty"`
-	AllowAnonymous bool   `yaml:"allow_anonymous,omitempty"`
+	Username   string `yaml:",omitempty"`
+	Passphrase string `yaml:",omitempty"`
+	Token      string `yaml:",omitempty"`
 }
 
 // TLS options - SkipCertificateValidation will disable server certificate verification - the client
@@ -29,10 +28,8 @@ type TLS struct {
 // ValidateCredentials makes sure that if username is provided, so is passphrase (and vice versa)
 // and also makes sure if username/passphrase is provided that token is not (and vice versa).
 // It is valid to have nothing defined (no username, passphrase, nor token), but if nothing is
-// defined and the "AllowAnonymous" flag is false, this usually means the person who
+// defined, this usually means the person who
 // installed Kiali most likely forgot to set credentials - therefore access should always be denied.
-// If nothing is defined and the "AllowAnonymous" flag is true, this means anonymous access is specifically allowed.
-// If the "AllowAnonymous" flag is true but non-empty credentials are defined, an error results.
 func (c *Credentials) ValidateCredentials() error {
 	if c.Username != "" && c.Passphrase == "" {
 		return fmt.Errorf("A passphrase must be provided if a username is set")
@@ -44,10 +41,6 @@ func (c *Credentials) ValidateCredentials() error {
 
 	if c.Username != "" && c.Token != "" {
 		return fmt.Errorf("Username/passphrase cannot be specified if a token is specified also. Only Username/Passphrase or Token can be set but not both")
-	}
-
-	if c.AllowAnonymous && (c.Username != "" || c.Token != "") {
-		return fmt.Errorf("The 'AllowAnonymous' flag is true but non-empty credentials exist")
 	}
 
 	return nil
