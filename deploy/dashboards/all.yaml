@@ -1,0 +1,515 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: nodejs
+spec:
+  runtime: Node.js
+  title: Node.js Metrics
+  charts:
+    - name: "Active handles"
+      unit: ""
+      spans: 4
+      metricName: "nodejs_active_handles_total"
+      dataType: "raw"
+    - name: "Active requests"
+      unit: ""
+      spans: 4
+      metricName: "nodejs_active_requests_total"
+      dataType: "raw"
+    - name: "Event loop lag"
+      unit: "s"
+      spans: 4
+      metricName: "nodejs_eventloop_lag_seconds"
+      dataType: "raw"
+    - name: "Total heap size"
+      unit: "B"
+      spans: 12
+      metricName: "nodejs_heap_space_size_total_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "space"
+          displayName: "Space"
+    - name: "Used heap size"
+      unit: "B"
+      spans: 6
+      metricName: "nodejs_heap_space_size_used_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "space"
+          displayName: "Space"
+    - name: "Available heap size"
+      unit: "B"
+      spans: 6
+      metricName: "nodejs_heap_space_size_available_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "space"
+          displayName: "Space"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: thorntail
+spec:
+  runtime: Thorntail
+  title: Thorntail Metrics
+  charts:
+    - name: "Current loaded classes"
+      unit: ""
+      spans: 4
+      metricName: "base:classloader_current_loaded_class_count"
+      dataType: "raw"
+    - name: "Unloaded classes"
+      unit: ""
+      spans: 4
+      metricName: "base:classloader_total_unloaded_class_count"
+      dataType: "raw"
+    - name: "Loaded modules"
+      unit: ""
+      spans: 4
+      metricName: "vendor:loaded_modules"
+      dataType: "raw"
+    - name: "Thread count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_count"
+      dataType: "raw"
+    - name: "Thread max count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_max_count"
+      dataType: "raw"
+    - name: "Thread daemon count"
+      unit: ""
+      spans: 4
+      metricName: "base:thread_daemon_count"
+      dataType: "raw"
+    - name: "Committed heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_committed_heap_bytes"
+      dataType: "raw"
+    - name: "Max heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_max_heap_bytes"
+      dataType: "raw"
+    - name: "Used heap"
+      unit: "B"
+      spans: 4
+      metricName: "base:memory_used_heap_bytes"
+      dataType: "raw"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-client
+spec:
+  runtime: Vert.x
+  title: Vert.x Client Metrics
+  charts:
+    - name: "Client response time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_http_client_responseTime_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Client request count rate"
+      unit: "ops"
+      spans: 6
+      metricName: "vertx_http_client_requestCount_total"
+      dataType: "rate"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Client active connections"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_client_connections"
+      dataType: "raw"
+    - name: "Client active websockets"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_client_wsConnections"
+      dataType: "raw"
+    - name: "Client bytes sent"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_client_bytesSent"
+      dataType: "histogram"
+    - name: "Client bytes received"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_client_bytesReceived"
+      dataType: "histogram"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-eventbus
+spec:
+  runtime: Vert.x
+  title: Vert.x Eventbus Metrics
+  charts:
+    - name: "Event bus handlers"
+      unit: ""
+      spans: 6
+      metricName: "vertx_eventbus_handlers"
+      dataType: "raw"
+      aggregations:
+        - label: "address"
+          displayName: "Eventbus address"
+    - name: "Event bus pending messages"
+      unit: ""
+      spans: 6
+      metricName: "vertx_eventbus_pending"
+      dataType: "raw"
+      aggregations:
+        - label: "address"
+          displayName: "Eventbus address"
+    - name: "Event bus processing time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_eventbus_processingTime_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "address"
+          displayName: "Eventbus address"
+    - name: "Event bus bytes read"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_eventbus_bytesRead"
+      dataType: "histogram"
+      aggregations:
+        - label: "address"
+          displayName: "Eventbus address"
+    - name: "Event bus bytes written"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_eventbus_bytesWritten"
+      dataType: "histogram"
+      aggregations:
+        - label: "address"
+          displayName: "Eventbus address"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-pool
+spec:
+  runtime: Vert.x
+  title: Vert.x Pools Metrics
+  charts:
+    - name: "Usage duration"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_pool_usage_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "pool_name"
+          displayName: "Name"
+        - label: "pool_type"
+          displayName: "Type"
+    - name: "Usage ratio"
+      unit: ""
+      spans: 6
+      metricName: "vertx_pool_ratio"
+      dataType: "raw"
+      aggregations:
+        - label: "pool_name"
+          displayName: "Name"
+        - label: "pool_type"
+          displayName: "Type"
+    - name: "Queue size"
+      unit: ""
+      spans: 6
+      metricName: "vertx_pool_queue_size"
+      dataType: "raw"
+      aggregations:
+        - label: "pool_name"
+          displayName: "Name"
+        - label: "pool_type"
+          displayName: "Type"
+    - name: "Time in queue"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_pool_queue_delay_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "pool_name"
+          displayName: "Name"
+        - label: "pool_type"
+          displayName: "Type"
+    - name: "Resources used"
+      unit: ""
+      spans: 6
+      metricName: "vertx_pool_inUse"
+      dataType: "raw"
+      aggregations:
+        - label: "pool_name"
+          displayName: "Name"
+        - label: "pool_type"
+          displayName: "Type"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-server
+spec:
+  runtime: Vert.x
+  title: Vert.x Server Metrics
+  charts:
+    - name: "Server response time"
+      unit: "s"
+      spans: 6
+      metricName: "vertx_http_server_responseTime_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Server request count rate"
+      unit: "ops"
+      spans: 6
+      metricName: "vertx_http_server_requestCount_total"
+      dataType: "rate"
+      aggregations:
+        - label: "code"
+          displayName: "Error code"
+        - label: "path"
+          displayName: "Path"
+        - label: "method"
+          displayName: "Method"
+    - name: "Server active connections"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_server_connections"
+      dataType: "raw"
+    - name: "Server active websockets"
+      unit: ""
+      spans: 6
+      metricName: "vertx_http_server_wsConnections"
+      dataType: "raw"
+    - name: "Server bytes sent"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_server_bytesSent"
+      dataType: "histogram"
+    - name: "Server bytes received"
+      unit: "B"
+      spans: 6
+      metricName: "vertx_http_server_bytesReceived"
+      dataType: "histogram"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-jvm
+spec:
+  runtime: Spring Boot
+  title: JVM Metrics
+  charts:
+    - name: "Total live threads"
+      unit: ""
+      spans: 4
+      metricName: "jvm_threads_live"
+      dataType: "raw"
+    - name: "Daemon threads"
+      unit: ""
+      spans: 4
+      metricName: "jvm_threads_daemon"
+      dataType: "raw"
+    - name: "Loaded classes"
+      unit: ""
+      spans: 4
+      metricName: "jvm_classes_loaded"
+      dataType: "raw"
+
+    - name: "Memory used"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_used_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+    - name: "Memory commited"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_committed_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+    - name: "Memory max"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_memory_max_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "area"
+          displayName: "Area"
+        - label: "id"
+          displayName: "Space"
+
+    - name: "Pool buffer memory used"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_memory_used_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"
+    - name: "Pool buffer capacity"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_total_capacity_bytes"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"
+    - name: "Pool buffer count"
+      unit: "B"
+      spans: 4
+      metricName: "jvm_buffer_count"
+      dataType: "raw"
+      aggregations:
+        - label: "id"
+          displayName: "Pool"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: springboot-tomcat
+spec:
+  runtime: Spring Boot
+  title: Tomcat Metrics
+  charts:
+    - name: "Sessions created"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_created_total"
+      dataType: "raw"
+    - name: "Active sessions"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_active_current"
+      dataType: "raw"
+    - name: "Sessions rejected"
+      unit: ""
+      spans: 4
+      metricName: "tomcat_sessions_rejected_total"
+      dataType: "raw"
+
+    - name: "Bytes sent"
+      unit: "bps"
+      spans: 6
+      metricName: "tomcat_global_sent_bytes_total"
+      dataType: "rate"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+    - name: "Bytes received"
+      unit: "bps"
+      spans: 6
+      metricName: "tomcat_global_received_bytes_total"
+      dataType: "rate"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+
+    - name: "Global errors"
+      unit: ""
+      spans: 6
+      metricName: "tomcat_global_error_total"
+      dataType: "raw"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+    - name: "Servlet errors"
+      unit: ""
+      spans: 6
+      metricName: "tomcat_servlet_error_total"
+      dataType: "raw"
+      aggregations:
+        - label: "name"
+          displayName: "Name"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: generic-go
+spec:
+  title: Go Metrics
+  runtime: Go
+  charts:
+    - name: "Threads"
+      unit: ""
+      spans: 6
+      metricName: "go_threads"
+      dataType: "raw"
+    - name: "Goroutines"
+      unit: ""
+      spans: 6
+      metricName: "go_goroutines"
+      dataType: "raw"
+    - name: "GC duration"
+      unit: "s"
+      spans: 6
+      metricName: "go_gc_duration_seconds"
+      dataType: "rate"
+      aggregations:
+        - label: "quantile"
+          displayName: "Quantile"
+    - name: "Heap allocated"
+      unit: "B"
+      spans: 6
+      metricName: "go_memstats_heap_alloc_bytes"
+      dataType: "raw"
+---
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: kiali
+spec:
+  title: Kiali Internal Metrics
+  charts:
+    - name: "API processing duration"
+      unit: "s"
+      spans: 6
+      metricName: "kiali_api_processing_duration_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "route"
+          displayName: "Route"
+    - name: "Functions processing duration"
+      unit: "s"
+      spans: 6
+      metricName: "kiali_go_function_processing_duration_seconds"
+      dataType: "histogram"
+      aggregations:
+        - label: "function"
+          displayName: "Function"
+        - label: "package"
+          displayName: "Package"
+    - name: "Failures"
+      unit: ""
+      spans: 12
+      metricName: "kiali_go_function_failures_total"
+      dataType: "raw"
+      aggregations:
+        - label: "function"
+          displayName: "Function"
+        - label: "package"
+          displayName: "Package"
