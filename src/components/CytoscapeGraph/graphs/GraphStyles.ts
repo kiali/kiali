@@ -152,11 +152,11 @@ export class GraphStyles {
     const getNodeBackgroundImage = (ele: any): string => {
       const isInaccessible = ele.data(CyNode.isInaccessible);
       const isServiceEntry = ele.data(CyNode.isServiceEntry);
-      if (isInaccessible && !isServiceEntry) {
+      const isGroup = ele.data(CyNode.isGroup);
+      if (isInaccessible && !isServiceEntry && !isGroup) {
         return NodeImageKey;
       }
       const isOutside = ele.data(CyNode.isOutside);
-      const isGroup = ele.data(CyNode.isGroup);
       if (isOutside && !isGroup) {
         return NodeImageTopology;
       }
