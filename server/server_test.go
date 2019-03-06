@@ -43,10 +43,6 @@ func TestAnonymousMode(t *testing.T) {
 
 	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
 
-	staticFile := tmpDir + "/static-file.txt"
-	generateStaticFile(t, staticFile, "static content")
-	defer os.Remove(staticFile)
-
 	conf := new(config.Config)
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
@@ -120,10 +116,6 @@ func TestSecureComm(t *testing.T) {
 	}
 	defer os.Remove(testClientCertFile)
 	defer os.Remove(testClientKeyFile)
-
-	staticFile := tmpDir + "/static-file.txt"
-	generateStaticFile(t, staticFile, "static content")
-	defer os.Remove(staticFile)
 
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
@@ -252,15 +244,6 @@ func getRequestResults(t *testing.T, httpClient *http.Client, url string, creden
 			return "", fmt.Errorf("Bad status: %v", resp.StatusCode)
 		}
 	}
-}
-
-func generateStaticFile(t *testing.T, filename string, content string) {
-	file, err := os.Create(filename)
-	if err != nil {
-		t.Fatalf("Cannot create file [%v]: %v", filename, err)
-	}
-	defer file.Close()
-	fmt.Fprintf(file, content)
 }
 
 func generateCertificate(t *testing.T, certPath string, keyPath string, host string) error {
