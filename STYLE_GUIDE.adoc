@@ -65,6 +65,12 @@ createItem = () => {
 }
 ----
 
+= Redux and Type-safe Use
+
+For additional type safety in our Redux Actions/Reducers, we use the library:
+https://github.com/piotrwitek/typesafe-actions
+Please refer to this site for instructions on how to use typescript with Redux.
+
 = Redux and URL Consistency
 
 Every application page should strive to have it's state in Redux so that
