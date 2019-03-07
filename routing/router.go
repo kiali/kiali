@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
@@ -47,9 +46,6 @@ func NewRouter() *mux.Router {
 			Name(route.Name).
 			Handler(handlerFunction)
 	}
-
-	// The Prometheus scrape endpoint - this reports our internal metrics
-	appRouter.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	// All client-side routes are prefixed with /console.
 	// They are forwarded to index.html and will be handled by react-router.

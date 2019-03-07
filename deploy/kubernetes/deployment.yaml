@@ -22,6 +22,10 @@ spec:
       labels:
         app: kiali
         version: ${VERSION_LABEL}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        kiali.io/runtimes: go,kiali
     spec:
       serviceAccount: kiali-service-account
       containers:
