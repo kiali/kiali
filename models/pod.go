@@ -93,7 +93,11 @@ func (pod *Pod) Parse(p *v1.Pod) {
 	}
 	// Check for custom dashboards annotation
 	if rawRuntimes, ok := p.Annotations["kiali.io/runtimes"]; ok {
-		pod.RuntimesAnnotation = strings.Split(strings.TrimSpace(rawRuntimes), ",")
+		runtimes := strings.Split(rawRuntimes, ",")
+		pod.RuntimesAnnotation = []string{}
+		for _, runtime := range runtimes {
+			pod.RuntimesAnnotation = append(pod.RuntimesAnnotation, strings.TrimSpace(runtime))
+		}
 	}
 	pod.Status = string(p.Status.Phase)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
