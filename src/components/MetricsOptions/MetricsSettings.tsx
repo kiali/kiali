@@ -19,7 +19,12 @@ interface Props {
   onChanged: (state: MetricsSettings) => void;
   onLabelsFiltersChanged: (label: LabelDisplayName, value: string, checked: boolean) => void;
   labelValues: AllLabelsValues;
+  hasHistograms: boolean;
 }
+
+const checkboxStyle = style({ marginLeft: 5 });
+const secondLevelStyle = style({ marginLeft: 14 });
+const spacerStyle = style({ height: '1em' });
 
 export class MetricsSettingsDropdown extends React.Component<Props> {
   private shouldReportOptions: boolean;
@@ -90,11 +95,31 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
   };
 
   render() {
+    const hasHistograms = this.props.hasHistograms;
+    const hasLabels = this.props.labelValues.size > 0;
+    if (!hasHistograms && !hasLabels) {
+      return null;
+    }
+
     this.processUrlParams();
 
-    const checkboxStyle = style({ marginLeft: 5 });
-    const secondLevelStyle = style({ marginLeft: 14 });
+    const metricsSettingsPopover = (
+      <Popover id="layers-popover">
+        {hasLabels && this.renderLabelOptions()}
+        {hasHistograms && this.renderHistogramOptions()}
+      </Popover>
+    );
 
+    return (
+      <OverlayTrigger overlay={metricsSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
+        <Button>
+          Metrics Settings <Icon name="angle-down" />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
+  renderLabelOptions(): JSX.Element {
     const displayGroupingLabels: any[] = [];
     this.props.labelValues.forEach((values, name) => {
       const checked = this.settings.activeLabels.includes(name);
@@ -126,7 +151,16 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
         </div>
       );
     });
+    return (
+      <>
+        <label>Show metrics by:</label>
+        {displayGroupingLabels}
+        <div className={spacerStyle} />
+      </>
+    );
+  }
 
+  renderHistogramOptions(): JSX.Element {
     // Prettier removes the parenthesis introducing JSX
     // prettier-ignore
     const displayHistogramOptions = [(
@@ -157,28 +191,12 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
         );
       })
     );
-
-    const spacerStyle = style({
-      height: '1em'
-    });
-
-    const metricsSettingsPopover = (
-      <Popover id="layers-popover">
-        <label>Show metrics by:</label>
-        {displayGroupingLabels}
-        <div className={spacerStyle} />
+    return (
+      <>
         <label>Histograms:</label>
         {displayHistogramOptions}
         <div className={spacerStyle} />
-      </Popover>
-    );
-
-    return (
-      <OverlayTrigger overlay={metricsSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
-        <Button>
-          Metrics Settings <Icon name="angle-down" />
-        </Button>
-      </OverlayTrigger>
+      </>
     );
   }
 
