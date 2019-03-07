@@ -79,12 +79,6 @@ var apiToVersion = map[string]string{
 	kubernetes.RbacGroupVersion.Group:       kubernetes.ApiRbacVersion,
 }
 
-const (
-	MeshmTLSEnabled          = "MESH_MTLS_ENABLED"
-	MeshmTLSPartiallyEnabled = "MESH_MTLS_PARTIALLY_ENABLED"
-	MeshmTLSNotEnabled       = "MESH_MTLS_NOT_ENABLED"
-)
-
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
 // per a given Namespace.
 func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (models.IstioConfigList, error) {

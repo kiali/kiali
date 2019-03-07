@@ -205,7 +205,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MeshmTLSEnabled, status)
+	assert.Equal(MTLSEnabled, status)
 }
 
 func TestMeshStatusPartiallyEnabled(t *testing.T) {
@@ -222,7 +222,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MeshmTLSPartiallyEnabled, status)
+	assert.Equal(MTLSPartiallyEnabled, status)
 }
 
 func TestMeshStatusNotEnabled(t *testing.T) {
@@ -239,65 +239,99 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MeshmTLSNotEnabled, status)
+	assert.Equal(MTLSNotEnabled, status)
 }
 
 func TestNamespaceHasMTLSEnabled(t *testing.T) {
-	assert := assert.New(t)
+	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
+	}
 
-	k8s := new(kubetest.K8SClientMock)
-
-	tlsService := TLSService{k8s: k8s}
-	status, err := (tlsService).NamespaceWidemTLSStatus("test")
-
-	assert.NoError(err)
-	assert.Equal("ENABLED", status)
+	testNamespaceScenario(MTLSEnabled, drs, ps, t)
 }
 
 func TestNamespaceHasPolicyDisabled(t *testing.T) {
-	assert := assert.New(t)
-
-	k8s := new(kubetest.K8SClientMock)
-
-	tlsService := TLSService{k8s: k8s}
-	status, err := (tlsService).NamespaceWidemTLSStatus("test")
-
-	assert.NoError(err)
-	assert.Equal("PARTLY_ENABLED", status)
-}
-
-func TestNamespaceHasPolicyEnabledDifferentNs(t *testing.T) {
-	assert := assert.New(t)
-
-	k8s := new(kubetest.K8SClientMock)
-
-	tlsService := TLSService{k8s: k8s}
-	status, err := (tlsService).NamespaceWidemTLSStatus("test")
-
-	assert.NoError(err)
-	assert.Equal("PARTLY_ENABLED", status)
+	ps := fakePermissivePolicy("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, t)
 }
 
 func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
-	assert := assert.New(t)
+	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
+	}
 
-	k8s := new(kubetest.K8SClientMock)
-
-	tlsService := TLSService{k8s: k8s}
-	status, err := (tlsService).NamespaceWidemTLSStatus("test")
-
-	assert.NoError(err)
-	assert.Equal("PARTLY_ENABLED", status)
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, t)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
+	ps := fakePolicyEmptyMTLS("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("foo", "allow-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+
+	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, t)
+}
+
+func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
+	ps := []kubernetes.IstioObject{}
+	drs := []kubernetes.IstioObject{}
+
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
+
+	ps = fakePermissivePolicy("default", "bookinfo")
+	drs = []kubernetes.IstioObject{
+		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
+	}
+
+	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
+}
+
+func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []kubernetes.IstioObject, t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("GetDestinationRules", "bookinfo", "").Return(drs, nil)
+	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
 
 	tlsService := TLSService{k8s: k8s}
-	status, err := (tlsService).NamespaceWidemTLSStatus("test")
+	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
-	assert.Equal("PARTLY_ENABLED", status)
+	assert.Equal(exStatus, status.Status)
+}
+
+func fakePolicyEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
+	mtls := []interface{}{
+		map[string]interface{}{
+			"mtls": nil,
+		},
+	}
+	return fakePolicy(name, namespace, mtls)
+}
+
+func fakePermissivePolicy(name, namespace string) []kubernetes.IstioObject {
+	return fakePolicyWithMtlsMode(name, namespace, "PERMISSIVE")
+}
+
+func fakePolicyWithMtlsMode(name, namespace, mTLSmode string) []kubernetes.IstioObject {
+	mtls := []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": mTLSmode,
+			},
+		},
+	}
+	return fakePolicy(name, namespace, mtls)
+}
+
+func fakePolicy(name, namespace string, peers []interface{}) []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{data.CreateEmptyPolicy(name, namespace, peers)}
 }

@@ -5,11 +5,18 @@ import (
 	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 type TLSService struct {
 	k8s kubernetes.IstioClientInterface
 }
+
+const (
+	MTLSEnabled          = "MTLS_ENABLED"
+	MTLSPartiallyEnabled = "MTLS_PARTIALLY_ENABLED"
+	MTLSNotEnabled       = "MTLS_NOT_ENABLED"
+)
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (string, error) {
 	mpp, mpErr := in.hasMeshPolicyEnabled(namespaces)
@@ -23,12 +30,12 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (string, error) {
 	}
 
 	if drp && mpp {
-		return MeshmTLSEnabled, nil
+		return MTLSEnabled, nil
 	} else if drp || mpp {
-		return MeshmTLSPartiallyEnabled, nil
+		return MTLSPartiallyEnabled, nil
 	}
 
-	return MeshmTLSNotEnabled, nil
+	return MTLSNotEnabled, nil
 }
 
 func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
@@ -106,6 +113,55 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 	return allDestinationRules, nil
 }
 
-func (in TLSService) NamespaceWidemTLSStatus(namespace string) (string, error) {
-	return "ENABLED", nil
+func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
+	pl, pErr := in.hasPolicyEnablingNamespacemTLS(namespace)
+	if pErr != nil {
+		return models.MTLSStatus{}, pErr
+	}
+
+	dr, dErr := in.hasDesinationRuleEnablingNamespacemTLS(namespace)
+	if dErr != nil {
+		return models.MTLSStatus{}, dErr
+	}
+
+	status := MTLSNotEnabled
+	if pl && dr {
+		status = MTLSEnabled
+	} else if pl || dr {
+		status = MTLSPartiallyEnabled
+	}
+
+	return models.MTLSStatus{
+		Status: status,
+	}, nil
+}
+
+func (in TLSService) hasPolicyEnablingNamespacemTLS(namespace string) (bool, error) {
+	ps, err := in.k8s.GetPolicies(namespace)
+	if err != nil {
+		return false, err
+	}
+
+	for _, p := range ps {
+		if kubernetes.PolicyHasMTLSEnabled(p) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (bool, error) {
+	drs, nssErr := in.getAllDestinationRules([]string{namespace})
+	if nssErr != nil {
+		return false, nssErr
+	}
+
+	for _, dr := range drs {
+		if kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

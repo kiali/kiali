@@ -844,15 +844,20 @@ func MeshPolicyHasMTLSEnabled(meshPolicy IstioObject) bool {
 		return false
 	}
 
+	// Rest of constraints are shared with non-mesh policies
+	return PolicyHasMTLSEnabled(meshPolicy)
+}
+
+func PolicyHasMTLSEnabled(policy IstioObject) bool {
 	// It is no globally enabled when has targets
-	targets, targetPresent := meshPolicy.GetSpec()["targets"]
+	targets, targetPresent := policy.GetSpec()["targets"]
 	specificTarget := targetPresent && len(targets.([]interface{})) > 0
 	if specificTarget {
 		return false
 	}
 
 	// It is globally enabled when a peer has mtls enabled
-	peers, peersPresent := meshPolicy.GetSpec()["peers"]
+	peers, peersPresent := policy.GetSpec()["peers"]
 	if !peersPresent {
 		return false
 	}
@@ -878,8 +883,19 @@ func MeshPolicyHasMTLSEnabled(meshPolicy IstioObject) bool {
 func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) bool {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
+	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
+}
+
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule IstioObject) bool {
+	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
+	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
+	nsHost := fmt.Sprintf("*.%s.svc.cluster.local", namespace)
+	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
+}
+
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule IstioObject) bool {
 	host, hostPresent := destinationRule.GetSpec()["host"]
-	if !hostPresent || host != "*.local" {
+	if !hostPresent || host != expectedHost {
 		return false
 	}
 
