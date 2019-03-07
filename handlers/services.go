@@ -18,7 +18,7 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -37,16 +37,16 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 
 // ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
 func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
-	getServiceMetrics(w, r, defaultPromClientSupplier, defaultK8SClientSupplier)
+	getServiceMetrics(w, r, defaultPromClientSupplier)
 }
 
 // getServiceMetrics (mock-friendly version)
-func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, k8sSupplier k8sClientSupplier) {
+func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
 	vars := mux.Vars(r)
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, promSupplier, k8sSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, promSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return
@@ -66,7 +66,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 // ServiceDetails is the API handler to fetch full details of an specific service
 func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -136,7 +136,7 @@ func ServiceDashboard(w http.ResponseWriter, r *http.Request) {
 	namespace := vars["namespace"]
 	service := vars["service"]
 
-	prom, _, namespaceInfo := initClientsForMetrics(w, defaultPromClientSupplier, defaultK8SClientSupplier, namespace)
+	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
 	if prom == nil {
 		// any returned value nil means error & response already written
 		return

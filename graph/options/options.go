@@ -146,7 +146,20 @@ func NewOptions(r *http.Request) Options {
 
 	// Process namespaces options:
 	namespaceMap := make(map[string]graph.NamespaceInfo)
-	accessibleNamespaces := getAccessibleNamespaces()
+
+	tokenContext := r.Context().Value("token")
+	var token string
+	if tokenContext != nil {
+		if tokenString, ok := tokenContext.(string); !ok {
+			graph.Error("token is not of type string")
+		} else {
+			token = tokenString
+		}
+	} else {
+		graph.Error("token missing in request context")
+	}
+
+	accessibleNamespaces := getAccessibleNamespaces(token)
 
 	// If path variable is set then it is the only relevant namespace (it's a node graph)
 	// Else if namespaces query param is set it specifies the relevant namespaces
@@ -314,9 +327,9 @@ func parseAppenders(params url.Values, o Options) []appender.Appender {
 // The Set is implemented using the map convention. Each map entry is set to the
 // creation timestamp of the namespace, to be used to ensure valid time ranges for
 // queries against the namespace.
-func getAccessibleNamespaces() map[string]time.Time {
+func getAccessibleNamespaces(token string) map[string]time.Time {
 	// Get the namespaces
-	business, err := business.Get()
+	business, err := business.Get(token)
 	graph.CheckError(err)
 
 	namespaces, err := business.Namespace.GetNamespaces()

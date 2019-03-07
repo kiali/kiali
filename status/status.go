@@ -73,10 +73,10 @@ func Put(name, value string) (previous string, hasPrevious bool) {
 }
 
 // Get returns a copy of the current status info.
-func Get() (status StatusInfo) {
+func Get(token string) (status StatusInfo) {
 	info.ExternalServices = []ExternalServiceInfo{}
 	info.WarningMessages = []string{}
-	info.getmTLSStatus()
+	info.getmTLSStatus(token)
 	getVersions()
 	return info
 }

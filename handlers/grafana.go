@@ -17,13 +17,21 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-type serviceSupplier func(string, string) (*v1.ServiceSpec, error)
+type serviceSupplier func(string, string, string) (*v1.ServiceSpec, error)
 type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	info, code, err := getGrafanaInfo(getService, findDashboard)
+
+	token, err := getToken(r)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	info, code, err := getGrafanaInfo(token, getService, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -33,7 +41,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.DisplayLink {
@@ -52,7 +60,7 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	}
 
 	// Find the in-cluster URL to reach Grafana's REST API
-	spec, err := serviceSupplier(grafanaConfig.ServiceNamespace, grafanaConfig.Service)
+	spec, err := serviceSupplier(token, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
 	if err != nil {
 		if k8serr.IsNotFound(err) {
 			return nil, http.StatusServiceUnavailable, err

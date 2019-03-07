@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
 )
 
@@ -27,11 +26,6 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *G
 		return
 	}
 
-	var err error
-	if globalInfo.Business == nil {
-		globalInfo.Business, err = business.Get()
-		graph.CheckError(err)
-	}
 	if namespaceInfo.WorkloadList == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)

@@ -4,9 +4,9 @@ import (
 	"github.com/kiali/kiali/business"
 )
 
-func (si *StatusInfo) getmTLSStatus() {
+func (si *StatusInfo) getmTLSStatus(token string) {
 	// Get business layer
-	business, err := business.Get()
+	business, err := business.Get(token)
 	if err != nil {
 		Put(ClusterMTLS, "error")
 		return

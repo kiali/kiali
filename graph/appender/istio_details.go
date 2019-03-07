@@ -27,12 +27,6 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 		return
 	}
 
-	if globalInfo.Business == nil {
-		var err error
-		globalInfo.Business, err = business.Get()
-		graph.CheckError(err)
-	}
-
 	addBadging(trafficMap, globalInfo, namespaceInfo)
 	addLabels(trafficMap, globalInfo)
 }

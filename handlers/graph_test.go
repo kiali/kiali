@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -67,7 +68,9 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	}
 	client.Inject(api)
 
-	business.SetWithBackends(k8s, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
+
 	return client, api, k8s, nil
 }
 
@@ -465,7 +468,8 @@ func TestAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -499,7 +503,8 @@ func TestVersionedAppGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -533,7 +538,8 @@ func TestServiceGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -567,7 +573,8 @@ func TestWorkloadGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -792,7 +799,8 @@ func TestAppNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -1017,7 +1025,8 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -1242,7 +1251,8 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -1318,7 +1328,8 @@ func TestServiceNodeGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -1452,7 +1463,8 @@ func TestComplexGraph(t *testing.T) {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			fut(w, r, client)
+			context := context.WithValue(r.Context(), "token", "test")
+			fut(w, r.WithContext(context), client)
 		}))
 
 	ts := httptest.NewServer(mr)

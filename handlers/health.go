@@ -17,7 +17,7 @@ const defaultHealthRateInterval = "10m"
 // NamespaceHealth is the API handler to get app-based health of every services in the given namespace
 func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -64,7 +64,7 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 
 // AppHealth is the API handler to get health of a single app
 func AppHealth(w http.ResponseWriter, r *http.Request) {
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -84,7 +84,7 @@ func AppHealth(w http.ResponseWriter, r *http.Request) {
 
 // WorkloadHealth is the API handler to get health of a single workload
 func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -105,7 +105,7 @@ func WorkloadHealth(w http.ResponseWriter, r *http.Request) {
 
 // ServiceHealth is the API handler to get health of a single service
 func ServiceHealth(w http.ResponseWriter, r *http.Request) {
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return

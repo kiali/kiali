@@ -36,7 +36,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	criteria := parseCriteria(namespace, objects)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -175,7 +175,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -235,7 +235,7 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -269,7 +269,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
@@ -311,7 +311,7 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
