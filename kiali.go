@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -91,8 +92,8 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 
 	if webRoot := config.Get().Server.WebRoot; webRoot != "/" {
-		util.UpdateBaseURL(webRoot)
-		util.ConfigToJS()
+		updateBaseURL(webRoot)
+		configToJS()
 	}
 
 	// prepare our internal metrics so Prometheus can scrape them
@@ -227,4 +228,48 @@ func determineConsoleVersion() string {
 		log.Errorf("Failed to determine console version from file [%v]. error=%v", filename, err)
 	}
 	return consoleVersion
+}
+
+// configToJS generates env.js file from Kiali config
+func configToJS() {
+	log.Info("Generating env.js from config")
+	path, _ := filepath.Abs("./console/env.js")
+
+	content := "window.WEB_ROOT='" + config.Get().Server.WebRoot + "';"
+
+	log.Debugf("The content of %v will be:\n%v", path, content)
+
+	err := ioutil.WriteFile(path, []byte(content), 0)
+	if isError(err) {
+		return
+	}
+}
+
+// updateBaseURL updates index.html base href with web root string
+func updateBaseURL(webRootPath string) {
+	log.Infof("Updating base URL in index.html with [%v]", webRootPath)
+	path, _ := filepath.Abs("./console/index.html")
+	b, err := ioutil.ReadFile(path)
+	if isError(err) {
+		return
+	}
+
+	html := string(b)
+
+	searchStr := `<base href="/">`
+	newStr := `<base href="` + webRootPath + `/">`
+	newHTML := strings.Replace(html, searchStr, newStr, -1)
+
+	err = ioutil.WriteFile(path, []byte(newHTML), 0)
+	if isError(err) {
+		return
+	}
+}
+
+func isError(err error) bool {
+	if err != nil {
+		log.Errorf("File I/O error [%v]", err.Error())
+	}
+
+	return (err != nil)
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/kiali/kiali/util"
 )
 
 // Structured version of Claims Section, as referenced at
@@ -35,7 +36,7 @@ func GetSignedTokenString(claims jwt.Claims) (string, error) {
 
 // GenerateToken generates a signed token with an expiration of <ExpirationSeconds> seconds
 func GenerateToken(username string) (TokenGenerated, error) {
-	timeExpire := time.Now().Add(time.Second * time.Duration(Get().LoginToken.ExpirationSeconds))
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(Get().LoginToken.ExpirationSeconds))
 	claim := IanaClaims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   username,
