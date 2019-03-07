@@ -20,18 +20,25 @@ import (
 type serviceSupplier func(string, string, string) (*v1.ServiceSpec, error)
 type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
+// The Kiali ServiceAccount token.
+var saToken string
+
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 
-	token, err := getToken(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+	// Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
+	// We need the Service Account token to get the Grafana service in order to generate the Grafana dashboard links.
+	if saToken == "" {
+		token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		saToken = string(token)
 	}
 
-	info, code, err := getGrafanaInfo(token, getService, findDashboard)
+	info, code, err := getGrafanaInfo(saToken, getService, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
