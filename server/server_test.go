@@ -96,6 +96,12 @@ func TestSecureComm(t *testing.T) {
 	} else {
 		t.Logf("Will use free port [%v] on host [%v] for tests", testPort, testHostname)
 	}
+	testMetricsPort, err := getFreePort(testHostname)
+	if err != nil {
+		t.Fatalf("Cannot get a free metrics port to run tests on host [%v]", testHostname)
+	} else {
+		t.Logf("Will use free metrics port [%v] on host [%v] for tests", testMetricsPort, testHostname)
+	}
 
 	testServerCertFile := tmpDir + "/server-test-server.cert"
 	testServerKeyFile := tmpDir + "/server-test-server.key"
@@ -125,12 +131,14 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Credentials.Username = authorizedUsername
 	conf.Server.Credentials.Passphrase = authorizedPassword
+	conf.Server.MetricsEnabled = true
+	conf.Server.MetricsPort = testMetricsPort
 	conf.Auth.Strategy = "login"
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
-	metricsURL := serverURL + "/metrics"
+	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
 
 	config.Set(conf)
 
