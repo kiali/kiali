@@ -54,21 +54,21 @@ ShallowWrapper {
             }
           }
           id="lookback-selector"
-          label="Last hour"
+          label="Last 1h"
           options={
             Object {
               "0": "Custom Time Range",
-              "10800": "Last 3 hours",
-              "1800": "Last 30 min",
-              "21600": "Last 6 hours",
-              "2592000": "Last 30 days",
-              "300": "Last 5 min",
-              "3600": "Last hour",
-              "43200": "Last 12 hours",
-              "60": "Last min",
-              "600": "Last 10 min",
-              "604800": "Last 7 days",
-              "86400": "Last day",
+              "10800": "Last 3h",
+              "1800": "Last 30m",
+              "21600": "Last 6h",
+              "2592000": "Last 30d",
+              "300": "Last 5m",
+              "3600": "Last 1h",
+              "43200": "Last 12h",
+              "60": "Last 1m",
+              "600": "Last 10m",
+              "604800": "Last 7d",
+              "86400": "Last 1d",
             }
           }
           useName={false}
@@ -112,20 +112,20 @@ ShallowWrapper {
             ],
           },
           "id": "lookback-selector",
-          "label": "Last hour",
+          "label": "Last 1h",
           "options": Object {
             "0": "Custom Time Range",
-            "10800": "Last 3 hours",
-            "1800": "Last 30 min",
-            "21600": "Last 6 hours",
-            "2592000": "Last 30 days",
-            "300": "Last 5 min",
-            "3600": "Last hour",
-            "43200": "Last 12 hours",
-            "60": "Last min",
-            "600": "Last 10 min",
-            "604800": "Last 7 days",
-            "86400": "Last day",
+            "10800": "Last 3h",
+            "1800": "Last 30m",
+            "21600": "Last 6h",
+            "2592000": "Last 30d",
+            "300": "Last 5m",
+            "3600": "Last 1h",
+            "43200": "Last 12h",
+            "60": "Last 1m",
+            "600": "Last 10m",
+            "604800": "Last 7d",
+            "86400": "Last 1d",
           },
           "useName": false,
           "value": 3600,
@@ -168,21 +168,21 @@ ShallowWrapper {
               }
             }
             id="lookback-selector"
-            label="Last hour"
+            label="Last 1h"
             options={
               Object {
                 "0": "Custom Time Range",
-                "10800": "Last 3 hours",
-                "1800": "Last 30 min",
-                "21600": "Last 6 hours",
-                "2592000": "Last 30 days",
-                "300": "Last 5 min",
-                "3600": "Last hour",
-                "43200": "Last 12 hours",
-                "60": "Last min",
-                "600": "Last 10 min",
-                "604800": "Last 7 days",
-                "86400": "Last day",
+                "10800": "Last 3h",
+                "1800": "Last 30m",
+                "21600": "Last 6h",
+                "2592000": "Last 30d",
+                "300": "Last 5m",
+                "3600": "Last 1h",
+                "43200": "Last 12h",
+                "60": "Last 1m",
+                "600": "Last 10m",
+                "604800": "Last 7d",
+                "86400": "Last 1d",
               }
             }
             useName={false}
@@ -226,20 +226,20 @@ ShallowWrapper {
               ],
             },
             "id": "lookback-selector",
-            "label": "Last hour",
+            "label": "Last 1h",
             "options": Object {
               "0": "Custom Time Range",
-              "10800": "Last 3 hours",
-              "1800": "Last 30 min",
-              "21600": "Last 6 hours",
-              "2592000": "Last 30 days",
-              "300": "Last 5 min",
-              "3600": "Last hour",
-              "43200": "Last 12 hours",
-              "60": "Last min",
-              "600": "Last 10 min",
-              "604800": "Last 7 days",
-              "86400": "Last day",
+              "10800": "Last 3h",
+              "1800": "Last 30m",
+              "21600": "Last 6h",
+              "2592000": "Last 30d",
+              "300": "Last 5m",
+              "3600": "Last 1h",
+              "43200": "Last 12h",
+              "60": "Last 1m",
+              "600": "Last 10m",
+              "604800": "Last 7d",
+              "86400": "Last 1d",
             },
             "useName": false,
             "value": 3600,

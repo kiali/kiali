@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
+import { Button, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -79,7 +79,6 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
 
     return (
       <>
-        <label className={GraphRefresh.durationLabelStyle}>Display</label>
         <ToolbarDropdown
           id={'graph_filter_duration'}
           disabled={this.props.disabled}
@@ -87,25 +86,17 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
           value={validDuration}
           label={String(validDurations[validDuration])}
           options={validDurations}
+          tooltip={'Time range for graph data'}
         />
-        <DropdownButton
+        <ToolbarDropdown
           id="graph_refresh_dropdown"
-          title={GraphRefresh.POLL_INTERVAL_LIST[this.props.refreshInterval]}
           disabled={this.props.disabled}
-        >
-          {Object.keys(GraphRefresh.POLL_INTERVAL_LIST).map((key: any) => {
-            return (
-              <MenuItem
-                key={key}
-                eventKey={key}
-                active={Number(key) === this.props.refreshInterval}
-                onSelect={value => this.props.setRefreshInterval(Number(value))}
-              >
-                {GraphRefresh.POLL_INTERVAL_LIST[key]}
-              </MenuItem>
-            );
-          })}
-        </DropdownButton>
+          handleSelect={value => this.props.setRefreshInterval(Number(value))}
+          value={this.props.refreshInterval}
+          label={GraphRefresh.POLL_INTERVAL_LIST[this.props.refreshInterval]}
+          options={GraphRefresh.POLL_INTERVAL_LIST}
+          tooltip={'Refresh interval for graph'}
+        />
         <span className={GraphRefresh.refreshButtonStyle}>
           <Button id="refresh_button" onClick={this.props.handleRefresh} disabled={this.props.disabled}>
             <Icon name="refresh" />

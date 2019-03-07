@@ -20,11 +20,11 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { ServiceListFilters } from './FiltersAndSorts';
-
 import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
+import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -212,7 +212,7 @@ class ServiceListComponent extends ListComponent.Component<
     return (
       <div>
         <StatefulFilters initialFilters={ServiceListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort>
+          <Sort style={{ ...ThinStyle }}>
             <Sort.TypeSelector
               sortTypes={ServiceListFilters.sortFields}
               currentSortType={this.state.currentSortField}
@@ -224,7 +224,7 @@ class ServiceListComponent extends ListComponent.Component<
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <ToolbarRightContent>
+          <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>

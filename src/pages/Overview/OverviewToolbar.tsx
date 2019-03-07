@@ -21,6 +21,7 @@ import { HistoryManager, URLParams } from '../../app/History';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { ThunkDispatch } from 'redux-thunk';
 import { getValidDurations, getValidDuration } from '../../config/serverConfig';
+import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -133,19 +134,21 @@ export class OverviewToolbar extends React.Component<Props, State> {
 
     return (
       <StatefulFilters initialFilters={FiltersAndSorts.availableFilters} onFilterChange={this.props.onRefresh}>
-        <Sort>
+        <Sort style={{ ...ThinStyle }}>
           <Sort.TypeSelector
+            // style={{ ...thinGroupStyle }}
             sortTypes={FiltersAndSorts.sortFields}
             currentSortType={this.state.sortField}
             onSortTypeSelected={this.updateSortField}
           />
           <Sort.DirectionSelector
+            // style={{ ...thinGroupStyle }}
             isNumeric={false}
             isAscending={this.state.isSortAscending}
             onClick={this.updateSortDirection}
           />
         </Sort>
-        <FormGroup>
+        <FormGroup style={{ ...ThinStyle }}>
           <ToolbarDropdown
             id="overview-type"
             disabled={false}
@@ -156,15 +159,15 @@ export class OverviewToolbar extends React.Component<Props, State> {
             options={overviewTypes}
           />
         </FormGroup>
-        <ToolbarRightContent>
+        <ToolbarRightContent style={{ ...AlignRightStyle }}>
           <ToolbarDropdown
             id="overview-duration"
             disabled={false}
             handleSelect={this.updateDuration}
-            nameDropdown="Display"
             value={validDuration}
             label={validDurations[validDuration]}
             options={validDurations}
+            tooltip={'Time range for overview data'}
           />
           <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />
         </ToolbarRightContent>

@@ -12,6 +12,7 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { HistoryManager, URLParams } from '../../app/History';
+import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 interface AppListComponentState extends ListComponent.State<AppListItem> {
   rateInterval: number;
@@ -161,7 +162,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     return (
       <>
         <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort>
+          <Sort style={{ ...ThinStyle }}>
             <Sort.TypeSelector
               sortTypes={AppListFilters.sortFields}
               currentSortType={this.state.currentSortField}
@@ -173,7 +174,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <ToolbarRightContent>
+          <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>

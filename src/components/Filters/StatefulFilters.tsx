@@ -32,6 +32,16 @@ export namespace FilterSelected {
   };
 }
 
+// align with separator start
+const alignLeftStyle = {
+  marginLeft: '-20px'
+};
+
+// reduce toolbar padding from 20px to 10px. save horiz space at border lines and match OS console
+const thinBorderStyle = {
+  paddingRight: '10px'
+};
+
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();
 
@@ -181,6 +191,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   renderInput() {
     const { currentFilterType, currentValue } = this.state;
+
     if (!currentFilterType) {
       return null;
     }
@@ -212,7 +223,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return (
       <div>
         <Toolbar>
-          <Filter>
+          <Filter style={{ ...alignLeftStyle, ...thinBorderStyle }}>
             <Filter.TypeSelector
               filterTypes={this.state.filterTypes}
               currentFilterType={currentFilterType}

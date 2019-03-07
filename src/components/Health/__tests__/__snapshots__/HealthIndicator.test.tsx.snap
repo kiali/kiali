@@ -67,7 +67,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "title": "Error Rate over last 10 min",
+            "title": "Error Rate over last 10m",
           },
         ],
         "requests": Object {
@@ -187,7 +187,7 @@ ShallowWrapper {
                     "priority": 0,
                     "text": "N/A",
                   },
-                  "title": "Error Rate over last 10 min",
+                  "title": "Error Rate over last 10m",
                 },
               ],
               "requests": Object {
@@ -326,7 +326,7 @@ ShallowWrapper {
                       "priority": 0,
                       "text": "N/A",
                     },
-                    "title": "Error Rate over last 10 min",
+                    "title": "Error Rate over last 10m",
                   },
                 ],
                 "requests": Object {

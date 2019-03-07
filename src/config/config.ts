@@ -18,29 +18,29 @@ const conf = {
     defaultDuration: 1 * UNIT_TIME.MINUTE,
     /** Options in interval duration */
     intervalDuration: {
-      60: 'Last min',
-      300: 'Last 5 min',
-      600: 'Last 10 min',
-      1800: 'Last 30 min',
-      3600: 'Last hour',
-      10800: 'Last 3 hours',
-      21600: 'Last 6 hours',
-      43200: 'Last 12 hours',
-      86400: 'Last day',
-      604800: 'Last 7 days',
-      2592000: 'Last 30 days'
+      60: 'Last 1m',
+      300: 'Last 5m',
+      600: 'Last 10m',
+      1800: 'Last 30m',
+      3600: 'Last 1h',
+      10800: 'Last 3h',
+      21600: 'Last 6h',
+      43200: 'Last 12h',
+      86400: 'Last 1d',
+      604800: 'Last 7d',
+      2592000: 'Last 30d'
     },
     /** By default refresh is 15 seconds */
     defaultPollInterval: 15 * MILLISECONDS,
     /** Options in refresh */
     pollInterval: {
       0: 'Pause',
-      10000: 'Every 10 sec',
-      15000: 'Every 15 sec',
-      30000: 'Every 30 sec',
-      60000: 'Every 1 min',
-      300000: 'Every 5 min',
-      900000: 'Every 15 min'
+      10000: 'Every 10s',
+      15000: 'Every 15s',
+      30000: 'Every 30s',
+      60000: 'Every 1m',
+      300000: 'Every 5m',
+      900000: 'Every 15m'
     },
     /** Graphs layouts types */
     graphLayouts: {

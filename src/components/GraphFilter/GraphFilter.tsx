@@ -23,6 +23,7 @@ import Namespace, { namespacesToString, namespacesFromString } from '../../types
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
+import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -41,14 +42,9 @@ type GraphFilterProps = ReduxProps & {
   onRefresh: () => void;
 };
 
-const zeroPaddingLeft = style({
-  marginLeft: '20px',
-  paddingLeft: '0px'
-});
-
-const namespaceStyle = style({
-  marginLeft: '-40px',
-  marginRight: '5px'
+// align with separator start / Graph breadcrumb
+const alignLeftStyle = style({
+  marginLeft: '-30px'
 });
 
 export class GraphFilter extends React.PureComponent<GraphFilterProps> {
@@ -125,21 +121,26 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     this.context.router.history.push('/graph/namespaces');
   };
 
+  // TODO [jshaughn] Is there a better typescript way than the style attribute with the spread syntax (here and other places)
   render() {
     const graphTypeKey: string = _.findKey(GraphType, val => val === this.props.graphType)!;
     const edgeLabelModeKey: string = _.findKey(EdgeLabelMode, val => val === this.props.edgeLabelMode)!;
     return (
       <>
         <Toolbar>
-          {this.props.node && (
-            <FormGroup className={zeroPaddingLeft}>
-              <Button className={namespaceStyle} onClick={this.handleNamespaceReturn}>
-                Back to Full Graph...
-              </Button>
-            </FormGroup>
-          )}
-          <FormGroup className={zeroPaddingLeft}>
-            <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
+          <FormGroup className={alignLeftStyle} style={{ ...ThinStyle }}>
+            {this.props.node ? (
+              <Button onClick={this.handleNamespaceReturn}>Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}</Button>
+            ) : (
+              <ToolbarDropdown
+                id={'graph_filter_view_type'}
+                disabled={this.props.disabled}
+                handleSelect={this.setGraphType}
+                value={graphTypeKey}
+                label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
+                options={GraphFilter.GRAPH_TYPES}
+              />
+            )}
             <ToolbarDropdown
               id={'graph_filter_edge_labels'}
               disabled={false}
@@ -148,17 +149,10 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
               label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
               options={GraphFilter.EDGE_LABEL_MODES}
             />
-            <ToolbarDropdown
-              id={'graph_filter_view_type'}
-              disabled={this.props.node !== undefined || this.props.disabled}
-              handleSelect={this.setGraphType}
-              value={graphTypeKey}
-              label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
-              options={GraphFilter.GRAPH_TYPES}
-            />
+            <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
           </FormGroup>
           <GraphFindContainer />
-          <Toolbar.RightContent>
+          <Toolbar.RightContent style={{ ...AlignRightStyle }}>
             <GraphRefreshContainer
               id="graph_refresh_container"
               disabled={this.props.disabled}

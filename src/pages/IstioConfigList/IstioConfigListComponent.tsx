@@ -29,6 +29,7 @@ import { IstioConfigListFilters } from './FiltersAndSorts';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { SortField } from '../../types/SortFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
+import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {
@@ -315,7 +316,7 @@ class IstioConfigListComponent extends ListComponent.Component<
     ruleListComponent = (
       <>
         <StatefulFilters initialFilters={IstioConfigListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort>
+          <Sort style={{ ...ThinStyle }}>
             <Sort.TypeSelector
               sortTypes={IstioConfigListFilters.sortFields}
               currentSortType={this.state.currentSortField}
@@ -327,7 +328,7 @@ class IstioConfigListComponent extends ListComponent.Component<
               onClick={this.updateSortDirection}
             />
           </Sort>
-          <ToolbarRightContent>
+          <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>

@@ -57,10 +57,10 @@ export class MetricsDuration extends React.Component<Props> {
         id={'metrics_filter_interval_duration'}
         disabled={false}
         handleSelect={this.onDurationChanged}
-        nameDropdown={'Display'}
         initialValue={validDuration}
         initialLabel={validDurations[validDuration]}
         options={validDurations}
+        tooltip={'Time range for metrics data'}
       />
     );
   }

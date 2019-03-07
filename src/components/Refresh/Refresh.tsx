@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, MenuItem, Icon, DropdownButton } from 'patternfly-react';
+import { Button, Icon } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppState } from '../../store/Store';
@@ -8,6 +8,7 @@ import { config } from '../../config';
 import { PollIntervalInMs } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
+import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 
 type ComponentProps = {
   id: string;
@@ -64,21 +65,14 @@ class Refresh extends React.Component<Props, State> {
       return (
         <>
           {!hideLabel && <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>}
-          <DropdownButton id={this.props.id} title={POLL_INTERVALS[this.props.refreshInterval]}>
-            {Object.keys(POLL_INTERVALS).map(strKey => {
-              const key = Number(strKey);
-              return (
-                <MenuItem
-                  key={key}
-                  eventKey={key}
-                  active={key === this.props.refreshInterval}
-                  onSelect={this.updatePollInterval}
-                >
-                  {POLL_INTERVALS[key]}
-                </MenuItem>
-              );
-            })}
-          </DropdownButton>
+          <ToolbarDropdown
+            id={this.props.id}
+            handleSelect={value => this.updatePollInterval(Number(value))}
+            value={this.props.refreshInterval}
+            label={POLL_INTERVALS[this.props.refreshInterval]}
+            options={POLL_INTERVALS}
+            tooltip={'Refresh interval'}
+          />
           <span style={{ paddingLeft: '0.5em' }}>
             <Button id={this.props.id + '_btn'} onClick={this.props.handleRefresh}>
               <Icon name="refresh" />

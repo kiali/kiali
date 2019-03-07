@@ -18,7 +18,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last min",
+            "text": "No requests over last 1m",
             "title": "Error Rate",
           },
         ],
@@ -56,7 +56,7 @@ ShallowWrapper {
           </span>
            Error Rate: 
         </strong>,
-        "No requests over last min",
+        "No requests over last 1m",
         undefined,
       ],
     },
@@ -100,7 +100,7 @@ ShallowWrapper {
         ],
         "type": "strong",
       },
-      "No requests over last min",
+      "No requests over last 1m",
       undefined,
     ],
     "type": "div",
@@ -124,7 +124,7 @@ ShallowWrapper {
             </span>
              Error Rate: 
           </strong>,
-          "No requests over last min",
+          "No requests over last 1m",
           undefined,
         ],
       },
@@ -168,7 +168,7 @@ ShallowWrapper {
           ],
           "type": "strong",
         },
-        "No requests over last min",
+        "No requests over last 1m",
         undefined,
       ],
       "type": "div",
@@ -212,7 +212,7 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last min",
+            "text": "No requests over last 1m",
             "title": "Error Rate",
           },
         ],
@@ -250,7 +250,7 @@ ShallowWrapper {
           </span>
            Error Rate: 
         </strong>,
-        "No requests over last min",
+        "No requests over last 1m",
         undefined,
       ],
     },
@@ -294,7 +294,7 @@ ShallowWrapper {
         ],
         "type": "strong",
       },
-      "No requests over last min",
+      "No requests over last 1m",
       undefined,
     ],
     "type": "div",
@@ -318,7 +318,7 @@ ShallowWrapper {
             </span>
              Error Rate: 
           </strong>,
-          "No requests over last min",
+          "No requests over last 1m",
           undefined,
         ],
       },
@@ -362,7 +362,7 @@ ShallowWrapper {
           ],
           "type": "strong",
         },
-        "No requests over last min",
+        "No requests over last 1m",
         undefined,
       ],
       "type": "div",
