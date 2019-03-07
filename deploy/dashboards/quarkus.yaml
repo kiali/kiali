@@ -1,0 +1,24 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: quarkus
+  labels:
+    runtime: Quarkus
+spec:
+  title: Quarkus Metrics
+  charts:
+    - name: "Thread count"
+      unit: ""
+      spans: 4
+      metricName: "vendor:thread_count"
+      dataType: "raw"
+    - name: "Used heap"
+      unit: "B"
+      spans: 4
+      metricName: "vendor:memory_heap_usage_bytes"
+      dataType: "raw"
+    - name: "Used non-heap"
+      unit: "B"
+      spans: 4
+      metricName: "vendor:memory_non_heap_usage_bytes"
+      dataType: "raw"
