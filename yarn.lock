@@ -2513,6 +2513,14 @@ create-react-context@<=0.2.2:
     fbjs "^0.8.0"
     gud "^1.0.0"
 
+create-react-context@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/create-react-context/-/create-react-context-0.2.3.tgz#9ec140a6914a22ef04b8b09b7771de89567cb6f3"
+  integrity sha512-CQBmD0+QGgTaxDL3OX1IDXYqjkp2It4RIbcb99jS6AEg27Ga+a9G3JtK6SIu0HBwPLZlmwt9F7UwWA4Bn92Rag==
+  dependencies:
+    fbjs "^0.8.0"
+    gud "^1.0.0"
+
 cross-spawn@5.1.0, cross-spawn@^5.0.1:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-5.1.0.tgz#e8bd0efee58fcff6f8f94510a0a554bbfa235449"
@@ -6575,12 +6583,7 @@ moment-timezone@^0.4.0, moment-timezone@^0.4.1:
   dependencies:
     moment ">= 2.6.0"
 
-moment@2.23.0:
-  version "2.23.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.23.0.tgz#759ea491ac97d54bac5ad776996e2a58cc1bc225"
-  integrity sha512-3IE39bHVqFbWWaPOMHZF98Q9c3LDKGTmypMiTM2QygGXXElkFWIH7GxfmlwmY2vwa+wmNsoYZmG2iusf1ZjJoA==
-
-"moment@>= 2.6.0", moment@^2.10, moment@^2.19.1:
+moment@2.23.0, "moment@>= 2.6.0", moment@^2.10, moment@^2.19.1:
   version "2.23.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.23.0.tgz#759ea491ac97d54bac5ad776996e2a58cc1bc225"
   integrity sha512-3IE39bHVqFbWWaPOMHZF98Q9c3LDKGTmypMiTM2QygGXXElkFWIH7GxfmlwmY2vwa+wmNsoYZmG2iusf1ZjJoA==
@@ -7424,49 +7427,25 @@ patternfly-bootstrap-treeview@~2.1.0:
     bootstrap "3.4.x"
     jquery ">= 2.1.x"
 
-patternfly-react-extensions@2.16.8:
-  version "2.16.8"
-  resolved "https://registry.yarnpkg.com/patternfly-react-extensions/-/patternfly-react-extensions-2.16.8.tgz#b8368e762a7a45c5ca965985d57880cc884e57a9"
-  integrity sha512-qCgJIwKWD1eyUclhCP5G9zKP7KPC0OOJlpz5X2paS/VeD8hb6f4eibsv5owLGNCi6iLYko2fMKNOItueq0e8oQ==
+patternfly-react-extensions@2.16.19:
+  version "2.16.19"
+  resolved "https://registry.yarnpkg.com/patternfly-react-extensions/-/patternfly-react-extensions-2.16.19.tgz#233c1e70dbe6b7bb68117830ea056a59672d0677"
+  integrity sha512-Wg7HyZnx/WBbdZtMkdBlsLqAe0HYH8lgpAzvgpD5Cvg/20cVUaOBozU/SMnTjj2IG0DNVwnN8IAR6M/GSmIt/g==
   dependencies:
     breakjs "^1.0.0"
     classnames "^2.2.5"
     css-element-queries "^1.0.1"
     patternfly "^3.58.0"
-    patternfly-react "^2.29.7"
+    patternfly-react "^2.29.17"
     react-bootstrap "^0.32.1"
     react-diff-view "^1.8.1"
     react-virtualized "9.x"
     unidiff "^1.0.1"
 
-patternfly-react@2.25.3:
-  version "2.25.3"
-  resolved "https://registry.yarnpkg.com/patternfly-react/-/patternfly-react-2.25.3.tgz#75993bab9810bab0a6c5fd6de49b1d6ed65d8daa"
-  integrity sha512-DLz1pmlLdoo5EuTRMOEd3SIHzui8tH+5pOzANNAztYWeUmQyl40Gk97CxHQaKf/cSayVz2zLTEZf5su9HSQGIw==
-  dependencies:
-    bootstrap-slider-without-jquery "^10.0.0"
-    breakjs "^1.0.0"
-    classnames "^2.2.5"
-    css-element-queries "^1.0.1"
-    patternfly "^3.58.0"
-    react-bootstrap "^0.32.1"
-    react-bootstrap-switch "^15.5.3"
-    react-bootstrap-typeahead "^3.1.3"
-    react-c3js "^0.1.20"
-    react-click-outside "^3.0.1"
-    react-collapse "^4.0.3"
-    react-fontawesome "^1.6.1"
-    react-motion "^0.5.2"
-    reactabular-table "^8.14.0"
-    recompose "^0.26.0"
-  optionalDependencies:
-    sortabular "^1.5.1"
-    table-resolver "^3.2.0"
-
-patternfly-react@^2.29.7:
-  version "2.29.7"
-  resolved "https://registry.yarnpkg.com/patternfly-react/-/patternfly-react-2.29.7.tgz#5ddcdceabc5fdfe8bc561c184624f9a30249b53d"
-  integrity sha512-RWz9QEMdZCI0pKA+XuXSNqmsWvDkjORzxwlmVIvDTk6z+Vs5zbOUHhjCN16R77BLIM0ZlZ8lxCMQ9vNak+M4Tw==
+patternfly-react@2.29.17, patternfly-react@^2.29.17:
+  version "2.29.17"
+  resolved "https://registry.yarnpkg.com/patternfly-react/-/patternfly-react-2.29.17.tgz#e6d11a8dde35a7c9ba15383c3c6e74b7db10f75e"
+  integrity sha512-/lq9rVYM+wDVXdudPMNluymnPaSrj1djiEpm+MzNdj95unnlkW4SKtr6uND2IWIvSscKWPF+1Dvkjwsi7hZ2Kg==
   dependencies:
     bootstrap-slider-without-jquery "^10.0.0"
     breakjs "^1.0.0"
@@ -7476,7 +7455,7 @@ patternfly-react@^2.29.7:
     patternfly "^3.58.0"
     react-bootstrap "^0.32.1"
     react-bootstrap-switch "^15.5.3"
-    react-bootstrap-typeahead "^3.1.3"
+    react-bootstrap-typeahead "^3.4.1"
     react-c3js "^0.1.20"
     react-click-outside "^3.0.1"
     react-collapse "^4.0.3"
@@ -8257,18 +8236,18 @@ react-bootstrap-switch@^15.5.3:
   resolved "https://registry.yarnpkg.com/react-bootstrap-switch/-/react-bootstrap-switch-15.5.3.tgz#97287791d4ec0d1892d142542e7e5248002b1251"
   integrity sha1-lyh3kdTsDRiS0UJULn5SSAArElE=
 
-react-bootstrap-typeahead@^3.1.3:
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/react-bootstrap-typeahead/-/react-bootstrap-typeahead-3.2.4.tgz#3af0bc5f569c4a745041620f4ecb2453c887c495"
-  integrity sha512-wFXIKbOHY4Q1AtnhSQIAnUvSDxmcFdDc5wIX/yd7YJug2jL5TvKspJ3XfX/FaWEWyn1pgHukRuFGnbYnL8rtUQ==
+react-bootstrap-typeahead@^3.4.1:
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/react-bootstrap-typeahead/-/react-bootstrap-typeahead-3.4.1.tgz#484c3c1be635c49898ca8dce59a6c71f2fce5888"
+  integrity sha512-Isutst1PaIO+GSlyDfoAskCdvp5biyUIL/VdDjfSYFaFmZ89W8pSCJ6rALowkvTlCVxoRHJMrmhxb/5KOTAPzQ==
   dependencies:
     classnames "^2.2.0"
+    create-react-context "^0.2.3"
     escape-string-regexp "^1.0.5"
     invariant "^2.2.1"
     lodash "^4.17.2"
     prop-types "^15.5.8"
     prop-types-extra "^1.0.1"
-    react-onclickoutside "^6.1.1"
     react-overlays "^0.8.1"
     react-popper "^1.0.0"
     warning "^4.0.1"
@@ -8431,11 +8410,6 @@ react-motion@^0.5.2:
     performance-now "^0.2.0"
     prop-types "^15.5.8"
     raf "^3.1.0"
-
-react-onclickoutside@^6.1.1:
-  version "6.7.1"
-  resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-6.7.1.tgz#6a5b5b8b4eae6b776259712c89c8a2b36b17be93"
-  integrity sha512-p84kBqGaMoa7VYT0vZ/aOYRfJB+gw34yjpda1Z5KeLflg70HipZOT+MXQenEhdkPAABuE2Astq4zEPdMqUQxcg==
 
 react-overlays@^0.8.0, react-overlays@^0.8.1:
   version "0.8.3"
