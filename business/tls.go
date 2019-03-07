@@ -9,7 +9,8 @@ import (
 )
 
 type TLSService struct {
-	k8s kubernetes.IstioClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 const (
@@ -152,7 +153,17 @@ func (in TLSService) hasPolicyEnablingNamespacemTLS(namespace string) (bool, err
 }
 
 func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (bool, error) {
-	drs, nssErr := in.getAllDestinationRules([]string{namespace})
+	nss, nssErr := in.businessLayer.Namespace.GetNamespaces()
+	if nssErr != nil {
+		return false, nssErr
+	}
+
+	nsNames := make([]string, 0, 0)
+	for _, ns := range nss {
+		nsNames = append(nsNames, ns.Name)
+	}
+
+	drs, nssErr := in.getAllDestinationRules(nsNames)
 	if nssErr != nil {
 		return false, nssErr
 	}

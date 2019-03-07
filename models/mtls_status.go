@@ -1,9 +1,9 @@
 package models
 
-// A MTLSStatus describes the current mTLS status of a mesh entity
-// As an entity we have: the mesh itself, a namespace or a service
+// MTLSStatus describes the current mTLS status of a mesh entity
 type MTLSStatus struct {
-	// Status only can have the following values:
-	// ENABLED, PARTIALLY_ENABLED, DISABLED
-	Status string `json:"name"`
+	// mTLS status: MTLS_ENABLED, MTLS_PARTIALLY_ENABLED, MTLS_NOT_ENABLED
+	// required: true
+	// example: MTLS_ENABLED
+	Status string `json:"status"`
 }
