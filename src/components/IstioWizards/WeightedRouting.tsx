@@ -119,12 +119,14 @@ class WeightedRouting extends React.Component<Props, State> {
   onLock = (workloadName: string, locked: boolean) => {
     this.setState(prevState => {
       let maxWeights = 100;
+      let numLocks = 0;
       for (let i = 0; i < prevState.workloads.length; i++) {
         if (prevState.workloads[i].name === workloadName) {
           prevState.workloads[i].locked = locked;
         }
         // Calculate maxWeights from locked nodes
         if (prevState.workloads[i].locked) {
+          numLocks++;
           maxWeights -= prevState.workloads[i].weight;
         }
       }
@@ -171,7 +173,7 @@ class WeightedRouting extends React.Component<Props, State> {
                       this.onWeight(workload.name, value as number);
                     }}
                     locked={this.state.workloads.length > 1 ? workload.locked : true}
-                    showLock={this.state.workloads.length > 1}
+                    showLock={this.state.workloads.length > 2}
                     onLock={locked => this.onLock(workload.name, locked)}
                   />
                 }
@@ -179,9 +181,11 @@ class WeightedRouting extends React.Component<Props, State> {
             );
           })}
         </ListView>
-        <Button className={resetStyle} onClick={() => this.resetState()}>
-          Evenly distribute traffic
-        </Button>
+        {this.props.workloads.length > 1 && (
+          <Button className={resetStyle} onClick={() => this.resetState()}>
+            Evenly distribute traffic
+          </Button>
+        )}
         {!isValid && <div className={validationStyle}>The sum of all weights must be 100 %</div>}
       </>
     );

@@ -143,26 +143,41 @@ class Slider extends React.Component<Props, State> {
       );
     }
 
+    const leftButtonStyle = { marginLeft: 5, marginRight: 0 };
     const leftButton = this.props.input && (
-      <Button bsSize="xsmall" style={{ marginLeft: 5 }} onClick={() => this.onMinus()}>
+      <Button bsSize="xsmall" style={leftButtonStyle} onClick={() => this.onMinus()}>
         <Icon type="fa" name="minus" />
       </Button>
     );
 
+    const inputStyle = this.props.locked
+      ? {
+          width: '3.5em',
+          textAlign: 'center',
+          marginLeft: 7,
+          marginRight: 7
+        }
+      : {
+          width: '3.5em',
+          textAlign: 'center',
+          marginLeft: 0,
+          marginRight: 0
+        };
     const inputElement = this.props.input && (
       <FormControl
         bsClass="slider-input-pf"
         type="text"
         value={this.state.value}
         // Trick to fix InputText when slider is locked and refreshed/resized
-        style={{ width: '3.5em' }}
+        style={inputStyle}
         onChange={this.onInputChange}
         disabled={this.props.locked}
       />
     );
 
+    const rightButtonStyle = { marginLeft: 0, marginRight: 5 };
     const rightButton = this.props.input && (
-      <Button bsSize="xsmall" onClick={() => this.onPlus()}>
+      <Button bsSize="xsmall" style={rightButtonStyle} onClick={() => this.onPlus()}>
         <Icon type="fa" name="plus" />
       </Button>
     );
@@ -191,10 +206,10 @@ class Slider extends React.Component<Props, State> {
         {label}
         <div className={sliderClass}>
           <Boundaries slider={BSSlider} {...this.props}>
-            {leftButton}
+            {!this.props.locked && leftButton}
             {inputElement}
+            {!this.props.locked && rightButton}
             {formatElement}
-            {rightButton}
             {this.props.showLock && lockElement}
           </Boundaries>
         </div>

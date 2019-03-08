@@ -30,8 +30,8 @@ type State = {
   rules: Rule[];
   valid: boolean;
   mtlsMode: string;
+  tlsModified: boolean;
   loadBalancer: string;
-  modified: boolean;
 };
 
 export const WIZARD_WEIGHTED_ROUTING = 'create_weighted_routing';
@@ -53,8 +53,8 @@ class IstioWizard extends React.Component<Props, State> {
       rules: [],
       valid: true,
       mtlsMode: NONE,
-      loadBalancer: NONE,
-      modified: false
+      tlsModified: false,
+      loadBalancer: NONE
     };
   }
 
@@ -78,8 +78,7 @@ class IstioWizard extends React.Component<Props, State> {
         rules: [],
         valid: isValid,
         mtlsMode: NONE,
-        loadBalancer: NONE,
-        modified: false
+        loadBalancer: NONE
       });
     }
   }
@@ -237,8 +236,7 @@ class IstioWizard extends React.Component<Props, State> {
 
   onClose = () => {
     this.setState({
-      showWizard: false,
-      modified: false
+      showWizard: false
     });
     this.props.onClose(false);
   };
@@ -264,30 +262,27 @@ class IstioWizard extends React.Component<Props, State> {
   onTLS = (mTLS: string) => {
     this.setState({
       mtlsMode: mTLS,
-      modified: true
+      tlsModified: true
     });
   };
 
   onLoadBalancer = (simple: string) => {
     this.setState({
-      loadBalancer: simple,
-      modified: true
+      loadBalancer: simple
     });
   };
 
   onWeightsChange = (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => {
     this.setState({
       valid: valid,
-      workloads: workloads,
-      modified: !reset
+      workloads: workloads
     });
   };
 
   onRulesChange = (valid: boolean, rules: Rule[]) => {
     this.setState({
       valid: valid,
-      rules: rules,
-      modified: true
+      rules: rules
     });
   };
 
@@ -318,7 +313,7 @@ class IstioWizard extends React.Component<Props, State> {
                   loadBalancer={this.state.loadBalancer}
                   onTlsChange={this.onTLS}
                   onLoadbalancerChange={this.onLoadBalancer}
-                  modified={this.state.modified}
+                  modified={this.state.tlsModified}
                 />
               </Wizard.Contents>
             </Wizard.Main>
