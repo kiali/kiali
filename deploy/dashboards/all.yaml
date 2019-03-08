@@ -449,7 +449,7 @@ spec:
 apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
-  name: generic-go
+  name: go
 spec:
   title: Go Metrics
   runtime: Go

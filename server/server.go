@@ -59,10 +59,16 @@ func (s *Server) Start() {
 		}
 		log.Warning(err)
 	}()
+
+	// Start the Metrics Server
+	if conf.Server.MetricsEnabled {
+		StartMetricsServer()
+	}
 }
 
 // Stop the HTTP server
 func (s *Server) Stop() {
+	StopMetricsServer()
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
 }

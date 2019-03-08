@@ -349,6 +349,22 @@ server:
   static_content_root_directory: VALUE
 ----
 
+|`SERVER_METRICS_ENABLED`
+|When true, Kiali will expose internal metrics for Prometheus. (default is true)
+[source,yaml]
+----
+server:
+  metrics_enabled: VALUE
+----
+
+|`SERVER_METRICS_PORT`
+|When server metrics are enabled, port on which the metrics server is started. (default is 9090)
+[source,yaml]
+----
+server:
+  metrics_port: VALUE
+----
+
 |`IN_CLUSTER`
 |The annotation used by Istio in a Deployment template. If in_cluster is false then you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT ). (default is `true`)
 [source,yaml]
