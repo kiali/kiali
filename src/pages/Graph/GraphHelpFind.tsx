@@ -130,6 +130,26 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     };
   };
 
+  noteColumns = () => {
+    return {
+      columns: [
+        {
+          property: 't',
+          header: {
+            label: 'Usage Note',
+            formatters: [this.headerFormat]
+          },
+          cell: {
+            formatters: [this.cellFormat],
+            props: {
+              align: 'textleft'
+            }
+          }
+        }
+      ]
+    };
+  };
+
   operatorColumns = () => {
     return {
       columns: [
@@ -163,28 +183,13 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     };
   };
 
-  tipColumns = () => {
-    return {
-      columns: [
-        {
-          property: 't',
-          header: {
-            label: 'Tip',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'textleft'
-            }
-          }
-        }
-      ]
-    };
-  };
-
   render() {
     const className = this.props.className ? this.props.className : '';
+    const preface =
+      'You can use the Find and Hide fields to highlight or hide edges and nodes from the graph. Each field ' +
+      'accepts text expressions using the language described below. Hide takes precedence when using Find and ' +
+      'Hide together. To get started click the "Examples" tab. Click "Usage Notes" for restrictions and tips. ' +
+      'The other tabs provide details about the full set of node and edge operands, as well as operators.';
     return (
       <Draggable handle="#helpheader">
         <div
@@ -204,11 +209,26 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
             </Button>
             <span className="modal-title">Help: Graph Find/Hide</span>
           </div>
-          <TabContainer id="basic-tabs" defaultActiveKey="examples">
+          <textarea
+            style={{
+              width: '100%',
+              height: '105px',
+              padding: '10px',
+              resize: 'vertical',
+              color: '#fff',
+              backgroundColor: '#003145'
+            }}
+            readOnly={true}
+            value={preface}
+          />
+          <TabContainer id="basic-tabs" defaultActiveKey="notes">
             <div>
               <Nav bsClass="nav nav-tabs nav-tabs-pf" style={{ paddingLeft: '10px' }}>
-                <NavItem eventKey="examples">
-                  <div>Examples</div>
+                <NavItem eventKey="notes">
+                  <div>Usage Notes</div>
+                </NavItem>
+                <NavItem eventKey="operators">
+                  <div>Operators</div>
                 </NavItem>
                 <NavItem eventKey="nodes">
                   <div>Nodes</div>
@@ -216,60 +236,83 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                 <NavItem eventKey="edges">
                   <div>Edges</div>
                 </NavItem>
-                <NavItem eventKey="operators">
-                  <div>Operators</div>
-                </NavItem>
-                <NavItem eventKey="tips">
-                  <div>Tips</div>
+                <NavItem eventKey="examples">
+                  <div>Examples</div>
                 </NavItem>
               </Nav>
               <TabContent>
-                <TabPane eventKey="examples">
+                <TabPane eventKey="notes" mountOnEnter={true} unmountOnExit={true}>
                   <TablePfProvider
                     striped={true}
                     bordered={true}
                     hover={true}
                     dataTable={true}
-                    columns={this.exampleColumns().columns}
+                    columns={this.noteColumns().columns}
                   >
-                    <Table.Header headerRows={resolve.headerRows(this.exampleColumns())} />
+                    <Table.Header headerRows={resolve.headerRows(this.noteColumns())} />
                     <Table.Body
                       rowKey="id"
                       rows={[
+                        { id: 't00', t: 'Expressions can not combine "AND" with "OR".' },
+                        { id: 't05', t: 'Parentheses are not supported (or needed).' },
                         {
-                          id: 'e00',
-                          e: 'name = reviews',
-                          d: `"find by name": find nodes with app label, service name or workload name equal to 'reviews'`
+                          id: 't10',
+                          t: 'The "name" operand expands internally to an "OR" expression (an "AND" when negated).'
+                        },
+                        { id: 't30', t: 'Expressions can not combine node and edge criteria.' },
+                        {
+                          id: 't40',
+                          t: 'Numeric equality (=,!=) is exact match. Include leading 0 and digits of precision.'
                         },
                         {
-                          id: 'e10',
-                          e: 'name not contains rev',
-                          d: `"find by name": find nodes with app label, service name and workload name not containing 'rev'`
+                          id: 't45',
+                          t:
+                            'Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'
+                        },
+                        { id: 't50', t: 'Numerics use "." decimal notation.' },
+                        { id: 't60', t: 'Percentages use 1 digit of precision, Rates use 2 digits of precision.' },
+                        {
+                          id: 't70',
+                          t: `Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`
                         },
                         {
-                          id: 'e20',
-                          e: 'app startswith product',
-                          d: `find nodes with app label starting with 'product'`
+                          id: 't80',
+                          t: 'Abbrevations: namespace|ns, service|svc, workload|wl (e.g. is wlnode)'
                         },
                         {
-                          id: 'e30',
-                          e: 'app != details and version=v1',
-                          d: `find nodes with app label not equal to 'details' and with version equal to 'v1'`
-                        },
-                        { id: 'e40', e: '!sc', d: `find nodes without a sidecar` },
-                        { id: 'e50', e: 'httpin > 0.5', d: `find nodes with incoming http rate > 0.5 rps` },
-                        { id: 'e60', e: 'tcpout >= 1000', d: `find nodes with outgoing tcp rates >= 1000 bps` },
-                        { id: 'e70', e: 'http > 0.5', d: `find edges with http rate > 0.5 rps` },
-                        {
-                          id: 'e80',
-                          e: 'rt > 500',
-                          d: `find edges with response time > 500ms. (requires response time edge labels)`
-                        },
-                        {
-                          id: 'e90',
-                          e: '%httptraffic >= 50.0',
-                          d: `find edges with >= 50% of the outgoing http request traffic of the parent`
+                          id: 't90',
+                          t:
+                            'Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'
                         }
+                      ]}
+                    />
+                  </TablePfProvider>
+                </TabPane>
+                <TabPane eventKey="operators" mountOnEnter={true} unmountOnExit={true}>
+                  <TablePfProvider
+                    striped={true}
+                    bordered={true}
+                    hover={true}
+                    dataTable={true}
+                    columns={this.operatorColumns().columns}
+                  >
+                    <Table.Header headerRows={resolve.headerRows(this.operatorColumns())} />
+                    <Table.Body
+                      rowKey="id"
+                      rows={[
+                        { id: 'o0', o: '! | not <unary expression>', d: `negation` },
+                        { id: 'o1', o: '=', d: `equals` },
+                        { id: 'o2', o: '!=', d: `not equals` },
+                        { id: 'o3', o: 'endswith | $=', d: `ends with, strings only` },
+                        { id: 'o4', o: '!endswith | !$=', d: `not ends with, strings only` },
+                        { id: 'o5', o: 'startswith | ^=', d: `starts with, strings only` },
+                        { id: 'o6', o: '!startswith | !^=', d: `not starts with, strings only` },
+                        { id: 'o7', o: 'contains | *=', d: 'contains, strings only' },
+                        { id: 'o8', o: '!contains | !*=', d: 'not contains, strings only' },
+                        { id: 'o9', o: '>', d: `greater than` },
+                        { id: 'o10', o: '>=', d: `greater than or equals` },
+                        { id: 'o11', o: '<', d: `less than` },
+                        { id: 'o12', o: '<=', d: `less than or equals` }
                       ]}
                     />
                   </TablePfProvider>
@@ -343,75 +386,51 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                     />
                   </TablePfProvider>
                 </TabPane>
-                <TabPane eventKey="operators" mountOnEnter={true} unmountOnExit={true}>
+                <TabPane eventKey="examples">
                   <TablePfProvider
                     striped={true}
                     bordered={true}
                     hover={true}
                     dataTable={true}
-                    columns={this.operatorColumns().columns}
+                    columns={this.exampleColumns().columns}
                   >
-                    <Table.Header headerRows={resolve.headerRows(this.operatorColumns())} />
+                    <Table.Header headerRows={resolve.headerRows(this.exampleColumns())} />
                     <Table.Body
                       rowKey="id"
                       rows={[
-                        { id: 'o0', o: '! | not <unary expression>', d: `negation` },
-                        { id: 'o1', o: '=', d: `equals` },
-                        { id: 'o2', o: '!=', d: `not equals` },
-                        { id: 'o3', o: 'endswith | $=', d: `ends with, strings only` },
-                        { id: 'o4', o: '!endswith | !$=', d: `not ends with, strings only` },
-                        { id: 'o5', o: 'startswith | ^=', d: `starts with, strings only` },
-                        { id: 'o6', o: '!startswith | !^=', d: `not starts with, strings only` },
-                        { id: 'o7', o: 'contains | *=', d: 'contains, strings only' },
-                        { id: 'o8', o: '!contains | !*=', d: 'not contains, strings only' },
-                        { id: 'o9', o: '>', d: `greater than` },
-                        { id: 'o10', o: '>=', d: `greater than or equals` },
-                        { id: 'o11', o: '<', d: `less than` },
-                        { id: 'o12', o: '<=', d: `less than or equals` }
-                      ]}
-                    />
-                  </TablePfProvider>
-                </TabPane>
-                <TabPane eventKey="tips" mountOnEnter={true} unmountOnExit={true}>
-                  <TablePfProvider
-                    striped={true}
-                    bordered={true}
-                    hover={true}
-                    dataTable={true}
-                    columns={this.tipColumns().columns}
-                  >
-                    <Table.Header headerRows={resolve.headerRows(this.tipColumns())} />
-                    <Table.Body
-                      rowKey="id"
-                      rows={[
-                        { id: 't00', t: 'Expressions can not combine "and" with "or".' },
-                        { id: 't05', t: 'Parentheses are not supported (or needed).' },
-                        { id: 't10', t: 'Find by name expands to an "or" expression internally.' },
-                        { id: 't20', t: 'Not Find by name expands to an "and" expression internally.' },
-                        { id: 't30', t: 'Expressions can not combine node and edge criteria.' },
                         {
-                          id: 't40',
-                          t: 'Numeric equality (=,!=) is exact match. Include leading 0 and digits of precision.'
+                          id: 'e00',
+                          e: 'name = reviews',
+                          d: `"find by name": find nodes with app label, service name or workload name equal to 'reviews'`
                         },
                         {
-                          id: 't45',
-                          t:
-                            'Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'
-                        },
-                        { id: 't50', t: 'Numerics use "." decimal notation.' },
-                        { id: 't60', t: 'Percentages use 1 digit of precision, Rates use 2 digits of precision.' },
-                        {
-                          id: 't70',
-                          t: `Unary operands may optionally be prefixed with " is " or " has ". (i.e. "has mtls")`
+                          id: 'e10',
+                          e: 'name not contains rev',
+                          d: `"find by name": find nodes with app label, service name and workload name not containing 'rev'`
                         },
                         {
-                          id: 't80',
-                          t: 'Abbrevations: namespace|ns, service|svc, workload|wl (e.g. is wlnode)'
+                          id: 'e20',
+                          e: 'app startswith product',
+                          d: `find nodes with app label starting with 'product'`
                         },
                         {
-                          id: 't90',
-                          t:
-                            'Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'
+                          id: 'e30',
+                          e: 'app != details and version=v1',
+                          d: `find nodes with app label not equal to 'details' and with version equal to 'v1'`
+                        },
+                        { id: 'e40', e: '!sc', d: `find nodes without a sidecar` },
+                        { id: 'e50', e: 'httpin > 0.5', d: `find nodes with incoming http rate > 0.5 rps` },
+                        { id: 'e60', e: 'tcpout >= 1000', d: `find nodes with outgoing tcp rates >= 1000 bps` },
+                        { id: 'e70', e: 'http > 0.5', d: `find edges with http rate > 0.5 rps` },
+                        {
+                          id: 'e80',
+                          e: 'rt > 500',
+                          d: `find edges with response time > 500ms. (requires response time edge labels)`
+                        },
+                        {
+                          id: 'e90',
+                          e: '%httptraffic >= 50.0',
+                          d: `find edges with >= 50% of the outgoing http request traffic of the parent`
                         }
                       ]}
                     />
