@@ -210,18 +210,31 @@ echo "=== SETTINGS ==="
 YAML_DIR=${YAML_DIR:-$(cd "$(dirname "$0")" && pwd -P)}
 
 apply_yaml() {
-  local yaml_file="${1}.yaml"
-  local yaml_path="${YAML_DIR}/${yaml_file}"
-  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
+  local yaml_path="${1}"
+  local yaml_url="${2}"
 
   if [ -f "${yaml_path}" ]; then
-    echo "Using YAML file: ${yaml_path}"
+    echo "Applying YAML file: ${yaml_path}"
     cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   else
     get_downloader
-    echo "Downloading YAML via: ${downloader} ${yaml_url}"
+    echo "Applying YAML from URL via: ${downloader} ${yaml_url}"
     ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
   fi
+}
+
+apply_resource() {
+  local yaml_file="${1}.yaml"
+  local yaml_path="${YAML_DIR}/${yaml_file}"
+  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/openshift/${yaml_file}"
+  apply_yaml ${yaml_path} ${yaml_url}
+}
+
+apply_dashboard() {
+  local yaml_file="${1}"
+  local yaml_path="${YAML_DIR}/../dashboards/${yaml_file}"
+  local yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/${yaml_file}"
+  apply_yaml ${yaml_path} ${yaml_url}
 }
 
 # Now deploy all the Kiali components to OpenShift
@@ -229,7 +242,7 @@ apply_yaml() {
 echo "Deploying Kiali to OpenShift project ${NAMESPACE}"
 for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
 do
-  apply_yaml ${yaml}
+  apply_resource ${yaml}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy to OpenShift. Aborting."
@@ -241,21 +254,34 @@ done
 # defined before creating the OAuthClients.
 PROTOCOL="$(if [[ $(oc get routes -n ${NAMESPACE} kiali -o jsonpath=\"{.spec.tls.termination}\") != '' ]]; then echo https; else echo http; fi)" \
   REDIRECT_URL="${PROTOCOL}://$(oc get routes -n ${NAMESPACE} kiali -o jsonpath={.spec.host})" \
-  apply_yaml "oauth"
+  apply_resource "oauth"
 
 # Deploy Kiali MonitoringDashboards to OpenShift
-# Note for undeploy script: dashboards are implicitly undeployed when the related CRD is removed
+# Note: when undeploying, dashboards are implicitly undeployed when the related CRD is removed
 echo "Deploying Kiali dashboards to OpenShift project ${NAMESPACE}"
-yaml_path="${YAML_DIR}/../dashboards/all.yaml"
-if [ -f "${yaml_path}" ]; then
-  echo "Using YAML file: ${yaml_path}"
-  cat ${yaml_path} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+index_path="${YAML_DIR}/../dashboards/dashboards.txt"
+if [ -f "${index_path}" ]; then
+  echo "Using dashboards index file: ${index_path}"
+  dashboards=$(cat ${index_path})
 else
   get_downloader
-  yaml_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/all.yaml"
-  echo "Downloading YAML via: ${downloader} ${yaml_url}"
-  ${downloader} ${yaml_url} | envsubst | ${OC_TOOL_PATH} apply -n ${NAMESPACE} -f -
+  index_url="https://raw.githubusercontent.com/kiali/kiali/${VERSION_LABEL}/deploy/dashboards/dashboards.txt"
+  echo "Downloading dashboards index file via: ${downloader} ${index_url}"
+  dashboards=$(${downloader} ${index_url})
 fi
-if [ "$?" != "0" ]; then
-  echo "NOTE: Could not deploy the runtimes dashboards. They are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
+
+if [ "${dashboards}" != "" ]; then
+  echo "=== Dashboards to install ==="
+  echo "${dashboards}"
+  echo "============================="
+  for dash in ${dashboards}
+  do
+    apply_dashboard ${dash}
+
+    if [ "$?" != "0" ]; then
+      echo "NOTE: Could not deploy runtimes dashboard [${dash}]. Dashboards are not mandatory and won't prevent Kiali to work. If you want to monitor your application runtimes, you can still deploy dashboards manually."
+    fi
+  done
+else
+  echo "No dashboards to install"
 fi

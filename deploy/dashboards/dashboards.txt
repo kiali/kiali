@@ -1,0 +1,10 @@
+generic-go.yaml
+kiali.yaml
+nodejs.yaml
+springboot-jvm.yaml
+springboot-tomcat.yaml
+thorntail.yaml
+vertx-client.yaml
+vertx-eventbus.yaml
+vertx-pool.yaml
+vertx-server.yaml
