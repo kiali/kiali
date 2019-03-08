@@ -1,4 +1,4 @@
-generic-go.yaml
+go.yaml
 kiali.yaml
 nodejs.yaml
 springboot-jvm.yaml
