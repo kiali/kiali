@@ -18,9 +18,8 @@ def test_assert_kiali_kurbenetes_clusters_are_valid():
 
 
 def test_assert_equivalence_cluster_roles():
-    kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift')['rules']
-    kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type="Kubernetes")['rules']
-
+    kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift').get('rules')
+    kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type='Kubernetes').get('rules')
 
     istio = conftest.get_istio_clusterrole_file()['rules']
 
