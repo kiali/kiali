@@ -17,6 +17,7 @@ const (
 	MTLSEnabled          = "MTLS_ENABLED"
 	MTLSPartiallyEnabled = "MTLS_PARTIALLY_ENABLED"
 	MTLSNotEnabled       = "MTLS_NOT_ENABLED"
+	MTLSDisabled         = "MTLS_DISABLED"
 )
 
 func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (string, error) {
@@ -175,4 +176,14 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (b
 	}
 
 	return false, nil
+}
+
+func finalStatus(drStatus string, pStatus string) string {
+	finalStatus := MTLSPartiallyEnabled
+
+	if drStatus == pStatus {
+		finalStatus = pStatus
+	}
+
+	return finalStatus
 }
