@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import FlexView from 'react-flexview';
-import { Breadcrumb, Icon, Button } from 'patternfly-react';
+import { Breadcrumb, Icon, Button, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, PollIntervalInMs, TimeInSeconds, TimeInMilliseconds } from '../../types/Common';
@@ -286,10 +286,16 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
           <div>
             <Breadcrumb title={true}>
               <Breadcrumb.Item active={true}>
-                Graph{' '}
-                <Button bsStyle="link" onClick={this.toggleHelp}>
-                  <Icon title="Help" type="pf" name="help" />
-                </Button>
+                Graph
+                <OverlayTrigger
+                  key={'graph-tour-help-ot'}
+                  placement="right"
+                  overlay={<Tooltip id={'graph-tour-help-tt'}>Graph help tour...</Tooltip>}
+                >
+                  <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleHelp}>
+                    <Icon type="pf" name="help" />
+                  </Button>
+                </OverlayTrigger>
               </Breadcrumb.Item>
               {this.props.graphTimestamp > 0 && (
                 <span className={'pull-right'}>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormControl, FormGroup, Icon, InputGroup } from 'patternfly-react';
+import { Button, FormControl, FormGroup, Icon, InputGroup, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -136,9 +136,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 </InputGroup.Button>
               )}
             </InputGroup>
-            <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-              <Icon name="help" type="pf" title="Help Find/Hide..." />
-            </Button>
+            <OverlayTrigger
+              key={'graph-find-help-ot'}
+              placement="top"
+              overlay={<Tooltip id={'graph-find-help-tt'}>Find/Hide help dialog...</Tooltip>}
+            >
+              <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
+                <Icon name="help" type="pf" />
+              </Button>
+            </OverlayTrigger>
           </span>
           {this.state.errorMessage && (
             <div>
