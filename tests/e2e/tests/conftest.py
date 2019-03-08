@@ -6,6 +6,8 @@ import requests
 from kiali import KialiClient
 from utils.command_exec import command_exec
 from pkg_resources import resource_string
+from urllib.request import urlopen
+
 
 ENV_FILE = '../config/env.yaml'
 ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../assets')
@@ -60,15 +62,14 @@ def get_istio_clusterrole_file():
       yaml_content = re.sub("release: {{.+}}", "", yaml_content)
       return yaml.safe_load(yaml_content)
 
-
 def get_kiali_clusterrole_file(file_type):
 
     if(file_type == "Openshift"):
-        yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_openshift_clusterrole')).content.decode("utf-8")
+        file = __get_environment_config__(ENV_FILE).get('kiali_openshift_clusterrole')
+
     elif(file_type == "Kubernetes"):
-        yaml_content = requests.get(__get_environment_config__(ENV_FILE).get('kiali_kubernetes_clusterrole')).content.decode("utf-8")
+        file = __get_environment_config__(ENV_FILE).get('kiali_kubernetes_clusterrole')
 
+    yaml_content = urlopen(file).read()
 
-    yaml_content = re.sub("\${VERSION_LABEL}", "0.10", yaml_content)
-    return yaml.safe_load(yaml_content)
-
+    return next(yaml.safe_load_all(yaml_content))
