@@ -11,7 +11,6 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
-import { HistoryManager, URLParams } from '../../app/History';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 interface AppListComponentState extends ListComponent.State<AppListItem> {
@@ -67,11 +66,6 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
       prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
-
-  rateIntervalChangedHandler = (key: number) => {
-    HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.setState({ rateInterval: key });
-  };
 
   sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction

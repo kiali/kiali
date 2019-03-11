@@ -42,7 +42,7 @@ const GraphDataThunkActions = {
         graphType: graphType,
         injectServiceNodes: injectServiceNodes
       };
-      if (namespaces.find(namespace => namespace.name === serverConfig().istioNamespace)) {
+      if (namespaces.find(namespace => namespace.name === serverConfig.istioNamespace)) {
         restParams['includeIstio'] = true;
       }
 

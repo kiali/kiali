@@ -15,14 +15,10 @@ ShallowWrapper {
         "10800": "Last 3h",
         "1800": "Last 30m",
         "21600": "Last 6h",
-        "2592000": "Last 30d",
         "300": "Last 5m",
         "3600": "Last 1h",
-        "43200": "Last 12h",
         "60": "Last 1m",
         "600": "Last 10m",
-        "604800": "Last 7d",
-        "86400": "Last 1d",
       }
     }
   />,
@@ -126,46 +122,6 @@ ShallowWrapper {
           >
             Last 6h
           </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="43200"
-            header={false}
-          >
-            Last 12h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="86400"
-            header={false}
-          >
-            Last 1d
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="604800"
-            header={false}
-          >
-            Last 7d
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="2592000"
-            header={false}
-          >
-            Last 30d
-          </MenuItem>
         </DropdownButton>,
       ],
     },
@@ -260,46 +216,6 @@ ShallowWrapper {
               header={false}
             >
               Last 6h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="43200"
-              header={false}
-            >
-              Last 12h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="86400"
-              header={false}
-            >
-              Last 1d
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="604800"
-              header={false}
-            >
-              Last 7d
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="2592000"
-              header={false}
-            >
-              Last 30d
             </MenuItem>,
           ],
           "disabled": false,
@@ -429,74 +345,6 @@ ShallowWrapper {
             "rendered": "Last 6h",
             "type": [Function],
           },
-          Object {
-            "instance": null,
-            "key": "43200",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 12h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "43200",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 12h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "86400",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "86400",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1d",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "604800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 7d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "604800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 7d",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "2592000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 30d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "2592000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 30d",
-            "type": [Function],
-          },
         ],
         "type": [Function],
       },
@@ -596,46 +444,6 @@ ShallowWrapper {
             >
               Last 6h
             </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="43200"
-              header={false}
-            >
-              Last 12h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="86400"
-              header={false}
-            >
-              Last 1d
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="604800"
-              header={false}
-            >
-              Last 7d
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="2592000"
-              header={false}
-            >
-              Last 30d
-            </MenuItem>
           </DropdownButton>,
         ],
       },
@@ -730,46 +538,6 @@ ShallowWrapper {
                 header={false}
               >
                 Last 6h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="43200"
-                header={false}
-              >
-                Last 12h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="86400"
-                header={false}
-              >
-                Last 1d
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="604800"
-                header={false}
-              >
-                Last 7d
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="2592000"
-                header={false}
-              >
-                Last 30d
               </MenuItem>,
             ],
             "disabled": false,
@@ -897,74 +665,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Last 6h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "43200",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 12h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "43200",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 12h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "86400",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "86400",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1d",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "604800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 7d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "604800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 7d",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "2592000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 30d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "2592000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 30d",
               "type": [Function],
             },
           ],
@@ -2096,14 +1796,10 @@ ShallowWrapper {
         "10800": "Last 3h",
         "1800": "Last 30m",
         "21600": "Last 6h",
-        "2592000": "Last 30d",
         "300": "Last 5m",
         "3600": "Last 1h",
-        "43200": "Last 12h",
         "60": "Last 1m",
         "600": "Last 10m",
-        "604800": "Last 7d",
-        "86400": "Last 1d",
       }
     }
     value={60}
@@ -2208,46 +1904,6 @@ ShallowWrapper {
           >
             Last 6h
           </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="43200"
-            header={false}
-          >
-            Last 12h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="86400"
-            header={false}
-          >
-            Last 1d
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="604800"
-            header={false}
-          >
-            Last 7d
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="2592000"
-            header={false}
-          >
-            Last 30d
-          </MenuItem>
         </DropdownButton>,
       ],
     },
@@ -2342,46 +1998,6 @@ ShallowWrapper {
               header={false}
             >
               Last 6h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="43200"
-              header={false}
-            >
-              Last 12h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="86400"
-              header={false}
-            >
-              Last 1d
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="604800"
-              header={false}
-            >
-              Last 7d
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="2592000"
-              header={false}
-            >
-              Last 30d
             </MenuItem>,
           ],
           "disabled": false,
@@ -2511,74 +2127,6 @@ ShallowWrapper {
             "rendered": "Last 6h",
             "type": [Function],
           },
-          Object {
-            "instance": null,
-            "key": "43200",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 12h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "43200",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 12h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "86400",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "86400",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1d",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "604800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 7d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "604800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 7d",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "2592000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 30d",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "2592000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 30d",
-            "type": [Function],
-          },
         ],
         "type": [Function],
       },
@@ -2678,46 +2226,6 @@ ShallowWrapper {
             >
               Last 6h
             </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="43200"
-              header={false}
-            >
-              Last 12h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="86400"
-              header={false}
-            >
-              Last 1d
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="604800"
-              header={false}
-            >
-              Last 7d
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="2592000"
-              header={false}
-            >
-              Last 30d
-            </MenuItem>
           </DropdownButton>,
         ],
       },
@@ -2812,46 +2320,6 @@ ShallowWrapper {
                 header={false}
               >
                 Last 6h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="43200"
-                header={false}
-              >
-                Last 12h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="86400"
-                header={false}
-              >
-                Last 1d
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="604800"
-                header={false}
-              >
-                Last 7d
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="2592000"
-                header={false}
-              >
-                Last 30d
               </MenuItem>,
             ],
             "disabled": false,
@@ -2979,74 +2447,6 @@ ShallowWrapper {
               },
               "ref": null,
               "rendered": "Last 6h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "43200",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 12h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "43200",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 12h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "86400",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "86400",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1d",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "604800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 7d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "604800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 7d",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "2592000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 30d",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "2592000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 30d",
               "type": [Function],
             },
           ],

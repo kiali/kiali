@@ -7,7 +7,7 @@ import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
-import { GrafanaInfo, LoginSession, ServerConfig } from '../store/Store';
+import { GrafanaInfo, LoginSession } from '../store/Store';
 import {
   AppHealth,
   ServiceHealth,
@@ -16,13 +16,15 @@ import {
   NamespaceServiceHealth,
   NamespaceWorkloadHealth
 } from '../types/Health';
-import { ServiceList } from '../types/ServiceList';
-import { AuthInfo } from '../types/Auth';
-import { AppList } from '../types/AppList';
 import { App } from '../types/App';
-import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
-import { config } from '../config';
+import { ServerStatus } from '../types/ServerStatus';
+import { AppList } from '../types/AppList';
+import { AuthInfo } from '../types/Auth';
 import { HTTP_VERBS, UserName, Password } from '../types/Common';
+import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
+import { ServiceList } from '../types/ServiceList';
+import { config } from '../config';
+import { ServerConfig } from '../types/ServerConfig';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -87,7 +89,7 @@ export const checkOpenshiftAuth = async (data: any): Promise<Response<LoginSessi
 };
 
 export const getStatus = () => {
-  return newRequest(HTTP_VERBS.GET, urls.status, {}, {});
+  return newRequest<ServerStatus>(HTTP_VERBS.GET, urls.status, {}, {});
 };
 
 export const getNamespaces = () => {

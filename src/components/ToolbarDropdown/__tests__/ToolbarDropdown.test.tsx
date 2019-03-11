@@ -3,6 +3,7 @@ import { mount, shallow } from 'enzyme';
 
 import ToolbarDropdown from '../ToolbarDropdown';
 import { config } from '../../../config';
+import { serverConfig } from '../../../config/serverConfig';
 
 const optionsChanged = jest.fn();
 
@@ -10,7 +11,7 @@ const data = [
   {
     id: 'graph_filter_interval_duration',
     default: config.toolbar.defaultDuration,
-    options: config.toolbar.intervalDuration
+    options: serverConfig.durations
   },
   {
     id: 'metrics_filter_poll_interval',
@@ -63,8 +64,8 @@ describe('ToolbarDropdown', () => {
         handleSelect={optionsChanged}
         nameDropdown={'Duration'}
         initialValue={config.toolbar.defaultDuration}
-        initialLabel={config.toolbar.intervalDuration[config.toolbar.defaultDuration]}
-        options={config.toolbar.intervalDuration}
+        initialLabel={serverConfig.durations[config.toolbar.defaultDuration]}
+        options={serverConfig.durations}
       />
     );
     const elt = wrapper

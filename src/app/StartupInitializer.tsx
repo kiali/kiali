@@ -5,7 +5,7 @@ import * as API from '../services/Api';
 import { LoginSession } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
 import InitializingScreen from './InitializingScreen';
-import AppConfigs from './AppConfigs';
+import authenticationConfig from '../config/authenticationConfig';
 
 interface InitializerComponentProps {
   setInitialAuthentication: (session: LoginSession) => void;
@@ -29,10 +29,8 @@ class InitializerComponent extends React.Component<InitializerComponentProps, { 
   private fetchAuthenticationConfig = async () => {
     try {
       const authConfig = await API.getAuthInfo();
-      AppConfigs.authenticationConfig = {
-        authorizationEndpoint: authConfig.data.authorizationEndpoint,
-        strategy: authConfig.data.strategy
-      };
+      authenticationConfig.authorizationEndpoint = authConfig.data.authorizationEndpoint;
+      authenticationConfig.strategy = authConfig.data.strategy;
 
       if (authConfig.data.sessionInfo.expiresOn && authConfig.data.sessionInfo.username) {
         this.props.setInitialAuthentication({

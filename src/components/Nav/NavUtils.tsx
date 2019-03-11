@@ -2,7 +2,7 @@ import { NodeType, NodeParamsType, GraphType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { URLParams } from '../../app/History';
+import { URLParam } from '../../app/History';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 
 export type GraphUrlParams = {
@@ -17,12 +17,12 @@ export type GraphUrlParams = {
 };
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
-  let q = `&${URLParams.GRAPH_EDGES}=${params.edgeLabelMode}`;
-  q += `&${URLParams.GRAPH_LAYOUT}=${params.graphLayout.name}`;
-  q += `&${URLParams.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
-  q += `&${URLParams.GRAPH_TYPE}=${params.graphType}`;
-  q += `&${URLParams.DURATION}=${params.duration}`;
-  q += `&${URLParams.POLL_INTERVAL}=${params.refreshInterval}`;
+  let q = `&${URLParam.GRAPH_EDGES}=${params.edgeLabelMode}`;
+  q += `&${URLParam.GRAPH_LAYOUT}=${params.graphLayout.name}`;
+  q += `&${URLParam.GRAPH_SERVICE_NODES}=${params.showServiceNodes}`;
+  q += `&${URLParam.GRAPH_TYPE}=${params.graphType}`;
+  q += `&${URLParam.DURATION}=${params.duration}`;
+  q += `&${URLParam.POLL_INTERVAL}=${params.refreshInterval}`;
   return q;
 };
 
@@ -30,7 +30,7 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
   let queryParams = buildCommonQueryParams(params);
   if (params.activeNamespaces.length > 0) {
     const namespaces = params.activeNamespaces.map(namespace => namespace.name).join(',');
-    queryParams += `&${URLParams.NAMESPACES}=${namespaces}`;
+    queryParams += `&${URLParam.NAMESPACES}=${namespaces}`;
   }
   if (isKioskMode()) {
     queryParams += '&kiosk=true';

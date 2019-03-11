@@ -5,6 +5,13 @@ ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <LoginPage
     authenticate={[MockFunction]}
+    checkCredentials={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+        ],
+      }
+    }
     status={2}
   />,
   Symbol(enzyme.__renderer__): Object {

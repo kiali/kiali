@@ -1,6 +1,6 @@
 import JaegerState, { converToTimestamp } from '../JaegerState';
 import { JaegerActions } from '../../actions/JaegerActions';
-import { config } from '../../config';
+import { serverConfig } from '../../config/serverConfig';
 
 const initialState = {
   toolbar: {
@@ -84,7 +84,7 @@ describe('JaegerState reducer', () => {
   describe('should set Lookback', () => {
     it('method converToTimestamp', () => {
       const multiplier = 1000 * 1000;
-      Object.keys(config.toolbar.intervalDuration).forEach(key => {
+      Object.keys(serverConfig.durations).forEach(key => {
         expect(converToTimestamp(Number(key))).toEqual(Number(key) * multiplier);
       });
     });

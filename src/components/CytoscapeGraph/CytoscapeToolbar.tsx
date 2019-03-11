@@ -14,8 +14,7 @@ import { CoseGraph } from './graphs/CoseGraph';
 import { DagreGraph } from './graphs/DagreGraph';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
-import { HistoryManager, URLParams } from '../../app/History';
-import { ListPagesHelper } from '../ListPage/ListPagesHelper';
+import { HistoryManager, URLParam } from '../../app/History';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
@@ -46,19 +45,19 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
   constructor(props: CytoscapeToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
-    const urlLayout = ListPagesHelper.getSingleQueryParam(URLParams.GRAPH_LAYOUT);
+    const urlLayout = HistoryManager.getParam(URLParam.GRAPH_LAYOUT);
     if (urlLayout) {
       if (urlLayout !== props.layout.name) {
         props.setLayout(LayoutDictionary.getLayoutByName(urlLayout));
       }
     } else {
-      HistoryManager.setParam(URLParams.GRAPH_LAYOUT, props.layout.name);
+      HistoryManager.setParam(URLParam.GRAPH_LAYOUT, props.layout.name);
     }
   }
 
   componentDidUpdate() {
     // ensure redux state and URL are aligned
-    HistoryManager.setParam(URLParams.GRAPH_LAYOUT, this.props.layout.name);
+    HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout.name);
   }
 
   render() {

@@ -6,7 +6,8 @@ import { LoginStatus } from '../../../store/Store';
 
 const LoginProps = {
   status: LoginStatus.loggedOut,
-  authenticate: jest.fn()
+  authenticate: jest.fn(),
+  checkCredentials: jest.fn()
 };
 
 const wrapper = shallow(<LoginPage {...LoginProps} />);

@@ -4,7 +4,7 @@ import { ListPagesHelper } from './ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { Pagination } from '../../types/Pagination';
 import * as API from '../../services/Api';
-import { HistoryManager, URLParams } from '../../app/History';
+import { HistoryManager, URLParam } from '../../app/History';
 
 export namespace ListComponent {
   export interface Props<R> {
@@ -33,7 +33,7 @@ export namespace ListComponent {
 
     onFilterChange = () => {
       // Resetting pagination when filters change
-      HistoryManager.deleteParam(URLParams.PAGE);
+      HistoryManager.deleteParam(URLParam.PAGE);
       this.updateListItems(true);
     };
 
@@ -58,7 +58,7 @@ export namespace ListComponent {
           }
         };
       });
-      HistoryManager.setParam(URLParams.PAGE, String(page));
+      HistoryManager.setParam(URLParam.PAGE, String(page));
     };
 
     perPageSelect = (perPage: number) => {
@@ -73,8 +73,8 @@ export namespace ListComponent {
         };
       });
       HistoryManager.setParams([
-        { name: URLParams.PAGE, value: '1' },
-        { name: URLParams.PER_PAGE, value: String(perPage) }
+        { name: URLParam.PAGE, value: '1' },
+        { name: URLParam.PER_PAGE, value: String(perPage) }
       ]);
     };
 
@@ -84,7 +84,7 @@ export namespace ListComponent {
           currentSortField: sortField,
           listItems: sorted
         });
-        HistoryManager.setParam(URLParams.SORT, sortField.param);
+        HistoryManager.setParam(URLParam.SORT, sortField.param);
       });
     };
 
@@ -94,7 +94,7 @@ export namespace ListComponent {
           isSortAscending: !this.state.isSortAscending,
           listItems: sorted
         });
-        HistoryManager.setParam(URLParams.DIRECTION, this.state.isSortAscending ? 'asc' : 'desc');
+        HistoryManager.setParam(URLParam.DIRECTION, this.state.isSortAscending ? 'asc' : 'desc');
       });
     };
   }

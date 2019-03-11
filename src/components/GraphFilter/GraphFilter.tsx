@@ -16,8 +16,7 @@ import { EdgeLabelMode } from '../../types/GraphFilter';
 import GraphFindContainer from './GraphFind';
 import GraphRefreshContainer from './GraphRefresh';
 import GraphSettingsContainer from './GraphSettings';
-import { HistoryManager, URLParams } from '../../app/History';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import history, { HistoryManager, URLParam } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import Namespace, { namespacesToString, namespacesFromString } from '../../types/Namespace';
 import { NamespaceActions } from '../../actions/NamespaceAction';
@@ -71,32 +70,33 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
   constructor(props: GraphFilterProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL with unset params.
-    const urlEdgeLabelMode = ListPagesHelper.getSingleQueryParam(URLParams.GRAPH_EDGES) as EdgeLabelMode;
+    const urlParams = new URLSearchParams(history.location.search);
+    const urlEdgeLabelMode = HistoryManager.getParam(URLParam.GRAPH_EDGES, urlParams) as EdgeLabelMode;
     if (urlEdgeLabelMode) {
       if (urlEdgeLabelMode !== props.edgeLabelMode) {
         props.setEdgeLabelMode(urlEdgeLabelMode);
       }
     } else {
-      HistoryManager.setParam(URLParams.GRAPH_EDGES, String(this.props.edgeLabelMode));
+      HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
     }
 
-    const urlGraphType = ListPagesHelper.getSingleQueryParam(URLParams.GRAPH_TYPE) as GraphType;
+    const urlGraphType = HistoryManager.getParam(URLParam.GRAPH_TYPE, urlParams) as GraphType;
     if (urlGraphType) {
       if (urlGraphType !== props.graphType) {
         props.setGraphType(urlGraphType);
       }
     } else {
-      HistoryManager.setParam(URLParams.GRAPH_TYPE, String(this.props.graphType));
+      HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
     }
 
-    const urlNamespaces = ListPagesHelper.getSingleQueryParam(URLParams.NAMESPACES);
+    const urlNamespaces = HistoryManager.getParam(URLParam.NAMESPACES, urlParams);
     if (urlNamespaces) {
       if (urlNamespaces !== namespacesToString(props.activeNamespaces)) {
         props.setActiveNamespaces(namespacesFromString(urlNamespaces));
       }
     } else {
       const activeNamespacesString = namespacesToString(props.activeNamespaces);
-      HistoryManager.setParam(URLParams.NAMESPACES, activeNamespacesString);
+      HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
   }
 
@@ -104,12 +104,12 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     // ensure redux state and URL are aligned
     const activeNamespacesString = namespacesToString(this.props.activeNamespaces);
     if (this.props.activeNamespaces.length === 0) {
-      HistoryManager.deleteParam(URLParams.NAMESPACES, true);
+      HistoryManager.deleteParam(URLParam.NAMESPACES, true);
     } else {
-      HistoryManager.setParam(URLParams.NAMESPACES, activeNamespacesString);
+      HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
-    HistoryManager.setParam(URLParams.GRAPH_EDGES, String(this.props.edgeLabelMode));
-    HistoryManager.setParam(URLParams.GRAPH_TYPE, String(this.props.graphType));
+    HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
+    HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
   }
 
   handleRefresh = () => {

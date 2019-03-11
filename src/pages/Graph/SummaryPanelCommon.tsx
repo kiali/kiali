@@ -177,7 +177,7 @@ export const renderLabels = (data: NodeData) => {
     <>
       <div className="label-collection" style={{ paddingTop: '3px' }}>
         {hasNamespace && <Label name="namespace" value={data.namespace} />}
-        {hasVersion && <Label name={serverConfig().istioLabels.versionLabelName} value={data.version} />}
+        {hasVersion && <Label name={serverConfig.istioLabels.versionLabelName} value={data.version} />}
       </div>
     </>
   );

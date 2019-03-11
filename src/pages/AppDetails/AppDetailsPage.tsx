@@ -13,7 +13,7 @@ import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
-import { MetricsDuration } from '../../components/MetricsOptions/MetricsDuration';
+import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 
 type AppDetailsState = {
   app: App;

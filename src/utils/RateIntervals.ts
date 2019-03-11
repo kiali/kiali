@@ -1,13 +1,12 @@
-import { config } from '../config';
+import { serverConfig } from '../config/serverConfig';
 
-const mapIntervals: { [key: number]: string } = config.toolbar.intervalDuration;
-export const tuples: [number, string][] = Object.keys(mapIntervals).map(key => {
-  const tuple: [number, string] = [+key, mapIntervals[key]];
+export const tuples: [number, string][] = Object.keys(serverConfig.durations).map(key => {
+  const tuple: [number, string] = [+key, serverConfig.durations[key]];
   return tuple;
 });
 
 export const getName = (durationSeconds: number): string => {
-  const name = mapIntervals[durationSeconds];
+  const name = serverConfig.durations[durationSeconds];
   if (name) {
     return name;
   }

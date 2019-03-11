@@ -6,7 +6,7 @@ import ToolbarDropdown from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { JaegerActions } from '../../actions/JaegerActions';
 import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from '../../actions/KialiAppAction';
-import { config } from '../../config';
+import { serverConfig } from '../../config/serverConfig';
 
 interface LookBackProps {
   fetching: boolean;
@@ -16,7 +16,7 @@ interface LookBackProps {
 }
 
 export class LookBack extends React.PureComponent<LookBackProps, {}> {
-  lookBackOptions = { ...config.toolbar.intervalDuration, ...{ 0: 'Custom Time Range' } };
+  lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
 
   constructor(props: LookBackProps) {
     super(props);

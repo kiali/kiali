@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import history, { URLParams, HistoryManager } from '../../app/History';
+import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { Aggregator } from '../../types/MetricsOptions';
 
@@ -21,9 +21,8 @@ export default class MetricsRawAggregation extends React.Component<Props> {
   private aggregator: Aggregator;
 
   static initialAggregator = (): Aggregator => {
-    const urlParams = new URLSearchParams(history.location.search);
-    const opParam = urlParams.get(URLParams.AGGREGATOR);
-    if (opParam != null) {
+    const opParam = HistoryManager.getParam(URLParam.AGGREGATOR);
+    if (opParam !== undefined) {
       return opParam as Aggregator;
     }
     return 'sum';
@@ -35,7 +34,7 @@ export default class MetricsRawAggregation extends React.Component<Props> {
   }
 
   onAggregatorChanged = (aggregator: string) => {
-    HistoryManager.setParam(URLParams.AGGREGATOR, aggregator);
+    HistoryManager.setParam(URLParam.AGGREGATOR, aggregator);
     this.aggregator = aggregator as Aggregator;
     this.props.onChanged(this.aggregator);
   };

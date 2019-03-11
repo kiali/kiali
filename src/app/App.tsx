@@ -1,16 +1,18 @@
+import axios from 'axios';
 import * as React from 'react';
-import { Router, withRouter } from 'react-router-dom';
+import { PersistGate } from 'redux-persist/lib/integration/react';
 import { Provider } from 'react-redux';
-import './App.css';
+import { Router, withRouter } from 'react-router-dom';
+import * as Visibility from 'visibilityjs';
+import { GlobalActions } from '../actions/GlobalActions';
 import NavigationContainer from '../containers/NavigationContainer';
 import { store, persistor } from '../store/ConfigStore';
-import axios from 'axios';
-import { GlobalActions } from '../actions/GlobalActions';
+import './App.css';
+import AuthenticationControllerContainer from './AuthenticationController';
 import history from './History';
-import { PersistGate } from 'redux-persist/lib/integration/react';
-import * as Visibility from 'visibilityjs';
 import InitializingScreen from './InitializingScreen';
 import StartupInitializer from './StartupInitializer';
+import LoginPageConnected from '../containers/LoginPageContainer';
 
 /**
  * Use the Patternfly RCUE productized css styles if set by the environment
@@ -83,26 +85,32 @@ type AppState = {
 };
 
 class App extends React.Component<{}, AppState> {
-  private navigator = withRouter(NavigationContainer);
+  private protectedArea: React.ReactNode;
 
   constructor(props: {}) {
     super(props);
     this.state = {
       isInitialized: false
     };
-
     loadRcueCssIfNeeded();
+
+    const Navigator = withRouter(NavigationContainer);
+    this.protectedArea = (
+      <Router history={history}>
+        <Navigator />
+      </Router>
+    );
   }
 
   render() {
-    const Navigator = this.navigator;
     return (
       <Provider store={store}>
         <PersistGate loading={<InitializingScreen />} persistor={persistor}>
           {this.state.isInitialized ? (
-            <Router history={history}>
-              <Navigator />
-            </Router>
+            <AuthenticationControllerContainer
+              publicAreaComponent={<LoginPageConnected />}
+              protectedAreaComponent={this.protectedArea}
+            />
           ) : (
             <StartupInitializer onInitializationFinished={this.initializationFinishedHandler} />
           )}

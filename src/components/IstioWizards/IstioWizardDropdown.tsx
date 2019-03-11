@@ -146,8 +146,8 @@ class IstioWizardDropdown extends React.Component<Props, State> {
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
           workloads={this.props.workloads.filter(workload => {
-            const appLabelName = serverConfig().istioLabels.versionLabelName;
-            const versionLabelName = serverConfig().istioLabels.versionLabelName;
+            const appLabelName = serverConfig.istioLabels.versionLabelName;
+            const versionLabelName = serverConfig.istioLabels.versionLabelName;
             return workload.labels && workload.labels[appLabelName] && workload.labels[versionLabelName];
           })}
           onClose={this.onClose}

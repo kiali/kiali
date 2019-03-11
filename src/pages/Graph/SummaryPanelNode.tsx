@@ -137,9 +137,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // - unknown nodes (no source telemetry)
       // - istio namespace nodes (no source telemetry)
       const reporter: Reporter =
-        data.nodeType === NodeType.UNKNOWN || data.namespace === serverConfig().istioNamespace
-          ? 'destination'
-          : 'source';
+        data.nodeType === NodeType.UNKNOWN || data.namespace === serverConfig.istioNamespace ? 'destination' : 'source';
       const byLabels = data.isRoot ? ['destination_service_namespace', 'request_protocol'] : ['request_protocol'];
       promiseOut = getNodeMetrics(
         nodeMetricType,
@@ -159,9 +157,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       const filtersRps = ['request_count', 'request_error_count'];
       // use dest metrics for incoming, except for service nodes which need source metrics to capture source errors
       const reporter: Reporter =
-        data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig().istioNamespace
-          ? 'source'
-          : 'destination';
+        data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig.istioNamespace ? 'source' : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
       const byLabels = this.isServiceDestCornerCase(nodeMetricType)
@@ -564,7 +560,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   private isIstioOutgoingCornerCase = (node): boolean => {
     const nodeType = node.data(CyNode.nodeType);
     const namespace = node.data(CyNode.namespace);
-    const istioNamespace = serverConfig().istioNamespace;
+    const istioNamespace = serverConfig.istioNamespace;
     if (nodeType === NodeType.UNKNOWN || namespace === istioNamespace) {
       return false;
     }

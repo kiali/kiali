@@ -11,7 +11,6 @@ import ItemDescription from './ItemDescription';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
-import { HistoryManager, URLParams } from '../../app/History';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 
 interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
@@ -72,11 +71,6 @@ class WorkloadListComponent extends ListComponent.Component<
       prevProps.currentSortField.title === this.props.currentSortField.title
     );
   }
-
-  rateIntervalChangedHandler = (key: number) => {
-    HistoryManager.setParam(URLParams.DURATION, String(key));
-    this.setState({ rateInterval: key });
-  };
 
   sortItemList(workloads: WorkloadListItem[], sortField: SortField<WorkloadListItem>, isAscending: boolean) {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction

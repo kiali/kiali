@@ -15,7 +15,7 @@ import { Dashboard } from './Dashboard';
 import MetricsHelper from './Helper';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
-import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
+import MetricsDuration from '../MetricsOptions/MetricsDuration';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -115,12 +115,14 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   }
 
   renderOptionsBar() {
-    const hasHistograms = this.state.dashboard !== undefined && this.state.dashboard.charts.some(chart => {
-      if (chart.histogram) {
-        return Object.keys(chart.histogram).length > 0;
-      }
-      return false;
-    });
+    const hasHistograms =
+      this.state.dashboard !== undefined &&
+      this.state.dashboard.charts.some(chart => {
+        if (chart.histogram) {
+          return Object.keys(chart.histogram).length > 0;
+        }
+        return false;
+      });
     return (
       <Toolbar>
         <FormGroup>
@@ -135,7 +137,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
           <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
         </FormGroup>
         <ToolbarRightContent>
-          <MetricsDurationContainer onChanged={this.onDurationChanged} />
+          <MetricsDuration onChanged={this.onDurationChanged} />
           <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
         </ToolbarRightContent>
       </Toolbar>

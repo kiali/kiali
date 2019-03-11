@@ -11,7 +11,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password))
+  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password)),
+  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
 });
 
 const LoginPageConnected = connect(

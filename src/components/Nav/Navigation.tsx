@@ -9,19 +9,14 @@ import { MessageCenterContainer, MessageCenterTriggerContainer } from '../../con
 import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
 import GlobalMTLSStatus from '../../containers/GlobalMTLSContainer';
-import LoginPage from '../../containers/LoginPageContainer';
-import { store } from '../../store/ConfigStore';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import { kialiLogo } from '../../config';
-import { isKioskMode } from '../../utils/SearchParamUtils';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
 
 type PropsType = RouteComponentProps & {
-  authenticated: boolean;
   navCollapsed: boolean;
-  checkCredentials: () => void;
   setNavCollapsed: (collapse: boolean) => void;
   jaegerUrl: string;
   enableIntegration: boolean;
@@ -34,24 +29,6 @@ class Navigation extends React.Component<PropsType> {
 
   constructor(props: PropsType) {
     super(props);
-  }
-
-  setDocLayout = () => {
-    if (document.documentElement) {
-      document.documentElement.className = this.props.authenticated ? 'layout-pf layout-pf-fixed' : 'login-pf';
-      if (isKioskMode()) {
-        document.documentElement.className += ' kiosk';
-      }
-    }
-  };
-
-  componentDidMount() {
-    this.setDocLayout();
-
-    if (!this.props.authenticated) {
-      // handle initial path from the browser
-      this.props.checkCredentials();
-    }
   }
 
   setControlledState = event => {
@@ -100,11 +77,7 @@ class Navigation extends React.Component<PropsType> {
   }
 
   render() {
-    store.subscribe(() => {
-      this.setDocLayout();
-    });
-
-    return this.props.authenticated ? (
+    return (
       <>
         <VerticalNav
           className="kiali-vertical-nav"
@@ -126,8 +99,6 @@ class Navigation extends React.Component<PropsType> {
         </VerticalNav>
         <RenderPage />
       </>
-    ) : (
-      <LoginPage />
     );
   }
 }

@@ -1,4 +1,4 @@
-import history, { URLParams } from '../../app/History';
+import history, { URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import { ActiveFilter, FilterType } from '../../types/Filters';
 import { Pagination } from '../../types/Pagination';
@@ -12,32 +12,6 @@ export namespace ListPagesHelper {
 
   export const handleError = (error: string) => {
     MessageCenter.add(error);
-  };
-
-  export const getQueryParam = (queryName: string): string[] | undefined => {
-    const urlParams = new URLSearchParams(history.location.search);
-    const values = urlParams.getAll(queryName);
-
-    if (values.length === 0) {
-      return undefined;
-    }
-
-    return values;
-  };
-
-  export const getSingleQueryParam = (queryName: string): string | undefined => {
-    const p = getQueryParam(queryName);
-    return p === undefined ? undefined : p[0];
-  };
-
-  export const getSingleBooleanQueryParam = (queryName: string): boolean | undefined => {
-    const p = getQueryParam(queryName);
-    return p === undefined ? undefined : p[0] === 'true';
-  };
-
-  export const getSingleIntQueryParam = (queryName: string): number | undefined => {
-    const p = getQueryParam(queryName);
-    return p === undefined ? undefined : Number(p[0]);
   };
 
   export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFilter[] => {
@@ -69,7 +43,7 @@ export namespace ListPagesHelper {
       urlParams.append(filterType.id, activeFilter.value);
     });
     // Resetting pagination when filters change
-    urlParams.delete(URLParams.PAGE);
+    urlParams.delete(URLParam.PAGE);
     history.push(history.location.pathname + '?' + urlParams.toString());
     return cleanFilters;
   };
@@ -106,27 +80,24 @@ export namespace ListPagesHelper {
   };
 
   export const currentPagination = (): Pagination => {
+    const urlParams = new URLSearchParams(history.location.search);
     return {
-      page: getSingleIntQueryParam(URLParams.PAGE) || 1,
-      perPage: getSingleIntQueryParam(URLParams.PER_PAGE) || perPageOptions[1],
+      page: HistoryManager.getNumericParam(URLParam.PAGE, urlParams) || 1,
+      perPage: HistoryManager.getNumericParam(URLParam.PER_PAGE, urlParams) || perPageOptions[1],
       perPageOptions: perPageOptions
     };
   };
 
   export const isCurrentSortAscending = (): boolean => {
-    return (getSingleQueryParam(URLParams.DIRECTION) || 'asc') === 'asc';
-  };
-
-  export const currentSortFieldId = (): string | undefined => {
-    return getSingleQueryParam(URLParams.SORT);
+    return (HistoryManager.getParam(URLParam.DIRECTION) || 'asc') === 'asc';
   };
 
   export const currentDuration = (): number => {
-    return getSingleIntQueryParam(URLParams.DURATION) || defaultDuration;
+    return HistoryManager.getDuration() || defaultDuration;
   };
 
   export const currentPollInterval = (): number => {
-    const pi = getSingleIntQueryParam(URLParams.POLL_INTERVAL);
+    const pi = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL);
     if (pi === undefined) {
       return defaultPollInterval;
     }
@@ -134,7 +105,7 @@ export namespace ListPagesHelper {
   };
 
   export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> => {
-    const queriedSortedField = getQueryParam(URLParams.SORT) || [sortFields[0].param];
+    const queriedSortedField = HistoryManager.getParam(URLParam.SORT) || [sortFields[0].param];
     return (
       sortFields.find(sortField => {
         return sortField.param === queriedSortedField[0];

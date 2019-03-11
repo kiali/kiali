@@ -11,6 +11,7 @@ type LoginProps = {
   message?: string;
   error?: any;
   authenticate: (username: string, password: string) => void;
+  checkCredentials: () => void;
 };
 
 type LoginState = {
@@ -32,10 +33,8 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
   }
 
   componentDidMount() {
-    const el = document.documentElement;
-    if (el) {
-      el.className = 'login-pf';
-    }
+    // handle initial path from the browser
+    this.props.checkCredentials();
   }
 
   handleChange = (e: any) => {

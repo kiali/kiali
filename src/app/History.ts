@@ -1,5 +1,6 @@
 import { createBrowserHistory } from 'history';
 import createMemoryHistory from 'history/createMemoryHistory';
+import { toValidDuration } from '../config/serverConfig';
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';
@@ -7,7 +8,7 @@ const history = process.env.TEST_RUNNER ? createMemoryHistory() : createBrowserH
 
 export default history;
 
-export enum URLParams {
+export enum URLParam {
   AGGREGATOR = 'aggregator',
   BY_LABELS = 'bylbl',
   DIRECTION = 'direction',
@@ -28,7 +29,7 @@ export enum URLParams {
 }
 
 export interface URLParamValue {
-  name: URLParams;
+  name: URLParam;
   value: any;
 }
 
@@ -38,18 +39,31 @@ export enum ParamAction {
 }
 
 export namespace HistoryManager {
-  export const setParam = (name: URLParams, value: string) => {
+  export const setParam = (name: URLParam, value: string) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
-  export const getParam = (name: URLParams): string | null => {
-    const urlParams = new URLSearchParams(history.location.search);
-    return urlParams.get(name);
+  export const getParam = (name: URLParam, urlParams?: URLSearchParams): string | undefined => {
+    if (!urlParams) {
+      urlParams = new URLSearchParams(history.location.search);
+    }
+    const p = urlParams.get(name);
+    return p !== null ? p : undefined;
   };
 
-  export const deleteParam = (name: URLParams, historyReplace?: boolean) => {
+  export const getNumericParam = (name: URLParam, urlParams?: URLSearchParams): number | undefined => {
+    const p = getParam(name, urlParams);
+    return p !== undefined ? Number(p) : undefined;
+  };
+
+  export const getBooleanParam = (name: URLParam, urlParams?: URLSearchParams): boolean | undefined => {
+    const p = getParam(name, urlParams);
+    return p !== undefined ? p === 'true' : undefined;
+  };
+
+  export const deleteParam = (name: URLParam, historyReplace?: boolean) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete(name);
     if (historyReplace) {
@@ -81,5 +95,13 @@ export namespace HistoryManager {
     } else {
       history.push(history.location.pathname + '?' + urlParams.toString());
     }
+  };
+
+  export const getDuration = (urlParams?: URLSearchParams): number | undefined => {
+    const duration = getParam(URLParam.DURATION, urlParams);
+    if (duration) {
+      return toValidDuration(Number(duration));
+    }
+    return undefined;
   };
 }

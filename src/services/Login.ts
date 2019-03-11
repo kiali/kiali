@@ -6,7 +6,7 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { LoginSession, KialiAppState } from '../store/Store';
 import { AuthStrategy, AuthResult, AuthConfig } from '../types/Auth';
 import { TimeInMilliseconds } from '../types/Common';
-import AppConfigs from '../app/AppConfigs';
+import authenticationConfig from '../config/authenticationConfig';
 
 type Dispatch = ThunkDispatch<KialiAppState, void, KialiAppAction>;
 
@@ -105,7 +105,7 @@ export class LoginDispatcher {
   }
 
   public async prepare(): Promise<AuthResult> {
-    const info = AppConfigs.authenticationConfig!;
+    const info = authenticationConfig;
     const strategy = this.strategyMapping.get(info.strategy)!;
 
     try {
@@ -137,7 +137,7 @@ export class LoginDispatcher {
   }
 
   public async perform(request: DispatchRequest<any>): Promise<LoginResult> {
-    const strategy = this.strategyMapping.get(AppConfigs.authenticationConfig!.strategy)!;
+    const strategy = this.strategyMapping.get(authenticationConfig.strategy)!;
 
     try {
       return await strategy.perform(request);

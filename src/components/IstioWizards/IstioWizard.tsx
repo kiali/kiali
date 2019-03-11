@@ -147,7 +147,7 @@ class IstioWizard extends React.Component<Props, State> {
         host: this.props.serviceName,
         subsets: this.props.workloads.map(workload => {
           // Using version
-          const versionLabelName = serverConfig().istioLabels.versionLabelName;
+          const versionLabelName = serverConfig.istioLabels.versionLabelName;
           const versionValue = workload.labels![versionLabelName];
           const labels: { [key: string]: string } = {};
           labels[versionLabelName] = versionValue;

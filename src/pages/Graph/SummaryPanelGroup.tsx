@@ -161,7 +161,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
     const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
     const reporter: Reporter =
-      this.props.data.summaryTarget.namespace === serverConfig().istioNamespace ? 'destination' : 'source';
+      this.props.data.summaryTarget.namespace === serverConfig.istioNamespace ? 'destination' : 'source';
 
     const promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter);
     // use dest metrics for incoming
@@ -215,7 +215,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .map((c, i) => (
         <Label
           key={c.data(CyNode.version)}
-          name={serverConfig().istioLabels.versionLabelName}
+          name={serverConfig.istioLabels.versionLabelName}
           value={c.data(CyNode.version)}
         />
       ));

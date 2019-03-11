@@ -3,7 +3,7 @@ import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 import isEqual from 'lodash/fp/isEqual';
 
-import history, { URLParams } from '../../app/History';
+import history, { URLParam } from '../../app/History';
 import { LabelDisplayName, AllLabelsValues } from '../../types/Metrics';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
@@ -37,11 +37,11 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
       showQuantiles: ['0.5', '0.95', '0.99'],
       activeLabels: []
     };
-    const avg = urlParams.get(URLParams.SHOW_AVERAGE);
+    const avg = urlParams.get(URLParam.SHOW_AVERAGE);
     if (avg !== null) {
       settings.showAverage = avg === 'true';
     }
-    const quantiles = urlParams.get(URLParams.QUANTILES);
+    const quantiles = urlParams.get(URLParam.QUANTILES);
     if (quantiles !== null) {
       if (quantiles.trim().length !== 0) {
         settings.showQuantiles = quantiles.split(' ').map(val => val.trim() as Quantiles);
@@ -49,7 +49,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
         settings.showQuantiles = [];
       }
     }
-    const byLabels = urlParams.getAll(URLParams.BY_LABELS);
+    const byLabels = urlParams.getAll(URLParam.BY_LABELS);
     if (byLabels.length !== 0) {
       settings.activeLabels = byLabels as LabelDisplayName[];
     }
@@ -73,14 +73,14 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
       : this.settings.activeLabels.filter(g => label !== g);
 
     const urlParams = new URLSearchParams(history.location.search);
-    urlParams.delete(URLParams.BY_LABELS);
-    newLabels.forEach(lbl => urlParams.append(URLParams.BY_LABELS, lbl));
+    urlParams.delete(URLParam.BY_LABELS);
+    newLabels.forEach(lbl => urlParams.append(URLParam.BY_LABELS, lbl));
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
   onHistogramAverageChanged = (checked: boolean) => {
     const urlParams = new URLSearchParams(history.location.search);
-    urlParams.set(URLParams.SHOW_AVERAGE, String(checked));
+    urlParams.set(URLParam.SHOW_AVERAGE, String(checked));
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
@@ -90,7 +90,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
       : this.settings.showQuantiles.filter(q => quantile !== q);
 
     const urlParams = new URLSearchParams(history.location.search);
-    urlParams.set(URLParams.QUANTILES, newQuantiles.join(' '));
+    urlParams.set(URLParam.QUANTILES, newQuantiles.join(' '));
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 

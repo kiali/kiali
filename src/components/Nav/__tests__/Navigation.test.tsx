@@ -51,8 +51,6 @@ const _tester = (path: string, expectedMenuPath: string) => {
 
   const wrapper = shallow(
     <Navigation
-      authenticated={true}
-      checkCredentials={jest.fn()}
       navCollapsed={false}
       setNavCollapsed={jest.fn()}
       jaegerUrl={''}

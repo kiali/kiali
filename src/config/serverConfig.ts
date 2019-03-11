@@ -1,42 +1,81 @@
-import deepFreeze from 'deep-freeze';
-import { store } from '../store/ConfigStore';
-import { KialiAppState, ServerConfig } from '../store/Store';
-import { PersistPartial } from 'redux-persist';
-import { DurationInSeconds } from '../types/Common';
-import { forOwn, pickBy } from 'lodash';
+import { ServerConfig } from '../types/ServerConfig';
 
-// It's not great to access the store directly for convenience but the alternative is
-// a huge code ripple just to access some server config. better to just have this one utility.
-export const serverConfig = (): ServerConfig => {
-  const actualState = store.getState() || ({} as KialiAppState & PersistPartial);
-  return deepFreeze(actualState.serverConfig);
+export type Durations = { [key: number]: string };
+
+type ComputedServerConfig = ServerConfig & {
+  durations: Durations;
 };
 
-// getValidDurations returns a new object with only the durations <= retention
-export const getValidDurations = (
-  durations: { [key: number]: string },
-  retention?: DurationInSeconds
-): { [key: number]: string } => {
-  const validDurations = pickBy(durations, (_, key: number) => {
-    return !retention || key <= retention;
+const toDurations = (tupleArray: [number, string][]): Durations => {
+  const obj = {};
+  tupleArray.forEach(tuple => {
+    obj[tuple[0]] = tuple[1];
   });
-  return validDurations as { [key: number]: string };
+  return obj;
 };
 
-// getValidDuration returns duration if it is a valid property key in durations, otherwise it return the first property
-// key in durations.  It is assumed that durations has at least one property.
-export const getValidDuration = (
-  durations: { [key: number]: string },
-  duration: DurationInSeconds
-): DurationInSeconds => {
-  let validDuration = 0;
-  forOwn(durations, (_, key) => {
-    const d = Number(key);
-    if (d === duration) {
-      validDuration = d;
-    } else if (!validDuration) {
-      validDuration = d;
+let durationsTuples: [number, string][] = [
+  [60, 'Last 1m'],
+  [300, 'Last 5m'],
+  [600, 'Last 10m'],
+  [1800, 'Last 30m'],
+  [3600, 'Last 1h'],
+  [10800, 'Last 3h'],
+  [21600, 'Last 6h'],
+  [43200, 'Last 12h'],
+  [86400, 'Last 1d'],
+  [604800, 'Last 7d'],
+  [2592000, 'Last 30d']
+];
+
+const computeValidDurations = (cfg: ComputedServerConfig) => {
+  if (cfg.prometheus.storageTsdbRetention) {
+    // Make sure we'll keep at least one item
+    if (cfg.prometheus.storageTsdbRetention <= durationsTuples[0][0]) {
+      durationsTuples = [durationsTuples[0]];
+    } else {
+      durationsTuples = durationsTuples.filter(d => d[0] <= cfg.prometheus.storageTsdbRetention!);
     }
-  });
-  return validDuration;
+  }
+  cfg.durations = toDurations(durationsTuples);
+};
+
+// Set some defaults. Mainly used in tests, because
+// these will be overwritten on user login.
+let serverConfig: ComputedServerConfig = {
+  istioNamespace: 'istio-system',
+  istioLabels: {
+    appLabelName: 'app',
+    versionLabelName: 'version'
+  },
+  prometheus: {
+    globalScrapeInterval: 15,
+    storageTsdbRetention: 21600
+  },
+  durations: {}
+};
+computeValidDurations(serverConfig);
+export { serverConfig };
+
+export const toValidDuration = (duration: number): number => {
+  // Check if valid
+  if (serverConfig.durations[duration]) {
+    return duration;
+  }
+  // Get closest duration
+  for (let i = durationsTuples.length - 1; i >= 0; i--) {
+    if (duration > durationsTuples[i][0]) {
+      return durationsTuples[i][0];
+    }
+  }
+  return durationsTuples[0][0];
+};
+
+export const setServerConfig = (svcConfig: ServerConfig) => {
+  serverConfig = {
+    ...svcConfig,
+    durations: {}
+  };
+
+  computeValidDurations(serverConfig);
 };

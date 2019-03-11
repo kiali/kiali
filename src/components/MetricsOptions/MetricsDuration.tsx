@@ -1,38 +1,28 @@
 import * as React from 'react';
 
-import history, { URLParams, HistoryManager } from '../../app/History';
-import { config } from '../../config';
+import { URLParam, HistoryManager } from '../../app/History';
 import { DurationInSeconds } from '../../types/Common';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import { KialiAppState, ServerConfig } from '../../store/Store';
-import { serverConfigSelector } from '../../store/Selectors';
-import { connect } from 'react-redux';
-import { getValidDurations, getValidDuration } from '../../config/serverConfig';
+import { serverConfig } from '../../config/serverConfig';
 
-type ReduxProps = {
-  serverConfig: ServerConfig;
-};
-
-type Props = ReduxProps & {
+type Props = {
   onChanged: (duration: DurationInSeconds) => void;
 };
 
-export class MetricsDuration extends React.Component<Props> {
-  static Durations = config.toolbar.intervalDuration;
+export default class MetricsDuration extends React.Component<Props> {
   // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
   static DefaultDuration = 600;
 
   private duration: DurationInSeconds;
 
   static initialDuration = (): DurationInSeconds => {
-    const urlParams = new URLSearchParams(history.location.search);
-    let d = urlParams.get(URLParams.DURATION);
-    if (d !== null) {
-      sessionStorage.setItem(URLParams.DURATION, d);
-      return Number(d);
+    const urlDuration = HistoryManager.getDuration();
+    if (urlDuration !== undefined) {
+      sessionStorage.setItem(URLParam.DURATION, String(urlDuration));
+      return urlDuration;
     }
-    d = sessionStorage.getItem(URLParams.DURATION);
-    return d !== null ? Number(d) : MetricsDuration.DefaultDuration;
+    const storageDuration = sessionStorage.getItem(URLParam.DURATION);
+    return storageDuration !== null ? Number(storageDuration) : MetricsDuration.DefaultDuration;
   };
 
   constructor(props: Props) {
@@ -41,38 +31,23 @@ export class MetricsDuration extends React.Component<Props> {
   }
 
   onDurationChanged = (key: string) => {
-    sessionStorage.setItem(URLParams.DURATION, key);
-    HistoryManager.setParam(URLParams.DURATION, key);
+    sessionStorage.setItem(URLParam.DURATION, key);
+    HistoryManager.setParam(URLParam.DURATION, key);
     this.duration = Number(key);
     this.props.onChanged(this.duration);
   };
 
   render() {
-    const retention = this.props.serverConfig.prometheus.storageTsdbRetention;
-    const validDurations = getValidDurations(MetricsDuration.Durations, retention);
-    const validDuration = getValidDuration(validDurations, this.duration);
-
     return (
       <ToolbarDropdown
         id={'metrics_filter_interval_duration'}
         disabled={false}
         handleSelect={this.onDurationChanged}
-        initialValue={validDuration}
-        initialLabel={validDurations[validDuration]}
-        options={validDurations}
+        initialValue={this.duration}
+        initialLabel={serverConfig.durations[this.duration]}
+        options={serverConfig.durations}
         tooltip={'Time range for metrics data'}
       />
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState) => ({
-  serverConfig: serverConfigSelector(state)
-});
-
-const MetricsDurationContainer = connect(
-  mapStateToProps,
-  null
-)(MetricsDuration);
-
-export default MetricsDurationContainer;

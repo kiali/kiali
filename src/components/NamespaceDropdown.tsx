@@ -11,7 +11,7 @@ import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import Namespace from '../types/Namespace';
 import { PfColors } from './Pf/PfColors';
-import { HistoryManager, URLParams } from '../app/History';
+import { HistoryManager, URLParam } from '../app/History';
 
 const namespaceButtonColors = {
   backgroundColor: PfColors.White,
@@ -66,21 +66,21 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
   componentDidUpdate(prevProps: NamespaceListType) {
     if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
       if (this.props.activeNamespaces.length === 0) {
-        HistoryManager.deleteParam(URLParams.NAMESPACES);
+        HistoryManager.deleteParam(URLParam.NAMESPACES);
       } else {
-        HistoryManager.setParam(URLParams.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
+        HistoryManager.setParam(URLParam.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
       }
     }
   }
 
   syncNamespacesURLParam = () => {
-    const namespaces = (HistoryManager.getParam(URLParams.NAMESPACES) || '').split(',').filter(Boolean);
+    const namespaces = (HistoryManager.getParam(URLParam.NAMESPACES) || '').split(',').filter(Boolean);
     if (namespaces.length > 0 && _.difference(namespaces, this.props.activeNamespaces.map(item => item.name))) {
       // We must change the props of namespaces
       const items = namespaces.map(ns => ({ name: ns } as Namespace));
       this.props.setNamespaces(items);
     } else if (namespaces.length === 0 && this.props.activeNamespaces.length !== 0) {
-      HistoryManager.setParam(URLParams.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
+      HistoryManager.setParam(URLParam.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
     }
   };
 

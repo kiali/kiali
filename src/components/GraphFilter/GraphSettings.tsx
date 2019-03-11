@@ -4,8 +4,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-import { HistoryManager, URLParams } from '../../app/History';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import { HistoryManager, URLParam } from '../../app/History';
 import { GraphFilterState, KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
@@ -44,19 +43,19 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     super(props);
 
     // Let URL override current redux state at construction time. Update URL with unset params.
-    const urlInjectServiceNodes = ListPagesHelper.getSingleBooleanQueryParam(URLParams.GRAPH_SERVICE_NODES);
+    const urlInjectServiceNodes = HistoryManager.getBooleanParam(URLParam.GRAPH_SERVICE_NODES);
     if (urlInjectServiceNodes !== undefined) {
       if (urlInjectServiceNodes !== props.showServiceNodes) {
         props.toggleServiceNodes();
       }
     } else {
-      HistoryManager.setParam(URLParams.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
+      HistoryManager.setParam(URLParam.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
     }
   }
 
   componentDidUpdate(prevProps: GraphSettingsProps) {
     // ensure redux state and URL are aligned
-    HistoryManager.setParam(URLParams.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
+    HistoryManager.setParam(URLParam.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
   }
 
   render() {
