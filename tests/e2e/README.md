@@ -40,6 +40,9 @@ $ pip install -r requirements.txt
 # Login to Openshift Cluster 
 $ oc login https://<openshift>:8443 --username=<username> --password=<password> --insecure-skip-tls-verify=true
 
+# run API tests
+$ pytest tests/test_api_methods.py
+
 # run all tests
 $ pytest -s tests/
 ```
