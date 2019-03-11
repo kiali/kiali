@@ -15,7 +15,7 @@ var metricsServer *http.Server
 // StartMetricsServer starts a new HTTP server forthat exposes Kiali internal metrics in Prometheus format
 func StartMetricsServer() {
 	conf := config.Get()
-	log.Info("Starting Metrics Server on [%v:%v]", conf.Server.Address, conf.Server.MetricsPort)
+	log.Infof("Starting Metrics Server on [%v:%v]", conf.Server.Address, conf.Server.MetricsPort)
 	metricsServer = &http.Server{
 		Addr:    fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.MetricsPort),
 		Handler: promhttp.Handler(),
