@@ -19,7 +19,7 @@ type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
   jaegerUrl: string;
-  enableIntegration: boolean;
+  jaegerIntegration: boolean;
 };
 
 class Navigation extends React.Component<PropsType> {
@@ -42,7 +42,7 @@ class Navigation extends React.Component<PropsType> {
   }
 
   renderMenuItems() {
-    const { location } = this.props;
+    const { location, jaegerIntegration, jaegerUrl } = this.props;
     const activeItem = navItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
       if (!isRoute && item.pathsActive) {
@@ -51,7 +51,7 @@ class Navigation extends React.Component<PropsType> {
       return isRoute;
     });
     return navItems.map(item => {
-      if (item.title === 'Distributed Tracing' && !this.props.enableIntegration && this.props.jaegerUrl !== '') {
+      if (item.title === 'Distributed Tracing' && !jaegerIntegration && jaegerUrl !== '') {
         return (
           <VerticalNav.Item
             key={item.to}

@@ -114,28 +114,6 @@ export interface GrafanaInfo {
 }
 
 export interface JaegerState {
-  toolbar: {
-    services: string[];
-    isFetchingService: boolean;
-  };
-  search: {
-    namespaceSelected: string;
-    serviceSelected: string;
-    hideGraph: boolean;
-    limit: number;
-    start: string;
-    end: string;
-    minDuration: string;
-    maxDuration: string;
-    lookback: number;
-    url: string;
-    tags: string;
-  };
-  trace: {
-    collapseTitle: boolean;
-    hideSummary: boolean;
-    hideMinimap: boolean;
-  };
   jaegerURL: string;
   enableIntegration: boolean;
 }

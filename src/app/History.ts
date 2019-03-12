@@ -25,7 +25,15 @@ export enum URLParam {
   QUANTILES = 'quantiles',
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
-  SORT = 'sort'
+  SORT = 'sort',
+  JAEGER_START_TIME = 'start',
+  JAEGER_END_TIME = 'end',
+  JAEGER_LIMIT_TRACES = 'limit',
+  JAEGER_LOOKBACK = 'lookback',
+  JAEGER_MAX_DURATION = 'maxDuration',
+  JAEGER_MIN_DURATION = 'minDuration',
+  JAEGER_SERVICE_SELECTOR = 'service',
+  JAEGER_TAGS = 'tags'
 }
 
 export interface URLParamValue {

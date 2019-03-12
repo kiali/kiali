@@ -1,22 +1,20 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { Col, Form, FormGroup, FormControl, FieldLevelHelp } from 'patternfly-react';
-import { KialiAppState } from '../../store/Store';
 import ToolbarDropdown from '../../components/ToolbarDropdown/ToolbarDropdown';
-import { JaegerActions } from '../../actions/JaegerActions';
-import { ThunkDispatch } from 'redux-thunk';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { serverConfig } from '../../config/serverConfig';
+import { config, serverConfig } from '../../config';
+import { TracesDate } from './RouteHelper';
 
 interface LookBackProps {
-  fetching: boolean;
+  disabled?: boolean;
+  lookback?: number;
   setLookback: (lookback: string) => void;
-  lookback: number;
   onChangeCustom: (when: string, dateField: string, timeField: string) => void;
+  dates: TracesDate;
 }
 
-export class LookBack extends React.PureComponent<LookBackProps, {}> {
+export class LookBack extends React.PureComponent<LookBackProps> {
   lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
+  lookbackDefault = config.toolbar.defaultDuration;
 
   constructor(props: LookBackProps) {
     super(props);
@@ -27,19 +25,26 @@ export class LookBack extends React.PureComponent<LookBackProps, {}> {
   }
 
   render() {
-    const { lookback, fetching, setLookback, onChangeCustom } = this.props;
+    const { disabled, lookback, setLookback, onChangeCustom, dates } = this.props;
     const tz = lookback === 0 ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
+
     return (
-      <span style={{ marginLeft: '10px' }}>
-        <Col componentClass={Form.ControlLabel} style={{ marginRight: '10px' }}>
+      <>
+        <Col componentClass={Form.ControlLabel} style={{ marginRight: '10px', marginLeft: '10px' }}>
           Lookback
         </Col>
         <ToolbarDropdown
           id="lookback-selector"
-          disabled={fetching}
+          disabled={disabled}
           options={this.lookBackOptions}
-          value={lookback}
-          label={this.lookBackOptions[lookback]}
+          value={lookback || this.lookbackDefault}
+          label={
+            lookback && lookback !== 0
+              ? this.lookBackOptions[lookback]
+              : lookback === 0
+              ? 'Custom Time Range'
+              : this.lookBackOptions[this.lookbackDefault]
+          }
           useName={false}
           handleSelect={setLookback}
         />
@@ -58,12 +63,14 @@ export class LookBack extends React.PureComponent<LookBackProps, {}> {
               <FormControl
                 style={{ marginLeft: '10px' }}
                 type="date"
+                value={dates.start.date}
                 disabled={false}
                 onChange={e => onChangeCustom('start', e.target.value, '')}
               />
               <FormControl
                 style={{ marginLeft: '10px' }}
                 type="time"
+                value={dates.start.time}
                 disabled={false}
                 onChange={e => onChangeCustom('start', '', e.target.value)}
               />
@@ -81,41 +88,23 @@ export class LookBack extends React.PureComponent<LookBackProps, {}> {
               <FormControl
                 style={{ marginLeft: '10px' }}
                 type="date"
+                value={dates.end.date}
                 disabled={false}
                 onChange={e => onChangeCustom('end', e.target.value, '')}
               />
               <FormControl
                 style={{ marginLeft: '10px' }}
                 type="time"
+                value={dates.end.time}
                 disabled={false}
                 onChange={e => onChangeCustom('end', '', e.target.value)}
               />
             </FormGroup>
           </Form>
         )}
-      </span>
+      </>
     );
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    fetching: state.jaegerState.search.serviceSelected === '',
-    lookback: state.jaegerState.search.lookback
-  };
-};
-
-const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
-  return {
-    setLookback: (lookback: string) => {
-      dispatch(JaegerActions.setLookback(Number(lookback)));
-    }
-  };
-};
-
-const LookBackContainer = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(LookBack);
-
-export default LookBackContainer;
+export default LookBack;

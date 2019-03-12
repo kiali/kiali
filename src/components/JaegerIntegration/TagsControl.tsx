@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { Col, Form, Card, FormGroup, FormControl, FieldLevelHelp } from 'patternfly-react';
-import { KialiAppState } from '../../store/Store';
 
 interface TagsControlProps {
-  fetching: boolean;
-  tags: string;
+  disable?: boolean;
+  tags?: string;
   onChange: (event: any) => void;
 }
 
@@ -38,16 +36,16 @@ export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
   };
 
   render() {
-    const { fetching, tags } = this.props;
+    const { disable, tags } = this.props;
     return (
-      <FormGroup style={{ display: 'inline-flex' }}>
+      <FormGroup style={{ display: 'inline-flex', marginLeft: '-20px' }}>
         <Col componentClass={Form.ControlLabel}>
           Tags
           <FieldLevelHelp content={this.tagsHelp()} placement={'bottom'} />
         </Col>
         <FormControl
           type="text"
-          disabled={fetching}
+          disabled={disable}
           defaultValue={tags}
           placeholder={'e.g. http.status_code=200 error=true'}
           style={{ width: '400px', marginLeft: '10px' }}
@@ -58,13 +56,4 @@ export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => {
-  return {
-    fetching: state.jaegerState.search.serviceSelected === '',
-    tags: state.jaegerState.search.tags
-  };
-};
-
-const TagsControlContainer = connect(mapStateToProps)(TagsControl);
-
-export default TagsControlContainer;
+export default TagsControl;

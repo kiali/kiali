@@ -7,7 +7,7 @@ describe('TagsControls', () => {
   let wrapper, onChangeMock;
   beforeEach(() => {
     onChangeMock = jest.fn();
-    wrapper = shallow(<TagsControl onChange={onChangeMock} fetching={false} tags={''} />);
+    wrapper = shallow(<TagsControl onChange={onChangeMock} disable={false} tags={''} />);
   });
 
   it('renders TagsControl correctly', () => {
@@ -30,8 +30,8 @@ describe('TagsControls', () => {
       ).toBeFalsy();
     });
 
-    it('FormControl disabled when is fetching', () => {
-      wrapper.setProps({ fetching: true });
+    it('FormControl disabled when is disable', () => {
+      wrapper.setProps({ disable: true });
       expect(wrapper.find(FormControl)).toHaveLength(1);
       expect(
         wrapper

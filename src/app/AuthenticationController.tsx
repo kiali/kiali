@@ -123,9 +123,7 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
   if (hasJaeger.length === 1 && hasJaeger[0].url) {
     dispatch(JaegerActions.setUrl(hasJaeger[0].url));
     // If same protocol enable integration
-    if (hasJaeger[0].url.startsWith(window.location.protocol)) {
-      dispatch(JaegerActions.setEnableIntegration(true));
-    }
+    dispatch(JaegerActions.setEnableIntegration(hasJaeger[0].url.startsWith(window.location.protocol)));
   }
 
   serverStatus.warningMessages.forEach(wMsg => {

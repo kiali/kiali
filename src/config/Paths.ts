@@ -6,5 +6,6 @@ export enum Paths {
   APPLICATIONS = 'applications',
   SERVICES = 'services',
   WORKLOADS = 'workloads',
-  ISTIO = 'istio'
+  ISTIO = 'istio',
+  JAEGER = 'jaeger'
 }

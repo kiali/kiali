@@ -4,7 +4,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
 ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <TagsControl
-    fetching={false}
+    disable={false}
     onChange={[MockFunction]}
     tags=""
   />,
@@ -98,6 +98,7 @@ ShallowWrapper {
       ],
       "style": Object {
         "display": "inline-flex",
+        "marginLeft": "-20px",
       },
     },
     "ref": null,
@@ -335,6 +336,7 @@ ShallowWrapper {
         ],
         "style": Object {
           "display": "inline-flex",
+          "marginLeft": "-20px",
         },
       },
       "ref": null,

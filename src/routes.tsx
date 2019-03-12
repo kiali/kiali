@@ -126,7 +126,7 @@ const pathRoutes: Path[] = [
     component: IstioConfigPage
   },
   {
-    path: '/jaeger',
+    path: '/' + Paths.JAEGER,
     component: ServiceJaegerPage
   }
 ];
@@ -150,6 +150,10 @@ const secondaryMastheadRoutes: Path[] = [
   },
   {
     path: '/' + Paths.ISTIO,
+    component: DefaultSecondaryMasthead
+  },
+  {
+    path: '/' + Paths.JAEGER,
     component: DefaultSecondaryMasthead
   }
 ];

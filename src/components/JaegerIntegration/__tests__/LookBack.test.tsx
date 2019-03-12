@@ -8,19 +8,25 @@ import { serverConfig } from '../../../config/serverConfig';
 const lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
 
 describe('LookBack', () => {
-  let wrapper, onChangeCustom, setLookback;
+  let wrapper, onChangeCustom, setLookback, dates;
+  dates = { start: { date: '2019-03-11', time: '10:40' }, end: { date: '2019-03-11', time: '11:40' } };
 
   beforeEach(() => {
     onChangeCustom = jest.fn();
     setLookback = jest.fn();
     wrapper = shallow(
-      <LookBack onChangeCustom={onChangeCustom} setLookback={setLookback} fetching={false} lookback={3600} />
+      <LookBack
+        onChangeCustom={onChangeCustom}
+        setLookback={setLookback}
+        disabled={false}
+        lookback={3600}
+        dates={dates}
+      />
     );
   });
 
   it('renders LookBack correctly without custom', () => {
     expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
   });
 
   it('renders Extra forms when lookback is custom', () => {
@@ -42,7 +48,7 @@ describe('LookBack', () => {
         .first()
         .props()['disabled']
     ).toBeFalsy();
-    wrapper.setProps({ fetching: true });
+    wrapper.setProps({ disabled: true });
     expect(
       wrapper
         .find(ToolbarDropdown)
