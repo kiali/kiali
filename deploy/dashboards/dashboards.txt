@@ -1,6 +1,7 @@
 go.yaml
 kiali.yaml
 nodejs.yaml
+quarkus.yaml
 springboot-jvm.yaml
 springboot-tomcat.yaml
 thorntail.yaml
