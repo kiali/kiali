@@ -37,6 +37,7 @@
     "one-line": [true, "check-catch", "check-else", "check-open-brace", "check-whitespace"],
     "only-arrow-functions": true,
     "prefer-const": [true, { "destructuring": "all" }],
+    "prefer-object-spread": true,
     "quotemark": [true, "single", "jsx-double", "avoid-escape"],
     "radix": true,
     "semicolon": [true, "always", "ignore-bound-class-methods"],

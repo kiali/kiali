@@ -20,17 +20,16 @@ export const INITIAL_LOGIN_STATE: LoginStateInterface = {
 const loginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: KialiAppAction): LoginStateInterface => {
   switch (action.type) {
     case getType(LoginActions.loginRequest):
-      return Object.assign({}, INITIAL_LOGIN_STATE, {
-        status: LoginStatus.logging
-      });
+      return { ...INITIAL_LOGIN_STATE, status: LoginStatus.logging };
     case getType(LoginActions.loginSuccess):
-      return Object.assign({}, INITIAL_LOGIN_STATE, action.payload);
+      return { ...INITIAL_LOGIN_STATE, ...action.payload };
     case getType(LoginActions.loginExtend):
-      return Object.assign({}, INITIAL_LOGIN_STATE, {
+      return {
+        ...INITIAL_LOGIN_STATE,
         status: LoginStatus.loggedIn,
         session: action.payload.session,
         uiExpiresOn: action.payload.uiExpiresOn
-      });
+      };
     case getType(LoginActions.loginFailure):
       let message = 'Error connecting to Kiali';
 
@@ -41,10 +40,7 @@ const loginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: Ki
           'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator creates a valid secret and restarts Kiali. Please refer to the Kiali documentation for more details.';
       }
 
-      return Object.assign({}, INITIAL_LOGIN_STATE, {
-        status: LoginStatus.error,
-        message: message
-      });
+      return { ...INITIAL_LOGIN_STATE, status: LoginStatus.error, message: message };
     case getType(LoginActions.logoutSuccess):
       return INITIAL_LOGIN_STATE;
     default:

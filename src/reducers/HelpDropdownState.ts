@@ -13,11 +13,12 @@ export const INITIAL_STATUS_STATE: StatusState = {
 const HelpDropdownState = (state: StatusState = INITIAL_STATUS_STATE, action: KialiAppAction): StatusState => {
   switch (action.type) {
     case getType(HelpDropdownActions.statusRefresh):
-      return Object.assign({}, INITIAL_STATUS_STATE, {
+      return {
+        ...INITIAL_STATUS_STATE,
         status: action.payload.status,
         components: action.payload.components,
         warningMessages: action.payload.warningMessages
-      });
+      };
     default:
       return state;
   }

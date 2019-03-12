@@ -43,14 +43,15 @@ const createMessage = (id: number, content: string, type: MessageType) => {
 // returns the updated state
 const updateMessage = (state: MessageCenterState, messageIds: number[], updater) => {
   const groups = state.groups.map(group => {
-    group = Object.assign({}, group, {
+    group = {
+      ...group,
       messages: group.messages.map(message => {
         if (messageIds.includes(message.id)) {
           message = updater(message);
         }
         return message;
       })
-    });
+    };
     return group;
   });
   return updateState(state, { groups });
@@ -65,9 +66,7 @@ const Messages = (
       const { groupId, content, messageType } = action.payload;
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
-          group = Object.assign({}, group, {
-            messages: group.messages.concat([createMessage(state.nextId, content, messageType)])
-          });
+          group = { ...group, messages: group.messages.concat([createMessage(state.nextId, content, messageType)]) };
           return group;
         }
         return group;
@@ -77,11 +76,12 @@ const Messages = (
     case getType(MessageCenterActions.removeMessage): {
       const messageId = action.payload.messageId;
       const groups = state.groups.map(group => {
-        group = Object.assign({}, group, {
+        group = {
+          ...group,
           messages: group.messages.filter(message => {
             return !messageId.includes(message.id);
           })
-        });
+        };
         return group;
       });
       return updateState(state, { groups });

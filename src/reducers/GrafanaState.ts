@@ -16,6 +16,8 @@ const GrafanaState = (
         // Ex: in case of response 204
         return null;
       }
+      // Spread types can only be created from object types so need to use Object.assign here
+      // tslint:disable-next-line
       return Object.assign({}, INITIAL_GRAFANA_STATE, {
         url: action.payload.url,
         serviceDashboardPath: action.payload.serviceDashboardPath,
