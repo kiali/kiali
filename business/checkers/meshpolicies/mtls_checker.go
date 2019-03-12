@@ -16,13 +16,13 @@ func (t MtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// if MeshPolicy doesn't enables mTLS, stop validation with any check.
-	if !kubernetes.MeshPolicyHasMTLSEnabled(t.MeshPolicy) {
+	if enabled, _ := kubernetes.PolicyHasMTLSEnabled(t.MeshPolicy); !enabled {
 		return validations, true
 	}
 
 	// otherwise, check among Destination Rules for a rule enabling mTLS mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		if kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr) {
+		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
 			return validations, true
 		}
 	}

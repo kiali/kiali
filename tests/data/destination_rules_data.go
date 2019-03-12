@@ -52,9 +52,21 @@ func AddTrafficPolicyToDestinationRule(trafficPolicy map[string]interface{}, dr 
 }
 
 func CreateMTLSTrafficPolicyForDestinationRules() map[string]interface{} {
+	return CreateTrafficPolicyForDestinationRules("ISTIO_MUTUAL")
+}
+
+func CreateDisabledMTLSTrafficPolicyForDestinationRules() map[string]interface{} {
+	return CreateTrafficPolicyForDestinationRules("DISABLE")
+}
+
+func CreateSimpleTLSTrafficPolicyForDestinationRules() map[string]interface{} {
+	return CreateTrafficPolicyForDestinationRules("SIMPLE")
+}
+
+func CreateTrafficPolicyForDestinationRules(mode string) map[string]interface{} {
 	return map[string]interface{}{
 		"tls": map[string]interface{}{
-			"mode": "ISTIO_MUTUAL",
+			"mode": mode,
 		},
 	}
 }

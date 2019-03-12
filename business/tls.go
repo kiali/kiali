@@ -53,7 +53,7 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 	}
 
 	for _, mp := range mps {
-		if kubernetes.MeshPolicyHasMTLSEnabled(mp) {
+		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
 			return true, nil
 		}
 	}
@@ -68,7 +68,7 @@ func (in *TLSService) hasDestinationRuleEnabled(namespaces []string) (bool, erro
 	}
 
 	for _, dr := range drs {
-		if kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr) {
+		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
 			return true, nil
 		}
 	}
@@ -116,47 +116,40 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 }
 
 func (in TLSService) NamespaceWidemTLSStatus(namespace string) (models.MTLSStatus, error) {
-	pl, pErr := in.hasPolicyEnablingNamespacemTLS(namespace)
+	plMode, pErr := in.hasPolicyNamespacemTLSDefinition(namespace)
 	if pErr != nil {
 		return models.MTLSStatus{}, pErr
 	}
 
-	dr, dErr := in.hasDesinationRuleEnablingNamespacemTLS(namespace)
+	drMode, dErr := in.hasDesinationRuleEnablingNamespacemTLS(namespace)
 	if dErr != nil {
 		return models.MTLSStatus{}, dErr
 	}
 
-	status := MTLSNotEnabled
-	if pl && dr {
-		status = MTLSEnabled
-	} else if pl || dr {
-		status = MTLSPartiallyEnabled
-	}
-
 	return models.MTLSStatus{
-		Status: status,
+		Status: finalStatus(drMode, plMode),
 	}, nil
 }
 
-func (in TLSService) hasPolicyEnablingNamespacemTLS(namespace string) (bool, error) {
+func (in TLSService) hasPolicyNamespacemTLSDefinition(namespace string) (string, error) {
 	ps, err := in.k8s.GetPolicies(namespace)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	for _, p := range ps {
-		if kubernetes.PolicyHasMTLSEnabled(p) {
-			return true, nil
+		if _, mode := kubernetes.PolicyHasMTLSEnabled(p); mode != "" {
+			return mode, nil
 		}
 	}
 
-	return false, nil
+	return "", nil
 }
 
-func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (bool, error) {
+func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (string, error) {
 	nss, nssErr := in.businessLayer.Namespace.GetNamespaces()
 	if nssErr != nil {
-		return false, nssErr
+		return "", nssErr
 	}
 
 	nsNames := make([]string, 0, 0)
@@ -166,23 +159,29 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (b
 
 	drs, nssErr := in.getAllDestinationRules(nsNames)
 	if nssErr != nil {
-		return false, nssErr
+		return "", nssErr
 	}
 
 	for _, dr := range drs {
-		if kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr) {
-			return true, nil
+		if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(namespace, dr); mode != "" {
+			return mode, nil
 		}
 	}
 
-	return false, nil
+	return "", nil
 }
 
 func finalStatus(drStatus string, pStatus string) string {
 	finalStatus := MTLSPartiallyEnabled
 
 	if drStatus == pStatus {
-		finalStatus = pStatus
+		if drStatus == "ENABLED" {
+			finalStatus = MTLSEnabled
+		} else if drStatus == "DISABLED" {
+			finalStatus = MTLSDisabled
+		} else if drStatus == "" {
+			finalStatus = MTLSNotEnabled
+		}
 	}
 
 	return finalStatus

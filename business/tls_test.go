@@ -6,6 +6,7 @@ import (
 	osv1 "github.com/openshift/api/project/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/tests/data"
@@ -275,17 +276,40 @@ func TestNamespaceHasDestinationRuleDisabled(t *testing.T) {
 }
 
 func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	ps := []kubernetes.IstioObject{}
 	drs := []kubernetes.IstioObject{}
 
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
 
-	ps = fakePermissivePolicy("default", "bookinfo")
+	ps = fakeTargetedPolicy("default", "bookinfo", "productpage")
 	drs = []kubernetes.IstioObject{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
 	testNamespaceScenario(MTLSNotEnabled, drs, ps, t)
+}
+
+func TestNamespaceHasMTLSDisabled(t *testing.T) {
+	ps := fakePermissivePolicy("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+
+	testNamespaceScenario(MTLSDisabled, drs, ps, t)
+}
+
+func TestNamespaceHasSimpleTls(t *testing.T) {
+	ps := fakePermissivePolicy("default", "bookinfo")
+	drs := []kubernetes.IstioObject{
+		data.AddTrafficPolicyToDestinationRule(data.CreateSimpleTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local")),
+	}
+
+	testNamespaceScenario(MTLSDisabled, drs, ps, t)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
@@ -304,7 +328,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s.On("GetDestinationRules", "bookinfo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: SetWithBackends(k8s, nil)}
+	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
@@ -321,7 +345,7 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 	k8s.On("GetDestinationRules", "foo", "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetPolicies", "bookinfo").Return(ps, nil)
 
-	tlsService := TLSService{k8s: k8s, businessLayer: SetWithBackends(k8s, nil)}
+	tlsService := TLSService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 	status, err := (tlsService).NamespaceWidemTLSStatus("bookinfo")
 
 	assert.NoError(err)
@@ -350,6 +374,16 @@ func fakePolicyEmptyMTLS(name, namespace string) []kubernetes.IstioObject {
 		},
 	}
 	return fakePolicy(name, namespace, mtls)
+}
+
+func fakeTargetedPolicy(name, namespace, target string) []kubernetes.IstioObject {
+	targets := []interface{}{
+		map[string]interface{}{
+			"name": target,
+		},
+	}
+
+	return []kubernetes.IstioObject{data.CreateEmptyPolicyWithTargets(name, namespace, targets)}
 }
 
 func fakePermissivePolicy(name, namespace string) []kubernetes.IstioObject {

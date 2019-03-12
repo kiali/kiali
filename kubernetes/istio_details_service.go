@@ -837,29 +837,23 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 	return true, -1
 }
 
-func MeshPolicyHasMTLSEnabled(meshPolicy IstioObject) bool {
-
+func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
 	// It is mandatory to have default as a name
-	if meshMeta := meshPolicy.GetObjectMeta(); meshMeta.Name != "default" {
-		return false
+	if policyMeta := policy.GetObjectMeta(); policyMeta.Name != "default" {
+		return false, ""
 	}
 
-	// Rest of constraints are shared with non-mesh policies
-	return PolicyHasMTLSEnabled(meshPolicy)
-}
-
-func PolicyHasMTLSEnabled(policy IstioObject) bool {
 	// It is no globally enabled when has targets
 	targets, targetPresent := policy.GetSpec()["targets"]
 	specificTarget := targetPresent && len(targets.([]interface{})) > 0
 	if specificTarget {
-		return false
+		return false, ""
 	}
 
 	// It is globally enabled when a peer has mtls enabled
 	peers, peersPresent := policy.GetSpec()["peers"]
 	if !peersPresent {
-		return false
+		return false, ""
 	}
 
 	for _, peer := range peers.([]interface{}) {
@@ -867,36 +861,43 @@ func PolicyHasMTLSEnabled(policy IstioObject) bool {
 		if mtls, present := peerMap["mtls"]; present {
 			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
 				// mTLS enabled in case there is an empty map or mode is STRICT
-				if mode, found := mtlsMap["mode"]; !found || mode == "STRICT" {
-					return true
+				if mode, found := mtlsMap["mode"]; found {
+					if mode == "STRICT" {
+						return true, "ENABLED"
+					} else {
+						return false, "DISABLED"
+					}
+				} else {
+					// STRICT mode when mtls object is empty
+					return true, "ENABLED"
 				}
 			} else {
-				// mTLS enabled in case mtls object is empty
-				return true
+				// STRICT mode when mtls object is empty
+				return true, "ENABLED"
 			}
 		}
 	}
 
-	return false
+	return false, ""
 }
 
-func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) bool {
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) (bool, string) {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule IstioObject) bool {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule IstioObject) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
 	nsHost := fmt.Sprintf("*.%s.svc.cluster.local", namespace)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule IstioObject) bool {
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule IstioObject) (bool, string) {
 	host, hostPresent := destinationRule.GetSpec()["host"]
 	if !hostPresent || host != expectedHost {
-		return false
+		return false, ""
 	}
 
 	if trafficPolicy, trafficPresent := destinationRule.GetSpec()["trafficPolicy"]; trafficPresent {
@@ -906,7 +907,9 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 					if mode, found := tlsCasted["mode"]; found {
 						if modeCasted, ok := mode.(string); ok {
 							if modeCasted == "ISTIO_MUTUAL" {
-								return true
+								return true, "ENABLED"
+							} else {
+								return false, "DISABLED"
 							}
 						}
 					}
@@ -915,7 +918,7 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 func fetch(rValue *[]IstioObject, namespace string, service string, fetcher func(string, string) ([]IstioObject, error), wg *sync.WaitGroup, errChan chan error) {

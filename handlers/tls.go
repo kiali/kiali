@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
 )
 
@@ -14,7 +13,7 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	// Get business layer
-	business, err := business.Get()
+	business, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return

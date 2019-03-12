@@ -17,3 +17,15 @@ func CreateEmptyPolicy(name, namespace string, peers []interface{}) kubernetes.I
 		},
 	}).DeepCopyIstioObject()
 }
+
+func CreateEmptyPolicyWithTargets(name, namespace string, targets []interface{}) kubernetes.IstioObject {
+	return (&kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{
+			"targets": targets,
+		},
+	}).DeepCopyIstioObject()
+}
