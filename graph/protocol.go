@@ -19,11 +19,12 @@ type Rate struct {
 }
 
 type Protocol struct {
-	Name      string
-	EdgeRates []Rate
-	NodeRates []Rate
-	Unit      string
-	UnitShort string
+	Name          string
+	EdgeRates     []Rate
+	EdgeResponses string
+	NodeRates     []Rate
+	Unit          string
+	UnitShort     string
 }
 
 var GRPC Protocol = Protocol{
@@ -34,6 +35,7 @@ var GRPC Protocol = Protocol{
 		Rate{Name: "grpcPercentErr", IsPercentErr: true, Precision: 1},
 		Rate{Name: "grpcPercentReq", IsPercentReq: true, Precision: 1},
 	},
+	EdgeResponses: "grpcResponses",
 	NodeRates: []Rate{
 		Rate{Name: "grpcIn", IsIn: true, Precision: 2},
 		Rate{Name: "grpcInErr", IsErr: true, Precision: 2},
@@ -53,6 +55,7 @@ var HTTP Protocol = Protocol{
 		Rate{Name: "httpPercentErr", IsPercentErr: true, Precision: 1},
 		Rate{Name: "httpPercentReq", IsPercentReq: true, Precision: 1},
 	},
+	EdgeResponses: "httpResponses",
 	NodeRates: []Rate{
 		Rate{Name: "httpIn", IsIn: true, Precision: 2},
 		Rate{Name: "httpIn3xx", Precision: 2},
@@ -68,6 +71,7 @@ var TCP Protocol = Protocol{
 	EdgeRates: []Rate{
 		Rate{Name: "tcp", IsTotal: true, Precision: 2},
 	},
+	EdgeResponses: "tcpResponses",
 	NodeRates: []Rate{
 		Rate{Name: "tcpIn", IsIn: true, Precision: 2},
 		Rate{Name: "tcpOut", IsOut: true, Precision: 2},
@@ -78,23 +82,28 @@ var TCP Protocol = Protocol{
 
 var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
-func AddToMetadata(protocol string, val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+	if val <= 0.0 {
+		return
+	}
+
 	switch protocol {
 	case "grpc":
-		addToMetadataGrpc(val, code, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataGrpc(val, code, flags, sourceMetadata, destMetadata, edgeMetadata)
 	case "http":
-		addToMetadataHttp(val, code, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataHttp(val, code, flags, sourceMetadata, destMetadata, edgeMetadata)
 	case "tcp":
-		addToMetadataTcp(val, code, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataTcp(val, flags, sourceMetadata, destMetadata, edgeMetadata)
 	default:
 		log.Tracef("Ignore unhandled metadata protocol [%s]", protocol)
 	}
 }
 
-func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "grpcOut", val)
 	addToMetadataValue(destMetadata, "grpcIn", val)
 	addToMetadataValue(edgeMetadata, "grpc", val)
+	addToMetadataResponses(edgeMetadata, "grpcResponses", code, flags, val)
 
 	// Istio telemetry may use HTTP codes for gRPC, so if it quacks like a duck...
 	isHttpCode := len(code) == 3
@@ -110,10 +119,11 @@ func addToMetadataGrpc(val float64, code string, sourceMetadata, destMetadata, e
 	}
 }
 
-func addToMetadataHttp(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "httpOut", val)
 	addToMetadataValue(destMetadata, "httpIn", val)
 	addToMetadataValue(edgeMetadata, "http", val)
+	addToMetadataResponses(edgeMetadata, "httpResponses", code, flags, val)
 
 	// note, we don't track 2xx because it's not used downstream and can be easily
 	// calculated: 2xx = (rate - 3xx - 4xx - 5xx)
@@ -130,10 +140,11 @@ func addToMetadataHttp(val float64, code string, sourceMetadata, destMetadata, e
 	}
 }
 
-func addToMetadataTcp(val float64, code string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
 	addToMetadataValue(sourceMetadata, "tcpOut", val)
 	addToMetadataValue(destMetadata, "tcpIn", val)
 	addToMetadataValue(edgeMetadata, "tcp", val)
+	addToMetadataResponses(edgeMetadata, "tcpResponses", "-", flags, val)
 }
 
 func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface{}) {
@@ -156,6 +167,9 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 		if val, ok := fromEdge.Metadata["grpcErr"]; ok {
 			addToMetadataValue(toEdge.Metadata, "grpcErr", val.(float64))
 		}
+		if responses, ok := fromEdge.Metadata["grpcResponses"]; ok {
+			addToResponses(toEdge.Metadata, "grpcResponses", responses.(Responses))
+		}
 	case "http":
 		addToMetadataValue(toEdge.Metadata, "http", fromEdge.Metadata["http"].(float64))
 		if val, ok := fromEdge.Metadata["http3xx"]; ok {
@@ -167,8 +181,15 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 		if val, ok := fromEdge.Metadata["http5xx"]; ok {
 			addToMetadataValue(toEdge.Metadata, "http5xx", val.(float64))
 		}
+		if responses, ok := fromEdge.Metadata["httpResponses"]; ok {
+			addToResponses(toEdge.Metadata, "httpResponses", responses.(Responses))
+		}
 	case "tcp":
 		addToMetadataValue(toEdge.Metadata, "tcp", fromEdge.Metadata["tcp"].(float64))
+		if responses, ok := fromEdge.Metadata["tcpResponses"]; ok {
+			addToResponses(toEdge.Metadata, "tcpResponses", responses.(Responses))
+		}
+
 	default:
 		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, toEdge))
 	}
@@ -183,6 +204,35 @@ func addToMetadataValue(md map[string]interface{}, k string, v float64) {
 		md[k] = curr.(float64) + v
 	} else {
 		md[k] = v
+	}
+}
+
+// The metadata for response codes is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic like this:
+// "200" : {
+//     "-"  : 90.0,
+//	 "DC" : 10.0,
+//	}, ...
+
+type ResponseFlags map[string]float64
+type Responses map[string]ResponseFlags
+
+func addToResponses(md map[string]interface{}, k string, responses Responses) {
+	for code, flagsValMap := range responses {
+		for flags, val := range flagsValMap {
+			addToMetadataResponses(md, k, code, flags, val)
+		}
+	}
+}
+
+func addToMetadataResponses(md map[string]interface{}, k, code, flags string, v float64) {
+	if responses, ok := md[k]; ok {
+		if flagsValueMap, ok2 := responses.(Responses)[code]; ok2 {
+			flagsValueMap[flags] += v
+		} else {
+			responses.(Responses)[code] = ResponseFlags{flags: v}
+		}
+	} else {
+		md[k] = Responses{code: {flags: v}}
 	}
 }
 
