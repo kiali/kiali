@@ -14,6 +14,7 @@ import * as MessageCenter from '../../utils/MessageCenter';
 import MatchingRouting, { ROUTE_TYPE, Rule } from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
+import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
 
 type Props = {
   show: boolean;
@@ -32,6 +33,7 @@ type State = {
   mtlsMode: string;
   tlsModified: boolean;
   loadBalancer: string;
+  lbModified: boolean;
 };
 
 export const WIZARD_WEIGHTED_ROUTING = 'create_weighted_routing';
@@ -42,8 +44,6 @@ export const WIZARD_TITLES = {
   [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing'
 };
 
-const NONE = 'NONE';
-
 class IstioWizard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -52,9 +52,10 @@ class IstioWizard extends React.Component<Props, State> {
       workloads: [],
       rules: [],
       valid: true,
-      mtlsMode: NONE,
+      mtlsMode: DISABLE,
       tlsModified: false,
-      loadBalancer: NONE
+      loadBalancer: ROUND_ROBIN,
+      lbModified: false
     };
   }
 
@@ -77,8 +78,8 @@ class IstioWizard extends React.Component<Props, State> {
         workloads: [],
         rules: [],
         valid: isValid,
-        mtlsMode: NONE,
-        loadBalancer: NONE
+        mtlsMode: DISABLE,
+        loadBalancer: ROUND_ROBIN
       });
     }
   }
@@ -217,14 +218,14 @@ class IstioWizard extends React.Component<Props, State> {
         console.log('Unrecognized type');
     }
 
-    if (this.state.mtlsMode !== NONE || this.state.loadBalancer !== NONE) {
+    if (this.state.tlsModified || this.state.lbModified) {
       wizardDR.spec.trafficPolicy = {};
-      if (this.state.mtlsMode !== NONE) {
+      if (this.state.tlsModified) {
         wizardDR.spec.trafficPolicy.tls = {
           mode: this.state.mtlsMode
         };
       }
-      if (this.state.loadBalancer !== NONE) {
+      if (this.state.lbModified) {
         wizardDR.spec.trafficPolicy.loadBalancer = {
           simple: this.state.loadBalancer
         };
@@ -268,7 +269,8 @@ class IstioWizard extends React.Component<Props, State> {
 
   onLoadBalancer = (simple: string) => {
     this.setState({
-      loadBalancer: simple
+      loadBalancer: simple,
+      lbModified: true
     });
   };
 
@@ -313,7 +315,7 @@ class IstioWizard extends React.Component<Props, State> {
                   loadBalancer={this.state.loadBalancer}
                   onTlsChange={this.onTLS}
                   onLoadbalancerChange={this.onLoadBalancer}
-                  modified={this.state.tlsModified}
+                  expanded={false}
                 />
               </Wizard.Contents>
             </Wizard.Main>

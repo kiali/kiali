@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Button,
-  Col,
   DropdownButton,
   DropdownKebab,
   Form,
@@ -11,8 +10,7 @@ import {
   ListView,
   ListViewIcon,
   ListViewItem,
-  MenuItem,
-  Row
+  MenuItem
 } from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
@@ -502,12 +500,10 @@ class MatchingRouting extends React.Component<Props, State> {
 
   render() {
     return (
-      <Row>
-        <Col>
-          {this.renderRuleBuilder()}
-          {this.renderRules()}
-        </Col>
-      </Row>
+      <>
+        {this.renderRuleBuilder()}
+        {this.renderRules()}
+      </>
     );
   }
 }

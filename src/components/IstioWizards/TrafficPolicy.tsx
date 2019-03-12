@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { Col, ControlLabel, DropdownButton, MenuItem, Row } from 'patternfly-react';
+import { Col, ControlLabel, DropdownButton, ExpandCollapse, Icon, MenuItem, Row } from 'patternfly-react';
 import { style } from 'typestyle';
 
-export const NONE = 'NONE';
-
+export const DISABLE = 'DISABLE';
 export const ISTIO_MUTUAL = 'ISTIO_MUTUAL';
+export const ROUND_ROBIN = 'ROUND_ROBIN';
 
-export const loadBalancerSimple: string[] = [NONE, 'ROUND_ROBIN', 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
+export const loadBalancerSimple: string[] = [ROUND_ROBIN, 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
 
-export const mTLSMode: string[] = [NONE, ISTIO_MUTUAL, 'MUTUAL', 'SIMPLE', 'DISABLE'];
+export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, 'MUTUAL', 'SIMPLE'];
 
 const statusName = 'Istio mTLS';
 
@@ -22,10 +22,11 @@ type Props = {
   loadBalancer: string;
   onTlsChange: (mtlsMode: string) => void;
   onLoadbalancerChange: (loadbalancer: string) => void;
-  modified: boolean;
+  expanded: boolean;
 };
 
 const tlsStyle = style({
+  marginTop: 20,
   marginLeft: 20,
   marginRight: 20
 });
@@ -35,16 +36,32 @@ const lbStyle = style({
   marginRight: 20
 });
 
+const tlsIconType = 'pf';
+const tlsIconName = 'locked';
+
+const expandStyle = style({
+  $nest: {
+    ['.btn']: {
+      fontSize: '14px'
+    }
+  }
+});
+
 class TrafficPolicy extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
   }
 
-  render() {
+  componentDidMount(): void {
     const isMtlsEnabled = this.props.status[statusName] && this.props.status[statusName] === MTLSStatus.ENABLED;
-    const mtlsMode = this.props.modified ? this.props.mtlsMode : isMtlsEnabled ? ISTIO_MUTUAL : this.props.mtlsMode;
+    if (isMtlsEnabled) {
+      this.props.onTlsChange(ISTIO_MUTUAL);
+    }
+  }
+
+  render() {
     const tlsMenuItems: any[] = mTLSMode.map(mode => (
-      <MenuItem key={mode} eventKey={mode} active={mode === mtlsMode}>
+      <MenuItem key={mode} eventKey={mode} active={mode === this.props.mtlsMode}>
         {mode}
       </MenuItem>
     ));
@@ -54,23 +71,37 @@ class TrafficPolicy extends React.Component<Props> {
       </MenuItem>
     ));
     return (
-      <Row>
-        <Col sm={12}>
-          <ControlLabel className={tlsStyle}>TLS</ControlLabel>
-          <DropdownButton bsStyle="default" title={mtlsMode} id="trafficPolicy-tls" onSelect={this.props.onTlsChange}>
-            {tlsMenuItems}
-          </DropdownButton>
-          <ControlLabel className={lbStyle}>LoadBalancer</ControlLabel>
-          <DropdownButton
-            bsStyle="default"
-            title={this.props.loadBalancer}
-            id="trafficPolicy-lb"
-            onSelect={this.props.onLoadbalancerChange}
-          >
-            {lbMenuItems}
-          </DropdownButton>
-        </Col>
-      </Row>
+      <ExpandCollapse
+        className={expandStyle}
+        textCollapsed="Show Advanced Options"
+        textExpanded="Hide Advanced Options"
+        expanded={this.props.expanded}
+      >
+        <Row>
+          <Col sm={12}>
+            <ControlLabel className={tlsStyle}>
+              <Icon type={tlsIconType} name={tlsIconName} /> TLS
+            </ControlLabel>
+            <DropdownButton
+              bsStyle="default"
+              title={this.props.mtlsMode}
+              id="trafficPolicy-tls"
+              onSelect={this.props.onTlsChange}
+            >
+              {tlsMenuItems}
+            </DropdownButton>
+            <ControlLabel className={lbStyle}>LoadBalancer</ControlLabel>
+            <DropdownButton
+              bsStyle="default"
+              title={this.props.loadBalancer}
+              id="trafficPolicy-lb"
+              onSelect={this.props.onLoadbalancerChange}
+            >
+              {lbMenuItems}
+            </DropdownButton>
+          </Col>
+        </Row>
+      </ExpandCollapse>
     );
   }
 }
