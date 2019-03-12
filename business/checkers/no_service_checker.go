@@ -1,10 +1,10 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	v1 "k8s.io/api/core/v1"
 )
@@ -15,6 +15,7 @@ type NoServiceChecker struct {
 	Services             []v1.Service
 	WorkloadList         models.WorkloadList
 	GatewaysPerNamespace [][]kubernetes.IstioObject
+	AuthorizationDetails *kubernetes.RBACDetails
 }
 
 func (in NoServiceChecker) Check() models.IstioValidations {
@@ -23,8 +24,6 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	if in.IstioDetails == nil || in.Services == nil {
 		return validations
 	}
-
-	log.Infof("ServiceEntries: %v\n", in.IstioDetails.ServiceEntries)
 
 	serviceNames := getServiceNames(in.Services)
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioDetails.ServiceEntries)
@@ -36,6 +35,10 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	}
 	for _, destinationRule := range in.IstioDetails.DestinationRules {
 		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.Namespace, in.WorkloadList, in.Services, serviceHosts))
+	}
+
+	for _, serviceRole := range in.AuthorizationDetails.ServiceRoles {
+		validations.MergeValidations(runServiceRoleCheck(serviceRole, in.Services))
 	}
 
 	return validations
@@ -99,6 +102,24 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 		Valid:      valid,
 	}
 	return drvalidations
+}
+
+func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []v1.Service) models.IstioValidations {
+	result, valid := authorization.ServiceChecker{
+		ServiceRole: serviceRole,
+		Services:    services,
+	}.Check()
+
+	validations := models.IstioValidations{}
+	istioObjectName := serviceRole.GetObjectMeta().Name
+	key := models.IstioValidationKey{ObjectType: "servicerole", Name: istioObjectName}
+	validations[key] = &models.IstioValidation{
+		Name:       istioObjectName,
+		ObjectType: "servicerole",
+		Checks:     result,
+		Valid:      valid,
+	}
+	return validations
 }
 
 func getServiceNames(services []v1.Service) []string {

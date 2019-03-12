@@ -326,6 +326,12 @@ func (o *K8SClientMock) GetServiceRoleBinding(namespace string, policyName strin
 	args := o.Called(namespace)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
+
+func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.RBACDetails, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(*kubernetes.RBACDetails), args.Error(1)
+}
+
 func (o *K8SClientMock) IsOpenShift() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
