@@ -140,7 +140,7 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/status",
 			handlers.Root,
-			false,
+			true,
 		},
 		// swagger:route GET /config getConfig
 		// ---
