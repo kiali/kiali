@@ -2,7 +2,7 @@ import { ServerConfig } from '../types/ServerConfig';
 
 export type Durations = { [key: number]: string };
 
-type ComputedServerConfig = ServerConfig & {
+export type ComputedServerConfig = ServerConfig & {
   durations: Durations;
 };
 

@@ -1,11 +1,15 @@
 import * as React from 'react';
 import { Modal, Icon, Button, Alert } from 'patternfly-react';
-
-import { KialiAppState } from '../../store/Store';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { style } from 'typestyle';
 import _ from 'lodash';
 import beautify from 'json-beautify';
+
+import authenticationConfig from '../../config/authenticationConfig';
+import { serverConfig } from '../../config';
+import { ComputedServerConfig } from '../../config/serverConfig';
+import { AuthConfig } from '../../types/Auth';
+import { KialiAppState } from '../../store/Store';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -30,6 +34,10 @@ const textAreaStyle = style({
 });
 
 type DebugInformationData = {
+  backendConfigs: {
+    authenticationConfig: AuthConfig;
+    computedServerConfig: ComputedServerConfig;
+  };
   currentURL: string;
   reduxState: KialiAppState;
 };
@@ -73,6 +81,10 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
   render() {
     const renderDebugInformation = _.memoize(() => {
       const debugInformation: DebugInformationData = {
+        backendConfigs: {
+          authenticationConfig: authenticationConfig,
+          computedServerConfig: serverConfig
+        },
         currentURL: window.location.href,
         reduxState: this.props.appState
       };
