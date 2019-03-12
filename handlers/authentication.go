@@ -55,7 +55,7 @@ type TokenResponse struct {
 	// The expired time for the token
 	// A string with the Datetime when the token will be expired
 	//
-	// example: 2018-06-20 19:40:54.116369887 +0000 UTC m=+43224.838320603
+	// example: Thu, 07 Mar 2019 17:50:26 +0000
 	// required: true
 	ExpiresOn string `json:"expiresOn"`
 }
@@ -121,7 +121,7 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	}
 	http.SetCookie(w, &tokenCookie)
 
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: token.Token, ExpiresOn: token.ExpiresOn.String(), Username: user})
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: token.Token, ExpiresOn: token.ExpiresOn.Format(time.RFC1123Z), Username: user})
 	return true
 }
 
@@ -187,7 +187,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	}
 	http.SetCookie(w, &tokenCookie)
 
-	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.String(), Username: user.Metadata.Name})
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: expiresOn.Format(time.RFC1123Z), Username: user.Metadata.Name})
 	return true
 }
 
@@ -356,7 +356,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 	token := getTokenStringFromRequest(r)
 	if claims, _ := config.GetTokenClaimsIfValid(token); claims != nil {
 		response.SessionInfo = sessionInfo{
-			ExpiresOn: time.Unix(claims.ExpiresAt, 0).String(),
+			ExpiresOn: time.Unix(claims.ExpiresAt, 0).Format(time.RFC1123Z),
 			Username:  claims.Subject,
 		}
 	}
