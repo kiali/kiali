@@ -106,11 +106,11 @@ class IstioWizard extends React.Component<Props, State> {
         // match follows format:  headers [<header-name>] <op> <value>
         const i0 = match.indexOf('[');
         const j0 = match.indexOf(']');
-        const headerName = match.substring(i0 + 1, j0);
+        const headerName = match.substring(i0 + 1, j0).trim();
         const i1 = match.indexOf(' ', j0 + 1);
         const j1 = match.indexOf(' ', i1 + 1);
-        const op = match.substring(i1 + 1, j1);
-        const value = match.substring(j1 + 1);
+        const op = match.substring(i1 + 1, j1).trim();
+        const value = match.substring(j1 + 1).trim();
         matchHeaders.headers![headerName] = { [op]: value };
       });
     if (Object.keys(matchHeaders.headers || {}).length > 0) {
@@ -123,9 +123,9 @@ class IstioWizard extends React.Component<Props, State> {
         // match follows format: <name> <op> <value>
         const i = match.indexOf(' ');
         const j = match.indexOf(' ', i + 1);
-        const name = match.substring(0, i);
-        const op = match.substring(i, j);
-        const value = match.substring(j);
+        const name = match.substring(0, i).trim();
+        const op = match.substring(i + 1, j).trim();
+        const value = match.substring(j + 1).trim();
         matchRequests.push({
           [name]: {
             [op]: value
@@ -231,7 +231,6 @@ class IstioWizard extends React.Component<Props, State> {
         };
       }
     }
-
     return [wizardDR, wizardVS];
   };
 
