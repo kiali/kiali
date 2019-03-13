@@ -48,7 +48,7 @@ $ pytest -s tests/
 ```
 ## Run notes
 
-* The Bookinfo namespace is cleaned of pre-existing Circuit Breakers and Virtual Serives.
+* The Bookinfo namespace is cleaned of pre-existing Circuit Breakers and Virtual Services.
   Therefore, igore any errors during the clearnup that follow the message:
     "Cleanning up (Note: ignore messages: "Error from server..."
 
