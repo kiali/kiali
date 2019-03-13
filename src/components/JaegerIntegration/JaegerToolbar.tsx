@@ -118,7 +118,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               <TagsControl tags={this.state.tags} onChange={e => this.setState({ tags: e.currentTarget.value })} />
               <FormGroup style={{ display: 'inline-flex' }}>
                 <Col componentClass={Form.ControlLabel} style={{ marginTop: '4px' }}>
-                  Min Duration
+                  Min Span Duration
                 </Col>
                 <FormControl
                   type="text"
@@ -131,7 +131,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               </FormGroup>
               <FormGroup style={{ display: 'inline-flex' }}>
                 <Col componentClass={Form.ControlLabel} style={{ marginTop: '4px' }}>
-                  Max Duration
+                  Max Span Duration
                 </Col>
                 <FormControl
                   type="text"
