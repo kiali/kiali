@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/kiali/kiali/util"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -134,6 +135,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.MetricsEnabled = true
 	conf.Server.MetricsPort = testMetricsPort
 	conf.Auth.Strategy = "login"
+	util.Clock = util.RealClock{}
 
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/authenticate"

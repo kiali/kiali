@@ -91,17 +91,26 @@ func getTokenStringFromRequest(r *http.Request) string {
 }
 
 func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
-	user := checkKialiCredentials(r)
+	// Check if user is already logged in
+	oldToken := getTokenStringFromRequest(r)
+	user, err := config.ValidateToken(oldToken)
 
+	// If user is already logged in, skip credential
+	// validation and just send a new JWT to extend
+	// the session of the user.
 	if len(user) == 0 {
-		conf := config.Get()
-		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
-			log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
-			RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
-			return false
-		} else {
-			RespondWithCode(w, http.StatusUnauthorized)
-			return false
+		user = checkKialiCredentials(r)
+
+		if len(user) == 0 {
+			conf := config.Get()
+			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
+				RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
+				return false
+			} else {
+				RespondWithCode(w, http.StatusUnauthorized)
+				return false
+			}
 		}
 	}
 
