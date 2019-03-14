@@ -3,6 +3,9 @@ package destinationrules
 import (
 	"strconv"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -13,7 +16,7 @@ type NoDestinationChecker struct {
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
 	ServiceEntries  map[string][]string
-	ServiceNames    []string
+	Services        []v1.Service
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions
@@ -61,26 +64,35 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, valid
 }
 
-func (n NoDestinationChecker) hasMatchingWorkload(service string, labels map[string]string) bool {
-	appLabel := config.Get().IstioLabels.AppLabelName
-
+func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels map[string]string) bool {
 	// Check wildcard hosts
 	if service == "*" {
 		return true
 	}
 
+	var selectors map[string]string
+
+	// Find the correct service
+	for _, s := range n.Services {
+		if s.Name == service {
+			selectors = s.Spec.Selector
+		}
+	}
+
 	// Check workloads
+	if selectors == nil || len(selectors) == 0 {
+		return false
+	}
+
+	selector := labels.SelectorFromSet(labels.Set(selectors))
+
+	subsetLabelSet := labels.Set(subsetLabels)
+	subsetSelector := labels.SelectorFromSet(subsetLabelSet)
+
 	for _, wl := range n.WorkloadList.Workloads {
-		if service == wl.Labels[appLabel] {
-			valid := true
-			for k, v := range labels {
-				wlv, found := wl.Labels[k]
-				if !found || wlv != v {
-					valid = false
-					break
-				}
-			}
-			if valid {
+		wlLabelSet := labels.Set(wl.Labels)
+		if selector.Matches(wlLabelSet) {
+			if subsetSelector.Matches(wlLabelSet) {
 				return true
 			}
 		}
@@ -103,8 +115,8 @@ func (n NoDestinationChecker) hasMatchingService(service, origHost string) bool 
 		}
 	}
 	// Check ServiceNames
-	for _, s := range n.ServiceNames {
-		if service == s {
+	for _, s := range n.Services {
+		if service == s.Name {
 			return true
 		}
 	}
