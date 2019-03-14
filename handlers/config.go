@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/common/model"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config"
@@ -73,9 +74,9 @@ func getPrometheusConfig() PrometheusConfig {
 		var config PrometheusPartialConfig
 		if checkErr(yaml.Unmarshal([]byte(configResult.YAML), &config), "Failed to unmarshal Prometheus configuration") {
 			scrapeIntervalString := config.Global.Scrape_interval
-			scrapeInterval, err := time.ParseDuration(scrapeIntervalString)
+			scrapeInterval, err := model.ParseDuration(scrapeIntervalString)
 			if checkErr(err, fmt.Sprintf("Invalid global scrape interval [%s]", scrapeIntervalString)) {
-				promConfig.GlobalScrapeInterval = int64(scrapeInterval.Seconds())
+				promConfig.GlobalScrapeInterval = int64(time.Duration(scrapeInterval).Seconds())
 			}
 		}
 	}
@@ -83,9 +84,9 @@ func getPrometheusConfig() PrometheusConfig {
 	flags, err := client.GetFlags()
 	if checkErr(err, "Failed to fetch Prometheus flags") {
 		if retentionString, ok := flags["storage.tsdb.retention"]; ok {
-			retention, err := time.ParseDuration(retentionString)
+			retention, err := model.ParseDuration(retentionString)
 			if checkErr(err, fmt.Sprintf("Invalid storage.tsdb.retention [%s]", retentionString)) {
-				promConfig.StorageTsdbRetention = int64(retention.Seconds())
+				promConfig.StorageTsdbRetention = int64(time.Duration(retention).Seconds())
 			}
 		}
 	}

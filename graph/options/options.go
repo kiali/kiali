@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
@@ -75,7 +76,7 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
-	var duration time.Duration
+	var duration model.Duration
 	var includeIstio bool
 	var injectServiceNodes bool
 	var queryTime int64
@@ -89,10 +90,10 @@ func NewOptions(r *http.Request) Options {
 	vendor := params.Get("vendor")
 
 	if durationString == "" {
-		duration, _ = time.ParseDuration(defaultDuration)
+		duration, _ = model.ParseDuration(defaultDuration)
 	} else {
 		var durationErr error
-		duration, durationErr = time.ParseDuration(durationString)
+		duration, durationErr = model.ParseDuration(durationString)
 		if durationErr != nil {
 			graph.BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
 		}
@@ -177,7 +178,7 @@ func NewOptions(r *http.Request) Options {
 		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
 			namespaceMap[namespaceToken] = graph.NamespaceInfo{
 				Name:     namespaceToken,
-				Duration: resolveNamespaceDuration(creationTime, duration, queryTime),
+				Duration: resolveNamespaceDuration(creationTime, time.Duration(duration), queryTime),
 			}
 		} else {
 			graph.Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
@@ -203,7 +204,7 @@ func NewOptions(r *http.Request) Options {
 			Workload:  workload,
 		},
 		VendorOptions: VendorOptions{
-			Duration:  duration,
+			Duration:  time.Duration(duration),
 			GraphType: graphType,
 			GroupBy:   groupBy,
 			QueryTime: queryTime,
