@@ -103,10 +103,11 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var vs, dr []kubernetes.IstioObject
 	var sWk map[string][]prometheus.Workload
 	var ws models.Workloads
+	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
-	errChan := make(chan error, 8)
+	wg.Add(10)
+	errChan := make(chan error, 9)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -123,6 +124,15 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		defer wg.Done()
 		var err2 error
 		hth, err2 = in.businessLayer.Health.GetServiceHealth(namespace, service, interval, queryTime)
+		if err2 != nil {
+			errChan <- err2
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err2 error
+		nsmtls, err2 = in.businessLayer.TLS.NamespaceWidemTLSStatus(namespace)
 		if err2 != nil {
 			errChan <- err2
 		}
@@ -204,7 +214,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		wo = append(wo, wi)
 	}
 
-	s := models.ServiceDetails{Workloads: wo, Health: hth}
+	s := models.ServiceDetails{Workloads: wo, Health: hth, NamespaceMTLS: nsmtls}
 	s.SetService(svc)
 	s.SetPods(kubernetes.FilterPodsForEndpoints(eps, pods))
 	s.SetEndpoints(eps)
