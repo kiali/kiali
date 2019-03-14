@@ -11,7 +11,7 @@ import moment from 'moment';
 type UserProps = {
   session: LoginSession;
   logout: () => void;
-  extendSession: () => void;
+  extendSession: (session: LoginSession) => void;
 };
 
 type UserState = {
@@ -19,6 +19,7 @@ type UserState = {
   timeCountDownSeconds: number;
   checkSessionTimerId?: Timer;
   timeLeftTimerId?: Timer;
+  isSessionTimeoutDismissed: boolean;
 };
 
 class UserDropdown extends React.Component<UserProps, UserState> {
@@ -26,6 +27,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
     super(props);
     this.state = {
       showSessionTimeOut: false,
+      isSessionTimeoutDismissed: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS
     };
   }
@@ -59,7 +61,7 @@ class UserDropdown extends React.Component<UserProps, UserState> {
       this.handleLogout();
     }
 
-    return expiresOn.diff(moment(), 'seconds');
+    return expiresOn.diff(moment());
   };
 
   checkSession = () => {
@@ -72,8 +74,8 @@ class UserDropdown extends React.Component<UserProps, UserState> {
     this.props.logout();
   }
 
-  extendSession = () => {
-    this.props.extendSession();
+  extendSession = (session: LoginSession) => {
+    this.props.extendSession(session);
     this.setState({ showSessionTimeOut: false });
   };
 
@@ -81,9 +83,10 @@ class UserDropdown extends React.Component<UserProps, UserState> {
     return (
       <>
         <SessionTimeout
-          logout={this.props.logout}
-          extendSession={this.extendSession}
-          show={this.state.showSessionTimeOut}
+          onLogout={this.props.logout}
+          onExtendSession={this.extendSession}
+          onDismiss={this.dismissHandler}
+          show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
         <Dropdown componentClass="li" id="user">
@@ -99,6 +102,10 @@ class UserDropdown extends React.Component<UserProps, UserState> {
       </>
     );
   }
+
+  private dismissHandler = () => {
+    this.setState({ isSessionTimeoutDismissed: true });
+  };
 }
 
 export default UserDropdown;

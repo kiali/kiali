@@ -1,5 +1,3 @@
-import { RawDate } from '../types/Common';
-
 import { ActionType, createAction } from 'typesafe-actions';
 import { LoginSession, LoginStatus } from '../store/Store';
 
@@ -8,14 +6,14 @@ enum LoginActionKeys {
   LOGIN_EXTEND = 'LOGIN_EXTEND',
   LOGIN_SUCCESS = 'LOGIN_SUCCESS',
   LOGIN_FAILURE = 'LOGIN_FAILURE',
-  LOGOUT_SUCCESS = 'LOGOUT_SUCCESS'
+  LOGOUT_SUCCESS = 'LOGOUT_SUCCESS',
+  SESSION_EXPIRED = 'SESSION_EXPIRED'
 }
 
 export interface LoginPayload {
   status: LoginStatus;
   session?: LoginSession;
   error?: any;
-  uiExpiresOn: RawDate;
 }
 
 // synchronous action creators
@@ -49,7 +47,8 @@ export const LoginActions = {
       session: undefined,
       error: undefined
     } as LoginPayload)
-  )
+  ),
+  sessionExpired: createAction(LoginActionKeys.SESSION_EXPIRED)
 };
 
 export type LoginAction = ActionType<typeof LoginActions>;

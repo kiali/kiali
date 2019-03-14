@@ -5,10 +5,6 @@ const conf = {
   version: '0.1',
   /** Configuration related with session */
   session: {
-    /** TimeOut in Minutes default 24 hours */
-    sessionTimeOut: 24 * UNIT_TIME.HOUR * MILLISECONDS,
-    /** Extended Session in Minutes default 30 minutes */
-    extendedSessionTimeOut: 30 * UNIT_TIME.MINUTE * MILLISECONDS,
     /** TimeOut Session remain for warning user default 1 minute */
     timeOutforWarningUser: 1 * UNIT_TIME.MINUTE * MILLISECONDS
   },

@@ -65,6 +65,10 @@ interface LoginRequest {
 }
 
 /** Requests */
+export const extendSession = () => {
+  return newRequest<LoginSession>(HTTP_VERBS.GET, urls.authenticate, {}, {});
+};
+
 export const login = async (
   request: LoginRequest = { username: ANONYMOUS_USER, password: 'anonymous' }
 ): Promise<Response<LoginSession>> => {

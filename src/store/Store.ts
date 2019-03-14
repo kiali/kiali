@@ -67,7 +67,8 @@ export enum LoginStatus {
   logging,
   loggedIn,
   loggedOut,
-  error
+  error,
+  expired
 }
 
 export interface LoginSession {
@@ -79,7 +80,6 @@ export interface LoginState {
   status: LoginStatus;
   session?: LoginSession;
   message: string;
-  uiExpiresOn: RawDate;
 }
 
 export interface Component {

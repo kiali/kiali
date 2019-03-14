@@ -1,11 +1,14 @@
 import * as React from 'react';
 import { Modal, Button, Icon, Row, Col } from 'patternfly-react';
-import { config } from '../../config';
-import { UNIT_TIME, MILLISECONDS } from '../../types/Common';
+import { AuthStrategy } from '../../types/Auth';
+import { LoginSession } from '../../store/Store';
+import * as API from '../../services/Api';
+import authenticationConfig from '../../config/authenticationConfig';
 
 type SessionTimeoutProps = {
-  logout: () => void;
-  extendSession: () => void;
+  onLogout: () => void;
+  onExtendSession: (session: LoginSession) => void;
+  onDismiss: () => void;
   show: boolean;
   timeOutCountDown: number;
 };
@@ -16,14 +19,11 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   }
 
   render() {
-    const extendedTime = config.session.extendedSessionTimeOut
-      ? config.session.extendedSessionTimeOut / (MILLISECONDS * UNIT_TIME.MINUTE)
-      : 30;
     return (
       <Modal
+        backdrop="static"
         className={'message-dialog-pf'}
         show={this.props.show}
-        onHide={this.props.logout}
         enforceFocus={true}
         aria-modal={true}
       >
@@ -34,25 +34,58 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
               <Icon name="warning-triangle-o" type="pf" style={{ fontSize: '48px' }} />
             </Col>
             <Col xs={12} sm={10} md={10} lg={10}>
-              <p className={'lead'}>
-                Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
-                <br />
-                Would you like to extend your session for another {extendedTime} minutes?
-              </p>
+              {authenticationConfig.strategy === AuthStrategy.login
+                ? this.textForLoginStrategy()
+                : this.textForOpenshiftStrategy()}
             </Col>
           </Row>
         </Modal.Body>
         <Modal.Footer>
           <React.Fragment>
-            <Button bsStyle={'default'} onClick={this.props.logout}>
+            <Button bsStyle={'default'} onClick={this.props.onLogout}>
               Log Out
             </Button>
-            <Button autoFocus={true} bsStyle={'primary'} onClick={this.props.extendSession}>
-              Continue Session
-            </Button>
+            {authenticationConfig.strategy === AuthStrategy.login ? (
+              <Button autoFocus={true} bsStyle={'primary'} onClick={this.extendSessionHandler}>
+                Continue Session
+              </Button>
+            ) : (
+              <Button autoFocus={true} bsStyle={'primary'} onClick={this.props.onDismiss}>
+                OK
+              </Button>
+            )}
           </React.Fragment>
         </Modal.Footer>
       </Modal>
     );
   }
+
+  private extendSessionHandler = async () => {
+    try {
+      const session = await API.extendSession();
+      this.props.onExtendSession(session.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  private textForLoginStrategy = () => {
+    return (
+      <p className={'lead'}>
+        Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
+        <br />
+        Would you like to extend your session?
+      </p>
+    );
+  };
+
+  private textForOpenshiftStrategy = () => {
+    return (
+      <p className={'lead'}>
+        Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
+        <br />
+        You will need to re-login with your cluster credentials. Please, save your changes, if any.
+      </p>
+    );
+  };
 }

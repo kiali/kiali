@@ -13,6 +13,7 @@ import history from './History';
 import InitializingScreen from './InitializingScreen';
 import StartupInitializer from './StartupInitializer';
 import LoginPageConnected from '../containers/LoginPageContainer';
+import { LoginActions } from '../actions/LoginActions';
 
 /**
  * Use the Patternfly RCUE productized css styles if set by the environment
@@ -76,6 +77,11 @@ axios.interceptors.response.use(
   error => {
     // The response was rejected, turn off the spinning
     decrementLoadingCounter();
+
+    if (error.response.status === 401) {
+      store.dispatch(LoginActions.sessionExpired());
+    }
+
     return Promise.reject(error);
   }
 );

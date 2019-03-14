@@ -639,6 +639,7 @@ ShallowWrapper {
                         className="login-pf-header"
                       />,
                       false,
+                      false,
                       <Form
                         bsClass="form"
                         componentClass="form"
@@ -707,6 +708,7 @@ ShallowWrapper {
                       "rendered": null,
                       "type": "header",
                     },
+                    false,
                     false,
                     Object {
                       "instance": null,
@@ -1517,6 +1519,7 @@ ShallowWrapper {
                           className="login-pf-header"
                         />,
                         false,
+                        false,
                         <Form
                           bsClass="form"
                           componentClass="form"
@@ -1585,6 +1588,7 @@ ShallowWrapper {
                         "rendered": null,
                         "type": "header",
                       },
+                      false,
                       false,
                       Object {
                         "instance": null,

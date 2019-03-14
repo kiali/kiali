@@ -4,6 +4,7 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { updateState } from '../utils/Reducer';
+import { LoginActions } from '../actions/LoginActions';
 
 export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   nextId: 0,
@@ -119,7 +120,11 @@ const Messages = (
       const { groupId } = action.payload;
       return updateState(state, { expandedGroupId: groupId });
     }
-
+    case getType(LoginActions.loginRequest): {
+      // Let's clear the message center quen user is loggin-in. This ensures
+      // that messages from a past session won't persist because may be obsolete.
+      return INITIAL_MESSAGE_CENTER_STATE;
+    }
     default:
       return state;
   }

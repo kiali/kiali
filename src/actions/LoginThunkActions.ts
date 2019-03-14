@@ -1,19 +1,17 @@
 import moment from 'moment';
-import { KialiAppState, LoginState, LoginSession } from '../store/Store';
+import { KialiAppState, LoginSession, LoginState } from '../store/Store';
 import { LoginActions } from './LoginActions';
 import * as API from '../services/Api';
 import * as Login from '../services/Login';
-import { AuthResult } from '../types/Auth';
+import { AuthResult, AuthStrategy } from '../types/Auth';
 import { KialiDispatch } from '../types/Redux';
 import { MessageCenterActions } from './MessageCenterActions';
+import authenticationConfig from '../config/authenticationConfig';
 
 const Dispatcher = new Login.LoginDispatcher();
 
 const shouldRelogin = (state?: LoginState): boolean =>
-  !state ||
-  !state.session ||
-  moment(state.session!.expiresOn).diff(moment()) > 0 ||
-  moment(state.uiExpiresOn).diff(moment()) > 0;
+  !state || !state.session || moment(state.session!.expiresOn).diff(moment()) > 0;
 
 const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession) => {
   dispatch(LoginActions.loginSuccess(session));
@@ -40,25 +38,30 @@ const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any)
 
 const LoginThunkActions = {
   authenticate: (username: string, password: string) => {
-    return (dispatch: KialiDispatch, getState: () => KialiAppState) =>
+    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
+      dispatch(LoginActions.loginRequest());
       performLogin(dispatch, getState(), { username, password });
+    };
   },
   checkCredentials: () => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
-      const state: KialiAppState = getState();
+      // If Openshift login strategy is enabled, redirect to the cluster login. Else
+      // it doesn't make sense to try to perform the login with blank credentials
+      if (authenticationConfig.strategy === AuthStrategy.openshift) {
+        const state: KialiAppState = getState();
 
-      dispatch(LoginActions.loginRequest());
+        dispatch(LoginActions.loginRequest());
 
-      if (shouldRelogin(state.authentication)) {
-        performLogin(dispatch, state);
-      } else {
-        loginSuccess(dispatch, state.authentication!.session!);
+        if (shouldRelogin(state.authentication)) {
+          performLogin(dispatch, state);
+        } else {
+          loginSuccess(dispatch, state.authentication!.session!);
+        }
       }
     };
   },
-  extendSession: () => {
-    return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
-      const session = getState().authentication!.session!;
+  extendSession: (session: LoginSession) => {
+    return (dispatch: KialiDispatch) => {
       dispatch(LoginActions.loginExtend(session));
     };
   },

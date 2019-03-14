@@ -1,7 +1,7 @@
 import React from 'react';
-import { Alert, Row, Col, Form, FormGroup, FormControl, Button, HelpBlock } from 'patternfly-react';
+import { Alert, Button, Col, Form, FormControl, FormGroup, HelpBlock, Row } from 'patternfly-react';
 import { KEY_CODES } from '../../types/Common';
-import { LoginStatus, LoginSession } from '../../store/Store';
+import { LoginSession, LoginStatus } from '../../store/Store';
 
 const kialiTitle = require('../../assets/img/logo-login.svg');
 
@@ -69,6 +69,9 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                   <div className={'card-pf'}>
                     <header className={'login-pf-header'} />
                     {this.props.status === LoginStatus.error && <Alert>{this.props.message}</Alert>}
+                    {this.props.status === LoginStatus.expired && (
+                      <Alert type="warning">Your session has expired or was terminated in another window.</Alert>
+                    )}
                     <Form onSubmit={e => this.handleSubmit(e)} id={'kiali-login'}>
                       <FormGroup>
                         <FormControl
