@@ -151,7 +151,7 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("v1", preference.Version)
 	assert.Equal(float64(0.8), e.Metadata["http"])
 	assert.Equal(nil, preference.Metadata["isUnused"])
-	assert.Equal(2, len(preference.Edges))
+	assert.Equal(1, len(preference.Edges))
 
 	e = preference.Edges[0]
 	recommendationV1 := e.Dest
@@ -160,13 +160,6 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal("v1", recommendationV1.Version)
 	assert.Equal(float64(0.8), e.Metadata["http"])
 	assert.Equal(nil, recommendationV1.Metadata["isUnused"])
-
-	e = preference.Edges[1]
-	recommendationV2 := e.Dest
-	assert.Equal("recommendation-v2", recommendationV2.Workload)
-	assert.Equal("recommendation", recommendationV2.App)
-	assert.Equal("v2", recommendationV2.Version)
-	assert.Equal(true, recommendationV2.Metadata["isUnused"])
 }
 
 func mockWorkloads() []models.WorkloadListItem {

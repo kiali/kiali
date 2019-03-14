@@ -40,17 +40,9 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) {
 	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, workloads)
 
-	// If trafficMap is empty just populate it with the unused nodes and return
-	if len(trafficMap) == 0 {
-		for k, v := range unusedTrafficMap {
-			trafficMap[k] = v
-		}
-		return
-	}
-
 	// Integrate the unused nodes into the existing traffic map
-	for _, v := range unusedTrafficMap {
-		addUnusedNodeToTrafficMap(trafficMap, v)
+	for id, unusedNode := range unusedTrafficMap {
+		trafficMap[id] = unusedNode
 	}
 }
 
@@ -81,30 +73,4 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		}
 	}
 	return unusedTrafficMap
-}
-
-func addUnusedNodeToTrafficMap(trafficMap graph.TrafficMap, unusedNode *graph.Node) {
-	// add unused node to traffic map
-	trafficMap[unusedNode.ID] = unusedNode
-
-	// Add a "sibling" edge to any node with an edge to the same app
-	for _, n := range trafficMap {
-		findAndAddSibling(n, unusedNode)
-	}
-}
-
-func findAndAddSibling(parent, unusedNode *graph.Node) {
-	if unusedNode.App == graph.Unknown {
-		return
-	}
-
-	found := false
-	for _, edge := range parent.Edges {
-		if found = edge.Dest.App == unusedNode.App; found {
-			break
-		}
-	}
-	if found {
-		parent.AddEdge(unusedNode)
-	}
 }
