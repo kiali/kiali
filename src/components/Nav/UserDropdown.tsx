@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { Dropdown, Icon, MenuItem } from 'patternfly-react';
+import moment from 'moment';
+import Timer = NodeJS.Timer;
+
 import { SessionTimeout } from '../SessionTimeout/SessionTimeout';
 import { config } from '../../config';
 import { MILLISECONDS } from '../../types/Common';
-import Timer = NodeJS.Timer;
 import { LoginSession } from 'src/store/Store';
-
-import moment from 'moment';
+import authenticationConfig from '../../config/authenticationConfig';
+import { AuthStrategy } from '../../types/Auth';
 
 type UserProps = {
   session: LoginSession;
@@ -80,6 +82,8 @@ class UserDropdown extends React.Component<UserProps, UserState> {
   };
 
   render() {
+    const isAnonymous = authenticationConfig.strategy === AuthStrategy.anonymous;
+
     return (
       <>
         <SessionTimeout
@@ -94,7 +98,12 @@ class UserDropdown extends React.Component<UserProps, UserState> {
             <Icon type="pf" name="user" /> {this.props.session.username}
           </Dropdown.Toggle>
           <Dropdown.Menu>
-            <MenuItem id="usermenu_logout" onClick={() => this.handleLogout()}>
+            <MenuItem
+              id="usermenu_logout"
+              disabled={isAnonymous}
+              onSelect={() => this.handleLogout()}
+              title={isAnonymous ? 'Logout is disabled because anonymous mode is enabled.' : ''}
+            >
               Logout
             </MenuItem>
           </Dropdown.Menu>
