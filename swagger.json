@@ -2960,10 +2960,6 @@
           "type": "string",
           "x-go-name": "IsMTLS"
         },
-        "isUnused": {
-          "type": "boolean",
-          "x-go-name": "IsUnused"
-        },
         "responseTime": {
           "type": "string",
           "x-go-name": "ResponseTime"

@@ -64,7 +64,6 @@ type EdgeData struct {
 	Traffic      ProtocolTraffic `json:"traffic,omitempty"`      // traffic rates for the edge protocol
 	ResponseTime string          `json:"responseTime,omitempty"` // in millis
 	IsMTLS       string          `json:"isMTLS,omitempty"`       // set to the percentage of traffic using a mutual TLS connection
-	IsUnused     bool            `json:"isUnused,omitempty"`     // true | false
 }
 
 type NodeWrapper struct {
@@ -282,9 +281,6 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 	if val, ok := e.Metadata["responseTime"]; ok {
 		responseTime := val.(float64)
 		ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
-	}
-	if val, ok := e.Source.Metadata["isUnused"]; ok {
-		ed.IsUnused = val.(bool)
 	}
 
 	// an edge represents traffic for at most one protocol
