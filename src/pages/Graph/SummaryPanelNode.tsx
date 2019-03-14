@@ -138,6 +138,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       // - istio namespace nodes (no source telemetry)
       const reporter: Reporter =
         data.nodeType === NodeType.UNKNOWN || data.namespace === serverConfig.istioNamespace ? 'destination' : 'source';
+      // note: request_protocol is not a valid byLabel for tcp filters but it is ignored by prometheus
       const byLabels = data.isRoot ? ['destination_service_namespace', 'request_protocol'] : ['request_protocol'];
       promiseOut = getNodeMetrics(
         nodeMetricType,
@@ -160,9 +161,8 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         data.nodeType === NodeType.SERVICE && data.namespace !== serverConfig.istioNamespace ? 'source' : 'destination';
       // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
       // comparator in getNodeDatapoints).
-      const byLabels = this.isServiceDestCornerCase(nodeMetricType)
-        ? ['destination_workload', 'request_protocol']
-        : ['request_protocol'];
+      const isServiceDestCornerCase = this.isServiceDestCornerCase(nodeMetricType);
+      const byLabelsRps = isServiceDestCornerCase ? ['destination_workload', 'request_protocol'] : ['request_protocol'];
       const promiseRps = getNodeMetrics(
         nodeMetricType,
         target,
@@ -172,9 +172,10 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         reporter,
         undefined,
         undefined,
-        byLabels
+        byLabelsRps
       );
       const filtersTCP = ['tcp_sent', 'tcp_received'];
+      const byLabelsTCP = isServiceDestCornerCase ? ['destination_workload'] : undefined;
       const promiseTCP = getNodeMetrics(
         nodeMetricType,
         target,
@@ -184,7 +185,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         'source',
         undefined,
         undefined,
-        byLabels
+        byLabelsTCP
       );
       promiseIn = mergeMetricsResponses([promiseRps, promiseTCP]);
     }

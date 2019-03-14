@@ -263,7 +263,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         filtersTCP,
         'inbound',
         reporterTCP,
-        'tcp',
+        undefined, // tcp metrics use dedicated metrics (i.e. no request_protocol label)
         quantiles,
         byLabels
       );
