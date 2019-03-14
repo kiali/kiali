@@ -31,7 +31,6 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       httpPercentErr: 'NaN',
       httpPercentReq: 'NaN',
       isMTLS: undefined,
-      isUnused: undefined,
       protocol: undefined,
       responseTime: 'NaN',
       tcp: 'NaN'

@@ -16,7 +16,6 @@ export const CyEdge = {
   httpPercentReq: 'httpPercentReq',
   id: 'id',
   isMTLS: 'isMTLS',
-  isUnused: 'isUnused',
   protocol: 'protocol',
   responseTime: 'responseTime',
   tcp: 'tcp'

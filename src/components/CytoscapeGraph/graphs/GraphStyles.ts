@@ -71,7 +71,7 @@ export class GraphStyles {
         pErr = ele.data(CyEdge.grpcPercentErr) > 0 ? Number(ele.data(CyEdge.grpcPercentErr)) : 0;
       }
 
-      if (rate === 0 || ele.data(CyEdge.isUnused)) {
+      if (rate === 0) {
         return EdgeColorDead;
       }
       if (pErr > REQUESTS_THRESHOLDS.failure) {
@@ -362,9 +362,7 @@ export class GraphStyles {
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
           },
-          'line-style': (ele: any) => {
-            return ele.data(CyEdge.isUnused) ? 'dotted' : 'solid';
-          },
+          'line-style': 'solid',
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
