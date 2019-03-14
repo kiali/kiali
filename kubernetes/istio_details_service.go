@@ -890,7 +890,7 @@ func DestinationRuleHasMeshWideMTLSEnabled(destinationRule IstioObject) (bool, s
 func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule IstioObject) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
-	nsHost := fmt.Sprintf("*.%s.svc.cluster.local", namespace)
+	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 

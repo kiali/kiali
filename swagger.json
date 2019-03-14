@@ -4169,6 +4169,9 @@
           "type": "boolean",
           "x-go-name": "IstioSidecar"
         },
+        "namespaceMTLS": {
+          "$ref": "#/definitions/MTLSStatus"
+        },
         "service": {
           "$ref": "#/definitions/Service"
         },
