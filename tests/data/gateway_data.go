@@ -42,11 +42,7 @@ func CreateServer(hosts []string, port uint32, portName, protocolName string) ma
 		hostSlice = append(hostSlice, h)
 	}
 	return map[string]interface{}{
-		"port": map[string]interface{}{
-			"number":   port,
-			"name":     portName,
-			"protocol": protocolName,
-		},
+		"port":  CreateEmptyPortDefinition(port, portName, protocolName),
 		"hosts": hostSlice,
 	}
 }

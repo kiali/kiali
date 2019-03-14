@@ -78,26 +78,3 @@ func CreateVirtualServiceWithServiceEntryTarget() kubernetes.IstioObject {
 	}
 	return vs
 }
-
-func CreateExternalServiceEntry() kubernetes.IstioObject {
-	return (&kubernetes.GenericIstioObject{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "external-svc-wikipedia",
-			Namespace: "wikipedia",
-		},
-		Spec: map[string]interface{}{
-			"hosts": []interface{}{
-				"wikipedia.org",
-			},
-			"location": "MESH_EXTERNAL",
-			"ports": []interface{}{
-				map[string]interface{}{
-					"number":   uint64(80),
-					"name":     "example-http",
-					"protocol": "HTTP",
-				},
-			},
-			"resolution": "DNS",
-		},
-	}).DeepCopyIstioObject()
-}
