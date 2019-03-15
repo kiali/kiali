@@ -27,3 +27,21 @@ func AddServicesToServiceRole(services []string, sr kubernetes.IstioObject) kube
 	}
 	return sr
 }
+
+func CreateEmptyServiceBindingRole(name, namespace string) kubernetes.IstioObject {
+	return (&kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{},
+	})
+}
+
+func AddRoleRefToServiceBindingRole(serviceRoleName string, sbr kubernetes.IstioObject) kubernetes.IstioObject {
+	sbr.GetSpec()["roleRef"] = map[string]interface{}{
+		"kind": "ServiceRole",
+		"name": serviceRoleName,
+	}
+	return sbr
+}
