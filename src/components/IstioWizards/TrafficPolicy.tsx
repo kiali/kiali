@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Col, ControlLabel, DropdownButton, ExpandCollapse, Icon, MenuItem, Row } from 'patternfly-react';
 import { style } from 'typestyle';
+import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 
 export const DISABLE = 'DISABLE';
 export const ISTIO_MUTUAL = 'ISTIO_MUTUAL';
@@ -10,19 +11,17 @@ export const loadBalancerSimple: string[] = [ROUND_ROBIN, 'LEAST_CONN', 'RANDOM'
 
 export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, 'MUTUAL', 'SIMPLE'];
 
-const statusName = 'Istio mTLS';
+type ReduxProps = {
+  meshWideStatus: string;
+};
 
-enum MTLSStatus {
-  ENABLED = 'MESH_MTLS_ENABLED'
-}
-
-type Props = {
-  status: { [key: string]: string };
+type Props = ReduxProps & {
   mtlsMode: string;
   loadBalancer: string;
   onTlsChange: (mtlsMode: string) => void;
   onLoadbalancerChange: (loadbalancer: string) => void;
   expanded: boolean;
+  nsWideStatus?: TLSStatus;
 };
 
 const tlsStyle = style({
@@ -53,8 +52,10 @@ class TrafficPolicy extends React.Component<Props> {
   }
 
   componentDidMount(): void {
-    const isMtlsEnabled = this.props.status[statusName] && this.props.status[statusName] === MTLSStatus.ENABLED;
-    if (isMtlsEnabled) {
+    const meshWideStatus = this.props.meshWideStatus || MTLSStatuses.NOT_ENABLED;
+    const nsWideStatus = this.props.nsWideStatus ? this.props.nsWideStatus.status : MTLSStatuses.NOT_ENABLED;
+    const isMtlsEnabled = nsWideMTLSStatus(nsWideStatus, meshWideStatus);
+    if (isMtlsEnabled === MTLSStatuses.ENABLED) {
       this.props.onTlsChange(ISTIO_MUTUAL);
     }
   }

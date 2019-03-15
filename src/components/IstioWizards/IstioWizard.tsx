@@ -15,12 +15,14 @@ import MatchingRouting, { ROUTE_TYPE, Rule } from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
 import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
+import { TLSStatus } from '../../types/TLSStatus';
 
 type Props = {
   show: boolean;
   type: string;
   namespace: string;
   serviceName: string;
+  tlsStatus?: TLSStatus;
   workloads: WorkloadOverview[];
   onClose: (changed: boolean) => void;
 };
@@ -315,6 +317,7 @@ class IstioWizard extends React.Component<Props, State> {
                   onTlsChange={this.onTLS}
                   onLoadbalancerChange={this.onLoadBalancer}
                   expanded={false}
+                  nsWideStatus={this.props.tlsStatus}
                 />
               </Wizard.Contents>
             </Wizard.Main>

@@ -10,6 +10,7 @@ import {
   Validations
 } from './IstioObjects';
 import { Route } from '../components/InfoRoutes/InfoRoutes';
+import { TLSStatus } from './TLSStatus';
 
 export interface Endpoints {
   addresses?: EndpointAddress[];
@@ -64,6 +65,7 @@ export interface ServiceDetailsInfo {
   dependencies?: { [key: string]: Route[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
+  namespaceMTLS?: TLSStatus;
   errorTraces?: number;
   validations: Validations;
 }

@@ -325,6 +325,7 @@ ShallowWrapper {
                   onChange={[MockFunction]}
                   serviceName="reviews"
                   show={false}
+                  tlsStatus={undefined}
                   virtualServices={
                     Object {
                       "items": Array [
@@ -748,6 +749,7 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    tlsStatus={undefined}
                     virtualServices={
                       Object {
                         "items": Array [
@@ -1165,6 +1167,7 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    tlsStatus={undefined}
                     virtualServices={
                       Object {
                         "items": Array [
@@ -1282,6 +1285,7 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    tlsStatus={undefined}
                     virtualServices={
                       Object {
                         "items": Array [
@@ -1394,6 +1398,7 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      tlsStatus={undefined}
                       virtualServices={
                         Object {
                           "items": Array [
@@ -1519,6 +1524,7 @@ ShallowWrapper {
                       "onChange": [MockFunction],
                       "serviceName": "reviews",
                       "show": false,
+                      "tlsStatus": undefined,
                       "virtualServices": Object {
                         "items": Array [
                           Object {
@@ -3237,6 +3243,7 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    tlsStatus={undefined}
                     virtualServices={
                       Object {
                         "items": Array [
@@ -3660,6 +3667,7 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      tlsStatus={undefined}
                       virtualServices={
                         Object {
                           "items": Array [
@@ -4077,6 +4085,7 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      tlsStatus={undefined}
                       virtualServices={
                         Object {
                           "items": Array [
@@ -4194,6 +4203,7 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      tlsStatus={undefined}
                       virtualServices={
                         Object {
                           "items": Array [
@@ -4306,6 +4316,7 @@ ShallowWrapper {
                         onChange={[MockFunction]}
                         serviceName="reviews"
                         show={false}
+                        tlsStatus={undefined}
                         virtualServices={
                           Object {
                             "items": Array [
@@ -4431,6 +4442,7 @@ ShallowWrapper {
                         "onChange": [MockFunction],
                         "serviceName": "reviews",
                         "show": false,
+                        "tlsStatus": undefined,
                         "virtualServices": Object {
                           "items": Array [
                             Object {

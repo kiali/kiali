@@ -1,6 +1,9 @@
+import { TLSStatus } from '../../types/TLSStatus';
+
 export type NamespaceInfo = {
   name: string;
   status?: NamespaceStatus;
+  tlsStatus?: TLSStatus;
 };
 
 export type NamespaceStatus = {

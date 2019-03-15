@@ -151,6 +151,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   workloads={workloads}
                   virtualServices={virtualServices}
                   destinationRules={destinationRules}
+                  tlsStatus={this.props.serviceDetails.namespaceMTLS}
                   onChange={this.props.onRefresh}
                 />
               </span>

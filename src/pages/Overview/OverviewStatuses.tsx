@@ -10,8 +10,9 @@ import { Paths } from '../../config';
 
 type Props = {
   name: string;
-  status: NamespaceStatus;
   type: OverviewType;
+  status: NamespaceStatus;
+  tlsStatus: boolean;
 };
 
 class OverviewStatuses extends React.Component<Props> {

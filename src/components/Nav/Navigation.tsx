@@ -8,8 +8,8 @@ import _ from 'lodash';
 import { MessageCenterContainer, MessageCenterTriggerContainer } from '../../containers/MessageCenterContainer';
 import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
-import GlobalMTLSStatus from '../../containers/GlobalMTLSContainer';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
+import { default as MeshMTLSStatus } from '../../components/MTls/MeshMTLSStatus';
 import { kialiLogo } from '../../config';
 
 export const istioConfigTitle = 'Istio Config';
@@ -88,7 +88,7 @@ class Navigation extends React.Component<PropsType> {
             <VerticalNav.Brand iconImg={kialiLogo} />
             <PfSpinnerContainer />
             <VerticalNav.IconBar>
-              <GlobalMTLSStatus />
+              <MeshMTLSStatus />
               <MessageCenterTriggerContainer />
               <HelpDropdown />
               <UserDropdown />

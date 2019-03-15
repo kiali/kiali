@@ -25,6 +25,7 @@ import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
 import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
+import { TLSStatus } from '../types/TLSStatus';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -102,6 +103,10 @@ export const getNamespaces = () => {
 
 export const getNamespaceMetrics = (namespace: string, params: MetricsOptions) => {
   return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {});
+};
+
+export const getNamespaceTls = (namespace: string) => {
+  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), {}, {});
 };
 
 export const getIstioConfig = (namespace: string, objects: string[], validate: boolean) => {

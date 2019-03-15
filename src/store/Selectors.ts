@@ -61,3 +61,10 @@ const showServiceNodes = (state: KialiAppState) => state.graph.filterState.showS
 export const showServiceNodesSelector = createIdentitySelector(showServiceNodes);
 
 export const graphDataSelector = GraphData.graphDataSelector;
+
+const meshwideMTLSStatus = (state: KialiAppState) => {
+  const statusName = 'Istio mTLS';
+  return state.statusState.status[statusName];
+};
+
+export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);

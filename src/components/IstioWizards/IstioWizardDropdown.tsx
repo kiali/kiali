@@ -6,6 +6,7 @@ import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
 import { serverConfig } from '../../config/serverConfig';
+import { TLSStatus } from '../../types/TLSStatus';
 
 type Props = {
   namespace: string;
@@ -14,6 +15,7 @@ type Props = {
   workloads: WorkloadOverview[];
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
+  tlsStatus?: TLSStatus;
   onChange: () => void;
 };
 
@@ -150,6 +152,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             const versionLabelName = serverConfig.istioLabels.versionLabelName;
             return workload.labels && workload.labels[appLabelName] && workload.labels[versionLabelName];
           })}
+          tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
         />
         <MessageDialog
