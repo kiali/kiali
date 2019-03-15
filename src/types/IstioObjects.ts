@@ -613,6 +613,21 @@ export interface ClusterRbacConfig extends IstioObject {
 
 export interface ClusterRbacConfigSpec {
   mode?: string;
+  inclusion?: ClusterRbacConfigTarget;
+  exclusion?: ClusterRbacConfigTarget;
+}
+
+export interface ClusterRbacConfigTarget {
+  services: string[];
+  namespaces: string[];
+}
+
+export interface RbacConfig extends IstioObject {
+  spec: RbacConfigSpec;
+}
+
+export interface RbacConfigSpec {
+  mode?: string;
   inclusion?: RbacConfigTarget;
   exclusion?: RbacConfigTarget;
 }

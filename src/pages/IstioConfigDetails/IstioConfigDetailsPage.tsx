@@ -215,6 +215,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.meshPolicy;
       } else if (this.state.istioObjectDetails.clusterRbacConfig) {
         istioObject = this.state.istioObjectDetails.clusterRbacConfig;
+      } else if (this.state.istioObjectDetails.rbacConfig) {
+        istioObject = this.state.istioObjectDetails.rbacConfig;
       } else if (this.state.istioObjectDetails.serviceRole) {
         istioObject = this.state.istioObjectDetails.serviceRole;
       } else if (this.state.istioObjectDetails.serviceRoleBinding) {

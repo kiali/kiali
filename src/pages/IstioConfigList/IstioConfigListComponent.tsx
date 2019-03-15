@@ -237,6 +237,10 @@ class IstioConfigListComponent extends ListComponent.Component<
       iconName = 'locked';
       iconType = 'pf';
       type = 'ClusterRbacConfig';
+    } else if (istioItem.type === 'rbacconfig') {
+      iconName = 'locked';
+      iconType = 'pf';
+      type = 'RbacConfig';
     } else if (istioItem.type === 'servicerole') {
       iconName = 'locked';
       iconType = 'pf';

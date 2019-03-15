@@ -19,6 +19,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     policies: [],
     meshPolicies: [],
     clusterRbacConfigs: [],
+    rbacConfigs: [],
     serviceRoles: [],
     serviceRoleBindings: [],
     validations: {},
@@ -49,6 +50,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     testData.clusterRbacConfigs.push({ metadata: { name: name + '11' }, spec: {} });
     testData.serviceRoles.push({ metadata: { name: name + '12' }, spec: {} });
     testData.serviceRoleBindings.push({ metadata: { name: name + '13' }, spec: {} });
+    testData.rbacConfigs.push({ metadata: { name: name + '14' }, spec: {} });
   });
   return testData;
 };
@@ -71,6 +73,7 @@ describe('IstioConfigListComponent#filterByName', () => {
     expect(filtered.policies.length).toBe(2);
     expect(filtered.meshPolicies.length).toBe(2);
     expect(filtered.clusterRbacConfigs.length).toBe(2);
+    expect(filtered.rbacConfigs.length).toBe(2);
     expect(filtered.serviceRoles.length).toBe(2);
     expect(filtered.serviceRoleBindings.length).toBe(2);
 
@@ -87,6 +90,7 @@ describe('IstioConfigListComponent#filterByName', () => {
     expect(filtered.clusterRbacConfigs[0].metadata.name).toBe('white11');
     expect(filtered.serviceRoles[0].metadata.name).toBe('white12');
     expect(filtered.serviceRoleBindings[0].metadata.name).toBe('white13');
+    expect(filtered.rbacConfigs[0].metadata.name).toBe('white14');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
@@ -111,7 +115,7 @@ describe('IstioConfigListComponent#toIstioItems', () => {
     const istioItems = toIstioItems(unfiltered);
 
     expect(istioItems).toBeDefined();
-    expect(istioItems.length).toBe(42);
+    expect(istioItems.length).toBe(45);
     expect(istioItems[0].gateway).toBeDefined();
     expect(istioItems[0].destinationRule).toBeUndefined();
     expect(istioItems[3].virtualService).toBeDefined();
@@ -129,7 +133,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(42);
+      expect(sorted.length).toBe(45);
 
       const first = sorted[0];
       expect(first.gateway).toBeDefined();
@@ -139,7 +143,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.virtualService).toBeDefined();
       expect(second.virtualService!.metadata.name).toBe('blue1');
 
-      const last = sorted[41];
+      const last = sorted[44];
       expect(last.policy).toBeDefined();
       expect(last.policy!.metadata.name).toBe('white9');
     });
@@ -153,13 +157,13 @@ describe('IstioConfigComponent#sortIstioItems', () => {
     // Descending
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(42);
+      expect(sorted.length).toBe(45);
 
       const first = sorted[0];
       expect(first.policy).toBeDefined();
       expect(first.policy!.metadata.name).toBe('white9');
 
-      const last = sorted[41];
+      const last = sorted[44];
       expect(last.gateway).toBeDefined();
       expect(last.gateway!.metadata.name).toBe('blue0');
     });
@@ -172,7 +176,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(42);
+      expect(sorted.length).toBe(45);
 
       const first = sorted[0];
       expect(first.adapter).toBeDefined();
@@ -182,7 +186,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
       expect(second.clusterRbacConfig).toBeDefined();
       expect(second.clusterRbacConfig!.metadata.name).toBe('blue11');
 
-      const last = sorted[41];
+      const last = sorted[44];
       expect(last.virtualService).toBeDefined();
       expect(last.virtualService!.metadata.name).toBe('white1');
     });
@@ -195,7 +199,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     return IstioConfigListFilters.sortIstioItems(istioItems, sortField, isAscending).then(sorted => {
       expect(sorted).toBeDefined();
-      expect(sorted.length).toBe(42);
+      expect(sorted.length).toBe(45);
 
       const first = sorted[0];
       expect(first.virtualService).toBeDefined();

@@ -138,6 +138,10 @@ export namespace IstioConfigListFilters {
         title: 'ClusterRbacConfig'
       },
       {
+        id: 'RbacConfig',
+        title: 'RbacConfig'
+      },
+      {
         id: 'ServiceRole',
         title: 'ServiceRole'
       },
