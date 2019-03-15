@@ -22,6 +22,7 @@ type IstioConfigList struct {
 	Policies            Policies            `json:"policies"`
 	MeshPolicies        MeshPolicies        `json:"meshPolicies"`
 	ClusterRbacConfigs  ClusterRbacConfigs  `json:"clusterRbacConfigs"`
+	RbacConfigs         RbacConfigs         `json:"rbacConfigs"`
 	ServiceRoles        ServiceRoles        `json:"serviceRoles"`
 	ServiceRoleBindings ServiceRoleBindings `json:"serviceRoleBindings"`
 	IstioValidations    IstioValidations    `json:"validations"`
@@ -42,6 +43,7 @@ type IstioConfigDetails struct {
 	Policy             *Policy             `json:"policy"`
 	MeshPolicy         *MeshPolicy         `json:"meshPolicy"`
 	ClusterRbacConfig  *ClusterRbacConfig  `json:"clusterRbacConfig"`
+	RbacConfig         *RbacConfig         `json:"rbacConfig"`
 	ServiceRole        *ServiceRole        `json:"serviceRole"`
 	ServiceRoleBinding *ServiceRoleBinding `json:"serviceRoleBinding"`
 	Permissions        ResourcePermissions `json:"permissions"`

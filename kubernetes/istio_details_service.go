@@ -571,6 +571,52 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 	return c, nil
 }
 
+func (in *IstioClient) GetRbacConfigs(namespace string) ([]IstioObject, error) {
+	// In case RbacConfigs aren't present on Istio, return empty array.
+	if !in.hasRbacResource(rbacconfigs) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[rbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
+	rbacConfigList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
+	}
+
+	rbacConfigs := make([]IstioObject, 0)
+	for _, rc := range rbacConfigList.GetItems() {
+		r := rc.DeepCopyIstioObject()
+		r.SetTypeMeta(typeMeta)
+		rbacConfigs = append(rbacConfigs, r)
+	}
+	return rbacConfigs, nil
+}
+
+func (in *IstioClient) GetRbacConfig(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[rbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
+	rbacConfig, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a RbacConfig object", namespace)
+	}
+	r := rbacConfig.DeepCopyIstioObject()
+	r.SetTypeMeta(typeMeta)
+	return r, nil
+}
+
 func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) {
 	// In case ServiceRoles aren't present on Istio, return empty array.
 	if !in.hasRbacResource(serviceroles) {

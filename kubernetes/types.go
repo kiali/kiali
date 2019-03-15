@@ -59,6 +59,10 @@ const (
 	clusterrbacconfigType     = "ClusterRbacConfig"
 	clusterrbacconfigTypeList = "ClusterRbacConfigList"
 
+	rbacconfigs        = "rbacconfigs"
+	rbacconfigType     = "RbacConfig"
+	rbacconfigTypeList = "RbacConfigList"
+
 	serviceroles        = "serviceroles"
 	serviceroleType     = "ServiceRole"
 	serviceroleTypeList = "ServiceRoleList"
@@ -382,6 +386,10 @@ var (
 			collectionKind: clusterrbacconfigTypeList,
 		},
 		{
+			objectKind:     rbacconfigType,
+			collectionKind: rbacconfigTypeList,
+		},
+		{
 			objectKind:     serviceroleType,
 			collectionKind: serviceroleTypeList,
 		},
@@ -472,6 +480,7 @@ var (
 
 		// Rbac
 		clusterrbacconfigs:  clusterrbacconfigType,
+		rbacconfigs:         rbacconfigType,
 		serviceroles:        serviceroleType,
 		servicerolebindings: servicerolebindingType,
 	}

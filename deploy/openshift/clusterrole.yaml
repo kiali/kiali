@@ -108,6 +108,7 @@ rules:
 - apiGroups: ["rbac.istio.io"]
   resources:
   - clusterrbacconfigs
+  - rbacconfigs
   - serviceroles
   - servicerolebindings
   verbs:
@@ -236,6 +237,7 @@ rules:
 - apiGroups: ["rbac.istio.io"]
   resources:
   - clusterrbacconfigs
+  - rbacconfigs
   - serviceroles
   - servicerolebindings
   verbs:

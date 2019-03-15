@@ -78,6 +78,8 @@ type IstioClientInterface interface {
 	GetMeshPolicies(namespace string) ([]IstioObject, error)
 	GetClusterRbacConfig(namespace string, name string) (IstioObject, error)
 	GetClusterRbacConfigs(namespace string) ([]IstioObject, error)
+	GetRbacConfig(namespace string, name string) (IstioObject, error)
+	GetRbacConfigs(namespace string) ([]IstioObject, error)
 	GetServiceRole(namespace string, name string) (IstioObject, error)
 	GetServiceRoles(namespace string) ([]IstioObject, error)
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
