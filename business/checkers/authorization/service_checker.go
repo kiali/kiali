@@ -27,6 +27,10 @@ func (sc ServiceChecker) Check() ([]*models.IstioCheck, bool) {
 							for _, s := range service {
 								if host, ok := s.(string); ok {
 									fqdn := kubernetes.ParseHost(host, sc.ServiceRole.GetObjectMeta().Namespace, sc.ServiceRole.GetObjectMeta().ClusterName)
+									if fqdn.Namespace != sc.ServiceRole.GetObjectMeta().Namespace {
+										validation := models.Build("servicerole.invalid.namespace", fmt.Sprintf("spec/rules[%d]/services", ruleIndex))
+										validations = append(validations, &validation)
+									}
 									if !sc.hasMatchingService(fqdn.Service) {
 										validation := models.Build("servicerole.invalid.services", fmt.Sprintf("spec/rules[%d]/services", ruleIndex))
 										validations = append(validations, &validation)

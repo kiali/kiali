@@ -154,6 +154,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Unable to find all the defined services",
 		Severity: ErrorSeverity,
 	},
+	"servicerole.invalid.namespace": {
+		Message:  "ServiceRole can only point to current namespace",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {
