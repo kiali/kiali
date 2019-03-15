@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -139,6 +140,30 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	}
 	istioObject.SetTypeMeta(typeMeta)
 	return istioObject, err
+}
+
+func (in *IstioClient) hasRbacResource(resource string) bool {
+	return in.getRbacResources()[resource]
+}
+
+func (in *IstioClient) getRbacResources() map[string]bool {
+	if in.rbacResources != nil {
+		return *in.rbacResources
+	}
+
+	rbacResources := map[string]bool{}
+	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/rbac.istio.io/v1alpha1").Do().Raw()
+	if err == nil {
+		resourceList := meta_v1.APIResourceList{}
+		if errMarshall := json.Unmarshal(resourceListRaw, &resourceList); errMarshall == nil {
+			for _, resource := range resourceList.APIResources {
+				rbacResources[resource.Name] = true
+			}
+		}
+	}
+	in.rbacResources = &rbacResources
+
+	return *in.rbacResources
 }
 
 // GetVirtualServices return all VirtualServices for a given namespace.
@@ -501,6 +526,11 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 }
 
 func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
+	// In case ClusterRbacConfigs aren't present on Istio, return empty array.
+	if !in.hasRbacResource(clusterrbacconfigs) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).Do().Get()
 	if err != nil {
 		return nil, err
@@ -541,7 +571,58 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 	return c, nil
 }
 
+func (in *IstioClient) GetRbacConfigs(namespace string) ([]IstioObject, error) {
+	// In case RbacConfigs aren't present on Istio, return empty array.
+	if !in.hasRbacResource(rbacconfigs) {
+		return []IstioObject{}, nil
+	}
+
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[rbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
+	rbacConfigList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
+	}
+
+	rbacConfigs := make([]IstioObject, 0)
+	for _, rc := range rbacConfigList.GetItems() {
+		r := rc.DeepCopyIstioObject()
+		r.SetTypeMeta(typeMeta)
+		rbacConfigs = append(rbacConfigs, r)
+	}
+	return rbacConfigs, nil
+}
+
+func (in *IstioClient) GetRbacConfig(namespace string, name string) (IstioObject, error) {
+	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(rbacconfigs).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[rbacconfigs],
+		APIVersion: ApiRbacVersion,
+	}
+	rbacConfig, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a RbacConfig object", namespace)
+	}
+	r := rbacConfig.DeepCopyIstioObject()
+	r.SetTypeMeta(typeMeta)
+	return r, nil
+}
+
 func (in *IstioClient) GetServiceRoles(namespace string) ([]IstioObject, error) {
+	// In case ServiceRoles aren't present on Istio, return empty array.
+	if !in.hasRbacResource(serviceroles) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(serviceroles).Do().Get()
 	if err != nil {
 		return nil, err
@@ -583,6 +664,11 @@ func (in *IstioClient) GetServiceRole(namespace string, name string) (IstioObjec
 }
 
 func (in *IstioClient) GetServiceRoleBindings(namespace string) ([]IstioObject, error) {
+	// In case ServiceRoleBindings aren't present on Istio, return empty array.
+	if !in.hasRbacResource(servicerolebindings) {
+		return []IstioObject{}, nil
+	}
+
 	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(servicerolebindings).Do().Get()
 	if err != nil {
 		return nil, err

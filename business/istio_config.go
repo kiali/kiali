@@ -34,6 +34,7 @@ type IstioConfigCriteria struct {
 	IncludePolicies            bool
 	IncludeMeshPolicies        bool
 	IncludeClusterRbacConfigs  bool
+	IncludeRbacConfigs         bool
 	IncludeServiceRoles        bool
 	IncludeServiceRoleBindings bool
 }
@@ -51,6 +52,7 @@ const (
 	Policies            = "policies"
 	MeshPolicies        = "meshpolicies"
 	ClusterRbacConfigs  = "clusterrbacconfigs"
+	RbacConfigs         = "rbacconfigs"
 	ServiceRoles        = "serviceroles"
 	ServiceRoleBindings = "servicerolebindings"
 )
@@ -68,6 +70,7 @@ var resourceTypesToAPI = map[string]string{
 	Policies:            kubernetes.AuthenticationGroupVersion.Group,
 	MeshPolicies:        kubernetes.AuthenticationGroupVersion.Group,
 	ClusterRbacConfigs:  kubernetes.RbacGroupVersion.Group,
+	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
 	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
 	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
 }
@@ -103,13 +106,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		Policies:            models.Policies{},
 		MeshPolicies:        models.MeshPolicies{},
 		ClusterRbacConfigs:  models.ClusterRbacConfigs{},
+		RbacConfigs:         models.RbacConfigs{},
 		ServiceRoles:        models.ServiceRoles{},
 		ServiceRoleBindings: models.ServiceRoleBindings{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp, rc, sr, srb []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr, rcErr, srErr, srbErr error
+	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp, crc, rc, sr, srb []kubernetes.IstioObject
+	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr, crcErr, rcErr, srErr, srbErr error
 	var wg sync.WaitGroup
-	wg.Add(14)
+	wg.Add(15)
 
 	go func() {
 		defer wg.Done()
@@ -215,8 +219,17 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeClusterRbacConfigs && criteria.Namespace == config.Get().IstioNamespace {
-			if rc, rcErr = in.k8s.GetClusterRbacConfigs(criteria.Namespace); rcErr == nil {
-				(&istioConfigList.ClusterRbacConfigs).Parse(rc)
+			if crc, crcErr = in.k8s.GetClusterRbacConfigs(criteria.Namespace); crcErr == nil {
+				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		if criteria.IncludeRbacConfigs {
+			if rc, rcErr = in.k8s.GetRbacConfigs(criteria.Namespace); rcErr == nil {
+				(&istioConfigList.RbacConfigs).Parse(rc)
 			}
 		}
 	}()
@@ -265,7 +278,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp, rc, sr, srb kubernetes.IstioObject
+	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp, crc, rc, sr, srb kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -336,9 +349,14 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			istioConfigDetail.MeshPolicy.Parse(mp)
 		}
 	case ClusterRbacConfigs:
-		if rc, err = in.k8s.GetClusterRbacConfig(namespace, object); err == nil {
+		if crc, err = in.k8s.GetClusterRbacConfig(namespace, object); err == nil {
 			istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
-			istioConfigDetail.ClusterRbacConfig.Parse(rc)
+			istioConfigDetail.ClusterRbacConfig.Parse(crc)
+		}
+	case RbacConfigs:
+		if rc, err = in.k8s.GetRbacConfig(namespace, object); err == nil {
+			istioConfigDetail.RbacConfig = &models.RbacConfig{}
+			istioConfigDetail.RbacConfig.Parse(rc)
 		}
 	case ServiceRoles:
 		if sr, err = in.k8s.GetServiceRole(namespace, object); err == nil {
@@ -511,6 +529,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case ClusterRbacConfigs:
 		istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 		istioConfigDetail.ClusterRbacConfig.Parse(result)
+	case RbacConfigs:
+		istioConfigDetail.RbacConfig = &models.RbacConfig{}
+		istioConfigDetail.RbacConfig.Parse(result)
 	case ServiceRoles:
 		istioConfigDetail.ServiceRole = &models.ServiceRole{}
 		istioConfigDetail.ServiceRole.Parse(result)

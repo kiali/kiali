@@ -307,6 +307,16 @@ func (o *K8SClientMock) GetClusterRbacConfig(namespace string, policyName string
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetServiceRoles(namespace string) ([]kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
