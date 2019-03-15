@@ -219,7 +219,7 @@ if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-  ALL_ISTIOS=$(ls -d1 ${OUTPUT_DIR}/istio-*)
+  ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
   if [ "$?" != "0" ]; then
     ${HACK_SCRIPT_DIR}/download-istio.sh
     if [ "$?" != "0" ]; then
@@ -227,8 +227,8 @@ if [ "${ISTIO_DIR}" == "" ]; then
       exit 1
     fi
   fi
-  # just pick the first one we see
-  ISTIO_DIR=$(ls -d1 ${OUTPUT_DIR}/istio-* | head -n1)
+  # install the Istio release that was last downloaded (that's the -t option to ls)
+  ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
 fi
 
 if [ ! -d "${ISTIO_DIR}" ]; then
