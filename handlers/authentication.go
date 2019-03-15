@@ -278,6 +278,8 @@ func NewAuthenticationHandler() (AuthenticationHandler, error) {
 
 func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
 		statusCode := http.StatusOK
 		conf := config.Get()
 
@@ -314,6 +316,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 
 func (aHandler AuthenticationHandler) HandleUnauthenticated(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		context := context.WithValue(r.Context(), "token", "")
 		next.ServeHTTP(w, r.WithContext(context))
 	})
