@@ -3235,6 +3235,9 @@
         "quotaSpecBinding": {
           "$ref": "#/definitions/QuotaSpecBinding"
         },
+        "rbacConfig": {
+          "$ref": "#/definitions/RbacConfig"
+        },
         "rule": {
           "$ref": "#/definitions/istioRule"
         },
@@ -3293,6 +3296,9 @@
         },
         "quotaSpecs": {
           "$ref": "#/definitions/QuotaSpecs"
+        },
+        "rbacConfigs": {
+          "$ref": "#/definitions/RbacConfigs"
         },
         "rules": {
           "$ref": "#/definitions/istioRules"
@@ -3982,6 +3988,50 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/QuotaSpec"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "RbacConfig": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "exclusion": {
+              "type": "object",
+              "x-go-name": "Exclusion"
+            },
+            "inclusion": {
+              "type": "object",
+              "x-go-name": "Inclusion"
+            },
+            "mode": {
+              "type": "object",
+              "x-go-name": "Mode"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "RbacConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/RbacConfig"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
