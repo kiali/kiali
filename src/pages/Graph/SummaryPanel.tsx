@@ -59,7 +59,7 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
   }
 
   render() {
-    if (!this.props.isPageVisible) {
+    if (!this.props.isPageVisible || !this.props.data.summaryTarget) {
       return null;
     }
     return (
