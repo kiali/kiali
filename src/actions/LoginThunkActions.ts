@@ -45,9 +45,10 @@ const LoginThunkActions = {
   },
   checkCredentials: () => {
     return (dispatch: KialiDispatch, getState: () => KialiAppState) => {
-      // If Openshift login strategy is enabled, redirect to the cluster login. Else
-      // it doesn't make sense to try to perform the login with blank credentials
-      if (authenticationConfig.strategy === AuthStrategy.openshift) {
+      // If Openshift login strategy is enabled, or anonymous mode is enabled,
+      // perform the login cycle. Else, it doesn't make sense to login with
+      // blank credentials.
+      if (authenticationConfig.strategy !== AuthStrategy.login) {
         const state: KialiAppState = getState();
 
         dispatch(LoginActions.loginRequest());
