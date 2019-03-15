@@ -82,7 +82,7 @@ if [ "${ISTIO_DIR}" == "" ]; then
   # The bookinfo demo files rarely change - should be the same no matter what Istio version we find.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-  ALL_ISTIOS=$(ls -d1 ${OUTPUT_DIR}/istio-*)
+  ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
   if [ "$?" != "0" ]; then
     ${HACK_SCRIPT_DIR}/download-istio.sh
     if [ "$?" != "0" ]; then
@@ -90,7 +90,8 @@ if [ "${ISTIO_DIR}" == "" ]; then
       exit 1
     fi
   fi
-  ISTIO_DIR=$(ls -d1 ${OUTPUT_DIR}/istio-* | head -n1)
+  # use the Istio release that was last downloaded (that's the -t option to ls)
+  ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
 fi
 
 if [ ! -d "${ISTIO_DIR}" ]; then
