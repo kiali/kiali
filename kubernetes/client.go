@@ -102,6 +102,10 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
+	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
+	// It is represented as a pointer to include the initialization phase.
+	// See istio_details_service.go#HasRbacResource() for more details.
+	rbacResources *map[string]bool
 	// Cache controller is a global cache for all k8s objects fetched by kiali in multiple namespaces.
 	// It doesn't support reduced permissions scenarios yet, don't forget to disabled on those use cases.
 	k8sCache  cacheController
