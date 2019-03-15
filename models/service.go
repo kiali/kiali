@@ -38,6 +38,7 @@ type ServiceDetails struct {
 	Health           ServiceHealth               `json:"health"`
 	Validations      IstioValidations            `json:"validations"`
 	ErrorTraces      int                         `json:"errorTraces"`
+	NamespaceMTLS    MTLSStatus                  `json:"namespaceMTLS"`
 }
 
 type Services []*Service

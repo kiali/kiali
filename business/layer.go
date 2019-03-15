@@ -16,6 +16,7 @@ type Layer struct {
 	Namespace      NamespaceService
 	k8s            kubernetes.IstioClientInterface
 	OpenshiftOAuth OpenshiftOAuthService
+	TLS            TLSService
 }
 
 // Global clientfactory and prometheus clients.
@@ -74,6 +75,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.k8s = k8s
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
+	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
 
 	return temporaryLayer
 }

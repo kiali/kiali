@@ -291,7 +291,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		nsNames = append(nsNames, ns.Name)
 	}
 
-	destinationRules, err := in.businessLayer.IstioConfig.getAllDestinationRules(nsNames)
+	destinationRules, err := in.businessLayer.TLS.getAllDestinationRules(nsNames)
 	if err != nil {
 		errChan <- err
 	} else {

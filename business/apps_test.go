@@ -1,8 +1,8 @@
 package business
 
 import (
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
+	"testing"
+
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -11,7 +11,9 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
-	"testing"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {

@@ -23,7 +23,7 @@ func (si *StatusInfo) getmTLSStatus(token string) {
 		nsNames = append(nsNames, ns.Name)
 	}
 
-	globalmTLSStatus, err := business.IstioConfig.MeshWidemTLSStatus(nsNames)
+	globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(nsNames)
 	if err != nil {
 		Put(ClusterMTLS, "error")
 		return

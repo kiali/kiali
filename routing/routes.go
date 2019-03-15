@@ -758,6 +758,27 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceHealth,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/tls tls namespaceTls
+		// ---
+		// Get TLS status for the given namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: namespaceTlsResponse
+		//      400: badRequestError
+		//      500: internalError
+		//
+		{
+			"NamespaceTls",
+			"GET",
+			"/api/namespaces/{namespace}/tls",
+			handlers.NamespaceTls,
+			true,
+		},
 		// swagger:route GET /namespaces/graph graphs graphNamespaces
 		// ---
 		// The backing JSON for a namespaces graph.

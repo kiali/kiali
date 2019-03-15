@@ -2131,6 +2131,43 @@
         }
       }
     },
+    "/namespaces/{namespace}/tls": {
+      "get": {
+        "description": "Get TLS status for the given namespace",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "tls"
+        ],
+        "operationId": "namespaceTls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/namespaceTlsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/workloads": {
       "get": {
         "description": "Endpoint to get the list of workloads for a namespace",
@@ -3334,6 +3371,22 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "MTLSStatus": {
+      "description": "MTLSStatus describes the current mTLS status of a mesh entity",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "description": "mTLS status: MTLS_ENABLED, MTLS_PARTIALLY_ENABLED, MTLS_NOT_ENABLED",
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "MTLS_ENABLED"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
     "Matrix": {
       "type": "array",
       "title": "Matrix is a list of time series.",
@@ -4111,6 +4164,9 @@
         "istioSidecar": {
           "type": "boolean",
           "x-go-name": "IstioSidecar"
+        },
+        "namespaceMTLS": {
+          "$ref": "#/definitions/MTLSStatus"
         },
         "service": {
           "$ref": "#/definitions/Service"
@@ -5239,6 +5295,12 @@
         "items": {
           "$ref": "#/definitions/namespace"
         }
+      }
+    },
+    "namespaceTlsResponse": {
+      "description": "Return the mTLS status of a specific Namespace",
+      "schema": {
+        "$ref": "#/definitions/MTLSStatus"
       }
     },
     "noContent": {
