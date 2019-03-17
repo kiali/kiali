@@ -284,6 +284,9 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                             <Link to={`/${Paths.SERVICES}?namespaces=` + ns.name} title="Services list">
                               <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
                             </Link>
+                            <Link to={`/${Paths.ISTIO}?namespaces=` + ns.name} title="Istio Config list">
+                              <Icon type="pf" name="template" style={{ paddingLeft: 10, paddingRight: 10 }} />
+                            </Link>
                           </div>
                         </CardBody>
                       </Card>
