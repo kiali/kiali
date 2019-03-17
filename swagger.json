@@ -4045,7 +4045,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "ResponseFlags": {
-      "description": "\"200\" : {\n\"-\"     : 80.0,\n\"DC\"    : 10.0,\n\"FI,FD\" : 10.0\n}, ...",
+      "description": "\"200\" : {\n\"-\"     : \"80.0\",\n\"DC\"    : \"10.0\",\n\"FI,FD\" : \"10.0\"\n}, ...",
       "type": "object",
       "title": "ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:",
       "additionalProperties": {

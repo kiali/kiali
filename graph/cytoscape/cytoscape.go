@@ -24,9 +24,9 @@ import (
 
 // ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
 // "200" : {
-//    "-"     : 80.0,
-//    "DC"    : 10.0,
-//    "FI,FD" : 10.0
+//    "-"     : "80.0",
+//    "DC"    : "10.0",
+//    "FI,FD" : "10.0"
 //	}, ...
 type ResponseFlags map[string]string
 type Responses map[string]ResponseFlags
