@@ -116,7 +116,7 @@ var istioCharts = []istioChart{
 	{
 		Chart: models.Chart{
 			Name:  "Request size",
-			Unit:  "B",
+			Unit:  "bytes",
 			Spans: 6,
 		},
 		refName: "request_size",
@@ -124,7 +124,7 @@ var istioCharts = []istioChart{
 	{
 		Chart: models.Chart{
 			Name:  "Response size",
-			Unit:  "B",
+			Unit:  "bytes",
 			Spans: 6,
 		},
 		refName: "response_size",
@@ -132,7 +132,7 @@ var istioCharts = []istioChart{
 	{
 		Chart: models.Chart{
 			Name:  "TCP received",
-			Unit:  "bps",
+			Unit:  "bitrate",
 			Spans: 6,
 		},
 		refName: "tcp_received",
@@ -140,7 +140,7 @@ var istioCharts = []istioChart{
 	{
 		Chart: models.Chart{
 			Name:  "TCP sent",
-			Unit:  "bps",
+			Unit:  "bitrate",
 			Spans: 6,
 		},
 		refName: "tcp_sent",

@@ -37,12 +37,12 @@ spec:
       metricName: "vertx_http_client_wsConnections"
       dataType: "raw"
     - name: "Client bytes sent"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_http_client_bytesSent"
       dataType: "histogram"
     - name: "Client bytes received"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_http_client_bytesReceived"
       dataType: "histogram"

@@ -31,7 +31,7 @@ spec:
         - label: "address"
           displayName: "Eventbus address"
     - name: "Event bus bytes read"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_eventbus_bytesRead"
       dataType: "histogram"
@@ -39,7 +39,7 @@ spec:
         - label: "address"
           displayName: "Eventbus address"
     - name: "Event bus bytes written"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_eventbus_bytesWritten"
       dataType: "histogram"

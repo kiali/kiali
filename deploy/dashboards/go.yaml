@@ -25,7 +25,7 @@ spec:
         - label: "quantile"
           displayName: "Quantile"
     - name: "Heap allocated"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "go_memstats_heap_alloc_bytes"
       dataType: "raw"

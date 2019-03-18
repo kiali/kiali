@@ -23,7 +23,7 @@ spec:
       dataType: "raw"
 
     - name: "Memory used"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_memory_used_bytes"
       dataType: "raw"
@@ -33,7 +33,7 @@ spec:
         - label: "id"
           displayName: "Space"
     - name: "Memory commited"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_memory_committed_bytes"
       dataType: "raw"
@@ -43,7 +43,7 @@ spec:
         - label: "id"
           displayName: "Space"
     - name: "Memory max"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_memory_max_bytes"
       dataType: "raw"
@@ -54,7 +54,7 @@ spec:
           displayName: "Space"
 
     - name: "Pool buffer memory used"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_buffer_memory_used_bytes"
       dataType: "raw"
@@ -62,7 +62,7 @@ spec:
         - label: "id"
           displayName: "Pool"
     - name: "Pool buffer capacity"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_buffer_total_capacity_bytes"
       dataType: "raw"
@@ -70,7 +70,7 @@ spec:
         - label: "id"
           displayName: "Pool"
     - name: "Pool buffer count"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "jvm_buffer_count"
       dataType: "raw"

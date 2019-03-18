@@ -12,12 +12,12 @@ spec:
       metricName: "vendor:thread_count"
       dataType: "raw"
     - name: "Used heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "vendor:memory_heap_usage_bytes"
       dataType: "raw"
     - name: "Used non-heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "vendor:memory_non_heap_usage_bytes"
       dataType: "raw"

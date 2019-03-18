@@ -39,12 +39,12 @@ spec:
       metricName: "vertx_http_server_wsConnections"
       dataType: "raw"
     - name: "Server bytes sent"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_http_server_bytesSent"
       dataType: "histogram"
     - name: "Server bytes received"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "vertx_http_server_bytesReceived"
       dataType: "histogram"

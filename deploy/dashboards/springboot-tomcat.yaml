@@ -23,7 +23,7 @@ spec:
       dataType: "raw"
 
     - name: "Bytes sent"
-      unit: "bps"
+      unit: "bitrate"
       spans: 6
       metricName: "tomcat_global_sent_bytes_total"
       dataType: "rate"
@@ -31,7 +31,7 @@ spec:
         - label: "name"
           displayName: "Name"
     - name: "Bytes received"
-      unit: "bps"
+      unit: "bitrate"
       spans: 6
       metricName: "tomcat_global_received_bytes_total"
       dataType: "rate"

@@ -37,17 +37,17 @@ spec:
       metricName: "base:thread_daemon_count"
       dataType: "raw"
     - name: "Committed heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "base:memory_committed_heap_bytes"
       dataType: "raw"
     - name: "Max heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "base:memory_max_heap_bytes"
       dataType: "raw"
     - name: "Used heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "base:memory_used_heap_bytes"
       dataType: "raw"

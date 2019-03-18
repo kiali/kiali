@@ -22,7 +22,7 @@ spec:
       metricName: "nodejs_eventloop_lag_seconds"
       dataType: "raw"
     - name: "Total heap size"
-      unit: "B"
+      unit: "bytes"
       spans: 12
       metricName: "nodejs_heap_space_size_total_bytes"
       dataType: "raw"
@@ -30,7 +30,7 @@ spec:
         - label: "space"
           displayName: "Space"
     - name: "Used heap size"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "nodejs_heap_space_size_used_bytes"
       dataType: "raw"
@@ -38,7 +38,7 @@ spec:
         - label: "space"
           displayName: "Space"
     - name: "Available heap size"
-      unit: "B"
+      unit: "bytes"
       spans: 6
       metricName: "nodejs_heap_space_size_available_bytes"
       dataType: "raw"
