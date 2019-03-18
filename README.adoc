@@ -262,6 +262,13 @@ auth:
   strategy: VALUE
 ----
 
+|`INSTALLATION_TAG`
+|Tag used to identify that particular instnce/installation of the kiali server.
+[source,yaml]
+----
+installation_tag: VALUE
+----
+
 |`IDENTITY_CERT_FILE`
 |Certificate file used to identify the file server. If set, you must go over https to retrieve content from the file server.
 [source,yaml]
