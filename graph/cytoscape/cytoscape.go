@@ -27,7 +27,7 @@ import (
 //    "-"     : "80.0",
 //    "DC"    : "10.0",
 //    "FI,FD" : "10.0"
-//	}, ...
+// }, ...
 type ResponseFlags map[string]string
 type Responses map[string]ResponseFlags
 
