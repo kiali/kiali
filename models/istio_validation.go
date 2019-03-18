@@ -158,6 +158,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "ServiceRole can only point to current namespace",
 		Severity: ErrorSeverity,
 	},
+	"servicerolebinding.invalid.role": {
+		Message:  "ServiceRole does not exists in this namespace",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {
