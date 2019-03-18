@@ -1,7 +1,7 @@
 package graph
 
 import (
-	"net/http"
+	nethttp "net/http"
 )
 
 type Response struct {
@@ -11,17 +11,17 @@ type Response struct {
 
 // Error panics with InternalServerError and the provided message
 func Error(message string) {
-	Panic(message, http.StatusInternalServerError)
+	Panic(message, nethttp.StatusInternalServerError)
 }
 
 // BadRequest panics with BadRequest and the provided message
 func BadRequest(message string) {
-	Panic(message, http.StatusBadRequest)
+	Panic(message, nethttp.StatusBadRequest)
 }
 
 // Forbidden panics with Forbidden and the provided message
 func Forbidden(message string) {
-	Panic(message, http.StatusForbidden)
+	Panic(message, nethttp.StatusForbidden)
 }
 
 // Panic panics with the provided HTTP response code and message

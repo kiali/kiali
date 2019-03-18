@@ -22,9 +22,19 @@ import (
 	"github.com/kiali/kiali/graph/options"
 )
 
+// ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
+// "200" : {
+//    "-"     : "80.0",
+//    "DC"    : "10.0",
+//    "FI,FD" : "10.0"
+// }, ...
+type ResponseFlags map[string]string
+type Responses map[string]ResponseFlags
+
 type ProtocolTraffic struct {
-	Protocol string            `json:"protocol"` // protocol
-	Rates    map[string]string `json:"rates"`    // map[rate]value
+	Protocol  string            `json:"protocol,omitempty"`  // protocol
+	Rates     map[string]string `json:"rates,omitempty"`     // map[rate]value
+	Responses Responses         `json:"responses,omitempty"` // see comment above
 }
 
 type NodeData struct {
@@ -257,7 +267,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 }
 
 func addNodeTelemetry(n *graph.Node, nd *NodeData) {
-	nd.Traffic = []ProtocolTraffic{}
 	for _, p := range graph.Protocols {
 		protocolTraffic := ProtocolTraffic{Protocol: p.Name}
 		for _, r := range p.NodeRates {
@@ -269,6 +278,9 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 			}
 		}
 		if protocolTraffic.Rates != nil {
+			if nd.Traffic == nil {
+				nd.Traffic = []ProtocolTraffic{}
+			}
 			nd.Traffic = append(nd.Traffic, protocolTraffic)
 		}
 	}
@@ -284,7 +296,6 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 	}
 
 	// an edge represents traffic for at most one protocol
-	ed.Traffic = ProtocolTraffic{}
 	for _, p := range graph.Protocols {
 		protocolTraffic := ProtocolTraffic{Protocol: p.Name}
 		total := 0.0
@@ -307,7 +318,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				// hold onto the percentReq field so we know how to report it below
 				percentReq = r
 			}
-			if rateVal := getRate(e.Metadata, r.Name); rateVal > 0.0 {
+			if rateVal > 0.0 {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
@@ -335,8 +346,20 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 						protocolTraffic.Rates[percentReq.Name] = fmt.Sprintf("%.*f", percentReq.Precision, rateVal)
 					}
 				}
+				mdResponses := e.Metadata[p.EdgeResponses].(graph.Responses)
+				for code, flagsValueMap := range mdResponses {
+					responseFlags := make(ResponseFlags)
+					for flags, value := range flagsValueMap {
+						responseFlags[flags] = fmt.Sprintf("%.*f", 1, value/total*100.0)
+					}
+					if protocolTraffic.Responses == nil {
+						protocolTraffic.Responses = Responses{code: responseFlags}
+					} else {
+						protocolTraffic.Responses[code] = responseFlags
+					}
+				}
+				ed.Traffic = protocolTraffic
 			}
-			ed.Traffic = protocolTraffic
 			break
 		}
 	}

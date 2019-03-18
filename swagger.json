@@ -3921,6 +3921,9 @@
             "type": "string"
           },
           "x-go-name": "Rates"
+        },
+        "responses": {
+          "$ref": "#/definitions/Responses"
         }
       },
       "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
@@ -4090,6 +4093,22 @@
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ResponseFlags": {
+      "description": "\"200\" : {\n\"-\"     : \"80.0\",\n\"DC\"    : \"10.0\",\n\"FI,FD\" : \"10.0\"\n}, ...",
+      "type": "object",
+      "title": "ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+    },
+    "Responses": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ResponseFlags"
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
     },
     "Runtime": {
       "description": "Runtime holds the runtime title and associated dashboard template(s)",
