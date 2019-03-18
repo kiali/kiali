@@ -32,6 +32,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       httpPercentReq: 'NaN',
       isMTLS: undefined,
       protocol: undefined,
+      responses: undefined,
       responseTime: 'NaN',
       tcp: 'NaN'
     },
@@ -91,7 +92,12 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
         const { traffic, ...edgeData } = edge.data;
         // see comment above about the 'traffic' data handling
         if (traffic && traffic.protocol !== '') {
-          decoratedEdge.data = { protocol: traffic.protocol, ...traffic.rates, ...edgeData };
+          decoratedEdge.data = {
+            protocol: traffic.protocol,
+            responses: traffic.responses,
+            ...traffic.rates,
+            ...edgeData
+          };
         }
         // prettier-ignore
         decoratedEdge.data = <DecoratedGraphEdgeData> { ...elementsDefaults.edges, ...decoratedEdge.data };

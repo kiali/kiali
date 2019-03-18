@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Icon } from 'patternfly-react';
+import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
@@ -22,6 +22,7 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { serverConfig } from '../../config/serverConfig';
 import { CyEdge } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { icons } from '../../config';
+import { ResponseTable } from '../../components/SummaryPanel/ResponseTable';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -118,32 +119,65 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="From" node={source} />
         <HeadingBlock prefix="To" node={dest} />
         {isMtls && <MTLSBlock />}
-        <div className="panel-body">
-          {isGrpc && (
-            <>
-              <RateTableGrpc
-                title="GRPC Traffic (requests per second):"
-                rate={this.safeRate(edge.data(CyEdge.grpc))}
-                rateErr={this.safeRate(edge.data(CyEdge.grpcPercentErr))}
-              />
-              <hr />
-            </>
-          )}
-          {isHttp && (
-            <>
-              <RateTableHttp
-                title="HTTP Traffic (requests per second):"
-                rate={this.safeRate(edge.data(CyEdge.http))}
-                rate3xx={this.safeRate(edge.data(CyEdge.http3xx))}
-                rate4xx={this.safeRate(edge.data(CyEdge.http4xx))}
-                rate5xx={this.safeRate(edge.data(CyEdge.http5xx))}
-              />
-              <hr />
-            </>
-          )}
-          {!isGrpc && !isHttp && !isTcp && renderNoTraffic()}
-          {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
-        </div>
+        {(isGrpc || isHttp) && (
+          <div
+            className="panel-body"
+            style={{ padding: '0px', paddingLeft: '15px', paddingRight: '15px', paddingBottom: '15px' }}
+          >
+            <TabContainer id="basic-tabs" defaultActiveKey="traffic">
+              <div>
+                <Nav bsClass="nav nav-tabs nav-tabs-pf" style={{ paddingLeft: '20px' }}>
+                  <NavItem eventKey="traffic">
+                    <div>Traffic</div>
+                  </NavItem>
+                  <NavItem eventKey="responses">
+                    <div>Response Codes</div>
+                  </NavItem>
+                </Nav>
+                <TabContent style={{ paddingTop: '10px' }}>
+                  <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
+                    {isGrpc && (
+                      <>
+                        <RateTableGrpc
+                          title="GRPC requests per second:"
+                          rate={this.safeRate(edge.data(CyEdge.grpc))}
+                          rateErr={this.safeRate(edge.data(CyEdge.grpcPercentErr))}
+                        />
+                      </>
+                    )}
+                    {isHttp && (
+                      <>
+                        <RateTableHttp
+                          title="HTTP requests per second:"
+                          rate={this.safeRate(edge.data(CyEdge.http))}
+                          rate3xx={this.safeRate(edge.data(CyEdge.http3xx))}
+                          rate4xx={this.safeRate(edge.data(CyEdge.http4xx))}
+                          rate5xx={this.safeRate(edge.data(CyEdge.http5xx))}
+                        />
+                      </>
+                    )}
+                  </TabPane>
+                  <TabPane eventKey="responses" mountOnEnter={true} unmountOnExit={true}>
+                    <ResponseTable
+                      title={isGrpc ? 'GRPC codes:' : 'HTTP codes:'}
+                      responses={edge.data(CyEdge.responses)}
+                    />
+                  </TabPane>
+                </TabContent>
+              </div>
+            </TabContainer>
+            <hr />
+            {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
+          </div>
+        )}
+        {isTcp && (
+          <div className="panel-body">
+            <ResponseTable title="TCP Responses:" responses={edge.data(CyEdge.responses)} />
+            <hr />
+            {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
+          </div>
+        )}
+        {!isGrpc && !isHttp && !isTcp && <div className="panel-body">{renderNoTraffic()}</div>}
       </div>
     );
   }

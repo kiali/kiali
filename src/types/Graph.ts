@@ -87,32 +87,42 @@ export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
 // Graph Structures
 
-export interface ProtocolTrafficNoData {
-  protocol: '';
-}
+// Responses is a map of maps, all strings. e.g.:
+// { code0: {
+//     flags0: %traffic,
+//     flags1: %traffic
+//   }}
+export type Responses = Object;
 
-export interface ProtocolTrafficHttp {
+export type ProtocolTrafficNoData = {
+  protocol: '';
+};
+
+export type ProtocolTrafficHttp = {
   protocol: 'http';
   rates: {
     http: string;
     httpPercentErr?: string;
   };
-}
+  responses: Responses;
+};
 
-export interface ProtocolTrafficGrpc {
+export type ProtocolTrafficGrpc = {
   protocol: 'grpc';
   rates: {
     grpc: string;
     grpcPercentErr?: string;
   };
-}
+  responses: Responses;
+};
 
-export interface ProtocolTrafficTcp {
+export type ProtocolTrafficTcp = {
   protocol: 'tcp';
   rates: {
     tcp: string;
   };
-}
+  responses: Responses;
+};
 
 export type ProtocolTraffic = ProtocolTrafficHttp | ProtocolTrafficTcp | ProtocolTrafficGrpc | ProtocolTrafficNoData;
 
@@ -191,6 +201,7 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   http5xx: string;
   httpPercentErr: string;
   httpPercentReq: string;
+  responses: Responses;
   tcp: string;
 }
 
