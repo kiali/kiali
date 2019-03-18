@@ -262,7 +262,7 @@ auth:
   strategy: VALUE
 ----
 
-|`INSTALLATION_TAG`
+|`KIALI_INSTALLATION_TAG`
 |Tag used to identify that particular instnce/installation of the kiali server.
 [source,yaml]
 ----
