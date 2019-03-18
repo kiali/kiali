@@ -256,8 +256,8 @@ func updateBaseURL(webRootPath string) {
 
 	html := string(b)
 
-	searchStr := `<base href="/">`
-	newStr := `<base href="` + webRootPath + `/">`
+	searchStr := `<base href="/"/>`
+	newStr := `<base href="` + webRootPath + `/"/>`
 	newHTML := strings.Replace(html, searchStr, newStr, -1)
 
 	err = ioutil.WriteFile(path, []byte(newHTML), 0)
