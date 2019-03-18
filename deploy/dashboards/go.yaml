@@ -7,17 +7,15 @@ spec:
   runtime: Go
   charts:
     - name: "Threads"
-      unit: ""
       spans: 6
       metricName: "go_threads"
       dataType: "raw"
     - name: "Goroutines"
-      unit: ""
       spans: 6
       metricName: "go_goroutines"
       dataType: "raw"
     - name: "GC duration"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "go_gc_duration_seconds"
       dataType: "rate"

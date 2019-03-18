@@ -7,7 +7,6 @@ spec:
   runtime: Quarkus
   charts:
     - name: "Thread count"
-      unit: ""
       spans: 4
       metricName: "vendor:thread_count"
       dataType: "raw"
@@ -23,22 +22,20 @@ spec:
       dataType: "raw"
 
     - name: "Young GC time"
-      unit: "s"
+      unit: "seconds"
       spans: 3
       metricName: "base:gc_young_generation_scavenger_time_seconds"
       dataType: "raw"
     - name: "Young GC count"
-      unit: ""
       spans: 3
       metricName: "base:gc_young_generation_scavenger_count"
       dataType: "raw"
     - name: "Total GC time"
-      unit: "s"
+      unit: "seconds"
       spans: 3
       metricName: "base:gc_complete_scavenger_time_seconds"
       dataType: "raw"
     - name: "Total GC count"
-      unit: ""
       spans: 3
       metricName: "base:gc_complete_scavenger_count"
       dataType: "raw"

@@ -7,7 +7,7 @@ spec:
   title: Vert.x Client Metrics
   charts:
     - name: "Client response time"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "vertx_http_client_responseTime_seconds"
       dataType: "histogram"
@@ -27,12 +27,10 @@ spec:
         - label: "method"
           displayName: "Method"
     - name: "Client active connections"
-      unit: ""
       spans: 6
       metricName: "vertx_http_client_connections"
       dataType: "raw"
     - name: "Client active websockets"
-      unit: ""
       spans: 6
       metricName: "vertx_http_client_wsConnections"
       dataType: "raw"

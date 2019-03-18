@@ -108,7 +108,7 @@ var istioCharts = []istioChart{
 	{
 		Chart: models.Chart{
 			Name:  "Request duration",
-			Unit:  "s",
+			Unit:  "seconds",
 			Spans: 6,
 		},
 		refName: "request_duration",

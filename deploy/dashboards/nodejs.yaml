@@ -7,17 +7,15 @@ spec:
   title: Node.js Metrics
   charts:
     - name: "Active handles"
-      unit: ""
       spans: 4
       metricName: "nodejs_active_handles_total"
       dataType: "raw"
     - name: "Active requests"
-      unit: ""
       spans: 4
       metricName: "nodejs_active_requests_total"
       dataType: "raw"
     - name: "Event loop lag"
-      unit: "s"
+      unit: "seconds"
       spans: 4
       metricName: "nodejs_eventloop_lag_seconds"
       dataType: "raw"

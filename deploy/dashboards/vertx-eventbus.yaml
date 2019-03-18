@@ -7,7 +7,6 @@ spec:
   title: Vert.x Eventbus Metrics
   charts:
     - name: "Event bus handlers"
-      unit: ""
       spans: 6
       metricName: "vertx_eventbus_handlers"
       dataType: "raw"
@@ -15,7 +14,6 @@ spec:
         - label: "address"
           displayName: "Eventbus address"
     - name: "Event bus pending messages"
-      unit: ""
       spans: 6
       metricName: "vertx_eventbus_pending"
       dataType: "raw"
@@ -23,7 +21,7 @@ spec:
         - label: "address"
           displayName: "Eventbus address"
     - name: "Event bus processing time"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "vertx_eventbus_processingTime_seconds"
       dataType: "histogram"
