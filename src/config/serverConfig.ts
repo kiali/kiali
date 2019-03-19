@@ -43,6 +43,7 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 // Set some defaults. Mainly used in tests, because
 // these will be overwritten on user login.
 let serverConfig: ComputedServerConfig = {
+  installationTag: 'Kiali Console',
   istioNamespace: 'istio-system',
   istioLabels: {
     appLabelName: 'app',

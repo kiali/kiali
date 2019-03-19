@@ -10,7 +10,7 @@ import HelpDropdown from '../../containers/HelpDropdownContainer';
 import UserDropdown from '../../containers/UserDropdownContainer';
 import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
 import { default as MeshMTLSStatus } from '../../components/MTls/MeshMTLSStatus';
-import { kialiLogo } from '../../config';
+import { kialiLogo, serverConfig } from '../../config';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
@@ -39,6 +39,10 @@ class Navigation extends React.Component<PropsType> {
 
   goTojaeger() {
     window.open(this.props.jaegerUrl, '_blank');
+  }
+
+  componentDidMount() {
+    document.title = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali Console';
   }
 
   renderMenuItems() {
