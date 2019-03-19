@@ -7,10 +7,10 @@ import {
   severityToColor,
   severityToIconName,
   validationToSeverity
-} from '../../../../types/ServiceInfo';
-import { ObjectValidation, VirtualService, Host } from '../../../../types/IstioObjects';
-import LocalTime from '../../../../components/Time/LocalTime';
-import DetailObject from '../../../../components/Details/DetailObject';
+} from '../../../types/ServiceInfo';
+import { ObjectValidation, VirtualService, Host } from '../../../types/IstioObjects';
+import LocalTime from '../../../components/Time/LocalTime';
+import DetailObject from '../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
 import { Link } from 'react-router-dom';
 

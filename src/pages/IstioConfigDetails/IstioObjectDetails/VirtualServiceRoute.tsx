@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as resolve from 'table-resolver';
-import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../../types/ServiceInfo';
+import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../types/ServiceInfo';
 import {
   Destination,
   DestinationWeight,
@@ -8,10 +8,10 @@ import {
   ObjectCheck,
   ObjectValidation,
   TCPRoute
-} from '../../../../types/IstioObjects';
+} from '../../../types/IstioObjects';
 import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
-import DetailObject from '../../../../components/Details/DetailObject';
-import { PfColors } from '../../../../components/Pf/PfColors';
+import DetailObject from '../../../components/Details/DetailObject';
+import { PfColors } from '../../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
 
 interface VirtualServiceRouteProps {
@@ -293,17 +293,19 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
     return (
       <div key={'bulletchart-wrapper-' + i} style={{ marginTop: '30px' }}>
-        <div>
-          <BulletChart
-            key={'bullet-chart-' + i}
-            label="Weight sum"
-            stacked={true}
-            thresholdWarning={-1}
-            thresholdError={-1}
-            values={this.bulletChartValues(route)}
-            ranges={[{ value: 100 }]}
-          />
-        </div>
+        {(route.route || []).length > 1 && (
+          <div>
+            <BulletChart
+              key={'bullet-chart-' + i}
+              label="Weight sum"
+              stacked={true}
+              thresholdWarning={-1}
+              thresholdError={-1}
+              values={this.bulletChartValues(route)}
+              ranges={[{ value: 100 }]}
+            />
+          </div>
+        )}
         <Table.PfProvider columns={resolvedColumns} striped={true} bordered={true} hover={true} dataTable={true}>
           <Table.Header headerRows={resolve.headerRows(this.columns())} />
           <Table.Body rows={resolvedRows} rowKey="id" />

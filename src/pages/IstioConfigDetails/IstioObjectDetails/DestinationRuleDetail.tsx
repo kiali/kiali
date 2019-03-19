@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Col, Icon, Row, Table } from 'patternfly-react';
-import { globalChecks, severityToColor, severityToIconName, validationToSeverity } from '../../../../types/ServiceInfo';
-import { DestinationRule, ObjectValidation, Subset } from '../../../../types/IstioObjects';
-import LocalTime from '../../../../components/Time/LocalTime';
-import DetailObject from '../../../../components/Details/DetailObject';
+import { globalChecks, severityToColor, severityToIconName, validationToSeverity } from '../../../types/ServiceInfo';
+import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
+import LocalTime from '../../../components/Time/LocalTime';
+import DetailObject from '../../../components/Details/DetailObject';
 import * as resolve from 'table-resolver';
-import Label from '../../../../components/Label/Label';
+import Label from '../../../components/Label/Label';
 import { Link } from 'react-router-dom';
 
 interface DestinationRuleProps {

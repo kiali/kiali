@@ -19,8 +19,8 @@ import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropd
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
-import VirtualServiceDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/VirtualServiceDetail';
-import DestinationRuleDetail from '../ServiceDetails/ServiceInfo/IstioObjectDetails/DestinationRuleDetail';
+import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
+import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
 import { Paths } from '../../config';
 
