@@ -167,9 +167,9 @@ export class ServiceHealth extends Health {
         const reqErrorsRatio = getRequestErrorsStatus(requests.errorRatio);
         const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
         const item: HealthItem = {
-          title: 'Error Rate',
+          title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
           status: reqErrorsRatio.status,
-          text: reqErrorsText + ' over ' + getName(ctx.rateInterval).toLowerCase()
+          text: reqErrorsText
         };
         items.push(item);
       } else {

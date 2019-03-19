@@ -137,18 +137,14 @@ ShallowWrapper {
             </strong>
           </div>
           <ul
-            style={
-              Object {
-                "listStyleType": "none",
-              }
-            }
+            className="fza38k8"
           />
         </Col>
         <Col
           bsClass="col"
           componentClass="div"
-          lg={3}
-          md={3}
+          lg={2}
+          md={2}
           sm={6}
           xs={12}
         >
@@ -172,11 +168,7 @@ ShallowWrapper {
               xs={12}
             >
               <ul
-                style={
-                  Object {
-                    "listStyleType": "none",
-                  }
-                }
+                className="fza38k8"
               >
                 <li>
                   <strong>
@@ -209,8 +201,8 @@ ShallowWrapper {
         <Col
           bsClass="col"
           componentClass="div"
-          lg={2}
-          md={2}
+          lg={3}
+          md={3}
           sm={6}
           xs={12}
         >
@@ -320,18 +312,14 @@ ShallowWrapper {
               </strong>
             </div>
             <ul
-              style={
-                Object {
-                  "listStyleType": "none",
-                }
-              }
+              className="fza38k8"
             />
           </Col>
           <Col
             bsClass="col"
             componentClass="div"
-            lg={3}
-            md={3}
+            lg={2}
+            md={2}
             sm={6}
             xs={12}
           >
@@ -355,11 +343,7 @@ ShallowWrapper {
                 xs={12}
               >
                 <ul
-                  style={
-                    Object {
-                      "listStyleType": "none",
-                    }
-                  }
+                  className="fza38k8"
                 >
                   <li>
                     <strong>
@@ -392,8 +376,8 @@ ShallowWrapper {
           <Col
             bsClass="col"
             componentClass="div"
-            lg={2}
-            md={2}
+            lg={3}
+            md={3}
             sm={6}
             xs={12}
           >

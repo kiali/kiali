@@ -18,8 +18,8 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 1m",
-            "title": "Error Rate",
+            "text": "No requests",
+            "title": "Error Rate over last 1m",
           },
         ],
         "requests": Object {
@@ -54,9 +54,9 @@ ShallowWrapper {
           >
             N/A
           </span>
-           Error Rate: 
+           Error Rate over last 1m: 
         </strong>,
-        "No requests over last 1m",
+        "No requests",
         undefined,
       ],
     },
@@ -77,7 +77,7 @@ ShallowWrapper {
             >
               N/A
             </span>,
-            " Error Rate: ",
+            " Error Rate over last 1m: ",
           ],
         },
         "ref": null,
@@ -96,11 +96,11 @@ ShallowWrapper {
             "rendered": "N/A",
             "type": "span",
           },
-          " Error Rate: ",
+          " Error Rate over last 1m: ",
         ],
         "type": "strong",
       },
-      "No requests over last 1m",
+      "No requests",
       undefined,
     ],
     "type": "div",
@@ -122,9 +122,9 @@ ShallowWrapper {
             >
               N/A
             </span>
-             Error Rate: 
+             Error Rate over last 1m: 
           </strong>,
-          "No requests over last 1m",
+          "No requests",
           undefined,
         ],
       },
@@ -145,7 +145,7 @@ ShallowWrapper {
               >
                 N/A
               </span>,
-              " Error Rate: ",
+              " Error Rate over last 1m: ",
             ],
           },
           "ref": null,
@@ -164,11 +164,11 @@ ShallowWrapper {
               "rendered": "N/A",
               "type": "span",
             },
-            " Error Rate: ",
+            " Error Rate over last 1m: ",
           ],
           "type": "strong",
         },
-        "No requests over last 1m",
+        "No requests",
         undefined,
       ],
       "type": "div",
@@ -212,8 +212,8 @@ ShallowWrapper {
               "priority": 0,
               "text": "N/A",
             },
-            "text": "No requests over last 1m",
-            "title": "Error Rate",
+            "text": "No requests",
+            "title": "Error Rate over last 1m",
           },
         ],
         "requests": Object {
@@ -248,9 +248,9 @@ ShallowWrapper {
           >
             N/A
           </span>
-           Error Rate: 
+           Error Rate over last 1m: 
         </strong>,
-        "No requests over last 1m",
+        "No requests",
         undefined,
       ],
     },
@@ -271,7 +271,7 @@ ShallowWrapper {
             >
               N/A
             </span>,
-            " Error Rate: ",
+            " Error Rate over last 1m: ",
           ],
         },
         "ref": null,
@@ -290,11 +290,11 @@ ShallowWrapper {
             "rendered": "N/A",
             "type": "span",
           },
-          " Error Rate: ",
+          " Error Rate over last 1m: ",
         ],
         "type": "strong",
       },
-      "No requests over last 1m",
+      "No requests",
       undefined,
     ],
     "type": "div",
@@ -316,9 +316,9 @@ ShallowWrapper {
             >
               N/A
             </span>
-             Error Rate: 
+             Error Rate over last 1m: 
           </strong>,
-          "No requests over last 1m",
+          "No requests",
           undefined,
         ],
       },
@@ -339,7 +339,7 @@ ShallowWrapper {
               >
                 N/A
               </span>,
-              " Error Rate: ",
+              " Error Rate over last 1m: ",
             ],
           },
           "ref": null,
@@ -358,11 +358,11 @@ ShallowWrapper {
               "rendered": "N/A",
               "type": "span",
             },
-            " Error Rate: ",
+            " Error Rate over last 1m: ",
           ],
           "type": "strong",
         },
-        "No requests over last 1m",
+        "No requests",
         undefined,
       ],
       "type": "div",

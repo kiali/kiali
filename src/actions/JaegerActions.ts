@@ -14,7 +14,7 @@ export const JaegerActions = {
       url: url
     })
   ),
-  setEnableIntegration: createStandardAction(JaegerActionKeys.SET_ENABLE_INTEGRATION)<boolean>(),
+  setEnableIntegration: createStandardAction(JaegerActionKeys.SET_ENABLE_INTEGRATION)<boolean>()
 };
 
 export type JaegerAction = ActionType<typeof JaegerActions>;

@@ -7,6 +7,7 @@ import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { Port } from '../../../types/IstioObjects';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
+import { style } from 'typestyle';
 
 import './ServiceInfoDescription.css';
 
@@ -22,6 +23,11 @@ interface ServiceInfoDescriptionProps {
   endpoints?: Endpoints[];
   health?: ServiceHealth;
 }
+
+const listStyle = style({
+  listStyleType: 'none',
+  padding: 0
+});
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
   constructor(props: ServiceInfoDescriptionProps) {
@@ -65,7 +71,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <div className="progress-description">
                 <strong>Ports</strong>
               </div>
-              <ul style={{ listStyleType: 'none' }}>
+              <ul className={listStyle}>
                 {(this.props.ports || []).map((port, i) => (
                   <li key={'port_' + i}>
                     {port.protocol} {port.name} ({port.port})
@@ -73,14 +79,14 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 ))}
               </ul>
             </Col>
-            <Col xs={12} sm={6} md={3} lg={3}>
+            <Col xs={12} sm={6} md={2} lg={2}>
               <div className="progress-description">
                 <strong>Endpoints</strong>
               </div>
               {(this.props.endpoints || []).map((endpoint, i) => (
                 <Row key={'endpoint_' + i}>
                   <Col xs={12} sm={12} md={12} lg={12}>
-                    <ul style={{ listStyleType: 'none' }}>
+                    <ul className={listStyle}>
                       {(endpoint.addresses || []).map((address, u) => (
                         <li key={'endpoint_' + i + '_address_' + u}>
                           <strong>{address.ip} </strong>: {address.name}
@@ -91,7 +97,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 </Row>
               ))}
             </Col>
-            <Col xs={12} sm={6} md={2} lg={2}>
+            <Col xs={12} sm={6} md={3} lg={3}>
               <div className="progress-description">
                 <strong>Health</strong>
               </div>
