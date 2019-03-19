@@ -83,6 +83,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
+		checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 	}
@@ -129,8 +130,11 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 	case MeshPolicies:
-		mtlsChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{mtlsChecker}
+		meshPoliciesChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{meshPoliciesChecker}
+	case Policies:
+		policiesChecker := checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{policiesChecker}
 	case ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
@@ -146,8 +150,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecs are not yet in place
 	case QuotaSpecBindings:
 		// Validations on QuotaSpecBindings are not yet in place
-	case Policies:
-		// Validations on Policies are not yet in place
 	case ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
 	case RbacConfigs:

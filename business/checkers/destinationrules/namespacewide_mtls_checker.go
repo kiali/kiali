@@ -18,7 +18,7 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
-	// otherwise, check among MeshPolicies for a rule enabling mesh-wide mTLS
+	// otherwise, check among MeshPolicies for a rule enabling ns-wide mTLS
 	for _, mp := range m.MTLSDetails.Policies {
 		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
 			return validations, true
