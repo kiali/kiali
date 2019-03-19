@@ -202,7 +202,7 @@ type Config struct {
 func NewConfig() (c *Config) {
 	c = new(Config)
 
-	c.InstallationTag = getDefaultString(EnvInstallationTag, "Kiali")
+	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
 
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")

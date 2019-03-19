@@ -263,7 +263,7 @@ auth:
 ----
 
 |`KIALI_INSTALLATION_TAG`
-|Tag used to identify a particular instance/installation of the kiali server (Default: kiali)
+|Tag used to identify a particular instance/installation of the kiali server
 [source,yaml]
 ----
 installation_tag: VALUE
