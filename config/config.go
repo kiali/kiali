@@ -18,6 +18,8 @@ import (
 // Environment vars can define some default values.
 // NOTE: If you add a new variable, don't forget to update README.adoc
 const (
+	EnvInstallationTag = "KIALI_INSTALLATION_TAG"
+
 	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
@@ -189,6 +191,7 @@ type Config struct {
 	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
 	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
 	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
+	InstallationTag  string            `yaml:"installation_tag,omitempty"`
 	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
@@ -198,6 +201,8 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
+
+	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
 
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")

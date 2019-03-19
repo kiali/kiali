@@ -27,9 +27,10 @@ type PrometheusConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	IstioNamespace string             `json:"istioNamespace,omitempty"`
-	IstioLabels    config.IstioLabels `json:"istioLabels,omitempty"`
-	Prometheus     PrometheusConfig   `json:"prometheus,omitempty"`
+	InstallationTag string             `json:"installationTag,omitempty"`
+	IstioNamespace  string             `json:"istioNamespace,omitempty"`
+	IstioLabels     config.IstioLabels `json:"istioLabels,omitempty"`
+	Prometheus      PrometheusConfig   `json:"prometheus,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -41,8 +42,9 @@ func Config(w http.ResponseWriter, r *http.Request) {
 	promConfig := getPrometheusConfig()
 	config := config.Get()
 	publicConfig := PublicConfig{
-		IstioNamespace: config.IstioNamespace,
-		IstioLabels:    config.IstioLabels,
+		InstallationTag: config.InstallationTag,
+		IstioNamespace:  config.IstioNamespace,
+		IstioLabels:     config.IstioLabels,
 		Prometheus: PrometheusConfig{
 			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 			StorageTsdbRetention: promConfig.StorageTsdbRetention,
