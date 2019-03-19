@@ -7,7 +7,7 @@ spec:
   title: Vert.x Pools Metrics
   charts:
     - name: "Usage duration"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "vertx_pool_usage_seconds"
       dataType: "histogram"
@@ -17,7 +17,6 @@ spec:
         - label: "pool_type"
           displayName: "Type"
     - name: "Usage ratio"
-      unit: ""
       spans: 6
       metricName: "vertx_pool_ratio"
       dataType: "raw"
@@ -27,7 +26,6 @@ spec:
         - label: "pool_type"
           displayName: "Type"
     - name: "Queue size"
-      unit: ""
       spans: 6
       metricName: "vertx_pool_queue_size"
       dataType: "raw"
@@ -37,7 +35,7 @@ spec:
         - label: "pool_type"
           displayName: "Type"
     - name: "Time in queue"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "vertx_pool_queue_delay_seconds"
       dataType: "histogram"
@@ -47,7 +45,6 @@ spec:
         - label: "pool_type"
           displayName: "Type"
     - name: "Resources used"
-      unit: ""
       spans: 6
       metricName: "vertx_pool_inUse"
       dataType: "raw"

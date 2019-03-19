@@ -6,7 +6,7 @@ spec:
   title: Kiali Internal Metrics
   charts:
     - name: "API processing duration"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "kiali_api_processing_duration_seconds"
       dataType: "histogram"
@@ -14,7 +14,7 @@ spec:
         - label: "route"
           displayName: "Route"
     - name: "Functions processing duration"
-      unit: "s"
+      unit: "seconds"
       spans: 6
       metricName: "kiali_go_function_processing_duration_seconds"
       dataType: "histogram"
@@ -24,7 +24,6 @@ spec:
         - label: "package"
           displayName: "Package"
     - name: "Failures"
-      unit: ""
       spans: 12
       metricName: "kiali_go_function_failures_total"
       dataType: "raw"

@@ -7,38 +7,35 @@ spec:
   runtime: Quarkus
   charts:
     - name: "Thread count"
-      unit: ""
       spans: 4
       metricName: "vendor:thread_count"
       dataType: "raw"
     - name: "Used heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "vendor:memory_heap_usage_bytes"
       dataType: "raw"
     - name: "Used non-heap"
-      unit: "B"
+      unit: "bytes"
       spans: 4
       metricName: "vendor:memory_non_heap_usage_bytes"
       dataType: "raw"
 
     - name: "Young GC time"
-      unit: "s"
+      unit: "seconds"
       spans: 3
       metricName: "base:gc_young_generation_scavenger_time_seconds"
       dataType: "raw"
     - name: "Young GC count"
-      unit: ""
       spans: 3
       metricName: "base:gc_young_generation_scavenger_count"
       dataType: "raw"
     - name: "Total GC time"
-      unit: "s"
+      unit: "seconds"
       spans: 3
       metricName: "base:gc_complete_scavenger_time_seconds"
       dataType: "raw"
     - name: "Total GC count"
-      unit: ""
       spans: 3
       metricName: "base:gc_complete_scavenger_count"
       dataType: "raw"
