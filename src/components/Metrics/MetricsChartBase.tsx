@@ -75,7 +75,49 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     };
   }
 
-  formatYAxis = (val: any): string => {
+  formatYAxis = (val: number): string => {
+    // Round to dismiss float imprecision
+    val = Math.round(val * 10000) / 10000;
+    switch (this.props.unit) {
+      case 'seconds':
+        return this.formatSI(val, 's');
+      case 'bytes':
+      case 'bytes-si':
+        return this.formatDataSI(val, 'B');
+      case 'bytes-iec':
+        return this.formatDataIEC(val, 'B');
+      case 'bitrate':
+      case 'bitrate-si':
+        return this.formatDataSI(val, 'bit/s');
+      case 'bitrate-iec':
+        return this.formatDataIEC(val, 'bit/s');
+      default:
+        // Fallback to default SI scaler:
+        return this.formatDataSI(val, this.props.unit);
+    }
+  };
+
+  formatDataSI = (val: number, suffix: string): string => {
+    return this.formatData(val, 1000, ['k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']) + suffix;
+  };
+
+  formatDataIEC = (val: number, suffix: string): string => {
+    return this.formatData(val, 1024, ['Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi']) + suffix;
+  };
+
+  formatData = (val: number, threshold: number, units: string[]): string => {
+    if (Math.abs(val) < threshold) {
+      return val + ' ';
+    }
+    let u = -1;
+    do {
+      val /= threshold;
+      ++u;
+    } while (Math.abs(val) >= threshold && u < units.length - 1);
+    return format('~r')(val) + ' ' + units[u];
+  };
+
+  formatSI = (val: number, suffix: string): string => {
     const fmt = format('~s')(val);
     let si = '';
     // Insert space before SI
@@ -85,12 +127,12 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     for (let i = fmt.length - 1; i >= 0; i--) {
       const c = fmt.charAt(i);
       if (c >= '0' && c <= '9') {
-        return fmt.substr(0, i + 1) + ' ' + si + this.props.unit;
+        return fmt.substr(0, i + 1) + ' ' + si + suffix;
       }
       si = c + si;
     }
     // Weird: no number found?
-    return fmt + this.props.unit;
+    return fmt + suffix;
   };
 
   protected onExpandHandler = (event: React.MouseEvent<HTMLAnchorElement>) => {
