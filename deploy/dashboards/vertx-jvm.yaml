@@ -1,24 +1,11 @@
 apiVersion: "monitoring.kiali.io/v1alpha1"
 kind: MonitoringDashboard
 metadata:
-  name: springboot-jvm
+  name: vertx-jvm
 spec:
-  runtime: Spring Boot
+  runtime: Vert.x
   title: JVM Metrics
   charts:
-    - name: "Total live threads"
-      spans: 4
-      metricName: "jvm_threads_live"
-      dataType: "raw"
-    - name: "Daemon threads"
-      spans: 4
-      metricName: "jvm_threads_daemon"
-      dataType: "raw"
-    - name: "Loaded classes"
-      spans: 4
-      metricName: "jvm_classes_loaded"
-      dataType: "raw"
-
     - name: "Memory used"
       unit: "bytes"
       spans: 4
@@ -49,3 +36,19 @@ spec:
           displayName: "Area"
         - label: "id"
           displayName: "Space"
+
+    - name: "Total live threads"
+      spans: 4
+      metricName: "jvm_threads_live_threads"
+      dataType: "raw"
+    - name: "Daemon threads"
+      spans: 4
+      metricName: "jvm_threads_daemon_threads"
+      dataType: "raw"
+    - name: "Threads states"
+      spans: 4
+      metricName: "jvm_threads_states_threads"
+      dataType: "raw"
+      aggregations:
+        - label: "state"
+          displayName: "State"

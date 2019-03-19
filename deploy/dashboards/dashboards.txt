@@ -2,10 +2,12 @@ go.yaml
 kiali.yaml
 nodejs.yaml
 quarkus.yaml
+springboot-jvm-pool.yaml
 springboot-jvm.yaml
 springboot-tomcat.yaml
 thorntail.yaml
 vertx-client.yaml
 vertx-eventbus.yaml
+vertx-jvm.yaml
 vertx-pool.yaml
 vertx-server.yaml
