@@ -167,6 +167,7 @@ https://github.com/kiali/kiali[kiali/kiali GitHub repository].
 . Checkout the code that you want to release:
 ** `git checkout branch_to_release` (usually, you should release "master")
 ** Be advised that the release process will commit changes locally.
+** PATCH RELEASES: you need to check out the minor branch (vX.Y) and cherry-pick all commits that need to go into the patch release. You should then push these new commits to the vX.Y branch. At this point, you can continue the release build.
 . The release process may need to create a PR to prepare the code for the next
   version. A GitHub token is required to create the PR:
 ** `export GH_TOKEN={your_github_token}`
