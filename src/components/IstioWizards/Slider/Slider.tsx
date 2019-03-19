@@ -15,6 +15,7 @@ type Props = {
   orientation: string;
   min: number;
   max: number;
+  maxLimit: number;
   step: number;
   value: number[] | number;
   tooltip: boolean;
@@ -50,6 +51,7 @@ class Slider extends React.Component<Props, State> {
     orientation: 'horizontal',
     min: 0,
     max: 100,
+    maxLimit: 100,
     value: 0,
     step: 1,
     toolTip: false,
@@ -145,24 +147,17 @@ class Slider extends React.Component<Props, State> {
 
     const leftButtonStyle = { marginLeft: 5, marginRight: 0 };
     const leftButton = this.props.input && (
-      <Button bsSize="xsmall" style={leftButtonStyle} onClick={() => this.onMinus()}>
+      <Button bsSize="xsmall" style={leftButtonStyle} onClick={() => this.onMinus()} disabled={this.props.locked}>
         <Icon type="fa" name="minus" />
       </Button>
     );
 
-    const inputStyle = this.props.locked
-      ? {
-          width: '3.5em',
-          textAlign: 'center',
-          marginLeft: 7,
-          marginRight: 7
-        }
-      : {
-          width: '3.5em',
-          textAlign: 'center',
-          marginLeft: 0,
-          marginRight: 0
-        };
+    const inputStyle = {
+      width: '3.5em',
+      textAlign: 'center',
+      marginLeft: 0,
+      marginRight: 0
+    };
     const inputElement = this.props.input && (
       <FormControl
         bsClass="slider-input-pf"
@@ -177,7 +172,7 @@ class Slider extends React.Component<Props, State> {
 
     const rightButtonStyle = { marginLeft: 0, marginRight: 5 };
     const rightButton = this.props.input && (
-      <Button bsSize="xsmall" style={rightButtonStyle} onClick={() => this.onPlus()}>
+      <Button bsSize="xsmall" style={rightButtonStyle} onClick={() => this.onPlus()} disabled={this.props.locked}>
         <Icon type="fa" name="plus" />
       </Button>
     );
@@ -206,9 +201,9 @@ class Slider extends React.Component<Props, State> {
         {label}
         <div className={sliderClass}>
           <Boundaries slider={BSSlider} {...this.props}>
-            {!this.props.locked && leftButton}
+            {leftButton}
             {inputElement}
-            {!this.props.locked && rightButton}
+            {rightButton}
             {formatElement}
             {this.props.showLock && lockElement}
           </Boundaries>

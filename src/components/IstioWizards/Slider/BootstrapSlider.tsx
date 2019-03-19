@@ -16,7 +16,12 @@ type Props = {
   ticks_labels: [];
   locked: boolean;
   min: number;
+  // Note that Slider will use max and maxLimit properties to:
+  // maxLimit: the max value Slider can show
+  // max: the max value Slider can enter
+  // max < maxLimit when using Slider groups, so max can be relative
   max: number;
+  maxLimit: number;
 };
 
 class BootstrapSlider extends React.Component<Props> {
@@ -36,13 +41,14 @@ class BootstrapSlider extends React.Component<Props> {
     });
 
     const onSlide = value => {
+      value = value >= this.props.max ? this.props.max : value;
       this.props.onSlide(value);
       this.slider.setValue(value);
     };
     this.slider.on('slide', onSlide);
     this.slider.on('slideStop', onSlide);
     this.slider.setAttribute('min', this.props.min);
-    this.slider.setAttribute('max', this.props.max);
+    this.slider.setAttribute('max', this.props.maxLimit);
     if (this.props.locked) {
       this.slider.disable();
     } else {
@@ -59,11 +65,16 @@ class BootstrapSlider extends React.Component<Props> {
     } else {
       this.slider.enable();
     }
-    if (this.props.min !== nextProps.min || this.props.max !== nextProps.max) {
+    if (
+      this.props.min !== nextProps.min ||
+      this.props.max !== nextProps.max ||
+      this.props.maxLimit !== nextProps.maxLimit
+    ) {
       this.slider.setAttribute('min', nextProps.min);
-      this.slider.setAttribute('max', nextProps.max);
+      this.slider.setAttribute('max', nextProps.maxLimit);
       this.slider.refresh();
       const onSlide = value => {
+        value = value >= this.props.max ? this.props.max : value;
         this.props.onSlide(value);
         this.slider.setValue(value);
       };

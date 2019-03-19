@@ -35,6 +35,35 @@ const resetStyle = style({
   marginBottom: 20
 });
 
+const listStyle = style({
+  marginTop: 10
+});
+
+const evenlyButtonStyle = style({
+  width: '100%',
+  textAlign: 'right'
+});
+
+const listHeaderStyle = style({
+  textTransform: 'uppercase',
+  fontSize: '12px',
+  fontWeight: 300,
+  color: '#72767b',
+  borderTop: '0px !important',
+  $nest: {
+    ['.list-view-pf-main-info']: {
+      padding: 5
+    },
+    ['.list-group-item-heading']: {
+      fontWeight: 300,
+      textAlign: 'center'
+    },
+    ['.list-group-item-text']: {
+      textAlign: 'center'
+    }
+  }
+});
+
 class WeightedRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -151,7 +180,8 @@ class WeightedRouting extends React.Component<Props, State> {
     const isValid = this.checkTotalWeight();
     return (
       <>
-        <ListView>
+        <ListView className={listStyle}>
+          <ListViewItem className={listHeaderStyle} heading={'Workload'} description={'Traffic Weight'} />
           {this.state.workloads.map((workload, id) => {
             return (
               <ListViewItem
@@ -165,10 +195,10 @@ class WeightedRouting extends React.Component<Props, State> {
                     tooltip={true}
                     input={true}
                     inputFormat="%"
-                    label={'Traffic Weight'}
                     value={workload.weight}
                     min={0}
                     max={workload.maxWeight}
+                    maxLimit={100}
                     onSlide={value => {
                       this.onWeight(workload.name, value as number);
                     }}
@@ -182,9 +212,11 @@ class WeightedRouting extends React.Component<Props, State> {
           })}
         </ListView>
         {this.props.workloads.length > 1 && (
-          <Button className={resetStyle} onClick={() => this.resetState()}>
-            Evenly distribute traffic
-          </Button>
+          <div className={evenlyButtonStyle}>
+            <Button className={resetStyle} onClick={() => this.resetState()}>
+              Evenly distribute traffic
+            </Button>
+          </div>
         )}
         {!isValid && <div className={validationStyle}>The sum of all weights must be 100 %</div>}
       </>
