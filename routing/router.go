@@ -27,6 +27,12 @@ func NewRouter() *mux.Router {
 		rootRouter.HandleFunc(webRoot, func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
 		})
+
+		// help the user out - if a request comes in for "/", redirect to our true webroot
+		rootRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, webRootWithSlash, http.StatusFound)
+		})
+
 		appRouter = rootRouter.PathPrefix(conf.Server.WebRoot).Subrouter()
 	}
 

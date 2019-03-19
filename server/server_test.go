@@ -8,7 +8,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"github.com/kiali/kiali/util"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/util"
 )
 
 const (
@@ -33,6 +33,67 @@ const (
 )
 
 var tmpDir = os.TempDir()
+
+func TestRootContextPath(t *testing.T) {
+	testPort, err := getFreePort(testHostname)
+	if err != nil {
+		t.Fatalf("Cannot get a free port to run tests on host [%v]", testHostname)
+	} else {
+		t.Logf("Will use free port [%v] on host [%v] for tests", testPort, testHostname)
+	}
+
+	testServerHostPort := fmt.Sprintf("%v:%v", testHostname, testPort)
+	testCustomRoot := "/customroot"
+
+	conf := new(config.Config)
+	conf.Server.WebRoot = testCustomRoot
+	conf.Server.Address = testHostname
+	conf.Server.Port = testPort
+	conf.Server.StaticContentRootDirectory = tmpDir
+	conf.Server.Credentials.Username = "unused"
+	conf.Server.Credentials.Passphrase = "unused"
+	conf.Auth.Strategy = "anonymous"
+
+	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
+
+	config.Set(conf)
+
+	server := NewServer()
+	server.Start()
+	t.Logf("Started test http server: %v", serverURL)
+	defer func() {
+		server.Stop()
+		t.Logf("Stopped test server: %v", serverURL)
+	}()
+
+	// the client
+	httpConfig := httpClientConfig{}
+	httpClient, err := httpConfig.buildHTTPClient()
+	if err != nil {
+		t.Fatalf("Failed to create http client")
+	}
+
+	// no credentials
+	noCredentials := &security.Credentials{}
+
+	// wait for our test http server to come up
+	checkHTTPReady(httpClient, serverURL)
+
+	// we should be able to get to our custom web root
+	if _, err = getRequestResults(t, httpClient, serverURL+testCustomRoot, noCredentials); err != nil {
+		t.Fatalf("Failed: Shouldn't have failed going to the web root: %v", err)
+	}
+
+	// we should be able to get to "/" root - this just forwards to our custom web root
+	if _, err = getRequestResults(t, httpClient, serverURL, noCredentials); err != nil {
+		t.Fatalf("Failed: Shouldn't have failed going to / root: %v", err)
+	}
+
+	// sanity check - make sure we cannot get to a bogus context path
+	if _, err = getRequestResults(t, httpClient, serverURL+"/badroot", noCredentials); err == nil {
+		t.Fatalf("Failed: Should have failed going to /badroot")
+	}
+}
 
 func TestAnonymousMode(t *testing.T) {
 	testPort, err := getFreePort(testHostname)
