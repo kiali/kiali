@@ -59,7 +59,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
 
 	wg.Wait()
@@ -111,7 +111,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	go in.fetchServices(&services, namespace, "", errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
 	wg.Wait()
 
@@ -269,13 +269,13 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 	}
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
 	}
 
-	wg.Add(1)
+	wg.Add(2)
 
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
@@ -285,6 +285,17 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			errChan <- err
 		} else {
 			details.MeshPolicies = meshPolicies
+		}
+	}(mtlsDetails)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
+		policies, err := in.k8s.GetPolicies(namespace)
+		if err != nil {
+			errChan <- err
+		} else {
+			details.Policies = policies
 		}
 	}(mtlsDetails)
 

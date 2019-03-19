@@ -98,6 +98,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "MeshPolicy enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"destinationrules.mtls.nspolicymissing": {
+		Message:  "Policy enabling mTLS for this namespace is missing",
+		Severity: ErrorSeverity,
+	},
 	"gateways.multimatch": {
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
