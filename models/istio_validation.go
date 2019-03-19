@@ -103,6 +103,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Policy enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"destinationrules.mtls.policymtlsenabled": {
+		Message:  "Policy with TLS strict mode found, it should be permissive",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.meshpolicymtlsenabled": {
+		Message:  "MeshPolicy enabling mTLS found, permissive policy is needed",
+		Severity: ErrorSeverity,
+	},
 	"gateways.multimatch": {
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,

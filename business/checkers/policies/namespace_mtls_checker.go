@@ -10,6 +10,7 @@ type NamespaceMtlsChecker struct {
 	MTLSDetails kubernetes.MTLSDetails
 }
 
+// Checks if a Policy enabling namespace-wide has a Destination Rule enabling mTLS too
 func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
