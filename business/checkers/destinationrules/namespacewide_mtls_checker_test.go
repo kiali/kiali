@@ -12,8 +12,8 @@ import (
 )
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy not enabling mTLS
-// It returns a validation
+// Context: There is one Policy enabling PERMISSIVE mTLS
+// It doesn't return any validation
 func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -33,23 +33,16 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 		MTLSDetails:     mTlsDetails,
 	}.Check()
 
-	assert.NotEmpty(validations)
-	assert.Equal(1, len(validations))
-	assert.False(valid)
-
-	validation := validations[0]
-	assert.NotNil(validation)
-	assert.Equal(models.ErrorSeverity, validation.Severity)
-	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
-	assert.Equal(models.CheckMessage("destinationrules.mtls.nspolicymissing"), validation.Message)
+	assert.Empty(validations)
+	assert.True(valid)
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one Policy enabling mTLS
+// Context: There is one Policy enabling STRICT mTLS
 // It doesn't return any validation
 func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.local"))
+		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		Policies: []kubernetes.IstioObject{
@@ -66,4 +59,55 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 
 	assert.Empty(validations)
 	assert.True(valid)
+}
+
+// Context: DestinationRule enables namespace-wide mTLS
+// Context: There is one MeshPolicy enabling mTLS
+// It doesn't return any validation
+func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{
+		MeshPolicies: []kubernetes.IstioObject{
+			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+		},
+	}
+
+	assert := assert.New(t)
+
+	validations, valid := NamespaceWideMTLSChecker{
+		DestinationRule: destinationRule,
+		MTLSDetails:     mTlsDetails,
+	}.Check()
+
+	assert.Empty(validations)
+	assert.True(valid)
+}
+
+// Context: DestinationRule enables namespace-wide mTLS
+// Context: There isn't any policy enabling mTLS
+// It doesn't return any validation
+func TestMTLSNsWideDREnabledWithoutPolicy(t *testing.T) {
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{}
+
+	assert := assert.New(t)
+
+	validations, valid := NamespaceWideMTLSChecker{
+		DestinationRule: destinationRule,
+		MTLSDetails:     mTlsDetails,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	assert.Equal(1, len(validations))
+	assert.False(valid)
+
+	validation := validations[0]
+	assert.NotNil(validation)
+	assert.Equal(models.ErrorSeverity, validation.Severity)
+	assert.Equal("spec/trafficPolicy/tls/mode", validation.Path)
+	assert.Equal(models.CheckMessage("destinationrules.mtls.nspolicymissing"), validation.Message)
 }

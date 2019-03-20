@@ -67,3 +67,28 @@ func TestPolicyEnabledDRmTLSEnabled(t *testing.T) {
 	assert.Empty(validations)
 	assert.True(valid)
 }
+
+// Context: Policy enables mTLS for a namespace
+// Context: There is one Destination Rule enabling mTLS for the namespace
+// Context: There is one Destination Rule enabling mTLS for the whole service-mesh
+// It returns doesn't return any validation
+func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("STRICT"))
+
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []kubernetes.IstioObject{
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("bar", "default", "*.local")),
+		},
+	}
+
+	validations, valid := NamespaceMtlsChecker{
+		Policy:      policy,
+		MTLSDetails: mTLSDetails,
+	}.Check()
+
+	assert.Empty(validations)
+	assert.True(valid)
+}

@@ -19,9 +19,15 @@ func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
-	// otherwise, check among Destination Rules for a rule enabling mTLS namespace-wide.
+	// otherwise, check among Destination Rules for a rule enabling mTLS namespace-wide or mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
+		// Check if there is a Destination Rule enabling ns-wide mTLS
 		if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(t.Policy.GetObjectMeta().Namespace, dr); enabled {
+			return validations, true
+		}
+
+		// Check if there is a Destination Rule enabling mesh-wide mTLS in second position
+		if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
 			return validations, true
 		}
 	}
