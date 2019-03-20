@@ -20,6 +20,7 @@ import {
   ClusterRbacConfig
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
+import _ from 'lodash';
 
 export interface IstioConfigItem {
   namespace: string;
@@ -185,128 +186,39 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
   const hasValidations = (type: string, name: string) =>
     istioConfigList.validations[type] && istioConfigList.validations[type][name];
 
-  istioConfigList.gateways.forEach(gw =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'gateway',
-      name: gw.metadata.name,
-      gateway: gw,
-      validation: hasValidations('gateway', gw.metadata.name)
-        ? istioConfigList.validations['gateway'][gw.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.virtualServices.items.forEach(vs =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'virtualservice',
-      name: vs.metadata.name,
-      virtualService: vs,
-      validation: hasValidations('virtualservice', vs.metadata.name)
-        ? istioConfigList.validations['virtualservice'][vs.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.destinationRules.items.forEach(dr =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'destinationrule',
-      name: dr.metadata.name,
-      destinationRule: dr,
-      validation: hasValidations('destinationrule', dr.metadata.name)
-        ? istioConfigList.validations['destinationrule'][dr.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.serviceEntries.forEach(se =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'serviceentry',
-      name: se.metadata.name,
-      serviceEntry: se,
-      validation: hasValidations('serviceentry', se.metadata.name)
-        ? istioConfigList.validations['serviceentry'][se.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.meshPolicies.forEach(p =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'meshpolicy',
-      name: p.metadata.name,
-      policy: p,
-      validation: hasValidations('meshpolicy', p.metadata.name)
-        ? istioConfigList.validations['meshpolicy'][p.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.policies.forEach(p =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'policy',
-      name: p.metadata.name,
-      policy: p,
-      validation: hasValidations('policy', p.metadata.name)
-        ? istioConfigList.validations['policy'][p.metadata.name]
-        : undefined
-    })
-  );
-  istioConfigList.rules.forEach(r =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'rule', name: r.metadata.name, rule: r })
-  );
-  istioConfigList.adapters.forEach(a =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'adapter', name: a.metadata.name, adapter: a })
-  );
-  istioConfigList.templates.forEach(t =>
-    istioItems.push({ namespace: istioConfigList.namespace.name, type: 'template', name: t.metadata.name, template: t })
-  );
-  istioConfigList.quotaSpecs.forEach(qs =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'quotaspec',
-      name: qs.metadata.name,
-      quotaSpec: qs
-    })
-  );
-  istioConfigList.quotaSpecBindings.forEach(qsb =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'quotaspecbinding',
-      name: qsb.metadata.name,
-      quotaSpecBinding: qsb
-    })
-  );
-  istioConfigList.clusterRbacConfigs.forEach(rc =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'clusterrbacconfig',
-      name: rc.metadata.name,
-      clusterRbacConfig: rc
-    })
-  );
-  istioConfigList.rbacConfigs.forEach(rc =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'rbacconfig',
-      name: rc.metadata.name,
-      rbacConfig: rc
-    })
-  );
-  istioConfigList.serviceRoles.forEach(sr =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'servicerole',
-      name: sr.metadata.name,
-      serviceRole: sr
-    })
-  );
-  istioConfigList.serviceRoleBindings.forEach(srb =>
-    istioItems.push({
-      namespace: istioConfigList.namespace.name,
-      type: 'servicerolebinding',
-      name: srb.metadata.name,
-      serviceRoleBinding: srb
-    })
-  );
+  const nonItems = ['validations', 'permissions', 'namespace'];
+
+  Object.keys(istioConfigList).forEach(field => {
+    if (nonItems.indexOf(field) > -1) {
+      // These items do not belong to the IstioConfigItem[]
+      return;
+    }
+
+    const typeNameProto = dicIstioType[field.toLowerCase()]; // ex. serviceEntries -> ServiceEntry
+    const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
+    const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
+    const itemField = istioConfigList[field];
+
+    let entries = itemField;
+    if (!(entries instanceof Array)) {
+      // VirtualServices, DestinationRules
+      entries = entries.items;
+    }
+
+    entries.forEach(entry => {
+      const item = {
+        namespace: istioConfigList.namespace.name,
+        type: typeName,
+        name: entry.metadata.name,
+        validation: hasValidations(typeName, entry.metadata.name)
+          ? istioConfigList.validations[typeName][entry.metadata.name]
+          : undefined
+      };
+
+      item[entryName] = entry;
+      istioItems.push(item);
+    });
+  });
+
   return istioItems;
 };
