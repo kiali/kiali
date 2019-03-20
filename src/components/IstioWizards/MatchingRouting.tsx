@@ -5,7 +5,7 @@ import {
   DropdownKebab,
   Form,
   FormControl,
-  Icon,
+  FormGroup,
   Label,
   ListView,
   ListViewIcon,
@@ -73,6 +73,7 @@ const matchStyle = style({
 });
 
 const createStyle = style({
+  marginTop: 70,
   marginLeft: 20
 });
 
@@ -95,6 +96,22 @@ const validationStyle = style({
   color: PfColors.Red100
 });
 
+const ruleItemStyle = style({
+  $nest: {
+    ['.list-group-item-heading']: {
+      flexBasis: 'calc(50% - 20px)',
+      width: 'calc(50% - 20px)'
+    }
+  }
+});
+
+const matchValueStyle = style({
+  fontWeight: 'normal',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis'
+});
+
 enum MOVE_TYPE {
   UP,
   DOWN
@@ -108,9 +125,6 @@ const svcIconName = 'service';
 
 const wkIconType = 'pf';
 const wkIconName = 'bundle';
-
-const valIconType = 'pf';
-const valIconName = 'error-circle-o';
 
 class MatchingRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -269,13 +283,22 @@ class MatchingRouting extends React.Component<Props, State> {
 
   onHeaderNameChange = (event: any) => {
     this.setState({
-      headerName: event.target.value
+      headerName: event.target.value,
+      validationMsg: ''
     });
   };
 
   onMatchValueChange = (event: any) => {
+    let validationMsg = '';
+    if (this.state.category === HEADERS && this.state.headerName === '') {
+      validationMsg = 'Header name must be non empty';
+    }
+    if (event.target.value === '') {
+      validationMsg = '';
+    }
     this.setState({
-      matchValue: event.target.value
+      matchValue: event.target.value,
+      validationMsg: validationMsg
     });
   };
 
@@ -307,6 +330,10 @@ class MatchingRouting extends React.Component<Props, State> {
     return matchAll;
   };
 
+  matchBuilderValidation = (): string => {
+    return this.state.validationMsg === '' ? 'success' : 'error';
+  };
+
   renderRuleBuilder = () => {
     return (
       <ListView>
@@ -328,7 +355,12 @@ class MatchingRouting extends React.Component<Props, State> {
           }
           // tslint:disable
           actions={
-            <Button bsStyle="primary" className={createStyle} onClick={this.onAddRule}>
+            <Button
+              bsStyle="primary"
+              className={createStyle}
+              disabled={this.state.validationMsg !== ''}
+              onClick={this.onAddRule}
+            >
               Add Rule
             </Button>
           }
@@ -350,41 +382,48 @@ class MatchingRouting extends React.Component<Props, State> {
     ));
     return (
       <Form inline={true}>
-        <DropdownButton
-          bsStyle="default"
-          title={this.state.category}
-          id="match-dropdown"
-          onSelect={this.onSelectCategory}
-        >
-          {matchItems}
-        </DropdownButton>
-        {this.state.category === HEADERS && (
+        <FormGroup validationState={this.matchBuilderValidation()}>
+          <DropdownButton
+            bsStyle="default"
+            title={this.state.category}
+            id="match-dropdown"
+            onSelect={this.onSelectCategory}
+          >
+            {matchItems}
+          </DropdownButton>
+          {this.state.category === HEADERS && (
+            <FormControl
+              type="text"
+              id="header-name-text"
+              placeholder={'Header name...'}
+              value={this.state.headerName}
+              onChange={this.onHeaderNameChange}
+            />
+          )}
+          <DropdownButton
+            bsStyle="default"
+            title={this.state.operator}
+            id="operator-dropdown"
+            onSelect={this.onSelectOperator}
+          >
+            {opItems}
+          </DropdownButton>
           <FormControl
             type="text"
-            id="header-name-text"
-            placeholder={'Header name...'}
-            value={this.state.headerName}
-            onChange={this.onHeaderNameChange}
+            id="header-value-text"
+            placeholder={placeholderText[this.state.category]}
+            value={this.state.matchValue}
+            onChange={this.onMatchValueChange}
           />
-        )}
-        <DropdownButton
-          bsStyle="default"
-          title={this.state.operator}
-          id="operator-dropdown"
-          onSelect={this.onSelectOperator}
-        >
-          {opItems}
-        </DropdownButton>
-        <FormControl
-          type="text"
-          id="header-value-text"
-          placeholder={placeholderText[this.state.category]}
-          value={this.state.matchValue}
-          onChange={this.onMatchValueChange}
-        />
-        <Button bsStyle="default" className={matchStyle} onClick={this.onAddMatch}>
-          Add Match
-        </Button>
+          <Button
+            bsStyle="default"
+            className={matchStyle}
+            disabled={this.state.validationMsg !== ''}
+            onClick={this.onAddMatch}
+          >
+            Add Match
+          </Button>
+        </FormGroup>
       </Form>
     );
   };
@@ -441,7 +480,11 @@ class MatchingRouting extends React.Component<Props, State> {
       const rule = this.state.rules[index];
       isValid = matchAll === -1 || index <= matchAll;
       const matches: any[] = rule.matches.map((map, index) => {
-        return <small key={'match-' + map + '-' + index}>{map}</small>;
+        return (
+          <div key={'match-' + map + '-' + index} className={matchValueStyle}>
+            {map}
+          </div>
+        );
       });
       const ruleActions = (
         <div>
@@ -459,11 +502,12 @@ class MatchingRouting extends React.Component<Props, State> {
       ruleItems.push(
         <ListViewItem
           key={'match-rule-' + index}
+          className={ruleItemStyle}
           leftContent={<ListViewIcon type={vsIconType} name={vsIconName} />}
           heading={
             <div>
               Matches:
-              {rule.matches.length === 0 && <small>Any request</small>}
+              {rule.matches.length === 0 && <div className={matchValueStyle}>Any request</div>}
               {rule.matches.length !== 0 && matches}
             </div>
           }
@@ -481,8 +525,9 @@ class MatchingRouting extends React.Component<Props, State> {
               </div>
               {!isValid && (
                 <div className={validationStyle}>
-                  <Icon type={valIconType} name={valIconName} /> Match 'Any request' is defined in a previous rule. This
-                  rule is not accessible.
+                  Match 'Any request' is defined in a previous rule.
+                  <br />
+                  This rule is not accessible.
                 </div>
               )}
             </div>
