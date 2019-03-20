@@ -54,13 +54,15 @@ def __remove_assets():
   print('Assets deleted: {}'.format(file_count))
 
 def get_istio_clusterrole_file():
-      yaml_content = requests.get( __get_environment_config__(ENV_FILE).get('istio_clusterrole')).content.decode("utf-8")
+    file = __get_environment_config__(ENV_FILE).get('istio_clusterrole')
+    yaml_content = urlopen(file).read().decode("utf-8")
 
-      yaml_content = re.sub("app: {{.+}}", "app: kiali", yaml_content)
-      yaml_content = re.sub("chart: {{.+}}", "version: 0.10 ", yaml_content)
-      yaml_content = re.sub("heritage: {{.+}}\n", "", yaml_content)
-      yaml_content = re.sub("release: {{.+}}", "", yaml_content)
-      return yaml.safe_load(yaml_content)
+    yaml_content = re.sub("app: {{.+}}", "app: kiali", yaml_content)
+    yaml_content = re.sub("chart: {{.+}}", "version: 0.10 ", yaml_content)
+    yaml_content = re.sub("heritage: {{.+}}\n", "", yaml_content)
+    yaml_content = re.sub("release: {{.+}}", "", yaml_content)
+
+    return next(yaml.safe_load_all(yaml_content))
 
 def get_kiali_clusterrole_file(file_type):
 
