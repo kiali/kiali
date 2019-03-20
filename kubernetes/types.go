@@ -538,6 +538,13 @@ type MTLSDetails struct {
 	MeshPolicies     []IstioObject `json:"meshpolicies"`
 }
 
+// RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
+type RBACDetails struct {
+	ClusterRbacConfigs  []IstioObject `json:"clusterrbacconfigs"`
+	ServiceRoles        []IstioObject `json:"serviceroles"`
+	ServiceRoleBindings []IstioObject `json:"servicerolebindings"`
+}
+
 type istioResponse struct {
 	result  IstioObject
 	results []IstioObject

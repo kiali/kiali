@@ -709,6 +709,33 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 	return s, nil
 }
 
+// GetAuthorizationDetails returns ServiceRoles, ServiceRoleBindings and ClusterRbacDetails
+func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, error) {
+	rb := &RBACDetails{}
+
+	// TODO Should we use concurrency here? Are these cached?
+	srb, err := in.GetServiceRoleBindings(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	sr, err := in.GetServiceRoles(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	crc, err := in.GetClusterRbacConfigs(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	rb.ServiceRoleBindings = srb
+	rb.ServiceRoles = sr
+	rb.ClusterRbacConfigs = crc
+
+	return rb, nil
+}
+
 func FilterByHost(host, serviceName, namespace string) bool {
 	// Check single name
 	if host == serviceName {

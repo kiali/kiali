@@ -64,14 +64,17 @@ const (
 )
 
 var ObjectTypeSingular = map[string]string{
-	"gateways":          "gateway",
-	"virtualservices":   "virtualservice",
-	"destinationrules":  "destinationrule",
-	"serviceentries":    "serviceentry",
-	"rules":             "rule",
-	"quotaspecs":        "quotaspec",
-	"quotaspecbindings": "quotaspecbinding",
-	"meshpolicies":      "meshpolicy",
+	"gateways":            "gateway",
+	"virtualservices":     "virtualservice",
+	"destinationrules":    "destinationrule",
+	"serviceentries":      "serviceentry",
+	"rules":               "rule",
+	"quotaspecs":          "quotaspec",
+	"quotaspecbindings":   "quotaspecbinding",
+	"meshpolicies":        "meshpolicy",
+	"serviceroles":        "servicerole",
+	"servicerolebindings": "servicerolebinding",
+	"clusterrbacconfigs":  "clusterrbacconfig",
 }
 
 var checkDescriptors = map[string]IstioCheck{
@@ -145,6 +148,18 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"meshpolicies.mtls.destinationrulemissing": {
 		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"servicerole.invalid.services": {
+		Message:  "Unable to find all the defined services",
+		Severity: ErrorSeverity,
+	},
+	"servicerole.invalid.namespace": {
+		Message:  "ServiceRole can only point to current namespace",
+		Severity: ErrorSeverity,
+	},
+	"servicerolebinding.invalid.role": {
+		Message:  "ServiceRole does not exists in this namespace",
 		Severity: ErrorSeverity,
 	},
 }

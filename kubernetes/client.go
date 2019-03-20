@@ -38,6 +38,7 @@ type IstioClientInterface interface {
 	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
 	GetAdapters(namespace string) ([]IstioObject, error)
+	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error)
 	GetDeployments(namespace string) ([]v1beta1.Deployment, error)
