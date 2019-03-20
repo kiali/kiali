@@ -9,7 +9,6 @@ import {
   Row,
   TabContainer,
   TabContent,
-  TabPane,
   ToastNotification,
   ToastNotificationList
 } from 'patternfly-react';
@@ -204,26 +203,17 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     </NavItem>
                   </Nav>
                   <TabContent>
-                    <WithErrorBoundary
-                      component={TabPane}
-                      eventKey={'workloads'}
-                      message={this.errorBoundaryMessage('Workloads')}
-                    >
+                    <WithErrorBoundary eventKey={'workloads'} message={this.errorBoundaryMessage('Workloads')}>
                       {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
                       )}
                     </WithErrorBoundary>
-                    <WithErrorBoundary
-                      component={TabPane}
-                      eventKey={'sources'}
-                      message={this.errorBoundaryMessage('Sources')}
-                    >
+                    <WithErrorBoundary eventKey={'sources'} message={this.errorBoundaryMessage('Sources')}>
                       {(Object.keys(dependencies).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </WithErrorBoundary>
                     <WithErrorBoundary
-                      component={TabPane}
                       eventKey={'virtualservices'}
                       message={this.errorBoundaryMessage('Virtual Services')}
                     >
@@ -235,7 +225,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       )}
                     </WithErrorBoundary>
                     <WithErrorBoundary
-                      component={TabPane}
                       eventKey={'destinationrules'}
                       message={this.errorBoundaryMessage('Destination Rules')}
                     >

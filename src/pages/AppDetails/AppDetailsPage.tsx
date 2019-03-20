@@ -36,6 +36,9 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       app: emptyApp,
       trafficData: null
     };
+  }
+
+  componentDidMount(): void {
     this.doRefresh();
   }
 

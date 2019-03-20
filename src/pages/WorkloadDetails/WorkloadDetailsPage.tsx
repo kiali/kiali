@@ -34,6 +34,9 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       istioEnabled: false,
       trafficData: null
     };
+  }
+
+  componentDidMount(): void {
     this.doRefresh();
   }
 
