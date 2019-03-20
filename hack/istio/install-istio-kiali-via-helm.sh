@@ -25,10 +25,11 @@ PASSPHRASE="admin"
 MTLS="false"
 DELETE_ISTIO="false"
 KIALI_ENABLED="false"
+KIALI_CREATE_SECRET="false"
 DASHBOARDS_ENABLED="false"
 USE_DEMO_VALUES="false"
 USE_DEMO_AUTH_VALUES="false"
-HELM_REPO_TO_ADD="https://gcsweb.istio.io/gcs/istio-prerelease/daily-build/release-1.1-latest-daily/charts/"
+#HELM_REPO_TO_ADD="https://gcsweb.istio.io/gcs/istio-prerelease/daily-build/release-1.1-latest-daily/charts/"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -67,6 +68,7 @@ while [[ $# -gt 0 ]]; do
     -ke|--kiali-enabled)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         KIALI_ENABLED="$2"
+        KIALI_CREATE_SECRET="$2"
       else
         echo "ERROR: The --kiali-enabled flag must be 'true' or 'false'"
         exit 1
@@ -188,8 +190,8 @@ if [ "${USE_DEMO_VALUES}" == "true" -a "${USE_DEMO_AUTH_VALUES}" == "true" ]; th
   exit 1
 fi
 if [ "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-  # we know Kiali is always enabled in the demo yamls
-  KIALI_ENABLED="true"
+  # we know Kiali is always enabled in the demo yamls but we do not need to create the secret
+  KIALI_CREATE_SECRET="false"
 fi
 
 CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
@@ -247,28 +249,28 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} new-project ${NAMESPACE}
     echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z default -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z prometheus -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-egressgateway-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-citadel-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingressgateway-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-cleanup-old-ca-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-post-install-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n istio-system
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n istio-system
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z prometheus -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-egressgateway-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-citadel-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingressgateway-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-cleanup-old-ca-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-post-install-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n ${NAMESPACE}
     if [ "${DASHBOARDS_ENABLED}" == "true" -o "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n istio-system
-      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n istio-system
+      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n ${NAMESPACE}
+      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n ${NAMESPACE}
     fi
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
 
   # Create the kiali secret
-  if [ "${KIALI_ENABLED}" == "true" ]; then
+  if [ "${KIALI_CREATE_SECRET}" == "true" ]; then
     _ENCODED_USERNAME=$(echo -n "${USERNAME}" | base64)
     _ENCODED_PASSPHRASE=$(echo -n "${PASSPHRASE}" | base64)
 
@@ -327,17 +329,26 @@ if [ ! -f "/tmp/istio.yaml" ]; then
     ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
   fi
   echo Building Helm yaml for Istio...
-  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace istio-system > /tmp/istio.yaml
+  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace ${NAMESPACE} > /tmp/istio.yaml
 fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
   ${CLIENT_EXE} delete -f /tmp/istio.yaml
-  for i in ${ISTIO_DIR}/install/kubernetes/helm/istio-init/files/crd*yaml; do ${CLIENT_EXE} delete -f $i; done
+  ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} delete -f -
+  ${CLIENT_EXE} delete -f "${ISTIO_DIR}/install/kubernetes/helm/istio-init/files"
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
 else
   echo Installing Istio...
-  for i in ${ISTIO_DIR}/install/kubernetes/helm/istio-init/files/crd*yaml; do ${CLIENT_EXE} apply -f $i; done
+  ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} apply -f -
+  _crd_count="0"
+  echo -n "Waiting for the CRDs to be created"
+  while [ "$_crd_count" -lt "53" ]; do
+    sleep 1
+    echo -n "."
+    _crd_count=$(${CLIENT_EXE} get crds | grep 'istio.io\|certmanager.k8s.io' | wc -l)
+  done
+  echo "done"
   ${CLIENT_EXE} apply -f /tmp/istio.yaml
 fi
 
