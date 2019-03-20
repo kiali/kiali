@@ -24,6 +24,7 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config/serverConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { icons } from '../../config';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -96,7 +97,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const group = this.props.data.summaryTarget;
     const data = nodeData(group);
     const { namespace } = data;
-
+    const serviceList = this.renderServiceList(group);
     const workloadList = this.renderWorkloadList(group);
 
     return (
@@ -120,16 +121,23 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
           </div>
-          {this.renderBadgeSummary(group.data(CyNode.hasVS))}
+          {this.renderBadgeSummary(group)}
         </div>
         <div className="panel-body">
+          {serviceList.length > 0 && (
+            <div>
+              <strong>Services: </strong>
+              {serviceList}
+            </div>
+          )}
           {workloadList.length > 0 && (
             <div>
               <strong>Workloads: </strong>
               {workloadList}
-              <hr />
             </div>
           )}
+          {(serviceList.length > 0 || workloadList.length > 0) && <hr />}
+
           {/* TODO: link to App Details charts when available
            <p style={{ textAlign: 'right' }}>
             <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
@@ -210,7 +218,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private renderVersionBadges = () => {
     return this.props.data.summaryTarget
-      .children('node[version]')
+      .children(`node[${CyNode.version}]`)
       .toArray()
       .map((c, i) => (
         <Label
@@ -221,13 +229,38 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       ));
   };
 
-  private renderBadgeSummary = (hasVS: boolean) => {
+  private renderBadgeSummary = group => {
+    let hasCB: boolean = group.data(CyNode.hasCB) === true;
+    let hasVS: boolean = group.data(CyNode.hasVS) === true;
+
+    group
+      .children(`node[${CyNode.hasCB}],[${CyNode.hasVS}]`)
+      .nodes()
+      .forEach(n => {
+        hasCB = hasCB || n.data(CyNode.hasCB);
+        hasVS = hasVS || n.data(CyNode.hasVS);
+      });
+
     return (
       <>
+        {hasCB && (
+          <div>
+            <Icon
+              name={icons.istio.circuitBreaker.name}
+              type={icons.istio.circuitBreaker.type}
+              style={{ width: '10px' }}
+            />
+            <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
+          </div>
+        )}
         {hasVS && (
           <div>
-            <Icon name="code-fork" type="fa" style={{ width: '10px' }} />
-            Has Virtual Service
+            <Icon
+              name={icons.istio.virtualService.name}
+              type={icons.istio.virtualService.type}
+              style={{ width: '10px' }}
+            />
+            <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
       </>
@@ -335,6 +368,23 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         {tcpCharts}
       </>
     );
+  };
+
+  private renderServiceList = (group): any[] => {
+    // likely 0 or 1 but support N in case of unanticipated labeling
+    const serviceList: any[] = [];
+
+    group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach((node, index) => {
+      const data = nodeData(node);
+      serviceList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.SERVICE} />);
+      serviceList.push(<span key={`node-comma-${index}`}>, </span>);
+    });
+
+    if (serviceList.length > 0) {
+      serviceList.pop();
+    }
+
+    return serviceList;
   };
 
   private renderWorkloadList = (group): any[] => {
