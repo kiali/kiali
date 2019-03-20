@@ -20,7 +20,7 @@ func (m MeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// otherwise, check among MeshPolicies for a rule enabling mesh-wide mTLS
 	for _, mp := range m.MTLSDetails.MeshPolicies {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if strictMode := kubernetes.PolicyHasStrictMTLS(mp); strictMode {
 			return validations, true
 		}
 	}
