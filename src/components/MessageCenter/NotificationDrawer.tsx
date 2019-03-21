@@ -12,6 +12,7 @@ import {
 } from 'patternfly-react';
 
 import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
+import * as moment from 'moment';
 
 const typeForPfIcon = (type: MessageType) => {
   switch (type) {
@@ -59,7 +60,14 @@ class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsTy
       <Notification seen={this.props.message.seen} onClick={() => this.props.onClick(this.props.message)}>
         <Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
         <Notification.Content>
-          <Notification.Message>{this.props.message.content}</Notification.Message>
+          <Notification.Message>
+            {this.props.message.content}
+            {this.props.message.count > 1 && (
+              <div>
+                {this.props.message.count} {moment().from(this.props.message.firstTriggered)}
+              </div>
+            )}
+          </Notification.Message>
           <Notification.Info
             leftText={this.props.message.created.toLocaleDateString()}
             rightText={this.props.message.created.toLocaleTimeString()}

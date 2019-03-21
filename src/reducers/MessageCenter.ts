@@ -1,10 +1,11 @@
-import { MessageType } from '../types/MessageCenter';
+import { MessageType, NotificationMessage } from '../types/MessageCenter';
 import { MessageCenterState } from '../store/Store';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';
+import _ from 'lodash';
 
 export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   nextId: 0,
@@ -29,14 +30,23 @@ export const INITIAL_MESSAGE_CENTER_STATE: MessageCenterState = {
   expandedGroupId: 'default'
 };
 
-const createMessage = (id: number, content: string, type: MessageType) => {
+const createMessage = (
+  id: number,
+  content: string,
+  type: MessageType,
+  count: number,
+  created: Date,
+  firstTriggered?: Date
+) => {
   return {
     id,
     content,
     type,
+    count,
     show_notification: type === MessageType.ERROR || type === MessageType.WARNING,
     seen: false,
-    created: new Date()
+    created: created,
+    firstTriggered
   };
 };
 
@@ -65,15 +75,48 @@ const Messages = (
   switch (action.type) {
     case getType(MessageCenterActions.addMessage): {
       const { groupId, content, messageType } = action.payload;
+
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
-          group = { ...group, messages: group.messages.concat([createMessage(state.nextId, content, messageType)]) };
+          const existingMessage = group.messages.find(message => {
+            return message.content === content;
+          });
+
+          let newMessage: NotificationMessage;
+
+          if (existingMessage) {
+            // it is in the list already
+            const firstTriggered = existingMessage.firstTriggered
+              ? existingMessage.firstTriggered
+              : existingMessage.created;
+
+            newMessage = createMessage(
+              state.nextId,
+              content,
+              messageType,
+              existingMessage.count + 1,
+              new Date(),
+              firstTriggered
+            );
+
+            // remove the old message from the list
+            const filteredArray = _.remove(group.messages, message => {
+              return message.content !== content;
+            });
+
+            group = { ...group, messages: filteredArray.concat(newMessage) };
+          } else {
+            newMessage = createMessage(state.nextId, content, messageType, 1, new Date(), undefined);
+            group = { ...group, messages: group.messages.concat(newMessage) };
+          }
+
           return group;
         }
         return group;
       });
       return updateState(state, { groups: groups, nextId: state.nextId + 1 });
     }
+
     case getType(MessageCenterActions.removeMessage): {
       const messageId = action.payload.messageId;
       const groups = state.groups.map(group => {
@@ -87,6 +130,7 @@ const Messages = (
       });
       return updateState(state, { groups });
     }
+
     case getType(MessageCenterActions.markAsRead): {
       return updateMessage(state, action.payload.messageId, message => ({
         ...message,
@@ -94,21 +138,26 @@ const Messages = (
         show_notification: false
       }));
     }
+
     case getType(MessageCenterActions.hideNotification): {
       return updateMessage(state, action.payload.messageId, message => ({ ...message, show_notification: false }));
     }
+
     case getType(MessageCenterActions.showMessageCenter):
       if (state.hidden) {
         return updateState(state, { hidden: false });
       }
       return state;
+
     case getType(MessageCenterActions.hideMessageCenter):
       if (!state.hidden) {
         return updateState(state, { hidden: true });
       }
       return state;
+
     case getType(MessageCenterActions.toggleExpandedMessageCenter):
       return updateState(state, { expanded: !state.expanded });
+
     case getType(MessageCenterActions.toggleGroup): {
       const { groupId } = action.payload;
       if (state.expandedGroupId === groupId) {
@@ -116,6 +165,7 @@ const Messages = (
       }
       return updateState(state, { expandedGroupId: groupId });
     }
+
     case getType(MessageCenterActions.expandGroup): {
       const { groupId } = action.payload;
       return updateState(state, { expandedGroupId: groupId });

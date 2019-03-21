@@ -39,6 +39,7 @@ describe('MessageCenter reducer', () => {
       nextId: 0
     });
   });
+
   it('should handle ADD_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
@@ -73,6 +74,8 @@ describe('MessageCenter reducer', () => {
               show_notification: true,
               content: 'my new message',
               type: MessageType.WARNING,
+              count: 1,
+              firstTriggered: undefined,
               created: date
             }
           ],
@@ -85,6 +88,67 @@ describe('MessageCenter reducer', () => {
       nextId: 1
     });
   });
+
+  it('should handle Duplicate Messages', () => {
+    const date = mockDate(new Date());
+    expect(
+      MessageCenter(
+        {
+          expanded: false,
+          expandedGroupId: 'default',
+          groups: [
+            {
+              id: 'default',
+              messages: [
+                {
+                  id: 0,
+                  seen: false,
+                  show_notification: true,
+                  content: 'my new message',
+                  type: MessageType.WARNING,
+                  count: 1,
+                  firstTriggered: undefined,
+                  created: date
+                }
+              ],
+              title: 'Default',
+              showActions: true,
+              hideIfEmpty: false
+            }
+          ],
+          hidden: true,
+          nextId: 0
+        },
+        MessageCenterActions.addMessage('my new message', 'default', MessageType.WARNING)
+      )
+    ).toEqual({
+      expanded: false,
+      expandedGroupId: 'default',
+      groups: [
+        {
+          id: 'default',
+          messages: [
+            {
+              id: 0,
+              seen: false,
+              show_notification: true,
+              content: 'my new message',
+              type: MessageType.WARNING,
+              count: 2,
+              firstTriggered: date,
+              created: date
+            }
+          ],
+          title: 'Default',
+          showActions: true,
+          hideIfEmpty: false
+        }
+      ],
+      hidden: true,
+      nextId: 1
+    });
+  });
+
   it('should handle REMOVE_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(
@@ -104,6 +168,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: true,
                   content: 'my new message',
                   type: MessageType.WARNING,
+                  count: 1,
                   created: date
                 },
                 {
@@ -112,6 +177,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: false,
                   content: 'other message',
                   type: MessageType.ERROR,
+                  count: 1,
                   created: date
                 },
                 {
@@ -120,6 +186,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: false,
                   content: 'other',
                   type: MessageType.INFO,
+                  count: 1,
                   created: date
                 }
               ],
@@ -144,6 +211,7 @@ describe('MessageCenter reducer', () => {
               show_notification: false,
               content: 'other message',
               type: MessageType.ERROR,
+              count: 1,
               created: date
             }
           ],
@@ -156,6 +224,7 @@ describe('MessageCenter reducer', () => {
       nextId: 1
     });
   });
+
   it('should handle MARK_MESSAGE_AS_READ', () => {
     const date = mockDate(new Date());
     expect(
@@ -175,6 +244,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: true,
                   content: 'my new message',
                   type: MessageType.WARNING,
+                  count: 1,
                   created: date
                 },
                 {
@@ -183,6 +253,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: false,
                   content: 'other message',
                   type: MessageType.ERROR,
+                  count: 1,
                   created: date
                 },
                 {
@@ -191,6 +262,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: false,
                   content: 'other',
                   type: MessageType.INFO,
+                  count: 1,
                   created: date
                 }
               ],
@@ -215,6 +287,7 @@ describe('MessageCenter reducer', () => {
               show_notification: false,
               content: 'my new message',
               type: MessageType.WARNING,
+              count: 1,
               created: date
             },
             {
@@ -223,6 +296,7 @@ describe('MessageCenter reducer', () => {
               show_notification: false,
               content: 'other message',
               type: MessageType.ERROR,
+              count: 1,
               created: date
             },
             {
@@ -231,6 +305,7 @@ describe('MessageCenter reducer', () => {
               show_notification: false,
               content: 'other',
               type: MessageType.INFO,
+              count: 1,
               created: date
             }
           ],
@@ -243,6 +318,7 @@ describe('MessageCenter reducer', () => {
       nextId: 1
     });
   });
+
   it('should handle HIDE_NOTIFICATION', () => {
     const date = mockDate(new Date());
     expect(
@@ -262,6 +338,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: true,
                   content: 'my new message',
                   type: MessageType.WARNING,
+                  count: 1,
                   created: date
                 },
                 {
@@ -270,6 +347,7 @@ describe('MessageCenter reducer', () => {
                   show_notification: true,
                   content: 'other message',
                   type: MessageType.ERROR,
+                  count: 1,
                   created: date
                 }
               ],
@@ -294,6 +372,7 @@ describe('MessageCenter reducer', () => {
               show_notification: false,
               content: 'my new message',
               type: MessageType.WARNING,
+              count: 1,
               created: date
             },
             {
@@ -302,6 +381,7 @@ describe('MessageCenter reducer', () => {
               show_notification: true,
               content: 'other message',
               type: MessageType.ERROR,
+              count: 1,
               created: date
             }
           ],
@@ -314,6 +394,7 @@ describe('MessageCenter reducer', () => {
       nextId: 1
     });
   });
+
   it('should handle SHOW', () => {
     expect(
       MessageCenter(
@@ -386,6 +467,7 @@ describe('MessageCenter reducer', () => {
       nextId: 0
     });
   });
+
   it('should handle TOGGLE_EXPAND', () => {
     expect(
       MessageCenter(
@@ -422,6 +504,7 @@ describe('MessageCenter reducer', () => {
       nextId: 0
     });
   });
+
   it('should handle TOGGLE_GROUP to hide a group', () => {
     expect(
       MessageCenter(
@@ -458,6 +541,7 @@ describe('MessageCenter reducer', () => {
       nextId: 0
     });
   });
+
   it('should handle TOGGLE_GROUP to show a group', () => {
     expect(
       MessageCenter(

@@ -18,6 +18,7 @@ describe('MessageCenter', () => {
           seen: false,
           content: 'show me',
           type: MessageType.ERROR,
+          count: 0,
           show_notification: true,
           created: new Date()
         },
@@ -26,6 +27,7 @@ describe('MessageCenter', () => {
           seen: false,
           content: 'hide me',
           type: MessageType.ERROR,
+          count: 0,
           created: new Date()
         }
       ]
@@ -41,6 +43,7 @@ describe('MessageCenter', () => {
           seen: true,
           content: 'show me too',
           type: MessageType.SUCCESS,
+          count: 0,
           show_notification: true,
           created: new Date()
         }
