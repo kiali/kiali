@@ -247,6 +247,10 @@ func configToJS() {
 
 // updateBaseURL updates index.html base href with web root string
 func updateBaseURL(webRootPath string) {
+	if webRootPath == "/" {
+		return // nothing to do - our web root path is already /
+	}
+
 	log.Infof("Updating base URL in index.html with [%v]", webRootPath)
 	path, _ := filepath.Abs("./console/index.html")
 	b, err := ioutil.ReadFile(path)
@@ -256,9 +260,14 @@ func updateBaseURL(webRootPath string) {
 
 	html := string(b)
 
-	searchStr := `<base href="/"/>`
-	newStr := `<base href="` + webRootPath + `/"/>`
+	searchStr := `<base href="/"`
+	newStr := `<base href="` + webRootPath + `/"`
 	newHTML := strings.Replace(html, searchStr, newStr, -1)
+	if html != newHTML && strings.Contains(newHTML, newStr) {
+		log.Debugf("Base URL has been updated to [%v]", newStr)
+	} else {
+		log.Warningf("Base URL was not updated [%v]! The custom context root is not in force", searchStr)
+	}
 
 	err = ioutil.WriteFile(path, []byte(newHTML), 0)
 	if isError(err) {
