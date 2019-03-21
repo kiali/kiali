@@ -92,3 +92,27 @@ func TestPolicyEnabledDRmTLSMeshWideEnabled(t *testing.T) {
 	assert.Empty(validations)
 	assert.True(valid)
 }
+
+// Context: Policy enables mTLS in PERMISSIVE mode
+// Context: Any Destination Rule.
+// It doesn't return any validation
+func TestPolicyPermissive(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	policy := data.CreateEmptyPolicy("default", "bar", data.CreateMTLSPeers("PERMISSIVE"))
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []kubernetes.IstioObject{
+			data.CreateEmptyDestinationRule("bar", "default", "*.bar.svc.cluster.local"),
+		},
+	}
+
+	validations, valid := NamespaceMtlsChecker{
+		Policy:      policy,
+		MTLSDetails: mTLSDetails,
+	}.Check()
+
+	assert.Empty(validations)
+	assert.True(valid)
+}
