@@ -11,9 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/util"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -28,7 +25,6 @@ type ClientInterface interface {
 	GetMetrics(query *IstioMetricsQuery) Metrics
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
-	GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
 }
 
@@ -38,21 +34,6 @@ type Client struct {
 	ClientInterface
 	p8s api.Client
 	api v1.API
-}
-
-// Workload describes a workload with contextual information
-type Workload struct {
-	Namespace string
-	App       string
-	Workload  string
-	Version   string
-}
-
-// Service describes a service with contextual information
-type Service struct {
-	Namespace   string
-	App         string
-	ServiceName string
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -72,61 +53,6 @@ func NewClient() (*Client, error) {
 // Inject allows for replacing the API with a mock For testing
 func (in *Client) Inject(api v1.API) {
 	in.api = api
-}
-
-// GetSourceWorkloads returns a map of list of source workloads for a given service
-// identified by its namespace and service name.
-// Returned map has a destination version as a key and a list of workloads as values.
-// It returns an error on any problem.
-func (in *Client) GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]Workload, error) {
-	reporter := "source"
-	if config.Get().IstioNamespace == namespace {
-		reporter = "destination"
-	}
-	// The query needs a lower bound to make sure that no outdated data is fetched
-	// So, a range is set and an "easy" function (delta) is applied to return an instant-vector,
-	// since only labels are needed.
-	queryTime := util.Clock.Now()
-	queryInterval := queryTime.Sub(namespaceCreationTime)
-	query := fmt.Sprintf("delta(istio_requests_total{reporter=\"%s\",destination_service_name=\"%s\",destination_service_namespace=\"%s\"}[%vs])",
-		reporter, servicename, namespace, int(queryInterval.Seconds()))
-	log.Debugf("GetSourceWorkloads query: %s", query)
-	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("GetSourceWorkloads")
-	result, err := in.api.Query(context.Background(), query, queryTime)
-	if err != nil {
-		return nil, err
-	}
-	promtimer.ObserveDuration() // notice we only collect metrics for successful prom queries
-	routes := make(map[string][]Workload)
-	switch result.Type() {
-	case model.ValVector:
-		matrix := result.(model.Vector)
-		for _, sample := range matrix {
-			metric := sample.Metric
-			index := string(metric["destination_version"])
-			source := Workload{
-				Namespace: string(metric["source_workload_namespace"]),
-				App:       string(metric["source_app"]),
-				Workload:  string(metric["source_workload"]),
-				Version:   string(metric["source_version"]),
-			}
-			if arr, ok := routes[index]; ok {
-				found := false
-				for _, s := range arr {
-					if s.Workload == source.Workload {
-						found = true
-						break
-					}
-				}
-				if !found {
-					routes[index] = append(arr, source)
-				}
-			} else {
-				routes[index] = []Workload{source}
-			}
-		}
-	}
-	return routes, nil
 }
 
 // GetMetrics returns the Metrics related to the provided query options.

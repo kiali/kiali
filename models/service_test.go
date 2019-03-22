@@ -10,7 +10,6 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/prometheus"
 )
 
 func TestServiceDetailParsing(t *testing.T) {
@@ -23,7 +22,6 @@ func TestServiceDetailParsing(t *testing.T) {
 	service.SetPods(fakePods())
 	service.SetVirtualServices(fakeVirtualServices(), false, false, false)
 	service.SetDestinationRules(fakeDestinationRules(), false, false, false)
-	service.SetSourceWorkloads(fakeSourceWorkloads())
 
 	// Kubernetes Details
 
@@ -144,11 +142,6 @@ func TestServiceDetailParsing(t *testing.T) {
 			},
 		},
 	}, service.DestinationRules.Items[1].Spec.Subsets)
-
-	assert.Equal(service.Dependencies, map[string][]SourceWorkload{
-		"v1": {SourceWorkload{Name: "unknown", Namespace: "ns"}, SourceWorkload{Name: "products-v1", Namespace: "ns"}, SourceWorkload{Name: "reviews-v2", Namespace: "ns"}},
-		"v2": {SourceWorkload{Name: "catalog-v1", Namespace: "ns"}, SourceWorkload{Name: "shares-v2", Namespace: "ns"}},
-	})
 }
 
 func TestServiceParse(t *testing.T) {
@@ -385,13 +378,4 @@ func fakeDestinationRules() []kubernetes.IstioObject {
 	}
 
 	return []kubernetes.IstioObject{&destinationRule1, &destinationRule2}
-}
-
-func fakeSourceWorkloads() map[string][]prometheus.Workload {
-	return map[string][]prometheus.Workload{
-		"v1": {{App: "unknown", Version: "unknown", Namespace: "ns", Workload: "unknown"},
-			{App: "products", Version: "v1", Namespace: "ns", Workload: "products-v1"},
-			{App: "reviews", Version: "v2", Namespace: "ns", Workload: "reviews-v2"}},
-		"v2": {{App: "catalog", Version: "v1", Namespace: "ns", Workload: "catalog-v1"},
-			{App: "shares", Version: "v2", Namespace: "ns", Workload: "shares-v2"}}}
 }

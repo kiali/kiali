@@ -15,7 +15,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/util"
 )
 
 func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
@@ -27,96 +26,6 @@ func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
 	}
 	client.Inject(api)
 	return client, api, nil
-}
-
-func TestGetSourceWorkloads(t *testing.T) {
-	rqCustV1C200 := model.Metric{
-		"__name__":                  "istio_requests_total",
-		"instance":                  "172.17.0.6:42422",
-		"job":                       "istio-mesh",
-		"response_code":             "200",
-		"source_workload_namespace": "istio-system",
-		"source_app":                "customer",
-		"source_workload":           "customer-v1",
-		"source_version":            "v1",
-		"destination_service":       "productpage.istio-system.svc.cluster.local",
-		"destination_version":       "v1"}
-	rqCustV1C404 := model.Metric{
-		"__name__":                  "istio_requests_total",
-		"instance":                  "172.17.0.6:42422",
-		"job":                       "istio-mesh",
-		"response_code":             "404",
-		"source_workload_namespace": "istio-system",
-		"source_app":                "customer",
-		"source_workload":           "customer-v1",
-		"source_version":            "v1",
-		"destination_service":       "productpage.istio-system.svc.cluster.local",
-		"destination_version":       "v1"}
-	rqCustV2 := model.Metric{
-		"__name__":                  "istio_requests_total",
-		"instance":                  "172.17.0.6:42422",
-		"job":                       "istio-mesh",
-		"response_code":             "200",
-		"source_workload_namespace": "istio-system",
-		"source_app":                "customer",
-		"source_workload":           "customer-v2",
-		"source_version":            "v2",
-		"destination_service":       "productpage.istio-system.svc.cluster.local",
-		"destination_version":       "v1"}
-	rqCustV2ToV2 := model.Metric{
-		"__name__":                  "istio_requests_total",
-		"instance":                  "172.17.0.6:42422",
-		"job":                       "istio-mesh",
-		"response_code":             "200",
-		"source_workload_namespace": "istio-system",
-		"source_app":                "customer",
-		"source_workload":           "customer-v2",
-		"source_version":            "v2",
-		"destination_service":       "productpage.istio-system.svc.cluster.local",
-		"destination_version":       "v2"}
-	vector := model.Vector{
-		&model.Sample{
-			Metric: rqCustV1C200,
-			Value:  4},
-		&model.Sample{
-			Metric: rqCustV1C404,
-			Value:  4},
-		&model.Sample{
-			Metric: rqCustV2,
-			Value:  1},
-		&model.Sample{
-			Metric: rqCustV2ToV2,
-			Value:  2}}
-
-	client, api, err := setupMocked()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	mockQuery(api, "delta(istio_requests_total{reporter=\"destination\",destination_service_name=\"productpage\",destination_service_namespace=\"istio-system\"}[50s])", &vector)
-	clock := util.ClockMock{Time: time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)}
-	util.Clock = clock
-
-	sources, err := client.GetSourceWorkloads("istio-system", clock.Time.Add(-time.Second*50), "productpage")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	assert.Equal(t, 2, len(sources), "Map should have 2 keys (versions)")
-	assert.Equal(t, 2, len(sources["v1"]), "v1 should have 2 sources")
-	assert.Equal(t, 1, len(sources["v2"]), "v2 should have 1 source")
-	assert.Equal(t, "customer", sources["v1"][0].App)
-	assert.Equal(t, "customer", sources["v1"][1].App)
-	assert.Equal(t, "customer", sources["v2"][0].App)
-	assert.Equal(t, "istio-system", sources["v1"][0].Namespace)
-	assert.Equal(t, "istio-system", sources["v1"][1].Namespace)
-	assert.Equal(t, "istio-system", sources["v2"][0].Namespace)
-	assert.Equal(t, "customer-v1", sources["v1"][0].Workload)
-	assert.Equal(t, "customer-v2", sources["v1"][1].Workload)
-	assert.Equal(t, "customer-v2", sources["v2"][0].Workload)
-	assert.Equal(t, "v1", sources["v1"][0].Version)
-	assert.Equal(t, "v2", sources["v1"][1].Version)
-	assert.Equal(t, "v2", sources["v2"][0].Version)
 }
 
 func round(q string) string {

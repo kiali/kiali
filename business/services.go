@@ -101,13 +101,12 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var pods []v1.Pod
 	var hth models.ServiceHealth
 	var vs, dr []kubernetes.IstioObject
-	var sWk map[string][]prometheus.Workload
 	var ws models.Workloads
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	wg.Add(10)
-	errChan := make(chan error, 9)
+	wg.Add(9)
+	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 
@@ -152,22 +151,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		var err2 error
 		dr, err2 = in.k8s.GetDestinationRules(namespace, service)
 		if err2 != nil {
-			errChan <- err2
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		ns, err2 := in.businessLayer.Namespace.GetNamespace(namespace)
-		if err2 != nil {
-			log.Errorf("Error fetching details of namespace %s: %s", namespace, err2)
-			errChan <- err2
-		}
-
-		sWk, err2 = in.prom.GetSourceWorkloads(ns.Name, ns.CreationTimestamp, service)
-		if err2 != nil {
-			log.Errorf("Error fetching SourceWorkloads per namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
 		}
 	}()
@@ -220,7 +203,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetEndpoints(eps)
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
-	s.SetSourceWorkloads(sWk)
 	s.SetErrorTraces(eTraces)
 	return &s, nil
 }

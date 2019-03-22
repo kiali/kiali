@@ -1,10 +1,9 @@
 package models
 
 import (
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/prometheus"
 )
 
 type ServiceOverview struct {
@@ -33,7 +32,6 @@ type ServiceDetails struct {
 	Endpoints        Endpoints                   `json:"endpoints"`
 	VirtualServices  VirtualServices             `json:"virtualServices"`
 	DestinationRules DestinationRules            `json:"destinationRules"`
-	Dependencies     map[string][]SourceWorkload `json:"dependencies"`
 	Workloads        WorkloadOverviews           `json:"workloads"`
 	Health           ServiceHealth               `json:"health"`
 	Validations      IstioValidations            `json:"validations"`
@@ -51,12 +49,6 @@ type Service struct {
 	Type            string            `json:"type"`
 	Ip              string            `json:"ip"`
 	Ports           Ports             `json:"ports"`
-}
-
-// SourceWorkload holds workload identifiers used for service dependencies
-type SourceWorkload struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
 }
 
 func (ss *Services) Parse(services []v1.Service) {
@@ -110,17 +102,4 @@ func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCre
 
 func (s *ServiceDetails) SetErrorTraces(errorTraces int) {
 	s.ErrorTraces = errorTraces
-}
-
-func (s *ServiceDetails) SetSourceWorkloads(sw map[string][]prometheus.Workload) {
-	// Transform dependencies for UI
-	s.Dependencies = make(map[string][]SourceWorkload)
-	for version, workloads := range sw {
-		for _, workload := range workloads {
-			s.Dependencies[version] = append(s.Dependencies[version], SourceWorkload{
-				Name:      workload.Workload,
-				Namespace: workload.Namespace,
-			})
-		}
-	}
 }
