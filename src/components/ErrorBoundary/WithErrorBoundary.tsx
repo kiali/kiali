@@ -25,5 +25,4 @@ const withErrorBoundary = <P extends object>(WrappedComponent: React.ComponentCl
     }
   };
 
-const TabPaneWithErrorBoundary = withErrorBoundary<TabPane.propTypes>(TabPane);
-export default TabPaneWithErrorBoundary;
+export const TabPaneWithErrorBoundary = withErrorBoundary<TabPane.propTypes>(TabPane);

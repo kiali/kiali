@@ -20,7 +20,7 @@ import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { Validations } from '../../types/IstioObjects';
-import WithErrorBoundary from '../../components/ErrorBoundary/WithErrorBoundary';
+import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 
 interface ServiceDetails extends ServiceId {
@@ -186,12 +186,12 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     </NavItem>
                   </Nav>
                   <TabContent>
-                    <WithErrorBoundary eventKey={'workloads'} message={this.errorBoundaryMessage('Workloads')}>
+                    <TabPaneWithErrorBoundary eventKey={'workloads'} message={this.errorBoundaryMessage('Workloads')}>
                       {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
                       )}
-                    </WithErrorBoundary>
-                    <WithErrorBoundary
+                    </TabPaneWithErrorBoundary>
+                    <TabPaneWithErrorBoundary
                       eventKey={'virtualservices'}
                       message={this.errorBoundaryMessage('Virtual Services')}
                     >
@@ -201,8 +201,8 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                           validations={validations!['virtualservice']}
                         />
                       )}
-                    </WithErrorBoundary>
-                    <WithErrorBoundary
+                    </TabPaneWithErrorBoundary>
+                    <TabPaneWithErrorBoundary
                       eventKey={'destinationrules'}
                       message={this.errorBoundaryMessage('Destination Rules')}
                     >
@@ -212,7 +212,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                           validations={validations!['destinationrule']}
                         />
                       )}
-                    </WithErrorBoundary>
+                    </TabPaneWithErrorBoundary>
                   </TabContent>
                 </div>
               </TabContainer>
