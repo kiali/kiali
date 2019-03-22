@@ -472,7 +472,11 @@ class MatchingRouting extends React.Component<Props, State> {
         </Label>{' '}
       </span>
     ));
-    return <div className={labelContainerStyle}>{matches}</div>;
+    return (
+      <div className={labelContainerStyle}>
+        Matching selected: {matches.length > 0 ? matches : <b>Match any request</b>}
+      </div>
+    );
   };
 
   renderRules = () => {
