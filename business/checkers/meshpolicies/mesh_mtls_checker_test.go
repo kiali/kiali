@@ -128,7 +128,7 @@ func TestMeshPolicymTLSDisabledDestinationRuleMissing(t *testing.T) {
 func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations, valid := MtlsChecker{
+	validations, valid := MeshMtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()
@@ -147,7 +147,7 @@ func testValidationAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDe
 func testValidationsNotAdded(t *testing.T, meshPolicy kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
-	validations, valid := MtlsChecker{
+	validations, valid := MeshMtlsChecker{
 		MeshPolicy:  meshPolicy,
 		MTLSDetails: mTLSDetails,
 	}.Check()

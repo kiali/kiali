@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -73,4 +74,84 @@ func TestInvalidProtocolNameMatcher(t *testing.T) {
 
 	assert.False(t, matchPortNameRule("httpname", "http"))
 	assert.False(t, matchPortNameRule("name", "http"))
+}
+
+func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {
+	policy := createPolicy("default", "bookinfo", []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": map[string]interface{}{},
+			},
+		},
+	})
+
+	enabled, mode := PolicyHasMTLSEnabled(policy)
+	assert.False(t, enabled)
+	assert.Equal(t, "", mode)
+}
+
+func TestPolicyHasMTLSEnabledNonDefaultName(t *testing.T) {
+	policy := createPolicy("non-default", "bookinfo", []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": "STRICT",
+			},
+		},
+	})
+
+	enabled, mode := PolicyHasMTLSEnabled(policy)
+	assert.False(t, enabled)
+	assert.Equal(t, "", mode)
+}
+
+func TestPolicyHasMTLSEnabledStrictMode(t *testing.T) {
+	policy := createPolicy("default", "bookinfo", []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": "STRICT",
+			},
+		},
+	})
+
+	enabled, mode := PolicyHasMTLSEnabled(policy)
+	assert.True(t, enabled)
+	assert.Equal(t, "STRICT", mode)
+}
+
+func TestPolicyHasMTLSEnabledStructMtls(t *testing.T) {
+	policy := createPolicy("default", "bookinfo", []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{},
+		},
+	})
+
+	enabled, mode := PolicyHasMTLSEnabled(policy)
+	assert.True(t, enabled)
+	assert.Equal(t, "STRICT", mode)
+}
+
+func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
+	policy := createPolicy("default", "bookinfo", []interface{}{
+		map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": "PERMISSIVE",
+			},
+		},
+	})
+
+	enabled, mode := PolicyHasMTLSEnabled(policy)
+	assert.True(t, enabled)
+	assert.Equal(t, "PERMISSIVE", mode)
+}
+
+func createPolicy(name, namespace string, peers interface{}) IstioObject {
+	return (&GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: map[string]interface{}{
+			"peers": peers,
+		},
+	}).DeepCopyIstioObject()
 }

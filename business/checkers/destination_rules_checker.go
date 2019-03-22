@@ -59,6 +59,8 @@ func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObje
 
 	enabledCheckers := []Checker{
 		destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+		destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
+		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 	}
 
 	for _, checker := range enabledCheckers {

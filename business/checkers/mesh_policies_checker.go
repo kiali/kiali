@@ -35,7 +35,7 @@ func (m MeshPolicyChecker) runChecks(meshPolicy kubernetes.IstioObject) models.I
 	}
 
 	enabledCheckers := []Checker{
-		meshpolicies.MtlsChecker{MeshPolicy: meshPolicy, MTLSDetails: m.MTLSDetails},
+		meshpolicies.MeshMtlsChecker{MeshPolicy: meshPolicy, MTLSDetails: m.MTLSDetails},
 	}
 
 	for _, checker := range enabledCheckers {

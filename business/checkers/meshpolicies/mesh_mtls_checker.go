@@ -5,18 +5,16 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const MeshPolicyCheckerType = "meshpolicy"
-
-type MtlsChecker struct {
+type MeshMtlsChecker struct {
 	MeshPolicy  kubernetes.IstioObject
 	MTLSDetails kubernetes.MTLSDetails
 }
 
-func (t MtlsChecker) Check() ([]*models.IstioCheck, bool) {
+func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
-	// if MeshPolicy doesn't enables mTLS, stop validation with any check.
-	if enabled, _ := kubernetes.PolicyHasMTLSEnabled(t.MeshPolicy); !enabled {
+	// if MeshPolicy doesn't have mtls in strict mode, stop validation with any check.
+	if strictMode := kubernetes.PolicyHasStrictMTLS(t.MeshPolicy); !strictMode {
 		return validations, true
 	}
 

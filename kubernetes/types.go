@@ -536,6 +536,7 @@ type IstioDetails struct {
 type MTLSDetails struct {
 	DestinationRules []IstioObject `json:"destinationrules"`
 	MeshPolicies     []IstioObject `json:"meshpolicies"`
+	Policies         []IstioObject `json:"policies"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)

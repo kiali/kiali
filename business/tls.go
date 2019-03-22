@@ -53,7 +53,7 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 	}
 
 	for _, mp := range mps {
-		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+		if strictMode := kubernetes.PolicyHasStrictMTLS(mp); strictMode {
 			return true, nil
 		}
 	}
@@ -138,7 +138,7 @@ func (in TLSService) hasPolicyNamespacemTLSDefinition(namespace string) (string,
 	}
 
 	for _, p := range ps {
-		if _, mode := kubernetes.PolicyHasMTLSEnabled(p); mode != "" {
+		if enabled, mode := kubernetes.PolicyHasMTLSEnabled(p); enabled {
 			return mode, nil
 		}
 	}
@@ -174,14 +174,12 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (s
 func finalStatus(drStatus string, pStatus string) string {
 	finalStatus := MTLSPartiallyEnabled
 
-	if drStatus == pStatus {
-		if drStatus == "ENABLED" {
-			finalStatus = MTLSEnabled
-		} else if drStatus == "DISABLED" {
-			finalStatus = MTLSDisabled
-		} else if drStatus == "" {
-			finalStatus = MTLSNotEnabled
-		}
+	if pStatus == "STRICT" && drStatus == "ISTIO_MUTUAL" {
+		finalStatus = MTLSEnabled
+	} else if pStatus == "PERMISSIVE" && (drStatus == "DISABLE" || drStatus == "SIMPLE") {
+		finalStatus = MTLSDisabled
+	} else if drStatus == "" && pStatus == "" {
+		finalStatus = MTLSNotEnabled
 	}
 
 	return finalStatus

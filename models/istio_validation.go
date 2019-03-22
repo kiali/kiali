@@ -72,6 +72,7 @@ var ObjectTypeSingular = map[string]string{
 	"quotaspecs":          "quotaspec",
 	"quotaspecbindings":   "quotaspecbinding",
 	"meshpolicies":        "meshpolicy",
+	"policies":            "policy",
 	"serviceroles":        "servicerole",
 	"servicerolebindings": "servicerolebinding",
 	"clusterrbacconfigs":  "clusterrbacconfig",
@@ -96,6 +97,18 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"destinationrules.mtls.meshpolicymissing": {
 		Message:  "MeshPolicy enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.nspolicymissing": {
+		Message:  "Policy enabling namespace-wide mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.policymtlsenabled": {
+		Message:  "Policy with TLS strict mode found, it should be permissive",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.meshpolicymtlsenabled": {
+		Message:  "MeshPolicy enabling mTLS found, permissive policy is needed",
 		Severity: ErrorSeverity,
 	},
 	"gateways.multimatch": {
@@ -160,6 +173,10 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"servicerolebinding.invalid.role": {
 		Message:  "ServiceRole does not exists in this namespace",
+		Severity: ErrorSeverity,
+	},
+	"policies.mtls.destinationrulemissing": {
+		Message:  "Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
 }

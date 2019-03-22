@@ -950,6 +950,11 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 	return true, -1
 }
 
+func PolicyHasStrictMTLS(policy IstioObject) bool {
+	_, mode := PolicyHasMTLSEnabled(policy)
+	return mode == "STRICT"
+}
+
 func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
 	// It is mandatory to have default as a name
 	if policyMeta := policy.GetObjectMeta(); policyMeta.Name != "default" {
@@ -973,21 +978,17 @@ func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
 		peerMap := peer.(map[string]interface{})
 		if mtls, present := peerMap["mtls"]; present {
 			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
-				// mTLS enabled in case there is an empty map or mode is STRICT
-				if mode, found := mtlsMap["mode"]; found {
-					if mode == "STRICT" {
-						return true, "ENABLED"
+				if modeItf, found := mtlsMap["mode"]; found {
+					if mode, ok := modeItf.(string); ok {
+						return true, mode
 					} else {
-						return false, "DISABLED"
+						return false, ""
 					}
-				} else {
-					// STRICT mode when mtls object is empty
-					return true, "ENABLED"
 				}
-			} else {
-				// STRICT mode when mtls object is empty
-				return true, "ENABLED"
 			}
+
+			// STRICT mode when mtls object is empty
+			return true, "STRICT"
 		}
 	}
 
@@ -1019,11 +1020,7 @@ func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule I
 				if tlsCasted, ok := tls.(map[string]interface{}); ok {
 					if mode, found := tlsCasted["mode"]; found {
 						if modeCasted, ok := mode.(string); ok {
-							if modeCasted == "ISTIO_MUTUAL" {
-								return true, "ENABLED"
-							} else {
-								return false, "DISABLED"
-							}
+							return modeCasted == "ISTIO_MUTUAL", modeCasted
 						}
 					}
 				}

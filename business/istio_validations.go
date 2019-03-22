@@ -59,7 +59,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	go in.fetchDetails(&istioDetails, namespace, errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
 
 	wg.Wait()
@@ -83,6 +83,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
+		checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
 	}
@@ -111,7 +112,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	go in.fetchServices(&services, namespace, "", errChan, &wg)
 	go in.fetchWorkloads(&workloads, namespace, errChan, &wg)
 	go in.fetchGatewaysPerNamespace(&gatewaysPerNamespace, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, errChan, &wg)
+	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, namespace, errChan, &wg)
 	go in.fetchAuthorizationDetails(&rbacDetails, namespace, errChan, &wg)
 	wg.Wait()
 
@@ -129,8 +130,11 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		destinationRulesChecker := checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 	case MeshPolicies:
-		mtlsChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
-		objectCheckers = []ObjectChecker{mtlsChecker}
+		meshPoliciesChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{meshPoliciesChecker}
+	case Policies:
+		policiesChecker := checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{policiesChecker}
 	case ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
@@ -146,8 +150,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecs are not yet in place
 	case QuotaSpecBindings:
 		// Validations on QuotaSpecBindings are not yet in place
-	case Policies:
-		// Validations on Policies are not yet in place
 	case ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
 	case RbacConfigs:
@@ -269,13 +271,13 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 	}
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
 	}
 
-	wg.Add(1)
+	wg.Add(2)
 
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
@@ -285,6 +287,17 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			errChan <- err
 		} else {
 			details.MeshPolicies = meshPolicies
+		}
+	}(mtlsDetails)
+
+	go func(details *kubernetes.MTLSDetails) {
+		defer wg.Done()
+
+		policies, err := in.k8s.GetPolicies(namespace)
+		if err != nil {
+			errChan <- err
+		} else {
+			details.Policies = policies
 		}
 	}(mtlsDetails)
 

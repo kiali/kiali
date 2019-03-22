@@ -81,6 +81,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails(), nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices([]string{""}), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
+	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakePolicies(), nil)
 	k8s.On("GetAuthorizationDetails", mock.AnythingOfType("string")).Return(&kubernetes.RBACDetails{}, nil)
 
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
@@ -97,6 +98,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)
 	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(kubetest.FakeNamespace("test"), nil)
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
+	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakePolicies(), nil)
 	k8s.On("IsOpenShift").Return(false)
 
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
@@ -135,6 +137,13 @@ func fakeMeshPolicies() []kubernetes.IstioObject {
 	return []kubernetes.IstioObject{
 		data.CreateEmptyMeshPolicy("default", nil),
 		data.CreateEmptyMeshPolicy("test", nil),
+	}
+}
+
+func fakePolicies() []kubernetes.IstioObject {
+	return []kubernetes.IstioObject{
+		data.CreateEmptyPolicy("default", "bookinfo", nil),
+		data.CreateEmptyPolicy("test", "foo", nil),
 	}
 }
 
