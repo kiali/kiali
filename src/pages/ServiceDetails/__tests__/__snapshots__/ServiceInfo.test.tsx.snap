@@ -28,7 +28,6 @@ ShallowWrapper {
     service="reviews"
     serviceDetails={
       Object {
-        "dependencies": Object {},
         "destinationRules": Object {
           "items": Array [
             Object {
@@ -504,13 +503,6 @@ ShallowWrapper {
                     <NavItem
                       active={false}
                       disabled={false}
-                      eventKey="sources"
-                    >
-                      Source Workloads (0)
-                    </NavItem>
-                    <NavItem
-                      active={false}
-                      disabled={false}
                       eventKey="virtualservices"
                     >
                       Virtual Services (1)
@@ -542,10 +534,6 @@ ShallowWrapper {
                     <WithErrorBoundary
                       eventKey="workloads"
                       message="One of the Workloads associated to this service has an invalid format"
-                    />
-                    <WithErrorBoundary
-                      eventKey="sources"
-                      message="One of the Sources associated to this service has an invalid format"
                     />
                     <WithErrorBoundary
                       eventKey="virtualservices"
@@ -924,13 +912,6 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="sources"
-                      >
-                        Source Workloads (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
                         eventKey="virtualservices"
                       >
                         Virtual Services (1)
@@ -962,10 +943,6 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
-                      <WithErrorBoundary
-                        eventKey="sources"
-                        message="One of the Sources associated to this service has an invalid format"
                       />
                       <WithErrorBoundary
                         eventKey="virtualservices"
@@ -1895,13 +1872,6 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="sources"
-                      >
-                        Source Workloads (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
                         eventKey="virtualservices"
                       >
                         Virtual Services (1)
@@ -1933,10 +1903,6 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
-                      <WithErrorBoundary
-                        eventKey="sources"
-                        message="One of the Sources associated to this service has an invalid format"
                       />
                       <WithErrorBoundary
                         eventKey="virtualservices"
@@ -2076,13 +2042,6 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="sources"
-                      >
-                        Source Workloads (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
                         eventKey="virtualservices"
                       >
                         Virtual Services (1)
@@ -2114,10 +2073,6 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
-                      <WithErrorBoundary
-                        eventKey="sources"
-                        message="One of the Sources associated to this service has an invalid format"
                       />
                       <WithErrorBoundary
                         eventKey="virtualservices"
@@ -2254,13 +2209,6 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="sources"
-                      >
-                        Source Workloads (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
                         eventKey="virtualservices"
                       >
                         Virtual Services (1)
@@ -2292,10 +2240,6 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
-                      <WithErrorBoundary
-                        eventKey="sources"
-                        message="One of the Sources associated to this service has an invalid format"
                       />
                       <WithErrorBoundary
                         eventKey="virtualservices"
@@ -2427,13 +2371,6 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="sources"
-                        >
-                          Source Workloads (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
                           eventKey="virtualservices"
                         >
                           Virtual Services (1)
@@ -2465,10 +2402,6 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
-                        <WithErrorBoundary
-                          eventKey="sources"
-                          message="One of the Sources associated to this service has an invalid format"
                         />
                         <WithErrorBoundary
                           eventKey="virtualservices"
@@ -2593,13 +2526,6 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey="sources"
-                          >
-                            Source Workloads (0)
-                          </NavItem>,
-                          <NavItem
-                            active={false}
-                            disabled={false}
                             eventKey="virtualservices"
                           >
                             Virtual Services (1)
@@ -2640,20 +2566,6 @@ ShallowWrapper {
                           },
                           "ref": null,
                           "rendered": "Workloads (0)",
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "active": false,
-                            "children": "Source Workloads (0)",
-                            "disabled": false,
-                            "eventKey": "sources",
-                          },
-                          "ref": null,
-                          "rendered": "Source Workloads (0)",
                           "type": [Function],
                         },
                         Object {
@@ -2749,10 +2661,6 @@ ShallowWrapper {
                           <WithErrorBoundary
                             eventKey="workloads"
                             message="One of the Workloads associated to this service has an invalid format"
-                          />,
-                          <WithErrorBoundary
-                            eventKey="sources"
-                            message="One of the Sources associated to this service has an invalid format"
                           />,
                           <WithErrorBoundary
                             eventKey="virtualservices"
@@ -2870,19 +2778,6 @@ ShallowWrapper {
                             "children": false,
                             "eventKey": "workloads",
                             "message": "One of the Workloads associated to this service has an invalid format",
-                          },
-                          "ref": null,
-                          "rendered": false,
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "children": false,
-                            "eventKey": "sources",
-                            "message": "One of the Sources associated to this service has an invalid format",
                           },
                           "ref": null,
                           "rendered": false,
@@ -3390,13 +3285,6 @@ ShallowWrapper {
                       <NavItem
                         active={false}
                         disabled={false}
-                        eventKey="sources"
-                      >
-                        Source Workloads (0)
-                      </NavItem>
-                      <NavItem
-                        active={false}
-                        disabled={false}
                         eventKey="virtualservices"
                       >
                         Virtual Services (1)
@@ -3428,10 +3316,6 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
-                      <WithErrorBoundary
-                        eventKey="sources"
-                        message="One of the Sources associated to this service has an invalid format"
                       />
                       <WithErrorBoundary
                         eventKey="virtualservices"
@@ -3810,13 +3694,6 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="sources"
-                        >
-                          Source Workloads (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
                           eventKey="virtualservices"
                         >
                           Virtual Services (1)
@@ -3848,10 +3725,6 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
-                        <WithErrorBoundary
-                          eventKey="sources"
-                          message="One of the Sources associated to this service has an invalid format"
                         />
                         <WithErrorBoundary
                           eventKey="virtualservices"
@@ -4781,13 +4654,6 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="sources"
-                        >
-                          Source Workloads (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
                           eventKey="virtualservices"
                         >
                           Virtual Services (1)
@@ -4819,10 +4685,6 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
-                        <WithErrorBoundary
-                          eventKey="sources"
-                          message="One of the Sources associated to this service has an invalid format"
                         />
                         <WithErrorBoundary
                           eventKey="virtualservices"
@@ -4962,13 +4824,6 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="sources"
-                        >
-                          Source Workloads (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
                           eventKey="virtualservices"
                         >
                           Virtual Services (1)
@@ -5000,10 +4855,6 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
-                        <WithErrorBoundary
-                          eventKey="sources"
-                          message="One of the Sources associated to this service has an invalid format"
                         />
                         <WithErrorBoundary
                           eventKey="virtualservices"
@@ -5140,13 +4991,6 @@ ShallowWrapper {
                         <NavItem
                           active={false}
                           disabled={false}
-                          eventKey="sources"
-                        >
-                          Source Workloads (0)
-                        </NavItem>
-                        <NavItem
-                          active={false}
-                          disabled={false}
                           eventKey="virtualservices"
                         >
                           Virtual Services (1)
@@ -5178,10 +5022,6 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
-                        <WithErrorBoundary
-                          eventKey="sources"
-                          message="One of the Sources associated to this service has an invalid format"
                         />
                         <WithErrorBoundary
                           eventKey="virtualservices"
@@ -5313,13 +5153,6 @@ ShallowWrapper {
                           <NavItem
                             active={false}
                             disabled={false}
-                            eventKey="sources"
-                          >
-                            Source Workloads (0)
-                          </NavItem>
-                          <NavItem
-                            active={false}
-                            disabled={false}
                             eventKey="virtualservices"
                           >
                             Virtual Services (1)
@@ -5351,10 +5184,6 @@ ShallowWrapper {
                           <WithErrorBoundary
                             eventKey="workloads"
                             message="One of the Workloads associated to this service has an invalid format"
-                          />
-                          <WithErrorBoundary
-                            eventKey="sources"
-                            message="One of the Sources associated to this service has an invalid format"
                           />
                           <WithErrorBoundary
                             eventKey="virtualservices"
@@ -5479,13 +5308,6 @@ ShallowWrapper {
                             <NavItem
                               active={false}
                               disabled={false}
-                              eventKey="sources"
-                            >
-                              Source Workloads (0)
-                            </NavItem>,
-                            <NavItem
-                              active={false}
-                              disabled={false}
                               eventKey="virtualservices"
                             >
                               Virtual Services (1)
@@ -5526,20 +5348,6 @@ ShallowWrapper {
                             },
                             "ref": null,
                             "rendered": "Workloads (0)",
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "active": false,
-                              "children": "Source Workloads (0)",
-                              "disabled": false,
-                              "eventKey": "sources",
-                            },
-                            "ref": null,
-                            "rendered": "Source Workloads (0)",
                             "type": [Function],
                           },
                           Object {
@@ -5635,10 +5443,6 @@ ShallowWrapper {
                             <WithErrorBoundary
                               eventKey="workloads"
                               message="One of the Workloads associated to this service has an invalid format"
-                            />,
-                            <WithErrorBoundary
-                              eventKey="sources"
-                              message="One of the Sources associated to this service has an invalid format"
                             />,
                             <WithErrorBoundary
                               eventKey="virtualservices"
@@ -5756,19 +5560,6 @@ ShallowWrapper {
                               "children": false,
                               "eventKey": "workloads",
                               "message": "One of the Workloads associated to this service has an invalid format",
-                            },
-                            "ref": null,
-                            "rendered": false,
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "children": false,
-                              "eventKey": "sources",
-                              "message": "One of the Sources associated to this service has an invalid format",
                             },
                             "ref": null,
                             "rendered": false,

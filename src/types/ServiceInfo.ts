@@ -9,7 +9,6 @@ import {
   VirtualServices,
   Validations
 } from './IstioObjects';
-import { Route } from '../components/InfoRoutes/InfoRoutes';
 import { TLSStatus } from './TLSStatus';
 
 export interface Endpoints {
@@ -30,11 +29,6 @@ export interface WorkloadOverview {
   labels?: { [key: string]: string };
   resourceVersion: string;
   createdAt: string;
-}
-
-export interface SourceWorkload {
-  name: string;
-  namespace: string;
 }
 
 // Istio Sidecar
@@ -62,7 +56,6 @@ export interface ServiceDetailsInfo {
   istioSidecar: boolean;
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
-  dependencies?: { [key: string]: Route[] };
   health?: ServiceHealth;
   workloads?: WorkloadOverview[];
   namespaceMTLS?: TLSStatus;
@@ -141,10 +134,6 @@ export const validationToSeverity = (object: ObjectValidation): string => {
     : object && !object.valid && warnChecks > 0
     ? 'warning'
     : 'correct';
-};
-
-export const validationToIconName = (object: ObjectValidation): string => {
-  return severityToIconName(validationToSeverity(object));
 };
 
 export const checkForPath = (object: ObjectValidation, path: string): ObjectCheck[] => {

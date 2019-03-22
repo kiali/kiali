@@ -16,7 +16,6 @@ const workload: Workload = {
   availableReplicas: 1,
   pods: [],
   services: [],
-  destinationServices: [],
   runtimes: [
     {
       name: 'Vert.x',

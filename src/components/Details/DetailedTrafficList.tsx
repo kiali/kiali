@@ -91,7 +91,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
             return (
               <TableGrid.Row key={item.node.id}>
                 {this.renderStatusColumn(item.traffic)}
-                {this.renderWorkloadColumn(item.node)}
+                {this.renderWorkloadColumn(item.node, item.proxy !== undefined)}
                 {this.renderTypeColumn(item.traffic)}
                 {this.renderTrafficColumn(item.traffic)}
               </TableGrid.Row>
@@ -129,12 +129,13 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     }
   };
 
-  private renderWorkloadColumn = (node: TrafficNode) => {
-    let icon = <Icon type="pf" name="unknown" style={{ paddingLeft: '2em' }} />;
+  private renderWorkloadColumn = (node: TrafficNode, isProxyed: boolean) => {
+    const style = isProxyed ? { paddingLeft: '2em' } : {};
+    let icon = <Icon type="pf" name="unknown" style={style} />;
     let name = <>{node.name}</>;
 
     if (NodeType.WORKLOAD === node.type) {
-      icon = <Icon type="pf" name="bundle" style={{ paddingLeft: '2em' }} />;
+      icon = <Icon type="pf" name="bundle" style={style} />;
       if (!node.isInaccessible) {
         name = (
           <Link to={`/namespaces/${encodeURIComponent(node.namespace)}/workloads/${encodeURIComponent(node.name)}`}>
@@ -143,7 +144,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
         );
       }
     } else if (NodeType.SERVICE === node.type) {
-      icon = <Icon type="pf" name="service" />;
+      icon = <Icon type="pf" name="service" style={style} />;
       if (!node.isServiceEntry || !node.isInaccessible) {
         name = (
           <Link to={`/namespaces/${encodeURIComponent(node.namespace)}/services/${encodeURIComponent(node.name)}`}>
@@ -152,7 +153,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
         );
       }
     } else if (NodeType.APP === node.type) {
-      icon = <Icon type="pf" name="applications" style={{ paddingLeft: '2em' }} />;
+      icon = <Icon type="pf" name="applications" style={style} />;
       if (!node.isInaccessible) {
         name = (
           <Link to={`/namespaces/${encodeURIComponent(node.namespace)}/applications/${encodeURIComponent(node.name)}`}>
@@ -164,7 +165,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
             <Link
               to={`/namespaces/${encodeURIComponent(node.namespace)}/applications/${encodeURIComponent(node.name)}`}
             >
-              `${node.name} / ${node.version}`
+              {`${node.name} / ${node.version}`}
             </Link>
           );
         }

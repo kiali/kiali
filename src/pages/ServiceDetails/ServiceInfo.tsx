@@ -20,8 +20,6 @@ import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { Validations } from '../../types/IstioObjects';
-import { ServiceInfoRoutes } from '../../components/InfoRoutes/ServiceInfoRoutes';
-import { Route } from '../../components/InfoRoutes/InfoRoutes';
 import WithErrorBoundary from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 
@@ -29,7 +27,7 @@ interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   validations: Validations;
   onRefresh: () => void;
-  onSelectTab: (tabName: string, tabKey?: string) => void;
+  onSelectTab: (tabName: string, postHandler?: (tabName: string) => void) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
 }
 
@@ -81,26 +79,12 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     return validationChecks;
   }
 
-  differentSourcesCount(): number {
-    const dependencies = this.props.serviceDetails.dependencies || {};
-
-    const differentDependencies = new Set();
-    Object.keys(dependencies).forEach(key => {
-      dependencies[key].forEach((dependency: Route) => {
-        differentDependencies.add(dependency.name);
-      });
-    });
-
-    return differentDependencies.size;
-  }
-
   errorBoundaryMessage(resourceName: string) {
     return `One of the ${resourceName} associated to this service has an invalid format`;
   }
 
   render() {
     const workloads = this.props.serviceDetails.workloads || [];
-    const dependencies = this.props.serviceDetails.dependencies || {};
     const virtualServices = this.props.serviceDetails.virtualServices || [];
     const destinationRules = this.props.serviceDetails.destinationRules || [];
     const validations = this.props.validations || {};
@@ -182,7 +166,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 <div>
                   <Nav bsClass="nav nav-tabs nav-tabs-pf">
                     <NavItem eventKey={'workloads'}>{'Workloads (' + Object.keys(workloads).length + ')'}</NavItem>
-                    <NavItem eventKey={'sources'}>{'Source Workloads (' + this.differentSourcesCount() + ')'}</NavItem>
                     <NavItem eventKey={'virtualservices'}>
                       {'Virtual Services (' + virtualServices.items.length + ')'}
                       {validationChecks.hasVirtualServiceChecks
@@ -206,11 +189,6 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                     <WithErrorBoundary eventKey={'workloads'} message={this.errorBoundaryMessage('Workloads')}>
                       {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
-                      )}
-                    </WithErrorBoundary>
-                    <WithErrorBoundary eventKey={'sources'} message={this.errorBoundaryMessage('Sources')}>
-                      {(Object.keys(dependencies).length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoRoutes dependencies={dependencies} />
                       )}
                     </WithErrorBoundary>
                     <WithErrorBoundary

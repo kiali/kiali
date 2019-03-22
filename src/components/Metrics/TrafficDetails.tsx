@@ -1,4 +1,4 @@
-import { Col, Row, Button, Icon } from 'patternfly-react';
+import { Button, Col, Icon, Row } from 'patternfly-react';
 import * as React from 'react';
 import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
@@ -6,16 +6,22 @@ import { DurationInSeconds } from '../../types/Common';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
 
-type WorkloadProps = {
-  itemType: MetricsObjectTypes.WORKLOAD;
-  namespace: string;
-  workloadName: string;
-};
-
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
   namespace: string;
   appName: string;
+};
+
+type ServiceProps = {
+  itemType: MetricsObjectTypes.SERVICE;
+  namespace: string;
+  serviceName: string;
+};
+
+type WorkloadProps = {
+  itemType: MetricsObjectTypes.WORKLOAD;
+  namespace: string;
+  workloadName: string;
 };
 
 type TrafficDetailsProps = {
@@ -23,7 +29,7 @@ type TrafficDetailsProps = {
   onDurationChanged: (duration: DurationInSeconds) => void;
   onRefresh: () => void;
   trafficData: GraphDefinition | null;
-} & (AppProps | WorkloadProps);
+} & (AppProps | WorkloadProps | ServiceProps);
 
 type TrafficDetailsState = {
   inboundTraffic: TrafficItem[];
@@ -52,8 +58,12 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       prevProps.itemType === MetricsObjectTypes.APP &&
       this.props.itemType === prevProps.itemType &&
       (prevProps.namespace !== this.props.namespace || prevProps.appName !== this.props.appName);
+    const isServiceSet =
+      prevProps.itemType === MetricsObjectTypes.SERVICE &&
+      this.props.itemType === prevProps.itemType &&
+      (prevProps.namespace !== this.props.namespace || prevProps.serviceName !== this.props.serviceName);
 
-    if (isWorkloadSet || isAppSet || prevProps.trafficData !== this.props.trafficData) {
+    if (isWorkloadSet || isAppSet || isServiceSet || prevProps.trafficData !== this.props.trafficData) {
       this.processTrafficData(this.props.trafficData);
     }
   }
@@ -85,28 +95,54 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     );
   }
 
-  private buildTrafficNode = (prefix: 'in' | 'out', node: any): TrafficNode => {
-    if (this.props.itemType === MetricsObjectTypes.WORKLOAD) {
-      return {
-        id: `${prefix}-${node.id}`,
-        type: node.nodeType,
-        namespace: node.namespace,
-        name: node.workload || '',
-        isInaccessible: node.isInaccessible || false
-      };
-    } else {
-      return {
-        id: `${prefix}-${node.id}`,
-        type: node.nodeType,
-        namespace: node.namespace,
-        name: node.app || '',
-        version: node.version,
-        isInaccessible: node.isInaccessible || false
-      };
+  private buildTrafficNode = (prefix: 'in' | 'out', node: GraphNodeData): TrafficNode => {
+    switch (node.nodeType) {
+      case NodeType.WORKLOAD:
+        return {
+          id: `${prefix}-${node.id}`,
+          type: node.nodeType,
+          namespace: node.namespace,
+          name: node.workload || 'unknown',
+          isInaccessible: node.isInaccessible || false
+        };
+        break;
+      case NodeType.APP:
+        return {
+          id: `${prefix}-${node.id}`,
+          type: node.nodeType,
+          namespace: node.namespace,
+          name: node.app || 'unknown',
+          version: node.version || '',
+          isInaccessible: node.isInaccessible || false
+        };
+        break;
+      case NodeType.SERVICE:
+        return {
+          id: `${prefix}-${node.id}`,
+          type: node.nodeType,
+          namespace: node.namespace,
+          name: node.service || 'unknown',
+          isServiceEntry: node.isServiceEntry,
+          isInaccessible: node.isInaccessible || false
+        };
+        break;
+      default:
+        return {
+          id: `${prefix}-${node.id}`,
+          type: NodeType.UNKNOWN,
+          namespace: node.namespace,
+          name: 'unknown'
+        };
+        break;
     }
   };
 
-  private processTrafficSiblings = (edges: any, serviceTraffic: ServiceTraffic, nodes: any, myNode: any) => {
+  private processSecondLevelTraffic = (
+    edges: any,
+    serviceTraffic: ServiceTraffic,
+    nodes: { [key: string]: GraphNodeData },
+    myNode: GraphNodeData
+  ) => {
     const inboundTraffic: TrafficItem[] = [];
     const outboundTraffic: TrafficItem[] = [];
 
@@ -142,7 +178,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     return { inboundTraffic, outboundTraffic };
   };
 
-  private processServicesTraffic = (
+  private processFirstLevelTraffic = (
     edges: GraphEdgeWrapper[],
     nodes: { [key: string]: GraphNodeData },
     myNode: GraphNodeData
@@ -154,37 +190,31 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     edges.forEach(edge => {
       const sourceNode = nodes['id-' + edge.data.source];
       const targetNode = nodes['id-' + edge.data.target];
-      if (myNode.id === edge.data.source && targetNode.nodeType === 'service') {
-        const svcId = `out-${targetNode.namespace}-${targetNode.service}`;
-        if (!serviceTraffic[svcId]) {
-          serviceTraffic[svcId] = {
-            traffic: edge.data.traffic!,
-            node: {
-              id: `out-${targetNode.id}`,
-              type: targetNode.nodeType,
-              namespace: targetNode.namespace,
-              name: targetNode.service!,
-              isServiceEntry: targetNode.isServiceEntry,
-              isInaccessible: targetNode.isInaccessible || false
-            }
-          };
-          outboundTraffic.push(serviceTraffic[svcId]);
+      if (myNode.id === edge.data.source) {
+        const trafficItem: TrafficItem = {
+          traffic: edge.data.traffic!,
+          node: this.buildTrafficNode('out', targetNode)
+        };
+        outboundTraffic.push(trafficItem);
+
+        if (trafficItem.node.type === NodeType.SERVICE) {
+          const svcId = `out-${trafficItem.node.namespace}-${trafficItem.node.name}`;
+          if (!serviceTraffic[svcId]) {
+            serviceTraffic[svcId] = trafficItem;
+          }
         }
-      } else if (myNode.id === edge.data.target && sourceNode.nodeType === 'service') {
-        const svcId = `in-${sourceNode.namespace}-${sourceNode.service}`;
-        if (!serviceTraffic[svcId]) {
-          serviceTraffic[svcId] = {
-            traffic: edge.data.traffic!,
-            node: {
-              id: `in-${sourceNode.id}`,
-              type: sourceNode.nodeType,
-              namespace: sourceNode.namespace,
-              name: sourceNode.service!,
-              isServiceEntry: sourceNode.isServiceEntry,
-              isInaccessible: sourceNode.isInaccessible || false
-            }
-          };
-          inboundTraffic.push(serviceTraffic[svcId]);
+      } else if (myNode.id === edge.data.target) {
+        const trafficItem: TrafficItem = {
+          traffic: edge.data.traffic!,
+          node: this.buildTrafficNode('in', sourceNode)
+        };
+        inboundTraffic.push(trafficItem);
+
+        if (trafficItem.node.type === NodeType.SERVICE) {
+          const svcId = `in-${trafficItem.node.namespace}-${trafficItem.node.name}`;
+          if (!serviceTraffic[svcId]) {
+            serviceTraffic[svcId] = trafficItem;
+          }
         }
       }
     });
@@ -214,8 +244,10 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
         const isMyWorkload =
           this.props.itemType === MetricsObjectTypes.WORKLOAD && this.props.workloadName === element.data.workload;
         const isMyApp = this.props.itemType === MetricsObjectTypes.APP && this.props.appName === element.data.app;
+        const isMyService =
+          this.props.itemType === MetricsObjectTypes.SERVICE && this.props.serviceName === element.data.service;
 
-        if (isMyWorkload || isMyApp) {
+        if (isMyWorkload || isMyApp || isMyService) {
           myNode = element.data;
         }
       }
@@ -227,16 +259,18 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
       return;
     }
 
-    // It's assumed that traffic is sent/received through services.
-    // So, process traffic to/from services first.
+    // Process direct traffic to/from the item of interest.
+    // This finds services and direct traffic (like workload-to-workload traffic)
     const {
       serviceTraffic,
-      inboundTraffic: servicesInbound,
-      outboundTraffic: servicesOutbound
-    } = this.processServicesTraffic(traffic.elements.edges!, nodes, myNode);
+      inboundTraffic: firstLevelInbound,
+      outboundTraffic: firstLevelOutbound
+    } = this.processFirstLevelTraffic(traffic.elements.edges!, nodes, myNode);
 
-    // Then, process traffic going/originating to/from workloads|apps
-    const { inboundTraffic: workloadsInbound, outboundTraffic: workloadsOutbound } = this.processTrafficSiblings(
+    // Then, process second level traffic.
+    // Second level are nodes whose traffic go through services and reaches
+    // the entity of interest.
+    const { inboundTraffic: secondLevelInbound, outboundTraffic: secondLevelOutbound } = this.processSecondLevelTraffic(
       traffic.elements.edges,
       serviceTraffic,
       nodes,
@@ -244,8 +278,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     );
 
     // Merge and set resolved traffic
-    const inboundTraffic = servicesInbound.concat(workloadsInbound);
-    const outboundTraffic = servicesOutbound.concat(workloadsOutbound);
+    const inboundTraffic = firstLevelInbound.concat(secondLevelInbound);
+    const outboundTraffic = firstLevelOutbound.concat(secondLevelOutbound);
     this.setState({ inboundTraffic, outboundTraffic });
   };
 }

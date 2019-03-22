@@ -10,7 +10,6 @@ ShallowWrapper {
         "appLabel": false,
         "availableReplicas": 1,
         "createdAt": "42",
-        "destinationServices": Array [],
         "istioSidecar": false,
         "labels": Object {},
         "name": "myworkload",

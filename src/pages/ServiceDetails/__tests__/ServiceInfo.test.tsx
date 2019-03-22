@@ -23,7 +23,6 @@ describe('#ServiceInfo render correctly with data', () => {
         },
         endpoints: data.endpoints,
         istioSidecar: hasIstioSidecar(data.deployments),
-        dependencies: data.dependencies,
         virtualServices: data.virtualServices,
         destinationRules: data.destinationRules,
         health: data.health,

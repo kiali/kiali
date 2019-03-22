@@ -9,12 +9,17 @@ import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
+import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { default as DestinationRuleValidator } from './ServiceInfo/types/DestinationRuleValidator';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
+import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
+import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
+import TrafficDetails from '../../components/Metrics/TrafficDetails';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
+  trafficData: GraphDefinition | null;
   validations: Validations;
 };
 
@@ -28,37 +33,40 @@ interface ParsedSearch {
   name?: string;
 }
 
+const emptyService = {
+  istioSidecar: false,
+  service: {
+    type: '',
+    name: '',
+    createdAt: '',
+    resourceVersion: '',
+    ip: ''
+  },
+  virtualServices: {
+    items: [],
+    permissions: {
+      create: false,
+      update: false,
+      delete: false
+    }
+  },
+  destinationRules: {
+    items: [],
+    permissions: {
+      create: false,
+      update: false,
+      delete: false
+    }
+  },
+  validations: {}
+};
+
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
-      serviceDetailsInfo: {
-        istioSidecar: false,
-        service: {
-          type: '',
-          name: '',
-          createdAt: '',
-          resourceVersion: '',
-          ip: ''
-        },
-        virtualServices: {
-          items: [],
-          permissions: {
-            create: false,
-            update: false,
-            delete: false
-          }
-        },
-        destinationRules: {
-          items: [],
-          permissions: {
-            create: false,
-            update: false,
-            delete: false
-          }
-        },
-        validations: {}
-      },
+      serviceDetailsInfo: emptyService,
+      trafficData: null,
       validations: {}
     };
   }
@@ -105,7 +113,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   componentDidMount() {
-    this.fetchBackend();
+    this.doRefresh();
   }
 
   componentDidUpdate(prevProps: RouteComponentProps<ServiceId>, prevState: ServiceDetailsState) {
@@ -113,9 +121,29 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service
     ) {
-      this.fetchBackend();
+      this.setState(
+        {
+          serviceDetailsInfo: emptyService,
+          trafficData: null,
+          validations: {}
+        },
+        () => this.doRefresh()
+      );
     }
   }
+
+  doRefresh = () => {
+    const currentTab = this.activeTab('tab', 'info');
+
+    if (this.state.serviceDetailsInfo === emptyService || currentTab === 'info') {
+      this.setState({ trafficData: null });
+      this.fetchBackend();
+    }
+
+    if (currentTab === 'traffic') {
+      this.fetchTrafficData();
+    }
+  };
 
   fetchBackend = () => {
     const promiseDetails = API.getServiceDetail(
@@ -133,6 +161,31 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details', error));
       });
+  };
+
+  fetchTrafficData = () => {
+    const node: NodeParamsType = {
+      service: this.props.match.params.service,
+      namespace: { name: this.props.match.params.namespace },
+      nodeType: NodeType.SERVICE,
+
+      // unneeded
+      workload: '',
+      app: '',
+      version: ''
+    };
+    const restParams = {
+      duration: `${MetricsDuration.initialDuration()}s`,
+      graphType: GraphType.WORKLOAD,
+      injectServiceNodes: true,
+      appenders: 'deadNode'
+    };
+
+    fetchTrafficDetails(node, restParams).then(trafficData => {
+      if (trafficData !== undefined) {
+        this.setState({ trafficData: trafficData });
+      }
+    });
   };
 
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
@@ -164,11 +217,18 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return (
       <>
         <BreadcrumbView location={this.props.location} />
-        <TabContainer id="basic-tabs" activeKey={this.activeTab('tab', 'info')} onSelect={this.tabSelectHandler('tab')}>
+        <TabContainer
+          id="basic-tabs"
+          activeKey={this.activeTab('tab', 'info')}
+          onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
+        >
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
               <NavItem eventKey="info">
                 <div>Info</div>
+              </NavItem>
+              <NavItem eventKey="traffic">
+                <div>Traffic</div>
               </NavItem>
               <NavItem eventKey="metrics">
                 <div>Inbound Metrics</div>
@@ -206,9 +266,20 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   service={this.props.match.params.service}
                   serviceDetails={this.state.serviceDetailsInfo}
                   validations={this.state.validations}
-                  onRefresh={this.fetchBackend}
+                  onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
+                />
+              </TabPane>
+              <TabPane eventKey="traffic">
+                <TrafficDetails
+                  duration={MetricsDuration.initialDuration()}
+                  trafficData={this.state.trafficData}
+                  itemType={MetricsObjectTypes.SERVICE}
+                  namespace={this.props.match.params.namespace}
+                  serviceName={this.props.match.params.service}
+                  onDurationChanged={this.handleTrafficDurationChange}
+                  onRefresh={this.doRefresh}
                 />
               </TabPane>
               <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
@@ -239,7 +310,17 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
   };
 
-  private tabSelectHandler = (tabName: string) => {
+  private handleTrafficDurationChange = () => {
+    this.fetchTrafficData();
+  };
+
+  private tabChangeHandler = (tabName: string) => {
+    if (tabName === 'traffic' && this.state.trafficData === null) {
+      this.fetchTrafficData();
+    }
+  };
+
+  private tabSelectHandler = (tabName: string, postHandler?: (tabName: string) => void) => {
     return (tabKey?: string) => {
       if (!tabKey) {
         return;
@@ -253,6 +334,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       urlParams.set(tabName, tabKey);
 
       this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
+
+      if (postHandler) {
+        postHandler(tabKey);
+      }
     };
   };
 }
