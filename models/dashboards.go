@@ -59,11 +59,19 @@ func ConvertAggregations(from kubernetes.MonitoringDashboardSpec) []Aggregation 
 }
 
 func buildIstioAggregations(local, remote string) []Aggregation {
-	return []Aggregation{
+	aggs := []Aggregation{
 		{
 			Label:       fmt.Sprintf("%s_version", local),
 			DisplayName: "Local version",
 		},
+	}
+	if remote == "destination" {
+		aggs = append(aggs, Aggregation{
+			Label:       "destination_service_name",
+			DisplayName: "Remote service",
+		})
+	}
+	aggs = append(aggs, []Aggregation{
 		{
 			Label:       fmt.Sprintf("%s_app", remote),
 			DisplayName: "Remote app",
@@ -76,7 +84,8 @@ func buildIstioAggregations(local, remote string) []Aggregation {
 			Label:       "response_code",
 			DisplayName: "Response code",
 		},
-	}
+	}...)
+	return aggs
 }
 
 // PrepareIstioDashboard prepares the Istio dashboard title and aggregations dynamically for input values
