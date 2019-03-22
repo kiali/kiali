@@ -978,8 +978,12 @@ func PolicyHasMTLSEnabled(policy IstioObject) (bool, string) {
 		peerMap := peer.(map[string]interface{})
 		if mtls, present := peerMap["mtls"]; present {
 			if mtlsMap, ok := mtls.(map[string]interface{}); ok {
-				if mode, found := mtlsMap["mode"]; found {
-					return true, mode.(string)
+				if modeItf, found := mtlsMap["mode"]; found {
+					if mode, ok := modeItf.(string); ok {
+						return true, mode
+					} else {
+						return false, ""
+					}
 				}
 			}
 
