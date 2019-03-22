@@ -2970,21 +2970,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "DestinationService": {
-      "description": "DestinationService holds service identifiers used for workload dependencies",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "namespace": {
-          "type": "string",
-          "x-go-name": "Namespace"
-        }
-      },
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
     "EdgeData": {
       "type": "object",
       "properties": {
@@ -4206,16 +4191,6 @@
     "ServiceDetails": {
       "type": "object",
       "properties": {
-        "dependencies": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/SourceWorkload"
-            }
-          },
-          "x-go-name": "Dependencies"
-        },
         "destinationRules": {
           "$ref": "#/definitions/destinationRules"
         },
@@ -4438,21 +4413,6 @@
     },
     "SeverityLevel": {
       "type": "string",
-      "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "SourceWorkload": {
-      "description": "SourceWorkload holds workload identifiers used for service dependencies",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "namespace": {
-          "type": "string",
-          "x-go-name": "Namespace"
-        }
-      },
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Status": {
@@ -4687,13 +4647,6 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
-        },
-        "destinationServices": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DestinationService"
-          },
-          "x-go-name": "DestinationServices"
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",

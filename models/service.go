@@ -27,16 +27,16 @@ type ServiceList struct {
 }
 
 type ServiceDetails struct {
-	Service          Service                     `json:"service"`
-	IstioSidecar     bool                        `json:"istioSidecar"`
-	Endpoints        Endpoints                   `json:"endpoints"`
-	VirtualServices  VirtualServices             `json:"virtualServices"`
-	DestinationRules DestinationRules            `json:"destinationRules"`
-	Workloads        WorkloadOverviews           `json:"workloads"`
-	Health           ServiceHealth               `json:"health"`
-	Validations      IstioValidations            `json:"validations"`
-	ErrorTraces      int                         `json:"errorTraces"`
-	NamespaceMTLS    MTLSStatus                  `json:"namespaceMTLS"`
+	Service          Service           `json:"service"`
+	IstioSidecar     bool              `json:"istioSidecar"`
+	Endpoints        Endpoints         `json:"endpoints"`
+	VirtualServices  VirtualServices   `json:"virtualServices"`
+	DestinationRules DestinationRules  `json:"destinationRules"`
+	Workloads        WorkloadOverviews `json:"workloads"`
+	Health           ServiceHealth     `json:"health"`
+	Validations      IstioValidations  `json:"validations"`
+	ErrorTraces      int               `json:"errorTraces"`
+	NamespaceMTLS    MTLSStatus        `json:"namespaceMTLS"`
 }
 
 type Services []*Service
