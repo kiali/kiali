@@ -22,14 +22,14 @@ var clientFactory kubernetes.ClientFactory
 
 func getService(token string, namespace string, service string) (*v1.ServiceSpec, error) {
 	if clientFactory == nil {
-		userClientFactory, err := kubernetes.NewClientFactory()
+		userClientFactory, err := kubernetes.GetClientFactory()
 		if err != nil {
 			return nil, err
 		}
 		clientFactory = userClientFactory
 	}
 
-	client, err := clientFactory.NewClient(token)
+	client, err := clientFactory.GetClient(token)
 	if err != nil {
 		return nil, err
 	}
