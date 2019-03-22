@@ -210,8 +210,8 @@ export interface SimpleRetryPolicy {
 }
 
 export interface HTTPFaultInjection {
-  delay: Delay;
-  abort: Abort;
+  delay?: Delay;
+  abort?: Abort;
 }
 
 export interface Delay {
@@ -221,12 +221,14 @@ export interface Delay {
   overrideHeaderName: string;
 }
 
+export interface Percent {
+  value: number;
+}
+
 export interface Abort {
-  percent: number;
-  grpcStatus: string;
-  http2Error: string;
-  httpStatus: string;
-  overrideHeaderName: string;
+  percent?: number;
+  httpStatus?: number;
+  percentage?: Percent;
 }
 
 export interface L4FaultInjection {
@@ -402,6 +404,7 @@ export interface HTTPRoute {
   websocketUpgrade?: boolean;
   timeout?: string;
   retries?: HTTPRetry;
+  fault?: HTTPFaultInjection;
   mirror?: Destination;
   corsPolicy?: CorsPolicy;
   appendHeaders?: { [key: string]: string };

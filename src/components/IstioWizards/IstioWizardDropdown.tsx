@@ -1,6 +1,11 @@
 import * as React from 'react';
 import { DropdownButton, MenuItem, MessageDialog, OverlayTrigger, Tooltip } from 'patternfly-react';
-import IstioWizard, { WIZARD_MATCHING_ROUTING, WIZARD_TITLES, WIZARD_WEIGHTED_ROUTING } from './IstioWizard';
+import IstioWizard, {
+  WIZARD_MATCHING_ROUTING,
+  WIZARD_TITLES,
+  WIZARD_WEIGHTED_ROUTING,
+  WIZARD_SUSPEND_TRAFFIC
+} from './IstioWizard';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -50,7 +55,8 @@ class IstioWizardDropdown extends React.Component<Props, State> {
   onAction = (key: string) => {
     switch (key) {
       case WIZARD_WEIGHTED_ROUTING:
-      case WIZARD_MATCHING_ROUTING: {
+      case WIZARD_MATCHING_ROUTING:
+      case WIZARD_SUSPEND_TRAFFIC: {
         this.setState({ showWizard: true, wizardType: key });
         break;
       }
@@ -110,6 +116,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
     switch (eventKey) {
       case WIZARD_WEIGHTED_ROUTING:
       case WIZARD_MATCHING_ROUTING:
+      case WIZARD_SUSPEND_TRAFFIC:
         const menuItem = (
           <MenuItem disabled={this.hasTrafficRouting()} key={eventKey} eventKey={eventKey}>
             {WIZARD_TITLES[eventKey]}
@@ -172,6 +179,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         <DropdownButton id="service_actions" title="Actions" onSelect={this.onAction} pullRight={true}>
           {this.canCreate() && this.renderMenuItem(WIZARD_WEIGHTED_ROUTING)}
           {this.canCreate() && this.renderMenuItem(WIZARD_MATCHING_ROUTING)}
+          {this.canCreate() && this.renderMenuItem(WIZARD_SUSPEND_TRAFFIC)}
           <MenuItem divider={true} />
           {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING)}
         </DropdownButton>

@@ -16,6 +16,7 @@ import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
 import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
 import { TLSStatus } from '../../types/TLSStatus';
+import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 
 type Props = {
   show: boolean;
@@ -31,6 +32,7 @@ type State = {
   showWizard: boolean;
   workloads: WorkloadWeight[];
   rules: Rule[];
+  suspendedRoutes: SuspendedRoute[];
   valid: boolean;
   mtlsMode: string;
   tlsModified: boolean;
@@ -40,11 +42,15 @@ type State = {
 
 export const WIZARD_WEIGHTED_ROUTING = 'create_weighted_routing';
 export const WIZARD_MATCHING_ROUTING = 'create_matching_routing';
+export const WIZARD_SUSPEND_TRAFFIC = 'suspend_traffic';
 
 export const WIZARD_TITLES = {
   [WIZARD_WEIGHTED_ROUTING]: 'Create Weighted Routing',
-  [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing'
+  [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing',
+  [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic'
 };
+
+const SERVICE_UNAVAILABLE = 503;
 
 class IstioWizard extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -53,6 +59,7 @@ class IstioWizard extends React.Component<Props, State> {
       showWizard: false,
       workloads: [],
       rules: [],
+      suspendedRoutes: [],
       valid: true,
       mtlsMode: DISABLE,
       tlsModified: false,
@@ -71,8 +78,11 @@ class IstioWizard extends React.Component<Props, State> {
           break;
         // By default no rules is a no valid scenario
         case WIZARD_MATCHING_ROUTING:
-        default:
           isValid = false;
+          break;
+        case WIZARD_SUSPEND_TRAFFIC:
+        default:
+          isValid = true;
           break;
       }
       this.setState({
@@ -216,6 +226,63 @@ class IstioWizard extends React.Component<Props, State> {
         };
         break;
       }
+      case WIZARD_SUSPEND_TRAFFIC: {
+        // VirtualService from the suspendedRoutes
+        const httpRoute: HTTPRoute = {
+          route: []
+        };
+        // Let's use the # os suspended notes to create weights
+        const totalRoutes = this.state.suspendedRoutes.length;
+        const closeRoutes = this.state.suspendedRoutes.filter(s => s.suspended).length;
+        const openRoutes = totalRoutes - closeRoutes;
+        let firstValue = true;
+        // If we have some suspended routes, we need to use weights
+        if (closeRoutes < totalRoutes) {
+          for (let i = 0; i < this.state.suspendedRoutes.length; i++) {
+            const suspendedRoute = this.state.suspendedRoutes[i];
+            const destW: DestinationWeight = {
+              destination: {
+                host: this.props.serviceName,
+                subset: wkdNameVersion[suspendedRoute.workload]
+              }
+            };
+            if (suspendedRoute.suspended) {
+              // A suspended route has a 0 weight
+              destW.weight = 0;
+            } else {
+              destW.weight = Math.floor(100 / openRoutes);
+              // We need to adjust the rest
+              if (firstValue) {
+                destW.weight += 100 % openRoutes;
+                firstValue = false;
+              }
+            }
+            httpRoute.route!.push(destW);
+          }
+        } else {
+          // All routes are suspended, so we use an fault/abort rule
+          httpRoute.route = [
+            {
+              destination: {
+                host: this.props.serviceName
+              }
+            }
+          ];
+          httpRoute.fault = {
+            abort: {
+              httpStatus: SERVICE_UNAVAILABLE,
+              percentage: {
+                value: 100
+              }
+            }
+          };
+        }
+        wizardVS.spec = {
+          hosts: [this.props.serviceName],
+          http: [httpRoute]
+        };
+        break;
+      }
       default:
         console.log('Unrecognized type');
     }
@@ -289,6 +356,13 @@ class IstioWizard extends React.Component<Props, State> {
     });
   };
 
+  onSuspendedChange = (valid: boolean, suspendedRoutes: SuspendedRoute[]) => {
+    this.setState({
+      valid: valid,
+      suspendedRoutes: suspendedRoutes
+    });
+  };
+
   render() {
     return (
       <Wizard show={this.state.showWizard} onHide={this.onClose}>
@@ -309,6 +383,13 @@ class IstioWizard extends React.Component<Props, State> {
                     serviceName={this.props.serviceName}
                     workloads={this.props.workloads}
                     onChange={this.onRulesChange}
+                  />
+                )}
+                {this.props.type === WIZARD_SUSPEND_TRAFFIC && (
+                  <SuspendTraffic
+                    serviceName={this.props.serviceName}
+                    workloads={this.props.workloads}
+                    onChange={this.onSuspendedChange}
                   />
                 )}
                 <TrafficPolicyConnected
