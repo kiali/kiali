@@ -101,6 +101,9 @@ const ruleItemStyle = style({
     ['.list-group-item-heading']: {
       flexBasis: 'calc(50% - 20px)',
       width: 'calc(50% - 20px)'
+    },
+    ['.list-view-pf-actions']: {
+      zIndex: 10
     }
   }
 });
