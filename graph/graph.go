@@ -145,7 +145,7 @@ func Id(serviceNamespace, service, workloadNamespace, workload, app, version, gr
 	// Every other field is unknown. Allow one unknown service per namespace to help reflect these
 	// bad destinations in the graph,  it may help diagnose a problem.
 	if Unknown == workload && Unknown == app && Unknown == service {
-		return fmt.Sprintf("svc_%s_unknown", namespace), NodeTypeService
+		return fmt.Sprintf("svc_%s_unknown", namespace), NodeTypeUnknown
 	}
 
 	workloadOk := IsOK(workload)
