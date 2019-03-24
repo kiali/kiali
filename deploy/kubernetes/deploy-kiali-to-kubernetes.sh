@@ -52,6 +52,11 @@
 #    in order for the integration to work properly.
 #    Default: "http://grafana-istio-system.127.0.0.1.nip.io"
 #
+# PROMETHEUS_SERVICE_URL
+#    The Prometheus URL that Kiali use to access and query the Prometheus Server.
+#    This URL must be accessible from Kiali Pod.
+#    Default: "http://prometheus.istio-system:9090"
+#
 # IMAGE_NAME
 #    Determines which image to download and install.
 #    Default: "kiali/kiali"
@@ -143,6 +148,7 @@ export NAMESPACE="${NAMESPACE:-istio-system}"
 export ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-$NAMESPACE}"
 export JAEGER_URL="${JAEGER_URL:-http://jaeger-query-istio-system.127.0.0.1.nip.io}"
 export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}"
+export PROMETHEUS_SERVICE_URL="${PROMETHEUS_SERVICE_URL:-http://prometheus.istio-system:9090}"
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
 export KIALI_USERNAME_BASE64
 export KIALI_PASSPHRASE_BASE64
@@ -199,6 +205,7 @@ echo NAMESPACE=$NAMESPACE
 echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
 echo GRAFANA_URL=$GRAFANA_URL
+echo PROMETHEUS_SERVICE_URL=$PROMETHEUS_SERVICE_URL
 echo VERBOSE_MODE=$VERBOSE_MODE
 echo "=== SETTINGS ==="
 

@@ -16,6 +16,7 @@ data:
         url: ${JAEGER_URL}
       grafana:
         url: ${GRAFANA_URL}
+      prometheus_service_url: ${PROMETHEUS_SERVICE_URL}
     identity:
       cert_file: /kiali-cert/cert-chain.pem
       private_key_file: /kiali-cert/key.pem
