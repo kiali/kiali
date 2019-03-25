@@ -9,7 +9,7 @@ data:
   config.yaml: |
     istio_namespace: ${ISTIO_NAMESPACE}
     server:
-      port: 20001
+      port: ${SERVER_PORT}
       web_root: /
     external_services:
       jaeger:

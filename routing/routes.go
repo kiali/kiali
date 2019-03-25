@@ -35,6 +35,23 @@ func NewRoutes() (r *Routes) {
 		//
 		//     Schemes: http, https
 		// responses:
+		//      200: statusInfo
+		{
+			"Healthz",
+			"GET",
+			"/healthz",
+			handlers.Healthz,
+			false,
+		},
+		// swagger:route GET / Root
+		// ---
+		// Endpoint to get the status of Kiali
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		// responses:
 		//      500: internalError
 		//      200: statusInfo
 		{

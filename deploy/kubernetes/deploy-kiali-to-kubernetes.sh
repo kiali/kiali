@@ -40,6 +40,10 @@
 #    If this is set, KIALI_PASSPHRASE is ignored.
 #    Default: this is not set by default
 #
+# SERVER_PORT
+#    The port that the server will bind to in order to receive API and console requests.
+#    Default: 20001
+#
 # JAEGER_URL
 #    The Jaeger URL that Kiali will use when integrating with Jaeger.
 #    This URL must be accessible to clients external to the cluster
@@ -141,6 +145,7 @@ export VERSION_LABEL="${VERSION_LABEL:-$IMAGE_VERSION}"
 export IMAGE_PULL_POLICY_TOKEN="${IMAGE_PULL_POLICY_TOKEN:-imagePullPolicy: Always}"
 export NAMESPACE="${NAMESPACE:-istio-system}"
 export ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-$NAMESPACE}"
+export SERVER_PORT="${SERVER_PORT:-20001}"
 export JAEGER_URL="${JAEGER_URL:-http://jaeger-query-istio-system.127.0.0.1.nip.io}"
 export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}"
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
@@ -197,6 +202,7 @@ echo VERSION_LABEL=$VERSION_LABEL
 echo IMAGE_PULL_POLICY_TOKEN=$IMAGE_PULL_POLICY_TOKEN
 echo NAMESPACE=$NAMESPACE
 echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
+echo SERVER_PORT=$SERVER_PORT
 echo JAEGER_URL=$JAEGER_URL
 echo GRAFANA_URL=$GRAFANA_URL
 echo VERBOSE_MODE=$VERBOSE_MODE
