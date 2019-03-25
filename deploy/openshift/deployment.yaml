@@ -38,6 +38,23 @@ spec:
         - "/kiali-configuration/config.yaml"
         - "-v"
         - "${VERBOSE_MODE}"
+        ports:
+          - name: api-port
+            containerPort: ${SERVER_PORT}
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: api-port
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: api-port
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 30
         env:
         - name: ACTIVE_NAMESPACE
           valueFrom:
