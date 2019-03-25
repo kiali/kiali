@@ -70,6 +70,24 @@ export namespace FiltersAndSorts {
         // default comparison fallback
         return a.name.localeCompare(b.name);
       }
+    },
+    {
+      id: 'mtls',
+      title: 'mTLS',
+      isNumeric: false,
+      param: 'm',
+      compare: (a: NamespaceInfo, b: NamespaceInfo) => {
+        if (a.tlsStatus && b.tlsStatus) {
+          return a.tlsStatus.status.localeCompare(b.tlsStatus.status);
+        } else if (a.tlsStatus) {
+          return -1;
+        } else if (b.tlsStatus) {
+          return 1;
+        }
+
+        // default comparison fallback
+        return a.name.localeCompare(b.name);
+      }
     }
   ];
 

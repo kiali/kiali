@@ -214,7 +214,7 @@ class OverviewPage extends React.Component<{}, State> {
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
-            if (sortField.id === 'tls') {
+            if (sortField.id === 'mtls') {
               newNamespaces = FiltersAndSorts.sortFunc(newNamespaces, sortField, isAscending);
             }
             return { namespaces: newNamespaces };
