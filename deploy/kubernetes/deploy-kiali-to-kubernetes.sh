@@ -16,6 +16,11 @@
 # To customize the behavior of this script, you can set one or more of the
 # following environment variables:
 #
+# AUTH_STRATEGY
+#    Determines what authentication strategy to use. Choose "login" to use a username and password.
+#    Choose "anonymous" to allow full access to Kiali without requiring any credentials.
+#    Default: "login"
+#
 # KIALI_USERNAME
 #    This is the username that will be required when logging into Kiali.
 #    If this is not set, or if it is set to an empty string, you will be prompted
@@ -120,23 +125,39 @@ get_downloader() {
   fi
 }
 
-# The credentials can be specified either as already base64 encoded, or in plain text.
-# If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
-if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
-  KIALI_USERNAME="${KIALI_USERNAME=}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_USERNAME" == "" ]; then
-    KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
-  fi
-  KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
+# Check the login strategy. If using "anonymous" there is no other checks to perform,
+# but if we are using "login" then we need to make sure there is a username and password set
+if [ "${AUTH_STRATEGY}" == "" ]; then
+  AUTH_STRATEGY=$(read -p 'Choose a login strategy of either "login" or "anonymous". Use "anonymous" at your own risk. [login]: ' val && echo -n $val)
+  AUTH_STRATEGY=${AUTH_STRATEGY:-login}
 fi
 
-if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
-  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_PASSPHRASE" == "" ]; then
-    KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
-    echo
+# Verify the AUTH_STRATEGY is a proper known value
+if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; then
+  echo "ERROR: unknown AUTH_STRATEGY must be either 'login' or 'anonymous'"
+  exit 1
+fi
+
+
+if [ "${AUTH_STRATEGY}" == "login" ]; then
+  # The credentials can be specified either as already base64 encoded, or in plain text.
+  # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
+  if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
+    KIALI_USERNAME="${KIALI_USERNAME=}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_USERNAME" == "" ]; then
+      KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
+    fi
+    KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
   fi
-  KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+
+  if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
+    KIALI_PASSPHRASE="${KIALI_PASSPHRASE=}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_PASSPHRASE" == "" ]; then
+      KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
+      echo
+    fi
+    KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+  fi
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"
@@ -151,6 +172,7 @@ export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
 export KIALI_USERNAME_BASE64
 export KIALI_PASSPHRASE_BASE64
+export AUTH_STRATEGY="${AUTH_STRATEGY:-login}"
 
 # Make sure we have access to all required tools
 
@@ -206,6 +228,7 @@ echo SERVER_PORT=$SERVER_PORT
 echo JAEGER_URL=$JAEGER_URL
 echo GRAFANA_URL=$GRAFANA_URL
 echo VERBOSE_MODE=$VERBOSE_MODE
+echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo "=== SETTINGS ==="
 
 # It is assumed the yaml files are in the same location as this script.
@@ -243,8 +266,19 @@ apply_dashboard() {
 
 # Now deploy all the Kiali components to Kubernetes
 # If we are missing one or more of the yaml files, download them
+# We need to delete the deployment and recreate it so that we know we are getting the updated changed
+echo "Deleting any existing Kiali deployments"
+kubectl delete deployment --selector=app=kiali
 echo "Deploying Kiali to Kubernetes namespace ${NAMESPACE}"
-for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
+# Only deploy the secret if we are using the login AUTH_STRATEGY
+if [ "${AUTH_STRATEGY}" == "login" ]; then
+  apply_resource secret
+  if [ "$?" != "0" ]; then
+    echo "ERROR: Failed to deploy the Kiali secret. Aborting."
+    exit 1
+  fi
+fi
+for yaml in configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
 do
   apply_resource ${yaml}
 
