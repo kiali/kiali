@@ -1,60 +1,22 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+
+import * as ActualAPI from '../../../services/Api';
 import ServiceInfo from '../ServiceInfo';
-import { hasIstioSidecar, ServiceDetailsInfo } from '../../../types/ServiceInfo';
 
 jest.mock('../../../services/Api');
 
-const API = require('../../../services/Api');
+const API = require('../../../services/Api') as typeof ActualAPI;
 
 describe('#ServiceInfo render correctly with data', () => {
   it('should render serviceInfo with data', () => {
-    return API.getServiceDetail('istio-system', 'reviews').then(response => {
-      const data = response.data;
-      const serviceDetailsInfo: ServiceDetailsInfo = {
-        service: {
-          labels: data.labels,
-          name: data.name,
-          createdAt: data.createdAt,
-          resourceVersion: data.resourceVersion,
-          type: data.type,
-          ports: data.ports,
-          ip: data.ip
-        },
-        endpoints: data.endpoints,
-        istioSidecar: hasIstioSidecar(data.deployments),
-        virtualServices: data.virtualServices,
-        destinationRules: data.destinationRules,
-        health: data.health,
-        validations: {
-          destinationrule: {
-            reviews: {
-              name: 'details',
-              objectType: 'destinationrule',
-              valid: false,
-              checks: [
-                {
-                  message: 'This subset is not found from the host',
-                  severity: 'error',
-                  path: 'spec/subsets[0]/version'
-                },
-                {
-                  message: 'This subset is not found from the host',
-                  severity: 'error',
-                  path: 'spec/subsets[1]/version'
-                }
-              ]
-            }
-          }
-        }
-      };
-
+    return API.getServiceDetail('istio-system', 'reviews', true).then(data => {
       const wrapper = shallow(
         <ServiceInfo
           namespace="istio-system"
           service="reviews"
-          serviceDetails={serviceDetailsInfo}
-          validations={serviceDetailsInfo.validations}
+          serviceDetails={data}
+          validations={data.validations}
           onRefresh={jest.fn()}
           onSelectTab={jest.fn()}
           activeTab={jest.fn()}

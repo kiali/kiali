@@ -1,7 +1,0 @@
-{
-  "url": "http://172.30.139.113:3000",
-  "variablesSuffix": "svc.cluster.local",
-  "dashboard": "istio-dashboard",
-  "varServiceSource": "var-source",
-  "varServiceDest": "var-http_destination"
-}
