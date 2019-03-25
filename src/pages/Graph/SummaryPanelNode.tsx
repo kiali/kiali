@@ -126,6 +126,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return;
     }
 
+    // If destination node is inaccessible, we cannot query the data.
+    if (data.isInaccessible) {
+      this.setState({ loading: false });
+      return;
+    }
+
     let promiseOut: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
     let promiseIn: Promise<Response<Metrics>> = Promise.resolve({ data: { metrics: {}, histograms: {} } });
 
@@ -373,11 +379,22 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   };
 
   private renderCharts = node => {
-    if (NodeType.UNKNOWN === node.data(CyNode.nodeType)) {
+    const data = nodeData(node);
+
+    if (NodeType.UNKNOWN === data.nodeType) {
       return (
         <>
           <div>
             <Icon type="pf" name="info" /> Sparkline charts not supported for unknown node. Use edge for details.
+            <hr />
+          </div>
+        </>
+      );
+    } else if (data.isInaccessible) {
+      return (
+        <>
+          <div>
+            <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the selected node is inaccessible.
             <hr />
           </div>
         </>
