@@ -138,7 +138,6 @@ if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; t
   exit 1
 fi
 
-
 if [ "${AUTH_STRATEGY}" == "login" ]; then
   # The credentials can be specified either as already base64 encoded, or in plain text.
   # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
@@ -172,7 +171,7 @@ export GRAFANA_URL="${GRAFANA_URL:-http://grafana-istio-system.127.0.0.1.nip.io}
 export VERBOSE_MODE="${VERBOSE_MODE:-3}"
 export KIALI_USERNAME_BASE64
 export KIALI_PASSPHRASE_BASE64
-export AUTH_STRATEGY="${AUTH_STRATEGY:-login}"
+export AUTH_STRATEGY
 
 # Make sure we have access to all required tools
 
@@ -264,12 +263,15 @@ apply_dashboard() {
   apply_yaml ${yaml_path} ${yaml_url}
 }
 
-# Now deploy all the Kiali components to Kubernetes
-# If we are missing one or more of the yaml files, download them
-# We need to delete the deployment and recreate it so that we know we are getting the updated changed
+# Now deploy all the Kiali components to Kubernetes.
+# If we are missing one or more of the yaml files, download them.
+echo "Deploying Kiali to Kubernetes namespace ${NAMESPACE}"
+
+# We can update the configmap/secret without updating the deployment yaml, which means our Kiali pod might not get restarted.
+# We need to delete the deployment and recreate it so that we know we are getting the updated changes.
 echo "Deleting any existing Kiali deployments"
 kubectl delete deployment --selector=app=kiali
-echo "Deploying Kiali to Kubernetes namespace ${NAMESPACE}"
+
 # Only deploy the secret if we are using the login AUTH_STRATEGY
 if [ "${AUTH_STRATEGY}" == "login" ]; then
   apply_resource secret
@@ -277,7 +279,10 @@ if [ "${AUTH_STRATEGY}" == "login" ]; then
     echo "ERROR: Failed to deploy the Kiali secret. Aborting."
     exit 1
   fi
+else
+  echo "Using strategy [${AUTH_STRATEGY}] - a secret is not needed so one will not be created."
 fi
+
 for yaml in configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
 do
   apply_resource ${yaml}
