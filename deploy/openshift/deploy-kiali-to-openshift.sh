@@ -16,6 +16,13 @@
 # To customize the behavior of this script, you can set one or more of the
 # following environment variables:
 #
+# AUTH_STRATEGY
+#    Determines what authentication strategy to use. Choose "login" to use a username and password.
+#    Choose "openshift" to use the OpenShift OAuth login which controls access based on the individual's
+#    RBAC roles in OpenShift. Choose "anonymous" to allow full access to Kiali without requiring 
+#    any credentials.
+#    Default: "openshift"
+#
 # KIALI_USERNAME
 #    This is the username that will be required when logging into Kiali.
 #    If this is not set, or if it is set to an empty string, you will be prompted
@@ -120,23 +127,39 @@ get_downloader() {
   fi
 }
 
-# The credentials can be specified either as already base64 encoded, or in plain text.
-# If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
-if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
-  KIALI_USERNAME="${KIALI_USERNAME=}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_USERNAME" == "" ]; then
-    KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
-  fi
-  KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
+# Check the login strategy. If using "openshift" there is no other checks to perform,
+# but if we are using "login" then we need to make sure there is a username and password set
+if [ "${AUTH_STRATEGY}" == "" ]; then
+  AUTH_STRATEGY=$(read -p 'Choose a login strategy of either "login", "openshift" or "anonymous". Use "anonymous" at your own risk. [openshift]: ' val && echo -n $val)
+  AUTH_STRATEGY=${AUTH_STRATEGY:-openshift}
 fi
 
-if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
-  KIALI_PASSPHRASE="${KIALI_PASSPHRASE=}" # note: the "=" inside ${} is on purpose
-  if [ "$KIALI_PASSPHRASE" == "" ]; then
-    KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
-    echo
+# Verify the AUTH_STRATEGY is a proper known value
+if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; then
+  echo "ERROR: unknown AUTH_STRATEGY must be either 'login', 'openshift' or 'anonymous'"
+  exit 1
+fi
+
+
+if [ "${AUTH_STRATEGY}" == "login" ]; then
+  # The credentials can be specified either as already base64 encoded, or in plain text.
+  # If the username or passphrase plain text variable is set but empty, the user will be asked for a value.
+  if [ "${KIALI_USERNAME_BASE64}" == "" ]; then
+    KIALI_USERNAME="${KIALI_USERNAME=}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_USERNAME" == "" ]; then
+      KIALI_USERNAME=$(read -p 'What do you want to use for the Kiali Username: ' val && echo -n $val)
+    fi
+    KIALI_USERNAME_BASE64="$(echo -n ${KIALI_USERNAME} | base64)"
   fi
-  KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+
+  if [ "${KIALI_PASSPHRASE_BASE64}" == "" ]; then
+    KIALI_PASSPHRASE="${KIALI_PASSPHRASE=}" # note: the "=" inside ${} is on purpose
+    if [ "$KIALI_PASSPHRASE" == "" ]; then
+      KIALI_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
+      echo
+    fi
+    KIALI_PASSPHRASE_BASE64="$(echo -n ${KIALI_PASSPHRASE} | base64)"
+  fi
 fi
 
 export IMAGE_NAME="${IMAGE_NAME:-kiali/kiali}"
@@ -208,6 +231,7 @@ echo SERVER_PORT=$SERVER_PORT
 echo JAEGER_URL=$JAEGER_URL
 echo GRAFANA_URL=$GRAFANA_URL
 echo VERBOSE_MODE=$VERBOSE_MODE
+echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo "=== SETTINGS ==="
 
 # It is assumed the yaml files are in the same location as this script.
@@ -246,7 +270,19 @@ apply_dashboard() {
 # Now deploy all the Kiali components to OpenShift
 # If we are missing one or more of the yaml files, download them
 echo "Deploying Kiali to OpenShift project ${NAMESPACE}"
-for yaml in secret configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
+# We can update the configmap/secret without updating the deployment yaml, which means our Kiali pod might not get restarted
+# We need to delete the deployment and recreate it so that we know we are getting the updated changed
+echo "Deleting any existing Kiali deployments"
+${OC_TOOL_PATH} delete deployment --selector=app=kiali
+# Only deploy the secret if we are using the login AUTH_STRATEGY
+if [ "${AUTH_STRATEGY}" == "login" ]; then
+  apply_resource secret
+  if [ "$?" != "0" ]; then
+    echo "ERROR: Failed to deploy the Kiali secret. Aborting."
+    exit 1
+  fi
+fi
+for yaml in configmap serviceaccount clusterrole clusterrolebinding deployment service route ingress crds
 do
   apply_resource ${yaml}
 

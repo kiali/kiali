@@ -16,6 +16,8 @@ data:
         url: ${JAEGER_URL}
       grafana:
         url: ${GRAFANA_URL}
+    auth:
+      strategy: ${AUTH_STRATEGY}
     identity:
       cert_file: /kiali-cert/cert-chain.pem
       private_key_file: /kiali-cert/key.pem
