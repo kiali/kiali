@@ -173,16 +173,6 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, workload, ratesInter
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
-func (o *PromClientMock) GetSourceWorkloads(namespace string, namespaceCreationTime time.Time, servicename string) (map[string][]prometheus.Workload, error) {
-	args := o.Called(namespace, namespaceCreationTime, servicename)
-	return args.Get(0).(map[string][]prometheus.Workload), args.Error(1)
-}
-
-func (o *PromClientMock) GetDestinationServices(namespace string, namespaceCreationTime time.Time, workloadname string) ([]prometheus.Service, error) {
-	args := o.Called(namespace, namespaceCreationTime, workloadname)
-	return args.Get(0).([]prometheus.Service), args.Error(1)
-}
-
 func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.BaseMetricsQuery) *prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(*prometheus.Metric)
