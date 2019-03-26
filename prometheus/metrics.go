@@ -80,9 +80,12 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 		definition istioMetric
 	}
 	maxResults := len(istioMetrics)
+	if len(q.Filters) != 0 {
+		maxResults = len(q.Filters)
+	}
 	results := make([]*resultHolder, maxResults, maxResults)
 
-	for i, istioMetric := range istioMetrics {
+	for _, istioMetric := range istioMetrics {
 		// if filters is empty, fetch all anyway
 		doFetch := len(q.Filters) == 0
 		if !doFetch {
@@ -96,7 +99,7 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 		if doFetch {
 			wg.Add(1)
 			result := resultHolder{definition: istioMetric}
-			results[i] = &result
+			results = append(results, &result)
 			if istioMetric.isHisto {
 				go fetchHisto(istioMetric.istioName, &result.histo)
 			} else {
