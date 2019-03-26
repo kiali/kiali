@@ -19,7 +19,6 @@ import {
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
-import { FiltersAndSorts } from './FiltersAndSorts';
 import OverviewToolbarContainer, { OverviewToolbar, OverviewType, OverviewDisplayMode } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import OverviewCardContent from './OverviewCardContent';
@@ -33,6 +32,8 @@ import { connect } from 'react-redux';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
+import { Sorts } from './Sorts';
+import { Filters } from './Filters';
 
 const cardGridStyle = style({ width: '100%' });
 
@@ -48,7 +49,7 @@ type ReduxProps = {
 
 type OverviewProps = ReduxProps & {};
 
-class OverviewPage extends React.Component<OverviewProps, State> {
+export class OverviewPage extends React.Component<OverviewProps, State> {
   private promises = new PromisesRegistry();
   private displayModeSet = false;
 
@@ -70,7 +71,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   sortFields() {
-    return FiltersAndSorts.sortFields;
+    return Sorts.sortFields;
   }
 
   load = () => {
@@ -78,7 +79,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     this.promises
       .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
-        const nameFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.nameFilter.title);
+        const nameFilters = FilterSelected.getSelected().filter(f => f.category === Filters.nameFilter.title);
         const allNamespaces: NamespaceInfo[] = namespacesResponse['data']
           .filter(ns => {
             return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
@@ -93,7 +94,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
             };
           });
         const isAscending = ListPagesHelper.isCurrentSortAscending();
-        const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
+        const sortField = ListPagesHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
         const displayMode = this.displayModeSet
           ? this.state.displayMode
@@ -104,7 +105,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         this.setState(
           {
             type: type,
-            namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending),
+            namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending),
             displayMode: displayMode
           },
           () => {
@@ -129,7 +130,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
             if (sortField.id === 'health') {
-              newNamespaces = FiltersAndSorts.sortFunc(newNamespaces, sortField, isAscending);
+              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
             }
             return { namespaces: newNamespaces };
           });
@@ -225,7 +226,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
             if (sortField.id === 'mtls') {
-              newNamespaces = FiltersAndSorts.sortFunc(newNamespaces, sortField, isAscending);
+              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
             }
             return { namespaces: newNamespaces };
           });
@@ -254,7 +255,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
-    const sorted = FiltersAndSorts.sortFunc(this.state.namespaces, sortField, isAscending);
+    const sorted = Sorts.sortFunc(this.state.namespaces, sortField, isAscending);
     this.setState({ namespaces: sorted });
   };
 
@@ -269,7 +270,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
 
   render() {
     const [xs, sm, md] = this.state.displayMode === OverviewDisplayMode.COMPACT ? [6, 3, 3] : [12, 6, 4];
-    const filteredNamespaces = FiltersAndSorts.filterBy(this.state.namespaces, FilterSelected.getSelected());
+    const filteredNamespaces = Filters.filterBy(this.state.namespaces, FilterSelected.getSelected());
     return (
       <>
         <Breadcrumb title={true}>
@@ -285,23 +286,22 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         <div className="cards-pf">
           <CardGrid matchHeight={true} className={cardGridStyle}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
-              {filteredNamespaces
-                .map(ns => {
-                  return (
-                    <Col xs={xs} sm={sm} md={md} key={ns.name}>
-                      <Card matchHeight={true} accented={true} aggregated={true}>
-                        <CardTitle>
-                          {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                          {ns.name}
-                        </CardTitle>
-                        <CardBody>
-                          {this.renderStatuses(ns)}
-                          <OverviewCardLinks name={ns.name} />
-                        </CardBody>
-                      </Card>
-                    </Col>
-                  );
-                })}
+              {filteredNamespaces.map(ns => {
+                return (
+                  <Col xs={xs} sm={sm} md={md} key={ns.name}>
+                    <Card matchHeight={true} accented={true} aggregated={true}>
+                      <CardTitle>
+                        {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
+                        {ns.name}
+                      </CardTitle>
+                      <CardBody>
+                        {this.renderStatuses(ns)}
+                        <OverviewCardLinks name={ns.name} />
+                      </CardBody>
+                    </Card>
+                  </Col>
+                );
+              })}
             </Row>
           </CardGrid>
         </div>

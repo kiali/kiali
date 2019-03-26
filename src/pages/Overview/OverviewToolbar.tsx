@@ -16,9 +16,10 @@ import { durationSelector, refreshIntervalSelector } from '../../store/Selectors
 import { PollIntervalInMs, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 
-import { FiltersAndSorts } from './FiltersAndSorts';
 import NamespaceInfo from './NamespaceInfo';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { Sorts } from './Sorts';
+import { Filters } from './Filters';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -78,7 +79,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     this.state = {
       isSortAscending: ListPagesHelper.isCurrentSortAscending(),
       overviewType: OverviewToolbar.currentOverviewType(),
-      sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields),
+      sortField: ListPagesHelper.currentSortField(Sorts.sortFields)
     };
   }
 
@@ -87,7 +88,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
-    const urlSortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
+    const urlSortField = ListPagesHelper.currentSortField(Sorts.sortFields);
     const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
     if (!this.paramsAreSynced(urlSortField, urlIsSortAscending)) {
       this.setState({
@@ -128,11 +129,11 @@ export class OverviewToolbar extends React.Component<Props, State> {
 
   render() {
     return (
-      <StatefulFilters initialFilters={FiltersAndSorts.availableFilters} onFilterChange={this.props.onRefresh}>
+      <StatefulFilters initialFilters={Filters.availableFilters} onFilterChange={this.props.onRefresh}>
         <Sort style={{ ...ThinStyle }}>
           <Sort.TypeSelector
             // style={{ ...thinGroupStyle }}
-            sortTypes={FiltersAndSorts.sortFields}
+            sortTypes={Sorts.sortFields}
             currentSortType={this.state.sortField}
             onSortTypeSelected={this.updateSortField}
           />
