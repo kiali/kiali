@@ -280,7 +280,7 @@ if [ "${AUTH_STRATEGY}" == "login" ]; then
     exit 1
   fi
 else
-  echo "Using strategy [${AUTH_STRATEGY}] - a secret is not needed so one will not be created."
+  echo "Using strategy [${AUTH_STRATEGY}] - a secret is not needed so none will be created."
 fi
 
 for yaml in configmap serviceaccount clusterrole clusterrolebinding deployment service ingress crds
