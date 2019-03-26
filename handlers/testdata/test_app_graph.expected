@@ -138,7 +138,7 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "100.00",
-                "httpOut": "120.00"
+                "httpOut": "124.00"
               }
             }
           ]
@@ -189,6 +189,24 @@
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "4a639f9922515051205421a93f94e0b8",
+          "nodeType": "service",
+          "namespace": "unknown",
+          "service": "unknown",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "4.00",
+                "httpIn4xx": "4.00"
+              }
+            }
+          ],
+          "isInaccessible": true
         }
       },
       {
@@ -353,11 +371,32 @@
             "protocol": "http",
             "rates": {
               "http": "40.00",
-              "httpPercentReq": "33.3"
+              "httpPercentReq": "32.3"
             },
             "responses": {
               "200": {
                 "-": "100.0"
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "5fb225e800c037b99f8767d961d187fc",
+          "source": "37ddc91db761d432f3fff1943802cad7",
+          "target": "4a639f9922515051205421a93f94e0b8",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "3.2"
+            },
+            "responses": {
+              "404": {
+                "NR": "100.0"
               }
             }
           }
@@ -372,7 +411,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "16.7"
+              "httpPercentReq": "16.1"
             },
             "responses": {
               "200": {
@@ -393,7 +432,7 @@
               "http": "60.00",
               "http5xx": "20.00",
               "httpPercentErr": "33.3",
-              "httpPercentReq": "50.0"
+              "httpPercentReq": "48.4"
             },
             "responses": {
               "200": {

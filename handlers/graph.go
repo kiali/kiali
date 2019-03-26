@@ -165,6 +165,8 @@ func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o options.Options) {
 		case graph.NodeTypeService:
 			if _, ok := n.Metadata["isServiceEntry"]; ok {
 				n.Metadata["isInaccessible"] = true
+			} else if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
+				n.Metadata["isInaccessible"] = true
 			} else {
 				if isOutside(n, o.Namespaces) {
 					n.Metadata["isOutside"] = true
