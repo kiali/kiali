@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
+import { Button, ButtonGroup, FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 
@@ -31,7 +31,14 @@ type Props = ReduxProps & {
   onError: (msg: string) => void;
   onRefresh: () => void;
   sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
+  displayMode: OverviewDisplayMode;
+  setDisplayMode: (mode: OverviewDisplayMode) => void;
 };
+
+export enum OverviewDisplayMode {
+  COMPACT,
+  EXPAND
+}
 
 const overviewTypes = {
   app: 'Apps',
@@ -71,7 +78,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     this.state = {
       isSortAscending: ListPagesHelper.isCurrentSortAscending(),
       overviewType: OverviewToolbar.currentOverviewType(),
-      sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields)
+      sortField: ListPagesHelper.currentSortField(FiltersAndSorts.sortFields),
     };
   }
 
@@ -146,6 +153,24 @@ export class OverviewToolbar extends React.Component<Props, State> {
             label={overviewTypes[this.state.overviewType]}
             options={overviewTypes}
           />
+        </FormGroup>
+        <FormGroup>
+          <ButtonGroup id="toolbar_layout_group">
+            <Button
+              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
+              title="Compact mode"
+              active={this.props.displayMode === OverviewDisplayMode.COMPACT}
+            >
+              Compact
+            </Button>
+            <Button
+              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
+              title="Expanded mode"
+              active={this.props.displayMode === OverviewDisplayMode.EXPAND}
+            >
+              Expand
+            </Button>
+          </ButtonGroup>
         </FormGroup>
         <ToolbarRightContent style={{ ...AlignRightStyle }}>
           <ToolbarDropdown

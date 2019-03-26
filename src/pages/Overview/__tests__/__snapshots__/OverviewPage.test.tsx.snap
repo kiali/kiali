@@ -28,8 +28,10 @@ ShallowWrapper {
           </BreadcrumbItem>
         </Breadcrumb>,
         <Connect(OverviewToolbar)
+          displayMode={1}
           onError={[Function]}
           onRefresh={[Function]}
+          setDisplayMode={[Function]}
           sort={[Function]}
         />,
         <div
@@ -87,8 +89,10 @@ ShallowWrapper {
         "key": undefined,
         "nodeType": "class",
         "props": Object {
+          "displayMode": 1,
           "onError": [Function],
           "onRefresh": [Function],
+          "setDisplayMode": [Function],
           "sort": [Function],
         },
         "ref": null,
@@ -178,8 +182,10 @@ ShallowWrapper {
             </BreadcrumbItem>
           </Breadcrumb>,
           <Connect(OverviewToolbar)
+            displayMode={1}
             onError={[Function]}
             onRefresh={[Function]}
+            setDisplayMode={[Function]}
             sort={[Function]}
           />,
           <div
@@ -237,8 +243,10 @@ ShallowWrapper {
           "key": undefined,
           "nodeType": "class",
           "props": Object {
+            "displayMode": 1,
             "onError": [Function],
             "onRefresh": [Function],
+            "setDisplayMode": [Function],
             "sort": [Function],
           },
           "ref": null,

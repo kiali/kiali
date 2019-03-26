@@ -12,10 +12,9 @@ type Props = {
   name: string;
   type: OverviewType;
   status: NamespaceStatus;
-  tlsStatus: boolean;
 };
 
-class OverviewStatuses extends React.Component<Props> {
+class OverviewCardContent extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
   }
@@ -70,4 +69,4 @@ class OverviewStatuses extends React.Component<Props> {
   }
 }
 
-export default OverviewStatuses;
+export default OverviewCardContent;

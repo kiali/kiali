@@ -9,6 +9,8 @@ import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
 
+window['SVGPathElement'] = a => a;
+
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
     jest.spyOn(API, func).mockImplementation(() => {

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
-import { Breadcrumb, Card, CardBody, CardGrid, CardTitle, Col, Icon, Row } from 'patternfly-react';
+import { Breadcrumb, Card, CardBody, CardGrid, CardTitle, Col, Row } from 'patternfly-react';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
@@ -21,67 +20,34 @@ import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 import { FiltersAndSorts } from './FiltersAndSorts';
-import OverviewToolbarContainer, { OverviewToolbar, OverviewType } from './OverviewToolbar';
+import OverviewToolbarContainer, { OverviewToolbar, OverviewType, OverviewDisplayMode } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
-import OverviewStatuses from './OverviewStatuses';
-import { switchType } from './OverviewHelper';
-import { Paths } from '../../config';
+import OverviewCardContent from './OverviewCardContent';
+import { summarizeHealthFilters, switchType } from './OverviewHelper';
 import { default as NamespaceMTLSStatusContainer } from '../../components/MTls/NamespaceMTLSStatus';
+import OverviewCardContentExpanded from './OverviewCardContentExpanded';
+import { MetricsOptions } from '../../types/MetricsOptions';
+import { computePrometheusRateParams } from '../../services/Prometheus';
+import OverviewCardLinks from './OverviewCardLinks';
 
 type State = {
   namespaces: NamespaceInfo[];
   type: OverviewType;
+  displayMode: OverviewDisplayMode;
 };
 
-type OverviewProps = {};
+const cardGridStyle = style({ width: '100%' });
 
-const cardGridStyle = style({
-  width: '100%'
-});
-
-class OverviewPage extends React.Component<OverviewProps, State> {
+class OverviewPage extends React.Component<{}, State> {
   private promises = new PromisesRegistry();
+  private displayModeSet = false;
 
-  private static summarizeHealthFilters() {
-    const healthFilters = FilterSelected.getSelected().filter(f => f.category === FiltersAndSorts.healthFilter.title);
-    if (healthFilters.length === 0) {
-      return {
-        noFilter: true,
-        showInError: true,
-        showInWarning: true,
-        showInSuccess: true
-      };
-    }
-    let showInError = false,
-      showInWarning = false,
-      showInSuccess = false;
-    healthFilters.forEach(f => {
-      switch (f.value) {
-        case FAILURE.name:
-          showInError = true;
-          break;
-        case DEGRADED.name:
-          showInWarning = true;
-          break;
-        case HEALTHY.name:
-          showInSuccess = true;
-          break;
-        default:
-      }
-    });
-    return {
-      noFilter: false,
-      showInError: showInError,
-      showInWarning: showInWarning,
-      showInSuccess: showInSuccess
-    };
-  }
-
-  constructor(props: OverviewProps) {
+  constructor(props: {}) {
     super(props);
     this.state = {
       namespaces: [],
-      type: OverviewToolbar.currentOverviewType()
+      type: OverviewToolbar.currentOverviewType(),
+      displayMode: OverviewDisplayMode.EXPAND
     };
   }
 
@@ -112,18 +78,31 @@ class OverviewPage extends React.Component<OverviewProps, State> {
             return {
               name: ns.name,
               status: previous ? previous.status : undefined,
-              tlsStatus: previous ? previous.tlsStatus : undefined
+              tlsStatus: previous ? previous.tlsStatus : undefined,
+              metrics: previous ? previous.metrics : undefined
             };
           });
         const isAscending = ListPagesHelper.isCurrentSortAscending();
         const sortField = ListPagesHelper.currentSortField(FiltersAndSorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
+        const displayMode = this.displayModeSet
+          ? this.state.displayMode
+          : allNamespaces.length > 16
+          ? OverviewDisplayMode.COMPACT
+          : OverviewDisplayMode.EXPAND;
         // Set state before actually fetching health
         this.setState(
-          { type: type, namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending) },
+          {
+            type: type,
+            namespaces: FiltersAndSorts.sortFunc(allNamespaces, sortField, isAscending),
+            displayMode: displayMode
+          },
           () => {
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
+            if (displayMode === OverviewDisplayMode.EXPAND) {
+              this.fetchMetrics();
+            }
           }
         );
       })
@@ -131,11 +110,11 @@ class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType) {
-    const rateInterval = ListPagesHelper.currentDuration();
+    const duration = ListPagesHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
-        .registerChained('healthchunks', undefined, () => this.fetchHealthChunk(chunk, rateInterval, type))
+        .registerChained('healthchunks', undefined, () => this.fetchHealthChunk(chunk, duration, type))
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
@@ -148,7 +127,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     });
   }
 
-  fetchHealthChunk(chunk: NamespaceInfo[], rateInterval: number, type: OverviewType) {
+  fetchHealthChunk(chunk: NamespaceInfo[], duration: number, type: OverviewType) {
     const apiFunc = switchType(
       type,
       API.getNamespaceAppHealth,
@@ -159,7 +138,7 @@ class OverviewPage extends React.Component<OverviewProps, State> {
       chunk.map(nsInfo => {
         const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
           nsInfo.name,
-          rateInterval
+          duration
         );
         return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
       })
@@ -189,6 +168,43 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch health', err));
+  }
+
+  fetchMetrics() {
+    const duration = ListPagesHelper.currentDuration();
+    // debounce async for back-pressure, ten by ten
+    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+      this.promises
+        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration))
+        .then(() => {
+          this.setState(prevState => {
+            return { namespaces: prevState.namespaces.slice() };
+          });
+        });
+    });
+  }
+
+  fetchMetricsChunk(chunk: NamespaceInfo[], duration: number) {
+    const rateParams = computePrometheusRateParams(duration, 10);
+    const optionsIn: MetricsOptions = {
+      filters: ['request_count'],
+      duration: duration,
+      step: rateParams.step,
+      rateInterval: rateParams.rateInterval,
+      direction: 'inbound',
+      reporter: 'destination'
+    };
+    return Promise.all(
+      chunk.map(nsInfo => {
+        return API.getNamespaceMetrics(nsInfo.name, optionsIn).then(rs => {
+          nsInfo.metrics = undefined;
+          if (rs.data.metrics.hasOwnProperty('request_count')) {
+            nsInfo.metrics = rs.data.metrics['request_count'].matrix;
+          }
+          return nsInfo;
+        });
+      })
+    ).catch(err => this.handleAxiosError('Could not fetch health', err));
   }
 
   fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>) {
@@ -230,14 +246,30 @@ class OverviewPage extends React.Component<OverviewProps, State> {
     this.setState({ namespaces: sorted });
   };
 
+  setDisplayMode = (mode: OverviewDisplayMode) => {
+    this.displayModeSet = true;
+    this.setState({ displayMode: mode });
+    if (mode === OverviewDisplayMode.EXPAND) {
+      // Load metrics
+      this.fetchMetrics();
+    }
+  };
+
   render() {
-    const { showInError, showInWarning, showInSuccess, noFilter } = OverviewPage.summarizeHealthFilters();
+    const { showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters();
+    const [xs, sm, md] = this.state.displayMode === OverviewDisplayMode.COMPACT ? [6, 3, 3] : [12, 6, 4];
     return (
       <>
         <Breadcrumb title={true}>
           <Breadcrumb.Item active={true}>Namespaces</Breadcrumb.Item>
         </Breadcrumb>
-        <OverviewToolbarContainer onRefresh={this.load} onError={ListPagesHelper.handleError} sort={this.sort} />
+        <OverviewToolbarContainer
+          onRefresh={this.load}
+          onError={ListPagesHelper.handleError}
+          sort={this.sort}
+          displayMode={this.state.displayMode}
+          setDisplayMode={this.setDisplayMode}
+        />
         <div className="cards-pf">
           <CardGrid matchHeight={true} className={cardGridStyle}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
@@ -253,41 +285,15 @@ class OverviewPage extends React.Component<OverviewProps, State> {
                 })
                 .map(ns => {
                   return (
-                    <Col xs={6} sm={3} md={3} key={ns.name}>
+                    <Col xs={xs} sm={sm} md={md} key={ns.name}>
                       <Card matchHeight={true} accented={true} aggregated={true}>
                         <CardTitle>
                           {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
                           {ns.name}
                         </CardTitle>
                         <CardBody>
-                          {ns.status ? (
-                            <OverviewStatuses
-                              key={ns.name}
-                              name={ns.name}
-                              status={ns.status}
-                              type={this.state.type}
-                              tlsStatus={true}
-                            />
-                          ) : (
-                            <div style={{ height: 70 }} />
-                          )}
-                          <div>
-                            <Link to={`/graph/namespaces?namespaces=` + ns.name} title="Graph">
-                              <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                            </Link>
-                            <Link to={`/${Paths.APPLICATIONS}?namespaces=` + ns.name} title="Applications list">
-                              <Icon type="pf" name="applications" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                            </Link>
-                            <Link to={`/${Paths.WORKLOADS}?namespaces=` + ns.name} title="Workloads list">
-                              <Icon type="pf" name="bundle" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                            </Link>
-                            <Link to={`/${Paths.SERVICES}?namespaces=` + ns.name} title="Services list">
-                              <Icon type="pf" name="service" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                            </Link>
-                            <Link to={`/${Paths.ISTIO}?namespaces=` + ns.name} title="Istio Config list">
-                              <Icon type="pf" name="template" style={{ paddingLeft: 10, paddingRight: 10 }} />
-                            </Link>
-                          </div>
+                          {this.renderStatuses(ns)}
+                          <OverviewCardLinks name={ns.name} />
                         </CardBody>
                       </Card>
                     </Col>
@@ -298,6 +304,25 @@ class OverviewPage extends React.Component<OverviewProps, State> {
         </div>
       </>
     );
+  }
+
+  renderStatuses(ns: NamespaceInfo): JSX.Element {
+    if (ns.status) {
+      if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
+        return <OverviewCardContent key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
+      }
+      return (
+        <OverviewCardContentExpanded
+          key={ns.name}
+          name={ns.name}
+          duration={ListPagesHelper.currentDuration()}
+          status={ns.status}
+          type={this.state.type}
+          metrics={ns.metrics}
+        />
+      );
+    }
+    return <div style={{ height: 70 }} />;
   }
 }
 
