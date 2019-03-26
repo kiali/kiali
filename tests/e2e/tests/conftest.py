@@ -8,13 +8,15 @@ from utils.command_exec import command_exec
 from pkg_resources import resource_string
 from urllib.request import urlopen
 
-
-ENV_FILE = '../config/env.yaml'
+CONFIG_PATH = '../config'
+ENV_FILE = CONFIG_PATH + '/env.yaml'
 ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../assets')
 CIRCUIT_BREAKER_FILE = ASSETS_PATH + '/bookinfo-reviews-all-cb.yaml'
 VIRTUAL_SERVICE_FILE = ASSETS_PATH + '/bookinfo-ratings-delay.yaml'
 WORKLOADS_FILE = ASSETS_PATH  + '/bookinfo-workloads.yaml'
 
+CURRENT_CONFIGMAP_FILE = CONFIG_PATH + '/current_kiali_configmap.yaml'
+NEW_CONFIG_MAP_FILE = CONFIG_PATH + '/new_kiali_configmap.yaml'
 
 @pytest.fixture(scope='session')
 def kiali_client():
@@ -32,7 +34,7 @@ def __get_kiali_client__(config):
                        username=config.get('kiali_username'), password=config.get('kiali_password'), verify=config.get(
             'kiali_verify_ssl_certificate'), swagger_address=config.get('kiali_swagger_address'), custom_base_path=config.get('kiali_custom_base_context'))
     else:
-        return KialiClient(hostname=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'), 
+        return KialiClient(hostname=config.get('kiali_hostname'), username=config.get('kiali_username'), password=config.get('kiali_password'),
         auth_type=config.get('kiali_auth_method'), swagger_address=config.get('kiali_swagger_address'), custom_base_path=config.get('kiali_custom_base_context'))
 
 def __get_environment_config__(env_file):
