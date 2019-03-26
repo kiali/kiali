@@ -19,14 +19,14 @@ export namespace Filters {
   export const mtlsValues: FilterValue[] = [
     { id: 'enabled', title: 'Enabled' },
     { id: 'partiallyEnabled', title: 'Partially Enabled' },
-    { id: 'notEnabled', title: 'Not Enabled' }
+    { id: 'disabled', title: 'Disabled' }
   ];
 
   const statusMap = new Map<string, string>([
     [MTLSStatuses.ENABLED, 'Enabled'],
     [MTLSStatuses.PARTIALLY, 'Partially Enabled'],
-    [MTLSStatuses.NOT_ENABLED, 'Not Enabled'],
-    [MTLSStatuses.DISABLED, 'Not Enabled']
+    [MTLSStatuses.NOT_ENABLED, 'Disabled'],
+    [MTLSStatuses.DISABLED, 'Disabled']
   ]);
 
   export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {

@@ -3,7 +3,9 @@
 exports[`Overview page renders initial layout 1`] = `
 ShallowWrapper {
   Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <OverviewPage />,
+  Symbol(enzyme.__unrendered__): <OverviewPage
+    meshStatus="MTLS_NOT_ENABLED"
+  />,
   Symbol(enzyme.__renderer__): Object {
     "batchedUpdates": [Function],
     "getNode": [Function],
