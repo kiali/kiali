@@ -302,6 +302,7 @@ GRAFANA_URL="${GRAFANA_URL}"  \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 KIALI_USERNAME="admin" \
 KIALI_PASSPHRASE="admin" \
+AUTH_STRATEGY="${AUTH_STRATEGY}" \
 deploy/kubernetes/deploy-kiali-to-kubernetes.sh
 
 ## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
