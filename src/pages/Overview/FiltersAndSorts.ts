@@ -33,9 +33,10 @@ export namespace FiltersAndSorts {
   ];
 
   const statusMap = new Map<string, string>([
-    ['Enabled', MTLSStatuses.ENABLED],
-    ['Partially Enabled', MTLSStatuses.PARTIALLY],
-    ['Not Enabled', MTLSStatuses.NOT_ENABLED]
+    [MTLSStatuses.ENABLED, 'Enabled'],
+    [MTLSStatuses.PARTIALLY, 'Partially Enabled'],
+    [MTLSStatuses.NOT_ENABLED, 'Not Enabled'],
+    [MTLSStatuses.DISABLED, 'Not Enabled']
   ]);
 
   export const mtlsFilter: FilterTypeWithFilter<NamespaceInfo> = {
@@ -47,7 +48,7 @@ export namespace FiltersAndSorts {
     filterValues: mtlsValues,
     filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {
       return namespaces.filter(
-        ns => ns.tlsStatus && filters.some(f => ns.tlsStatus!.status === statusMap.get(f.value))
+        ns => ns.tlsStatus && filters.some(f => statusMap.get(ns.tlsStatus!.status) === f.value)
       );
     }
   };
