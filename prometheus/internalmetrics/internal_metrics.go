@@ -33,6 +33,7 @@ type MetricsType struct {
 	PrometheusProcessingTime *prometheus.HistogramVec
 	GoFunctionProcessingTime *prometheus.HistogramVec
 	GoFunctionFailures       *prometheus.CounterVec
+	KubernetesClients        *prometheus.GaugeVec
 }
 
 // Metrics contains all of Kiali's own internal metrics.
@@ -95,6 +96,13 @@ var Metrics = MetricsType{
 		},
 		[]string{labelPackage, labelType, labelFunction},
 	),
+	KubernetesClients: prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "kiali_kubernetes_clients",
+			Help: "The number of Kubernetes clients in use.",
+		},
+		[]string{},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -151,6 +159,7 @@ func RegisterInternalMetrics() {
 		Metrics.PrometheusProcessingTime,
 		Metrics.GoFunctionProcessingTime,
 		Metrics.GoFunctionFailures,
+		Metrics.KubernetesClients,
 	)
 }
 
@@ -266,4 +275,9 @@ func GetGoFunctionMetric(goPkg string, goType string, goFunc string) SuccessOrFa
 			labelFunction: goFunc,
 		}),
 	}
+}
+
+// SetKubernetesClients sets the kubernetes client count
+func SetKubernetesClients(clientCount int) {
+	Metrics.KubernetesClients.With(prometheus.Labels{}).Set(float64(clientCount))
 }

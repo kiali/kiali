@@ -34,7 +34,7 @@ func NewK8SClientFactoryMock(k8s kubernetes.IstioClientInterface) *K8SClientFact
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) NewClient(token string) (kubernetes.IstioClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(token string) (kubernetes.IstioClientInterface, error) {
 	return o.k8s, nil
 }
 

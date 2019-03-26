@@ -31,7 +31,7 @@ func GetUnauthenticated() (*Layer, error) {
 func Get(token string) (*Layer, error) {
 	// Use an existing client factory if it exists, otherwise create and use in the future
 	if clientFactory == nil {
-		userClient, err := kubernetes.NewClientFactory()
+		userClient, err := kubernetes.GetClientFactory()
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func Get(token string) (*Layer, error) {
 	}
 
 	// Creates a new k8s client based on the current users token
-	k8s, err := clientFactory.NewClient(token)
+	k8s, err := clientFactory.GetClient(token)
 	if err != nil {
 		return nil, err
 	}
