@@ -23,12 +23,18 @@ import { FiltersAndSorts } from './FiltersAndSorts';
 import OverviewToolbarContainer, { OverviewToolbar, OverviewType, OverviewDisplayMode } from './OverviewToolbar';
 import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import OverviewCardContent from './OverviewCardContent';
-import { summarizeHealthFilters, switchType } from './OverviewHelper';
-import { default as NamespaceMTLSStatusContainer } from '../../components/MTls/NamespaceMTLSStatus';
+import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
 import { MetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import OverviewCardLinks from './OverviewCardLinks';
+import { KialiAppState } from '../../store/Store';
+import { connect } from 'react-redux';
+import { meshWideMTLSStatusSelector } from '../../store/Selectors';
+import { nsWideMTLSStatus } from '../../types/TLSStatus';
+import { switchType } from './OverviewHelper';
+
+const cardGridStyle = style({ width: '100%' });
 
 type State = {
   namespaces: NamespaceInfo[];
@@ -36,13 +42,17 @@ type State = {
   displayMode: OverviewDisplayMode;
 };
 
-const cardGridStyle = style({ width: '100%' });
+type ReduxProps = {
+  meshStatus: string;
+};
 
-class OverviewPage extends React.Component<{}, State> {
+type OverviewProps = ReduxProps & {};
+
+class OverviewPage extends React.Component<OverviewProps, State> {
   private promises = new PromisesRegistry();
   private displayModeSet = false;
 
-  constructor(props: {}) {
+  constructor(props: OverviewProps) {
     super(props);
     this.state = {
       namespaces: [],
@@ -231,7 +241,9 @@ class OverviewPage extends React.Component<{}, State> {
     )
       .then(results => {
         results.forEach(result => {
-          result.nsInfo.tlsStatus = result.status;
+          result.nsInfo.tlsStatus = {
+            status: nsWideMTLSStatus(result.status.status, this.props.meshStatus)
+          };
         });
       })
       .catch(err => this.handleAxiosError('Could not fetch TLS status', err));
@@ -256,8 +268,8 @@ class OverviewPage extends React.Component<{}, State> {
   };
 
   render() {
-    const { showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters();
     const [xs, sm, md] = this.state.displayMode === OverviewDisplayMode.COMPACT ? [6, 3, 3] : [12, 6, 4];
+    const filteredNamespaces = FiltersAndSorts.filterBy(this.state.namespaces, FilterSelected.getSelected());
     return (
       <>
         <Breadcrumb title={true}>
@@ -273,16 +285,7 @@ class OverviewPage extends React.Component<{}, State> {
         <div className="cards-pf">
           <CardGrid matchHeight={true} className={cardGridStyle}>
             <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
-              {this.state.namespaces
-                .filter(ns => {
-                  return (
-                    noFilter ||
-                    (ns.status &&
-                      ((showInError && ns.status.inError.length > 0) ||
-                        (showInWarning && ns.status.inWarning.length > 0) ||
-                        (showInSuccess && ns.status.inSuccess.length > 0)))
-                  );
-                })
+              {filteredNamespaces
                 .map(ns => {
                   return (
                     <Col xs={xs} sm={sm} md={md} key={ns.name}>
@@ -326,4 +329,9 @@ class OverviewPage extends React.Component<{}, State> {
   }
 }
 
-export default OverviewPage;
+const mapStateToProps = (state: KialiAppState) => ({
+  meshStatus: meshWideMTLSStatusSelector(state)
+});
+
+const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
+export default OverviewPageContainer;
