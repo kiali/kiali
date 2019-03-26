@@ -32,7 +32,7 @@ ShallowWrapper {
           "items": Array [
             Object {
               "metadata": Object {
-                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                 "name": "reviews",
                 "resourceVersion": "393061",
               },
@@ -58,11 +58,12 @@ ShallowWrapper {
                     "name": "v3",
                   },
                 ],
-                "trafficPolicy": null,
+                "trafficPolicy": undefined,
               },
             },
           ],
           "permissions": Object {
+            "create": false,
             "delete": false,
             "update": false,
           },
@@ -95,39 +96,8 @@ ShallowWrapper {
             ],
           },
         ],
-        "health": Object {
-          "deploymentStatuses": Array [
-            Object {
-              "available": 1,
-              "name": "reviews-v1",
-              "replicas": 1,
-            },
-            Object {
-              "available": 1,
-              "name": "reviews-v2",
-              "replicas": 1,
-            },
-            Object {
-              "available": 1,
-              "name": "reviews-v3",
-              "replicas": 1,
-            },
-          ],
-          "envoy": Object {
-            "inbound": Object {
-              "healthy": 1,
-              "total": 1,
-            },
-            "outbound": Object {
-              "healthy": 3,
-              "total": 3,
-            },
-          },
-          "requests": Object {
-            "errorRatio": -1,
-          },
-        },
-        "istioSidecar": false,
+        "health": undefined,
+        "istioSidecar": true,
         "service": Object {
           "createdAt": "2018-06-29T16:43:18+02:00",
           "ip": "172.30.196.248",
@@ -175,7 +145,7 @@ ShallowWrapper {
                 "resourceVersion": "393057",
               },
               "spec": Object {
-                "gateways": null,
+                "gateways": undefined,
                 "hosts": Array [
                   "reviews",
                 ],
@@ -191,15 +161,17 @@ ShallowWrapper {
                     ],
                   },
                 ],
-                "tcp": null,
+                "tcp": undefined,
               },
             },
           ],
           "permissions": Object {
+            "create": false,
             "delete": false,
             "update": false,
           },
         },
+        "workloads": Array [],
       }
     }
     validations={
@@ -284,7 +256,7 @@ ShallowWrapper {
                       "items": Array [
                         Object {
                           "metadata": Object {
-                            "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                            "creationTimestamp": "2018-07-02T13:44:01+02:00",
                             "name": "reviews",
                             "resourceVersion": "393061",
                           },
@@ -310,11 +282,12 @@ ShallowWrapper {
                                 "name": "v3",
                               },
                             ],
-                            "trafficPolicy": null,
+                            "trafficPolicy": undefined,
                           },
                         },
                       ],
                       "permissions": Object {
+                        "create": false,
                         "delete": false,
                         "update": false,
                       },
@@ -335,7 +308,7 @@ ShallowWrapper {
                             "resourceVersion": "393057",
                           },
                           "spec": Object {
-                            "gateways": null,
+                            "gateways": undefined,
                             "hosts": Array [
                               "reviews",
                             ],
@@ -351,11 +324,12 @@ ShallowWrapper {
                                 ],
                               },
                             ],
-                            "tcp": null,
+                            "tcp": undefined,
                           },
                         },
                       ],
                       "permissions": Object {
+                        "create": false,
                         "delete": false,
                         "update": false,
                       },
@@ -411,42 +385,9 @@ ShallowWrapper {
                     },
                   ]
                 }
-                health={
-                  Object {
-                    "deploymentStatuses": Array [
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v1",
-                        "replicas": 1,
-                      },
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v2",
-                        "replicas": 1,
-                      },
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v3",
-                        "replicas": 1,
-                      },
-                    ],
-                    "envoy": Object {
-                      "inbound": Object {
-                        "healthy": 1,
-                        "total": 1,
-                      },
-                      "outbound": Object {
-                        "healthy": 3,
-                        "total": 3,
-                      },
-                    },
-                    "requests": Object {
-                      "errorRatio": -1,
-                    },
-                  }
-                }
+                health={undefined}
                 ip="172.30.196.248"
-                istioEnabled={false}
+                istioEnabled={true}
                 labels={
                   Object {
                     "app": "reviews",
@@ -534,7 +475,12 @@ ShallowWrapper {
                     <WithErrorBoundary
                       eventKey="workloads"
                       message="One of the Workloads associated to this service has an invalid format"
-                    />
+                    >
+                      <ServiceInfoWorkload
+                        namespace="istio-system"
+                        workloads={Array []}
+                      />
+                    </WithErrorBoundary>
                     <WithErrorBoundary
                       eventKey="virtualservices"
                       message="One of the Virtual Services associated to this service has an invalid format"
@@ -550,7 +496,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -566,7 +512,7 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ]
@@ -582,7 +528,7 @@ ShallowWrapper {
                           Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -608,7 +554,7 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ]
@@ -693,7 +639,7 @@ ShallowWrapper {
                         "items": Array [
                           Object {
                             "metadata": Object {
-                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
                               "name": "reviews",
                               "resourceVersion": "393061",
                             },
@@ -719,11 +665,12 @@ ShallowWrapper {
                                   "name": "v3",
                                 },
                               ],
-                              "trafficPolicy": null,
+                              "trafficPolicy": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -744,7 +691,7 @@ ShallowWrapper {
                               "resourceVersion": "393057",
                             },
                             "spec": Object {
-                              "gateways": null,
+                              "gateways": undefined,
                               "hosts": Array [
                                 "reviews",
                               ],
@@ -760,11 +707,12 @@ ShallowWrapper {
                                   ],
                                 },
                               ],
-                              "tcp": null,
+                              "tcp": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -820,42 +768,9 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  health={
-                    Object {
-                      "deploymentStatuses": Array [
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v1",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v2",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v3",
-                          "replicas": 1,
-                        },
-                      ],
-                      "envoy": Object {
-                        "inbound": Object {
-                          "healthy": 1,
-                          "total": 1,
-                        },
-                        "outbound": Object {
-                          "healthy": 3,
-                          "total": 3,
-                        },
-                      },
-                      "requests": Object {
-                        "errorRatio": -1,
-                      },
-                    }
-                  }
+                  health={undefined}
                   ip="172.30.196.248"
-                  istioEnabled={false}
+                  istioEnabled={true}
                   labels={
                     Object {
                       "app": "reviews",
@@ -943,7 +858,12 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
+                      >
+                        <ServiceInfoWorkload
+                          namespace="istio-system"
+                          workloads={Array []}
+                        />
+                      </WithErrorBoundary>
                       <WithErrorBoundary
                         eventKey="virtualservices"
                         message="One of the Virtual Services associated to this service has an invalid format"
@@ -959,7 +879,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -975,7 +895,7 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ]
@@ -991,7 +911,7 @@ ShallowWrapper {
                             Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -1017,7 +937,7 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ]
@@ -1096,7 +1016,7 @@ ShallowWrapper {
                         "items": Array [
                           Object {
                             "metadata": Object {
-                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
                               "name": "reviews",
                               "resourceVersion": "393061",
                             },
@@ -1122,11 +1042,12 @@ ShallowWrapper {
                                   "name": "v3",
                                 },
                               ],
-                              "trafficPolicy": null,
+                              "trafficPolicy": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1147,7 +1068,7 @@ ShallowWrapper {
                               "resourceVersion": "393057",
                             },
                             "spec": Object {
-                              "gateways": null,
+                              "gateways": undefined,
                               "hosts": Array [
                                 "reviews",
                               ],
@@ -1163,11 +1084,12 @@ ShallowWrapper {
                                   ],
                                 },
                               ],
-                              "tcp": null,
+                              "tcp": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1214,7 +1136,7 @@ ShallowWrapper {
                         "items": Array [
                           Object {
                             "metadata": Object {
-                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
                               "name": "reviews",
                               "resourceVersion": "393061",
                             },
@@ -1240,11 +1162,12 @@ ShallowWrapper {
                                   "name": "v3",
                                 },
                               ],
-                              "trafficPolicy": null,
+                              "trafficPolicy": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1265,7 +1188,7 @@ ShallowWrapper {
                               "resourceVersion": "393057",
                             },
                             "spec": Object {
-                              "gateways": null,
+                              "gateways": undefined,
                               "hosts": Array [
                                 "reviews",
                               ],
@@ -1281,11 +1204,12 @@ ShallowWrapper {
                                   ],
                                 },
                               ],
-                              "tcp": null,
+                              "tcp": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1327,7 +1251,7 @@ ShallowWrapper {
                           "items": Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -1353,11 +1277,12 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -1378,7 +1303,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -1394,11 +1319,12 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -1454,7 +1380,7 @@ ShallowWrapper {
                         "items": Array [
                           Object {
                             "metadata": Object {
-                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
                               "name": "reviews",
                               "resourceVersion": "393061",
                             },
@@ -1480,11 +1406,12 @@ ShallowWrapper {
                                   "name": "v3",
                                 },
                               ],
-                              "trafficPolicy": null,
+                              "trafficPolicy": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1503,7 +1430,7 @@ ShallowWrapper {
                               "resourceVersion": "393057",
                             },
                             "spec": Object {
-                              "gateways": null,
+                              "gateways": undefined,
                               "hosts": Array [
                                 "reviews",
                               ],
@@ -1519,11 +1446,12 @@ ShallowWrapper {
                                   ],
                                 },
                               ],
-                              "tcp": null,
+                              "tcp": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -1587,42 +1515,9 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  health={
-                    Object {
-                      "deploymentStatuses": Array [
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v1",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v2",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v3",
-                          "replicas": 1,
-                        },
-                      ],
-                      "envoy": Object {
-                        "inbound": Object {
-                          "healthy": 1,
-                          "total": 1,
-                        },
-                        "outbound": Object {
-                          "healthy": 3,
-                          "total": 3,
-                        },
-                      },
-                      "requests": Object {
-                        "errorRatio": -1,
-                      },
-                    }
-                  }
+                  health={undefined}
                   ip="172.30.196.248"
-                  istioEnabled={false}
+                  istioEnabled={true}
                   labels={
                     Object {
                       "app": "reviews",
@@ -1684,42 +1579,9 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  health={
-                    Object {
-                      "deploymentStatuses": Array [
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v1",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v2",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v3",
-                          "replicas": 1,
-                        },
-                      ],
-                      "envoy": Object {
-                        "inbound": Object {
-                          "healthy": 1,
-                          "total": 1,
-                        },
-                        "outbound": Object {
-                          "healthy": 3,
-                          "total": 3,
-                        },
-                      },
-                      "requests": Object {
-                        "errorRatio": -1,
-                      },
-                    }
-                  }
+                  health={undefined}
                   ip="172.30.196.248"
-                  istioEnabled={false}
+                  istioEnabled={true}
                   labels={
                     Object {
                       "app": "reviews",
@@ -1779,40 +1641,9 @@ ShallowWrapper {
                       ],
                     },
                   ],
-                  "health": Object {
-                    "deploymentStatuses": Array [
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v1",
-                        "replicas": 1,
-                      },
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v2",
-                        "replicas": 1,
-                      },
-                      Object {
-                        "available": 1,
-                        "name": "reviews-v3",
-                        "replicas": 1,
-                      },
-                    ],
-                    "envoy": Object {
-                      "inbound": Object {
-                        "healthy": 1,
-                        "total": 1,
-                      },
-                      "outbound": Object {
-                        "healthy": 3,
-                        "total": 3,
-                      },
-                    },
-                    "requests": Object {
-                      "errorRatio": -1,
-                    },
-                  },
+                  "health": undefined,
                   "ip": "172.30.196.248",
-                  "istioEnabled": false,
+                  "istioEnabled": true,
                   "labels": Object {
                     "app": "reviews",
                   },
@@ -1903,7 +1734,12 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
+                      >
+                        <ServiceInfoWorkload
+                          namespace="istio-system"
+                          workloads={Array []}
+                        />
+                      </WithErrorBoundary>
                       <WithErrorBoundary
                         eventKey="virtualservices"
                         message="One of the Virtual Services associated to this service has an invalid format"
@@ -1919,7 +1755,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -1935,7 +1771,7 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ]
@@ -1951,7 +1787,7 @@ ShallowWrapper {
                             Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -1977,7 +1813,7 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ]
@@ -2073,7 +1909,12 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
+                      >
+                        <ServiceInfoWorkload
+                          namespace="istio-system"
+                          workloads={Array []}
+                        />
+                      </WithErrorBoundary>
                       <WithErrorBoundary
                         eventKey="virtualservices"
                         message="One of the Virtual Services associated to this service has an invalid format"
@@ -2089,7 +1930,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -2105,7 +1946,7 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ]
@@ -2121,7 +1962,7 @@ ShallowWrapper {
                             Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -2147,7 +1988,7 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ]
@@ -2240,7 +2081,12 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
+                      >
+                        <ServiceInfoWorkload
+                          namespace="istio-system"
+                          workloads={Array []}
+                        />
+                      </WithErrorBoundary>
                       <WithErrorBoundary
                         eventKey="virtualservices"
                         message="One of the Virtual Services associated to this service has an invalid format"
@@ -2256,7 +2102,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -2272,7 +2118,7 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ]
@@ -2288,7 +2134,7 @@ ShallowWrapper {
                             Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -2314,7 +2160,7 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ]
@@ -2402,7 +2248,12 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
+                        >
+                          <ServiceInfoWorkload
+                            namespace="istio-system"
+                            workloads={Array []}
+                          />
+                        </WithErrorBoundary>
                         <WithErrorBoundary
                           eventKey="virtualservices"
                           message="One of the Virtual Services associated to this service has an invalid format"
@@ -2418,7 +2269,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -2434,7 +2285,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ]
@@ -2450,7 +2301,7 @@ ShallowWrapper {
                               Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -2476,7 +2327,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ]
@@ -2661,7 +2512,12 @@ ShallowWrapper {
                           <WithErrorBoundary
                             eventKey="workloads"
                             message="One of the Workloads associated to this service has an invalid format"
-                          />,
+                          >
+                            <ServiceInfoWorkload
+                              namespace="istio-system"
+                              workloads={Array []}
+                            />
+                          </WithErrorBoundary>,
                           <WithErrorBoundary
                             eventKey="virtualservices"
                             message="One of the Virtual Services associated to this service has an invalid format"
@@ -2677,7 +2533,7 @@ ShallowWrapper {
                                       "resourceVersion": "393057",
                                     },
                                     "spec": Object {
-                                      "gateways": null,
+                                      "gateways": undefined,
                                       "hosts": Array [
                                         "reviews",
                                       ],
@@ -2693,7 +2549,7 @@ ShallowWrapper {
                                           ],
                                         },
                                       ],
-                                      "tcp": null,
+                                      "tcp": undefined,
                                     },
                                   },
                                 ]
@@ -2709,7 +2565,7 @@ ShallowWrapper {
                                 Array [
                                   Object {
                                     "metadata": Object {
-                                      "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                       "name": "reviews",
                                       "resourceVersion": "393061",
                                     },
@@ -2735,7 +2591,7 @@ ShallowWrapper {
                                           "name": "v3",
                                         },
                                       ],
-                                      "trafficPolicy": null,
+                                      "trafficPolicy": undefined,
                                     },
                                   },
                                 ]
@@ -2775,12 +2631,26 @@ ShallowWrapper {
                           "key": undefined,
                           "nodeType": "class",
                           "props": Object {
-                            "children": false,
+                            "children": <ServiceInfoWorkload
+                              namespace="istio-system"
+                              workloads={Array []}
+                            />,
                             "eventKey": "workloads",
                             "message": "One of the Workloads associated to this service has an invalid format",
                           },
                           "ref": null,
-                          "rendered": false,
+                          "rendered": Object {
+                            "instance": null,
+                            "key": undefined,
+                            "nodeType": "class",
+                            "props": Object {
+                              "namespace": "istio-system",
+                              "workloads": Array [],
+                            },
+                            "ref": null,
+                            "rendered": null,
+                            "type": [Function],
+                          },
                           "type": [Function],
                         },
                         Object {
@@ -2799,7 +2669,7 @@ ShallowWrapper {
                                       "resourceVersion": "393057",
                                     },
                                     "spec": Object {
-                                      "gateways": null,
+                                      "gateways": undefined,
                                       "hosts": Array [
                                         "reviews",
                                       ],
@@ -2815,7 +2685,7 @@ ShallowWrapper {
                                           ],
                                         },
                                       ],
-                                      "tcp": null,
+                                      "tcp": undefined,
                                     },
                                   },
                                 ]
@@ -2839,7 +2709,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -2855,7 +2725,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ],
@@ -2876,7 +2746,7 @@ ShallowWrapper {
                                 Array [
                                   Object {
                                     "metadata": Object {
-                                      "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                       "name": "reviews",
                                       "resourceVersion": "393061",
                                     },
@@ -2902,7 +2772,7 @@ ShallowWrapper {
                                           "name": "v3",
                                         },
                                       ],
-                                      "trafficPolicy": null,
+                                      "trafficPolicy": undefined,
                                     },
                                   },
                                 ]
@@ -2941,7 +2811,7 @@ ShallowWrapper {
                               "destinationRules": Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -2967,7 +2837,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ],
@@ -3066,7 +2936,7 @@ ShallowWrapper {
                         "items": Array [
                           Object {
                             "metadata": Object {
-                              "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                              "creationTimestamp": "2018-07-02T13:44:01+02:00",
                               "name": "reviews",
                               "resourceVersion": "393061",
                             },
@@ -3092,11 +2962,12 @@ ShallowWrapper {
                                   "name": "v3",
                                 },
                               ],
-                              "trafficPolicy": null,
+                              "trafficPolicy": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -3117,7 +2988,7 @@ ShallowWrapper {
                               "resourceVersion": "393057",
                             },
                             "spec": Object {
-                              "gateways": null,
+                              "gateways": undefined,
                               "hosts": Array [
                                 "reviews",
                               ],
@@ -3133,11 +3004,12 @@ ShallowWrapper {
                                   ],
                                 },
                               ],
-                              "tcp": null,
+                              "tcp": undefined,
                             },
                           },
                         ],
                         "permissions": Object {
+                          "create": false,
                           "delete": false,
                           "update": false,
                         },
@@ -3193,42 +3065,9 @@ ShallowWrapper {
                       },
                     ]
                   }
-                  health={
-                    Object {
-                      "deploymentStatuses": Array [
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v1",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v2",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v3",
-                          "replicas": 1,
-                        },
-                      ],
-                      "envoy": Object {
-                        "inbound": Object {
-                          "healthy": 1,
-                          "total": 1,
-                        },
-                        "outbound": Object {
-                          "healthy": 3,
-                          "total": 3,
-                        },
-                      },
-                      "requests": Object {
-                        "errorRatio": -1,
-                      },
-                    }
-                  }
+                  health={undefined}
                   ip="172.30.196.248"
-                  istioEnabled={false}
+                  istioEnabled={true}
                   labels={
                     Object {
                       "app": "reviews",
@@ -3316,7 +3155,12 @@ ShallowWrapper {
                       <WithErrorBoundary
                         eventKey="workloads"
                         message="One of the Workloads associated to this service has an invalid format"
-                      />
+                      >
+                        <ServiceInfoWorkload
+                          namespace="istio-system"
+                          workloads={Array []}
+                        />
+                      </WithErrorBoundary>
                       <WithErrorBoundary
                         eventKey="virtualservices"
                         message="One of the Virtual Services associated to this service has an invalid format"
@@ -3332,7 +3176,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -3348,7 +3192,7 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ]
@@ -3364,7 +3208,7 @@ ShallowWrapper {
                             Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -3390,7 +3234,7 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ]
@@ -3475,7 +3319,7 @@ ShallowWrapper {
                           "items": Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -3501,11 +3345,12 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -3526,7 +3371,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -3542,11 +3387,12 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -3602,42 +3448,9 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    health={
-                      Object {
-                        "deploymentStatuses": Array [
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v1",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v2",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v3",
-                            "replicas": 1,
-                          },
-                        ],
-                        "envoy": Object {
-                          "inbound": Object {
-                            "healthy": 1,
-                            "total": 1,
-                          },
-                          "outbound": Object {
-                            "healthy": 3,
-                            "total": 3,
-                          },
-                        },
-                        "requests": Object {
-                          "errorRatio": -1,
-                        },
-                      }
-                    }
+                    health={undefined}
                     ip="172.30.196.248"
-                    istioEnabled={false}
+                    istioEnabled={true}
                     labels={
                       Object {
                         "app": "reviews",
@@ -3725,7 +3538,12 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
+                        >
+                          <ServiceInfoWorkload
+                            namespace="istio-system"
+                            workloads={Array []}
+                          />
+                        </WithErrorBoundary>
                         <WithErrorBoundary
                           eventKey="virtualservices"
                           message="One of the Virtual Services associated to this service has an invalid format"
@@ -3741,7 +3559,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -3757,7 +3575,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ]
@@ -3773,7 +3591,7 @@ ShallowWrapper {
                               Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -3799,7 +3617,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ]
@@ -3878,7 +3696,7 @@ ShallowWrapper {
                           "items": Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -3904,11 +3722,12 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -3929,7 +3748,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -3945,11 +3764,12 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -3996,7 +3816,7 @@ ShallowWrapper {
                           "items": Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -4022,11 +3842,12 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -4047,7 +3868,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -4063,11 +3884,12 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -4109,7 +3931,7 @@ ShallowWrapper {
                             "items": Array [
                               Object {
                                 "metadata": Object {
-                                  "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                  "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                   "name": "reviews",
                                   "resourceVersion": "393061",
                                 },
@@ -4135,11 +3957,12 @@ ShallowWrapper {
                                       "name": "v3",
                                     },
                                   ],
-                                  "trafficPolicy": null,
+                                  "trafficPolicy": undefined,
                                 },
                               },
                             ],
                             "permissions": Object {
+                              "create": false,
                               "delete": false,
                               "update": false,
                             },
@@ -4160,7 +3983,7 @@ ShallowWrapper {
                                   "resourceVersion": "393057",
                                 },
                                 "spec": Object {
-                                  "gateways": null,
+                                  "gateways": undefined,
                                   "hosts": Array [
                                     "reviews",
                                   ],
@@ -4176,11 +3999,12 @@ ShallowWrapper {
                                       ],
                                     },
                                   ],
-                                  "tcp": null,
+                                  "tcp": undefined,
                                 },
                               },
                             ],
                             "permissions": Object {
+                              "create": false,
                               "delete": false,
                               "update": false,
                             },
@@ -4236,7 +4060,7 @@ ShallowWrapper {
                           "items": Array [
                             Object {
                               "metadata": Object {
-                                "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                 "name": "reviews",
                                 "resourceVersion": "393061",
                               },
@@ -4262,11 +4086,12 @@ ShallowWrapper {
                                     "name": "v3",
                                   },
                                 ],
-                                "trafficPolicy": null,
+                                "trafficPolicy": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -4285,7 +4110,7 @@ ShallowWrapper {
                                 "resourceVersion": "393057",
                               },
                               "spec": Object {
-                                "gateways": null,
+                                "gateways": undefined,
                                 "hosts": Array [
                                   "reviews",
                                 ],
@@ -4301,11 +4126,12 @@ ShallowWrapper {
                                     ],
                                   },
                                 ],
-                                "tcp": null,
+                                "tcp": undefined,
                               },
                             },
                           ],
                           "permissions": Object {
+                            "create": false,
                             "delete": false,
                             "update": false,
                           },
@@ -4369,42 +4195,9 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    health={
-                      Object {
-                        "deploymentStatuses": Array [
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v1",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v2",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v3",
-                            "replicas": 1,
-                          },
-                        ],
-                        "envoy": Object {
-                          "inbound": Object {
-                            "healthy": 1,
-                            "total": 1,
-                          },
-                          "outbound": Object {
-                            "healthy": 3,
-                            "total": 3,
-                          },
-                        },
-                        "requests": Object {
-                          "errorRatio": -1,
-                        },
-                      }
-                    }
+                    health={undefined}
                     ip="172.30.196.248"
-                    istioEnabled={false}
+                    istioEnabled={true}
                     labels={
                       Object {
                         "app": "reviews",
@@ -4466,42 +4259,9 @@ ShallowWrapper {
                         },
                       ]
                     }
-                    health={
-                      Object {
-                        "deploymentStatuses": Array [
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v1",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v2",
-                            "replicas": 1,
-                          },
-                          Object {
-                            "available": 1,
-                            "name": "reviews-v3",
-                            "replicas": 1,
-                          },
-                        ],
-                        "envoy": Object {
-                          "inbound": Object {
-                            "healthy": 1,
-                            "total": 1,
-                          },
-                          "outbound": Object {
-                            "healthy": 3,
-                            "total": 3,
-                          },
-                        },
-                        "requests": Object {
-                          "errorRatio": -1,
-                        },
-                      }
-                    }
+                    health={undefined}
                     ip="172.30.196.248"
-                    istioEnabled={false}
+                    istioEnabled={true}
                     labels={
                       Object {
                         "app": "reviews",
@@ -4561,40 +4321,9 @@ ShallowWrapper {
                         ],
                       },
                     ],
-                    "health": Object {
-                      "deploymentStatuses": Array [
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v1",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v2",
-                          "replicas": 1,
-                        },
-                        Object {
-                          "available": 1,
-                          "name": "reviews-v3",
-                          "replicas": 1,
-                        },
-                      ],
-                      "envoy": Object {
-                        "inbound": Object {
-                          "healthy": 1,
-                          "total": 1,
-                        },
-                        "outbound": Object {
-                          "healthy": 3,
-                          "total": 3,
-                        },
-                      },
-                      "requests": Object {
-                        "errorRatio": -1,
-                      },
-                    },
+                    "health": undefined,
                     "ip": "172.30.196.248",
-                    "istioEnabled": false,
+                    "istioEnabled": true,
                     "labels": Object {
                       "app": "reviews",
                     },
@@ -4685,7 +4414,12 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
+                        >
+                          <ServiceInfoWorkload
+                            namespace="istio-system"
+                            workloads={Array []}
+                          />
+                        </WithErrorBoundary>
                         <WithErrorBoundary
                           eventKey="virtualservices"
                           message="One of the Virtual Services associated to this service has an invalid format"
@@ -4701,7 +4435,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -4717,7 +4451,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ]
@@ -4733,7 +4467,7 @@ ShallowWrapper {
                               Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -4759,7 +4493,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ]
@@ -4855,7 +4589,12 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
+                        >
+                          <ServiceInfoWorkload
+                            namespace="istio-system"
+                            workloads={Array []}
+                          />
+                        </WithErrorBoundary>
                         <WithErrorBoundary
                           eventKey="virtualservices"
                           message="One of the Virtual Services associated to this service has an invalid format"
@@ -4871,7 +4610,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -4887,7 +4626,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ]
@@ -4903,7 +4642,7 @@ ShallowWrapper {
                               Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -4929,7 +4668,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ]
@@ -5022,7 +4761,12 @@ ShallowWrapper {
                         <WithErrorBoundary
                           eventKey="workloads"
                           message="One of the Workloads associated to this service has an invalid format"
-                        />
+                        >
+                          <ServiceInfoWorkload
+                            namespace="istio-system"
+                            workloads={Array []}
+                          />
+                        </WithErrorBoundary>
                         <WithErrorBoundary
                           eventKey="virtualservices"
                           message="One of the Virtual Services associated to this service has an invalid format"
@@ -5038,7 +4782,7 @@ ShallowWrapper {
                                     "resourceVersion": "393057",
                                   },
                                   "spec": Object {
-                                    "gateways": null,
+                                    "gateways": undefined,
                                     "hosts": Array [
                                       "reviews",
                                     ],
@@ -5054,7 +4798,7 @@ ShallowWrapper {
                                         ],
                                       },
                                     ],
-                                    "tcp": null,
+                                    "tcp": undefined,
                                   },
                                 },
                               ]
@@ -5070,7 +4814,7 @@ ShallowWrapper {
                               Array [
                                 Object {
                                   "metadata": Object {
-                                    "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                    "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                     "name": "reviews",
                                     "resourceVersion": "393061",
                                   },
@@ -5096,7 +4840,7 @@ ShallowWrapper {
                                         "name": "v3",
                                       },
                                     ],
-                                    "trafficPolicy": null,
+                                    "trafficPolicy": undefined,
                                   },
                                 },
                               ]
@@ -5184,7 +4928,12 @@ ShallowWrapper {
                           <WithErrorBoundary
                             eventKey="workloads"
                             message="One of the Workloads associated to this service has an invalid format"
-                          />
+                          >
+                            <ServiceInfoWorkload
+                              namespace="istio-system"
+                              workloads={Array []}
+                            />
+                          </WithErrorBoundary>
                           <WithErrorBoundary
                             eventKey="virtualservices"
                             message="One of the Virtual Services associated to this service has an invalid format"
@@ -5200,7 +4949,7 @@ ShallowWrapper {
                                       "resourceVersion": "393057",
                                     },
                                     "spec": Object {
-                                      "gateways": null,
+                                      "gateways": undefined,
                                       "hosts": Array [
                                         "reviews",
                                       ],
@@ -5216,7 +4965,7 @@ ShallowWrapper {
                                           ],
                                         },
                                       ],
-                                      "tcp": null,
+                                      "tcp": undefined,
                                     },
                                   },
                                 ]
@@ -5232,7 +4981,7 @@ ShallowWrapper {
                                 Array [
                                   Object {
                                     "metadata": Object {
-                                      "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                       "name": "reviews",
                                       "resourceVersion": "393061",
                                     },
@@ -5258,7 +5007,7 @@ ShallowWrapper {
                                           "name": "v3",
                                         },
                                       ],
-                                      "trafficPolicy": null,
+                                      "trafficPolicy": undefined,
                                     },
                                   },
                                 ]
@@ -5443,7 +5192,12 @@ ShallowWrapper {
                             <WithErrorBoundary
                               eventKey="workloads"
                               message="One of the Workloads associated to this service has an invalid format"
-                            />,
+                            >
+                              <ServiceInfoWorkload
+                                namespace="istio-system"
+                                workloads={Array []}
+                              />
+                            </WithErrorBoundary>,
                             <WithErrorBoundary
                               eventKey="virtualservices"
                               message="One of the Virtual Services associated to this service has an invalid format"
@@ -5459,7 +5213,7 @@ ShallowWrapper {
                                         "resourceVersion": "393057",
                                       },
                                       "spec": Object {
-                                        "gateways": null,
+                                        "gateways": undefined,
                                         "hosts": Array [
                                           "reviews",
                                         ],
@@ -5475,7 +5229,7 @@ ShallowWrapper {
                                             ],
                                           },
                                         ],
-                                        "tcp": null,
+                                        "tcp": undefined,
                                       },
                                     },
                                   ]
@@ -5491,7 +5245,7 @@ ShallowWrapper {
                                   Array [
                                     Object {
                                       "metadata": Object {
-                                        "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                         "name": "reviews",
                                         "resourceVersion": "393061",
                                       },
@@ -5517,7 +5271,7 @@ ShallowWrapper {
                                             "name": "v3",
                                           },
                                         ],
-                                        "trafficPolicy": null,
+                                        "trafficPolicy": undefined,
                                       },
                                     },
                                   ]
@@ -5557,12 +5311,26 @@ ShallowWrapper {
                             "key": undefined,
                             "nodeType": "class",
                             "props": Object {
-                              "children": false,
+                              "children": <ServiceInfoWorkload
+                                namespace="istio-system"
+                                workloads={Array []}
+                              />,
                               "eventKey": "workloads",
                               "message": "One of the Workloads associated to this service has an invalid format",
                             },
                             "ref": null,
-                            "rendered": false,
+                            "rendered": Object {
+                              "instance": null,
+                              "key": undefined,
+                              "nodeType": "class",
+                              "props": Object {
+                                "namespace": "istio-system",
+                                "workloads": Array [],
+                              },
+                              "ref": null,
+                              "rendered": null,
+                              "type": [Function],
+                            },
                             "type": [Function],
                           },
                           Object {
@@ -5581,7 +5349,7 @@ ShallowWrapper {
                                         "resourceVersion": "393057",
                                       },
                                       "spec": Object {
-                                        "gateways": null,
+                                        "gateways": undefined,
                                         "hosts": Array [
                                           "reviews",
                                         ],
@@ -5597,7 +5365,7 @@ ShallowWrapper {
                                             ],
                                           },
                                         ],
-                                        "tcp": null,
+                                        "tcp": undefined,
                                       },
                                     },
                                   ]
@@ -5621,7 +5389,7 @@ ShallowWrapper {
                                       "resourceVersion": "393057",
                                     },
                                     "spec": Object {
-                                      "gateways": null,
+                                      "gateways": undefined,
                                       "hosts": Array [
                                         "reviews",
                                       ],
@@ -5637,7 +5405,7 @@ ShallowWrapper {
                                           ],
                                         },
                                       ],
-                                      "tcp": null,
+                                      "tcp": undefined,
                                     },
                                   },
                                 ],
@@ -5658,7 +5426,7 @@ ShallowWrapper {
                                   Array [
                                     Object {
                                       "metadata": Object {
-                                        "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                        "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                         "name": "reviews",
                                         "resourceVersion": "393061",
                                       },
@@ -5684,7 +5452,7 @@ ShallowWrapper {
                                             "name": "v3",
                                           },
                                         ],
-                                        "trafficPolicy": null,
+                                        "trafficPolicy": undefined,
                                       },
                                     },
                                   ]
@@ -5723,7 +5491,7 @@ ShallowWrapper {
                                 "destinationRules": Array [
                                   Object {
                                     "metadata": Object {
-                                      "createdTimestamp": "2018-07-02T13:44:01+02:00",
+                                      "creationTimestamp": "2018-07-02T13:44:01+02:00",
                                       "name": "reviews",
                                       "resourceVersion": "393061",
                                     },
@@ -5749,7 +5517,7 @@ ShallowWrapper {
                                           "name": "v3",
                                         },
                                       ],
-                                      "trafficPolicy": null,
+                                      "trafficPolicy": undefined,
                                     },
                                   },
                                 ],
