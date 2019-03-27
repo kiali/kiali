@@ -113,6 +113,10 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_PERSISTENCE_DIR="$2"
       shift;shift
       ;;
+    -kn|--knative)
+      KNATIVE_ENABLED="true"
+      shift;
+      ;;
     -ke|--kiali-enabled)
       KIALI_ENABLED="$2"
       shift;shift
@@ -444,8 +448,33 @@ if [ "$_CMD" = "up" ]; then
     sudo systemctl restart docker.service
   fi
 
+  echo "Writing openshift config..."
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS} --write-config
+
+  if [ "$KNATIVE_ENABLED" == "true" ]; then
+    debug "Preparing the cluster for Knative"
+    sed -i -e 's/"admissionConfig":{"pluginConfig":null}/"admissionConfig": {\
+        "pluginConfig": {\
+            "ValidatingAdmissionWebhook": {\
+                "configuration": {\
+                    "apiVersion": "v1",\
+                    "kind": "DefaultAdmissionConfig",\
+                    "disable": false\
+                }\
+            },\
+            "MutatingAdmissionWebhook": {\
+                "configuration": {\
+                    "apiVersion": "v1",\
+                    "kind": "DefaultAdmissionConfig",\
+                    "disable": false\
+                }\
+            }\
+        }\
+    }/' ${OPENSHIFT_PERSISTENCE_DIR}/kube-apiserver/master-config.yaml
+  fi
+
   echo "Starting the OpenShift cluster..."
-  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}"
+  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS} --write-config"
   ${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
 
   if [ "$?" != "0" ]; then
@@ -538,6 +567,35 @@ if [ "$_CMD" = "up" ]; then
     KIALI_PASSPHRASE=${KIALI_PASSPHRASE} /tmp/deploy-kiali-to-openshift.sh
   fi
 
+  if [ "${KNATIVE_ENABLED}" == "true" ]; then
+    echo "Setting up security policy for knative..."
+
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z build-controller -n knative-build
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z controller -n knative-serving
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z autoscaler -n knative-serving
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z kube-state-metrics -n knative-monitoring
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z node-exporter -n knative-monitoring
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user anyuid -z prometheus-system -n knative-monitoring
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin -z build-controller -n knative-build
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin -z controller -n knative-serving
+
+    curl -L https://github.com/knative/serving/releases/download/v0.4.1/serving.yaml \
+      | sed 's/LoadBalancer/NodePort/' \
+      | ${MAISTRA_ISTIO_OC_COMMAND} apply -f -
+
+    echo "Waiting for Knative to become ready"
+    sleep 5; while echo && {$MAISTRA_ISTIO_OC_COMMAND} get pods -n knative-serving | grep -v -E "(Running|Completed|STATUS)"; do sleep 5; done
+
+    echo "Creating a new project for knative examples"
+    ${MAISTRA_ISTIO_OC_COMMAND} new-project knative-examples
+
+
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user privileged -z default -n knative-examples
+    ${MAISTRA_ISTIO_OC_COMMAND} label --overwrite namespace knative-examples istio-injection=enabled
+
+    echo "Knative is installed!"
+  fi
+
   if [ "${REMOVE_JAEGER}" == "true" ]; then
       echo "Removing Jaeger from cluster..."
       ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=jaeger -n istio-system
@@ -555,7 +613,7 @@ elif [ "$_CMD" = "down" ];then
     if [ "${FILESYSTEM}" ] ; then
       sudo umount "${FILESYSTEM}"
     fi
-  done  
+  done
   # only purge these if we do not want persistence
   if [ "${OPENSHIFT_PERSISTENCE_ARGS}" == "" ]; then
     echo "SUDO ACCESS: Purging /var/lib/origin files"
