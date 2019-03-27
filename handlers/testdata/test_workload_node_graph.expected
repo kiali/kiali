@@ -50,7 +50,7 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "170.00",
-                "httpOut": "160.00"
+                "httpOut": "164.00"
               }
             },
             {
@@ -180,6 +180,24 @@
       },
       {
         "data": {
+          "id": "4a639f9922515051205421a93f94e0b8",
+          "nodeType": "service",
+          "namespace": "unknown",
+          "service": "unknown",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "4.00",
+                "httpIn4xx": "4.00"
+              }
+            }
+          ],
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
           "id": "b30b0078325bf2e1adb4d57c4c0c2665",
           "nodeType": "unknown",
           "namespace": "unknown",
@@ -209,11 +227,32 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "12.5"
+              "httpPercentReq": "12.2"
             },
             "responses": {
               "200": {
                 "-": "100.0"
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "1fdebf7bec889df76208b55ef5cb0e03",
+          "source": "240c2314cefc993c5d9479a5c349fbd2",
+          "target": "4a639f9922515051205421a93f94e0b8",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "2.4"
+            },
+            "responses": {
+              "404": {
+                "NR": "100.0"
               }
             }
           }
@@ -232,7 +271,7 @@
               "http4xx": "20.00",
               "http5xx": "20.00",
               "httpPercentErr": "50.0",
-              "httpPercentReq": "50.0"
+              "httpPercentReq": "48.8"
             },
             "responses": {
               "200": {
@@ -260,7 +299,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "12.5"
+              "httpPercentReq": "12.2"
             },
             "responses": {
               "200": {
@@ -297,7 +336,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "12.5"
+              "httpPercentReq": "12.2"
             },
             "responses": {
               "200": {
@@ -316,7 +355,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "12.5"
+              "httpPercentReq": "12.2"
             },
             "responses": {
               "200": {

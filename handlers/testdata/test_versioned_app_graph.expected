@@ -209,7 +209,7 @@
               "protocol": "http",
               "rates": {
                 "httpIn": "40.00",
-                "httpOut": "70.00"
+                "httpOut": "74.00"
               }
             }
           ]
@@ -264,6 +264,24 @@
           "isInaccessible": true,
           "isOutside": true,
           "isRoot": true
+        }
+      },
+      {
+        "data": {
+          "id": "4a639f9922515051205421a93f94e0b8",
+          "nodeType": "service",
+          "namespace": "unknown",
+          "service": "unknown",
+          "traffic": [
+            {
+              "protocol": "http",
+              "rates": {
+                "httpIn": "4.00",
+                "httpIn4xx": "4.00"
+              }
+            }
+          ],
+          "isInaccessible": true
         }
       },
       {
@@ -567,7 +585,7 @@
               "http": "30.00",
               "http5xx": "10.00",
               "httpPercentErr": "33.3",
-              "httpPercentReq": "42.9"
+              "httpPercentReq": "40.5"
             },
             "responses": {
               "200": {
@@ -582,6 +600,27 @@
       },
       {
         "data": {
+          "id": "fb2d0efdb81a37d8a1fdbbea3b82ea73",
+          "source": "dd4c5162b7f38a52e7f984766f88d807",
+          "target": "4a639f9922515051205421a93f94e0b8",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "5.4"
+            },
+            "responses": {
+              "404": {
+                "NR": "100.0"
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
           "id": "5d3f0ce188557ed9741bda52cb245ff4",
           "source": "dd4c5162b7f38a52e7f984766f88d807",
           "target": "87100ff76f5122d56e8aa75d018b5d67",
@@ -589,7 +628,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "28.6"
+              "httpPercentReq": "27.0"
             },
             "responses": {
               "200": {
@@ -608,7 +647,7 @@
             "protocol": "http",
             "rates": {
               "http": "20.00",
-              "httpPercentReq": "28.6"
+              "httpPercentReq": "27.0"
             },
             "responses": {
               "200": {
