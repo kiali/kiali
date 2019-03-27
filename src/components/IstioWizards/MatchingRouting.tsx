@@ -1,20 +1,8 @@
 import * as React from 'react';
-import {
-  Button,
-  DropdownButton,
-  DropdownKebab,
-  Form,
-  FormControl,
-  FormGroup,
-  Label,
-  ListView,
-  ListViewIcon,
-  ListViewItem,
-  MenuItem
-} from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
-import { style } from 'typestyle';
-import { PfColors } from '../Pf/PfColors';
+import Rules, { MOVE_TYPE, Rule } from './MatchingRouting/Rules';
+import RuleBuilder from './MatchingRouting/RuleBuilder';
+import { EXACT, HEADERS } from './MatchingRouting/MatchBuilder';
 
 type Props = {
   serviceName: string;
@@ -22,22 +10,10 @@ type Props = {
   onChange: (valid: boolean, rules: Rule[]) => void;
 };
 
-export enum ROUTE_TYPE {
-  SERVICE = 'service-',
-  WORKLOAD = 'workload-'
-}
-
-export type Rule = {
-  matches: string[];
-  routeType: ROUTE_TYPE;
-  route: string;
-};
-
 type State = {
   category: string;
   operator: string;
-  route: string;
-  routeType: ROUTE_TYPE;
+  routes: string[];
   matches: string[];
   headerName: string;
   matchValue: string;
@@ -45,89 +21,10 @@ type State = {
   validationMsg: string;
 };
 
-const HEADERS = 'headers';
-const URI = 'uri';
-const SCHEME = 'scheme';
-const METHOD = 'method';
-const AUTHORITY = 'authority';
-
-const matchOptions: string[] = [HEADERS, URI, SCHEME, METHOD, AUTHORITY];
-
-const EXACT = 'exact';
-const PREFIX = 'prefix';
-const REGEX = 'regex';
-
-const opOptions: string[] = [EXACT, PREFIX, REGEX];
-
-const placeholderText = {
-  [HEADERS]: 'Header value...',
-  [URI]: 'Uri value...',
-  [SCHEME]: 'Scheme value...',
-  [METHOD]: 'Method value...',
-  [AUTHORITY]: 'Authority value...'
-};
-
-const matchStyle = style({
-  marginLeft: 20,
-  marginRight: 20
-});
-
-const createStyle = style({
-  marginTop: 70,
-  marginLeft: 20
-});
-
-const labelContainerStyle = style({
-  marginTop: 5
-});
-
-const labelMatchStyle = style({});
-
-const routeStyle = style({
-  marginTop: 15
-});
-
-const routeToStyle = style({
-  marginLeft: 10
-});
-
-const validationStyle = style({
-  marginTop: 15,
-  color: PfColors.Red100
-});
-
-const ruleItemStyle = style({
-  $nest: {
-    ['.list-group-item-heading']: {
-      flexBasis: 'calc(50% - 20px)',
-      width: 'calc(50% - 20px)'
-    },
-    ['.list-view-pf-actions']: {
-      zIndex: 10
-    }
-  }
-});
-
-const matchValueStyle = style({
-  fontWeight: 'normal',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis'
-});
-
-enum MOVE_TYPE {
-  UP,
-  DOWN
-}
-
-const vsIconType = 'fa';
-const vsIconName = 'code-fork';
-
-const svcIconType = 'pf';
-const svcIconName = 'service';
-
-const wkIconType = 'pf';
-const wkIconName = 'bundle';
+const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
+const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
+const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_ROUTES_NON_EMPTY = 'Routes must be non empty';
 
 class MatchingRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -135,8 +32,7 @@ class MatchingRouting extends React.Component<Props, State> {
     this.state = {
       category: HEADERS,
       operator: EXACT,
-      routeType: props.workloads.length > 0 ? ROUTE_TYPE.WORKLOAD : ROUTE_TYPE.SERVICE,
-      route: props.workloads.length > 0 ? props.workloads[0].name : props.serviceName,
+      routes: this.props.workloads.map(w => w.name),
       matches: [],
       headerName: '',
       matchValue: '',
@@ -144,34 +40,6 @@ class MatchingRouting extends React.Component<Props, State> {
       validationMsg: ''
     };
   }
-
-  onSelectCategory = (category: string) => {
-    this.setState({
-      category: category
-    });
-  };
-
-  onSelectOperator = (operator: string) => {
-    this.setState({
-      operator: operator
-    });
-  };
-
-  onSelectRoute = (routeName: string) => {
-    let route = '';
-    let routeType: ROUTE_TYPE;
-    if (routeName.startsWith(ROUTE_TYPE.SERVICE.toString())) {
-      routeType = ROUTE_TYPE.SERVICE;
-      route = routeName.substring(ROUTE_TYPE.SERVICE.toString().length);
-    } else {
-      routeType = ROUTE_TYPE.WORKLOAD;
-      route = routeName.substring(ROUTE_TYPE.WORKLOAD.toString().length);
-    }
-    this.setState({
-      route: route,
-      routeType: routeType
-    });
-  };
 
   isMatchesIncluded = (rules: Rule[], rule: Rule) => {
     let found = false;
@@ -238,8 +106,7 @@ class MatchingRouting extends React.Component<Props, State> {
         }
         const newRule: Rule = {
           matches: prevState.matches,
-          routeType: prevState.routeType,
-          route: prevState.route
+          routes: prevState.routes
         };
         if (!this.isMatchesIncluded(prevState.rules, newRule)) {
           prevState.rules.push(newRule);
@@ -256,7 +123,7 @@ class MatchingRouting extends React.Component<Props, State> {
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
             rules: prevState.rules,
-            validationMsg: 'A Rule with same matching criteria is already added.'
+            validationMsg: MSG_SAME_MATCHING
           };
         }
       },
@@ -285,22 +152,45 @@ class MatchingRouting extends React.Component<Props, State> {
   };
 
   onHeaderNameChange = (event: any) => {
+    let validationMsg = '';
+    if (this.state.matchValue !== '' && event.target.value === '') {
+      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+    }
+    if (this.state.matchValue === '' && event.target.value !== '') {
+      validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+    }
     this.setState({
       headerName: event.target.value,
-      validationMsg: ''
+      validationMsg: validationMsg
     });
   };
 
   onMatchValueChange = (event: any) => {
     let validationMsg = '';
-    if (this.state.category === HEADERS && this.state.headerName === '') {
-      validationMsg = 'Header name must be non empty';
+    if (this.state.category === HEADERS) {
+      if (this.state.headerName === '' && event.target.value !== '') {
+        validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+      }
+      if (this.state.headerName !== '' && event.target.value === '') {
+        validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+      }
     }
     if (event.target.value === '') {
       validationMsg = '';
     }
     this.setState({
       matchValue: event.target.value,
+      validationMsg: validationMsg
+    });
+  };
+
+  onSelectRoutes = (routes: string[]) => {
+    let validationMsg = '';
+    if (routes.length === 0) {
+      validationMsg = MSG_ROUTES_NON_EMPTY;
+    }
+    this.setState({
+      routes: routes,
       validationMsg: validationMsg
     });
   };
@@ -333,228 +223,29 @@ class MatchingRouting extends React.Component<Props, State> {
     return matchAll;
   };
 
-  matchBuilderValidation = (): string => {
-    return this.state.validationMsg === '' ? 'success' : 'error';
-  };
-
-  renderRuleBuilder = () => {
-    return (
-      <ListView>
-        <ListViewItem
-          key={'match-builder'}
-          description={
-            <div>
-              <div>
-                Matches:
-                {this.renderMatchBuilder()}
-                {this.renderMatches()}
-              </div>
-              <div className={routeStyle}>
-                Route:
-                {this.renderRouteBuilder()}
-              </div>
-              {this.state.validationMsg !== '' && <div className={validationStyle}>{this.state.validationMsg}</div>}
-            </div>
-          }
-          // tslint:disable
-          actions={
-            <Button
-              bsStyle="primary"
-              className={createStyle}
-              disabled={this.state.validationMsg !== ''}
-              onClick={this.onAddRule}
-            >
-              Add Rule
-            </Button>
-          }
-        />
-      </ListView>
-    );
-  };
-
-  renderMatchBuilder = () => {
-    const matchItems: any[] = matchOptions.map((mode, index) => (
-      <MenuItem key={mode + '-' + index} eventKey={mode} active={mode === this.state.category}>
-        {mode}
-      </MenuItem>
-    ));
-    const opItems: any[] = opOptions.map((op, index) => (
-      <MenuItem key={op + '-' + index} eventKey={op} active={op === this.state.operator}>
-        {op}
-      </MenuItem>
-    ));
-    return (
-      <Form inline={true}>
-        <FormGroup validationState={this.matchBuilderValidation()}>
-          <DropdownButton
-            bsStyle="default"
-            title={this.state.category}
-            id="match-dropdown"
-            onSelect={this.onSelectCategory}
-          >
-            {matchItems}
-          </DropdownButton>
-          {this.state.category === HEADERS && (
-            <FormControl
-              type="text"
-              id="header-name-text"
-              placeholder={'Header name...'}
-              value={this.state.headerName}
-              onChange={this.onHeaderNameChange}
-            />
-          )}
-          <DropdownButton
-            bsStyle="default"
-            title={this.state.operator}
-            id="operator-dropdown"
-            onSelect={this.onSelectOperator}
-          >
-            {opItems}
-          </DropdownButton>
-          <FormControl
-            type="text"
-            id="header-value-text"
-            placeholder={placeholderText[this.state.category]}
-            value={this.state.matchValue}
-            onChange={this.onMatchValueChange}
-          />
-          <Button
-            bsStyle="default"
-            className={matchStyle}
-            disabled={this.state.validationMsg !== ''}
-            onClick={this.onAddMatch}
-          >
-            Add Match
-          </Button>
-        </FormGroup>
-      </Form>
-    );
-  };
-
-  renderRouteBuilder = () => {
-    const routeItems: any[] = this.props.workloads.map(wk => (
-      <MenuItem
-        key={'workload-' + wk.name}
-        eventKey={'workload-' + wk.name}
-        active={wk.name === this.state.route && this.state.routeType === ROUTE_TYPE.WORKLOAD}
-      >
-        Workload: {wk.name}
-      </MenuItem>
-    ));
-    routeItems.push(
-      <MenuItem
-        key={'service-' + this.props.serviceName}
-        eventKey={'service-' + this.props.serviceName}
-        active={this.props.serviceName === this.state.route && this.state.routeType === ROUTE_TYPE.SERVICE}
-      >
-        Service: {this.props.serviceName}
-      </MenuItem>
-    );
-    return (
-      <Form inline={true}>
-        <DropdownButton
-          bsStyle="default"
-          title={(this.state.routeType === ROUTE_TYPE.SERVICE ? 'Service: ' : 'Workload: ') + this.state.route}
-          id="route-dropdown"
-          onSelect={this.onSelectRoute}
-        >
-          {routeItems}
-        </DropdownButton>
-      </Form>
-    );
-  };
-
-  renderMatches = () => {
-    const matches: any[] = this.state.matches.map((match, index) => (
-      <span key={match + '-' + index}>
-        <Label className={labelMatchStyle} type="primary" onRemoveClick={() => this.onRemoveMatch(match)}>
-          {match}
-        </Label>{' '}
-      </span>
-    ));
-    return (
-      <div className={labelContainerStyle}>
-        Matching selected: {matches.length > 0 ? matches : <b>Match any request</b>}
-      </div>
-    );
-  };
-
-  renderRules = () => {
-    let ruleItems: any[] = [];
-    let isValid: boolean = true;
-    let matchAll: number = this.matchAllIndex(this.state.rules);
-    for (let index = 0; index < this.state.rules.length; index++) {
-      const rule = this.state.rules[index];
-      isValid = matchAll === -1 || index <= matchAll;
-      const matches: any[] = rule.matches.map((map, index) => {
-        return (
-          <div key={'match-' + map + '-' + index} className={matchValueStyle}>
-            {map}
-          </div>
-        );
-      });
-      const ruleActions = (
-        <div>
-          <Button onClick={() => this.onRemoveRule(index)}>Remove</Button>
-          {this.state.rules.length > 1 && (
-            <DropdownKebab key={'move-rule-actions-' + index} id={'move-rule-actions-' + index} pullRight={true}>
-              {index > 0 && <MenuItem onClick={() => this.onMoveRule(index, MOVE_TYPE.UP)}>Move Up</MenuItem>}
-              {index + 1 < this.state.rules.length && (
-                <MenuItem onClick={() => this.onMoveRule(index, MOVE_TYPE.DOWN)}>Move Down</MenuItem>
-              )}
-            </DropdownKebab>
-          )}
-        </div>
-      );
-      ruleItems.push(
-        <ListViewItem
-          key={'match-rule-' + index}
-          className={ruleItemStyle}
-          leftContent={<ListViewIcon type={vsIconType} name={vsIconName} />}
-          heading={
-            <div>
-              Matches:
-              {rule.matches.length === 0 && <div className={matchValueStyle}>Any request</div>}
-              {rule.matches.length !== 0 && matches}
-            </div>
-          }
-          description={
-            <div>
-              <b>Route to:</b>
-              <div>
-                <span>
-                  <ListViewIcon
-                    type={rule.routeType === ROUTE_TYPE.SERVICE ? svcIconType : wkIconType}
-                    name={rule.routeType === ROUTE_TYPE.SERVICE ? svcIconName : wkIconName}
-                  />
-                  <span className={routeToStyle}>{rule.route}</span>
-                </span>
-              </div>
-              {!isValid && (
-                <div className={validationStyle}>
-                  Match 'Any request' is defined in a previous rule.
-                  <br />
-                  This rule is not accessible.
-                </div>
-              )}
-            </div>
-          }
-          actions={ruleActions}
-        />
-      );
-    }
-    return (
-      <div>
-        <ListView>{ruleItems}</ListView>
-      </div>
-    );
-  };
-
   render() {
     return (
       <>
-        {this.renderRuleBuilder()}
-        {this.renderRules()}
+        <RuleBuilder
+          category={this.state.category}
+          operator={this.state.operator}
+          headerName={this.state.headerName}
+          matchValue={this.state.matchValue}
+          isValid={this.state.validationMsg === ''}
+          onSelectCategory={(category: string) => this.setState({ category: category })}
+          onHeaderNameChange={this.onHeaderNameChange}
+          onSelectOperator={(operator: string) => this.setState({ operator: operator })}
+          onMatchValueChange={this.onMatchValueChange}
+          onAddMatch={this.onAddMatch}
+          matches={this.state.matches}
+          onRemoveMatch={this.onRemoveMatch}
+          workloads={this.props.workloads}
+          routes={this.state.routes}
+          onSelectRoutes={this.onSelectRoutes}
+          validationMsg={this.state.validationMsg}
+          onAddRule={this.onAddRule}
+        />
+        <Rules rules={this.state.rules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
       </>
     );
   }

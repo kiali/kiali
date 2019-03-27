@@ -11,12 +11,13 @@ import {
 import { serverConfig } from '../../config/serverConfig';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
-import MatchingRouting, { ROUTE_TYPE, Rule } from './MatchingRouting';
+import MatchingRouting from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
 import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
 import { TLSStatus } from '../../types/TLSStatus';
 import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
+import { Rule } from './MatchingRouting/Rules';
 
 type Props = {
   show: boolean;
@@ -209,15 +210,21 @@ class IstioWizard extends React.Component<Props, State> {
           hosts: [this.props.serviceName],
           http: this.state.rules.map(rule => {
             const httpRoute: HTTPRoute = {};
-            const destW: DestinationWeight = {
-              destination: {
-                host: this.props.serviceName
+            httpRoute.route = [];
+            for (let iRoute = 0; iRoute < rule.routes.length; iRoute++) {
+              const destW: DestinationWeight = {
+                destination: {
+                  host: this.props.serviceName,
+                  subset: wkdNameVersion[rule.routes[iRoute]]
+                }
+              };
+              destW.weight = Math.floor(100 / rule.routes.length);
+              if (iRoute === 0) {
+                destW.weight = destW.weight + (100 % rule.routes.length);
               }
-            };
-            if (rule.routeType === ROUTE_TYPE.WORKLOAD) {
-              destW.destination.subset = wkdNameVersion[rule.route];
+              httpRoute.route.push(destW);
             }
-            httpRoute.route = [destW];
+
             if (rule.matches.length > 0) {
               httpRoute.match = this.buildHTTPMatchRequest(rule.matches);
             }
