@@ -251,8 +251,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       this.metricsPromise = undefined;
     }
 
-    // Just return if the metric types are unset, there is no data, or charts are unsupported
-    if (!destMetricType || !sourceMetricType || !this.hasSupportedCharts(edge) || (!isGrpc && !isHttp && !isTcp)) {
+    // Just return if the metric types are unset, there is no data, destination node is "unknown" or charts are unsupported
+    if (
+      !destMetricType ||
+      !sourceMetricType ||
+      !this.hasSupportedCharts(edge) ||
+      (!isGrpc && !isHttp && !isTcp) ||
+      destData.isInaccessible
+    ) {
       this.setState({
         loading: false
       });
@@ -407,6 +413,15 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <>
           <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. Use the
           workload graph type to observe individual workload-to-service edge sparklines.
+        </>
+      );
+    }
+
+    const data = nodeData(edge.target());
+    if (data.isInaccessible) {
+      return (
+        <>
+          <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the destination is inaccessible.
         </>
       );
     }

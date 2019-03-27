@@ -145,7 +145,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
       }
     } else if (NodeType.SERVICE === node.type) {
       icon = <Icon type="pf" name="service" style={style} />;
-      if (!node.isServiceEntry || !node.isInaccessible) {
+      if (!node.isServiceEntry && !node.isInaccessible) {
         name = (
           <Link to={`/namespaces/${encodeURIComponent(node.namespace)}/services/${encodeURIComponent(node.name)}`}>
             {node.name}
