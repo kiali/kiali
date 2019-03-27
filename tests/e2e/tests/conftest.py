@@ -15,8 +15,8 @@ CIRCUIT_BREAKER_FILE = ASSETS_PATH + '/bookinfo-reviews-all-cb.yaml'
 VIRTUAL_SERVICE_FILE = ASSETS_PATH + '/bookinfo-ratings-delay.yaml'
 WORKLOADS_FILE = ASSETS_PATH  + '/bookinfo-workloads.yaml'
 
-CURRENT_CONFIGMAP_FILE = CONFIG_PATH + '/current_kiali_configmap.yaml'
-NEW_CONFIG_MAP_FILE = CONFIG_PATH + '/new_kiali_configmap.yaml'
+CURRENT_CONFIGMAP_FILE = './current_kiali_configmap.yaml'
+NEW_CONFIG_MAP_FILE = './new_kiali_configmap.yaml'
 
 @pytest.fixture(scope='session')
 def kiali_client():
@@ -77,3 +77,9 @@ def get_kiali_clusterrole_file(file_type):
     yaml_content = urlopen(file).read()
 
     return next(yaml.safe_load_all(yaml_content))
+
+def get_kiali_hostname():
+    return __get_environment_config__(ENV_FILE).get('kiali_hostname')
+
+def get_kiali_swagger_address():
+    return __get_environment_config__(ENV_FILE).get('kiali_swagger_address')
