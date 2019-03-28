@@ -3,16 +3,9 @@ import * as React from 'react';
 import { MTLSIconTypes } from './MTLSIcon';
 import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { meshWideMTLSStatusSelector } from '../../store/Selectors';
-import { MTLSStatuses, nsWideMTLSStatus } from '../../types/TLSStatus';
+import { MTLSStatuses } from '../../types/TLSStatus';
 
-type ReduxProps = {
-  meshStatus: string;
-};
-
-type Props = ReduxProps & {
+type Props = {
   status: string;
 };
 
@@ -49,7 +42,7 @@ class NamespaceMTLSStatus extends React.Component<Props> {
   render() {
     return (
       <MTLSStatus
-        status={nsWideMTLSStatus(this.props.status, this.props.meshStatus)}
+        status={this.props.status}
         className={this.iconStyle()}
         statusDescriptors={statusDescriptors}
         overlayPosition={'left'}
@@ -58,10 +51,4 @@ class NamespaceMTLSStatus extends React.Component<Props> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
-  meshStatus: meshWideMTLSStatusSelector(state)
-});
-
-const NamespaceMTLSStatusContainer = connect(mapStateToProps)(NamespaceMTLSStatus);
-
-export default NamespaceMTLSStatusContainer;
+export default NamespaceMTLSStatus;

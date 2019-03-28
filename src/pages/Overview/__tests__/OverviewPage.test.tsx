@@ -3,11 +3,13 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
 
 import { mount, shallow, ReactWrapper } from 'enzyme';
-import OverviewPage from '../OverviewPage';
+import { OverviewPage } from '../OverviewPage';
+import OverviewPageContainer from '../OverviewPage';
 import { FilterSelected } from '../../../components/Filters/StatefulFilters';
 import * as API from '../../../services/Api';
 import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../../../types/Health';
 import { store } from '../../../store/ConfigStore';
+import { MTLSStatuses } from '../../../types/TLSStatus';
 
 window['SVGPathElement'] = a => a;
 
@@ -46,7 +48,7 @@ const mountPage = () => {
   mounted = mount(
     <Provider store={store}>
       <Router>
-        <OverviewPage />
+        <OverviewPageContainer />
       </Router>
     </Provider>
   );
@@ -63,7 +65,7 @@ describe('Overview page', () => {
   });
 
   it('renders initial layout', () => {
-    const wrapper = shallow(<OverviewPage />);
+    const wrapper = shallow(<OverviewPage meshStatus={MTLSStatuses.NOT_ENABLED} />);
     expect(wrapper).toMatchSnapshot();
   });
 

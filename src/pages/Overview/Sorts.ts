@@ -1,44 +1,7 @@
-import { FILTER_ACTION_APPEND, FilterType, FilterValue } from '../../types/Filters';
-import { FAILURE, DEGRADED, HEALTHY } from '../../types/Health';
-import { NamespaceInfo } from './NamespaceInfo';
 import { SortField } from '../../types/SortFilters';
+import NamespaceInfo from './NamespaceInfo';
 
-export namespace FiltersAndSorts {
-  export const nameFilter: FilterType = {
-    id: 'namespace_search',
-    title: 'Name',
-    placeholder: 'Filter by Name',
-    filterType: 'text',
-    action: FILTER_ACTION_APPEND,
-    filterValues: []
-  };
-
-  const healthValues: FilterValue[] = [
-    {
-      id: FAILURE.name,
-      title: FAILURE.name
-    },
-    {
-      id: DEGRADED.name,
-      title: DEGRADED.name
-    },
-    {
-      id: HEALTHY.name,
-      title: HEALTHY.name
-    }
-  ];
-
-  export const healthFilter: FilterType = {
-    id: 'health',
-    title: 'Health',
-    placeholder: 'Filter by Application Health',
-    filterType: 'select',
-    action: FILTER_ACTION_APPEND,
-    filterValues: healthValues
-  };
-
-  export const availableFilters: FilterType[] = [nameFilter, healthFilter];
-
+export namespace Sorts {
   export const sortFields: SortField<NamespaceInfo>[] = [
     {
       id: 'namespace',
@@ -67,6 +30,24 @@ export namespace FiltersAndSorts {
         } else if (b.status) {
           return 1;
         }
+        // default comparison fallback
+        return a.name.localeCompare(b.name);
+      }
+    },
+    {
+      id: 'mtls',
+      title: 'mTLS',
+      isNumeric: false,
+      param: 'm',
+      compare: (a: NamespaceInfo, b: NamespaceInfo) => {
+        if (a.tlsStatus && b.tlsStatus) {
+          return a.tlsStatus.status.localeCompare(b.tlsStatus.status);
+        } else if (a.tlsStatus) {
+          return -1;
+        } else if (b.tlsStatus) {
+          return 1;
+        }
+
         // default comparison fallback
         return a.name.localeCompare(b.name);
       }

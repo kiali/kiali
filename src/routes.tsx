@@ -6,7 +6,7 @@ import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetail
 import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
 import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
-import OverviewPage from './pages/Overview/OverviewPage';
+import OverviewPageContainer from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
 import GraphPageContainer from './containers/GraphPageContainer';
 import { icons, Paths } from './config';
@@ -66,7 +66,7 @@ const defaultRoute = '/overview';
 const pathRoutes: Path[] = [
   {
     path: '/overview',
-    component: OverviewPage
+    component: OverviewPageContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
