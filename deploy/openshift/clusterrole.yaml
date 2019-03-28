@@ -145,6 +145,7 @@ rules:
   - monitoringdashboards
   verbs:
   - get
+  - list
 ---
 apiVersion: v1
 kind: ClusterRole
@@ -281,3 +282,4 @@ rules:
   - monitoringdashboards
   verbs:
   - get
+  - list

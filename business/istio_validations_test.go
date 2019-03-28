@@ -66,7 +66,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
 
-	svc := setupWorkloadService(k8s, nil)
+	svc := setupWorkloadService(k8s)
 	return svc
 }
 

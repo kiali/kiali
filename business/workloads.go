@@ -13,6 +13,7 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -63,6 +64,18 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		return nil, err
 	}
 
+	var runtimes []models.Runtime
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		conf := config.Get()
+		app := workload.Labels[conf.IstioLabels.AppLabelName]
+		version := workload.Labels[conf.IstioLabels.VersionLabelName]
+		dash := NewDashboardsService(nil, in.prom)
+		runtimes = dash.GetCustomDashboardRefs(namespace, app, version, workload.Pods)
+	}()
+
 	if includeServices {
 		services, err := in.k8s.GetServices(namespace, workload.Labels)
 		if err != nil {
@@ -71,7 +84,8 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		workload.SetServices(services)
 	}
 
-	in.fillCustomDashboardRefs(namespace, workload)
+	wg.Wait()
+	workload.Runtimes = runtimes
 
 	return workload, nil
 }
@@ -960,39 +974,4 @@ func controllerPriority(type1, type2 string) string {
 	} else {
 		return type2
 	}
-}
-
-// fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this workload and add them to the model
-func (in *WorkloadService) fillCustomDashboardRefs(namespace string, workload *models.Workload) {
-	uniqueRefsList := getUniqueRuntimes(workload.Pods)
-	mon, err := kubernetes.NewKialiMonitoringClient()
-	if err != nil {
-		// Do not fail the whole query, just log & return
-		log.Error("Cannot initialize Kiali Monitoring Client")
-		return
-	}
-	dash := NewDashboardsService(mon, in.prom)
-	workload.Runtimes = dash.buildRuntimesList(namespace, uniqueRefsList)
-}
-
-func getUniqueRuntimes(pods models.Pods) []string {
-	// Get uniqueness from plain list rather than map to preserve ordering; anyway, very low amount of objects is expected
-	uniqueRefs := []string{}
-	for _, pod := range pods {
-		for _, ref := range pod.RuntimesAnnotation {
-			if ref != "" {
-				exists := false
-				for _, existingRef := range uniqueRefs {
-					if ref == existingRef {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					uniqueRefs = append(uniqueRefs, ref)
-				}
-			}
-		}
-	}
-	return uniqueRefs
 }

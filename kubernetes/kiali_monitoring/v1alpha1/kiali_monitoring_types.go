@@ -26,10 +26,17 @@ type MonitoringDashboard struct {
 	Spec               MonitoringDashboardSpec `json:"spec"`
 }
 
+type MonitoringDashboardsList struct {
+	meta_v1.TypeMeta `json:",inline"`
+	meta_v1.ListMeta `json:"metadata"`
+	Items            []MonitoringDashboard `json:"items"`
+}
+
 type MonitoringDashboardSpec struct {
-	Title   string                    `json:"title"`
-	Runtime string                    `json:"runtime"`
-	Items   []MonitoringDashboardItem `json:"items"`
+	Title      string                    `json:"title"`
+	Runtime    string                    `json:"runtime"`
+	DiscoverOn string                    `json:"discoverOn"`
+	Items      []MonitoringDashboardItem `json:"items"`
 }
 
 type MonitoringDashboardItem struct {
@@ -74,6 +81,35 @@ func (in *MonitoringDashboard) DeepCopy() *MonitoringDashboard {
 }
 
 func (in *MonitoringDashboard) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *MonitoringDashboardsList) DeepCopyInto(out *MonitoringDashboardsList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	out.ListMeta = in.ListMeta
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]MonitoringDashboard, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+func (in *MonitoringDashboardsList) DeepCopy() *MonitoringDashboardsList {
+	if in == nil {
+		return nil
+	}
+	out := new(MonitoringDashboardsList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *MonitoringDashboardsList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

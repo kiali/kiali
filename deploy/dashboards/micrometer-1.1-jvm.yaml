@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: JVM
   title: JVM Metrics
+  discoverOn: "jvm_threads_live_threads"
   items:
   - chart:
       name: "Memory used"

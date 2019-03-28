@@ -5,6 +5,7 @@ metadata:
 spec:
   title: MicroProfile Metrics
   runtime: MicroProfile
+  discoverOn: "base:thread_count"
   items:
   - chart:
       name: "Current loaded classes"

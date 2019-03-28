@@ -10,6 +10,7 @@ import (
 // KialiMonitoringInterface for mocks (only mocked function are necessary here)
 type KialiMonitoringInterface interface {
 	GetDashboard(namespace string, name string) (*v1alpha1.MonitoringDashboard, error)
+	GetDashboards(namespace string) ([]v1alpha1.MonitoringDashboard, error)
 }
 
 // KialiMonitoringClient is the client struct for Kiali Monitoring API over Kubernetes
@@ -54,4 +55,14 @@ func (in *KialiMonitoringClient) GetDashboard(namespace, name string) (*v1alpha1
 		return nil, err
 	}
 	return &result, err
+}
+
+// GetDashboards returns all MonitoringDashboards from the given namespace
+func (in *KialiMonitoringClient) GetDashboards(namespace string) ([]v1alpha1.MonitoringDashboard, error) {
+	result := v1alpha1.MonitoringDashboardsList{}
+	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").Do().Into(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result.Items, nil
 }

@@ -26,6 +26,7 @@ type ClientInterface interface {
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetWorkloadRequestRates(namespace, workload, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
+	GetMetricsForLabels(labels []string) ([]string, error)
 }
 
 // Client for Prometheus API.
@@ -139,4 +140,22 @@ func (in *Client) GetFlags() (v1.FlagsResult, error) {
 		return nil, err
 	}
 	return flags, nil
+}
+
+// GetMetricsForLabels returns a list of metrics existing for the provided labels set
+func (in *Client) GetMetricsForLabels(labels []string) ([]string, error) {
+	// Arbitrarily set time range. Meaning that discovery works with metrics produced within last hour
+	end := time.Now()
+	start := end.Add(-time.Hour)
+	results, err := in.api.Series(context.Background(), labels, start, end)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, labelSet := range results {
+		if name, ok := labelSet["__name__"]; ok {
+			names = append(names, string(name))
+		}
+	}
+	return names, nil
 }

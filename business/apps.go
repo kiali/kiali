@@ -103,7 +103,12 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 		(*appInstance).ServiceNames[i] = svc.Name
 	}
 
-	in.fillCustomDashboardRefs(namespace, appInstance, appDetails)
+	pods := models.Pods{}
+	for _, workload := range appDetails.Workloads {
+		pods = append(pods, workload.Pods...)
+	}
+	dash := NewDashboardsService(nil, in.prom)
+	(*appInstance).Runtimes = dash.GetCustomDashboardRefs(namespace, appName, "", pods)
 
 	return *appInstance, nil
 }
@@ -196,21 +201,4 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 	}
 
 	return castAppDetails(services, ws), nil
-}
-
-// fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
-func (in *AppService) fillCustomDashboardRefs(namespace string, app *models.App, details *appDetails) {
-	allPods := models.Pods{}
-	for _, workload := range details.Workloads {
-		allPods = append(allPods, workload.Pods...)
-	}
-	uniqueRefsList := getUniqueRuntimes(allPods)
-	mon, err := kubernetes.NewKialiMonitoringClient()
-	if err != nil {
-		// Do not fail the whole query, just log & return
-		log.Error("Cannot initialize Kiali Monitoring Client")
-		return
-	}
-	dash := NewDashboardsService(mon, in.prom)
-	app.Runtimes = dash.buildRuntimesList(namespace, uniqueRefsList)
 }
