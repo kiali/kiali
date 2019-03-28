@@ -21,8 +21,13 @@ const loginSuccess = async (dispatch: KialiDispatch, session: LoginSession) => {
 // The `data` argument is defined as `any` because the dispatchers receive
 // different kinds of data (such as e-mail/password, tokens).
 const performLogin = (dispatch: KialiDispatch, state: KialiAppState, data?: any) => {
-  const bail = (loginResult: Login.LoginResult) =>
-    data ? dispatch(LoginActions.loginFailure(loginResult.error)) : dispatch(LoginActions.logoutSuccess());
+  const bail = (loginResult: Login.LoginResult) => {
+    if (authenticationConfig.strategy === AuthStrategy.openshift) {
+      dispatch(LoginActions.loginFailure(loginResult.error));
+    } else {
+      data ? dispatch(LoginActions.loginFailure(loginResult.error)) : dispatch(LoginActions.logoutSuccess());
+    }
+  };
 
   Dispatcher.prepare().then((result: AuthResult) => {
     if (result === AuthResult.CONTINUE) {

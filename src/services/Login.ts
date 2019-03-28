@@ -83,7 +83,12 @@ class OpenshiftLogin implements LoginStrategy<any> {
   }
 
   public async perform(_request: NullDispatch): Promise<LoginResult> {
+    // get the data from the url that was passed by the OAuth login.
     const session = (await API.checkOpenshiftAuth(window.location.hash.substring(1))).data;
+
+    // remove the data that was passed by the OAuth login. In certain error situations this can cause the
+    // page to enter a refresh loop since it tries to reload the page which then tries to reuse the bad token again.
+    history.replaceState('', document.title, window.location.pathname + window.location.search);
 
     return {
       status: AuthResult.SUCCESS,

@@ -2,6 +2,8 @@ import React from 'react';
 import { Alert, Button, Col, Form, FormControl, FormGroup, HelpBlock, Row } from 'patternfly-react';
 import { KEY_CODES } from '../../types/Common';
 import { LoginSession, LoginStatus } from '../../store/Store';
+import { AuthStrategy } from '../../types/Auth';
+import authenticationConfig from '../../config/authenticationConfig';
 
 const kialiTitle = require('../../assets/img/logo-login.svg');
 
@@ -44,8 +46,13 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
 
   handleSubmit = (e: any) => {
     e.preventDefault();
-    if (this.state.username.length > 0 && this.state.password.length > 0 && this.props.authenticate) {
-      this.props.authenticate(this.state.username, this.state.password);
+    if (authenticationConfig.strategy === AuthStrategy.openshift) {
+      // If we are using OpenShift OAuth, take the user back to the OpenShift OAuth login
+      window.location.href = authenticationConfig.authorizationEndpoint!;
+    } else {
+      if (this.state.username.length > 0 && this.state.password.length > 0 && this.props.authenticate) {
+        this.props.authenticate(this.state.username, this.state.password);
+      }
     }
   };
 
@@ -56,6 +63,10 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
   };
 
   render() {
+    let loginLabel = 'Log In';
+    if (authenticationConfig.strategy === AuthStrategy.openshift) {
+      loginLabel = 'Log In With OpenShift';
+    }
     return (
       <div className={'login-pf-page'}>
         <div className={'container-fluid'}>
@@ -73,41 +84,45 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                       <Alert type="warning">Your session has expired or was terminated in another window.</Alert>
                     )}
                     <Form onSubmit={e => this.handleSubmit(e)} id={'kiali-login'}>
-                      <FormGroup>
-                        <FormControl
-                          id="username"
-                          type="text"
-                          name="username"
-                          onChange={this.handleChange}
-                          placeholder={'Username'}
-                          disabled={false}
-                          required={true}
-                          onKeyPress={this.handleKeyPress}
-                        />
-                        {this.props.status === LoginStatus.logging && !this.state.username && (
-                          <HelpBlock>Username is required</HelpBlock>
-                        )}
-                      </FormGroup>
-                      <FormGroup>
-                        <FormControl
-                          type="password"
-                          name="password"
-                          onChange={this.handleChange}
-                          placeholder={'Password'}
-                          disabled={false}
-                          required={true}
-                          onKeyPress={this.handleKeyPress}
-                        />
-                        {this.props.status === LoginStatus.logging && !this.state.password && (
-                          <HelpBlock>Password is required</HelpBlock>
-                        )}
-                      </FormGroup>
+                      {authenticationConfig.strategy === AuthStrategy.login && (
+                        <FormGroup>
+                          <FormControl
+                            id="username"
+                            type="text"
+                            name="username"
+                            onChange={this.handleChange}
+                            placeholder={'Username'}
+                            disabled={false}
+                            required={true}
+                            onKeyPress={this.handleKeyPress}
+                          />
+                          {this.props.status === LoginStatus.logging && !this.state.username && (
+                            <HelpBlock>Username is required</HelpBlock>
+                          )}
+                        </FormGroup>
+                      )}
+                      {authenticationConfig.strategy === AuthStrategy.login && (
+                        <FormGroup>
+                          <FormControl
+                            type="password"
+                            name="password"
+                            onChange={this.handleChange}
+                            placeholder={'Password'}
+                            disabled={false}
+                            required={true}
+                            onKeyPress={this.handleKeyPress}
+                          />
+                          {this.props.status === LoginStatus.logging && !this.state.password && (
+                            <HelpBlock>Password is required</HelpBlock>
+                          )}
+                        </FormGroup>
+                      )}
                       <Button
                         type="submit"
                         onKeyPress={this.handleKeyPress}
                         className="btn btn-primary btn-block btn-lg"
                       >
-                        Log In
+                        {loginLabel}
                       </Button>
                     </Form>
                   </div>
