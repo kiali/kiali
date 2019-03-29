@@ -33,17 +33,17 @@ func (g GatewayChecker) Check() models.IstioValidations {
 }
 
 func (g GatewayChecker) runSingleChecks(gw kubernetes.IstioObject) models.IstioValidations {
-	validations := models.IstioValidations{}
-	checks, valid := gateways.PortChecker{
-		Gateway: gw,
-	}.Check()
+	key, validations := EmptyValidValidation(gw.GetObjectMeta().Name, GatewayCheckerType)
 
-	key := models.IstioValidationKey{ObjectType: GatewayCheckerType, Name: gw.GetObjectMeta().Name}
-	validations[key] = &models.IstioValidation{
-		Name:       key.Name,
-		ObjectType: key.ObjectType,
-		Checks:     checks,
-		Valid:      valid,
+	enabledCheckers := []Checker{
+		gateways.PortChecker{Gateway: gw},
 	}
-	return validations
+
+	for _, checker := range enabledCheckers {
+		checks, validChecker := checker.Check()
+		validations.Checks = append(validations.Checks, checks...)
+		validations.Valid = validations.Valid && validChecker
+	}
+
+	return models.IstioValidations{key: validations}
 }

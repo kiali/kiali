@@ -9,6 +9,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const ServiceRoleCheckerType = "servicerole"
+
 type NoServiceChecker struct {
 	Namespace            string
 	IstioDetails         *kubernetes.IstioDetails
@@ -45,6 +47,8 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 }
 
 func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string) models.IstioValidations {
+	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, VirtualCheckerType)
+
 	result, valid := virtual_services.NoHostChecker{
 		Namespace:         namespace,
 		ServiceNames:      serviceNames,
@@ -52,74 +56,55 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 		ServiceEntryHosts: serviceHosts,
 	}.Check()
 
-	istioObjectName := virtualService.GetObjectMeta().Name
-	key := models.IstioValidationKey{ObjectType: "virtualservice", Name: istioObjectName}
-	vsvalidations := models.IstioValidations{}
-	vsvalidations[key] = &models.IstioValidation{
-		Name:       istioObjectName,
-		ObjectType: "virtualservice",
-		Checks:     result,
-		Valid:      valid,
-	}
-	return vsvalidations
+	validations.Valid = valid
+	validations.Checks = result
+
+	return models.IstioValidations{key: validations}
 }
 
 func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[string]struct{}) models.IstioValidations {
+	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, VirtualCheckerType)
+
 	result, valid := virtual_services.NoGatewayChecker{
 		VirtualService: virtualService,
 		GatewayNames:   gatewayNames,
 	}.Check()
 
-	istioObjectName := virtualService.GetObjectMeta().Name
-	key := models.IstioValidationKey{ObjectType: "virtualservice", Name: istioObjectName}
-	vsvalidations := models.IstioValidations{}
-	vsvalidations[key] = &models.IstioValidation{
-		Name:       istioObjectName,
-		ObjectType: "virtualservice",
-		Checks:     result,
-		Valid:      valid,
-	}
-	return vsvalidations
+	validations.Valid = valid
+	validations.Checks = result
+
+	return models.IstioValidations{key: validations}
 }
 
 func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, services []v1.Service, serviceHosts map[string][]string) models.IstioValidations {
+	key, validations := EmptyValidValidation(destinationRule.GetObjectMeta().Name, DestinationRuleCheckerType)
+
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
 		WorkloadList:    workloads,
 		DestinationRule: destinationRule,
 		Services:        services,
-		// ServiceNames:    serviceNames,
-		ServiceEntries: serviceHosts,
+		ServiceEntries:  serviceHosts,
 	}.Check()
 
-	istioObjectName := destinationRule.GetObjectMeta().Name
-	key := models.IstioValidationKey{ObjectType: "destinationrule", Name: istioObjectName}
-	drvalidations := models.IstioValidations{}
-	drvalidations[key] = &models.IstioValidation{
-		Name:       istioObjectName,
-		ObjectType: "destinationrule",
-		Checks:     result,
-		Valid:      valid,
-	}
-	return drvalidations
+	validations.Valid = valid
+	validations.Checks = result
+
+	return models.IstioValidations{key: validations}
 }
 
 func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []v1.Service) models.IstioValidations {
+	key, validations := EmptyValidValidation(serviceRole.GetObjectMeta().Name, ServiceRoleCheckerType)
+
 	result, valid := authorization.ServiceChecker{
 		ServiceRole: serviceRole,
 		Services:    services,
 	}.Check()
 
-	validations := models.IstioValidations{}
-	istioObjectName := serviceRole.GetObjectMeta().Name
-	key := models.IstioValidationKey{ObjectType: "servicerole", Name: istioObjectName}
-	validations[key] = &models.IstioValidation{
-		Name:       istioObjectName,
-		ObjectType: "servicerole",
-		Checks:     result,
-		Valid:      valid,
-	}
-	return validations
+	validations.Valid = valid
+	validations.Checks = result
+
+	return models.IstioValidations{key: validations}
 }
 
 func getServiceNames(services []v1.Service) []string {
