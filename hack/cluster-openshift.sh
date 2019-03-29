@@ -604,7 +604,7 @@ if [ "$_CMD" = "up" ]; then
 
     echo "Installing a sample application for knative..."
     istiooc delete -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml || true
-    istiooc apply -n knative-examples -f ${ROOT}/knative/service.yaml
+    istiooc apply -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml
   fi
 
   if [ "${REMOVE_JAEGER}" == "true" ]; then
