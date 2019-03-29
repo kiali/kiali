@@ -116,7 +116,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kn|--knative)
       KNATIVE_ENABLED="true"
-      shift;
+      shift;shift
       ;;
     -ke|--kiali-enabled)
       KIALI_ENABLED="$2"
@@ -182,6 +182,10 @@ Valid options:
       Default: ${DEFAULT_MAISTRA_INSTALL_YAML}
   -ke|--kiali-enabled (true|false)
       When set to true, Kiali will be installed in OpenShift.
+      Default: false
+      Used only for the 'up' command.
+  -kn|--knative (true|false)
+      When set to true, Knative will be installed in OpenShift.
       Default: false
       Used only for the 'up' command.
   -ku|--kiali-username <username>
@@ -603,8 +607,8 @@ if [ "$_CMD" = "up" ]; then
     echo "Knative is installed!"
 
     echo "Installing a sample application for knative..."
-    istiooc delete -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml || true
-    istiooc apply -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml
+    ${MAISTRA_ISTIO_OC_COMMAND} delete -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml || true
+    ${MAISTRA_ISTIO_OC_COMMAND} apply -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml
   fi
 
   if [ "${REMOVE_JAEGER}" == "true" ]; then
