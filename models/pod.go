@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -18,6 +18,7 @@ type Pod struct {
 	Labels              map[string]string `json:"labels"`
 	CreatedAt           string            `json:"createdAt"`
 	CreatedBy           []Reference       `json:"createdBy"`
+	Containers          []*ContainerInfo  `json:"containers"`
 	IstioContainers     []*ContainerInfo  `json:"istioContainers"`
 	IstioInitContainers []*ContainerInfo  `json:"istioInitContainers"`
 	Status              string            `json:"status"`
@@ -60,7 +61,7 @@ type sideCarStatus struct {
 	InitContainers []string `json:"initContainers"`
 }
 
-// ParseDeployment extracts desired information from k8s Pod info
+// ParsePod extracts desired information from k8s Pod info
 func (pod *Pod) Parse(p *v1.Pod) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
@@ -72,7 +73,8 @@ func (pod *Pod) Parse(p *v1.Pod) {
 		})
 	}
 	conf := config.Get()
-	// ParseDeployment some annotations
+	// ParsePod some annotations
+	istioContainerNames := map[string]bool{}
 	if jSon, ok := p.Annotations[conf.ExternalServices.Istio.IstioSidecarAnnotation]; ok {
 		var scs sideCarStatus
 		err := json.Unmarshal([]byte(jSon), &scs)
@@ -82,14 +84,26 @@ func (pod *Pod) Parse(p *v1.Pod) {
 					Name:  name,
 					Image: lookupImage(name, p.Spec.InitContainers)}
 				pod.IstioInitContainers = append(pod.IstioInitContainers, &container)
+				istioContainerNames[name] = true
 			}
 			for _, name := range scs.Containers {
 				container := ContainerInfo{
 					Name:  name,
 					Image: lookupImage(name, p.Spec.Containers)}
 				pod.IstioContainers = append(pod.IstioContainers, &container)
+				istioContainerNames[name] = true
 			}
 		}
+	}
+	for _, c := range p.Spec.Containers {
+		if istioContainerNames[c.Name] {
+			continue
+		}
+		container := ContainerInfo{
+			Name:  c.Name,
+			Image: c.Image,
+		}
+		pod.Containers = append(pod.Containers, &container)
 	}
 	// Check for custom dashboards annotation
 	if rawRuntimes, ok := p.Annotations["kiali.io/runtimes"]; ok {

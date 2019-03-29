@@ -32,6 +32,10 @@ var (
 	emptyGetOptions  = meta_v1.GetOptions{}
 )
 
+type PodLogs struct {
+	Logs string
+}
+
 // IstioClientInterface for mocks (only mocked function are necessary here)
 type IstioClientInterface interface {
 	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
@@ -55,6 +59,8 @@ type IstioClientInterface interface {
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*v1.Namespace, error)
 	GetNamespaces() ([]v1.Namespace, error)
+	GetPod(namespace, name string) (*v1.Pod, error)
+	GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*PodLogs, error)
 	GetPods(namespace, labelSelector string) ([]v1.Pod, error)
 	GetProject(project string) (*osv1.Project, error)
 	GetProjects() ([]osv1.Project, error)

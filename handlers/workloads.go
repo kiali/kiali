@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/prometheus"
@@ -113,4 +118,72 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, dashboard)
+}
+
+// PodDetails is the API handler to fetch all details to be displayed, related to a single pod
+func PodDetails(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Pods initialization error: "+err.Error())
+		return
+	}
+	namespace := vars["namespace"]
+	pod := vars["pod"]
+
+	// Fetch and build pod
+	podDetails, err := business.Workload.GetPod(namespace, pod)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, podDetails)
+}
+
+func PodLogs(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	queryParams := r.URL.Query()
+
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Pod Logs initialization error: "+err.Error())
+		return
+	}
+	namespace := vars["namespace"]
+	pod := vars["pod"]
+
+	// Get log options
+	podLogOptions := v1.PodLogOptions{Timestamps: true}
+	if container := queryParams.Get("container"); container != "" {
+		podLogOptions.Container = container
+	}
+	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
+		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
+			podLogOptions.SinceTime = &meta_v1.Time{time.Unix(numTime, 0)}
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
+			return
+		}
+	}
+
+	// Fetch pod logs
+	podLogs, err := business.Workload.GetPodLogs(namespace, pod, &podLogOptions)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, podLogs)
 }
