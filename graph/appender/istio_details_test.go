@@ -16,7 +16,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string) {
+func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, string, string) {
 	trafficMap := graph.NewTrafficMap()
 
 	appNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
@@ -38,7 +38,10 @@ func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, 
 	workloadNode.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[workloadNode.ID] = &workloadNode
 
-	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID
+	fooServiceNode := graph.NewNode("testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	trafficMap[fooServiceNode.ID] = &fooServiceNode
+
+	return trafficMap, appNode.ID, appNodeV1.ID, appNodeV2.ID, serviceNode.ID, workloadNode.ID, fooServiceNode.ID
 }
 
 func TestCBAll(t *testing.T) {
@@ -63,9 +66,9 @@ func TestCBAll(t *testing.T) {
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil)
-	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId := setupTrafficMap()
+	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -87,7 +90,7 @@ func TestCBAll(t *testing.T) {
 	a := IstioAppender{}
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(true, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(true, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -127,9 +130,9 @@ func TestCBSubset(t *testing.T) {
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil)
-	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId := setupTrafficMap()
+	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -151,7 +154,7 @@ func TestCBSubset(t *testing.T) {
 	a := IstioAppender{}
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(true, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -177,6 +180,17 @@ func TestVS(t *testing.T) {
 			"hosts": []interface{}{
 				"ratings",
 			},
+			"http": []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host": "foo",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
@@ -187,9 +201,9 @@ func TestVS(t *testing.T) {
 	}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil)
-	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId := setupTrafficMap()
+	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -200,6 +214,7 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata["hasVS"])
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -211,7 +226,7 @@ func TestVS(t *testing.T) {
 	a := IstioAppender{}
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
-	assert.Equal(5, len(trafficMap))
+	assert.Equal(6, len(trafficMap))
 	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
@@ -220,6 +235,7 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
 	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
 	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(true, trafficMap[svcNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata["hasVS"])
 }

@@ -59,12 +59,15 @@ func (vService *VirtualService) IsValidHost(namespace string, serviceName string
 	if serviceName == "" {
 		return false
 	}
-	if hosts, ok := vService.Spec.Hosts.([]interface{}); ok {
-		for _, host := range hosts {
-			if kubernetes.FilterByHost(host.(string), serviceName, namespace) {
-				return true
-			}
-		}
+
+	protocolNames := []string{"http", "tcp"}
+	protocols := map[string]interface{}{
+		"http": vService.Spec.Http,
+		"tcp":  vService.Spec.Tcp,
+	}
+
+	if kubernetes.FilterByRoute(protocols, protocolNames, serviceName, namespace, nil) {
+		return true
 	}
 	return false
 }
