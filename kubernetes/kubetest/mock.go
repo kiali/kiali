@@ -13,9 +13,9 @@ import (
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 //// Mock for the K8SClientFactory
