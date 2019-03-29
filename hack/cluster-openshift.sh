@@ -42,7 +42,8 @@ get_downloader() {
 }
 
 # Change to the directory where this script is and set our env
-cd "$(dirname "${BASH_SOURCE[0]}")"
+SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
+cd ${SCRIPT_ROOT}
 
 # The default version of the istiooc command to be downloaded
 DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.9.0"
@@ -474,8 +475,8 @@ if [ "$_CMD" = "up" ]; then
   fi
 
   echo "Starting the OpenShift cluster..."
-  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS} --write-config"
-  ${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
+  debug "${MAISTRA_ISTIO_OC_COMMAND} cluster up ${ENABLE_ARG} --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}"
+  ${MAISTRA_ISTIO_OC_COMMAND} cluster up --public-hostname=${OPENSHIFT_IP_ADDRESS} ${OPENSHIFT_PERSISTENCE_ARGS} ${CLUSTER_OPTIONS}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: failed to start OpenShift"
@@ -584,16 +585,26 @@ if [ "$_CMD" = "up" ]; then
       | ${MAISTRA_ISTIO_OC_COMMAND} apply -f -
 
     echo "Waiting for Knative to become ready"
-    sleep 5; while echo && {$MAISTRA_ISTIO_OC_COMMAND} get pods -n knative-serving | grep -v -E "(Running|Completed|STATUS)"; do sleep 5; done
+    sleep 5; while echo && ${MAISTRA_ISTIO_OC_COMMAND} get pods -n knative-serving | grep -v -E "(Running|Completed|STATUS)"; do sleep 5; done
 
     echo "Creating a new project for knative examples"
-    ${MAISTRA_ISTIO_OC_COMMAND} new-project knative-examples
+    ${MAISTRA_ISTIO_OC_COMMAND} new-project knative-examples || true
 
+    echo "Applying default domain to knative pods"
+
+    export DOMAIN=$(${MAISTRA_ISTIO_OC_COMMAND} get route -n istio-system istio-ingressgateway --output=custom-columns=ROUTE:.spec.host | grep -v ROUTE | sed "s/istio-ingressgateway-istio-system.//g")
+    cat ${SCRIPT_ROOT}/knative/config-domain.yaml | envsubst | oc apply -f -
+
+    echo "Using domain: *.knative.${DOMAIN}"
 
     ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-scc-to-user privileged -z default -n knative-examples
     ${MAISTRA_ISTIO_OC_COMMAND} label --overwrite namespace knative-examples istio-injection=enabled
 
     echo "Knative is installed!"
+
+    echo "Installing a sample application for knative..."
+    istiooc delete -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml || true
+    istiooc apply -n knative-examples -f ${ROOT}/knative/service.yaml
   fi
 
   if [ "${REMOVE_JAEGER}" == "true" ]; then
