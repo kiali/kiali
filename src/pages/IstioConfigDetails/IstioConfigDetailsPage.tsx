@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Col, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
 import {
   aceOptions,
@@ -14,7 +14,7 @@ import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
 import { ObjectValidation } from '../../types/IstioObjects';
-import { AceValidations, parseKialiValidations, parseYamlValidations, jsYaml } from '../../types/AceValidations';
+import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
 import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
@@ -23,6 +23,7 @@ import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
 import { Paths } from '../../config';
+import { MessageType } from '../../types/MessageCenter';
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -155,7 +156,18 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             jsonPatch
           );
       updatePromise
-        .then(r => this.fetchIstioObjectDetails())
+        .then(r => {
+          const targetMessage =
+            this.props.match.params.namespace +
+            ' / ' +
+            (this.props.match.params.objectSubtype
+              ? this.props.match.params.objectSubtype
+              : this.props.match.params.objectType) +
+            ' / ' +
+            this.props.match.params.object;
+          MessageCenter.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
+          this.fetchIstioObjectDetails();
+        })
         .catch(error => {
           MessageCenter.add(API.getErrorMsg('Could not update IstioConfig details.', error));
         });
@@ -274,9 +286,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     return (
       <IstioActionButtons
         objectName={this.props.match.params.object}
+        readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !yamlErrors}
         onCancel={this.onCancel}
         onUpdate={this.onUpdate}
+        onRefresh={this.onRefresh}
       />
     );
   };
@@ -285,10 +299,6 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const canDelete = this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
     return (
       <span style={{ float: 'right' }}>
-        <Button onClick={this.onRefresh}>
-          <Icon name="refresh" />
-        </Button>
-        &nbsp;
         <IstioActionDropdown
           objectName={this.props.match.params.object}
           canDelete={canDelete}

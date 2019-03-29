@@ -43,7 +43,7 @@ const createMessage = (
     content,
     type,
     count,
-    show_notification: type === MessageType.ERROR || type === MessageType.WARNING,
+    show_notification: type === MessageType.ERROR || type === MessageType.WARNING || type === MessageType.SUCCESS,
     seen: false,
     created: created,
     firstTriggered
