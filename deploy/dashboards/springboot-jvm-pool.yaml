@@ -5,28 +5,5 @@ metadata:
 spec:
   runtime: Spring Boot
   title: JVM Pool Metrics
-  charts:
-    - name: "Pool buffer memory used"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_buffer_memory_used_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "id"
-          displayName: "Pool"
-    - name: "Pool buffer capacity"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_buffer_total_capacity_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "id"
-          displayName: "Pool"
-    - name: "Pool buffer count"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_buffer_count"
-      dataType: "raw"
-      aggregations:
-        - label: "id"
-          displayName: "Pool"
+  items:
+  - include: "micrometer-1.0.6-jvm-pool"

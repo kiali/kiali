@@ -5,47 +5,5 @@ metadata:
 spec:
   runtime: Spring Boot
   title: JVM Metrics
-  charts:
-    - name: "Total live threads"
-      spans: 4
-      metricName: "jvm_threads_live"
-      dataType: "raw"
-    - name: "Daemon threads"
-      spans: 4
-      metricName: "jvm_threads_daemon"
-      dataType: "raw"
-    - name: "Loaded classes"
-      spans: 4
-      metricName: "jvm_classes_loaded"
-      dataType: "raw"
-
-    - name: "Memory used"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_used_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
-    - name: "Memory commited"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_committed_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
-    - name: "Memory max"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_max_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
+  items:
+  - include: "micrometer-1.0.6-jvm"

@@ -5,50 +5,5 @@ metadata:
 spec:
   runtime: Vert.x
   title: JVM Metrics
-  charts:
-    - name: "Memory used"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_used_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
-    - name: "Memory commited"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_committed_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
-    - name: "Memory max"
-      unit: "bytes"
-      spans: 4
-      metricName: "jvm_memory_max_bytes"
-      dataType: "raw"
-      aggregations:
-        - label: "area"
-          displayName: "Area"
-        - label: "id"
-          displayName: "Space"
-
-    - name: "Total live threads"
-      spans: 4
-      metricName: "jvm_threads_live_threads"
-      dataType: "raw"
-    - name: "Daemon threads"
-      spans: 4
-      metricName: "jvm_threads_daemon_threads"
-      dataType: "raw"
-    - name: "Threads states"
-      spans: 4
-      metricName: "jvm_threads_states_threads"
-      dataType: "raw"
-      aggregations:
-        - label: "state"
-          displayName: "State"
+  items:
+  - include: "micrometer-1.1-jvm"

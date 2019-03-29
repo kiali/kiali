@@ -5,24 +5,28 @@ metadata:
 spec:
   title: Go Metrics
   runtime: Go
-  charts:
-    - name: "Threads"
+  items:
+  - chart:
+      name: "Threads"
       spans: 6
       metricName: "go_threads"
       dataType: "raw"
-    - name: "Goroutines"
+  - chart:
+      name: "Goroutines"
       spans: 6
       metricName: "go_goroutines"
       dataType: "raw"
-    - name: "GC duration"
+  - chart:
+      name: "GC duration"
       unit: "seconds"
       spans: 6
       metricName: "go_gc_duration_seconds"
       dataType: "rate"
       aggregations:
-        - label: "quantile"
-          displayName: "Quantile"
-    - name: "Heap allocated"
+      - label: "quantile"
+        displayName: "Quantile"
+  - chart:
+      name: "Heap allocated"
       unit: "bytes"
       spans: 6
       metricName: "go_memstats_heap_alloc_bytes"

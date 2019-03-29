@@ -5,42 +5,47 @@ metadata:
 spec:
   runtime: Vert.x
   title: Vert.x Eventbus Metrics
-  charts:
-    - name: "Event bus handlers"
+  items:
+  - chart:
+      name: "Event bus handlers"
       spans: 6
       metricName: "vertx_eventbus_handlers"
       dataType: "raw"
       aggregations:
-        - label: "address"
-          displayName: "Eventbus address"
-    - name: "Event bus pending messages"
+      - label: "address"
+        displayName: "Eventbus address"
+  - chart:
+      name: "Event bus pending messages"
       spans: 6
       metricName: "vertx_eventbus_pending"
       dataType: "raw"
       aggregations:
-        - label: "address"
-          displayName: "Eventbus address"
-    - name: "Event bus processing time"
+      - label: "address"
+        displayName: "Eventbus address"
+  - chart:
+      name: "Event bus processing time"
       unit: "seconds"
       spans: 6
       metricName: "vertx_eventbus_processingTime_seconds"
       dataType: "histogram"
       aggregations:
-        - label: "address"
-          displayName: "Eventbus address"
-    - name: "Event bus bytes read"
+      - label: "address"
+        displayName: "Eventbus address"
+  - chart:
+      name: "Event bus bytes read"
       unit: "bytes"
       spans: 6
       metricName: "vertx_eventbus_bytesRead"
       dataType: "histogram"
       aggregations:
-        - label: "address"
-          displayName: "Eventbus address"
-    - name: "Event bus bytes written"
+      - label: "address"
+        displayName: "Eventbus address"
+  - chart:
+      name: "Event bus bytes written"
       unit: "bytes"
       spans: 6
       metricName: "vertx_eventbus_bytesWritten"
       dataType: "histogram"
       aggregations:
-        - label: "address"
-          displayName: "Eventbus address"
+      - label: "address"
+        displayName: "Eventbus address"
