@@ -115,7 +115,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -kn|--knative)
-      KNATIVE_ENABLED="true"
+      KNATIVE_ENABLED="$2"
       shift;shift
       ;;
     -ke|--kiali-enabled)
