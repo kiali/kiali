@@ -33,7 +33,7 @@ var (
 )
 
 type PodLogs struct {
-	Logs string
+	Logs string `json:"logs,omitempty"`
 }
 
 // IstioClientInterface for mocks (only mocked function are necessary here)
