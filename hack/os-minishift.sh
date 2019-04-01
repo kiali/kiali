@@ -307,6 +307,28 @@ elif [ "$_CMD" = "knative" ]; then
   oc apply -f https://github.com/knative/serving/releases/download/v0.4.1/serving.yaml
   oc apply -f https://raw.githubusercontent.com/knative/serving/v0.4.1/third_party/config/build/clusterrole.yaml
 
+  echo "Waiting for Knative to become ready"
+  sleep 5; while oc get pods -n knative-serving | grep -v -E "(Running|Completed|STATUS)"; do sleep 5; done
+
+  echo "Knative is installed!"
+
+  echo "Creating a new project for knative examples"
+  oc new-project knative-examples || true
+
+  echo "Applying default domain to knative pods"
+
+  oc expose svc istio-ingressgateway -n istio-system || true
+  export DOMAIN=$(oc get route -n istio-system istio-ingressgateway --output=custom-columns=ROUTE:.spec.host | grep -v ROUTE | sed "s/istio-ingressgateway-istio-system.//g")
+  cat ./knative/config-domain.yaml | envsubst | oc apply -f -
+
+  echo "Using domain: *.knative.${DOMAIN}"
+
+  oc adm policy add-scc-to-user privileged -z default -n knative-examples
+  oc label --overwrite namespace knative-examples istio-injection=enabled
+
+  echo "Installing a sample application for knative..."
+  oc delete -n knative-examples -f ./knative/service.yaml || true
+  oc apply -n knative-examples -f ./knative/service.yaml
 else
   echo "ERROR: Missing required command"
   exit 1
