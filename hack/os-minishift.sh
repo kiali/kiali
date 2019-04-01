@@ -17,6 +17,7 @@
 #   down - shuts down the OpenShift cluster, you can start it up again
 #   delete - if you don't want your cluster anymore, this deletes it
 #   expose - exposes services
+#   knative - installs Knative into your cluster
 #
 ##############################################################################
 
@@ -121,6 +122,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     bookinfo)
       _CMD="bookinfo"
+      shift
+      ;;
+    knative)
+      _CMD="knative"
       shift
       ;;
     gwurl)
@@ -288,6 +293,19 @@ elif [ "$_CMD" = "oc" ]; then
 elif [ "$_CMD" = "login" ]; then
   ensure_minishift_is_running
   oc_login
+
+elif [ "$_CMD" = "knative" ]; then
+  ensure_minishift_is_running
+  oc_login
+
+  echo 'Configuring necessary privileges to the service accounts used by Knative'
+  oc adm policy add-scc-to-user anyuid -z controller -n knative-serving
+  oc adm policy add-scc-to-user anyuid -z autoscaler -n knative-serving
+  oc adm policy add-cluster-role-to-user cluster-admin -z controller -n knative-serving
+
+  echo 'Installing Knative Serving'
+  oc apply -f https://github.com/knative/serving/releases/download/v0.4.1/serving.yaml
+  oc apply -f https://raw.githubusercontent.com/knative/serving/v0.4.1/third_party/config/build/clusterrole.yaml
 
 else
   echo "ERROR: Missing required command"
