@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 interface VirtualServiceProps {
   namespace: string;
   virtualService: VirtualService;
-  validation: ObjectValidation;
+  validation?: ObjectValidation;
 }
 
 class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
@@ -25,12 +25,16 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     super(props);
   }
 
-  validation(virtualService: VirtualService): ObjectValidation {
+  validation(virtualService: VirtualService): ObjectValidation | undefined {
     return this.props.validation;
   }
 
   globalStatus(rule: VirtualService) {
     const validation = this.validation(rule);
+    if (!validation) {
+      return '';
+    }
+
     const checks = globalChecks(validation);
     const severity = validationToSeverity(validation);
     const iconName = severityToIconName(severity);

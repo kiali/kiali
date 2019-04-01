@@ -317,7 +317,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   renderOverview = (): any => {
-    if (this.state.istioObjectDetails && this.state.istioValidations) {
+    if (this.state.istioObjectDetails) {
       if (this.state.istioObjectDetails.virtualService) {
         return (
           <VirtualServiceDetail

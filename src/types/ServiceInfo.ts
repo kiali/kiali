@@ -136,7 +136,7 @@ export const validationToSeverity = (object: ObjectValidation): string => {
     : 'correct';
 };
 
-export const checkForPath = (object: ObjectValidation, path: string): ObjectCheck[] => {
+export const checkForPath = (object: ObjectValidation | undefined, path: string): ObjectCheck[] => {
   if (!object || !object.checks) {
     return [];
   }

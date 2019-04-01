@@ -19,7 +19,7 @@ interface VirtualServiceRouteProps {
   namespace: string;
   kind: string;
   routes: any[];
-  validation: ObjectValidation;
+  validation?: ObjectValidation;
 }
 
 const PFBlueColors = [
@@ -161,7 +161,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   validation(): ObjectValidation {
-    return this.props.validation;
+    return this.props.validation ? this.props.validation : ({} as ObjectValidation);
   }
 
   statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, routeIndex: number, destinationIndex: number) {

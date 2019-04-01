@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 interface DestinationRuleProps {
   namespace: string;
   destinationRule: DestinationRule;
-  validation: ObjectValidation;
+  validation?: ObjectValidation;
 }
 
 class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
@@ -20,10 +20,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   }
 
   validation(destinationRule: DestinationRule): ObjectValidation | undefined {
-    if (this.props.validation) {
-      return this.props.validation;
-    }
-    return undefined;
+    return this.props.validation;
   }
 
   globalStatus(rule: DestinationRule) {

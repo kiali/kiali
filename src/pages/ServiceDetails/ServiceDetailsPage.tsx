@@ -193,16 +193,18 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       const dr = new DestinationRuleValidator(destinationRule);
       const formatValidation = dr.formatValidation();
 
-      const objectValidations = validations['destinationrule'][destinationRule.metadata.name];
-      if (
-        formatValidation !== null &&
-        !objectValidations.checks.some(check => check.message === formatValidation.message)
-      ) {
-        objectValidations.checks.push(formatValidation);
-        objectValidations.valid = false;
+      if (validations['destinationrule']) {
+        const objectValidations = validations['destinationrule'][destinationRule.metadata.name];
+        if (
+          formatValidation !== null &&
+          !objectValidations.checks.some(check => check.message === formatValidation.message)
+        ) {
+          objectValidations.checks.push(formatValidation);
+          objectValidations.valid = false;
+        }
       }
     });
-    return validations;
+    return validations ? validations : ({} as Validations);
   }
 
   navigateToJaeger = () => {

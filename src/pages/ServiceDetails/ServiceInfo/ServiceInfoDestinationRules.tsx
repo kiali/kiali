@@ -133,6 +133,10 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
     );
   }
 
+  hasValidations(destinationRule: DestinationRule): boolean {
+    return !!this.props.validations && !!this.props.validations[destinationRule.metadata.name];
+  }
+
   validation(destinationRule: DestinationRule): ObjectValidation {
     return this.props.validations[destinationRule.metadata.name];
   }
@@ -158,7 +162,12 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
       return {
         id: vsIdx,
         name: this.overviewLink(destinationRule),
-        status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(destinationRule)]} />,
+        status: (
+          <ConfigIndicator
+            id={vsIdx + '-config-validation'}
+            validations={this.hasValidations(destinationRule) ? [this.validation(destinationRule)] : []}
+          />
+        ),
         trafficPolicy: destinationRule.spec.trafficPolicy ? (
           <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
         ) : (

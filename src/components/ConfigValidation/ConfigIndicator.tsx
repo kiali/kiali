@@ -57,7 +57,9 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   numberOfChecks = (type: string) => {
     let numCheck = 0;
     this.props.validations.forEach(validation => {
-      numCheck += validation.checks.filter(i => i.severity === type).length;
+      if (validation.checks) {
+        numCheck += validation.checks.filter(i => i.severity === type).length;
+      }
     });
     return numCheck;
   };
@@ -72,6 +74,9 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   };
 
   getValid() {
+    if (this.props.validations.length === 0) {
+      return WARNING;
+    }
     const warnIssues = this.numberOfChecks('warning');
     const errIssues = this.numberOfChecks('error');
     return warnIssues === 0 && errIssues === 0 ? VALID : errIssues > 0 ? NOT_VALID : WARNING;
@@ -84,23 +89,27 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
   tooltipContent() {
     let numChecks = 0;
     this.props.validations.forEach(validation => {
-      if (validation !== undefined) {
+      if (validation.checks) {
         numChecks += validation.checks.length;
       }
     });
 
     const issuesMessages: string[] = [];
-    if (numChecks === 0) {
-      issuesMessages.push('No issues found');
+    if (this.props.validations.length > 0) {
+      if (numChecks === 0) {
+        issuesMessages.push('No issues found');
+      } else {
+        const errMessage = this.getTypeMessage('error');
+        if (errMessage) {
+          issuesMessages.push(errMessage);
+        }
+        const warnMessage = this.getTypeMessage('warning');
+        if (warnMessage) {
+          issuesMessages.push(warnMessage);
+        }
+      }
     } else {
-      const errMessage = this.getTypeMessage('error');
-      if (errMessage) {
-        issuesMessages.push(errMessage);
-      }
-      const warnMessage = this.getTypeMessage('warning');
-      if (warnMessage) {
-        issuesMessages.push(warnMessage);
-      }
+      issuesMessages.push('Expected validation results are missing');
     }
 
     const validationsInfo: JSX.Element[] = [];

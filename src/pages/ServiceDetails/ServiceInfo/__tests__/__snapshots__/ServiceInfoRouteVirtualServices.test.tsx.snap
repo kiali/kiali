@@ -293,11 +293,7 @@ ShallowWrapper {
                   "resourceVersion": "1234",
                   "status": <ConfigIndicator
                     id="0-config-validation"
-                    validations={
-                      Array [
-                        undefined,
-                      ]
-                    }
+                    validations={Array []}
                   />,
                 },
               ]
@@ -523,11 +519,7 @@ ShallowWrapper {
                   "resourceVersion": "1234",
                   "status": <ConfigIndicator
                     id="0-config-validation"
-                    validations={
-                      Array [
-                        undefined,
-                      ]
-                    }
+                    validations={Array []}
                   />,
                 },
               ]
@@ -666,11 +658,7 @@ ShallowWrapper {
                     "resourceVersion": "1234",
                     "status": <ConfigIndicator
                       id="0-config-validation"
-                      validations={
-                        Array [
-                          undefined,
-                        ]
-                      }
+                      validations={Array []}
                     />,
                   },
                 ]
@@ -892,11 +880,7 @@ ShallowWrapper {
                   "resourceVersion": "1234",
                   "status": <ConfigIndicator
                     id="0-config-validation"
-                    validations={
-                      Array [
-                        undefined,
-                      ]
-                    }
+                    validations={Array []}
                   />,
                 },
               ],
@@ -1132,11 +1116,7 @@ ShallowWrapper {
                     "resourceVersion": "1234",
                     "status": <ConfigIndicator
                       id="0-config-validation"
-                      validations={
-                        Array [
-                          undefined,
-                        ]
-                      }
+                      validations={Array []}
                     />,
                   },
                 ]
@@ -1362,11 +1342,7 @@ ShallowWrapper {
                     "resourceVersion": "1234",
                     "status": <ConfigIndicator
                       id="0-config-validation"
-                      validations={
-                        Array [
-                          undefined,
-                        ]
-                      }
+                      validations={Array []}
                     />,
                   },
                 ]
@@ -1505,11 +1481,7 @@ ShallowWrapper {
                       "resourceVersion": "1234",
                       "status": <ConfigIndicator
                         id="0-config-validation"
-                        validations={
-                          Array [
-                            undefined,
-                          ]
-                        }
+                        validations={Array []}
                       />,
                     },
                   ]
@@ -1731,11 +1703,7 @@ ShallowWrapper {
                     "resourceVersion": "1234",
                     "status": <ConfigIndicator
                       id="0-config-validation"
-                      validations={
-                        Array [
-                          undefined,
-                        ]
-                      }
+                      validations={Array []}
                     />,
                   },
                 ],

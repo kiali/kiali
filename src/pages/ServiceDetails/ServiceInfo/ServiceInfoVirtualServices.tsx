@@ -85,6 +85,11 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     };
   }
 
+  hasValidations(virtualService: VirtualService): boolean {
+    // This is insane, but doing return to the clause inside the if will cause compiler failure
+    return !!this.props.validations && !!this.props.validations[virtualService.metadata.name];
+  }
+
   validation(virtualService: VirtualService): ObjectValidation {
     return this.props.validations[virtualService.metadata.name];
   }
@@ -124,7 +129,12 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
   rows() {
     return (this.props.virtualServices || []).map((virtualService, vsIdx) => ({
       id: vsIdx,
-      status: <ConfigIndicator id={vsIdx + '-config-validation'} validations={[this.validation(virtualService)]} />,
+      status: (
+        <ConfigIndicator
+          id={vsIdx + '-config-validation'}
+          validations={this.hasValidations(virtualService) ? [this.validation(virtualService)] : []}
+        />
+      ),
       name: this.overviewLink(virtualService),
       createdAt: <LocalTime time={virtualService.metadata.creationTimestamp || ''} />,
       resourceVersion: virtualService.metadata.resourceVersion,
