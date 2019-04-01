@@ -98,6 +98,7 @@ ShallowWrapper {
             <img
               alt="Vert.x"
               src="vertx-logo.png"
+              title="Vert.x"
             />
             <span>
                | 
@@ -203,6 +204,7 @@ ShallowWrapper {
               <img
                 alt="Vert.x"
                 src="vertx-logo.png"
+                title="Vert.x"
               />
               <span>
                  | 
