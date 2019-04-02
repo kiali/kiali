@@ -5,41 +5,47 @@ metadata:
 spec:
   runtime: Node.js
   title: Node.js Metrics
-  charts:
-    - name: "Active handles"
+  items:
+  - chart:
+      name: "Active handles"
       spans: 4
       metricName: "nodejs_active_handles_total"
       dataType: "raw"
-    - name: "Active requests"
+  - chart:
+      name: "Active requests"
       spans: 4
       metricName: "nodejs_active_requests_total"
       dataType: "raw"
-    - name: "Event loop lag"
+  - chart:
+      name: "Event loop lag"
       unit: "seconds"
       spans: 4
       metricName: "nodejs_eventloop_lag_seconds"
       dataType: "raw"
-    - name: "Total heap size"
+  - chart:
+      name: "Total heap size"
       unit: "bytes"
       spans: 12
       metricName: "nodejs_heap_space_size_total_bytes"
       dataType: "raw"
       aggregations:
-        - label: "space"
-          displayName: "Space"
-    - name: "Used heap size"
+      - label: "space"
+        displayName: "Space"
+  - chart:
+      name: "Used heap size"
       unit: "bytes"
       spans: 6
       metricName: "nodejs_heap_space_size_used_bytes"
       dataType: "raw"
       aggregations:
-        - label: "space"
-          displayName: "Space"
-    - name: "Available heap size"
+      - label: "space"
+        displayName: "Space"
+  - chart:
+      name: "Available heap size"
       unit: "bytes"
       spans: 6
       metricName: "nodejs_heap_space_size_available_bytes"
       dataType: "raw"
       aggregations:
-        - label: "space"
-          displayName: "Space"
+      - label: "space"
+        displayName: "Space"

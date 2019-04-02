@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kiali_monitoring/v1alpha1"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -25,7 +25,7 @@ type Chart struct {
 }
 
 // ConvertChart converts a k8s chart (from MonitoringDashboard k8s resource) into this models chart
-func ConvertChart(from kubernetes.MonitoringDashboardChart) Chart {
+func ConvertChart(from v1alpha1.MonitoringDashboardChart) Chart {
 	return Chart{
 		Name:  from.Name,
 		Unit:  from.Unit,
@@ -41,10 +41,10 @@ type Aggregation struct {
 
 // ConvertAggregations converts a k8s aggregations (from MonitoringDashboard k8s resource) into this models aggregations
 // Results are sorted by DisplayName
-func ConvertAggregations(from kubernetes.MonitoringDashboardSpec) []Aggregation {
+func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []Aggregation {
 	uniqueAggs := make(map[string]Aggregation)
-	for _, chart := range from.Charts {
-		for _, agg := range chart.Aggregations {
+	for _, item := range from.Items {
+		for _, agg := range item.Chart.Aggregations {
 			uniqueAggs[agg.DisplayName] = Aggregation{Label: agg.Label, DisplayName: agg.DisplayName}
 		}
 	}

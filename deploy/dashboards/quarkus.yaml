@@ -5,37 +5,22 @@ metadata:
 spec:
   title: Quarkus Metrics
   runtime: Quarkus
-  charts:
-    - name: "Thread count"
+  items:
+  - chart:
+      name: "Thread count"
       spans: 4
       metricName: "vendor:thread_count"
       dataType: "raw"
-    - name: "Used heap"
+  - chart:
+      name: "Used heap"
       unit: "bytes"
       spans: 4
       metricName: "vendor:memory_heap_usage_bytes"
       dataType: "raw"
-    - name: "Used non-heap"
+  - chart:
+      name: "Used non-heap"
       unit: "bytes"
       spans: 4
       metricName: "vendor:memory_non_heap_usage_bytes"
       dataType: "raw"
-
-    - name: "Young GC time"
-      unit: "seconds"
-      spans: 3
-      metricName: "base:gc_young_generation_scavenger_time_seconds"
-      dataType: "raw"
-    - name: "Young GC count"
-      spans: 3
-      metricName: "base:gc_young_generation_scavenger_count"
-      dataType: "raw"
-    - name: "Total GC time"
-      unit: "seconds"
-      spans: 3
-      metricName: "base:gc_complete_scavenger_time_seconds"
-      dataType: "raw"
-    - name: "Total GC count"
-      spans: 3
-      metricName: "base:gc_complete_scavenger_count"
-      dataType: "raw"
+  - include: "microprofile-x.y"

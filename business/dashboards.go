@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kiali_monitoring/v1alpha1"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -23,7 +24,7 @@ func NewDashboardsService(mon kubernetes.KialiMonitoringInterface, prom promethe
 	return DashboardsService{prom: prom, mon: mon}
 }
 
-func (in *DashboardsService) loadDashboardResource(namespace, template string) (*kubernetes.MonitoringDashboard, error) {
+func (in *DashboardsService) loadDashboardResource(namespace, template string) (*v1alpha1.MonitoringDashboard, error) {
 	// There is an override mechanism with dashboards: default dashboards can be provided in Kiali namespace,
 	// and can be overriden in app namespace.
 	// So we look for the one in app namespace first, and only if not found fallback to the one in istio-system.
@@ -35,13 +36,59 @@ func (in *DashboardsService) loadDashboardResource(namespace, template string) (
 			return nil, err
 		}
 	}
+	return dashboard, err
+}
 
-	return dashboard, nil
+func (in *DashboardsService) loadAndResolveDashboardResource(namespace, template string, loaded map[string]bool) (*v1alpha1.MonitoringDashboard, error) {
+	// Circular dependency check
+	if _, ok := loaded[template]; ok {
+		return nil, fmt.Errorf("Cannot load dashboard %s due to circular dependency detected. Already loaded dependencies: %v", template, loaded)
+	}
+	loaded[template] = true
+	dashboard, err := in.loadDashboardResource(namespace, template)
+	if err != nil {
+		return nil, err
+	}
+	err = in.resolveReferences(namespace, dashboard, loaded)
+	return dashboard, err
+}
+
+// resolveReferences resolves the composition mechanism that allows to reference a dashboard from another one
+func (in *DashboardsService) resolveReferences(namespace string, dashboard *v1alpha1.MonitoringDashboard, loaded map[string]bool) error {
+	resolved := []v1alpha1.MonitoringDashboardItem{}
+	for _, item := range dashboard.Spec.Items {
+		reference := strings.TrimSpace(item.Include)
+		if reference != "" {
+			// reference can point to a whole dashboard (ex: microprofile-1.0) or a chart within a dashboard (ex: microprofile-1.0$Thread count)
+			parts := strings.Split(reference, "$")
+			dashboardRefName := parts[0]
+			composedDashboard, err := in.loadAndResolveDashboardResource(namespace, dashboardRefName, loaded)
+			if err != nil {
+				return err
+			}
+			for _, item2 := range composedDashboard.Spec.Items {
+				if len(parts) > 1 {
+					// Reference a specific chart
+					if item2.Chart.Name == parts[1] {
+						resolved = append(resolved, item2)
+						break
+					}
+				} else {
+					// Reference the whole dashboard
+					resolved = append(resolved, item2)
+				}
+			}
+		} else {
+			resolved = append(resolved, item)
+		}
+	}
+	dashboard.Spec.Items = resolved
+	return nil
 }
 
 // GetDashboard returns a dashboard filled-in with target data
 func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, template string) (*models.MonitoringDashboard, error) {
-	dashboard, err := in.loadDashboardResource(params.Namespace, template)
+	dashboard, err := in.loadAndResolveDashboardResource(params.Namespace, template, map[string]bool{})
 	if err != nil {
 		return nil, err
 	}
@@ -62,25 +109,25 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 	grouping := strings.Join(params.ByLabels, ",")
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(dashboard.Spec.Charts))
-	filledCharts := make([]models.Chart, len(dashboard.Spec.Charts))
+	wg.Add(len(dashboard.Spec.Items))
+	filledCharts := make([]models.Chart, len(dashboard.Spec.Items))
 
-	for i, c := range dashboard.Spec.Charts {
-		go func(idx int, chart kubernetes.MonitoringDashboardChart) {
+	for i, item := range dashboard.Spec.Items {
+		go func(idx int, chart v1alpha1.MonitoringDashboardChart) {
 			defer wg.Done()
 			filledCharts[idx] = models.ConvertChart(chart)
-			if chart.DataType == kubernetes.Raw {
+			if chart.DataType == v1alpha1.Raw {
 				aggregator := params.RawDataAggregator
 				if chart.Aggregator != "" {
 					aggregator = chart.Aggregator
 				}
 				filledCharts[idx].Metric = in.prom.FetchRange(chart.MetricName, labels, grouping, aggregator, &params.BaseMetricsQuery)
-			} else if chart.DataType == kubernetes.Rate {
+			} else if chart.DataType == v1alpha1.Rate {
 				filledCharts[idx].Metric = in.prom.FetchRateRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			} else {
 				filledCharts[idx].Histogram = in.prom.FetchHistogramRange(chart.MetricName, labels, grouping, &params.BaseMetricsQuery)
 			}
-		}(i, c)
+		}(i, item.Chart)
 	}
 
 	wg.Wait()
@@ -174,7 +221,7 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 }
 
 func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames []string) []models.Runtime {
-	dashboards := make([]*kubernetes.MonitoringDashboard, len(templatesNames))
+	dashboards := make([]*v1alpha1.MonitoringDashboard, len(templatesNames))
 	wg := sync.WaitGroup{}
 	wg.Add(len(templatesNames))
 	for idx, template := range templatesNames {
@@ -198,7 +245,7 @@ func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames 
 		}
 		runtime := dashboard.Spec.Runtime
 		ref := models.DashboardRef{
-			Template: dashboard.Metadata["name"].(string),
+			Template: dashboard.Name,
 			Title:    dashboard.Spec.Title,
 		}
 		found := false

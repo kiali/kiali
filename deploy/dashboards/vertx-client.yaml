@@ -5,41 +5,47 @@ metadata:
 spec:
   runtime: Vert.x
   title: Vert.x Client Metrics
-  charts:
-    - name: "Client response time"
+  items:
+  - chart:
+      name: "Client response time"
       unit: "seconds"
       spans: 6
       metricName: "vertx_http_client_responseTime_seconds"
       dataType: "histogram"
       aggregations:
-        - label: "path"
-          displayName: "Path"
-        - label: "method"
-          displayName: "Method"
-    - name: "Client request count rate"
+      - label: "path"
+        displayName: "Path"
+      - label: "method"
+        displayName: "Method"
+  - chart:
+      name: "Client request count rate"
       unit: "ops"
       spans: 6
       metricName: "vertx_http_client_requestCount_total"
       dataType: "rate"
       aggregations:
-        - label: "path"
-          displayName: "Path"
-        - label: "method"
-          displayName: "Method"
-    - name: "Client active connections"
+      - label: "path"
+        displayName: "Path"
+      - label: "method"
+        displayName: "Method"
+  - chart:
+      name: "Client active connections"
       spans: 6
       metricName: "vertx_http_client_connections"
       dataType: "raw"
-    - name: "Client active websockets"
+  - chart:
+      name: "Client active websockets"
       spans: 6
       metricName: "vertx_http_client_wsConnections"
       dataType: "raw"
-    - name: "Client bytes sent"
+  - chart:
+      name: "Client bytes sent"
       unit: "bytes"
       spans: 6
       metricName: "vertx_http_client_bytesSent"
       dataType: "histogram"
-    - name: "Client bytes received"
+  - chart:
+      name: "Client bytes received"
       unit: "bytes"
       spans: 6
       metricName: "vertx_http_client_bytesReceived"

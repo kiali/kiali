@@ -5,35 +5,39 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kiali_monitoring/v1alpha1"
 )
 
 func TestConvertAggregations(t *testing.T) {
 	assert := assert.New(t)
 
-	dashboardSpec := kubernetes.MonitoringDashboardSpec{
-		Charts: []kubernetes.MonitoringDashboardChart{
-			kubernetes.MonitoringDashboardChart{
-				Aggregations: []kubernetes.MonitoringDashboardAggregation{
-					kubernetes.MonitoringDashboardAggregation{
-						DisplayName: "Path",
-						Label:       "path",
-					},
-					kubernetes.MonitoringDashboardAggregation{
-						DisplayName: "Error code",
-						Label:       "error_code",
+	dashboardSpec := v1alpha1.MonitoringDashboardSpec{
+		Items: []v1alpha1.MonitoringDashboardItem{
+			v1alpha1.MonitoringDashboardItem{
+				Chart: v1alpha1.MonitoringDashboardChart{
+					Aggregations: []v1alpha1.MonitoringDashboardAggregation{
+						v1alpha1.MonitoringDashboardAggregation{
+							DisplayName: "Path",
+							Label:       "path",
+						},
+						v1alpha1.MonitoringDashboardAggregation{
+							DisplayName: "Error code",
+							Label:       "error_code",
+						},
 					},
 				},
 			},
-			kubernetes.MonitoringDashboardChart{
-				Aggregations: []kubernetes.MonitoringDashboardAggregation{
-					kubernetes.MonitoringDashboardAggregation{
-						DisplayName: "Address",
-						Label:       "address",
-					},
-					kubernetes.MonitoringDashboardAggregation{
-						DisplayName: "Error code",
-						Label:       "error_code",
+			v1alpha1.MonitoringDashboardItem{
+				Chart: v1alpha1.MonitoringDashboardChart{
+					Aggregations: []v1alpha1.MonitoringDashboardAggregation{
+						v1alpha1.MonitoringDashboardAggregation{
+							DisplayName: "Address",
+							Label:       "address",
+						},
+						v1alpha1.MonitoringDashboardAggregation{
+							DisplayName: "Error code",
+							Label:       "error_code",
+						},
 					},
 				},
 			},

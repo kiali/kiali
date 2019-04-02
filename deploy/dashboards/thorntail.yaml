@@ -5,43 +5,10 @@ metadata:
 spec:
   runtime: Thorntail
   title: Thorntail Metrics
-  charts:
-    - name: "Current loaded classes"
-      spans: 4
-      metricName: "base:classloader_current_loaded_class_count"
-      dataType: "raw"
-    - name: "Unloaded classes"
-      spans: 4
-      metricName: "base:classloader_total_unloaded_class_count"
-      dataType: "raw"
-    - name: "Loaded modules"
-      spans: 4
+  items:
+  - include: "microprofile-1.1"
+  - chart:
+      name: "Loaded modules"
+      spans: 6
       metricName: "vendor:loaded_modules"
-      dataType: "raw"
-    - name: "Thread count"
-      spans: 4
-      metricName: "base:thread_count"
-      dataType: "raw"
-    - name: "Thread max count"
-      spans: 4
-      metricName: "base:thread_max_count"
-      dataType: "raw"
-    - name: "Thread daemon count"
-      spans: 4
-      metricName: "base:thread_daemon_count"
-      dataType: "raw"
-    - name: "Committed heap"
-      unit: "bytes"
-      spans: 4
-      metricName: "base:memory_committed_heap_bytes"
-      dataType: "raw"
-    - name: "Max heap"
-      unit: "bytes"
-      spans: 4
-      metricName: "base:memory_max_heap_bytes"
-      dataType: "raw"
-    - name: "Used heap"
-      unit: "bytes"
-      spans: 4
-      metricName: "base:memory_used_heap_bytes"
       dataType: "raw"

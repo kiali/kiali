@@ -1,15 +1,15 @@
 package kubernetes
 
 import (
-	"encoding/json"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+
+	"github.com/kiali/kiali/kubernetes/kiali_monitoring/v1alpha1"
 )
 
 // KialiMonitoringInterface for mocks (only mocked function are necessary here)
 type KialiMonitoringInterface interface {
-	GetDashboard(namespace string, name string) (*MonitoringDashboard, error)
+	GetDashboard(namespace string, name string) (*v1alpha1.MonitoringDashboard, error)
 }
 
 // KialiMonitoringClient is the client struct for Kiali Monitoring API over Kubernetes
@@ -37,19 +37,21 @@ func NewKialiMonitoringClient() (*KialiMonitoringClient, error) {
 		return nil, err
 	}
 
-	client, err := newClientForAPI(config, kialiMonitoringGroupVersion, types)
+	client, err := newClientForAPI(config, v1alpha1.KialiMonitoringGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
 	return &KialiMonitoringClient{
 		client: client,
 	}, err
 }
 
 // GetDashboard returns a MonitoringDashboard for the given name
-func (in *KialiMonitoringClient) GetDashboard(namespace string, name string) (*MonitoringDashboard, error) {
-	result, err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").SubResource(name).Do().Raw()
+func (in *KialiMonitoringClient) GetDashboard(namespace, name string) (*v1alpha1.MonitoringDashboard, error) {
+	result := v1alpha1.MonitoringDashboard{}
+	err := in.client.Get().Namespace(namespace).Resource("monitoringdashboards").SubResource(name).Do().Into(&result)
 	if err != nil {
 		return nil, err
 	}
-	var dashboard MonitoringDashboard
-	err = json.Unmarshal(result, &dashboard)
-	return &dashboard, err
+	return &result, err
 }
