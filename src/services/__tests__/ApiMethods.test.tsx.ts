@@ -49,7 +49,7 @@ describe('#GetErrorMessage', () => {
       }
     };
     expect(API.getErrorMsg(errormsg, axErr)).toEqual(
-      `${errormsg}, Error: [ Unauthorized ] Have your session expired? Try logging again.`
+      `${errormsg}, Error: [ Unauthorized ] Has your session expired? Try logging again.`
     );
   });
 });

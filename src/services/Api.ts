@@ -406,7 +406,7 @@ export const getErrorMsg = (msg: string, error: AxiosError) => {
     } else if (error.response.statusText) {
       errorMessage = `${msg}, Error: [ ${error.response.statusText} ]`;
       if (error.response.status === 401) {
-        errorMessage += ' Have your session expired? Try logging again.';
+        errorMessage += ' Has your session expired? Try logging again.';
       }
     }
   }
