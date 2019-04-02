@@ -217,6 +217,10 @@ const (
 	reportnothingType     = "reportnothing"
 	reportnothingTypeList = "reportnothingList"
 
+	templates        = "templates"
+	templateType     = "template"
+	templateTypeList = "templateList"
+
 	tracespans        = "tracespans"
 	tracespanType     = "tracespan"
 	tracespanTypeList = "tracespanList"
@@ -447,6 +451,10 @@ var (
 			collectionKind: reportnothingTypeList,
 		},
 		{
+			objectKind:     templateType,
+			collectionKind: templateTypeList,
+		},
+		{
 			objectKind:     tracespanType,
 			collectionKind: tracespanTypeList,
 		},
@@ -514,6 +522,7 @@ var (
 		metricType:        metrics,
 		quotaType:         quotas,
 		reportnothingType: reportnothings,
+		templateType:      templates,
 		tracespanType:     tracespans,
 	}
 
@@ -565,6 +574,7 @@ var (
 		metrics:        metricType,
 		quotas:         quotaType,
 		reportnothings: reportnothingType,
+		templates:      templateType,
 		tracespans:     tracespanType,
 
 		// Policies
