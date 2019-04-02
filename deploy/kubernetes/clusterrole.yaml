@@ -80,6 +80,7 @@ rules:
   - stackdrivers
   - statsds
   - stdios
+  - templates
   - tracespans
   - zipkins
   verbs:
@@ -214,6 +215,7 @@ rules:
   - stackdrivers
   - statsds
   - stdios
+  - templates
   - tracespans
   - zipkins
   verbs:
