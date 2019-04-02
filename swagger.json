@@ -1652,6 +1652,14 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The pod name.",
             "name": "pod",
             "in": "path",
@@ -1692,6 +1700,14 @@
             "description": "The pod container name. Optional for single-container pod. Otherwise required.",
             "name": "container",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
