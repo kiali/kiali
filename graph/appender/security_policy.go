@@ -162,9 +162,7 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 						other += rate
 					}
 				}
-				if percentMtls := mtls / (mtls + other) * 100; percentMtls > 0 {
-					e.Metadata["isMTLS"] = percentMtls
-				}
+				e.Metadata["isMTLS"] = mtls / (mtls + other) * 100
 			}
 		}
 	}
