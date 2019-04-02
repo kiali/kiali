@@ -31,9 +31,18 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
+// swagger:parameters podLogs
+type ContainerParam struct {
+	// The pod container name. Optional for single-container pod. Otherwise required.
+	//
+	// in: query
+	// required: false
+	Name string `json:"container"`
+}
+
 // swagger:parameters istioConfigList  workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls
 type NamespaceParam struct {
-	// The namespace id.
+	// The namespace name.
 	//
 	// in: path
 	// required: true
@@ -68,6 +77,15 @@ type ObjectSubtypeParam struct {
 	Name string `json:"object_subtype"`
 }
 
+// swagger:parameters podDetails podLogs
+type PodParam struct {
+	// The pod name.
+	//
+	// in: path
+	// required: true
+	Name string `json:"pod"`
+}
+
 // swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard
 type ServiceParam struct {
 	// The service name.
@@ -75,6 +93,15 @@ type ServiceParam struct {
 	// in: path
 	// required: true
 	Name string `json:"service"`
+}
+
+// swagger:parameters podLogs
+type SinceTimeParam struct {
+	// The start time for fetching logs. UNIX time in seconds. Default is all logs.
+	//
+	// in: query
+	// required: false
+	Name string `json:"sinceTime"`
 }
 
 // swagger:parameters customDashboard
