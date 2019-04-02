@@ -245,22 +245,22 @@ func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error
 // It returns an error on any problem.
 func (in *IstioClient) GetPod(namespace, name string) (*v1.Pod, error) {
 	if in.k8sCache != nil {
-		pods, err := in.k8sCache.GetPods(namespace)
-		if err != nil {
-			return &v1.Pod{}, err
-		}
-		for _, pod := range pods {
-			if name == pod.Name {
-				return &pod, nil
+		if pods, err := in.k8sCache.GetPods(namespace); err != nil {
+			return nil, err
+		} else {
+			for _, pod := range pods {
+				if name == pod.Name {
+					return &pod, nil
+				}
 			}
+			return nil, NewNotFound(name, "core/v1", "Pod")
 		}
-		return &v1.Pod{}, nil
 	}
 
-	if pod, err := in.k8s.CoreV1().Pods(namespace).Get(name, emptyGetOptions); err == nil {
-		return pod, nil
+	if pod, err := in.k8s.CoreV1().Pods(namespace).Get(name, emptyGetOptions); err != nil {
+		return nil, err
 	} else {
-		return &v1.Pod{}, err
+		return pod, nil
 	}
 }
 
