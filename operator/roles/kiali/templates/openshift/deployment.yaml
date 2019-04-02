@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiali
+  namespace: {{ namespace }}
+  labels:
+    app: kiali
+    version: {{ version_label }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kiali
+      version: {{ version_label }}
+  template:
+    metadata:
+      name: kiali
+      labels:
+        app: kiali
+        version: {{ version_label }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ metrics_port }}"
+        kiali.io/runtimes: go,kiali
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxAvailable: 1
+      type: RollingUpdate
+    spec:
+      serviceAccount: kiali
+      containers:
+      - image: {{ image_name }}:{{ image_version }}
+        imagePullPolicy: {{ image_pull_policy }}
+        name: kiali
+        command:
+        - "/opt/kiali/kiali"
+        - "-config"
+        - "/kiali-configuration/config.yaml"
+        - "-v"
+        - "{{ verbose_mode }}"
+        ports:
+          - name: api-port
+            containerPort: {{ server_port }}
+        readinessProbe:
+          httpGet:
+            path: {{ web_root | regex_replace('\\/$', '') }}/healthz
+            port: api-port
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 30
+        livenessProbe:
+          httpGet:
+            path: {{ web_root | regex_replace('\\/$', '') }}/healthz
+            port: api-port
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 30
+        env:
+        - name: ACTIVE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: kiali-configuration
+          mountPath: "/kiali-configuration"
+        - name: kiali-cert
+          mountPath: "/kiali-cert"
+        - name: kiali-secret
+          mountPath: "/kiali-secret"
+      volumes:
+      - name: kiali-configuration
+        configMap:
+          name: kiali
+      - name: kiali-cert
+        secret:
+          secretName: kiali-cert-secret
+      - name: kiali-secret
+        secret:
+          secretName: kiali
+          optional: true

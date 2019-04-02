@@ -1,0 +1,13 @@
+apiVersion: oauth.openshift.io/v1
+kind: OAuthClient
+metadata:
+  name: kiali
+  namespace: {{ namespace }}
+  labels:
+    app: kiali
+    version: {{ version_label }}
+redirectURIs:
+  - {{ kiali_route_url }}
+  - localhost:3000
+grantMethod: auto
+allowAnyScope: true

@@ -1,0 +1,9 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-jvm
+spec:
+  runtime: Vert.x
+  title: JVM Metrics
+  items:
+  - include: "micrometer-1.1-jvm"

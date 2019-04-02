@@ -1,0 +1,8 @@
+apiVersion: op.kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+  image_version: latest
+  # the Makefile needs this
+  state: present

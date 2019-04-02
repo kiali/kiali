@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kiali
+  namespace: {{ namespace }}
+  labels:
+    app: kiali
+    version: {{ version_label }}
+data:
+  config.yaml: |
+    istio_namespace: {{ istio_namespace }}
+    server:
+      port: {{ server_port }}
+      web_root: {{ web_root }}
+      metrics_port: {{ metrics_port }}
+    external_services:
+      jaeger:
+        url: {{ jaeger_url }}
+      grafana:
+        url: {{ grafana_url }}
+    auth:
+      strategy: {{ auth_strategy }}
+    identity:
+      cert_file: /kiali-cert/tls.crt
+      private_key_file: /kiali-cert/tls.key

@@ -1,0 +1,70 @@
+# TODO: This isn't complete - some perms are still missing. Right now we use cluster-admin in role_binding.yaml.
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: kiali-operator
+  labels:
+    app: kiali-operator
+    version: ${OPERATOR_VERSION_LABEL}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - namespaces
+  - pods
+  - routes
+  - secrets
+  - services
+  - serviceaccounts
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  - extensions
+  resources:
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - apps
+  - extensions
+  resourceNames:
+  - kiali-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - route.openshift.io
+  resources:
+  - routes
+  verbs:
+  - '*'
+- apiGroups:
+  - op.kiali.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups: ["rbac.istio.io"]
+  resources:
+  - clusterolebindings
+  - clusterroles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch

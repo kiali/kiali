@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${OPERATOR_NAMESPACE}
+  labels:
+    app: kiali-operator
+    version: ${OPERATOR_VERSION_LABEL}
