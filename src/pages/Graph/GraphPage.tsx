@@ -52,6 +52,7 @@ type ReduxProps = {
   showServiceNodes: boolean;
   showUnusedNodes: boolean;
   summaryData: SummaryData | null;
+  mtlsEnabled: boolean;
 
   fetchGraphData: (
     namespaces: Namespace[],
@@ -320,6 +321,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                 refresh={this.handleRefreshClick}
                 containerClassName={cytoscapeGraphContainerStyle}
                 ref={refInstance => this.setCytoscapeGraph(refInstance)}
+                isMTLSEnabled={this.props.mtlsEnabled}
               />
               {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
@@ -340,7 +342,11 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
               />
             )}
             {this.props.showLegend && (
-              <GraphLegend className={graphToolbarStyle} closeLegend={this.props.toggleLegend} />
+              <GraphLegend
+                className={graphToolbarStyle}
+                isMTLSEnabled={this.props.mtlsEnabled}
+                closeLegend={this.props.toggleLegend}
+              />
             )}
           </FlexView>
         </FlexView>

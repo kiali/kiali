@@ -30,7 +30,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       http5xx: 'NaN',
       httpPercentErr: 'NaN',
       httpPercentReq: 'NaN',
-      isMTLS: undefined,
+      isMTLS: '-1',
       protocol: undefined,
       responses: undefined,
       responseTime: 'NaN',

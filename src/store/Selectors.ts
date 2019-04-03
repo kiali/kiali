@@ -1,6 +1,7 @@
 import { createSelector } from 'reselect';
 import * as GraphData from './Selectors/GraphData';
 import { KialiAppState } from './Store';
+import { isMTLSEnabled } from '../types/TLSStatus';
 // These memoized selectors are from Redux Reselect package
 
 const createIdentitySelector = selector =>
@@ -62,9 +63,10 @@ export const showServiceNodesSelector = createIdentitySelector(showServiceNodes)
 
 export const graphDataSelector = GraphData.graphDataSelector;
 
-const meshwideMTLSStatus = (state: KialiAppState) => {
-  const statusName = 'Istio mTLS';
-  return state.statusState.status[statusName];
-};
+const meshwideMTLSStatus = (state: KialiAppState) => state.statusState.status['Istio mTLS'];
 
 export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);
+
+const meshwideMTLSEnabled = (state: KialiAppState) => isMTLSEnabled(state.statusState.status['Istio mTLS']);
+
+export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);

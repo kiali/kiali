@@ -540,7 +540,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       // edges...
       //
       case 'mtls':
-        return { target: 'edge', selector: isNegation ? `[^${CyEdge.isMTLS}]` : `[${CyEdge.isMTLS}]` };
+        return { target: 'edge', selector: isNegation ? `[${CyEdge.isMTLS} <= 0]` : `[${CyEdge.isMTLS} > 0]` };
       default:
         return undefined;
     }

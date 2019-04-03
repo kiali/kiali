@@ -110,7 +110,7 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('tcp > 5.0')).toEqual('edge[tcp > 5.0]');
 
     // @ts-ignore
-    expect(instance.parseValue('mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('mtls')).toEqual('edge[isMTLS > 0]');
 
     // check all numeric operators
     // @ts-ignore
@@ -158,17 +158,17 @@ describe('Parse find value test', () => {
 
     // check unary parsing
     // @ts-ignore
-    expect(instance.parseValue('is mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('is mtls')).toEqual('edge[isMTLS > 0]');
     // @ts-ignore
-    expect(instance.parseValue('has mtls')).toEqual('edge[isMTLS]');
+    expect(instance.parseValue('has mtls')).toEqual('edge[isMTLS > 0]');
     // @ts-ignore
-    expect(instance.parseValue('! mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('! mtls')).toEqual('edge[isMTLS <= 0]');
     // @ts-ignore
-    expect(instance.parseValue('!has mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('!has mtls')).toEqual('edge[isMTLS <= 0]');
     // @ts-ignore
-    expect(instance.parseValue('!mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('!mtls')).toEqual('edge[isMTLS <= 0]');
     // @ts-ignore
-    expect(instance.parseValue('not has mtls')).toEqual('edge[^isMTLS]');
+    expect(instance.parseValue('not has mtls')).toEqual('edge[isMTLS <= 0]');
 
     // check binary parsing
     // @ts-ignore

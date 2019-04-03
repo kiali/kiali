@@ -20,3 +20,7 @@ export const nsWideMTLSStatus = (nsStatus: string, meshStatus: string): string =
 
   return finalStatus;
 };
+
+export const isMTLSEnabled = (status: string): boolean => {
+  return status === MTLSStatuses.ENABLED;
+};

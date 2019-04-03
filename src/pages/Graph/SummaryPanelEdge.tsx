@@ -93,7 +93,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const edge = this.props.data.summaryTarget;
     const source = edge.source();
     const dest = edge.target();
-    const isMtls = edge.data(CyEdge.isMTLS);
+    const mTLSPercentage = edge.data(CyEdge.isMTLS);
+    const isMtls = mTLSPercentage && Number(mTLSPercentage) > 0;
     const protocol = edge.data(CyEdge.protocol);
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
@@ -111,7 +112,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     };
 
     const MTLSBlock = () => {
-      return <div className="panel-heading label-collection">{this.renderBadgeSummary(isMtls)}</div>;
+      return <div className="panel-heading label-collection">{this.renderBadgeSummary(mTLSPercentage)}</div>;
     };
 
     return (
@@ -490,10 +491,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
-  private renderBadgeSummary = (isMtls: string) => {
+  private renderBadgeSummary = (mTLSPercentage: string) => {
     let mtls = 'mTLS Enabled';
-    if (isMtls && Number(isMtls) < 100.0) {
-      mtls = `${mtls} [${isMtls}% of request traffic]`;
+    const isMtls = Number(mTLSPercentage) > 0;
+    if (isMtls && Number(mTLSPercentage) < 100.0) {
+      mtls = `${mtls} [${mTLSPercentage}% of request traffic]`;
     }
     return (
       <>

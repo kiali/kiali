@@ -8,7 +8,8 @@ import {
   refreshIntervalSelector,
   graphTypeSelector,
   edgeLabelModeSelector,
-  graphDataSelector
+  graphDataSelector,
+  meshWideMTLSEnabledSelector
 } from '../store/Selectors';
 
 import { KialiAppState } from '../store/Store';
@@ -41,7 +42,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   showSecurity: state.graph.filterState.showSecurity,
   showServiceNodes: state.graph.filterState.showServiceNodes,
   showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  summaryData: state.graph.summaryData
+  summaryData: state.graph.summaryData,
+  mtlsEnabled: meshWideMTLSEnabledSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

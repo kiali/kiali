@@ -7,22 +7,18 @@ import { Button, Icon } from 'patternfly-react';
 // The size of content's dialog is the same as the image (it is fetched dynamically on this code)
 // Any image format that can be displayed by a browser could be used.
 const graphLegendImage = require('../../assets/img/graph-legend.svg');
+const graphmTLSEnabledLegendImage = require('../../assets/img/graph-mtls-legend.svg');
 
 export interface GraphLegendProps {
   closeLegend: () => void;
   className?: string;
+  isMTLSEnabled: boolean;
 }
 
 export interface GraphLegendState {
   width: number;
   height: number;
 }
-
-const legendImageStyle = style({
-  backgroundImage: `url(${graphLegendImage})`,
-  margin: '5px 10px',
-  padding: 0
-});
 
 export default class GraphLegend extends React.Component<GraphLegendProps, GraphLegendState> {
   constructor(props: GraphLegendProps) {
@@ -38,7 +34,25 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
         height: image.height
       });
     };
-    image.src = graphLegendImage;
+    image.src = this.getLegendImage();
+  }
+
+  getLegendImageStyle() {
+    return style({
+      backgroundImage: `url(${this.getLegendImage()})`,
+      margin: '5px 10px',
+      padding: 0
+    });
+  }
+
+  getLegendImage() {
+    let image = graphLegendImage;
+
+    if (this.props.isMTLSEnabled) {
+      image = graphmTLSEnabledLegendImage;
+    }
+
+    return image;
   }
 
   render() {
@@ -57,7 +71,7 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
           </div>
           <div
             style={{ width: this.state.width, height: this.state.height }}
-            className={`modal-body ${legendImageStyle}`}
+            className={`modal-body ${this.getLegendImageStyle()}`}
           />
         </div>
       </Draggable>

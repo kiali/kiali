@@ -5,6 +5,7 @@ const mutIcons = {
     circuitBreaker: { type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
     missingSidecar: { type: 'pf', name: 'blueprint', ascii: '\ue915 ', color: 'red' },
     mtls: { type: 'pf', name: 'locked', ascii: '\ue923 ' },
+    disabledMtls: { type: 'fa', name: 'unlock', ascii: '\uf09c ' },
     virtualService: { type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
   },
   menu: {

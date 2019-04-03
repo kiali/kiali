@@ -10,6 +10,7 @@ import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
+import { CyNode } from './CytoscapeGraphUtils';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
@@ -18,31 +19,30 @@ import {
   activeNamespacesSelector,
   durationSelector,
   edgeLabelModeSelector,
-  refreshIntervalSelector,
+  graphDataSelector,
   graphTypeSelector,
-  graphDataSelector
+  refreshIntervalSelector
 } from '../../store/Selectors';
 import {
+  CyData,
   CytoscapeBaseEvent,
   CytoscapeClickEvent,
+  CytoscapeGlobalScratchData,
+  CytoscapeGlobalScratchNamespace,
   CytoscapeMouseInEvent,
   CytoscapeMouseOutEvent,
-  CytoscapeGlobalScratchNamespace,
-  CytoscapeGlobalScratchData,
-  NodeParamsType,
-  NodeType,
+  DecoratedGraphElements,
   GraphType,
-  CyData,
-  DecoratedGraphElements
+  NodeParamsType,
+  NodeType
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
 
-import { makeNodeGraphUrlFromParams, GraphUrlParams } from '../Nav/NavUtils';
+import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
-import { CyNode } from './CytoscapeGraphUtils';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 
@@ -73,6 +73,7 @@ type ReduxProps = {
 type CytoscapeGraphProps = ReduxProps & {
   isLoading: boolean;
   isError: boolean;
+  isMTLSEnabled: boolean;
   containerClassName?: string;
   refresh: () => void;
 };
@@ -370,6 +371,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       activeNamespaces: this.props.activeNamespaces,
       edgeLabelMode: this.props.edgeLabelMode,
       graphType: this.props.graphType,
+      mtlsEnabled: this.props.isMTLSEnabled,
       showCircuitBreakers: this.props.showCircuitBreakers,
       showMissingSidecars: this.props.showMissingSidecars,
       showSecurity: this.props.showSecurity,
