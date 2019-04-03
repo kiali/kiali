@@ -1,0 +1,68 @@
+# All of this is ultimately to obtain the kiali_route_url that is needed by oauth.yaml
+
+# Give some time for the route to come up
+- pause:
+    seconds: 5
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+
+- name: Detect Kiali route on OpenShift
+  k8s_facts:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: kiali
+    namespace: "{{ namespace }}"
+  register: kiali_route_raw
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+
+- name: Set Kiali TLS Termination from OpenShift route
+  set_fact:
+    kiali_route_tls_termination: "{{ kiali_route_raw['resources'][0]['spec']['tls']['termination'] }}"
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+
+- name: Detect HTTP Kiali OpenShift route protocol
+  set_fact:
+    kiali_route_protocol: "http"
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+  - kiali_route_tls_termination == ""
+
+- name: Detect HTTPS Kiali OpenShift route protocol
+  set_fact:
+    kiali_route_protocol: "https"
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+  - kiali_route_tls_termination != ""
+
+- name: Create URL for Kiali OpenShift route
+  set_fact:
+    kiali_route_url: "{{ kiali_route_protocol }}://{{ kiali_route_raw['resources'][0]['status']['ingress'][0]['host'] }}"
+  when:
+  - is_openshift == True
+  - auth_strategy == "openshift"
+  - state == "present"
+- set_fact:
+    kiali_route_url: ""
+  when: kiali_route_url is not defined
+
+# Now that we have the kiali_route_url we can process the oauth.yaml
+
+- name: "Process OpenShift OAuth client; state={{ state }}"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template', 'templates/openshift/oauth.yaml') }}"
+  when:
+  - is_openshift == True
+  - (auth_strategy == "openshift" and state == "present") or (state == "absent")

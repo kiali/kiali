@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kiali
+  namespace: {{ namespace }}
+  labels:
+    app: kiali
+    version: {{ version_label }}
+spec:
+  type: NodePort
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: {{ server_port }}
+  selector:
+    app: kiali
+    version: {{ version_label }}

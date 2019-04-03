@@ -1,0 +1,29 @@
+- name: If uninstalling, find running Kiali pod and/or ReplicaSet to be removed
+  set_fact:
+    kiali_pod_to_remove: "{{ lookup('k8s', kind='Pod', label_selector='app=kiali') }}"
+    kiali_replicaset_to_remove: "{{ lookup('k8s', kind='ReplicaSet', label_selector='app=kiali') }}"
+  when: state == "absent"
+
+- name: If uninstalling, remove the Kiali pod
+  k8s:
+    state: "absent"
+    api_version: "v1"
+    kind: "Pod"
+    namespace: "{{ namespace }}"
+    name: "{{ kiali_pod_to_remove.metadata.name }}"
+  when:
+  - state == "absent"
+  - kiali_pod_to_remove.metadata is defined
+  - kiali_pod_to_remove.metadata.name is defined
+
+- name: If uninstalling, remove the Kiali replicaset
+  k8s:
+    state: "absent"
+    api_version: "v1"
+    kind: "ReplicaSet"
+    namespace: "{{ namespace }}"
+    name: "{{ kiali_replicaset_to_remove.metadata.name }}"
+  when:
+  - state == "absent"
+  - kiali_replicaset_to_remove.metadata is defined
+  - kiali_replicaset_to_remove.metadata.name is defined

@@ -1,0 +1,89 @@
+apiVersion: op.kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+  ##########
+  # Determines what authentication strategy to use when users log into Kiali.
+  # Options are "login", "anonymous", "openshift".
+  # Choose "login" to use a username and password that will be stored in a secret.
+  # Choose "anonymous" to allow full access to Kiali without requiring any credentials.
+  # Choose "openshift" to use the OpenShift OAuth login which controls access based on
+  # the individual's  RBAC roles in OpenShift. Not valid for non-OpenShift environments.
+  # When empty, its value will default to "openshift" on OpenShift and "login" on Kubernetes.
+  #auth_strategy: ""
+
+  ##########
+  # The Grafana URL that Kiali will use when integrating with Grafana.
+  # This URL must be accessible to clients external to the cluster
+  # in order for the integration to work properly.
+  # This should always be defined, but if left blank an attempt will be made to auto-discover it.
+  #grafana_url: ""
+
+  ##########
+  # Determines which Kiali image to download and install.
+  #image_name: "kiali/kiali"
+
+  ##########
+  # The Kubernetes pull policy for the Kiali deployment.
+  #image_pull_policy: "IfNotPresent"
+
+  ##########
+  # Determines which version of Kiali to install.
+  # Choose "lastrelease" to use the last Kiali release.
+  # Choose "latest" to use the latest image (which may or may not be a released version of Kiali).
+  # Otherwise, you can set this to any valid Kiali version (such as "v0.12").
+  #image_version: "lastrelease"
+
+  ##########
+  # The namespace where Istio is installed.
+  #istio_namespace: "istio-system"
+
+  ##########
+  # The Jaeger URL that Kiali will use when integrating with Jaeger.
+  # This URL must be accessible to clients external to the cluster
+  # in order for the integration to work properly.
+  # This should always be defined, but if left blank an attempt will be made to auto-discover it.
+  #jaeger_url: ""
+
+  ##########
+  # The port that the server will bind to in order to receive metric requests.
+  # This is the port Prometheus will need to scrape when collecting metrics from Kiali.
+  #metrics_port: "9090"
+
+  ##########
+  # The namespace into which Kiali is to be installed.
+  #namespace: "istio-system"
+
+  ##########
+  # The name of the secret where the Kiali credentials are found.
+  # These credentials will be required when logging into Kiali.
+  # Only used when auth_strategy is "login".
+  #secret_name: "kiali"
+
+  ##########
+  # The port that the server will bind to in order to receive API and console requests.
+  #server_port: "20001"
+
+  ##########
+  # Determines which priority levels of log messages Kiali will output.
+  # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
+  #verbose_mode: "3"
+
+  ##########
+  # Kiali resources will be assigned a "version" label when they are deployed.
+  # This determines what value those "version" labels will have.
+  # When empty, its default will be determined as follows:
+  #   If image_version is "latest", version_label will be fixed to "master".
+  #   If image_version is "lastrelease", version_label will be fixed to
+  #   the last Kiali release version string.
+  #   If the image_version is anything else, version_label will be that value, too.
+  #version_label: ""
+
+  ##########
+  # Defines the context root path for the Kiali console and API endpoints and readiness probes.
+  # When providing a context root path that is not "/", do not add a trailing
+  # slash. For example, use "/kiali" not "/kiali/".
+  # When empty, will default to "/" on OpenShift and "/kiali" on Kubernetes.
+  #web_root: ""
+

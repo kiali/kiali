@@ -1,0 +1,10 @@
+---
+- version: v1alpha1
+  group: op.kiali.io
+  kind: Kiali
+  role: /opt/ansible/roles/kiali
+  reconcilePeriod: 0
+  finalizer:
+    name: finalizer.kiali
+    vars:
+      state: absent

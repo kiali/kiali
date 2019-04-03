@@ -1,0 +1,17 @@
+- name: "Process Kiali objects on Kubernetes; state={{ state }}"
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "kubernetes"
+  with_items:
+  - serviceaccount
+  - configmap
+  - clusterrole
+  - clusterrole-viewer
+  - clusterrolebinding
+  - crds
+  - deployment
+  - service
+  - ingress
+  loop_control:
+    loop_var: process_resource_item
+  when: is_k8s == True

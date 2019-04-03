@@ -1,0 +1,6 @@
+apiVersion: op.kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+  image_version: latest

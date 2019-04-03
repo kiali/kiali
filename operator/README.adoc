@@ -1,0 +1,82 @@
+_This README is currently targeted to developers only and only discusses using the link:./Makefile[Makefile]._
+
+== Build the Operator
+
+The operator isn't on Docker Hub or Quay.io yet, so you need to build it to get the image on your machine:
+
+```
+make operator-build
+```
+
+== Deploy the Operator (and optionally Kiali)
+
+To install the Kiali operator to either an OpenShift or Kubernetes cluster:
+
+```
+make operator-deploy
+```
+
+This will deploy the Kiali operator to the "kiali-operator" namespace. It will also deploy Kiali (see below if you do not want to install Kiali).
+
+You will not be prompted for authentication credentials - the Makefile will default to using the OpenShift OAuth authentication strategy if on OpenShift, and will default to using username/passphrase of admin/admin if on Kubernetes.
+
+This make target runs the link:./deploy/deploy-kiali-operator.sh[install script]. For documentation on all available settings it supports, see the comments at the top of that script. You may have to edit the Makefile target if you want to pass additional settings to the script.
+
+If you don't want to install Kiali (i.e. you just want the Kiali operator), run:
+
+```
+OPERATOR_INSTALL_KIALI=false make operator-deploy
+```
+
+== Remove the Operator
+
+You can remove the operator by running the `operator-remove` target:
+
+```
+make operator-remove
+```
+
+== Deploy Kiali
+
+To install Kiali when an operator already is installed, you can edit the link:./deploy/kiali/kiali_cr_dev.yaml[Kiali Custom Resource YAML (the "CR")] (or leave it as-is to pick up the defaults) and then run:
+
+```
+make deploy-kiali
+```
+
+For documentation on all available settings, see link:./deploy/kiali/kiali_cr.yaml[this Kiali CR file].
+
+== Remove Kiali
+
+To tell the operator to remove Kiali (i.e. uninstall Kiali), run:
+
+```
+make remove-kiali
+```
+
+== Purge Kiali
+
+Sometimes when developing and testing Ansible tasks, you want to start cleanly with no Kiali resources in your cluster. To quickly purge your cluster of Kiali resources (e.g. the deployment, the service account, etc), run the `purge-kiali` target:
+
+```
+make purge-kiali
+```
+
+== Run Ansible locally
+
+You can test the Ansible tasks locally by running the dev-playbook. This allows you to test the Ansible tasks without having to rebuild and redeploy the operator. By running the Ansible playbook locally, you can install Kiali directly into your cluster using the Ansible tasks without going through the operator.
+
+```
+make run-playbook
+```
+
+For developers who want to test specific tasks, you can temporarily add "tags: test" to your tasks and then run the `run-playbook-tag` target which will run only those tasks you tagged.
+
+== NOTES
+
+* The skeleton for this project was created via:
+
+```
+operator-sdk new kiali-operator --api-version=op.kiali.io/v1alpha1 --kind=Kiali --type=ansible --skip-git-init
+```
+

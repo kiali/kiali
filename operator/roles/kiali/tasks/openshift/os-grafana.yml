@@ -1,0 +1,15 @@
+- name: Detect Grafana route on OpenShift
+  k8s_facts:
+    api_version: route.openshift.io/v1
+    kind: Route
+    name: grafana
+    namespace: "{{ istio_namespace }}"
+  register: grafana_route_raw
+  when: is_openshift == True
+
+- name: Set Grafana URL from OpenShift route
+  set_fact:
+    grafana_url: "http://{{ grafana_route_raw['resources'][0]['status']['ingress'][0]['host'] }}"
+  when:
+  - is_openshift == True
+  - grafana_route_raw['resources'][0] is defined
