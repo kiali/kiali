@@ -8,6 +8,7 @@ import (
 
 type ServiceRoleBindings []ServiceRoleBinding
 type ServiceRoleBinding struct {
+	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Subjects interface{} `json:"subjects"`
@@ -24,6 +25,7 @@ func (srbs *ServiceRoleBindings) Parse(serviceRoleBindings []kubernetes.IstioObj
 }
 
 func (srb *ServiceRoleBinding) Parse(serviceRoleBinding kubernetes.IstioObject) {
+	srb.TypeMeta = serviceRoleBinding.GetTypeMeta()
 	srb.Metadata = serviceRoleBinding.GetObjectMeta()
 	srb.Spec.Subjects = serviceRoleBinding.GetSpec()["subjects"]
 	srb.Spec.RoleRef = serviceRoleBinding.GetSpec()["roleRef"]
