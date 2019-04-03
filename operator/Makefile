@@ -37,8 +37,8 @@ IMAGE_VERSION="${IMAGE_VERSION}" \
 NAMESPACE="${NAMESPACE}" \
 deploy/deploy-kiali-operator.sh
 
-# Remove the Kiali operator resources from the cluster.
-operator-remove:
+# Remove the Kiali operator resources from the cluster along with Kiali itself
+operator-remove: purge-kiali
 	@echo Remove Operator
 	oc delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector=app=kiali-operator -n ${OPERATOR_NAMESPACE}
 	oc delete --ignore-not-found=true namespace ${OPERATOR_NAMESPACE}
