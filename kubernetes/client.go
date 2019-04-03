@@ -12,7 +12,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,6 +25,7 @@ import (
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
+	osroutesv1 "github.com/openshift/api/route/v1"
 )
 
 var (
@@ -64,6 +65,7 @@ type IstioClientInterface interface {
 	GetQuotaSpecBindings(namespace string) ([]IstioObject, error)
 	GetReplicationControllers(namespace string) ([]v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error)
+	GetRoute(namespace string, service string) (*osroutesv1.Route, error)
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error)

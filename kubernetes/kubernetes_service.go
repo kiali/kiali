@@ -14,6 +14,7 @@ import (
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
+	osroutesv1 "github.com/openshift/api/route/v1"
 )
 
 // GetNamespace fetches and returns the specified namespace definition
@@ -105,6 +106,17 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 		}
 	}
 	return services, nil
+}
+
+// GetRoute returns the external URL endpoint of a specific service.
+// It returns an error on any problem.
+func (in *IstioClient) GetRoute(namespace, service string) (*osroutesv1.Route, error) {
+	result := &osroutesv1.Route{}
+	err := in.k8s.RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(service).Do().Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // GetDeployment returns the definition of a specific deployment.

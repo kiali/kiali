@@ -53,8 +53,9 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
-	EnvJaegerURL     = "JAEGER_URL"
-	EnvJaegerService = "JAEGER_SERVICE"
+	EnvJaegerURL              = "JAEGER_URL"
+	EnvJaegerService          = "JAEGER_SERVICE"
+	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
@@ -128,8 +129,9 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
-	URL     string `yaml:"url"`
-	Service string `yaml:"service"`
+	URL              string `yaml:"url"`
+	Service          string `yaml:"service"`
+	ServiceNamespace string `yaml:"service_namespace"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -250,6 +252,7 @@ func NewConfig() (c *Config) {
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
+	c.ExternalServices.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, "istio-system"))
 	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
 
 	// Istio Configuration

@@ -539,6 +539,15 @@ external_services:
     service: VALUE
 ----
 
+|`JAEGER_SERVICE_NAMESPACE`
+|The Kubernetes namespace that holds the Jaeger service. (default is `istio-system`)
+[source,yaml]
+----
+external_services:
+  jaeger:
+    service_namespace: VALUE
+----
+
 |`JAEGER_URL`
 |The URL to the Jaeger service. When not set, Kiali throw an error when the user try request to Jaeger (/api/jaeger).
 [source,yaml]
