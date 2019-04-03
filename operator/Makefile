@@ -23,7 +23,10 @@ operator-push:
 	@echo Push operator image to image repo
 	docker push ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
 
-# Deploy the Kiali operator to the cluster using the install script
+# Deploy the Kiali operator to the cluster using the install script.
+# The Kiali Operator does not create secrets, but this calls the install
+# script which creates a Kiali secret for you as a convienence
+# so you don't have to remember to do it yourself.
 operator-deploy: operator-remove
 	@echo Deploy Operator
 	OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME}" \
@@ -52,6 +55,8 @@ deploy-kiali:
 remove-kiali:
 	@echo Remove Kiali
 	oc delete --ignore-not-found=true -n ${OPERATOR_NAMESPACE} -f deploy/kiali/kiali_cr_dev.yaml
+	# Since Kiali Operator does not manage any secrets, delete the secret here
+	oc delete --ignore-if-not-exist=true secret kiali -n ${NAMESPACE}
 
 # Purges all Kiali resources via direct "oc delete".
 purge-kiali:
