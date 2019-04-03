@@ -13,6 +13,7 @@
     name: "{{ kiali_pod_to_remove.metadata.name }}"
   when:
   - state == "absent"
+  - kiali_pod_to_remove.metadata is defined
   - kiali_pod_to_remove.metadata.name is defined
 
 - name: If uninstalling, remove the Kiali replicaset
@@ -24,4 +25,5 @@
     name: "{{ kiali_replicaset_to_remove.metadata.name }}"
   when:
   - state == "absent"
+  - kiali_replicaset_to_remove.metadata is defined
   - kiali_replicaset_to_remove.metadata.name is defined

@@ -51,13 +51,12 @@ deploy-kiali:
 # Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall it.
 remove-kiali:
 	@echo Remove Kiali
-	sed 's/state: present/state: absent/' deploy/kiali/kiali_cr_dev.yaml | oc apply -n ${OPERATOR_NAMESPACE} -f -
-	# This could be another way to do it - but it doesn't remove the oauth resource for some reason:
-	#oc delete --ignore-not-found=true -n ${OPERATOR_NAMESPACE} -f deploy/kiali/kiali_cr_dev.yaml
+	oc delete --ignore-not-found=true -n ${OPERATOR_NAMESPACE} -f deploy/kiali/kiali_cr_dev.yaml
 
 # Purges all Kiali resources via direct "oc delete".
 purge-kiali:
 	@echo Purge Kiali resources
+	oc patch kiali kiali -n ${OPERATOR_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge ; true
 	oc delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions,oauthclients.oauth.openshift.io --selector=app=kiali -n ${NAMESPACE}
 
 # Run the dev playbook to run the Ansible script locally.

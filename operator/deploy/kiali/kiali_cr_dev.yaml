@@ -4,5 +4,3 @@ metadata:
   name: kiali
 spec:
   image_version: latest
-  # the Makefile needs this
-  state: present

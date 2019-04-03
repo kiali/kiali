@@ -414,7 +414,6 @@ kind: Kiali
 metadata:
   name: kiali
 spec:
-  state: "present"
   $(build_spec_value auth_strategy AUTH_STRATEGY)
   $(build_spec_value grafana_url GRAFANA_URL)
   $(build_spec_value image_name IMAGE_NAME)

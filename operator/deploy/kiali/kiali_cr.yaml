@@ -66,12 +66,6 @@ spec:
   #server_port: "20001"
 
   ##########
-  # Determines if Kiali should be installed, patched, or deleted.
-  # When set to "present", Kiali will be installed if it does not already exist or patched if it exists.
-  # When set to "absent", an existing Kiali will be deleted.
-  #state: "present"
-
-  ##########
   # Determines which priority levels of log messages Kiali will output.
   # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
   #verbose_mode: "3"

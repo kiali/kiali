@@ -4,7 +4,7 @@
   kind: Kiali
   role: /opt/ansible/roles/kiali
   reconcilePeriod: 0
-  #finalizer:
-  #  name: finalizer
-  #  vars:
-  #    state: absent
+  finalizer:
+    name: finalizer.kiali
+    vars:
+      state: absent
