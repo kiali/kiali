@@ -79,18 +79,33 @@ const (
 
 	// Config - Adapters
 
+	adapters        = "adapters"
+	adapterType     = "adapter"
+	adapterTypeList = "adapterList"
+
+	bypasses       = "bypasses"
+	bypassType     = "bypass"
+	bypassTypeList = "bypassList"
+
 	circonuses       = "circonuses"
 	circonusType     = "circonus"
 	circonusTypeList = "circonusList"
+
+	cloudwatches       = "cloudwatches"
+	cloudwatchType     = "cloudwatch"
+	cloudwatchTypeList = "cloudwatchList"
 
 	deniers        = "deniers"
 	denierType     = "denier"
 	denierTypeList = "denierList"
 
+	dogstatsds        = "dogstatsds"
+	dogstatsdType     = "dogstatsd"
+	dogstatsdTypeList = "dogstatsdList"
+
 	fluentds        = "fluentds"
 	fluentdType     = "fluentd"
 	fluentdTypeList = "fluentdList"
-	fluentdLabel    = "fluentd"
 
 	handlers        = "handlers"
 	handlerType     = "handler"
@@ -108,6 +123,10 @@ const (
 	memquotaType     = "memquota"
 	memquotaTypeList = "memquotaList"
 
+	noops        = "noops"
+	noopType     = "noop"
+	noopTypeList = "noopList"
+
 	opas        = "opas"
 	opaType     = "opa"
 	opaTypeList = "opaList"
@@ -120,9 +139,17 @@ const (
 	rbacType     = "rbac"
 	rbacTypeList = "rbacList"
 
+	redisquotas        = "redisquotas"
+	redisquotaType     = "redisquota"
+	redisquotaTypeList = "redisquotaList"
+
 	servicecontrols        = "servicecontrols"
 	servicecontrolType     = "servicecontrol"
 	servicecontrolTypeList = "servicecontrolList"
+
+	signalfxs        = "signalfxs"
+	signalfxType     = "signalfx"
+	signalfxTypeList = "signalfxList"
 
 	solarwindses       = "solarwindses"
 	solarwindsType     = "solarwinds"
@@ -140,6 +167,10 @@ const (
 	stdioType     = "stdio"
 	stdioTypeList = "stdioList"
 
+	zipkins        = "zipkins"
+	zipkinType     = "zipkin"
+	zipkinTypeList = "zipkinList"
+
 	// Config - Templates
 
 	apikeys        = "apikeys"
@@ -153,6 +184,14 @@ const (
 	checknothings        = "checknothings"
 	checknothingType     = "checknothing"
 	checknothingTypeList = "checknothingList"
+
+	edges        = "edges"
+	edgeType     = "edge"
+	edgeTypeList = "edgeList"
+
+	instances        = "instances"
+	instanceType     = "instance"
+	instanceTypeList = "instanceList"
 
 	kuberneteses       = "kuberneteses"
 	kubernetesType     = "kubernetes"
@@ -178,9 +217,13 @@ const (
 	reportnothingType     = "reportnothing"
 	reportnothingTypeList = "reportnothingList"
 
-	servicecontrolreports        = "servicecontrolreports"
-	servicecontrolreportType     = "servicecontrolreport"
-	servicecontrolreportTypeList = "servicecontrolreportList"
+	templates        = "templates"
+	templateType     = "template"
+	templateTypeList = "templateList"
+
+	tracespans        = "tracespans"
+	tracespanType     = "tracespan"
+	tracespanTypeList = "tracespanList"
 )
 
 var (
@@ -270,12 +313,28 @@ var (
 		collectionKind string
 	}{
 		{
+			objectKind:     adapterType,
+			collectionKind: adapterTypeList,
+		},
+		{
+			objectKind:     bypassType,
+			collectionKind: bypassTypeList,
+		},
+		{
 			objectKind:     circonusType,
 			collectionKind: circonusTypeList,
 		},
 		{
+			objectKind:     cloudwatchType,
+			collectionKind: cloudwatchTypeList,
+		},
+		{
 			objectKind:     denierType,
 			collectionKind: denierTypeList,
+		},
+		{
+			objectKind:     dogstatsdType,
+			collectionKind: dogstatsdTypeList,
 		},
 		{
 			objectKind:     fluentdType,
@@ -298,6 +357,10 @@ var (
 			collectionKind: memquotaTypeList,
 		},
 		{
+			objectKind:     noopType,
+			collectionKind: noopTypeList,
+		},
+		{
 			objectKind:     opaType,
 			collectionKind: opaTypeList,
 		},
@@ -310,8 +373,12 @@ var (
 			collectionKind: rbacTypeList,
 		},
 		{
-			objectKind:     servicecontrolType,
-			collectionKind: servicecontrolTypeList,
+			objectKind:     redisquotaType,
+			collectionKind: redisquotaTypeList,
+		},
+		{
+			objectKind:     signalfxType,
+			collectionKind: signalfxTypeList,
 		},
 		{
 			objectKind:     solarwindsType,
@@ -328,6 +395,10 @@ var (
 		{
 			objectKind:     stdioType,
 			collectionKind: stdioTypeList,
+		},
+		{
+			objectKind:     zipkinType,
+			collectionKind: zipkinTypeList,
 		},
 	}
 
@@ -348,8 +419,16 @@ var (
 			collectionKind: checknothingTypeList,
 		},
 		{
+			objectKind:     edgeType,
+			collectionKind: edgeTypeList,
+		},
+		{
 			objectKind:     kubernetesType,
 			collectionKind: kubernetesTypeList,
+		},
+		{
+			objectKind:     instanceType,
+			collectionKind: instanceTypeList,
 		},
 		{
 			objectKind:     listEntryType,
@@ -372,8 +451,12 @@ var (
 			collectionKind: reportnothingTypeList,
 		},
 		{
-			objectKind:     servicecontrolreportType,
-			collectionKind: servicecontrolreportTypeList,
+			objectKind:     templateType,
+			collectionKind: templateTypeList,
+		},
+		{
+			objectKind:     tracespanType,
+			collectionKind: tracespanTypeList,
 		},
 	}
 
@@ -403,34 +486,44 @@ var (
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
 	adapterPlurals = map[string]string{
-		circonusType:       circonuses,
-		denierType:         deniers,
-		fluentdType:        fluentds,
-		handlerType:        handlers,
-		kubernetesenvType:  kubernetesenvs,
-		listcheckerType:    listcheckers,
-		memquotaType:       memquotas,
-		opaType:            opas,
-		prometheusType:     prometheuses,
-		rbacType:           rbacs,
-		servicecontrolType: servicecontrols,
-		solarwindsType:     solarwindses,
-		stackdriverType:    stackdrivers,
-		statsdType:         statsds,
-		stdioType:          stdios,
+		adapterType:       adapters,
+		bypassType:        bypasses,
+		circonusType:      circonuses,
+		cloudwatchType:    cloudwatches,
+		denierType:        deniers,
+		dogstatsdType:     dogstatsds,
+		fluentdType:       fluentds,
+		handlerType:       handlers,
+		kubernetesenvType: kubernetesenvs,
+		listcheckerType:   listcheckers,
+		memquotaType:      memquotas,
+		noopType:          noops,
+		opaType:           opas,
+		prometheusType:    prometheuses,
+		rbacType:          rbacs,
+		redisquotaType:    redisquotas,
+		signalfxType:      signalfxs,
+		solarwindsType:    solarwindses,
+		stackdriverType:   stackdrivers,
+		statsdType:        statsds,
+		stdioType:         stdios,
+		zipkinType:        zipkins,
 	}
 
 	templatePlurals = map[string]string{
-		apikeyType:               apikeys,
-		authorizationType:        authorizations,
-		checknothingType:         checknothings,
-		kubernetesType:           kuberneteses,
-		listEntryType:            listEntries,
-		logentryType:             logentries,
-		metricType:               metrics,
-		quotaType:                quotas,
-		reportnothingType:        reportnothings,
-		servicecontrolreportType: servicecontrolreports,
+		apikeyType:        apikeys,
+		authorizationType: authorizations,
+		checknothingType:  checknothings,
+		edgeType:          edges,
+		instanceType:      instances,
+		kubernetesType:    kuberneteses,
+		listEntryType:     listEntries,
+		logentryType:      logentries,
+		metricType:        metrics,
+		quotaType:         quotas,
+		reportnothingType: reportnothings,
+		templateType:      templates,
+		tracespanType:     tracespans,
 	}
 
 	PluralType = map[string]string{
@@ -446,33 +539,43 @@ var (
 		quotaspecbindings: quotaspecbindingType,
 
 		// Adapters
-		circonuses:      circonusType,
-		deniers:         denierType,
-		fluentds:        fluentdType,
-		handlers:        handlerType,
-		kubernetesenvs:  kubernetesenvType,
-		listcheckers:    listcheckerType,
-		memquotas:       memquotaType,
-		opas:            opaType,
-		prometheuses:    prometheusType,
-		rbacs:           rbacType,
-		servicecontrols: servicecontrolType,
-		solarwindses:    solarwindsType,
-		stackdrivers:    stackdriverType,
-		statsds:         statsdType,
-		stdios:          stdioType,
+		adapters:       adapterType,
+		bypasses:       bypassType,
+		circonuses:     circonusType,
+		cloudwatches:   cloudwatchType,
+		deniers:        denierType,
+		dogstatsds:     dogstatsdType,
+		fluentds:       fluentdType,
+		handlers:       handlerType,
+		kubernetesenvs: kubernetesenvType,
+		listcheckers:   listcheckerType,
+		memquotas:      memquotaType,
+		noops:          noopType,
+		opas:           opaType,
+		prometheuses:   prometheusType,
+		rbacs:          rbacType,
+		redisquotas:    redisquotaType,
+		signalfxs:      signalfxType,
+		solarwindses:   solarwindsType,
+		stackdrivers:   stackdriverType,
+		statsds:        statsdType,
+		stdios:         stdioType,
+		zipkins:        zipkinType,
 
 		// Templates
-		apikeys:               apikeyType,
-		authorizations:        authorizationType,
-		checknothings:         checknothingType,
-		kuberneteses:          kubernetesType,
-		listEntries:           listEntryType,
-		logentries:            logentryType,
-		metrics:               metricType,
-		quotas:                quotaType,
-		reportnothings:        reportnothingType,
-		servicecontrolreports: servicecontrolreportType,
+		apikeys:        apikeyType,
+		authorizations: authorizationType,
+		checknothings:  checknothingType,
+		edges:          edgeType,
+		instances:      instanceType,
+		kuberneteses:   kubernetesType,
+		listEntries:    listEntryType,
+		logentries:     logentryType,
+		metrics:        metricType,
+		quotas:         quotaType,
+		reportnothings: reportnothingType,
+		templates:      templateType,
+		tracespans:     tracespanType,
 
 		// Policies
 		policies:     policyType,

@@ -45,13 +45,19 @@ rules:
   - watch
 - apiGroups: ["config.istio.io"]
   resources:
+  - adapters
   - apikeys
+  - bypasses
   - authorizations
   - checknothings
   - circonuses
+  - cloudwatches
   - deniers
+  - dogstatsds
+  - edges
   - fluentds
   - handlers
+  - instances
   - kubernetesenvs
   - kuberneteses
   - listcheckers
@@ -59,20 +65,24 @@ rules:
   - logentries
   - memquotas
   - metrics
+  - noops
   - opas
   - prometheuses
   - quotas
   - quotaspecbindings
   - quotaspecs
   - rbacs
+  - redisquotas
   - reportnothings
   - rules
-  - servicecontrolreports
-  - servicecontrols
+  - signalfxs
   - solarwindses
   - stackdrivers
   - statsds
   - stdios
+  - templates
+  - tracespans
+  - zipkins
   verbs:
   - create
   - delete
@@ -170,13 +180,19 @@ rules:
   - watch
 - apiGroups: ["config.istio.io"]
   resources:
+  - adapters
   - apikeys
+  - bypasses
   - authorizations
   - checknothings
   - circonuses
+  - cloudwatches
   - deniers
+  - dogstatsds
+  - edges
   - fluentds
   - handlers
+  - instances
   - kubernetesenvs
   - kuberneteses
   - listcheckers
@@ -184,20 +200,24 @@ rules:
   - logentries
   - memquotas
   - metrics
+  - noops
   - opas
   - prometheuses
   - quotas
   - quotaspecbindings
   - quotaspecs
   - rbacs
+  - redisquotas
   - reportnothings
   - rules
-  - servicecontrolreports
-  - servicecontrols
+  - signalfxs
   - solarwindses
   - stackdrivers
   - statsds
   - stdios
+  - templates
+  - tracespans
+  - zipkins
   verbs:
   - get
   - list
