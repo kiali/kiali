@@ -84,6 +84,7 @@
   when: is_k8s == True
 
 # We only care about state=present. The dashboard CRs will automatically delete when we delete their CRD.
+# These are optional - don't abort if they fail to install.
 - name: Create the Monitoring Dashboards
   k8s:
     state: "{{ state }}"
@@ -93,6 +94,7 @@
   - "templates/dashboards/*.yaml"
   when:
   - state == "present"
+  ignore_errors: yes
 
 # For some reason, the Ansible operator cannot/will not delete the running Pod, so do it here.
 - name: If uninstalling, remove any running Kiali pod
