@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Vert.x
   title: Vert.x Client Metrics
+  discoverOn: "vertx_http_client_connections"
   items:
   - chart:
       name: "Client response time"

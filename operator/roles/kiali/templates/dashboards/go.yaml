@@ -5,6 +5,7 @@ metadata:
 spec:
   title: Go Metrics
   runtime: Go
+  discoverOn: "go_info"
   items:
   - chart:
       name: "Threads"

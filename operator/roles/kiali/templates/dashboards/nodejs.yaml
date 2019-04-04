@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Node.js
   title: Node.js Metrics
+  discoverOn: "nodejs_active_handles_total"
   items:
   - chart:
       name: "Active handles"

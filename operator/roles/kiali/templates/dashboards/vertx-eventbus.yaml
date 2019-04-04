@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Vert.x
   title: Vert.x Eventbus Metrics
+  discoverOn: "vertx_eventbus_handlers"
   items:
   - chart:
       name: "Event bus handlers"
