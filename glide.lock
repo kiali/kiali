@@ -1,5 +1,5 @@
 hash: 0eb5cc51418f24f3270a506b36478148093a02df626dd9c16da461288e50e243
-updated: 2019-02-08T09:13:21.359310545-05:00
+updated: 2019-04-04T14:46:48.080783237+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -14,7 +14,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
-  version: 8e4a75f11384d0fb2188d872d456407e41f33fc0
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
   - proto
   - sortkeys
@@ -61,7 +61,7 @@ imports:
 - name: github.com/modern-go/reflect2
   version: 05fbef0ca5da472bbf96c9322b84a53edc03c9fd
 - name: github.com/openshift/api
-  version: 5ad8479f64f1b60ee9c62ce8ef1fe6638838725e
+  version: 8741ff068a473be041d7bafb4502c12e4f10aab5
   subpackages:
   - apps/v1
   - project/v1
@@ -90,13 +90,9 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 488faf799f863e27e50c516468f76ae8f1da20a5
-  subpackages:
-  - internal/util
-  - nfs
-  - xfs
+  version: ea9eea63887261e4d8ed8315f4078e88d540c725
 - name: github.com/stretchr/objx
-  version: d3a9fb181056cd80e0a50b6632afda135e99174e
+  version: c61a9dfcced1815e7d40e214d00d1a8669a9f58c
 - name: github.com/stretchr/testify
   version: c679ae2cc0cb27ec3293fea7e254e47386f05d69
   subpackages:

@@ -254,7 +254,7 @@ func TestMountStats(t *testing.T) {
 			}},
 		},
 		{
-			name: "fixtures OK",
+			name: "fixtures/proc OK",
 			mounts: []*Mount{
 				{
 					Device: "rootfs",
@@ -344,7 +344,7 @@ func TestMountStats(t *testing.T) {
 		if tt.s != "" {
 			mounts, err = parseMountStats(strings.NewReader(tt.s))
 		} else {
-			proc, e := FS("fixtures").NewProc(26231)
+			proc, e := FS(procTestFixtures).NewProc(26231)
 			if e != nil {
 				t.Fatalf("failed to create proc: %v", err)
 			}
