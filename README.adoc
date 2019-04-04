@@ -468,7 +468,7 @@ external_services:
 ----
 
 |`GRAFANA_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Grafana service. (default is `istio-system`)
+|The Kubernetes namespace that holds the Grafana service. (default is `istio-system`). If this and `GRAFANA_SERVICE` are set to empty String it uses `GRAFANA_URL` for communication.
 [source,yaml]
 ----
 external_services:
@@ -477,7 +477,7 @@ external_services:
 ----
 
 |`GRAFANA_SERVICE`
-|The Kubernetes service name for Grafana. (default is `grafana`). Kiali uses GRAFANA_SERVICE to connect internally (within the cluster) to Grafana service.
+|The Kubernetes service name for Grafana. (default is `grafana`). Kiali uses GRAFANA_SERVICE to connect internally (within the cluster) to Grafana service. If this and `GRAFANA_SERVICE_NAMESPACE` are set to empty String it uses `GRAFANA_URL` for communication.
 [source,yaml]
 ----
 external_services:
