@@ -30,6 +30,7 @@ class InitializerComponent extends React.Component<InitializerComponentProps, { 
     try {
       const authConfig = await API.getAuthInfo();
       authenticationConfig.authorizationEndpoint = authConfig.data.authorizationEndpoint;
+      authenticationConfig.secretMissing = authConfig.data.secretMissing;
       authenticationConfig.strategy = authConfig.data.strategy;
 
       if (authConfig.data.sessionInfo.expiresOn && authConfig.data.sessionInfo.username) {

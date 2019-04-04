@@ -79,7 +79,15 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
                 <Col sm={10} smOffset={1} md={8} mdOffset={2} lg={8} lgOffset={2}>
                   <div className={'card-pf'}>
                     <header className={'login-pf-header'} />
-                    {this.props.status === LoginStatus.error && <Alert>{this.props.message}</Alert>}
+                    {authenticationConfig.secretMissing && (
+                      <Alert>
+                        The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
+                        creates a valid secret. Please refer to the Kiali documentation for more details.
+                      </Alert>
+                    )}
+                    {!authenticationConfig.secretMissing && this.props.status === LoginStatus.error && (
+                      <Alert>{this.props.message}</Alert>
+                    )}
                     {this.props.status === LoginStatus.expired && (
                       <Alert type="warning">Your session has expired or was terminated in another window.</Alert>
                     )}
