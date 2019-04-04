@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Col, Row } from 'patternfly-react';
 import { AppHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import { AppListItem } from '../../types/AppList';
@@ -48,18 +49,16 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
 
   render() {
     return this.state.health ? (
-      <table style={{ width: '70em', tableLayout: 'fixed' }}>
-        <tbody>
-          <tr>
-            <td>
-              <strong>Health: </strong>
-              <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
-            </td>
-            <td>{!this.props.item.istioSidecar && <MissingSidecar />}</td>
-            <td />
-          </tr>
-        </tbody>
-      </table>
+      <Row>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          <strong>Health: </strong>
+          <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
+        </Col>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          {!this.props.item.istioSidecar && <MissingSidecar />}
+        </Col>
+        <Col xs={12} sm={12} md={4} lg={4} />
+      </Row>
     ) : (
       <span />
     );

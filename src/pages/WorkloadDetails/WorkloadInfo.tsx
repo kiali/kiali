@@ -14,7 +14,7 @@ type WorkloadInfoProps = {
   validations: Validations;
   namespace: string;
   onRefresh: () => void;
-  onSelectTab: (tabName: string, postHandler?: (k: string) => void) => ((tabKey: string) => void);
+  onSelectTab: (tabName: string, postHandler?: (k: string) => void) => (tabKey: string) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
   istioEnabled: boolean;
   health?: WorkloadHealth;

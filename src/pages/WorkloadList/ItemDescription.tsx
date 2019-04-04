@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Badge, ListViewItem, ListViewIcon } from 'patternfly-react';
+import { Badge, Col, ListViewItem, ListViewIcon, Row } from 'patternfly-react';
 import { WorkloadIcon, WorkloadListItem, worloadLink } from '../../types/Workload';
 import { PfColors } from '../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
@@ -68,28 +68,30 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
       </div>
     );
     const itemDescription = (
-      <table style={{ width: '70em', tableLayout: 'fixed' }}>
-        <tbody>
-          <tr>
-            {this.state.health && (
-              <td>
-                <strong>Health: </strong>
-                <HealthIndicator id={object.name} health={this.state.health} mode={DisplayMode.SMALL} />
-              </td>
-            )}
-            <td>{!object.istioSidecar && <MissingSidecar />}</td>
-            {object.appLabel || object.versionLabel ? (
-              <td>
-                <strong>Label Validation :</strong>
-                {object.appLabel && <Badge>app</Badge>}
-                {object.versionLabel && <Badge>version</Badge>}
-              </td>
-            ) : (
-              <td />
-            )}
-          </tr>
-        </tbody>
-      </table>
+      <Row>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          {this.state.health && (
+            <td>
+              <strong>Health: </strong>
+              <HealthIndicator id={object.name} health={this.state.health} mode={DisplayMode.SMALL} />
+            </td>
+          )}
+        </Col>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          {!object.istioSidecar && <MissingSidecar />}
+        </Col>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          {object.appLabel || object.versionLabel ? (
+            <span>
+              <strong>Label Validation :</strong>
+              {object.appLabel && <Badge>app</Badge>}
+              {object.versionLabel && <Badge>version</Badge>}
+            </span>
+          ) : (
+            <span />
+          )}
+        </Col>
+      </Row>
     );
     const content = (
       <ListViewItem
