@@ -81,7 +81,7 @@ GO_BUILD_ENVVARS = \
 all: help
 help: Makefile
 	@echo
-	@echo " Choose a command run in "$(PROJECTNAME)":"
+	@echo "Choose a make target to run:"
 	@echo
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
@@ -315,16 +315,16 @@ k8s-reload-image: .k8s-validate
 	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
 	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}
 
-## gometalinter-install. Installs gometalinter
+## gometalinter-install: Installs gometalinter
 gometalinter-install:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
 
-## lint. Runs gometalinter
+## lint: Runs gometalinter
 lint:
 	gometalinter --disable-all  --enable=vet --tests  --vendor ./...
 
-## lint-all. Runs gometalinter with items from good to have list but does not run during travis
+## lint-all: Runs gometalinter with items from good to have list but does not run during travis
 lint-all:
 	gometalinter --disable-all --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
 	--enable=ineffassign --enable=unconvert --enable=goimports -enable=gosimple --enable=staticcheck \
