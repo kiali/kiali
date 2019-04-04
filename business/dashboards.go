@@ -153,9 +153,10 @@ func (in *DashboardsService) GetDashboard(params prometheus.CustomMetricsQuery, 
 	}
 
 	aggLabels := models.ConvertAggregations(dashboard.Spec)
-	labels := fmt.Sprintf(`{namespace="%s",app="%s"`, params.Namespace, params.App)
+	cfg := config.Get()
+	labels := fmt.Sprintf(`{namespace="%s",%s="%s"`, params.Namespace, cfg.IstioLabels.AppLabelName, params.App)
 	if params.Version != "" {
-		labels += fmt.Sprintf(`,version="%s"`, params.Version)
+		labels += fmt.Sprintf(`,%s="%s"`, cfg.IstioLabels.VersionLabelName, params.Version)
 	} else {
 		// For app-based dashboards, we automatically add a possible aggregation/grouping over versions
 		versionsAgg := models.Aggregation{
@@ -347,9 +348,10 @@ func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames 
 }
 
 func (in *DashboardsService) fetchMetricNames(namespace, app, version string) []string {
-	labels := fmt.Sprintf(`{namespace="%s",app="%s"`, namespace, app)
+	cfg := config.Get()
+	labels := fmt.Sprintf(`{namespace="%s",%s="%s"`, namespace, cfg.IstioLabels.AppLabelName, app)
 	if version != "" {
-		labels += fmt.Sprintf(`,version="%s"`, version)
+		labels += fmt.Sprintf(`,%s="%s"`, cfg.IstioLabels.VersionLabelName, version)
 	}
 	labels += "}"
 	metrics, err := in.prom.GetMetricsForLabels([]string{labels})
