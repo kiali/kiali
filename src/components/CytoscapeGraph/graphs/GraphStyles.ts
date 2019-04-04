@@ -147,7 +147,7 @@ export class GraphStyles {
       if (cyGlobal.showSecurity && mtlsPercentage >= 0) {
         if (mtlsPercentage > 0 && !cyGlobal.mtlsEnabled) {
           content = EdgeIconMTLS + ' ' + content;
-        } else if (mtlsPercentage === 0 && cyGlobal.mtlsEnabled) {
+        } else if (mtlsPercentage < 100 && cyGlobal.mtlsEnabled) {
           content = EdgeIconDisabledMTLS + ' ' + content;
         }
       }
