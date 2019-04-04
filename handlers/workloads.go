@@ -111,7 +111,7 @@ func WorkloadDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := business.NewDashboardsService(nil, prom)
+	svc := business.NewDashboardsService(prom)
 	dashboard, err := svc.GetIstioDashboard(params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

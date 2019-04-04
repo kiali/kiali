@@ -138,11 +138,6 @@ func (o *PromClientMock) MockWorkloadRequestRates(namespace, wkld string, in, ou
 	o.On("GetWorkloadRequestRates", namespace, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
 }
 
-// MockEmptyMetricsDiscovery mocks GetMetricsForLabels (for runtimes metrics discovery) as being empty
-func (o *PromClientMock) MockEmptyMetricsDiscovery() {
-	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string")).Return([]string{}, nil)
-}
-
 func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
@@ -196,9 +191,4 @@ func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string
 func (o *PromClientMock) GetMetrics(query *prometheus.IstioMetricsQuery) prometheus.Metrics {
 	args := o.Called(query)
 	return args.Get(0).(prometheus.Metrics)
-}
-
-func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
-	args := o.Called(labels)
-	return args.Get(0).([]string), args.Error(1)
 }

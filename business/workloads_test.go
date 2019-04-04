@@ -20,7 +20,6 @@ import (
 
 func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	prom := new(prometheustest.PromClientMock)
-	prom.MockEmptyMetricsDiscovery()
 	return WorkloadService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 }
 

@@ -667,7 +667,7 @@ func NewRoutes() (r *Routes) {
 			"CustomDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/customdashboard/{template}",
-			handlers.CustomDashboard,
+			handlers.CustomDashboard(),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/health services serviceHealth

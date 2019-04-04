@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/kiali/k-charted/model"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/models"
@@ -519,7 +520,7 @@ type MetricsResponse struct {
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// in:body
-	Body models.MonitoringDashboard
+	Body model.MonitoringDashboard
 }
 
 // IstioConfig details of an specific Istio Object

@@ -41,19 +41,6 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
 }
 
-func extractCustomMetricsQueryParams(r *http.Request, q *prometheus.CustomMetricsQuery, namespaceInfo *models.Namespace) error {
-	q.FillDefaults()
-	queryParams := r.URL.Query()
-	q.Version = queryParams.Get("version")
-	op := queryParams.Get("rawDataAggregator")
-	// Explicit white-listing operators to prevent any kind of injection
-	// For a list of operators, see https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
-	if op == "sum" || op == "min" || op == "max" || op == "avg" || op == "stddev" || op == "stdvar" {
-		q.RawDataAggregator = op
-	}
-	return extractBaseMetricsQueryParams(queryParams, &q.BaseMetricsQuery, namespaceInfo)
-}
-
 func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMetricsQuery, namespaceInfo *models.Namespace) error {
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		// Only first is taken into consideration
