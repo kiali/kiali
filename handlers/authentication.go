@@ -27,6 +27,7 @@ type AuthInfo struct {
 	Strategy              string      `json:"strategy"`
 	AuthorizationEndpoint string      `json:"authorizationEndpoint,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
+	SecretMissing         bool        `json:"secretMissing,omitempty"`
 }
 
 type sessionInfo struct {
@@ -360,6 +361,10 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.AuthorizationEndpoint = metadata.AuthorizationEndpoint
+	case config.AuthStrategyLogin:
+		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+			response.SecretMissing = true
+		}
 	}
 
 	token := getTokenStringFromRequest(r)
