@@ -203,7 +203,7 @@ func grafanaVersion() (*ExternalServiceInfo, error) {
 func prometheusVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
-	prometheusUrl := config.Get().ExternalServices.PrometheusServiceURL
+	prometheusUrl := config.Get().ExternalServices.Prometheus.URL
 	resp, err := http.Get(prometheusUrl + "/version")
 	if err == nil {
 		defer resp.Body.Close()

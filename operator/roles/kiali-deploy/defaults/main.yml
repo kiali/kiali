@@ -1,0 +1,91 @@
+# Defaults for all user-facing Kiali settings. These are documented in kiali_cr.yaml.
+#
+# Note that these are under the main dictionary group "kiali_defaults".
+# The actual vars used by the role are found in the vars/ directory.
+# These defaults (the dictionaries under "kiali_defaults") are merged into the vars such that the values
+# below (e.g. deployment, server, etc.) are merged in rather than completely replaced by user-supplied values.
+#
+# If new groups are added to these defaults, you must remember to add the merge code to vars/main.yml.
+
+kiali_defaults:
+  installation_tag: ""
+  istio_namespace: "istio-system"
+
+  api:
+    namespaces:
+      exclude:
+      - "istio-operator"
+      - "kube.*"
+      - "openshift.*"
+      - "ibm.*"
+
+  auth:
+    strategy: ""
+
+  deployment:
+    image_name: "kiali/kiali"
+    image_pull_policy: "IfNotPresent"
+    image_version: "lastrelease"
+    namespace: "istio-system"
+    secret_name: "kiali"
+    verbose_mode: "3"
+    version_label: ""
+    view_only_mode: false
+
+  external_services:
+    grafana:
+      api_key: ""
+      display_link: true
+      password: ""
+      service: "grafana"
+      service_dashboard_pattern: "Istio%20Service%20Dashboard"
+      service_namespace: "istio-system"
+      url: ""
+      username: ""
+      var_namespace: "var-namespace"
+      var_service: "var-service"
+      var_workload: "var-workload"
+      workload_dashboard_pattern: "Istio%20Workload%20Dashboard"
+    istio:
+      istio_identity_domain: "svc.cluster.local"
+      istio_sidecar_annotation: "sidecar.istio.io/status"
+      url_service_version: "http://istio-pilot:8080/version"
+    jaeger:
+      service: "jaeger-query"
+      url: ""
+    prometheus:
+      custom_metrics_url: "http://prometheus.istio-system:9090"
+      url: "http://prometheus.istio-system:9090"
+
+  identity:
+    cert_file: ""
+    private_key_file: ""
+
+  istio_labels:
+    app_label_name: "app"
+    version_label_name: "version"
+
+  kubernetes_config:
+    burst: 200
+    qps: 175
+    cache_enabled: false
+    cache_duration: 300000000
+
+  login_token:
+    signing_key: "kiali"
+    expiration_seconds: 86400
+
+  server:
+    address: ""
+    audit_log: true
+    cors_allow_all: false
+    metrics_enabled: true
+    metrics_port: 9090
+    port: 20001
+    web_root: ""
+
+# These variables are outside of the kiali_defaults. Their values will be
+# auto-detected by the role and are not meant to be set by the user.
+# However, for debugging purposes you can force one of these to true.
+is_k8s: false
+is_openshift: false

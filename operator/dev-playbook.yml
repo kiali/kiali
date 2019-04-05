@@ -2,8 +2,8 @@
 - hosts: localhost
   gather_facts: no
   vars:
-    #state: absent
-    state: present
-    image_version: dev
+    deployment:
+      image_version: dev
   roles:
-  - kiali
+  - kiali-deploy
+  - kiali-remove

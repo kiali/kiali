@@ -43,7 +43,7 @@ func NewClient() (*Client, error) {
 	if config.Get() == nil {
 		return nil, errors.New("config.Get() must be not null")
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.Get().ExternalServices.PrometheusServiceURL})
+	p8s, err := api.NewClient(api.Config{Address: config.Get().ExternalServices.Prometheus.URL})
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (in *Client) API() v1.API {
 
 // Address return the configured Prometheus service URL
 func (in *Client) Address() string {
-	return config.Get().ExternalServices.PrometheusServiceURL
+	return config.Get().ExternalServices.Prometheus.URL
 }
 
 func (in *Client) GetConfiguration() (v1.ConfigResult, error) {

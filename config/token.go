@@ -25,7 +25,7 @@ type TokenGenerated struct {
 
 func GetSignedTokenString(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(Get().LoginToken.SigningKey)
+	ss, err := token.SignedString([]byte(Get().LoginToken.SigningKey))
 
 	if err != nil {
 		return "", err
@@ -65,7 +65,7 @@ func ValidateToken(tokenString string) (string, error) {
 
 func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &IanaClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return Get().LoginToken.SigningKey, nil
+		return []byte(Get().LoginToken.SigningKey), nil
 	})
 	if err != nil {
 		return nil, err

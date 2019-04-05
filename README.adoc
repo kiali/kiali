@@ -28,22 +28,21 @@ Kiali also includes Jaeger Tracing to provide distributed tracing out of the box
 
 === Getting Started
 
-If you are not a developer but just want to run something to see Kiali, then go to https://www.kiali.io for some instructions.
+This README is targeted mainly toward Kiali developers. If you are not a developer but want to learn more about Kiali, you will find https://www.kiali.io more helpful. For some instructions on running Kiali without having to git clone this repository or build anything, please see the link:https://www.kiali.io/gettingstarted[Getting Started] page.
 
-You could also try to use our hack script to quickly install OpenShift, Istio, and Kiali like this:
+If you have git cloned this repository, you can try to use our hack script to quickly install OpenShift, Maistra (Istio), and Kiali like this:
 
 ```
-wget https://raw.githubusercontent.com/kiali/kiali/master/hack/cluster-openshift.sh
-sh cluster-openshift.sh --kiali-enabled true up
+hack/cluster-openshift.sh --kiali-enabled true up
 ```
 
 If you do not already have an Istio-enabled application to test with, you can install one using the link:hack/istio/README.adoc[Bookinfo Demo install script] provided here as a convenience.
 
 There are other demo applications to choose from as well: link:./DEMOS.adoc[see some examples].
 
-=== Docker Image
+=== Container Image
 
-Kiali is published as a docker image on https://hub.docker.com/r/kiali/kiali[Docker hub at kiali/kiali]
+Kiali is published as a container image on https://hub.docker.com/r/kiali/kiali[Docker hub at kiali/kiali]
 
 === License and Copyright
 
@@ -106,11 +105,7 @@ make test
 == Running
 
 [NOTE]
-If you want to quickly get up and running to play with Kiali and do not wish to git clone the repository, or build anything, see https://kiali.org for instructions. If you do not have a cluster environment (e.g. OpenShift) yet, grab the link:https://raw.githubusercontent.com/kiali/kiali/master/hack/cluster-openshift.sh[cluster-openshift.sh] convenience script and run it to quickly start an OpenShift cluster environment with Istio installed. If you do not have a service mesh to test with, grab the link:https://raw.githubusercontent.com/kiali/kiali/master/hack/istio/install-bookinfo-demo.sh[install-bookinfo-demo.sh] convenience script to download and install the Istio Bookinfo Demo service mesh.
-
-=== Secrets
-
-*Note*: There is a secret variable in the configuration called *TOKEN_SECRET*, be careful with this secret.
+If you want to quickly get up and running to play with Kiali and do not wish to git clone the repository or build anything, see https://www.kiali.io/gettingstarted for instructions.
 
 === Running on OpenShift
 
@@ -120,9 +115,9 @@ The following section assumes that the user has link:https://github.com/openshif
 
 The link:https://docs.openshift.org/latest/welcome/index.html[OpenShift Origin Documentation] will outline all the steps required.
 
-==== Building the Docker Image
+==== Building the Container Image
 
-Create the Kiali docker image through the "docker-build" make target:
+Create the Kiali container image through the "docker-build" make target:
 
 [source,shell]
 ----
@@ -130,41 +125,87 @@ cd ${GOPATH}/src/github.com/kiali/kiali
 make docker-build
 ----
 
-==== Deploying Kiali to OpenShift
+This builds the Kiali operator image, too.
+
+==== Deploying Kiali operator and Kiali to OpenShift
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.1*. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/getting_started/[Maistra] but you can use the link:https://istio.io/docs/setup/kubernetes/install[upstream Istio instructions] making sure to follow the link:https://istio.io/docs/setup/kubernetes/prepare/platform-setup/openshift/[OpenShift preparation steps].
 
 [NOTE]
-The following make targets assume that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
+The following make targets assume that either the `oc` command or the Maistra `istiooc` command is available in the user's PATH and that the user is logged in.
 
-The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of Kiali, if available, and deploy a new one:
-----
-make openshift-deploy
-----
+[NOTE]
+The Makefile used in these commands is the link:./operator/Makefile[Operator Makefile] in the link:./operator[operator] directory. The legacy make targets in the main Makefile are still there for those developers that are used to using them - those legacy targets simply delegate to the Operator Makefile now.
 
-If you need to set the **JAEGER** or **GRAFANA** services, set the URL in the environment variable **JAEGER_URL** and **GRAFANA_URL**
+===== Deploying Kiali Operator to OpenShift
 
-==== Deploying Kiali to OpenShift with commands
-
-
-==== Undeploying Kiali from OpenShift
-
-If you want to remove Kiali from your OpenShift environment, you can do so by running the following command:
+You need to first install the Kiali operator. This needs to be done only one time. After the operator is deployed, you can deploy and remove Kiali any number of times using the steps described below.
 
 [source,shell]
 ----
-make openshift-undeploy
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make operator-create
+----
+
+The main Makefile has the same target which delegates to the above.
+
+===== Deploying Kiali to OpenShift
+
+Now you can deploy Kiali. This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created also.
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make kiali-create
+----
+
+The main Makefile legacy target `openshift-deploy` delegates to the above.
+
+==== Removing Kiali from OpenShift
+
+If you want to remove Kiali, you can do so via the operator by executing the `kiali-delete` target. This target will also remove the secret.
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make kiali-delete
+----
+
+The main Makefile legacy target `openshift-undeploy` delegates to the above.
+
+If you want to quickly purge your OpenShift environment of all Kiali resources, you can run the `purge-kiali` target instead. This does not use the operator, instead it purges all Kiali resources using the oc/kubectl command.
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make purge-kiali
 ----
 
 ==== Reloading Kiali image in OpenShift
 
-If you already have Kiali installed but you want to recreate the pod with a new docker image, you can run the following command:
+[NOTE]
+To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build openshift-reload-image` to quickly get your new Kiali build into your running OpenShift.
+
+If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
 
 [source,shell]
 ----
+cd ${GOPATH}/src/github.com/kiali/kiali
 make openshift-reload-image
 ----
+
+==== Removing Kiali operator from OpenShift
+
+You can remove the Kiali operator by running this make command. Note: after this completes, the `kiali-create` and `kiali-delete` targets will be ineffective until you run the `operator-create` target to re-deploy the Kiali operator.
+
+[source,shell]
+----
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make operator-delete
+----
+
+There is no analogous target in the main Makefile.
 
 === Running on Kubernetes
 
@@ -172,9 +213,9 @@ make openshift-reload-image
 
 The following section assumes that the user has link:https://github.com/kubernetes/kubernetes[Kubernetes] installed.
 
-==== Building the Docker Image
+==== Building the Container Image
 
-Create the Kiali docker image through the "docker-build" make target:
+Create the Kiali container image through the "docker-build" make target:
 
 [source,shell]
 ----
@@ -182,7 +223,9 @@ cd ${GOPATH}/src/github.com/kiali/kiali
 make docker-build
 ----
 
-Note that if you are using minikube, you can build the docker image and push it directly into the minikube docker daemon using the alternative make target `minikube-docker`:
+This builds the Kiali operator image, too.
+
+Note that if you are using minikube, you can build the container images and push them directly into the minikube docker daemon using the alternative make target `minikube-docker`:
 
 [source,shell]
 ----
@@ -190,10 +233,10 @@ cd ${GOPATH}/src/github.com/kiali/kiali
 make minikube-docker
 ----
 
-==== Deploying Kiali to Kubernetes
+==== Deploying and Removing Kiali to/from Kubernetes
 
 [NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
+Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.1*. There are a few places that you can reference in order to learn how to do this. We recommend using link:https://maistra.io/docs/getting_started/[Maistra] but you can use the link:https://istio.io/docs/setup/kubernetes/install[upstream Istio instructions].
 
 [NOTE]
 The following make targets assume that the `kubectl` command is available in the user's PATH.
@@ -201,34 +244,34 @@ The following make targets assume that the `kubectl` command is available in the
 [NOTE]
 In order to deploy on Kubernetes and to be able to access the deployed service, you must ensure you have Ingress support. If you are using minikube, you need to run `minikube addons enable ingress` and add `kiali` as a hostname in your `/etc/hosts` via something like this command: `echo "$(minikube ip) kiali" | sudo tee -a /etc/hosts`
 
-The deploy and undeploy commands are automated in the Makefile. The following will undeploy an old installation of Kiali, if available, and deploy a new one:
-----
-make k8s-deploy
-----
-
-If you need to set the **JAEGER** or **GRAFANA** services, set the URL in the environment variable **JAEGER_URL** and **GRAFANA_URL**
-
-==== Undeploying Kiali from Kubernetes
-
-If you want to remove Kiali from your Kubernetes environment, you can do so by running the following command:
+The same commands documented above that explain how to deploy and remove Kiali operator and Kiali from OpenShift also apply to any Kubernetes environment. So these will work - see above for details about these commands.
 
 [source,shell]
 ----
-make k8s-undeploy
+cd ${GOPATH}/src/github.com/kiali/kiali/operator
+make operator-create
+make kiali-create
+make kiali-delete
+make purge-kiali
+make operator-delete
 ----
 
-==== Reloading Kiali image in Kubernetes
+==== Reloading Kiali image in OpenShift
 
-If you already have Kiali installed but you want to recreate the pod with a new docker image, you can run the following command:
+[NOTE]
+To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build k8s-reload-image` to quickly get your new Kiali build into your running OpenShift.
+
+If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
 
 [source,shell]
 ----
+cd ${GOPATH}/src/github.com/kiali/kiali
 make k8s-reload-image
 ----
 
 === Running Standalone
 
-Sometimes you may want to run Kiali outside of any container environment, perhaps for debugging purposes. To do this, run:
+Rarely, you may want to run Kiali outside of any cluster environment, perhaps for debugging purposes. To do this, run:
 
 [source,shell]
 ----
@@ -246,436 +289,62 @@ make install
 ${GOPATH}/bin/kiali -config <your-config-file>
 ----
 
-== Environment Variables
+== Configuration
 
-Many configuration settings can optionally be set via environment variables. If one of the environment variables below are set, they serve as the default value for its associated YAML configuration setting. The following are currently supported:
-
-[cols="1a,1a"]
-|===
-|Environment Variable Name|Description and YAML Setting
-
-|`AUTH_STRATEGY`
-|Defines how users are to be authenticated. There are three strategies available: "anonymous" (which allows anyone to log in without needing credentials), "login" (which requires users to log in with the credentials found in the Kiali secret), and "openshift" (which requires users to log in with valid OpenShift user credentials). (Default: login)
-[source,yaml]
-----
-auth:
-  strategy: VALUE
-----
-
-|`KIALI_INSTALLATION_TAG`
-|Tag used to identify a particular instance/installation of the kiali server
-[source,yaml]
-----
-installation_tag: VALUE
-----
-
-|`IDENTITY_CERT_FILE`
-|Certificate file used to identify the file server. If set, you must go over https to retrieve content from the file server.
-[source,yaml]
-----
-identity:
-  cert_file: VALUE
-----
-
-|`IDENTITY_PRIVATE_KEY_FILE`
-|Private key file used to identify the server. If set, you must go over https to retrieve content from the file server.
-[source,yaml]
-----
-identity:
-  private_key_file: VALUE
-----
-
-|`ISTIO_NAMESPACE`
-| The namespace where Istio is installed. (Default: istio-system)
-[source,yaml]
-----
-istio_namespace: VALUE
-----
-
-|`ISTIO_LABEL_NAME_APP`
-| The label name of app required by Istio. (Default: app)
-[source,yaml]
-----
-istio_labels:
-  app_label_name: VALUE
-----
-
-|`ISTIO_LABEL_NAME_VERSION`
-| The label name of version required by Istio. (Default: version)
-[source,yaml]
-----
-istio_labels:
-  version_label_name: VALUE
-----
-
-|`SERVER_ADDRESS`
-|Where the http server is bound to.
-[source,yaml]
-----
-server:
-  address: VALUE
-----
-
-|`SERVER_PORT`
-|Where the http server is listening.
-[source,yaml]
-----
-server:
-  port: VALUE
-----
-
-|`SERVER_WEB_ROOT`
-|Context root path to serve Kiali API and webapp from. (Default: /)
-[source,yaml]
-----
-server:
-  web_root: /VALUE
-----
-
-|`SERVER_CORS_ALLOW_ALL`
-|When true, allows the web console to send requests to other domains other than where the console came from. Typically used for development environments only.
-[source,yaml]
-----
-server:
-  cors_allow_all: (true\|false)
-----
-
-|`SERVER_AUDIT_LOG`
-|When true, allows additional audit logging on Write operations. (default is true)
-[source,yaml]
-----
-server:
-  audit_log: (true\|false)
-----
-
-|`SERVER_STATIC_CONTENT_ROOT_DIRECTORY`
-|The file server will serve all static content found under this root directory.
-[source,yaml]
-----
-server:
-  static_content_root_directory: VALUE
-----
-
-|`SERVER_METRICS_ENABLED`
-|When true, Kiali will expose internal metrics for Prometheus. (default is true)
-[source,yaml]
-----
-server:
-  metrics_enabled: VALUE
-----
-
-|`SERVER_METRICS_PORT`
-|When server metrics are enabled, port on which the metrics server is started. (default is 9090)
-[source,yaml]
-----
-server:
-  metrics_port: VALUE
-----
-
-|`IN_CLUSTER`
-|The annotation used by Istio in a Deployment template. If in_cluster is false then you need to set environments: `KUBERNETES_SERVICE_HOST`, `KUBERNETES_SERVICE_PORT` (Local development mode : oc proxy --port KUBERNETES_SERVICE_PORT ). (default is `true`)
-[source,yaml]
-----
-in_cluster: (true\|false)
-----
-
-|`PROMETHEUS_SERVICE_URL`
-|The URL used to access and query the Prometheus Server. It must be accessible from Kiali pod. (default is `http://prometheus.istio-system:9090`)
-[source,yaml]
-----
-external_services:
-  prometheus_service_url: VALUE
-----
-
-|`PROMETHEUS_CUSTOM_METRICS_URL`
-|The URL used to query the Prometheus Server for building the runtime metrics dashboards. It must be accessible from Kiali pod. (default is `PROMETHEUS_SERVICE_URL`)
-[source,yaml]
-----
-external_services:
-  prometheus_custom_metrics_url: VALUE
-----
-
-|`ISTIO_SIDECAR_ANNOTATION`
-|The annotation used by Istio in Pods. (default is `sidecar.istio.io/status`)
-[source,yaml]
-----
-external_services:
-  istio:
-    istio_sidecar_annotation: VALUE
-----
-
-|`ISTIO_IDENTITY_DOMAIN`
-|The annotation used by Istio how Identity Domain. (default is `svc.cluster.local`)
-[source,yaml]
-----
-external_services:
-  istio:
-    istio_identity_domain: VALUE
-----
-
-|`ISTIO_URL_SERVICE_VERSION`
-|The Service of Istio to check version. (default is `http://istio-pilot:9093/version`)
-[source,yaml]
-----
-external_services:
-  istio:
-    istio_url_service_version: VALUE
-----
-
-|`GRAFANA_DISPLAY_LINK`
-|When `true`, a link to Grafana will be displayed for more dashboards. (default is `true`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    display_link: (true\|false)
-----
-
-|`GRAFANA_URL`
-|The URL to the Grafana service. When not set, Kiali will report an error as it cannot generate links to Grafana. To avoid this error, either set a valid URL (it must be accessible from user browser), or turn off `GRAFANA_DISPLAY_LINK` options.
-[source,yaml]
-----
-external_services:
-  grafana:
-    url: VALUE
-----
-
-|`GRAFANA_API_KEY`
-|API key to access Grafana. API key only requires `viewer` permissions.
-[source,yaml]
-----
-external_services:
-  grafana:
-    api_key: VALUE
-----
-
-|`GRAFANA_USERNAME`
-|Username to be used when making requests to Grafana. User only requires `viewer` permissions. Requires `GRAFANA_PASSWORD`.
-[source,yaml]
-----
-external_services:
-  grafana:
-    username: VALUE
-----
-
-|`GRAFANA_PASSWORD`
-|Password to be used when making requests to Grafana. User only requires `viewer` permissions. Has no effect without `GRAFANA_USERNAME`.
-[source,yaml]
-----
-external_services:
-  grafana:
-    password: VALUE
-----
-
-|`GRAFANA_SERVICE_NAMESPACE`
-|The Kubernetes namespace that holds the Grafana service. (default is `istio-system`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    service_namespace: VALUE
-----
-
-|`GRAFANA_SERVICE`
-|The Kubernetes service name for Grafana. (default is `grafana`). Kiali uses GRAFANA_SERVICE to connect internally (within the cluster) to Grafana service.
-[source,yaml]
-----
-external_services:
-  grafana:
-    service: VALUE
-----
-
-|`GRAFANA_SERVICE_DASHBOARD_PATTERN`
-|Search pattern for Grafana Service dashboard. (default is `Istio%20Service%20Dashboard`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    service_dashboard_pattern: VALUE
-----
-
-|`GRAFANA_WORKLOAD_DASHBOARD_PATTERN`
-|Search pattern for Grafana Workload dashboard. (default is `Istio%20Workload%20Dashboard`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    workload_dashboard_pattern: VALUE
-----
-
-|`GRAFANA_VAR_NAMESPACE`
-|The name of the Grafana variable that controls namespaces in dashboards. (default is `var-namespace`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    var_namespace: VALUE
-----
-
-|`GRAFANA_VAR_SERVICE`
-|The name of the Grafana variable that controls services in dashboards. (default is `var-service`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    var_service: VALUE
-----
-
-|`GRAFANA_VAR_WORKLOAD`
-|The name of the Grafana variable that controls workloads in dashboards. (default is `var-workload`)
-[source,yaml]
-----
-external_services:
-  grafana:
-    var_workload: VALUE
-----
-
-|`JAEGER_SERVICE`
-|The name of the Jaeger service.(default is `jaeger-query`). Kiali uses JAEGER_SERVICE to connect internally (within the cluster) to Jaeger service to query the error traces.
-[source,yaml]
-----
-external_services:
-  jaeger:
-    service: VALUE
-----
-
-|`JAEGER_URL`
-|The URL to the Jaeger service. When not set, Kiali throw an error when the user try request to Jaeger (/api/jaeger).
-[source,yaml]
-----
-external_services:
-  jaeger:
-    url: VALUE
-----
-
-|`API_NAMESPACES_EXCLUDE`
-|An optional list of namespaces/projects excluded from the list of namespaces provided by the API and UI. Regex is supported. This does not affect explicit namespace access.
-[source,yaml]
-----
-api:
-  namespaces:
-    exclude:
-    - namespacePattern1
-    - namespacePattern2
-    - etc..
-----
-
-|`LOGIN_TOKEN_SIGNING_KEY`
-|The signing key used to generate tokens for user authentication. (default is `kiali`)
-[source,yaml]
-----
-login_token:
-  signing_key: VALUE
-----
-|`LOGIN_TOKEN_EXPIRATION_SECONDS`
-|The token expiration in seconds. (default is 10 hours => 36000)
-[source,yaml]
-----
-login_token:
-  expiration_seconds: VALUE
-----
-|`KUBERNETES_BURST`
-|The Burst value of Kubernetes client (default is 200)
-[source,yaml]
-----
-kubernetes_config:
-  burst: VALUE
-----
-|`KUBERNETES_QPS`
-|The QPS value of Kubernetes client (default is 175)
-[source,yaml]
-----
-kubernetes_config:
-  qps: VALUE
-----
-|`KUBERNETES_CACHE_ENABLED`
-|Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
-
-*Important*
-
-Kubernetes cache is not compatible with reduced permissions scenearios.
-
-(default is false)
-[source,yaml]
-----
-kubernetes_config:
-  cache_enabled: VALUE
-----
-|`KUBERNETES_CACHE_DURATION`
-|The ratio interval (expressed in nanoseconds) used for the cache to perform a full refresh.
-
-(default is 300000000)
-[source,yaml]
-----
-kubernetes_config:
-  cache_duration: VALUE
-----
-
-|===
+Many configuration settings can optionally be set within the Kiali Operator custom resource (CR) file. See link:./operator/deploy/kiali/kiali_cr.yaml[this example Kiali CR file] that has all the configuration settings documented.
 
 == Configure External Services
 
 === Jaeger
 
-If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **configmap.yaml** the value of the jaeger > url
+If you have Jaeger installed in a custom way that is not easily auto-detectable by Kiali, you need to change in the Kiali CR the value of the jaeger > url
+
 [source,yaml]
 ----
-apiVersion: v1
-kind: ConfigMap
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
 metadata:
   name: kiali
-  labels:
-    app: kiali
-    version: ${VERSION_LABEL}
-data:
-  config.yaml: |
-    server:
-      port: 20001
+spec:
+...
     external_services:
       jaeger:
         url: http://jaeger-query-istio-system.127.0.0.1.nip.io
-      grafana:
-        url: http://grafana-istio-system.127.0.0.1.nip.io
+...
 ----
+
 === Grafana
 
-If you are using the Make task **openshift-deploy** or **k8s-deploy** you need to change in the **configmap.yaml** the value of the grafana > url
+If you have Grafana installed in a custom way that is not easily auto-detectable by Kiali, you need to change in the Kiali CR the value of the grafana > url
+
 [source,yaml]
 ----
-apiVersion: v1
-kind: ConfigMap
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
 metadata:
   name: kiali
-  labels:
-    app: kiali
-    version: ${VERSION_LABEL}
-data:
-  config.yaml: |
-    server:
-      port: 20001
+spec:
+...
     external_services:
-      jaeger:
-        url: http://jaeger-query-istio-system.127.0.0.1.nip.io
       grafana:
         url: http://grafana-istio-system.127.0.0.1.nip.io
+...
 ----
 
 == Additional Notes
 
 === Customize the UI web context root
 
-By default Kiali UI is deployed to the top level of `https://kiali-istio-system.<your_cluster_domain_or_ip>/`.  In some situation such as when you want to serve Kiali UI along with other apps under the same host name, e.g., `example.com/kiali`, `example.com/app1`, you can edit Kiali Config Map and provide a different value for `web_root`.  Note: the path must begin with a `/`.
+By default Kiali UI is deployed to the top level of `https://kiali-istio-system.<your_cluster_domain_or_ip>/`.  In some situations such as when you want to serve Kiali UI along with other apps under the same host name, e.g., `example.com/kiali`, `example.com/app1`, you can edit Kiali Config Map and provide a different value for `web_root`.  Note: the path must begin with a `/` and not end with `/` (e.g. `/kiali`).
 
 An example of custom web root:
 
 [source,yaml]
 ----
+...
 server:
-  port: 20001
   web_root: /kiali
-external_services:
-  jaeger:
-  ...
+...
 ----
 
 === Running the UI Outside the Core
@@ -700,16 +369,16 @@ WWW-Authenticate: Basic realm="Kiali"
 
 === Running A Locally Built UI Inside the Core
 
-If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the docker image via the `docker-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
+If you are developing the UI on your local machine but you want to see it deployed and running inside of the core server, you can do so by setting the environment variable CONSOLE_VERSION to the value "local" when building the container image via the `docker-build` target. By default, your UI's build/ directory is assumed to be in a directory called `kiali-ui` that is a peer directory of the GOPATH root directory for the core server. If it is not, you can set the environment variable CONSOLE_LOCAL_DIR to the value of the path of the root directory for the UI such that `$CONSOLE_LOCAL_DIR/build` contains the generated build files for the UI.
 
-For example, if your GOPATH directory for the Kiali project is `/source/kiali/kiali` and you have git cloned the Kiali UI repository in `/source/kiali/kiali-ui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core docker image via:
+For example, if your GOPATH directory for the Kiali project is `/source/kiali/kiali` and you have git cloned the Kiali UI repository in `/source/kiali/kiali-ui` then you do not need to set CONSOLE_LOCAL_DIR. You can embed your locally built console into the core container image via:
 
 [source,shell]
 ----
 CONSOLE_VERSION=local make docker-build
 ----
 
-If you git cloned the Kiali UI repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core docker image via:
+If you git cloned the Kiali UI repository in directory `/my/git/repo` and have built the UI there (such that the build files are located at `/my/git/repo/build`) then you can embed that locally built console into the core container image via:
 
 [source,shell]
 ----
@@ -731,34 +400,6 @@ In the provided Kubernetes templates, SSL is turned on by default. If you want t
 * Remove the "identity" block, with certificate paths, from the Kiali Config Map.
 
 * Optionally you can also remove the volume that is declared and mounted in Kiali Deployment (the name of the volume and mount are both "kiali-cert". If you don't remove these, they will just be ignored.
-
-=== Running Kiali with commands
-
-[NOTE]
-Before deploying and running Kiali, you must first install and deploy link:https://istio.io[Istio]. *Required Istio Version: 1.0*. There are a few places that you can reference in order to learn how to do this such as link:https://github.com/redhat-developer-demos/istio-tutorial[here], link:https://blog.openshift.com/evaluate-istio-openshift/[here], and link:https://istio.io/docs/setup/kubernetes/quick-start.html[here].
-
-[NOTE]
-The installation scripts obtained by curl below can be customized with environment variables. Read the installation scripts for details on what environment variables are used.
-
-==== Running in Openshift
-
-[NOTE]
-The following assumes that the `oc` command is available in the user's PATH and that the user is logged in. If you have `istiooc` instead, create a symlink in your PATH pointing `oc` to your `istiooc` binary.
-
-[source,bash]
-----
-curl -L http://git.io/getLatestKiali | sh
-----
-
-==== Running in Kubernetes
-
-[NOTE]
-The following assumes `kubectl` command is available in the user's PATH.
-
-[source,bash]
-----
-curl -L http://git.io/getLatestKialiKubernetes | sh
-----
 
 == Contributing
 

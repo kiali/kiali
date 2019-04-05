@@ -20,34 +20,34 @@ spec:
     spec:
       serviceAccountName: kiali-operator
       containers:
-        - name: ansible
-          command:
-          - /usr/local/bin/ao-logs
-          - /tmp/ansible-operator/runner
-          - stdout
-          image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-            readOnly: true
-        - name: operator
-          image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
-          imagePullPolicy: "IfNotPresent"
-          volumeMounts:
-          - mountPath: /tmp/ansible-operator/runner
-            name: runner
-          env:
-            - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: OPERATOR_NAME
-              value: "kiali-operator"
+      - name: ansible
+        command:
+        - /usr/local/bin/ao-logs
+        - /tmp/ansible-operator/runner
+        - stdout
+        image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
+        imagePullPolicy: ${OPERATOR_IMAGE_PULL_POLICY}
+        volumeMounts:
+        - mountPath: /tmp/ansible-operator/runner
+          name: runner
+          readOnly: true
+      - name: operator
+        image: ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
+        imagePullPolicy: ${OPERATOR_IMAGE_PULL_POLICY}
+        volumeMounts:
+        - mountPath: /tmp/ansible-operator/runner
+          name: runner
+        env:
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: "kiali-operator"
       volumes:
-        - name: runner
-          emptyDir: {}
+      - name: runner
+        emptyDir: {}

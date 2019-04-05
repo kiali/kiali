@@ -1,5 +1,5 @@
-# TODO: This isn't complete - some perms are still missing. Right now we use cluster-admin in role_binding.yaml.
-apiVersion: v1
+# NOTE: Changes to this file must be reflected in the OperatorHub.io CSV file
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: kiali-operator
@@ -7,60 +7,151 @@ metadata:
     app: kiali-operator
     version: ${OPERATOR_VERSION_LABEL}
 rules:
-- apiGroups:
-  - ""
+- apiGroups: [""]
   resources:
   - configmaps
   - endpoints
-  - namespaces
+  - events
+  - persistentvolumeclaims
   - pods
-  - routes
-  - secrets
-  - services
   - serviceaccounts
+  - services
   verbs:
   - '*'
-- apiGroups:
-  - apps
-  - extensions
+- apiGroups: ["apps"]
   resources:
   - deployments
   - replicasets
-  - statefulsets
   verbs:
   - '*'
-- apiGroups:
-  - monitoring.coreos.com
+- apiGroups: ["monitoring.coreos.com"]
   resources:
   - servicemonitors
   verbs:
   - create
   - get
-- apiGroups:
-  - apps
-  - extensions
+- apiGroups: ["apps"]
   resourceNames:
   - kiali-operator
   resources:
   - deployments/finalizers
   verbs:
   - update
-- apiGroups:
-  - route.openshift.io
+- apiGroups: ["kiali.io"]
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  verbs:
+  - '*'
+- apiGroups: ["apiextensions.k8s.io"]
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - '*'
+- apiGroups: ["extensions"]
+  resources:
+  - ingresses
+  verbs:
+  - '*'
+- apiGroups: ["route.openshift.io"]
   resources:
   - routes
   verbs:
   - '*'
-- apiGroups:
-  - op.kiali.io
+- apiGroups: ["oauth.openshift.io"]
   resources:
-  - '*'
+  - oauthclients
   verbs:
   - '*'
-- apiGroups: ["rbac.istio.io"]
+- apiGroups: ["monitoring.kiali.io"]
   resources:
-  - clusterolebindings
-  - clusterroles
+  - monitoringdashboards
+  verbs:
+  - '*'
+# The permissions below are for Kiali itself; operator needs these so it can escalate when creating Kiali's roles
+- apiGroups: [""]
+  resources:
+  - configmaps
+  - endpoints
+  - namespaces
+  - nodes
+  - pods
+  - pods/log
+  - replicationcontrollers
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["extensions", "apps"]
+  resources:
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["config.istio.io"]
+  resources:
+  - adapters
+  - apikeys
+  - bypasses
+  - authorizations
+  - checknothings
+  - circonuses
+  - cloudwatches
+  - deniers
+  - dogstatsds
+  - edges
+  - fluentds
+  - handlers
+  - instances
+  - kubernetesenvs
+  - kuberneteses
+  - listcheckers
+  - listentries
+  - logentries
+  - memquotas
+  - metrics
+  - noops
+  - opas
+  - prometheuses
+  - quotas
+  - quotaspecbindings
+  - quotaspecs
+  - rbacs
+  - redisquotas
+  - reportnothings
+  - rules
+  - signalfxs
+  - solarwindses
+  - stackdrivers
+  - statsds
+  - stdios
+  - templates
+  - tracespans
+  - zipkins
   verbs:
   - create
   - delete
@@ -68,3 +159,62 @@ rules:
   - list
   - patch
   - watch
+- apiGroups: ["networking.istio.io"]
+  resources:
+  - destinationrules
+  - gateways
+  - serviceentries
+  - virtualservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups: ["authentication.istio.io"]
+  resources:
+  - meshpolicies
+  - policies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups: ["rbac.istio.io"]
+  resources:
+  - clusterrbacconfigs
+  - rbacconfigs
+  - servicerolebindings
+  - serviceroles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups: ["apps.openshift.io"]
+  resources:
+  - deploymentconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["project.openshift.io"]
+  resources:
+  - projects
+  verbs:
+  - get
+- apiGroups: ["route.openshift.io"]
+  resources:
+  - routes
+  verbs:
+  - get
+- apiGroups: ["monitoring.kiali.io"]
+  resources:
+  - monitoringdashboards
+  verbs:
+  - get

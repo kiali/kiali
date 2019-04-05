@@ -506,7 +506,7 @@ func mockFlags(api *PromAPIMock, ret pv1.FlagsResult) {
 
 func setupExternal() (*prometheus.Client, error) {
 	conf := config.NewConfig()
-	conf.ExternalServices.PrometheusServiceURL = "http://prometheus-istio-system.127.0.0.1.nip.io"
+	conf.ExternalServices.Prometheus.URL = "http://prometheus-istio-system.127.0.0.1.nip.io"
 	config.Set(conf)
 	return prometheus.NewClient()
 }
