@@ -32,7 +32,7 @@ func TestNetDevParseLine(t *testing.T) {
 }
 
 func TestNewNetDev(t *testing.T) {
-	fs, err := NewFS("fixtures")
+	fs, err := NewFS(procTestFixtures)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestNewNetDev(t *testing.T) {
 }
 
 func TestProcNewNetDev(t *testing.T) {
-	p, err := FS("fixtures").NewProc(26231)
+	p, err := FS(procTestFixtures).NewProc(26231)
 	if err != nil {
 		t.Fatal(err)
 	}

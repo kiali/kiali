@@ -5,15 +5,9 @@ commands:
   default:
     steps:
     - run: make style check_license vet test staticcheck
-  no-style:
-    steps:
-    - run: make check_license vet test staticcheck
   no-test:
     steps:
     - run: make style check_license vet staticcheck
-  no-style-test:
-    steps:
-    - run: make check_license vet staticcheck
 
 jobs:
   test:
@@ -38,22 +32,22 @@ workflows:
   procfs:
     jobs:
     - test:
-        command: no-style-test
-        name: linux-1-10
-        os: linux
-        go_version: "1.10"
-    - test:
         command: default
         name: linux-1-11
         os: linux
         go_version: "1.11"
     - test:
-        command: no-style-test
-        name: windows-1-10
-        os: windows
-        go_version: "1.10"
+        command: default
+        name: linux-1-12
+        os: linux
+        go_version: "1.12"
     - test:
         command: no-test
         name: windows-1-11
         os: windows
         go_version: "1.11"
+    - test:
+        command: no-test
+        name: windows-1-12
+        os: windows
+        go_version: "1.12"
