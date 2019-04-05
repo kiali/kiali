@@ -146,6 +146,7 @@ func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+		return
 	}
 	jsonPatch := string(body)
 	updatedService, err := business.Svc.UpdateService(namespace, service, jsonPatch)

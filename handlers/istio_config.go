@@ -282,6 +282,7 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+		return
 	}
 	jsonPatch := string(body)
 	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(api, namespace, objectType, objectSubtype, object, jsonPatch)
