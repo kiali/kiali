@@ -421,9 +421,12 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route PATCH /namespaces/{namespace}/services/{service} services serviceDetails
+		// swagger:route PATCH /namespaces/{namespace}/services/{service} services serviceDetailsUpdate
 		// ---
-		// Endpoint to get the details of a given service
+		// Endpoint to update a Service definition using Json Merge Patch strategy.
+		//
+		//     Consumes:
+		//	   - application/json
 		//
 		//     Produces:
 		//     - application/json

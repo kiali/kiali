@@ -1711,6 +1711,52 @@
             "$ref": "#/responses/internalError"
           }
         }
+      },
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "services"
+        ],
+        "summary": "Endpoint to update a Service definition using Json Merge Patch strategy.",
+        "operationId": "serviceDetailsUpdate",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace id.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/serviceDetailsResponse"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
       }
     },
     "/namespaces/{namespace}/services/{service}/dashboard": {
@@ -4221,6 +4267,9 @@
         },
         "namespaceMTLS": {
           "$ref": "#/definitions/MTLSStatus"
+        },
+        "permissions": {
+          "$ref": "#/definitions/ResourcePermissions"
         },
         "service": {
           "$ref": "#/definitions/Service"
