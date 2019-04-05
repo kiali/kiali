@@ -44,36 +44,46 @@ func TestFQDNHostname(t *testing.T) {
 
 func TestExactProtocolNameMatcher(t *testing.T) {
 	// http, http2, grpc, mongo, or redis
-	assert.True(t, matchPortNameRule("http", "http"))
-	assert.True(t, matchPortNameRule("http", "HTTP"))
-	assert.True(t, matchPortNameRule("grpc", "grpc"))
-	assert.True(t, matchPortNameRule("http2", "http2"))
+	assert.True(t, MatchPortNameRule("http", "http"))
+	assert.True(t, MatchPortNameRule("http", "HTTP"))
+	assert.True(t, MatchPortNameRule("grpc", "grpc"))
+	assert.True(t, MatchPortNameRule("http2", "http2"))
 }
 
 func TestTCPAndUDPMatcher(t *testing.T) {
-	assert.True(t, matchPortNameRule("tcp", "TCP"))
-	assert.True(t, matchPortNameRule("tcp", "tcp"))
-	assert.True(t, matchPortNameRule("udp", "UDP"))
-	assert.True(t, matchPortNameRule("udp", "udp"))
+	assert.True(t, MatchPortNameRule("tcp", "TCP"))
+	assert.True(t, MatchPortNameRule("tcp", "tcp"))
+	assert.True(t, MatchPortNameRule("udp", "UDP"))
+	assert.True(t, MatchPortNameRule("udp", "udp"))
 
-	assert.True(t, matchPortNameRule("tcp-any", "UDP"))
-	assert.True(t, matchPortNameRule("udp-any", "TCP"))
+	assert.True(t, MatchPortNameRule("tcp-any", "UDP"))
+	assert.True(t, MatchPortNameRule("udp-any", "TCP"))
 
-	assert.True(t, matchPortNameRule("doesnotmatter", "UDP"))
-	assert.True(t, matchPortNameRule("everythingisvalid", "TCP"))
+	assert.True(t, MatchPortNameRule("doesnotmatter", "UDP"))
+	assert.True(t, MatchPortNameRule("everythingisvalid", "TCP"))
 }
 
 func TestValidProtocolNameMatcher(t *testing.T) {
-	assert.True(t, matchPortNameRule("http-name", "http"))
-	assert.True(t, matchPortNameRule("http2-name", "http2"))
+	assert.True(t, MatchPortNameRule("http-name", "http"))
+	assert.True(t, MatchPortNameRule("http2-name", "http2"))
 }
 
 func TestInvalidProtocolNameMatcher(t *testing.T) {
-	assert.False(t, matchPortNameRule("http2-name", "http"))
-	assert.False(t, matchPortNameRule("http-name", "http2"))
+	assert.False(t, MatchPortNameRule("http2-name", "http"))
+	assert.False(t, MatchPortNameRule("http-name", "http2"))
 
-	assert.False(t, matchPortNameRule("httpname", "http"))
-	assert.False(t, matchPortNameRule("name", "http"))
+	assert.False(t, MatchPortNameRule("httpname", "http"))
+	assert.False(t, MatchPortNameRule("name", "http"))
+}
+
+func TestValidPortNameMatcher(t *testing.T) {
+	assert.True(t, MatchPortNameWithValidProtocols("http-name"))
+	assert.True(t, MatchPortNameWithValidProtocols("http2-name"))
+}
+
+func TestInvalidPortNameMatcher(t *testing.T) {
+	assert.False(t, MatchPortNameWithValidProtocols("httpname"))
+	assert.False(t, MatchPortNameWithValidProtocols("name"))
 }
 
 func TestPolicyHasMtlsEnabledStructMode(t *testing.T) {

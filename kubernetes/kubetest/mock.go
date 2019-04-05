@@ -375,6 +375,7 @@ func (o *K8SClientMock) MockServices(namespace string, names []string) {
 		services = append(services, fakeService(namespace, name))
 	}
 	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
+	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta1.Deployment{}, nil)
 }
 
 func fakeService(namespace, name string) core_v1.Service {
