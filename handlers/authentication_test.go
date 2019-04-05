@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -158,4 +160,53 @@ func TestLogout(t *testing.T) {
 
 	assert.Equal(t, "", cookie.Value)
 	assert.True(t, cookie.Expires.Before(clockTime))
+}
+
+// TestMissingSecretFlagPresent checks that the AuthenticationInfo handler
+// sets the secretMissing flag if secret is not present when AuthStrategy is "login".
+func TestMissingSecretFlagPresent(t *testing.T) {
+	cfg := config.NewConfig()
+	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Server.Credentials.Username = ""
+	cfg.Server.Credentials.Passphrase = ""
+	config.Set(cfg)
+
+	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)
+
+	responseRecorder := httptest.NewRecorder()
+	AuthenticationInfo(responseRecorder, request)
+	response := responseRecorder.Result()
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	var reply map[string]interface{}
+	body, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(body, &reply)
+
+	assert.Contains(t, reply, "secretMissing")
+	assert.Equal(t, true, reply["secretMissing"])
+}
+
+// TestMissingSecretFlagAbsent checks that the AuthenticationInfo handler
+// won't set the secretMissing flag if secret is present.
+func TestMissingSecretFlagAbsent(t *testing.T) {
+	cfg := config.NewConfig()
+	cfg.Auth.Strategy = config.AuthStrategyLogin
+	cfg.Server.Credentials.Username = "foo"
+	cfg.Server.Credentials.Passphrase = "bar"
+	config.Set(cfg)
+
+	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)
+
+	responseRecorder := httptest.NewRecorder()
+	AuthenticationInfo(responseRecorder, request)
+	response := responseRecorder.Result()
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	var reply map[string]interface{}
+	body, _ := ioutil.ReadAll(response.Body)
+	json.Unmarshal(body, &reply)
+
+	assert.NotContains(t, reply, "secretMissing")
 }
