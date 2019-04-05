@@ -10,7 +10,7 @@ import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer'
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';

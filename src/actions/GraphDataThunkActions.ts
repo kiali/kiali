@@ -9,7 +9,7 @@ import { GraphDataActions } from './GraphDataActions';
 import { MessageCenterActions } from './MessageCenterActions';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
-import { serverConfig } from '../config/serverConfig';
+import { serverConfig } from '../config/ServerConfig';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };

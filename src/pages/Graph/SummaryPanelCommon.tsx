@@ -9,7 +9,7 @@ import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import Label from '../../components/Label/Label';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export interface NodeData {

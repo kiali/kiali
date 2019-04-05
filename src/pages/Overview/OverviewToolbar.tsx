@@ -10,7 +10,7 @@ import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { PollIntervalInMs, DurationInSeconds } from '../../types/Common';

@@ -5,9 +5,9 @@ import { style } from 'typestyle';
 import _ from 'lodash';
 import beautify from 'json-beautify';
 
-import authenticationConfig from '../../config/authenticationConfig';
+import authenticationConfig from '../../config/AuthenticationConfig';
 import { serverConfig } from '../../config';
-import { ComputedServerConfig } from '../../config/serverConfig';
+import { ComputedServerConfig } from '../../config/ServerConfig';
 import { AuthConfig } from '../../types/Auth';
 import { KialiAppState } from '../../store/Store';
 

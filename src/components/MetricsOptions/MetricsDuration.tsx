@@ -3,7 +3,7 @@ import * as React from 'react';
 import { URLParam, HistoryManager } from '../../app/History';
 import { DurationInSeconds } from '../../types/Common';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 
 type Props = {
   onChanged: (duration: DurationInSeconds) => void;

@@ -3,7 +3,7 @@ import { Alert, Button, Col, Form, FormControl, FormGroup, HelpBlock, Row } from
 import { KEY_CODES } from '../../types/Common';
 import { LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
-import authenticationConfig from '../../config/authenticationConfig';
+import authenticationConfig from '../../config/AuthenticationConfig';
 
 const kialiTitle = require('../../assets/img/logo-login.svg');
 

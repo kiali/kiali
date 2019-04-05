@@ -7,7 +7,7 @@ import { SessionTimeout } from '../SessionTimeout/SessionTimeout';
 import { config } from '../../config';
 import { MILLISECONDS } from '../../types/Common';
 import { LoginSession } from 'src/store/Store';
-import authenticationConfig from '../../config/authenticationConfig';
+import authenticationConfig from '../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../types/Auth';
 
 type UserProps = {

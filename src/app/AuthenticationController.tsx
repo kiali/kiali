@@ -13,7 +13,7 @@ import { GrafanaActions } from '../actions/GrafanaActions';
 import InitializingScreen from './InitializingScreen';
 import { isKioskMode } from '../utils/SearchParamUtils';
 import * as MessageCenter from '../utils/MessageCenter';
-import { setServerConfig } from '../config/serverConfig';
+import { setServerConfig } from '../config/ServerConfig';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
