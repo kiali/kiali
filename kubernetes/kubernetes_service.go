@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"github.com/kiali/kiali/log"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -11,6 +12,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
@@ -302,4 +304,10 @@ func (in *IstioClient) GetSelfSubjectAccessReview(namespace, api, resourceType s
 		}
 	}
 	return result, err
+}
+
+func (in *IstioClient) UpdateService(namespace string, serviceName, jsonPatch string) (*v1.Service, error) {
+	log.Debugf("UpdateService input: %s / %s / %s", namespace, serviceName, jsonPatch)
+	bytePatch := []byte(jsonPatch)
+	return in.k8s.CoreV1().Services(namespace).Patch(serviceName, types.MergePatchType, bytePatch)
 }

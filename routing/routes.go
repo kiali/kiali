@@ -421,6 +421,27 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
+		// swagger:route PATCH /namespaces/{namespace}/services/{service} services serviceDetails
+		// ---
+		// Endpoint to get the details of a given service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      404: notFoundError
+		//      500: internalError
+		//      200: serviceDetailsResponse
+		//
+		{
+			"ServiceDetailsUpdate",
+			"PATCH",
+			"/api/namespaces/{namespace}/services/{service}",
+			handlers.ServiceUpdate,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/workloads workloads workloadList
 		// ---
 		// Endpoint to get the list of workloads for a namespace

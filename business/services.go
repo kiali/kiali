@@ -105,7 +105,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
+	wg.Add(10)
 	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
@@ -165,6 +165,12 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		}
 	}()
 
+	var svcUpdate bool
+	go func() {
+		defer wg.Done()
+		_, svcUpdate, _ = getPermissions(in.k8s, namespace, Services, "")
+	}()
+
 	var vsCreate, vsUpdate, vsDelete bool
 	go func() {
 		defer wg.Done()
@@ -204,6 +210,24 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
 	s.SetErrorTraces(eTraces)
+	s.SetPermissions(svcUpdate)
+	return &s, nil
+}
+
+// UpdateService applies a jsonPatch into a service definition.
+// It returns a single service definition (only the service object, no endpoints/istio/runtime)
+// UI usually fetches a following GetService after this call
+func (in *SvcService) UpdateService(namespace, service, jsonPatch string) (*models.ServiceDetails, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "UpdateServiceDefinition")
+	defer promtimer.ObserveNow(&err)
+
+	svc, err := in.k8s.UpdateService(namespace, service, jsonPatch)
+	if err != nil {
+		return nil, err
+	}
+	s := models.ServiceDetails{}
+	s.SetService(svc)
 	return &s, nil
 }
 

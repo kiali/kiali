@@ -13,13 +13,20 @@ rules:
   - namespaces
   - nodes
   - pods
-  - services
   - replicationcontrollers
   - routes
   verbs:
   - get
   - list
   - watch
+- apiGroups: [""]
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
 - apiGroups: ["extensions", "apps"]
   resources:
   - deployments

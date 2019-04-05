@@ -355,6 +355,11 @@ func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, js
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) UpdateService(namespace string, serviceName, jsonPatch string) (*v1.Service, error) {
+	args := o.Called(namespace, serviceName, jsonPatch)
+	return args.Get(0).(*v1.Service), args.Error(1)
+}
+
 func (o *K8SClientMock) MockService(namespace, name string) {
 	s := fakeService(namespace, name)
 	o.On("GetService", namespace, name).Return(&s, nil)

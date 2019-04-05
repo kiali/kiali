@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
 	"sync"
 
@@ -128,6 +129,40 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, serviceDetails)
+}
+
+func ServiceUpdate(w http.ResponseWriter, r *http.Request) {
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	params := mux.Vars(r)
+	namespace := params["namespace"]
+	service := params["service"]
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+	}
+	jsonPatch := string(body)
+	updatedService, err := business.Svc.UpdateService(namespace, service, jsonPatch)
+
+	if errors.IsNotFound(err) {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
+		RespondWithError(w, http.StatusInternalServerError, statusError.ErrStatus.Message)
+		return
+	} else if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	audit(r, "UPDATE on Namespace: " + namespace + " Service: " + service + " Patch: " + jsonPatch)
+	RespondWithJSON(w, http.StatusOK, updatedService)
 }
 
 // ServiceDashboard is the API handler to fetch Istio dashboard, related to a single service

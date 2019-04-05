@@ -90,6 +90,7 @@ type IstioClientInterface interface {
 	IsOpenShift() bool
 	Stop()
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
+	UpdateService(namespace string, serviceName, jsonPatch string) (*v1.Service, error)
 }
 
 // IstioClient is the client struct for Kubernetes and Istio APIs

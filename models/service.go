@@ -37,6 +37,7 @@ type ServiceDetails struct {
 	Validations      IstioValidations  `json:"validations"`
 	ErrorTraces      int               `json:"errorTraces"`
 	NamespaceMTLS    MTLSStatus        `json:"namespaceMTLS"`
+	Permissions      ResourcePermissions `json:"permissions"`
 }
 
 type Services []*Service
@@ -102,4 +103,9 @@ func (s *ServiceDetails) SetDestinationRules(dr []kubernetes.IstioObject, canCre
 
 func (s *ServiceDetails) SetErrorTraces(errorTraces int) {
 	s.ErrorTraces = errorTraces
+}
+
+func (s *ServiceDetails) SetPermissions(canUpdate bool) {
+	// Only update is relevant for Kiali
+	s.Permissions = ResourcePermissions{Create: false, Update: canUpdate, Delete: false}
 }

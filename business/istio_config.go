@@ -55,6 +55,7 @@ const (
 	RbacConfigs         = "rbacconfigs"
 	ServiceRoles        = "serviceroles"
 	ServiceRoleBindings = "servicerolebindings"
+	Services            = "services"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -73,6 +74,7 @@ var resourceTypesToAPI = map[string]string{
 	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
 	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
 	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
+	Services: 			 "",
 }
 
 var apiToVersion = map[string]string{
