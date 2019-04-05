@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/kiali/kiali/config/security"
@@ -265,4 +266,28 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if conf.Server.Credentials.Passphrase != "" {
 		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
 	}
+}
+
+func TestRaces(t *testing.T) {
+
+	wg := sync.WaitGroup{}
+	wg.Add(10)
+
+	cfg := NewConfig()
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			defer wg.Done()
+			Get()
+		}()
+	}
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			defer wg.Done()
+			Set(cfg)
+		}()
+	}
+
+	wg.Wait()
 }

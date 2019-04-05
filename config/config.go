@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -95,7 +96,8 @@ const (
 )
 
 // Global configuration for the application.
-var configuration *Config
+var configuration Config
+var rwMutex sync.RWMutex
 
 // Server configuration
 type Server struct {
@@ -285,12 +287,17 @@ func NewConfig() (c *Config) {
 
 // Get the global Config
 func Get() (conf *Config) {
-	return configuration
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	copy := configuration
+	return &copy
 }
 
 // Set the global Config
 func Set(conf *Config) {
-	configuration = conf
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
+	configuration = *conf
 }
 
 func getDefaultStringFromFile(filename string, defaultValue string) (retVal string) {
