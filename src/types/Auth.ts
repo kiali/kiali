@@ -1,5 +1,6 @@
 export interface AuthConfig {
   authorizationEndpoint?: string;
+  secretMissing?: boolean;
   strategy: AuthStrategy;
 }
 

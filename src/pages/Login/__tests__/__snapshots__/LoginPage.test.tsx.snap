@@ -640,6 +640,7 @@ ShallowWrapper {
                       />,
                       false,
                       false,
+                      false,
                       <Form
                         bsClass="form"
                         componentClass="form"
@@ -708,6 +709,7 @@ ShallowWrapper {
                       "rendered": null,
                       "type": "header",
                     },
+                    false,
                     false,
                     false,
                     Object {
@@ -1520,6 +1522,7 @@ ShallowWrapper {
                         />,
                         false,
                         false,
+                        false,
                         <Form
                           bsClass="form"
                           componentClass="form"
@@ -1588,6 +1591,7 @@ ShallowWrapper {
                         "rendered": null,
                         "type": "header",
                       },
+                      false,
                       false,
                       false,
                       Object {
