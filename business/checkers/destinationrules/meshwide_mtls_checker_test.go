@@ -9,8 +9,22 @@ import (
 )
 
 // Context: DestinationRule enables mesh-wide mTLS
-// Context: There is one MeshPolicy not enabling mTLS
-// It returns a validation
+// Context: There is no MeshPolicy
+// It doesn't return any validation
+func TestMTLSMeshWideDREnabledWithNoMeshPolicy(t *testing.T) {
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{
+		MeshPolicies: []kubernetes.IstioObject{},
+	}
+
+	testReturnsAValidation(t, destinationRule, mTlsDetails)
+}
+
+// Context: DestinationRule enables mesh-wide mTLS
+// Context: There is one MeshPolicy in PERMISSIVE mode
+// It doesn't return any validation
 func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
@@ -21,11 +35,11 @@ func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		},
 	}
 
-	testReturnsAValidation(t, destinationRule, mTlsDetails)
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
 // Context: DestinationRule enables mesh-wide mTLS
-// Context: There is one MeshPolicy enabling mTLS
+// Context: There is one MeshPolicy enabling mTLS in STRICT mode
 // It doesn't return any validation
 func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -41,7 +55,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one MeshPolicy enabling mTLS
+// Context: There is one MeshPolicy enabling mTLS in STRICT mode
 // It doesn't return any validation
 func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -57,7 +71,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 }
 
 // Context: DestinationRule enables namespace-wide mTLS
-// Context: There is one MeshPolicy not enabling mTLS
+// Context: There is one MeshPolicy enabling mTLS in PERMISSIVE mode
 // It doesn't return any validation
 func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -65,7 +79,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 
 	mTlsDetails := kubernetes.MTLSDetails{
 		MeshPolicies: []kubernetes.IstioObject{
-			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("PERMISSIVE")),
 		},
 	}
 
