@@ -74,7 +74,7 @@ var resourceTypesToAPI = map[string]string{
 	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
 	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
 	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
-	Services: 			 "",
+	Services:            "",
 }
 
 var apiToVersion = map[string]string{
