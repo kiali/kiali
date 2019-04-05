@@ -6,7 +6,7 @@ import * as Login from '../services/Login';
 import { AuthResult, AuthStrategy } from '../types/Auth';
 import { KialiDispatch } from '../types/Redux';
 import { MessageCenterActions } from './MessageCenterActions';
-import authenticationConfig from '../config/authenticationConfig';
+import authenticationConfig from '../config/AuthenticationConfig';
 
 const Dispatcher = new Login.LoginDispatcher();
 

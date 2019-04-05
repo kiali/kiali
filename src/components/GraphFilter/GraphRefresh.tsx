@@ -12,10 +12,10 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 
-import { config } from '../../config/config';
+import { config } from '../../config/Config';
 import { HistoryManager, URLParam } from '../../app/History';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 
 //
 // GraphRefresh actually handles the Duration dropdown, the RefreshInterval dropdown and the Refresh button.

@@ -6,7 +6,7 @@ import { Button, Icon, ControlLabel, FormControl } from 'patternfly-react';
 import Boundaries from './Boundaries';
 import DropdownMenu from './DropdownMenu';
 import { style } from 'typestyle';
-import { hollowPinIcon, solidPinIcon } from '../../../config/icons';
+import { hollowPinIcon, solidPinIcon } from '../../../config/Icons';
 
 export const noop = Function.prototype;
 

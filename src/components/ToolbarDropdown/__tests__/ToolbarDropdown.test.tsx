@@ -3,7 +3,7 @@ import { mount, shallow } from 'enzyme';
 
 import ToolbarDropdown from '../ToolbarDropdown';
 import { config } from '../../../config';
-import { serverConfig } from '../../../config/serverConfig';
+import { serverConfig } from '../../../config/ServerConfig';
 
 const optionsChanged = jest.fn();
 

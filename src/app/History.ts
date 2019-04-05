@@ -1,6 +1,6 @@
 import { createBrowserHistory } from 'history';
 import createMemoryHistory from 'history/createMemoryHistory';
-import { toValidDuration } from '../config/serverConfig';
+import { toValidDuration } from '../config/ServerConfig';
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
 const baseName = webRoot && webRoot !== '/' ? webRoot + '/console' : '/console';

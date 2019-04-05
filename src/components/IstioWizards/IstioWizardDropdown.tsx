@@ -10,7 +10,7 @@ import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
 import * as MessageCenter from '../../utils/MessageCenter';
 import * as API from '../../services/Api';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import { TLSStatus } from '../../types/TLSStatus';
 
 type Props = {

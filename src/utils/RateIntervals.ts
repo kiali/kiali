@@ -1,4 +1,4 @@
-import { serverConfig } from '../config/serverConfig';
+import { serverConfig } from '../config/ServerConfig';
 
 export const tuples: [number, string][] = Object.keys(serverConfig.durations).map(key => {
   const tuple: [number, string] = [+key, serverConfig.durations[key]];

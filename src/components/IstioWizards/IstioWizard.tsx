@@ -8,7 +8,7 @@ import {
   HTTPRoute,
   VirtualService
 } from '../../types/IstioObjects';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import MatchingRouting from './MatchingRouting';

@@ -19,7 +19,7 @@ import {
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { serverConfig } from '../../config/serverConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import { CyEdge } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { icons } from '../../config';
 import { ResponseTable } from '../../components/SummaryPanel/ResponseTable';

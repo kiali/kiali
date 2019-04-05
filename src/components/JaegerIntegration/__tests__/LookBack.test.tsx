@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { LookBack } from '../LookBack';
 import { Form, FormGroup } from 'patternfly-react';
 import ToolbarDropdown from '../../../components/ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../../config/serverConfig';
+import { serverConfig } from '../../../config/ServerConfig';
 
 const lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
 

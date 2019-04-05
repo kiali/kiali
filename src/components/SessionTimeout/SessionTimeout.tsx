@@ -3,7 +3,7 @@ import { Modal, Button, Icon, Row, Col } from 'patternfly-react';
 import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
 import * as API from '../../services/Api';
-import authenticationConfig from '../../config/authenticationConfig';
+import authenticationConfig from '../../config/AuthenticationConfig';
 
 type SessionTimeoutProps = {
   onLogout: () => void;
