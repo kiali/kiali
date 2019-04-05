@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: JVM
   title: JVM Pool Metrics
+  discoverOn: "jvm_buffer_total_capacity_bytes"
   items:
   - chart:
       name: "Pool buffer memory used"

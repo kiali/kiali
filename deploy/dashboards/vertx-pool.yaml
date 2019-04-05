@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Vert.x
   title: Vert.x Pools Metrics
+  discoverOn: "vertx_pool_ratio"
   items:
   - chart:
       name: "Usage duration"

@@ -14,10 +14,13 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {
-	return AppService{k8s: k8s}
+	prom := new(prometheustest.PromClientMock)
+	prom.MockEmptyMetricsDiscovery()
+	return AppService{k8s: k8s, prom: prom}
 }
 
 func TestGetAppListFromDeployments(t *testing.T) {

@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Tomcat
   title: Tomcat Metrics
+  discoverOn: "tomcat_sessions_created_total"
   items:
   - chart:
       name: "Sessions created"

@@ -5,6 +5,7 @@ metadata:
 spec:
   runtime: Thorntail
   title: Thorntail Metrics
+  discoverOn: "vendor:loaded_modules"
   items:
   - include: "microprofile-1.1"
   - chart:
