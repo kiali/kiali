@@ -180,14 +180,14 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .then(responses => {
         const metricsOut = responses[0].data.metrics;
         const metricsIn = responses[1].data.metrics;
-        const rcOut = metricsOut['request_count'];
-        const ecOut = metricsOut['request_error_count'];
-        const tcpSentOut = metricsOut['tcp_sent'];
-        const tcpReceivedOut = metricsOut['tcp_received'];
-        const rcIn = metricsIn['request_count'];
-        const ecIn = metricsIn['request_error_count'];
-        const tcpSentIn = metricsIn['tcp_sent'];
-        const tcpReceivedIn = metricsIn['tcp_received'];
+        const rcOut = metricsOut.request_count;
+        const ecOut = metricsOut.request_error_count;
+        const tcpSentOut = metricsOut.tcp_sent;
+        const tcpReceivedOut = metricsOut.tcp_received;
+        const rcIn = metricsIn.request_count;
+        const ecIn = metricsIn.request_error_count;
+        const tcpSentIn = metricsIn.tcp_sent;
+        const tcpReceivedIn = metricsIn.tcp_received;
         this.setState({
           loading: false,
           requestCountIn: graphUtils.toC3Columns(rcIn.matrix, 'RPS'),

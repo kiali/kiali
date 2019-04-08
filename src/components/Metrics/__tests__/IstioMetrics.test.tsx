@@ -8,7 +8,7 @@ import * as API from '../../../services/Api';
 import { MetricsObjectTypes, MonitoringDashboard, Chart } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
 
-window['SVGPathElement'] = a => a;
+(window as any).SVGPathElement = a => a;
 let mounted: ReactWrapper<any, any> | null;
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {

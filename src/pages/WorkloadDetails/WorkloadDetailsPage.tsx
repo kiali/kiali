@@ -65,29 +65,29 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
 
     const validations: Validations = {};
     if (workload.pods.length > 0) {
-      validations['pod'] = {};
+      validations.pod = {};
       workload.pods.forEach(pod => {
-        validations['pod'][pod.name] = {
+        validations.pod[pod.name] = {
           name: pod.name,
           objectType: 'pod',
           valid: true,
           checks: []
         };
         if (!pod.istioContainers || pod.istioContainers.length === 0) {
-          validations['pod'][pod.name].checks.push(noIstiosidecar);
+          validations.pod[pod.name].checks.push(noIstiosidecar);
         }
         if (!pod.labels) {
-          validations['pod'][pod.name].checks.push(noAppLabel);
-          validations['pod'][pod.name].checks.push(noVersionLabel);
+          validations.pod[pod.name].checks.push(noAppLabel);
+          validations.pod[pod.name].checks.push(noVersionLabel);
         } else {
           if (!pod.appLabel) {
-            validations['pod'][pod.name].checks.push(noAppLabel);
+            validations.pod[pod.name].checks.push(noAppLabel);
           }
           if (!pod.versionLabel) {
-            validations['pod'][pod.name].checks.push(noVersionLabel);
+            validations.pod[pod.name].checks.push(noVersionLabel);
           }
         }
-        validations['pod'][pod.name].valid = validations['pod'][pod.name].checks.length === 0;
+        validations.pod[pod.name].valid = validations.pod[pod.name].checks.length === 0;
       });
     }
     return validations;

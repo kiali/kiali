@@ -229,7 +229,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
     const comparator = (metric: Metric) => {
       if (this.isSpecialServiceDest(destMetricType)) {
-        return metric[sourceLabel] === sourceValue && metric['destination_workload'] === 'unknown';
+        return metric[sourceLabel] === sourceValue && metric.destination_workload === 'unknown';
       }
       return metric[sourceLabel] === sourceValue;
     };
@@ -316,43 +316,37 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         const histograms = response.data.histograms;
         let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived } = defaultSummaryPanelState;
         if (isGrpc || isHttp) {
-          reqRates = this.getNodeDataPoints(
-            metrics['request_count'],
-            'RPS',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
+          reqRates = this.getNodeDataPoints(metrics.request_count, 'RPS', sourceMetricType, destMetricType, sourceData);
           errRates = this.getNodeDataPoints(
-            metrics['request_error_count'],
+            metrics.request_error_count,
             'Error',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rtAvg = this.getNodeDataPoints(
-            histograms['request_duration']['avg'],
+            histograms.request_duration.avg,
             'Average',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rtMed = this.getNodeDataPoints(
-            histograms['request_duration']['0.5'],
+            histograms.request_duration['0.5'],
             'Median',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rt95 = this.getNodeDataPoints(
-            histograms['request_duration']['0.95'],
+            histograms.request_duration['0.95'],
             '95th',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rt99 = this.getNodeDataPoints(
-            histograms['request_duration']['0.99'],
+            histograms.request_duration['0.99'],
             '99th',
             sourceMetricType,
             destMetricType,
@@ -360,9 +354,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           );
         } else {
           // TCP
-          tcpSent = this.getNodeDataPoints(metrics['tcp_sent'], 'Sent', sourceMetricType, destMetricType, sourceData);
+          tcpSent = this.getNodeDataPoints(metrics.tcp_sent, 'Sent', sourceMetricType, destMetricType, sourceData);
           tcpReceived = this.getNodeDataPoints(
-            metrics['tcp_received'],
+            metrics.tcp_received,
             'Received',
             sourceMetricType,
             destMetricType,

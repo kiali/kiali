@@ -59,7 +59,7 @@ describe('CytoscapeGraph component test', () => {
     );
     const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);
     const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
-    expect(emptyGraphLayoutWrapper.prop('elements')['nodes']).toEqual(emptyGraphDecorated.nodes);
-    expect(emptyGraphLayoutWrapper.prop('elements')['edges']).toEqual(emptyGraphDecorated.edges);
+    expect(emptyGraphLayoutWrapper.prop('elements').nodes).toEqual(emptyGraphDecorated.nodes);
+    expect(emptyGraphLayoutWrapper.prop('elements').edges).toEqual(emptyGraphDecorated.edges);
   });
 });

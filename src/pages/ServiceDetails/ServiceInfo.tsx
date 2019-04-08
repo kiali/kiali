@@ -63,17 +63,17 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const validations = this.props.validations || {};
     validationChecks.hasVirtualServiceChecks = this.props.serviceDetails.virtualServices.items.some(
       virtualService =>
-        validations['virtualservice'] &&
-        validations['virtualservice'][virtualService.metadata.name] &&
-        validations['virtualservice'][virtualService.metadata.name].checks.length > 0
+        validations.virtualservice &&
+        validations.virtualservice[virtualService.metadata.name] &&
+        validations.virtualservice[virtualService.metadata.name].checks.length > 0
     );
 
     validationChecks.hasDestinationRuleChecks = this.props.serviceDetails.destinationRules.items.some(
       destinationRule =>
-        validations['destinationrule'] &&
+        validations.destinationrule &&
         destinationRule.metadata &&
-        validations['destinationrule'][destinationRule.metadata.name] &&
-        validations['destinationrule'][destinationRule.metadata.name].checks.length > 0
+        validations.destinationrule[destinationRule.metadata.name] &&
+        validations.destinationrule[destinationRule.metadata.name].checks.length > 0
     );
 
     return validationChecks;
@@ -198,7 +198,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoVirtualServices
                           virtualServices={virtualServices.items}
-                          validations={validations!['virtualservice']}
+                          validations={validations!.virtualservice}
                         />
                       )}
                     </TabPaneWithErrorBoundary>
@@ -209,7 +209,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                       {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
                         <ServiceInfoDestinationRules
                           destinationRules={destinationRules.items}
-                          validations={validations!['destinationrule']}
+                          validations={validations!.destinationrule}
                         />
                       )}
                     </TabPaneWithErrorBoundary>

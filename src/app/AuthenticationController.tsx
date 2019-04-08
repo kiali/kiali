@@ -119,7 +119,7 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
   );
 
   // Get the jaeger URL
-  const hasJaeger = serverStatus.externalServices.filter(item => item['name'] === 'Jaeger');
+  const hasJaeger = serverStatus.externalServices.filter(item => item.name === 'Jaeger');
   if (hasJaeger.length === 1 && hasJaeger[0].url) {
     dispatch(JaegerActions.setUrl(hasJaeger[0].url));
     // If same protocol enable integration

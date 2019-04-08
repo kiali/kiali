@@ -219,30 +219,28 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
   showRequestCountMetrics(outbound: Metrics, inbound: Metrics, data: NodeData, nodeMetricType: NodeMetricType) {
     let comparator = (metric: Metric, protocol?: Protocol) => {
-      return protocol ? metric['request_protocol'] === protocol : true;
+      return protocol ? metric.request_protocol === protocol : true;
     };
     if (this.isServiceDestCornerCase(nodeMetricType)) {
       comparator = (metric: Metric, protocol?: Protocol) => {
-        return (
-          (protocol ? metric['request_protocol'] === protocol : true) && metric['destination_workload'] === 'unknown'
-        );
+        return (protocol ? metric.request_protocol === protocol : true) && metric.destination_workload === 'unknown';
       };
     } else if (data.isRoot) {
       comparator = (metric: Metric, protocol?: Protocol) => {
         return (
-          (protocol ? metric['request_protocol'] === protocol : true) &&
-          this.isActiveNamespace(metric['destination_service_namespace'])
+          (protocol ? metric.request_protocol === protocol : true) &&
+          this.isActiveNamespace(metric.destination_service_namespace)
         );
       };
     }
-    const rcOut = outbound.metrics['request_count'];
-    const ecOut = outbound.metrics['request_error_count'];
-    const tcpSentOut = outbound.metrics['tcp_sent'];
-    const tcpReceivedOut = outbound.metrics['tcp_received'];
-    const rcIn = inbound.metrics['request_count'];
-    const ecIn = inbound.metrics['request_error_count'];
-    const tcpSentIn = inbound.metrics['tcp_sent'];
-    const tcpReceivedIn = inbound.metrics['tcp_received'];
+    const rcOut = outbound.metrics.request_count;
+    const ecOut = outbound.metrics.request_error_count;
+    const tcpSentOut = outbound.metrics.tcp_sent;
+    const tcpReceivedOut = outbound.metrics.tcp_received;
+    const rcIn = inbound.metrics.request_count;
+    const ecIn = inbound.metrics.request_error_count;
+    const tcpSentIn = inbound.metrics.tcp_sent;
+    const tcpReceivedIn = inbound.metrics.tcp_received;
     this.setState({
       loading: false,
       grpcRequestCountOut: getDatapoints(rcOut, 'RPS', comparator, Protocol.GRPC),

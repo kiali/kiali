@@ -157,10 +157,10 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     this.metricsPromise.promise
       .then(response => {
-        const reqRates = getDatapoints(response.data.metrics['request_count'], 'RPS');
-        const errRates = getDatapoints(response.data.metrics['request_error_count'], 'Error');
-        const tcpSent = getDatapoints(response.data.metrics['tcp_sent'], 'Sent');
-        const tcpReceived = getDatapoints(response.data.metrics['tcp_received'], 'Received');
+        const reqRates = getDatapoints(response.data.metrics.request_count, 'RPS');
+        const errRates = getDatapoints(response.data.metrics.request_error_count, 'Error');
+        const tcpSent = getDatapoints(response.data.metrics.tcp_sent, 'Sent');
+        const tcpReceived = getDatapoints(response.data.metrics.tcp_received, 'Received');
 
         this.setState({
           loading: false,

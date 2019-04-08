@@ -43,8 +43,8 @@ export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, S
         .then(responses => {
           const serviceListItems: string[] = [];
           responses.forEach(response => {
-            const ns = response['data']['namespace']['name'];
-            response['data']['services'].forEach((service: ServiceOverview) => {
+            const ns = response.data.namespace.name;
+            response.data.services.forEach((service: ServiceOverview) => {
               serviceListItems.push(`${service.name}.${ns}`);
             });
           });

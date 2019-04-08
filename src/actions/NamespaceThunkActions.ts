@@ -17,7 +17,7 @@ const NamespaceThunkActions = {
     return (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
       dispatch(NamespaceActions.requestStarted());
       return Api.getNamespaces()
-        .then(response => response['data'])
+        .then(response => response.data)
         .then(data => {
           dispatch(NamespaceActions.receiveList([...data], new Date()));
         })

@@ -90,7 +90,7 @@ class WorkloadListComponent extends ListComponent.Component<
       this.promises
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse['data'];
+          const namespaces: Namespace[] = namespacesResponse.data;
           this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters, resetPagination);
         })
         .catch(namespacesError => {

@@ -79,11 +79,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     } else {
       window.onbeforeunload = null;
     }
-    // This will reset the flag to prevent ask multiple times the confirmnation to leave with unsaved changed
+    // This will reset the flag to prevent ask multiple times the confirmation to leave with unsaved changed
     this.promptTo = '';
     // Hack to force redisplay of annotations after update
     // See https://github.com/securingsincity/react-ace/issues/300
     if (this.aceEditorRef.current) {
+      // tslint:disable-next-line
       this.aceEditorRef.current!['editor'].onChangeAnnotation();
     }
 

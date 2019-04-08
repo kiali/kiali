@@ -1,14 +1,22 @@
 import * as React from 'react';
 import { Responses } from '../../types/Graph';
+import _ from 'lodash';
 
 type ResponseTableProps = {
   responses: Responses;
   title: string;
 };
 
+interface Row {
+  code: string;
+  flags: string;
+  key: string;
+  val: string;
+}
+
 // The Envoy flags can be found here:
 // https://github.com/envoyproxy/envoy/blob/master/source/common/stream_info/utility.cc
-const FLAGS = Object.freeze({
+const Flags: object = {
   DC: { code: '500', help: 'Downstream Connection Termination' },
   DI: { help: 'Delayed via fault injection' },
   FI: { help: 'Aborted via fault injection' },
@@ -26,7 +34,7 @@ const FLAGS = Object.freeze({
   UR: { code: '503', help: 'Upstream remote reset' },
   URX: { code: '503', help: 'Upstream retry limit exceeded' },
   UT: { code: '504', help: 'Upstream request timeout' }
-});
+};
 
 export class ResponseTable extends React.PureComponent<ResponseTableProps> {
   constructor(props: ResponseTableProps) {
@@ -47,10 +55,10 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
           </thead>
           <tbody>
             {this.getRows(this.props.responses).map(row => (
-              <tr key={row['key']}>
-                <td>{row['code']}</td>
-                <td title={this.getTitle(row['flags'])}>{row['flags']}</td>
-                <td>{row['val']}</td>
+              <tr key={row.key}>
+                <td>{row.code}</td>
+                <td title={this.getTitle(row.flags)}>{row.flags}</td>
+                <td>{row.val}</td>
               </tr>
             ))}
           </tbody>
@@ -59,10 +67,10 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
     );
   }
 
-  private getRows = (responses: Responses): Object[] => {
-    const rows: Object[] = [];
-    Object.keys(responses).map(code => {
-      Object.keys(responses[code]).map(f => {
+  private getRows = (responses: Responses): Row[] => {
+    const rows: Row[] = [];
+    _.keys(responses).map(code => {
+      _.keys(responses[code]).map(f => {
         rows.push({ key: `${code} ${f}`, code: code, flags: f, val: responses[code][f] });
       });
     });
@@ -74,7 +82,7 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
       .split(',')
       .map(flagToken => {
         flagToken = flagToken.trim();
-        const flag = FLAGS[flagToken];
+        const flag = Flags[flagToken];
         return flagToken === '-' ? '' : `[${flagToken}] ${flag ? flag.help : 'Unknown Flag'}`;
       })
       .join('\n');

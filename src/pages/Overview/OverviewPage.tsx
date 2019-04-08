@@ -80,7 +80,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
         const nameFilters = FilterSelected.getSelected().filter(f => f.category === Filters.nameFilter.title);
-        const allNamespaces: NamespaceInfo[] = namespacesResponse['data']
+        const allNamespaces: NamespaceInfo[] = namespacesResponse.data
           .filter(ns => {
             return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
           })
@@ -210,7 +210,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         return API.getNamespaceMetrics(nsInfo.name, optionsIn).then(rs => {
           nsInfo.metrics = undefined;
           if (rs.data.metrics.hasOwnProperty('request_count')) {
-            nsInfo.metrics = rs.data.metrics['request_count'].matrix;
+            nsInfo.metrics = rs.data.metrics.request_count.matrix;
           }
           return nsInfo;
         });

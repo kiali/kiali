@@ -109,7 +109,7 @@ class IstioConfigListComponent extends ListComponent.Component<
       this.promises
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
-          const namespaces: Namespace[] = namespacesResponse['data'];
+          const namespaces: Namespace[] = namespacesResponse.data;
           this.fetchConfigs(
             namespaces.map(namespace => namespace.name),
             istioTypeFilters,

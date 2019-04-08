@@ -46,14 +46,14 @@ describe('LookBack', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['disabled']
+        .props().disabled
     ).toBeFalsy();
     wrapper.setProps({ disabled: true });
     expect(
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['disabled']
+        .props().disabled
     ).toBeTruthy();
   });
 
@@ -62,7 +62,7 @@ describe('LookBack', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['options']
+        .props().options
     ).toEqual(lookBackOptions);
   });
 
@@ -72,7 +72,7 @@ describe('LookBack', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['value']
+        .props().value
     ).toEqual('1h');
   });
 
@@ -81,7 +81,7 @@ describe('LookBack', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['handleSelect']
+        .props().handleSelect
     ).toBe(setLookback);
   });
 });

@@ -11,7 +11,7 @@ import { AppHealth, NamespaceAppHealth, HEALTHY, FAILURE, DEGRADED } from '../..
 import { store } from '../../../store/ConfigStore';
 import { MTLSStatuses } from '../../../types/TLSStatus';
 
-window['SVGPathElement'] = a => a;
+(window as any).SVGPathElement = a => a;
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {

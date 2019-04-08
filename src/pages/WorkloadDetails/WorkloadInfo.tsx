@@ -46,9 +46,9 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     validationChecks.hasPodsChecks = pods.some(
       pod =>
-        this.props.validations['pod'] &&
-        this.props.validations['pod'][pod.name] &&
-        this.props.validations['pod'][pod.name].checks.length > 0
+        this.props.validations.pod &&
+        this.props.validations.pod[pod.name] &&
+        this.props.validations.pod[pod.name].checks.length > 0
     );
 
     return validationChecks;
@@ -116,7 +116,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                   </Nav>
                   <TabContent>
                     <TabPane eventKey={'pods'}>
-                      {pods.length > 0 && <WorkloadPods pods={pods} validations={this.props.validations!['pod']} />}
+                      {pods.length > 0 && <WorkloadPods pods={pods} validations={this.props.validations!.pod} />}
                     </TabPane>
                     <TabPane eventKey={'services'}>
                       {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}

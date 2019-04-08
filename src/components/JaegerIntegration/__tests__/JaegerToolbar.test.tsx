@@ -33,11 +33,11 @@ describe('LookBack', () => {
   describe('Form', () => {
     it('FormControl should be disabled', () => {
       wrapper.find(FormControl).forEach(f => {
-        expect(f.props()['disabled']).toBeFalsy();
+        expect(f.props().disabled).toBeFalsy();
       });
       wrapper.setProps({ disabled: true });
       wrapper.find(FormControl).forEach(f => {
-        expect(f.props()['disabled']).toBeTruthy();
+        expect(f.props().disabled).toBeTruthy();
       });
     });
   });

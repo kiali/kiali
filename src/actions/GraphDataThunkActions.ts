@@ -37,17 +37,17 @@ const GraphDataThunkActions = {
         return Promise.resolve();
       }
       dispatch(GraphDataActions.getGraphDataStart());
-      const restParams = {
+      const restParams: any = {
         duration: duration + 's',
         graphType: graphType,
         injectServiceNodes: injectServiceNodes
       };
       if (namespaces.find(namespace => namespace.name === serverConfig.istioNamespace)) {
-        restParams['includeIstio'] = true;
+        restParams.includeIstio = true;
       }
 
       if (graphType === GraphType.APP || graphType === GraphType.VERSIONED_APP) {
-        restParams['groupBy'] = GroupByType.APP;
+        restParams.groupBy = GroupByType.APP;
       }
 
       // Some appenders are expensive so only specify an appender if needed.
@@ -74,13 +74,13 @@ const GraphDataThunkActions = {
         default:
           break;
       }
-      restParams['appenders'] = appenders;
+      restParams.appenders = appenders;
       console.debug('Fetching graph with appenders: ' + appenders);
 
       if (node) {
         return setCurrentRequest(API.getNodeGraphElements(node, restParams)).then(
           response => {
-            const responseData: any = response['data'];
+            const responseData: any = response.data;
             const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
             const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
             const graphDuration = responseData && responseData.duration ? responseData.duration : 0;
@@ -102,10 +102,10 @@ const GraphDataThunkActions = {
         );
       }
 
-      restParams['namespaces'] = namespaces.map(namespace => namespace.name).join(',');
+      restParams.namespaces = namespaces.map(namespace => namespace.name).join(',');
       return setCurrentRequest(API.getGraphElements(restParams)).then(
         response => {
-          const responseData: any = response['data'];
+          const responseData: any = response.data;
           const graphData = responseData && responseData.elements ? responseData.elements : EMPTY_GRAPH_DATA;
           const timestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
           const graphDuration = responseData && responseData.duration ? responseData.duration : 0;

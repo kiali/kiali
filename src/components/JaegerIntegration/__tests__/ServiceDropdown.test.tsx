@@ -20,7 +20,7 @@ describe('NamespaceDropdown', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['value']
+        .props().value
     ).toBe('');
   });
 
@@ -31,7 +31,7 @@ describe('NamespaceDropdown', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['label']
+        .props().label
     ).toBe(service);
   });
 
@@ -40,7 +40,7 @@ describe('NamespaceDropdown', () => {
       wrapper
         .find(ToolbarDropdown)
         .first()
-        .props()['handleSelect']
+        .props().handleSelect
     ).toBe(setService);
   });
 });

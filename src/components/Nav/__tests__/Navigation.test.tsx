@@ -60,7 +60,7 @@ const _tester = (path: string, expectedMenuPath: string) => {
   );
 
   const navWrapper = wrapper.find(VerticalNav.Item).findWhere(el => el.key() === path);
-  expect(navWrapper.props()['active']).toBeTruthy();
+  expect(navWrapper.props().active).toBeTruthy();
 };
 
 describe('Navigation test', () => {

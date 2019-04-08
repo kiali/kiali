@@ -29,9 +29,9 @@ describe('#LoginPage render correctly', () => {
   it('handleChange should change state', () => {
     const instance = wrapper.instance() as LoginPage;
     instance.handleChange({ target: { name: 'username', value: username } });
-    expect(instance.state['username']).toBe(username);
+    expect(instance.state.username).toBe(username);
     instance.handleChange({ target: { name: 'password', value: password } });
-    expect(instance.state['password']).toBe(password);
+    expect(instance.state.password).toBe(password);
   });
 
   it('handleKeyPress should call handleSubmit if enterkey', () => {

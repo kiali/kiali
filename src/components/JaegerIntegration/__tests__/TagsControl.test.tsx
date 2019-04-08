@@ -26,7 +26,7 @@ describe('TagsControls', () => {
         wrapper
           .find(FormControl)
           .first()
-          .props()['disabled']
+          .props().disabled
       ).toBeFalsy();
     });
 
@@ -37,7 +37,7 @@ describe('TagsControls', () => {
         wrapper
           .find(FormControl)
           .first()
-          .props()['disabled']
+          .props().disabled
       ).toBeTruthy();
     });
 
@@ -47,7 +47,7 @@ describe('TagsControls', () => {
         wrapper
           .find(FormControl)
           .first()
-          .props()['defaultValue']
+          .props().defaultValue
       ).toBe('');
     });
 
@@ -58,7 +58,7 @@ describe('TagsControls', () => {
         wrapper
           .find(FormControl)
           .first()
-          .props()['defaultValue']
+          .props().defaultValue
       ).toBe('{error: true}');
     });
 

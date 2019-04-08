@@ -25,10 +25,10 @@ describe('RightToolbar', () => {
     it('RightToolbar have Search button', () => {
       let buttonProps = wrapper.find({ title: 'Search' }).props();
       expect(buttonProps).toBeDefined();
-      expect(buttonProps['onClick']).toBeDefined();
+      expect(buttonProps.onClick).toBeDefined();
       wrapper.setProps({ disabled: true });
       buttonProps = wrapper.find({ title: 'Search' }).props();
-      expect(buttonProps['disabled']).toBeTruthy();
+      expect(buttonProps.disabled).toBeTruthy();
     });
   });
 });

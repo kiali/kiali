@@ -93,7 +93,7 @@ export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 //     flags0: %traffic,
 //     flags1: %traffic
 //   }}
-export type Responses = Object;
+export type Responses = object;
 
 export type ProtocolTrafficNoData = {
   protocol: '';
