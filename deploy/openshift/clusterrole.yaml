@@ -20,6 +20,11 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["route.openshift.io"]
+  resources:
+  - routes
+  verbs:
+  - get
 - apiGroups: ["extensions", "apps"]
   resources:
   - deployments
@@ -168,6 +173,11 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["route.openshift.io"]
+  resources:
+  - routes
+  verbs:
+  - get
 - apiGroups: ["extensions", "apps"]
   resources:
   - deployments
