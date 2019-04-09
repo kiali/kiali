@@ -26,6 +26,7 @@ import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
 import { ServerConfig } from '../types/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
+import { Pod, PodLogs } from '../types/IstioObjects';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -398,6 +399,21 @@ export const getWorkload = (namespace: string, name: string) => {
   return newRequest<Workload>(HTTP_VERBS.GET, urls.workload(namespace, name), {}, {});
 };
 
+export const getPod = (namespace: string, name: string) => {
+  return newRequest<Pod>(HTTP_VERBS.GET, urls.pod(namespace, name), {}, {});
+};
+
+export const getPodLogs = (namespace: string, name: string, container?: string, sinceTime?: number) => {
+  const params: any = {};
+  if (container) {
+    params.container = container;
+  }
+  if (sinceTime) {
+    params.sinceTime = sinceTime;
+  }
+  return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
+};
+
 export const getErrorMsg = (msg: string, error: AxiosError) => {
   let errorMessage = msg;
   if (error && error.response) {
@@ -406,7 +422,7 @@ export const getErrorMsg = (msg: string, error: AxiosError) => {
     } else if (error.response.statusText) {
       errorMessage = `${msg}, Error: [ ${error.response.statusText} ]`;
       if (error.response.status === 401) {
-        errorMessage += ' Has your session expired? Try logging again.';
+        errorMessage += ' Has your session expired? Try logging in again.';
       }
     }
   }

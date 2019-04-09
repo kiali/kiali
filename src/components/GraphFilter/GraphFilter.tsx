@@ -183,8 +183,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
   graphType: graphTypeSelector(state),
-  node: state.graph.node,
-  showFindHelp: state.graph.filterState.showFindHelp
+  node: state.graph.node
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
@@ -192,8 +191,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
     setGraphType: bindActionCreators(GraphFilterActions.setGraphType, dispatch),
-    setNode: bindActionCreators(GraphActions.setNode, dispatch),
-    toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch)
+    setNode: bindActionCreators(GraphActions.setNode, dispatch)
   };
 };
 

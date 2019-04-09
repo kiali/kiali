@@ -20,6 +20,7 @@ interface PodsGroup {
 }
 
 type WorkloadPodsProps = {
+  namespace: string;
   pods: Pod[];
   validations: { [key: string]: ObjectValidation };
 };
@@ -277,20 +278,22 @@ class WorkloadPods extends React.Component<WorkloadPodsProps, WorkloadPodsState>
 
   render() {
     return (
-      <Row className="card-pf-body">
-        <Col xs={12}>
-          <Table.PfProvider
-            columns={this.columns().columns}
-            striped={true}
-            bordered={true}
-            hover={true}
-            dataTable={true}
-          >
-            <Table.Header headerRows={resolve.headerRows(this.columns())} />
-            <Table.Body rows={this.rows()} rowKey="id" />
-          </Table.PfProvider>
-        </Col>
-      </Row>
+      <>
+        <Row className="card-pf-body">
+          <Col xs={12}>
+            <Table.PfProvider
+              columns={this.columns().columns}
+              striped={true}
+              bordered={true}
+              hover={true}
+              dataTable={true}
+            >
+              <Table.Header headerRows={resolve.headerRows(this.columns())} />
+              <Table.Body rows={this.rows()} rowKey="id" />
+            </Table.PfProvider>
+          </Col>
+        </Row>
+      </>
     );
   }
 }

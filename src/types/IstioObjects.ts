@@ -80,11 +80,18 @@ export interface Pod {
   labels?: { [key: string]: string };
   createdAt: string;
   createdBy: Reference[];
+  containers?: ContainerInfo[];
   istioContainers?: ContainerInfo[];
   istioInitContainers?: ContainerInfo[];
   status: string;
   appLabel: boolean;
   versionLabel: boolean;
+}
+
+export type Logs = string;
+
+export interface PodLogs {
+  logs?: Logs;
 }
 
 export interface Service {

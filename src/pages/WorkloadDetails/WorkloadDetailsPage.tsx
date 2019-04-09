@@ -3,7 +3,7 @@ import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
 import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
 import { ObjectCheck, Validations } from '../../types/IstioObjects';
-import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
@@ -16,6 +16,7 @@ import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../type
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
+import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -168,6 +169,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     const app = this.state.workload.labels[serverConfig.istioLabels.appLabelName];
     const version = this.state.workload.labels[serverConfig.istioLabels.versionLabelName];
     const isLabeled = app && version;
+    const hasPods = this.state.workload.pods && this.state.workload.pods.length > 0;
 
     return (
       <>
@@ -184,6 +186,9 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
               </NavItem>
               <NavItem eventKey="traffic">
                 <div>Traffic</div>
+              </NavItem>
+              <NavItem eventKey="logs">
+                <div>Logs</div>
               </NavItem>
               <NavItem eventKey="in_metrics">
                 <div>Inbound Metrics</div>
@@ -225,6 +230,17 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   onDurationChanged={this.handleTrafficDurationChange}
                   onRefresh={this.doRefresh}
                 />
+              </TabPane>
+              {
+                // I don't know why but the TabContainer's parent height does not extend to the available space. Nothing
+                // I tried extended it to 100%, so below I set to 50vh to provide space to the logs textbox.
+              }
+              <TabPane eventKey="logs" mountOnEnter={true} unmountOnExit={true} style={{ height: '50vh' }}>
+                {hasPods ? (
+                  <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
+                ) : (
+                  <div>There are no logs to display because the workload has no pods.</div>
+                )}
               </TabPane>
               <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadMetricsContainer
