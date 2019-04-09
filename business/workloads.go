@@ -10,7 +10,7 @@ import (
 	"k8s.io/api/apps/v1beta2"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -102,6 +102,24 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	pods := models.Pods{}
 	pods.Parse(ps)
 	return pods, nil
+}
+
+func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPod")
+	defer promtimer.ObserveNow(&err)
+
+	p, err := in.k8s.GetPod(namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	pod := models.Pod{}
+	pod.Parse(p)
+	return &pod, nil
+}
+
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*kubernetes.PodLogs, error) {
+	return in.k8s.GetPodLogs(namespace, name, opts)
 }
 
 func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, labelSelector string) (models.Workloads, error) {

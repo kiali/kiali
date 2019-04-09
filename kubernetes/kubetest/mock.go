@@ -182,6 +182,16 @@ func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]v1.Pod, erro
 	return args.Get(0).([]v1.Pod), args.Error(1)
 }
 
+func (o *K8SClientMock) GetPod(namespace, name string) (*v1.Pod, error) {
+	args := o.Called(namespace, name)
+	return args.Get(0).(*v1.Pod), args.Error(1)
+}
+
+func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*kubernetes.PodLogs, error) {
+	args := o.Called(namespace, name, opts)
+	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
+}
+
 func (o *K8SClientMock) GetProject(project string) (*osv1.Project, error) {
 	args := o.Called(project)
 	return args.Get(0).(*osv1.Project), args.Error(1)

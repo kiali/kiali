@@ -1,16 +1,19 @@
 package kubernetes
 
 import (
+	"bytes"
+
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
@@ -236,6 +239,45 @@ func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error
 	} else {
 		return []v1.Pod{}, err
 	}
+}
+
+// GetPod returns the pod definitions for a given pod name.
+// It returns an error on any problem.
+func (in *IstioClient) GetPod(namespace, name string) (*v1.Pod, error) {
+	if in.k8sCache != nil {
+		if pods, err := in.k8sCache.GetPods(namespace); err != nil {
+			return nil, err
+		} else {
+			for _, pod := range pods {
+				if name == pod.Name {
+					return &pod, nil
+				}
+			}
+			return nil, NewNotFound(name, "core/v1", "Pod")
+		}
+	}
+
+	if pod, err := in.k8s.CoreV1().Pods(namespace).Get(name, emptyGetOptions); err != nil {
+		return nil, err
+	} else {
+		return pod, nil
+	}
+}
+
+// GetPod returns the pod definitions for a given pod name.
+// It returns an error on any problem.
+func (in *IstioClient) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*PodLogs, error) {
+	req := in.k8s.CoreV1().RESTClient().Get().Namespace(namespace).Name(name).Resource("pods").SubResource("log").VersionedParams(opts, scheme.ParameterCodec)
+
+	readCloser, err := req.Stream()
+	if err != nil {
+		return nil, err
+	}
+
+	defer readCloser.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(readCloser)
+	return &PodLogs{Logs: buf.String()}, nil
 }
 
 func (in *IstioClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {

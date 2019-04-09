@@ -945,6 +945,48 @@ func NewRoutes() (r *Routes) {
 			handlers.GetJaegerInfo,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/pods/{pod} pods podDetails
+		// ---
+		// Endpoint to get pod details
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      200: workloadDetails
+		//
+		{
+			"PodDetails",
+			"GET",
+			"/api/namespaces/{namespace}/pods/{pod}",
+			handlers.PodDetails,
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/pods/{pod}/logs pods podLogs
+		// ---
+		// Endpoint to get pod logs
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      200: workloadDetails
+		//
+		{
+			"PodLogs",
+			"GET",
+			"/api/namespaces/{namespace}/pods/{pod}/logs",
+			handlers.PodLogs,
+			true,
+		},
 	}
 
 	return

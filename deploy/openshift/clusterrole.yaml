@@ -13,6 +13,7 @@ rules:
   - namespaces
   - nodes
   - pods
+  - pods/log
   - services
   - replicationcontrollers
   - routes
@@ -162,6 +163,7 @@ rules:
   - namespaces
   - nodes
   - pods
+  - pods/log
   - services
   - replicationcontrollers
   - routes

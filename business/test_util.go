@@ -6,10 +6,11 @@ import (
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/apps/v1beta2"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -574,6 +575,44 @@ func FakePodsSyncedWithDeployments() []v1.Pod {
 				},
 			},
 		},
+	}
+}
+
+func FakePodSyncedWithDeployments() *v1.Pod {
+	conf := config.NewConfig()
+	config.Set(conf)
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	return &v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "details-v1-3618568057-dnkjp",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
+			OwnerReferences: []meta_v1.OwnerReference{meta_v1.OwnerReference{
+				Controller: &controller,
+				Kind:       "ReplicaSet",
+				Name:       "details-v1-3618568057",
+			}},
+			Annotations: kubetest.FakeIstioAnnotations(),
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				v1.Container{Name: "details", Image: "whatever"},
+				v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			},
+			InitContainers: []v1.Container{
+				v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				v1.Container{Name: "enable-core-dump", Image: "alpine"},
+			},
+		},
+	}
+}
+
+func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
+	return &kubernetes.PodLogs{
+		Logs: "Fake Log Entry 1\nFake Log Entry 2",
 	}
 }
 
