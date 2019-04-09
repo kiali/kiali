@@ -148,8 +148,10 @@ func waitForSecret() {
 		}
 	}()
 	secret := <-foundSecretChan
-	config.Get().Server.Credentials.Username = secret.Username
-	config.Get().Server.Credentials.Passphrase = secret.Passphrase
+	cfg := config.Get()
+	cfg.Server.Credentials.Username = secret.Username
+	cfg.Server.Credentials.Passphrase = secret.Passphrase
+	config.Set(cfg)
 }
 
 func waitForTermination() {
