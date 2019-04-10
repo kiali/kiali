@@ -14,6 +14,8 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+
+	"github.com/kiali/kiali/log"
 )
 
 type OpenshiftOAuthService struct {
@@ -60,6 +62,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 	response, err := request("GET", ".well-known/oauth-authorization-server", nil)
 
 	if err != nil {
+		log.Error(err)
 		message := fmt.Errorf("Could not send request to the Openshift OAuth API: %v", err)
 		return nil, message
 	}
@@ -67,6 +70,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 	err = json.Unmarshal(response, &server)
 
 	if err != nil {
+		log.Error(err)
 		message := fmt.Errorf("Could not parse data from the Openshift API: %v", err)
 		return nil, message
 	}
@@ -74,6 +78,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 	redirectURL, err := getKialiRoutePath()
 
 	if err != nil {
+		log.Error(err)
 		message := fmt.Errorf("Could not get Kiali route for OAuth redirect: %v", err)
 		return nil, message
 	}
@@ -112,15 +117,17 @@ func (in *OpenshiftOAuthService) ValidateToken(token string) error {
 func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	var user *OAuthUser
 
-	response, err := request("GET", "oapi/v1/users/~", &token)
+	response, err := request("GET", "apis/user.openshift.io/v1/users/~", &token)
 
 	if err != nil {
+		log.Error(err)
 		return nil, fmt.Errorf("Could not get user info from Openshift: %v", err)
 	}
 
 	err = json.Unmarshal(response, &user)
 
 	if err != nil {
+		log.Error(err)
 		return nil, fmt.Errorf("Could not parse user info from Openshift: %v", err)
 	}
 
@@ -136,16 +143,19 @@ func getKialiRoutePath() (*string, error) {
 	conf, err := kubernetes.ConfigClient()
 
 	if err != nil {
+		log.Error(err)
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
 	}
 
-	response, err := request("GET", fmt.Sprintf("oapi/v1/namespaces/%s/routes/kiali", namespace), &conf.BearerToken)
+	response, err := request("GET", fmt.Sprintf("apis/route.openshift.io/v1/namespaces/%v/routes/kiali", namespace), &conf.BearerToken)
 	if err != nil {
+		log.Error(err)
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
 	}
 
 	err = json.Unmarshal(response, &route)
 	if err != nil {
+		log.Error(err)
 		return nil, fmt.Errorf("cannot parse Kiali route: %v", err)
 	}
 
