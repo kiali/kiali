@@ -187,8 +187,12 @@ func validateConfig() error {
 	}
 
 	validPathRegEx := regexp.MustCompile(`^\/[a-zA-Z\d_/\$]*$`)
-	if path := config.Get().Server.WebRoot; !validPathRegEx.MatchString(path) {
-		return fmt.Errorf("web root must begin with a / and contain only alphanumerics: %v", path)
+	webRoot := config.Get().Server.WebRoot
+	if !validPathRegEx.MatchString(webRoot) {
+		return fmt.Errorf("web root must begin with a / and contain only alphanumerics: %v", webRoot)
+	}
+	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
+		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
 	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
