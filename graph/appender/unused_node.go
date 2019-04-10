@@ -64,7 +64,7 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 		id, nodeType := graph.Id("", "", namespace, w.Name, app, version, a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = unusedTrafficMap[id]; !found {
-				log.Debugf("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
+				log.Tracef("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
 				node := graph.NewNodeExplicit(id, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = map[string]interface{}{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}

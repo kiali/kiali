@@ -57,7 +57,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
 		quantile = DefaultQuantile
 	}
-	log.Debugf("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
+	log.Tracef("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
 	duration := a.Namespaces[namespace].Duration
 
 	// create map to quickly look up responseTime

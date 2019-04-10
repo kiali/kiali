@@ -51,7 +51,7 @@ func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalI
 }
 
 func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
-	log.Debugf("Resolving security policy for namespace = %v", namespace)
+	log.Tracef("Resolving security policy for namespace = %v", namespace)
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
