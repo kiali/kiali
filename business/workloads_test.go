@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"k8s.io/api/core/v1"
-
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -402,7 +400,7 @@ func TestGetPod(t *testing.T) {
 	k8s.On("GetPod", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakePodSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
 
-	svc := setupWorkloadService(k8s, nil)
+	svc := setupWorkloadService(k8s)
 
 	pod, _ := svc.GetPod("Namespace", "details-v1-3618568057-dnkjp")
 
@@ -419,7 +417,7 @@ func TestGetPodLogs(t *testing.T) {
 	k8s.On("GetPodLogs", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything).Return(FakePodLogsSyncedWithDeployments(), nil)
 	k8s.On("IsOpenShift").Return(false)
 
-	svc := setupWorkloadService(k8s, nil)
+	svc := setupWorkloadService(k8s)
 
 	podLogs, _ := svc.GetPodLogs("Namespace", "details-v1-3618568057-dnkjp", &v1.PodLogOptions{Container: "details"})
 
