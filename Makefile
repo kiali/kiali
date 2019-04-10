@@ -215,11 +215,15 @@ minikube-docker: .prepare-minikube .prepare-docker-image-files
 	docker build -t ${DOCKER_TAG} _output/docker
 	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-build
 
-## docker-push: Pushing current docker image to ${DOCKER_TAG}. Runs `docker push` internally
-docker-push:
+docker-push-operator:
+	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-push
+
+docker-push-kiali:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
-	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-push
+
+## docker-push: Pushing current docker images to ${DOCKER_TAG}. Runs `docker push` internally
+docker-push: docker-push-kiali
 
 ## operator-create: Delgates to the operator-create target of the operator Makefile
 operator-create: docker-build-operator
