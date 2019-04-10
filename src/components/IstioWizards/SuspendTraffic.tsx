@@ -6,6 +6,7 @@ import { style } from 'typestyle';
 type Props = {
   serviceName: string;
   workloads: WorkloadOverview[];
+  initSuspendedRoutes: SuspendedRoute[];
   onChange: (valid: boolean, suspendedRoutes: SuspendedRoute[]) => void;
 };
 
@@ -71,15 +72,21 @@ class SuspendTraffic extends React.Component<Props, State> {
   }
 
   resetState = () => {
+    const defaultSuspendedRoutes = this.props.workloads.map(workload => {
+      return {
+        workload: workload.name,
+        suspended: false,
+        httpStatus: SERVICE_UNAVAILABLE
+      };
+    });
     this.setState(
-      {
-        suspendedRoutes: this.props.workloads.map(workload => {
-          return {
-            workload: workload.name,
-            suspended: false,
-            httpStatus: SERVICE_UNAVAILABLE
-          };
-        })
+      prevState => {
+        return {
+          suspendedRoutes:
+            prevState.suspendedRoutes.length === 0 && this.props.initSuspendedRoutes.length > 0
+              ? this.props.initSuspendedRoutes
+              : defaultSuspendedRoutes
+        };
       },
       () => this.props.onChange(true, this.state.suspendedRoutes)
     );

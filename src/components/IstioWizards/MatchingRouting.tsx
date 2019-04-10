@@ -7,6 +7,7 @@ import { EXACT, HEADERS } from './MatchingRouting/MatchBuilder';
 type Props = {
   serviceName: string;
   workloads: WorkloadOverview[];
+  initRules: Rule[];
   onChange: (valid: boolean, rules: Rule[]) => void;
 };
 
@@ -36,7 +37,7 @@ class MatchingRouting extends React.Component<Props, State> {
       matches: [],
       headerName: '',
       matchValue: '',
-      rules: [],
+      rules: this.props.initRules,
       validationMsg: ''
     };
   }

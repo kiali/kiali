@@ -8,6 +8,7 @@ import { PfColors } from '../Pf/PfColors';
 type Props = {
   serviceName: string;
   workloads: WorkloadOverview[];
+  initWeights: WorkloadWeight[];
   onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;
 };
 
@@ -76,24 +77,33 @@ class WeightedRouting extends React.Component<Props, State> {
     this.resetState();
   }
 
-  resetState = () => {
-    if (this.props.workloads.length === 0) {
-      return;
-    }
-    const wkTraffic = this.props.workloads.length < 100 ? Math.round(100 / this.props.workloads.length) : 0;
-    const remainTraffic = this.props.workloads.length < 100 ? 100 % this.props.workloads.length : 0;
-    const workloads: WorkloadWeight[] = this.props.workloads.map(workload => ({
+  getDefaultWeights = (workloads: WorkloadOverview[]): WorkloadWeight[] => {
+    const wkTraffic = workloads.length < 100 ? Math.round(100 / workloads.length) : 0;
+    const remainTraffic = workloads.length < 100 ? 100 % workloads.length : 0;
+    const wkWeights: WorkloadWeight[] = workloads.map(workload => ({
       name: workload.name,
       weight: wkTraffic,
       locked: false,
       maxWeight: 100
     }));
     if (remainTraffic > 0) {
-      workloads[workloads.length - 1].weight = workloads[workloads.length - 1].weight + remainTraffic;
+      wkWeights[wkWeights.length - 1].weight = wkWeights[wkWeights.length - 1].weight + remainTraffic;
+    }
+    return wkWeights;
+  };
+
+  resetState = () => {
+    if (this.props.workloads.length === 0) {
+      return;
     }
     this.setState(
-      {
-        workloads: workloads
+      prevState => {
+        return {
+          workloads:
+            prevState.workloads.length === 0 && this.props.initWeights.length > 0
+              ? this.props.initWeights
+              : this.getDefaultWeights(this.props.workloads)
+        };
       },
       () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, true)
     );
