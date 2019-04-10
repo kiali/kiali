@@ -16,10 +16,6 @@ COMMIT_HASH ?= $(shell git rev-parse HEAD)
 CONSOLE_VERSION ?= latest
 CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 
-# Authentication Strategy
-# Possible Values: anonymous, login, openshift
-AUTH_STRATEGY ?= login
-
 # Version label is used in the OpenShift/K8S resources to identify
 # their specific instances. Kiali resources will have labels of
 # "app: kiali" and "version: ${VERSION_LABEL}"
@@ -33,36 +29,6 @@ GO_VERSION_KIALI = 1.8.3
 DOCKER_NAME ?= kiali/kiali
 DOCKER_VERSION ?= dev
 DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
-
-# If the IMAGE_PULL_POLICY is not defined and its the short version (eg vX.Y and not vX.Y.Z)
-# then we need to use the image pull policy of 'Always' otherwise the latest update to that
-# branch may not be brought in for users
-ifndef IMAGE_PULL_POLICY
-	SHORT_VERSION=$(shell if [[ ${DOCKER_VERSION} =~ ^v[0-9]+\.[0-9]+$$ ]]; then echo true; fi)
-	ifeq (${SHORT_VERSION}, true)
-		IMAGE_PULL_POLICY = Always
-	endif
-
-	ifeq ("${DOCKER_VERSION}", "latest")
-		IMAGE_PULL_POLICY = Always
-	endif
-
-	ifeq ("${DOCKER_VERSION}", "dev")
-		IMAGE_PULL_POLICY = IfNotPresent
-	endif
-
-endif
-# If the IMAGE_PULL_POLICY is defined, then we need to update the token so it can be added
-# Otherwise we just use the k8s defaults.
-ifdef IMAGE_PULL_POLICY
-	IMAGE_PULL_POLICY_TOKEN="imagePullPolicy: ${IMAGE_PULL_POLICY}"
-endif
-
-# Indicates the log level the app will use when started.
-# <4=INFO
-#  4=DEBUG
-#  5=TRACE
-VERBOSE_MODE ?= 3
 
 # Declares the namespace where the objects are to be deployed.
 # For OpenShift, this is the name of the project.
@@ -159,7 +125,7 @@ test-e2e:
 ## run: Run kiali binary
 run:
 	@echo Running...
-	@${GOPATH}/bin/kiali -v ${VERBOSE_MODE} -config config.yaml
+	@${GOPATH}/bin/kiali -v 4 -config config.yaml
 
 #
 # dep targets - dependency management
@@ -204,7 +170,7 @@ swagger-travis: swagger-validate
 	@cmp -s swagger.json swagger_copy.json; \
 	RETVAL=$$?; \
 	if [ $$RETVAL -ne 0 ]; then \
-            echo "SWAGGER FILE IS NOT CORRECT"; exit 1; \
+	  echo "SWAGGER FILE IS NOT CORRECT"; exit 1; \
 	fi
 
 #
@@ -218,10 +184,18 @@ swagger-travis: swagger-validate
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/kiali _output/docker
 
-## docker-build: Build docker image into local docker daemon. Runs `docker build` internally
-docker-build: .prepare-docker-image-files
-	@echo Building docker image into local docker daemon...
+## docker-build-kiali: Build Kiali docker image into local docker daemon. Runs `docker build` internally
+docker-build-kiali: .prepare-docker-image-files
+	@echo Building docker image for Kiali into local docker daemon...
 	docker build -t ${DOCKER_TAG} _output/docker
+
+## docker-build-operator: Build Kiali operator docker image into local docker daemon. Runs `docker build` internally
+docker-build-operator:
+	@echo Building docker image for Kiali operator into local docker daemon...
+	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-build
+
+## docker-build: Build Kiali and Kiali operator docker images into local docker daemon.
+docker-build: docker-build-kiali docker-build-operator
 
 .prepare-minikube:
 	@minikube addons list | grep -q "ingress: enabled" ; \
@@ -239,81 +213,49 @@ minikube-docker: .prepare-minikube .prepare-docker-image-files
 	@echo Building docker image into minikube docker daemon...
 	@eval $$(minikube docker-env) ; \
 	docker build -t ${DOCKER_TAG} _output/docker
+	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-build
 
 ## docker-push: Pushing current docker image to ${DOCKER_TAG}. Runs `docker push` internally
 docker-push:
 	@echo Pushing current docker image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
+	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-push
 
-.openshift-validate:
-	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc))
-	@${OC} get project ${NAMESPACE} > /dev/null
+## operator-create: Delgates to the operator-create target of the operator Makefile
+operator-create: docker-build-operator
+	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-create
 
-.openshift-find-addons: .openshift-validate
-	@$(eval JAEGER_URL ?= $(shell echo http://$$(${OC} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}'):80))
-	@echo "Found Jaeger at: ${JAEGER_URL}"
-	@$(eval GRAFANA_URL ?= $(shell echo http://$$(${OC} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}'):3000))
-	@echo "Found Grafana at: ${GRAFANA_URL}"
+.ensure-oc-exists:
+	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl))
 
-## openshift-deploy: Deploy docker image in Openshift project.
-openshift-deploy: openshift-undeploy .openshift-find-addons
-	IMAGE_NAME="${DOCKER_NAME}" \
-IMAGE_VERSION="${DOCKER_VERSION}" \
-IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
-VERSION_LABEL="${VERSION_LABEL}" \
-NAMESPACE="${NAMESPACE}" \
-JAEGER_URL="${JAEGER_URL}" \
-GRAFANA_URL="${GRAFANA_URL}"  \
-VERBOSE_MODE="${VERBOSE_MODE}" \
-KIALI_USERNAME="admin" \
-KIALI_PASSPHRASE="admin" \
-AUTH_STRATEGY="${AUTH_STRATEGY}" \
-deploy/openshift/deploy-kiali-to-openshift.sh
+.ensure-operator-is-running: .ensure-oc-exists
+	@${OC} get pods -l app=kiali-operator -n kiali-operator 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null ;\
+	RETVAL=$$?; \
+	if [ $$RETVAL -ne 0 ]; then \
+	  echo "The Operator is not running. To start it, run: make operator-create"; exit 1; \
+	fi
 
-## openshift-undeploy: Undeploy from Openshift project.
-openshift-undeploy: .openshift-validate
-	@echo Undeploying from OpenShift project ${NAMESPACE}
-	${OC} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules,ingresses,customresourcedefinitions,oauthclients.oauth.openshift.io --selector=app=kiali -n ${NAMESPACE}
+## openshift-deploy: Delgates to the kiali-create target of the operator Makefile
+openshift-deploy: openshift-undeploy
+	IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator kiali-create
+
+## openshift-undeploy: Delgates to the kiali-delete target of the operator Makefile
+openshift-undeploy: .ensure-operator-is-running
+	IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator kiali-delete
+
+## k8s-deploy: Delgates to the kiali-create target of the operator Makefile
+k8s-deploy: openshift-deploy
+
+## k8s-undeploy: Delgates to the kiali-delete target of the operator Makefile
+k8s-undeploy: openshift-undeploy
 
 ## openshift-reload-image: Refreshing image in Openshift project.
-openshift-reload-image: .openshift-validate
+openshift-reload-image: .ensure-oc-exists
 	@echo Refreshing image in OpenShift project ${NAMESPACE}
 	${OC} delete pod --selector=app=kiali -n ${NAMESPACE}
 
-.k8s-validate:
-	@$(eval KUBECTL ?= $(shell which kubectl))
-	@${KUBECTL} get namespace ${NAMESPACE} > /dev/null
-
-.k8s-find-addons: .k8s-validate
-	@$(eval JAEGER_URL ?= $(shell echo http://$$(${KUBECTL} get svc tracing -n istio-system -o jsonpath='{.spec.clusterIP}'):80))
-	@echo "Found Jaeger at: ${JAEGER_URL}"
-	@$(eval GRAFANA_URL ?= $(shell echo http://$$(${KUBECTL} get svc grafana -n istio-system -o jsonpath='{.spec.clusterIP}'):3000))
-	@echo "Found Grafana at: ${GRAFANA_URL}"
-
-## k8s-deploy: Deploy docker image in Kubernetes namespace.
-k8s-deploy: k8s-undeploy .k8s-find-addons
-	IMAGE_NAME="${DOCKER_NAME}" \
-IMAGE_VERSION="${DOCKER_VERSION}" \
-IMAGE_PULL_POLICY_TOKEN=${IMAGE_PULL_POLICY_TOKEN} \
-VERSION_LABEL="${VERSION_LABEL}" \
-NAMESPACE="${NAMESPACE}" \
-JAEGER_URL="${JAEGER_URL}" \
-GRAFANA_URL="${GRAFANA_URL}"  \
-VERBOSE_MODE="${VERBOSE_MODE}" \
-KIALI_USERNAME="admin" \
-KIALI_PASSPHRASE="admin" \
-AUTH_STRATEGY="${AUTH_STRATEGY}" \
-deploy/kubernetes/deploy-kiali-to-kubernetes.sh
-
-## k8s-undeploy: Undeploy docker image in Kubernetes namespace.
-k8s-undeploy: .k8s-validate
-	@echo Undeploying from Kubernetes namespace ${NAMESPACE}
-	${KUBECTL} delete all,secrets,sa,configmaps,deployments,ingresses,clusterroles,clusterrolebindings,virtualservices,destinationrules,customresourcedefinitions --selector=app=kiali -n ${NAMESPACE}
-
 ## k8s-reload-image: Refreshing image in Kubernetes namespace.
-k8s-reload-image: .k8s-validate
-	@echo Refreshing image in Kubernetes namespace ${NAMESPACE}
-	${KUBECTL} delete pod --selector=app=kiali -n ${NAMESPACE}
+k8s-reload-image: openshift-reload-image
 
 ## gometalinter-install: Installs gometalinter
 gometalinter-install:

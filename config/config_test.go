@@ -27,7 +27,7 @@ func TestEnvVar(t *testing.T) {
 	if conf.Server.Port != 12345 {
 		t.Error("server port is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
 		t.Error("prometheus dashboard url is wrong")
 	}
 	if !conf.Server.CORSAllowAll {
@@ -43,10 +43,10 @@ func TestPrometheusDashboardUrlFallback(t *testing.T) {
 
 	conf := NewConfig()
 
-	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+	if conf.ExternalServices.Prometheus.URL != "test-address" {
 		t.Error("prometheus service url is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
 		t.Error("prometheus dashboard url is not taking main prometheus url")
 	}
 
@@ -54,10 +54,10 @@ func TestPrometheusDashboardUrlFallback(t *testing.T) {
 
 	conf = NewConfig()
 
-	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+	if conf.ExternalServices.Prometheus.URL != "test-address" {
 		t.Error("prometheus service url is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "second-test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "second-test-address" {
 		t.Error("prometheus dashboard url is not taking main prometheus url")
 	}
 }

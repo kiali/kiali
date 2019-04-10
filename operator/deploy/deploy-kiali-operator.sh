@@ -3,8 +3,11 @@
 ##############################################################################
 # deploy-kiali-operator.sh
 #
-# This script can be used to deploy the Kiali operator and optionally Kiali
-# into an OpenShift or Kubernetes cluster.
+# This script can be used to deploy the Kiali operator into an OpenShift
+# or Kubernetes cluster.
+#
+# This script can also optionally install Kiali after it installs the operator.
+# See OPERATOR_INSTALL_KIALI below.
 #
 # To use this script, either "oc" or "kubectl" must be in your PATH.
 # This script utilizes "envsubst" - make sure that command line tool
@@ -23,7 +26,12 @@
 # OPERATOR_IMAGE_NAME
 #    Determines which image of the operator to download and install.
 #    To control what image name of Kiali to install, see IMAGE_NAME.
-#    Default: "kiali/kiali-operator"
+#    Default: "quay.io/kiali/kiali-operator"
+#
+# OPERATOR_IMAGE_PULL_POLICY
+#    The Kubernetes pull policy for the Kiali Operator deployment.
+#    This is overridden to be "Always" if OPERATOR_IMAGE_VERSION is set to "latest".
+#    Default: "IfNotPresent"
 #
 # OPERATOR_IMAGE_VERSION
 #    Determines which version of the operator to install.
@@ -92,14 +100,16 @@
 #
 # IMAGE_PULL_POLICY
 #    The Kubernetes pull policy for the Kiali deployment.
+#    The operator will overide this to be "Always" if IMAGE_VERSION is set to "latest".
 #    Default: "IfNotPresent"
 #
 # IMAGE_VERSION
 #    Determines which version of Kiali to install.
 #    This can be set to "latest" in which case the latest image is installed (which may or
-#    may not be a released version of Kiali).
+#    may not be a released version of Kiali). This is normally for developer use only.
 #    This can be set to "lastrelease" in which case the last Kiali release is installed.
 #    Otherwise, you can set to this any valid Kiali version (such as "v0.12").
+#    NOTE: If this is set to "latest" then the IMAGE_PULL_POLICY will be "Always".
 #    Default: "lastrelease"
 #
 # ISTIO_NAMESPACE
@@ -112,11 +122,6 @@
 #    in order for the integration to work properly.
 #    If empty, the operator will attempt to auto-detect it.
 #    Default: ""
-#
-# METRICS_PORT
-#    The port that the server will bind to in order to receive metric requests.
-#    This is the port Prometheus will need to scrape when collecting metrics from Kiali.
-#    Default: "9090"
 #
 # NAMESPACE
 #    The namespace into which Kiali is to be installed.
@@ -132,32 +137,6 @@
 #    this SECRET_NAME setting is still needed - it is the name of the secret that
 #    already (or will) contain the credentials (i.e. the secret you must create manually).
 #    Default: kiali
-#
-# SERVER_PORT
-#    The port that the server will bind to in order to receive API and console requests.
-#    Default: 20001
-#
-# VERBOSE_MODE
-#    Determines which priority levels of log messages Kiali will output.
-#    Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
-#    Default: "3"
-#
-# VERSION_LABEL
-#    Kiali resources will be assigned a "version" label when they are deployed.
-#    This env var determines what value those "version" labels will be.
-#    If the IMAGE_VERSION env var is "latest", this VERSION_LABEL will be fixed to "master".
-#    If the IMAGE_VERSION env var is "lastrelease", this VERSION_LABEL will be fixed to
-#    the last Kiali release version string.
-#    If the IMAGE_VERSION env var is anything else, you can assign VERSION_LABEL to anything
-#    and it will be used for the value of Kiali's "version" labels, otherwise it will default
-#    to the value of IMAGE_VERSION env var value.
-#    Default: See above for how the default value is determined
-#
-# WEB_ROOT
-#    Defines the context root path for the Kiali console, API endpoints and readiness probes.
-#    When providing a context root path that is not "/", do not add a trailing
-#    slash. For example, use "/kiali" not "/kiali/".
-#    When empty, will default to "/" on OpenShift and "/kiali" on Kubernetes.
 #
 ##############################################################################
 
@@ -203,7 +182,8 @@ else
 fi
 
 # Export all possible variables for envsubst to be able to process
-export OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-kiali/kiali-operator}"
+export OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-quay.io/kiali/kiali-operator}"
+export OPERATOR_IMAGE_PULL_POLICY="${OPERATOR_IMAGE_PULL_POLICY:-IfNotPresent}"
 export OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION:-lastrelease}"
 export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
 export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
@@ -242,11 +222,13 @@ else
   if [ "${OPERATOR_IMAGE_VERSION}" == "latest" ]; then
     echo "Will use the latest Kiali operator image from master branch"
     OPERATOR_VERSION_LABEL="master"
+    OPERATOR_IMAGE_PULL_POLICY="Always"
   fi
 fi
 
 echo "=== OPERATOR SETTINGS ==="
 echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
+echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
 echo OPERATOR_IMAGE_VERSION=$OPERATOR_IMAGE_VERSION
 echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
 echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
@@ -257,7 +239,6 @@ echo "=== OPERATOR SETTINGS ==="
 # Figure out where that is using a method that is valid for bash and sh.
 
 _OP_YAML_DIR="$(cd "$(dirname "$0")" && pwd -P)"
-_KIALI_YAML_DIR="$(echo $_OP_YAML_DIR)/kiali"
 
 apply_yaml() {
   local yaml_path="${1}"
@@ -294,12 +275,40 @@ do
   fi
 done
 
-echo "The Kiali operator is installed!"
+# Wait for the operator to start up so we can confirm it is OK.
+for run in {1..10}
+do
+  ${CLIENT_EXE} get pods -l app=kiali-operator -n ${OPERATOR_NAMESPACE} 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null && _OPERATOR_STARTED=true && break
+  echo "Waiting for the operator to start..."
+  sleep 6
+done
+
+if [ -z ${_OPERATOR_STARTED} ]; then
+  echo "ERROR: The Kiali Operator is not running yet. Please make sure it was deployed successfully."
+  exit 1
+else
+  echo "The Kiali operator is installed!"
+fi
 
 # Now deploy Kiali if we were asked to do so.
 
 if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
-  echo "Skipping the Kiali installation."
+  _BRANCH="${OPERATOR_VERSION_LABEL}"
+  if [ "${_BRANCH}" == "dev" ]; then
+    _BRANCH="master"
+  fi
+  echo "=========================================="
+  echo "Skipping the automatic Kiali installation."
+  echo "To install Kiali, create a Kiali custom resource in the namespace [${OPERATOR_NAMESPACE}]."
+  echo "An example Kiali CR with all settings documented can be found here:"
+  echo "  https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "To install Kiali with all default settings, you can run:"
+  echo "  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "Do not forget to create a secret if you wish to use an auth strategy of 'login' (This is"
+  echo "the default setting when installing in Kubernetes but not OpenShift)."
+  echo "An example would be:"
+  echo "  ${CLIENT_EXE} create secret generic ${SECRET_NAME:-kiali} -n ${NAMESPACE:-istio-system} --from-literal 'username=admin' --from-literal 'passphrase=admin'"
+  echo "=========================================="
   echo "Done."
   exit 0
 else
@@ -351,13 +360,8 @@ echo IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY
 echo IMAGE_VERSION=$IMAGE_VERSION
 echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
-echo METRICS_PORT=$METRICS_PORT
 echo NAMESPACE=$NAMESPACE
 echo SECRET_NAME=$SECRET_NAME
-echo SERVER_PORT=$SERVER_PORT
-echo VERBOSE_MODE=$VERBOSE_MODE
-echo VERSION_LABEL=$VERSION_LABEL
-echo WEB_ROOT=$WEB_ROOT
 echo "=== KIALI SETTINGS ==="
 
 # Create the secret when required
@@ -381,9 +385,9 @@ if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
     echo "A secret named [${SECRET_NAME}] in namespace [${NAMESPACE}] was created."
   fi
 
-  ${CLIENT_EXE} label secret ${SECRET_NAME} app=kiali
+  ${CLIENT_EXE} label secret ${SECRET_NAME} -n ${NAMESPACE} app=kiali
   if [ "$?" != "0" ]; then
-    echo "WARNING: Failed to label the created secret [${SECRET_NAME}]."
+    echo "WARNING: Failed to label the created secret [${SECRET_NAME}] in namespace [${NAMESPACE}]."
   fi
 else
   if [ "${AUTH_STRATEGY}" == "login" ]; then
@@ -398,10 +402,11 @@ echo "Deploying Kiali CR to namespace [${OPERATOR_NAMESPACE}]"
 build_spec_value() {
   local var_name=${1}
   local var_value=${!2-_undefined_}
-  if [ "${var_value}" == "_undefined_" ]; then
-    echo
+  local var_show_empty=${3:-false}
+  if [ "${var_value}" == "_undefined_" -a "${var_show_empty}" == "false" ]; then
+    return
   else
-    if [ "${var_value}" == "" ]; then
+    if [ "${var_value}" == "" -o "${var_value}" == "_undefined_" ]; then
       var_value='""'
     fi
     echo "$var_name: $var_value"
@@ -409,25 +414,25 @@ build_spec_value() {
 }
 
 cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
-apiVersion: op.kiali.io/v1alpha1
+apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
 spec:
-  $(build_spec_value auth_strategy AUTH_STRATEGY)
-  $(build_spec_value grafana_url GRAFANA_URL)
-  $(build_spec_value image_name IMAGE_NAME)
-  $(build_spec_value image_pull_policy IMAGE_PULL_POLICY)
-  $(build_spec_value image_version IMAGE_VERSION)
   $(build_spec_value istio_namespace ISTIO_NAMESPACE)
-  $(build_spec_value jaeger_url JAEGER_URL)
-  $(build_spec_value metrics_port METRICS_PORT)
-  $(build_spec_value namespace NAMESPACE)
-  $(build_spec_value secret_name SECRET_NAME)
-  $(build_spec_value server_port SERVER_PORT)
-  $(build_spec_value verbose_mode VERBOSE_MODE)
-  $(build_spec_value version_label VERSION_LABEL)
-  $(build_spec_value web_root WEB_ROOT)
+  auth:
+    $(build_spec_value strategy AUTH_STRATEGY)
+  deployment:
+    $(build_spec_value image_name IMAGE_NAME)
+    $(build_spec_value image_pull_policy IMAGE_PULL_POLICY)
+    $(build_spec_value image_version IMAGE_VERSION)
+    $(build_spec_value namespace NAMESPACE)
+    $(build_spec_value secret_name SECRET_NAME)
+  external_services:
+    grafana:
+      $(build_spec_value url GRAFANA_URL true)
+    jaeger:
+      $(build_spec_value url JAEGER_URL true)
 EOF
 
 if [ "$?" != "0" ]; then

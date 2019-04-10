@@ -1,89 +1,252 @@
-apiVersion: op.kiali.io/v1alpha1
+apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
 spec:
-  ##########
-  # Determines what authentication strategy to use when users log into Kiali.
-  # Options are "login", "anonymous", "openshift".
-  # Choose "login" to use a username and password that will be stored in a secret.
-  # Choose "anonymous" to allow full access to Kiali without requiring any credentials.
-  # Choose "openshift" to use the OpenShift OAuth login which controls access based on
-  # the individual's  RBAC roles in OpenShift. Not valid for non-OpenShift environments.
-  # When empty, its value will default to "openshift" on OpenShift and "login" on Kubernetes.
-  #auth_strategy: ""
 
-  ##########
-  # The Grafana URL that Kiali will use when integrating with Grafana.
-  # This URL must be accessible to clients external to the cluster
-  # in order for the integration to work properly.
-  # This should always be defined, but if left blank an attempt will be made to auto-discover it.
-  #grafana_url: ""
+##########
+# Tag used to identify a particular instance/installation of the Kiali server.
+#    ---
+#  installation_tag: ""
 
-  ##########
-  # Determines which Kiali image to download and install.
-  #image_name: "kiali/kiali"
+##########
+# The namespace where Istio is installed.
+#    ---
+#  istio_namespace: "istio-system"
 
-  ##########
-  # The Kubernetes pull policy for the Kiali deployment.
-  #image_pull_policy: "IfNotPresent"
+##########
+#  ---
+#  api:
+#
+# An optional list of namespaces/projects excluded from the list of namespaces provided by
+# the API and UI. Regex is supported. This does not affect explicit namespace access.
+#    ---
+#    namespaces:
+#      exclude:
+#      - "istio-operator"
+#      - "kube.*"
+#      - "openshift.*"
+#      - "ibm.*"
 
-  ##########
-  # Determines which version of Kiali to install.
-  # Choose "lastrelease" to use the last Kiali release.
-  # Choose "latest" to use the latest image (which may or may not be a released version of Kiali).
-  # Otherwise, you can set this to any valid Kiali version (such as "v0.12").
-  #image_version: "lastrelease"
+##########
+#  ---
+#  auth:
+#
+# Determines what authentication strategy to use when users log into Kiali.
+# Options are "login", "anonymous", "openshift".
+# Choose "login" to use a username and password that will be stored in a secret.
+# Choose "anonymous" to allow full access to Kiali without requiring any credentials.
+# Choose "openshift" to use the OpenShift OAuth login which controls access based on
+# the individual's  RBAC roles in OpenShift. Not valid for non-OpenShift environments.
+# When empty, its value will default to "openshift" on OpenShift and "login" on Kubernetes.
+#    ---
+#    strategy: ""
 
-  ##########
-  # The namespace where Istio is installed.
-  #istio_namespace: "istio-system"
+##########
+#  ---
+#  deployment:
+#
+# The Kubernetes pull policy for the Kiali deployment.
+# This is overridden to be "Always" if image_version is set to "latest".
+#    ---
+#    image_pull_policy: "IfNotPresent"
+#
+# Determines which version of Kiali to install.
+# Choose "lastrelease" to use the last Kiali release.
+# Choose "latest" to use the latest image (which may or may not be a released version of Kiali).
+# Otherwise, you can set this to any valid Kiali version (such as "v0.12").
+# Note that if this is set to "latest" then the image_pull_policy will be "Always".
+#    ---
+#    image_version: "lastrelease"
+#
+# Determines which Kiali image to download and install.
+#    ---
+#    image_name: "kiali/kiali"
+#
+# The namespace into which Kiali is to be installed.
+#    ---
+#    namespace: "istio-system"
+#
+# The name of the secret where the Kiali credentials are found.
+# These credentials will be required when logging into Kiali.
+# Only used when auth_strategy is "login".
+#    ---
+#    secret_name: "kiali"
+#
+# Determines which priority levels of log messages Kiali will output.
+# Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
+#    ---
+#    verbose_mode: "3"
+#
+# Kiali resources will be assigned a "version" label when they are deployed.
+# This determines what value those "version" labels will have.
+# When empty, its default will be determined as follows:
+#   If image_version is "latest", version_label will be fixed to "master".
+#   If image_version is "lastrelease", version_label will be fixed to
+#   the last Kiali release version string.
+#   If the image_version is anything else, version_label will be that value, too.
+#    ---
+#    version_label: ""
+#
+# When true, Kiali will be in "view only" mode, allowing the user to view and retrieve
+# management and monitoring data for the service mesh, but not allow the user to
+# modify the service mesh.
+#    ---
+#    view_only_mode: false
 
-  ##########
-  # The Jaeger URL that Kiali will use when integrating with Jaeger.
-  # This URL must be accessible to clients external to the cluster
-  # in order for the integration to work properly.
-  # This should always be defined, but if left blank an attempt will be made to auto-discover it.
-  #jaeger_url: ""
+##########
+#  ---
+#  external_services:
+#
+# **Grafana-specific settings:
+# api_key: API key to access Grafana. API key only requires viewer permissions.
+# display_link: When true, a link to Grafana will be displayed for more dashboards.
+# password: Password to be used when making requests to Grafana. User only requires viewer permissions.
+# service: The Kubernetes service name for Grafana. Kiali uses this to connect within the cluster to Grafana.
+# service_dashboard_pattern: Search pattern for Grafana Service dashboard.
+# service_namespace: The Kubernetes namespace that holds the Grafana service.
+# url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
+#      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+# username: Username to be used when making requests to Grafana. User only requires viewer permissions.
+# var_namespace: The name of the Grafana variable that controls namespaces in dashboards.
+# var_service: The name of the Grafana variable that controls services in dashboards.
+# var_workload: The name of the Grafana variable that controls workloads in dashboards.
+# workload_dashboard_pattern: Search pattern for Grafana Workload dashboard.
+#    ---
+#    grafana:
+#      api_key: ""
+#      display_link: "true"
+#      password: ""
+#      service: "grafana"
+#      service_dashboard_pattern: "Istio%20Service%20Dashboard"
+#      service_namespace: "istio-system"
+#      url: ""
+#      username: ""
+#      var_namespace: "var-namespace"
+#      var_service: "var-service"
+#      var_workload: "var-workload"
+#      workload_dashboard_pattern: "Istio%20Workload%20Dashboard"
+#
+# **Istio-specific settings:
+# istio_identity_domain: The annotation used by Istio to identify domains.
+# istio_sidecar_annotation: The pod annotation used by Istio to identify the sidecar.
+# url_service_version: The Istio service used to determine the Istio version.
+#    ---
+#    istio:
+#      istio_identity_domain: "svc.cluster.local"
+#      istio_sidecar_annotation: "sidecar.istio.io/status"
+#      url_service_version: "http://istio-pilot:8080/version"
+#
+# **Jaeger-specific settings:
+# service: The Kubernetes service name for Jaeger. Kiali uses this to connect within the cluster to Jaeger.
+# url: The URL that Kiali uses when integrating with Jaeger. This URL must be accessible to clients external to
+#      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+#    ---
+#    jaeger:
+#      service: "jaeger-query"
+#      url: ""
+#
+# **Prometheus-specific settings:
+# custom_metrics_url: The URL used to query the Prometheus Server for building the runtime metrics dashboards.
+#                     This URL must be accessible from the Kiali pod.
+# url: The URL used to query the Prometheus Server. This URL must be accessible from the Kiali pod.
+#    ---
+#    prometheus:
+#      custom_metrics_url: "http://prometheus.istio-system:9090"
+#      url: "http://prometheus.istio-system:9090"
 
-  ##########
-  # The port that the server will bind to in order to receive metric requests.
-  # This is the port Prometheus will need to scrape when collecting metrics from Kiali.
-  #metrics_port: "9090"
+##########
+#  ---
+#  identity:
+#
+# Certificate file used to identify the file server. If set, you must go over https to access Kiali.
+# The operator will set these if it deploys Kiali behind https.
+#    ---
+#    cert_file: ""
+#
+# Private key file used to identify the server. If set, you must go over https to access Kiali.
+#    ---
+#    private_key_file: ""
 
-  ##########
-  # The namespace into which Kiali is to be installed.
-  #namespace: "istio-system"
+##########
+#  ---
+#  istio_labels:
+#
+# This section defines what labels Istio is using to indicate apps and versions.
+# Typical values are: ("app" and "version") or ("app.kubernetes.io/name" and "app.kubernetes.io/version").
+# Kiali needs to know what labels Istio is using to be in sync with what Istio considers applications.
+#    ---
+#    app_label_name: "app"
+#    version_label_name: "version"
 
-  ##########
-  # The name of the secret where the Kiali credentials are found.
-  # These credentials will be required when logging into Kiali.
-  # Only used when auth_strategy is "login".
-  #secret_name: "kiali"
+##########
+#  ---
+#  kubernetes_config:
+#
+# The Burst value of the Kubernetes client.
+#    ---
+#    burst: 200
+#
+# The QPS value of the Kubernetes client.
+#    ---
+#    qps: 175
+#
+# Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
+# Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
+#    ---
+#    cache_enabled: false
+#
+# The ratio interval (expressed in nanoseconds) used for the cache to perform a full refresh.
+# Only used when cache_enabled is true.
+#    ---
+#    cache_duration: 300000000
 
-  ##########
-  # The port that the server will bind to in order to receive API and console requests.
-  #server_port: "20001"
+##########
+#  ---
+#  login_token:
+#
+# The signing key used to generate tokens for user authentication.
+#    ---
+#    signing_key: "kiali"
+#
+# The token expiration in seconds.
+#    ---
+#    expiration_seconds: 86400
 
-  ##########
-  # Determines which priority levels of log messages Kiali will output.
-  # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
-  #verbose_mode: "3"
-
-  ##########
-  # Kiali resources will be assigned a "version" label when they are deployed.
-  # This determines what value those "version" labels will have.
-  # When empty, its default will be determined as follows:
-  #   If image_version is "latest", version_label will be fixed to "master".
-  #   If image_version is "lastrelease", version_label will be fixed to
-  #   the last Kiali release version string.
-  #   If the image_version is anything else, version_label will be that value, too.
-  #version_label: ""
-
-  ##########
-  # Defines the context root path for the Kiali console and API endpoints and readiness probes.
-  # When providing a context root path that is not "/", do not add a trailing
-  # slash. For example, use "/kiali" not "/kiali/".
-  # When empty, will default to "/" on OpenShift and "/kiali" on Kubernetes.
-  #web_root: ""
+##########
+#  ---
+#  server:
+#
+# Where the Kiali server is bound. The console and API server are accessible on this host.
+#    ---
+#    address: ""
+#
+# When true, allows additional audit logging on write operations.
+#    ---
+#    audit_log: true
+#
+# When true, allows the web console to send requests to other domains other than where the console came from.
+# Typically used for development environments only.
+#    ---
+#    cors_allow_all: false
+#
+# When true, the metrics endpoint will be available for Prometheus to scrape.
+#    ---
+#    metrics_enabled: true
+#
+# The port that the server will bind to in order to receive metric requests.
+# This is the port Prometheus will need to scrape when collecting metrics from Kiali.
+#    ---
+#    metrics_port: 9090
+#
+# The port that the server will bind to in order to receive console and API requests.
+#    ---
+#    port: 20001
+#
+# Defines the context root path for the Kiali console and API endpoints and readiness probes.
+# When providing a context root path that is not "/", do not add a trailing slash.
+# For example, use "/kiali" not "/kiali/".
+# When empty, will default to "/" on OpenShift and "/kiali" on Kubernetes.
+#    ---
+#    web_root: ""
 

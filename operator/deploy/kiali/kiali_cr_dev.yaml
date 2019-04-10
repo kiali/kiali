@@ -1,6 +1,11 @@
-apiVersion: op.kiali.io/v1alpha1
+apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
 spec:
-  image_version: latest
+  auth:
+    strategy: $AUTH_STRATEGY
+  deployment:
+    image_version: $IMAGE_VERSION
+    namespace: $NAMESPACE
+    verbose_mode: $VERBOSE_MODE
