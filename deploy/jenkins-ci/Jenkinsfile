@@ -49,8 +49,13 @@ properties([
       name: 'SKIP_UI_RELEASE',
       defaultValue: 'n',
       trim: true,
-      description: "Set to 'y' if you don't want to release the UI. The UI release can be omitted \n" +
-                   "only if RELEASE_TYPE=patch")
+      description: "Set to 'y' if you don't want to release the UI"),
+    string(
+         name: 'UI_VERSION',
+         defaultValue: '',
+         trim: true,
+         description: "If you are skipping UI release. Specify the UI version to package, or leave \n" +
+                      "unset to use the version present in the main Makefile (e.g. leave unset for patch releases)")
   ])
 ])
 
@@ -58,7 +63,7 @@ node('kiali-build') {
   def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
   def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
-  def buildUi = params.RELEASE_TYPE != "patch" || params.SKIP_UI_RELEASE != "y"
+  def buildUi = params.SKIP_UI_RELEASE != "y"
   def dockerTag = ""
 
   try {

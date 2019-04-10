@@ -82,22 +82,23 @@ endif
 # JENKINS_URL is an environment variable that is set when this
 # Makefile is run under a Jenkins Pipeline.
 ifdef JENKINS_URL
-ifeq ($(RELEASE_TYPE),patch)
-  # Only for patch releases, there is the chance that the UI won't be
-  # released, because only the back-end suffered changes.
-  # If UI is not being released, use the CONSOLE_VERSION present in
-  # the main Makefile
-ifeq ($(SKIP_UI_RELEASE),y)
-  CONSOLE_VERSION ?= $(shell sed -rn 's/^CONSOLE_VERSION \?= (.*)/\1/p' Makefile)
-else
-  CONSOLE_VERSION ?= local
-endif
 
-else # if patch release
+# There is the chance that the UI won't be
+# released, because only the back-end suffered changes.
+# If UI is not being released, use the CONSOLE_VERSION present in
+# the main Makefile (or use the received one)
+ifeq ($(SKIP_UI_RELEASE),y)
+ifneq ($(UI_VERSION),)
+  CONSOLE_VERSION = $(UI_VERSION)
+else
+  CONSOLE_VERSION ?= $(shell sed -rn 's/^CONSOLE_VERSION \?= (.*)/\1/p' Makefile)
+endif
+else
   # Let's set CONSOLE_VERSION to "local", since the UI will also be
   # built an released.
   CONSOLE_VERSION ?= local
-endif # if patch release
+endif # if skip_ui_release
+
 else # if Jenkins
   # If this Makefile is not being run in Jenkins, assume that
   # the back-end and the UI are being released separately.
