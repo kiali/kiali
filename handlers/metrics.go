@@ -128,12 +128,11 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 		log.Debugf("[extractMetricsQueryParams] Interval set to: %v", q.RateInterval)
 	}
 	// If needed, adjust query start time (bound to namespace creation time)
-	log.Debugf("[extractMetricsQueryParams] Requested query start time: %v", q.Start)
 	intervalDuration := q.End.Sub(intervalStartTime)
 	allowedStart := namespaceInfo.CreationTimestamp.Add(intervalDuration)
 	if q.Start.Before(allowedStart) {
+		log.Debugf("[extractMetricsQueryParams] Requested query start time [%v] set to allowed time [%v]", q.Start, allowedStart)
 		q.Start = allowedStart
-		log.Debugf("[extractMetricsQueryParams] Query start time set to: %v", q.Start)
 
 		if q.Start.After(q.End) {
 			// This means that the query range does not fall in the range
