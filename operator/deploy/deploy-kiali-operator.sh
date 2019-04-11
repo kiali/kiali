@@ -276,12 +276,14 @@ do
 done
 
 # Wait for the operator to start up so we can confirm it is OK.
-for run in {1..10}
+echo -n "Waiting for the operator to start."
+for run in {1..60}
 do
   ${CLIENT_EXE} get pods -l app=kiali-operator -n ${OPERATOR_NAMESPACE} 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null && _OPERATOR_STARTED=true && break
-  echo "Waiting for the operator to start..."
-  sleep 6
+  echo -n "."
+  sleep 5
 done
+echo
 
 if [ -z ${_OPERATOR_STARTED} ]; then
   echo "ERROR: The Kiali Operator is not running yet. Please make sure it was deployed successfully."
