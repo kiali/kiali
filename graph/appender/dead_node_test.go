@@ -6,8 +6,7 @@ import (
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
@@ -23,12 +22,12 @@ func setupWorkloads() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]v1beta1.Deployment{
-		v1beta1.Deployment{
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
+		apps_v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testPodsWithTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
@@ -36,11 +35,11 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		v1beta1.Deployment{
+		apps_v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testPodsNoTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
@@ -48,11 +47,11 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		v1beta1.Deployment{
+		apps_v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testNoPodsWithTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{"app": "testNoPodsWithTraffic", "version": "v1"},
@@ -60,11 +59,11 @@ func setupWorkloads() *business.Layer {
 				},
 			},
 		},
-		v1beta1.Deployment{
+		apps_v1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "testNoPodsNoTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{"app": "testNoPodsNoTraffic", "version": "v1"},
@@ -95,8 +94,8 @@ func setupWorkloads() *business.Layer {
 			},
 		}, nil)
 	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil)

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/config"
-	"k8s.io/api/apps/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	autoscalingV1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -613,7 +613,7 @@ type IstioObjectList interface {
 type ServiceList struct {
 	Services    *v1.ServiceList
 	Pods        *v1.PodList
-	Deployments *v1beta1.DeploymentList
+	Deployments *apps_v1.DeploymentList
 }
 
 // ServiceDetails is a wrapper to group full Service description, Endpoints and Pods.
@@ -621,7 +621,7 @@ type ServiceList struct {
 type ServiceDetails struct {
 	Service     *v1.Service                                `json:"service"`
 	Endpoints   *v1.Endpoints                              `json:"endpoints"`
-	Deployments *v1beta1.DeploymentList                    `json:"deployments"`
+	Deployments *apps_v1.DeploymentList                    `json:"deployments"`
 	Autoscalers *autoscalingV1.HorizontalPodAutoscalerList `json:"autoscalers"`
 	Pods        []v1.Pod                                   `json:"pods"`
 }

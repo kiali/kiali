@@ -5,11 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
@@ -105,7 +104,7 @@ func fakeRuntimeObjects() []runtime.Object {
 			}
 			objects = append(objects, rc)
 
-			dep := &v1beta1.Deployment{
+			dep := &apps_v1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: ns,
 					Name:      "dep" + strconv.Itoa(i),
@@ -113,7 +112,7 @@ func fakeRuntimeObjects() []runtime.Object {
 			}
 			objects = append(objects, dep)
 
-			rs := &v1beta2.ReplicaSet{
+			rs := &apps_v1.ReplicaSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: ns,
 					Name:      "rs" + strconv.Itoa(i),
@@ -121,7 +120,7 @@ func fakeRuntimeObjects() []runtime.Object {
 			}
 			objects = append(objects, rs)
 
-			ss := &v1beta2.StatefulSet{
+			ss := &apps_v1.StatefulSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: ns,
 					Name:      "ss" + strconv.Itoa(i),

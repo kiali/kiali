@@ -6,8 +6,7 @@ import (
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
@@ -56,11 +55,11 @@ func NewK8SClientMock() *K8SClientMock {
 
 // MockEmptyWorkloads setup the current mock to return empty workloads for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
-	o.On("GetDeployments", namespace).Return([]v1beta1.Deployment{}, nil)
-	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
+	o.On("GetDeployments", namespace).Return([]apps_v1.Deployment{}, nil)
+	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
 	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
 	o.On("GetDeploymentConfigs", namespace).Return([]osappsv1.DeploymentConfig{}, nil)
-	o.On("GetStatefulSets", namespace).Return([]v1beta2.StatefulSet{}, nil)
+	o.On("GetStatefulSets", namespace).Return([]apps_v1.StatefulSet{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
 	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
 }
@@ -68,10 +67,10 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interface{}) {
 	notfound := fmt.Errorf("not found")
-	o.On("GetDeployment", namespace, workload).Return(&v1beta1.Deployment{}, notfound)
-	o.On("GetStatefulSet", namespace, workload).Return(&v1beta2.StatefulSet{}, notfound)
+	o.On("GetDeployment", namespace, workload).Return(&apps_v1.Deployment{}, notfound)
+	o.On("GetStatefulSet", namespace, workload).Return(&apps_v1.StatefulSet{}, notfound)
 	o.On("GetDeploymentConfig", namespace, workload).Return(&osappsv1.DeploymentConfig{}, notfound)
-	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
+	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
 	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
 	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
@@ -102,14 +101,14 @@ func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, 
 	return args.Get(0).([]batch_v1beta1.CronJob), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error) {
+func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error) {
 	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(*v1beta1.Deployment), args.Error(1)
+	return args.Get(0).(*apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployments(namespace string) ([]v1beta1.Deployment, error) {
+func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta1.Deployment), args.Error(1)
+	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osappsv1.DeploymentConfig, error) {
@@ -227,9 +226,9 @@ func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]v1.Replic
 	return args.Get(0).([]v1.ReplicationController), args.Error(1)
 }
 
-func (o *K8SClientMock) GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error) {
+func (o *K8SClientMock) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta2.ReplicaSet), args.Error(1)
+	return args.Get(0).([]apps_v1.ReplicaSet), args.Error(1)
 }
 
 func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
@@ -257,14 +256,14 @@ func (o *K8SClientMock) GetServiceEntry(namespace string, serviceEntryName strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error) {
+func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
 	args := o.Called(namespace, statefulsetName)
-	return args.Get(0).(*v1beta2.StatefulSet), args.Error(1)
+	return args.Get(0).(*apps_v1.StatefulSet), args.Error(1)
 }
 
-func (o *K8SClientMock) GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error) {
+func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta2.StatefulSet), args.Error(1)
+	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
 }
 
 func (o *K8SClientMock) GetTemplate(namespace, templateType, templateName string) (kubernetes.IstioObject, error) {

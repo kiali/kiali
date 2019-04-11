@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/api/apps/v1beta2"
-
 	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -21,9 +19,10 @@ import (
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	osappsv1 "github.com/openshift/api/apps/v1"
 	osv1 "github.com/openshift/api/project/v1"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -58,7 +57,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeRSSyncedWithPods(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakePodsSyncedWithDeployments(), nil)
@@ -87,8 +86,8 @@ func TestWorkloadMetricsDefault(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "_workload=\"my_workload\"")
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
@@ -139,8 +138,8 @@ func TestWorkloadMetricsWithParams(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "rate(")
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {

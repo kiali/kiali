@@ -2,11 +2,10 @@ package models
 
 import (
 	osappsv1 "github.com/openshift/api/apps/v1"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -116,7 +115,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func (workload *Workload) ParseDeployment(d *v1beta1.Deployment) {
+func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	conf := config.Get()
 	workload.Name = d.Name
 	workload.Type = "Deployment"
@@ -137,7 +136,7 @@ func (workload *Workload) ParseDeployment(d *v1beta1.Deployment) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicaSet(r *v1beta2.ReplicaSet) {
+func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	conf := config.Get()
 	workload.Name = r.Name
 	workload.Type = "ReplicaSet"
@@ -192,7 +191,7 @@ func (workload *Workload) ParseDeploymentConfig(dc *osappsv1.DeploymentConfig) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseStatefulSet(s *v1beta2.StatefulSet) {
+func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	conf := config.Get()
 	workload.Name = s.Name
 	workload.Type = "StatefulSet"

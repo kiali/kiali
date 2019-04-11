@@ -7,9 +7,8 @@ import (
 	"github.com/kiali/kiali/config"
 	osappsv1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
-	"k8s.io/api/core/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -114,10 +113,10 @@ func TestParsePodsToWorkload(t *testing.T) {
 	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
-func fakeDeployment() *v1beta1.Deployment {
+func fakeDeployment() *apps_v1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	replicas := int32(1)
-	return &v1beta1.Deployment{
+	return &apps_v1.Deployment{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "Deployment",
 		},
@@ -126,7 +125,7 @@ func fakeDeployment() *v1beta1.Deployment {
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
 		},
-		Spec: v1beta1.DeploymentSpec{
+		Spec: apps_v1.DeploymentSpec{
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
@@ -134,17 +133,17 @@ func fakeDeployment() *v1beta1.Deployment {
 			},
 			Replicas: &replicas,
 		},
-		Status: v1beta1.DeploymentStatus{
+		Status: apps_v1.DeploymentStatus{
 			AvailableReplicas:   1,
 			UnavailableReplicas: 0,
 		},
 	}
 }
 
-func fakeReplicaSet() *v1beta2.ReplicaSet {
+func fakeReplicaSet() *apps_v1.ReplicaSet {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	replicas := int32(1)
-	return &v1beta2.ReplicaSet{
+	return &apps_v1.ReplicaSet{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "ReplicaSet",
 		},
@@ -153,7 +152,7 @@ func fakeReplicaSet() *v1beta2.ReplicaSet {
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
 		},
-		Spec: v1beta2.ReplicaSetSpec{
+		Spec: apps_v1.ReplicaSetSpec{
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
@@ -161,7 +160,7 @@ func fakeReplicaSet() *v1beta2.ReplicaSet {
 			},
 			Replicas: &replicas,
 		},
-		Status: v1beta2.ReplicaSetStatus{
+		Status: apps_v1.ReplicaSetStatus{
 			AvailableReplicas: 1,
 		},
 	}
