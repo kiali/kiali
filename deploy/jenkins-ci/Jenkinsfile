@@ -36,6 +36,11 @@ properties([
       trim: true,
       description: 'The name of the Quay repository to push the release'),
     string(
+      name: 'QUAY_OPERATOR_NAME',
+      defaultValue: 'quay.io/kiali/kiali-operator',
+      trim: true,
+      description: 'The name of the Quay repository to push the operator release'),
+    string(
       name: 'BACKEND_PULL_URI',
       defaultValue: 'https://api.github.com/repos/kiali/kiali/pulls',
       trim: true,
