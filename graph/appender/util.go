@@ -8,13 +8,13 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
 
 // package-private util functions (used by multiple files)
 
-func promQuery(query string, queryTime time.Time, api v1.API, a Appender) model.Vector {
+func promQuery(query string, queryTime time.Time, api prom_v1.API, a Appender) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

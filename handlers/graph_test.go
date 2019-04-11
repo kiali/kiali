@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	osv1 "github.com/openshift/api/project/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -30,15 +30,15 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 	k8s := new(kubetest.K8SClientMock)
 
 	k8s.On("GetNamespaces").Return(
-		&v1.NamespaceList{
-			Items: []v1.Namespace{
-				v1.Namespace{
-					ObjectMeta: metav1.ObjectMeta{
+		&core_v1.NamespaceList{
+			Items: []core_v1.Namespace{
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "bookinfo",
 					},
 				},
-				v1.Namespace{
-					ObjectMeta: metav1.ObjectMeta{
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Name: "tutorial",
 					},
 				},
@@ -46,14 +46,14 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 		}, nil)
 
 	k8s.On("GetProjects").Return(
-		[]osv1.Project{
-			osv1.Project{
-				ObjectMeta: metav1.ObjectMeta{
+		[]osproj_v1.Project{
+			osproj_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "bookinfo",
 				},
 			},
-			osv1.Project{
-				ObjectMeta: metav1.ObjectMeta{
+			osproj_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "tutorial",
 				},
 			},

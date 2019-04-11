@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -44,7 +44,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	errChan := make(chan error, 1)
 
 	var istioDetails kubernetes.IstioDetails
-	var services []v1.Service
+	var services []core_v1.Service
 	var workloads models.WorkloadList
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
@@ -76,7 +76,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	return runObjectCheckers(objectCheckers), nil
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails},
@@ -95,7 +95,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	defer promtimer.ObserveNow(&err)
 
 	var istioDetails kubernetes.IstioDetails
-	var services []v1.Service
+	var services []core_v1.Service
 	var workloads models.WorkloadList
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
@@ -226,7 +226,7 @@ func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher fu
 	}
 }
 
-func (in *IstioValidationsService) fetchServices(rValue *[]v1.Service, namespace, serviceName string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, namespace, serviceName string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		services, err := in.k8s.GetServices(namespace, nil)

@@ -38,7 +38,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
@@ -931,7 +931,7 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 	RespondWithJSONIndent(w, http.StatusOK, vendorConfig)
 }
 
-func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
+func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
 	if "" == query {
 		return model.Vector{}
 	}

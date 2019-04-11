@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/api"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
@@ -20,8 +20,8 @@ type ClientInterface interface {
 	FetchRateRange(metricName, labels, grouping string, q *BaseMetricsQuery) *Metric
 	GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetAppRequestRates(namespace, app, ratesInterval string, queryTime time.Time) (model.Vector, model.Vector, error)
-	GetConfiguration() (v1.ConfigResult, error)
-	GetFlags() (v1.FlagsResult, error)
+	GetConfiguration() (prom_v1.ConfigResult, error)
+	GetFlags() (prom_v1.FlagsResult, error)
 	GetMetrics(query *IstioMetricsQuery) Metrics
 	GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error)
 	GetServiceRequestRates(namespace, service, ratesInterval string, queryTime time.Time) (model.Vector, error)
@@ -34,7 +34,7 @@ type ClientInterface interface {
 type Client struct {
 	ClientInterface
 	p8s api.Client
-	api v1.API
+	api prom_v1.API
 }
 
 // NewClient creates a new client to the Prometheus API.
@@ -47,12 +47,12 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := Client{p8s: p8s, api: v1.NewAPI(p8s)}
+	client := Client{p8s: p8s, api: prom_v1.NewAPI(p8s)}
 	return &client, nil
 }
 
 // Inject allows for replacing the API with a mock For testing
-func (in *Client) Inject(api v1.API) {
+func (in *Client) Inject(api prom_v1.API) {
 	in.api = api
 }
 
@@ -117,7 +117,7 @@ func (in *Client) FetchHistogramRange(metricName, labels, grouping string, q *Ba
 }
 
 // API returns the Prometheus V1 HTTP API for performing calls not supported natively by this client
-func (in *Client) API() v1.API {
+func (in *Client) API() prom_v1.API {
 	return in.api
 }
 
@@ -126,15 +126,15 @@ func (in *Client) Address() string {
 	return config.Get().ExternalServices.Prometheus.URL
 }
 
-func (in *Client) GetConfiguration() (v1.ConfigResult, error) {
+func (in *Client) GetConfiguration() (prom_v1.ConfigResult, error) {
 	config, err := in.API().Config(context.Background())
 	if err != nil {
-		return v1.ConfigResult{}, err
+		return prom_v1.ConfigResult{}, err
 	}
 	return config, nil
 }
 
-func (in *Client) GetFlags() (v1.FlagsResult, error) {
+func (in *Client) GetFlags() (prom_v1.FlagsResult, error) {
 	flags, err := in.API().Flags(context.Background())
 	if err != nil {
 		return nil, err

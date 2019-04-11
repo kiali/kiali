@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -161,7 +161,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	pod := vars["pod"]
 
 	// Get log options
-	podLogOptions := v1.PodLogOptions{Timestamps: true}
+	podLogOptions := core_v1.PodLogOptions{Timestamps: true}
 	if container := queryParams.Get("container"); container != "" {
 		podLogOptions.Container = container
 	}

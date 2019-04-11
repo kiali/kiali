@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osv1 "github.com/openshift/api/project/v1"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -34,8 +34,8 @@ func TestNamespaceMetricsDefault(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
 		assert.NotContains(t, query, "histogram_quantile")
@@ -84,8 +84,8 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "rate(")
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {
@@ -122,7 +122,7 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/my_namespace/metrics"
 
-	var nsNil *osv1.Project
+	var nsNil *osproj_v1.Project
 	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
 
 	resp, err := http.Get(url)
@@ -139,7 +139,7 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	if err != nil {
 		t.Fatal(err)
 	}
-	k8s.On("GetProject", "ns").Return(&osv1.Project{}, nil)
+	k8s.On("GetProject", "ns").Return(&osproj_v1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(

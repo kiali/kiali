@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -28,8 +28,8 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceList")
 	defer promtimer.ObserveNow(&err)
 
-	var svcs []v1.Service
-	var pods []v1.Pod
+	var svcs []core_v1.Service
+	var pods []core_v1.Pod
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -65,7 +65,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []v1.Service, pods []v1.Pod) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
 	// Convert each k8s service into our model
@@ -98,7 +98,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		return nil, err
 	}
 
-	var pods []v1.Pod
+	var pods []core_v1.Pod
 	var hth models.ServiceHealth
 	var vs, dr []kubernetes.IstioObject
 	var ws models.Workloads
@@ -224,7 +224,7 @@ func (in *SvcService) GetServiceDefinition(namespace, service string) (*models.S
 	return &s, nil
 }
 
-func (in *SvcService) getServiceDefinition(namespace, service string) (svc *v1.Service, eps *v1.Endpoints, err error) {
+func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core_v1.Service, eps *core_v1.Endpoints, err error) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	errChan := make(chan error, 2)

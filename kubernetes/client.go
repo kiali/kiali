@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -21,9 +23,6 @@ import (
 
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
-
-	osappsv1 "github.com/openshift/api/apps/v1"
-	osv1 "github.com/openshift/api/project/v1"
 )
 
 var (
@@ -45,8 +44,8 @@ type IstioClientInterface interface {
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
 	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
-	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osappsv1.DeploymentConfig, error)
-	GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error)
+	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error)
+	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
 	GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error)
 	GetEndpoints(namespace string, serviceName string) (*core_v1.Endpoints, error)
@@ -61,8 +60,8 @@ type IstioClientInterface interface {
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
-	GetProject(project string) (*osv1.Project, error)
-	GetProjects() ([]osv1.Project, error)
+	GetProject(project string) (*osproj_v1.Project, error)
+	GetProjects() ([]osproj_v1.Project, error)
 	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
 	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)

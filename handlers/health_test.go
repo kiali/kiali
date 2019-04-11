@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osv1 "github.com/openshift/api/project/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -173,10 +173,10 @@ func setupMockData(k8s *kubetest.K8SClientMock) {
 	util.Clock = util.ClockMock{Time: clockTime}
 
 	k8s.On("GetProject", "ns").Return(
-		&osv1.Project{
-			ObjectMeta: metav1.ObjectMeta{
+		&osproj_v1.Project{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "ns",
-				CreationTimestamp: metav1.NewTime(clockTime.Add(-17 * time.Second)),
+				CreationTimestamp: meta_v1.NewTime(clockTime.Add(-17 * time.Second)),
 			},
 		}, nil)
 }

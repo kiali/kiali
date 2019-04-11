@@ -1,10 +1,10 @@
 package models
 
 import (
-	"k8s.io/api/core/v1"
 	"time"
 
-	osv1 "github.com/openshift/api/project/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
+	core_v1 "k8s.io/api/core/v1"
 )
 
 // A Namespace provide a scope for names
@@ -26,7 +26,7 @@ type Namespace struct {
 	CreationTimestamp time.Time `json:"-"`
 }
 
-func CastNamespaceCollection(ns []v1.Namespace) []Namespace {
+func CastNamespaceCollection(ns []core_v1.Namespace) []Namespace {
 	namespaces := make([]Namespace, len(ns))
 	for i, item := range ns {
 		namespaces[i] = CastNamespace(item)
@@ -35,7 +35,7 @@ func CastNamespaceCollection(ns []v1.Namespace) []Namespace {
 	return namespaces
 }
 
-func CastNamespace(ns v1.Namespace) Namespace {
+func CastNamespace(ns core_v1.Namespace) Namespace {
 	namespace := Namespace{}
 	namespace.Name = ns.Name
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
@@ -43,7 +43,7 @@ func CastNamespace(ns v1.Namespace) Namespace {
 	return namespace
 }
 
-func CastProjectCollection(ps []osv1.Project) []Namespace {
+func CastProjectCollection(ps []osproj_v1.Project) []Namespace {
 	namespaces := make([]Namespace, len(ps))
 	for i, project := range ps {
 		namespaces[i] = CastProject(project)
@@ -52,7 +52,7 @@ func CastProjectCollection(ps []osv1.Project) []Namespace {
 	return namespaces
 }
 
-func CastProject(p osv1.Project) Namespace {
+func CastProject(p osproj_v1.Project) Namespace {
 	namespace := Namespace{}
 	namespace.Name = p.Name
 	namespace.CreationTimestamp = p.CreationTimestamp.Time

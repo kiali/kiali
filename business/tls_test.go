@@ -3,8 +3,8 @@ package business
 import (
 	"testing"
 
-	osv1 "github.com/openshift/api/project/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -352,15 +352,15 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 	assert.Equal(exStatus, status.Status)
 }
 
-func fakeProjects() []osv1.Project {
-	return []osv1.Project{
+func fakeProjects() []osproj_v1.Project {
+	return []osproj_v1.Project{
 		{
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "bookinfo",
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "foo",
 			},
 		},

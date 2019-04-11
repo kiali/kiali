@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -28,8 +29,8 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ClusterIP: "fromservice",
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
+			Ports: []core_v1.ServicePort{
+				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(dashboard, 200))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, code)
@@ -43,8 +44,8 @@ func TestGetGrafanaInfoFromConfig(t *testing.T) {
 	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
+			Ports: []core_v1.ServicePort{
+				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(dashboard, 200))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -58,8 +59,8 @@ func TestGetGrafanaInfoNoExternalIP(t *testing.T) {
 	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{},
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
+			Ports: []core_v1.ServicePort{
+				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(dashboard, 200))
 	assert.NotNil(t, err)
 	assert.Equal(t, http.StatusServiceUnavailable, code)
@@ -72,8 +73,8 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
+			Ports: []core_v1.ServicePort{
+				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(anError, 401))
 	assert.Equal(t, "Error from Grafana (401): unauthorized", err.Error())
 	assert.Equal(t, 500, code)
@@ -86,8 +87,8 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
 		return &v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
-			Ports: []v1.ServicePort{
-				v1.ServicePort{Port: 3000}}}, nil
+			Ports: []core_v1.ServicePort{
+				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier("unexpected response", 200))
 	assert.NotNil(t, err)
 	assert.Equal(t, 500, code)

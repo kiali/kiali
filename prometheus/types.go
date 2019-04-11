@@ -3,13 +3,13 @@ package prometheus
 import (
 	"time"
 
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
 
 // BaseMetricsQuery holds common parameters for all kinds of queries
 type BaseMetricsQuery struct {
-	v1.Range
+	prom_v1.Range
 	RateInterval string
 	RateFunc     string
 	Quantiles    []string

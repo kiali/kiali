@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
-	osappsv1 "github.com/openshift/api/apps/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	apps_v1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -101,7 +101,7 @@ func TestParsePodsToWorkload(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	w := Workload{}
-	w.ParsePods("workload-from-controller", "Controller", []v1.Pod{*fakePod()})
+	w.ParsePods("workload-from-controller", "Controller", []core_v1.Pod{*fakePod()})
 
 	assert.Equal("workload-from-controller", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -126,7 +126,7 @@ func fakeDeployment() *apps_v1.Deployment {
 			ResourceVersion:   "2709198702082918",
 		},
 		Spec: apps_v1.DeploymentSpec{
-			Template: v1.PodTemplateSpec{
+			Template: core_v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
@@ -153,7 +153,7 @@ func fakeReplicaSet() *apps_v1.ReplicaSet {
 			ResourceVersion:   "2709198702082918",
 		},
 		Spec: apps_v1.ReplicaSetSpec{
-			Template: v1.PodTemplateSpec{
+			Template: core_v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
@@ -166,10 +166,10 @@ func fakeReplicaSet() *apps_v1.ReplicaSet {
 	}
 }
 
-func fakeReplicationController() *v1.ReplicationController {
+func fakeReplicationController() *core_v1.ReplicationController {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	replicas := int32(1)
-	return &v1.ReplicationController{
+	return &core_v1.ReplicationController{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "ReplicationController",
 		},
@@ -178,23 +178,23 @@ func fakeReplicationController() *v1.ReplicationController {
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
 		},
-		Spec: v1.ReplicationControllerSpec{
-			Template: &v1.PodTemplateSpec{
+		Spec: core_v1.ReplicationControllerSpec{
+			Template: &core_v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
 			Replicas: &replicas,
 		},
-		Status: v1.ReplicationControllerStatus{
+		Status: core_v1.ReplicationControllerStatus{
 			AvailableReplicas: 1,
 		},
 	}
 }
 
-func fakeDeploymentConfig() *osappsv1.DeploymentConfig {
+func fakeDeploymentConfig() *osapps_v1.DeploymentConfig {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return &osappsv1.DeploymentConfig{
+	return &osapps_v1.DeploymentConfig{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "DeploymentConfig",
 		},
@@ -203,25 +203,25 @@ func fakeDeploymentConfig() *osappsv1.DeploymentConfig {
 			CreationTimestamp: meta_v1.NewTime(t1),
 			ResourceVersion:   "2709198702082918",
 		},
-		Spec: osappsv1.DeploymentConfigSpec{
-			Template: &v1.PodTemplateSpec{
+		Spec: osapps_v1.DeploymentConfigSpec{
+			Template: &core_v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Labels: map[string]string{"foo": "bar", "version": "v1"},
 				},
 			},
 			Replicas: 1,
 		},
-		Status: osappsv1.DeploymentConfigStatus{
+		Status: osapps_v1.DeploymentConfigStatus{
 			AvailableReplicas:   1,
 			UnavailableReplicas: 0,
 		},
 	}
 }
 
-func fakePod() *v1.Pod {
+func fakePod() *core_v1.Pod {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 
-	return &v1.Pod{
+	return &core_v1.Pod{
 		TypeMeta: meta_v1.TypeMeta{
 			Kind: "Pod",
 		},
@@ -231,7 +231,7 @@ func fakePod() *v1.Pod {
 			ResourceVersion:   "2709198702082918",
 			Labels:            map[string]string{"foo": "bar", "version": "v1"},
 		},
-		Status: v1.PodStatus{
+		Status: core_v1.PodStatus{
 			Phase: "Running",
 		},
 	}

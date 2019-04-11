@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	pv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -47,7 +47,7 @@ func TestGetServiceMetrics(t *testing.T) {
 	q.Direction = "inbound"
 	q.RateInterval = "5m"
 	q.Quantiles = []string{"0.99"}
-	expectedRange := pv1.Range{
+	expectedRange := prom_v1.Range{
 		Start: q.Start,
 		End:   q.End,
 		Step:  q.Step,
@@ -365,7 +365,7 @@ func TestConfig(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockConfig(api, pv1.ConfigResult{
+	mockConfig(api, prom_v1.ConfigResult{
 		YAML: `{"status":"success","data":{"yaml":"global:\n  scrape_interval: 15s\n"}}`,
 	})
 
@@ -379,7 +379,7 @@ func TestFlags(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	mockFlags(api, pv1.FlagsResult{"storage.tsdb.retention": "6h"})
+	mockFlags(api, prom_v1.FlagsResult{"storage.tsdb.retention": "6h"})
 
 	flags, err := client.GetFlags()
 	assert.Equal(t, flags["storage.tsdb.retention"], "6h")
@@ -437,7 +437,7 @@ func mockRange(api *PromAPIMock, query string, ret model.SampleValue) {
 	mockQueryRange(api, query, &matrix)
 }
 
-func mockWithRange(api *PromAPIMock, qRange pv1.Range, query string, ret model.SampleValue) {
+func mockWithRange(api *PromAPIMock, qRange prom_v1.Range, query string, ret model.SampleValue) {
 	metric := model.Metric{
 		"reporter": "destination",
 		"__name__": "whatever",
@@ -487,20 +487,20 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 }
 
 func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
-	namespace := corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
+	namespace := core_v1.Namespace{
+		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              name,
-			CreationTimestamp: metav1.Time{Time: creationTime},
+			CreationTimestamp: meta_v1.Time{Time: creationTime},
 		},
 	}
 	k8s.On("GetNamespace", name).Return(&namespace, nil)
 }
 
-func mockConfig(api *PromAPIMock, ret pv1.ConfigResult) {
+func mockConfig(api *PromAPIMock, ret prom_v1.ConfigResult) {
 	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
 }
 
-func mockFlags(api *PromAPIMock, ret pv1.FlagsResult) {
+func mockFlags(api *PromAPIMock, ret prom_v1.FlagsResult) {
 	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
 }
 

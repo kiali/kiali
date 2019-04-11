@@ -1,6 +1,6 @@
 package models
 
-import "k8s.io/api/core/v1"
+import core_v1 "k8s.io/api/core/v1"
 
 type Endpoints []Endpoint
 type Endpoint struct {
@@ -8,7 +8,7 @@ type Endpoint struct {
 	Ports     Ports     `json:"ports"`
 }
 
-func (endpoints *Endpoints) Parse(es *v1.Endpoints) {
+func (endpoints *Endpoints) Parse(es *core_v1.Endpoints) {
 	if es == nil {
 		return
 	}
@@ -20,7 +20,7 @@ func (endpoints *Endpoints) Parse(es *v1.Endpoints) {
 	}
 }
 
-func (endpoint *Endpoint) Parse(s v1.EndpointSubset) {
+func (endpoint *Endpoint) Parse(s core_v1.EndpointSubset) {
 	(&endpoint.Ports).ParseEndpointPorts(s.Ports)
 	(&endpoint.Addresses).Parse(s.Addresses)
 }

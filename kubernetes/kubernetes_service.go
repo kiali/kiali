@@ -3,27 +3,26 @@ package kubernetes
 import (
 	"bytes"
 
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproj_v1 "github.com/openshift/api/project/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
-
-	osappsv1 "github.com/openshift/api/apps/v1"
-	osv1 "github.com/openshift/api/project/v1"
 )
 
 // GetNamespace fetches and returns the specified namespace definition
 // from the cluster
-func (in *IstioClient) GetNamespace(namespace string) (*v1.Namespace, error) {
+func (in *IstioClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
 	ns, err := in.k8s.CoreV1().Namespaces().Get(namespace, emptyGetOptions)
 	if err != nil {
-		return &v1.Namespace{}, err
+		return &core_v1.Namespace{}, err
 	}
 
 	return ns, nil
@@ -32,7 +31,7 @@ func (in *IstioClient) GetNamespace(namespace string) (*v1.Namespace, error) {
 // GetNamespaces returns a list of all namespaces of the cluster.
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
-func (in *IstioClient) GetNamespaces() ([]v1.Namespace, error) {
+func (in *IstioClient) GetNamespaces() ([]core_v1.Namespace, error) {
 	namespaces, err := in.k8s.CoreV1().Namespaces().List(emptyListOptions)
 	if err != nil {
 		return nil, err
@@ -44,8 +43,8 @@ func (in *IstioClient) GetNamespaces() ([]v1.Namespace, error) {
 // GetProject fetches and returns the definition of the project with
 // the specified name by querying the cluster API. GetProject will fail
 // if the underlying cluster is not Openshift.
-func (in *IstioClient) GetProject(name string) (*osv1.Project, error) {
-	result := &osv1.Project{}
+func (in *IstioClient) GetProject(name string) (*osproj_v1.Project, error) {
+	result := &osproj_v1.Project{}
 
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do().Into(result)
 
@@ -56,8 +55,8 @@ func (in *IstioClient) GetProject(name string) (*osv1.Project, error) {
 	return result, nil
 }
 
-func (in *IstioClient) GetProjects() ([]osv1.Project, error) {
-	result := &osv1.ProjectList{}
+func (in *IstioClient) GetProjects() ([]osproj_v1.Project, error) {
+	result := &osproj_v1.ProjectList{}
 
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects").Do().Into(result)
 
@@ -83,8 +82,8 @@ func (in *IstioClient) IsOpenShift() bool {
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.
-func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error) {
-	var allServices []v1.Service
+func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
+	var allServices []core_v1.Service
 	var err error
 	if in.k8sCache != nil {
 		allServices, err = in.k8sCache.GetServices(namespace)
@@ -94,12 +93,12 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 		}
 	}
 	if err != nil {
-		return []v1.Service{}, err
+		return []core_v1.Service{}, err
 	}
 	if selectorLabels == nil {
 		return allServices, nil
 	}
-	var services []v1.Service
+	var services []core_v1.Service
 	for _, svc := range allServices {
 		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
 		if svcSelector.Matches(labels.Set(selectorLabels)) {
@@ -133,8 +132,8 @@ func (in *IstioClient) GetDeployments(namespace string) ([]apps_v1.Deployment, e
 
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
-func (in *IstioClient) GetDeploymentConfig(namespace, deploymentconfigName string) (*osappsv1.DeploymentConfig, error) {
-	result := &osappsv1.DeploymentConfig{}
+func (in *IstioClient) GetDeploymentConfig(namespace, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error) {
+	result := &osapps_v1.DeploymentConfig{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(deploymentconfigName).Do().Into(result)
 	if err != nil {
 		return nil, err
@@ -145,8 +144,8 @@ func (in *IstioClient) GetDeploymentConfig(namespace, deploymentconfigName strin
 // GetDeployments returns an array of deployments for a given namespace and a set of labels.
 // An empty labelSelector will fetch all Deployments for a namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error) {
-	result := &osappsv1.DeploymentConfigList{}
+func (in *IstioClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
+	result := &osapps_v1.DeploymentConfigList{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").Do().Into(result)
 	if err != nil {
 		return nil, err
@@ -183,20 +182,20 @@ func (in *IstioClient) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet,
 	}
 }
 
-func (in *IstioClient) GetReplicationControllers(namespace string) ([]v1.ReplicationController, error) {
+func (in *IstioClient) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
 	if in.k8sCache != nil {
 		return in.k8sCache.GetReplicationControllers(namespace)
 	}
 	if rcList, err := in.k8s.CoreV1().ReplicationControllers(namespace).List(emptyListOptions); err == nil {
 		return rcList.Items, nil
 	} else {
-		return []v1.ReplicationController{}, err
+		return []core_v1.ReplicationController{}, err
 	}
 }
 
 // GetService returns the definition of a specific service.
 // It returns an error on any problem.
-func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, error) {
+func (in *IstioClient) GetService(namespace, serviceName string) (*core_v1.Service, error) {
 	if in.k8sCache != nil {
 		return in.k8sCache.GetService(namespace, serviceName)
 	}
@@ -205,7 +204,7 @@ func (in *IstioClient) GetService(namespace, serviceName string) (*v1.Service, e
 
 // GetEndpoints return the list of endpoint of a specific service.
 // It returns an error on any problem.
-func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*v1.Endpoints, error) {
+func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*core_v1.Endpoints, error) {
 	if in.k8sCache != nil {
 		return in.k8sCache.GetEndpoints(namespace, serviceName)
 	}
@@ -215,16 +214,16 @@ func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*v1.Endpoint
 // GetPods returns the pods definitions for a given set of labels.
 // An empty labelSelector will fetch all pods found per a namespace.
 // It returns an error on any problem.
-func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error) {
+func (in *IstioClient) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
 	if in.k8sCache != nil {
 		pods, err := in.k8sCache.GetPods(namespace)
 		if err != nil {
-			return []v1.Pod{}, err
+			return []core_v1.Pod{}, err
 		}
 		if labelSelector != "" {
 			selector, err := labels.Parse(labelSelector)
 			if err != nil {
-				return []v1.Pod{}, err
+				return []core_v1.Pod{}, err
 			}
 			pods = FilterPodsForSelector(selector, pods)
 		}
@@ -236,13 +235,13 @@ func (in *IstioClient) GetPods(namespace, labelSelector string) ([]v1.Pod, error
 	if pods, err := in.k8s.CoreV1().Pods(namespace).List(meta_v1.ListOptions{LabelSelector: labelSelector}); err == nil {
 		return pods.Items, nil
 	} else {
-		return []v1.Pod{}, err
+		return []core_v1.Pod{}, err
 	}
 }
 
 // GetPod returns the pod definitions for a given pod name.
 // It returns an error on any problem.
-func (in *IstioClient) GetPod(namespace, name string) (*v1.Pod, error) {
+func (in *IstioClient) GetPod(namespace, name string) (*core_v1.Pod, error) {
 	if in.k8sCache != nil {
 		if pods, err := in.k8sCache.GetPods(namespace); err != nil {
 			return nil, err
@@ -265,7 +264,7 @@ func (in *IstioClient) GetPod(namespace, name string) (*v1.Pod, error) {
 
 // GetPod returns the pod definitions for a given pod name.
 // It returns an error on any problem.
-func (in *IstioClient) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*PodLogs, error) {
+func (in *IstioClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error) {
 	req := in.k8s.CoreV1().RESTClient().Get().Namespace(namespace).Name(name).Resource("pods").SubResource("log").VersionedParams(opts, scheme.ParameterCodec)
 
 	readCloser, err := req.Stream()

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/kubernetes"
@@ -20,7 +20,7 @@ var defaultPromClientSupplier = prometheus.NewClient
 
 var clientFactory kubernetes.ClientFactory
 
-func getService(token string, namespace string, service string) (*v1.ServiceSpec, error) {
+func getService(token string, namespace string, service string) (*core_v1.ServiceSpec, error) {
 	if clientFactory == nil {
 		userClientFactory, err := kubernetes.GetClientFactory()
 		if err != nil {
