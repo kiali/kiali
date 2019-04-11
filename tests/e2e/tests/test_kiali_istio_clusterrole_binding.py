@@ -2,22 +2,22 @@
 import tests.conftest as conftest
 
 
-def test_assert_istio_has_kiali_clusterroles_on_istio():
+def _test_assert_istio_has_kiali_clusterroles_on_istio():
     istio = conftest.get_istio_clusterrole_file()
     assert istio is not None
 
 
-def test_assert_kiali_openshift_clusters_are_valid():
+def _test_assert_kiali_openshift_clusters_are_valid():
     kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift')
     assert kiali_openshift is not None
 
 
-def test_assert_kiali_kurbenetes_clusters_are_valid():
+def _test_assert_kiali_kurbenetes_clusters_are_valid():
     kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type="Kubernetes")
     assert kiali_kubernetes is not None
 
 
-def test_assert_equivalence_cluster_roles():
+def _test_assert_equivalence_cluster_roles():
     kiali_openshift = conftest.get_kiali_clusterrole_file(file_type='Openshift').get('rules')
     kiali_kubernetes = conftest.get_kiali_clusterrole_file(file_type='Kubernetes').get('rules')
 
