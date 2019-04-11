@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -171,7 +171,7 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	return in.getNamespaceServiceHealth(namespace, services, rateInterval, queryTime), nil
 }
 
-func (in *HealthService) getNamespaceServiceHealth(namespace string, services []v1.Service, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
+func (in *HealthService) getNamespaceServiceHealth(namespace string, services []core_v1.Service, rateInterval string, queryTime time.Time) models.NamespaceServiceHealth {
 	allHealth := make(models.NamespaceServiceHealth)
 
 	// Prepare all data (note that it's important to provide data for all services, even those which may not have any health, for overview cards)

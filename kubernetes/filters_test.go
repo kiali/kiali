@@ -4,31 +4,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestFilterPodsForEndpoints(t *testing.T) {
 	assert := assert.New(t)
 
-	endpoints := v1.Endpoints{
-		Subsets: []v1.EndpointSubset{
+	endpoints := core_v1.Endpoints{
+		Subsets: []core_v1.EndpointSubset{
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []core_v1.EndpointAddress{
 					{
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Name: "pod-1",
 							Kind: "Pod",
 						},
 					},
 					{
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Name: "pod-2",
 							Kind: "Pod",
 						},
 					},
 					{
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Name: "other",
 							Kind: "Other",
 						},
@@ -37,9 +37,9 @@ func TestFilterPodsForEndpoints(t *testing.T) {
 				},
 			},
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []core_v1.EndpointAddress{
 					{
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Name: "pod-3",
 							Kind: "Pod",
 						},
@@ -49,7 +49,7 @@ func TestFilterPodsForEndpoints(t *testing.T) {
 		},
 	}
 
-	pods := []v1.Pod{
+	pods := []core_v1.Pod{
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "pod-1"}},
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "pod-2"}},
 		{ObjectMeta: meta_v1.ObjectMeta{Name: "pod-3"}},

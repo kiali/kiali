@@ -3,13 +3,13 @@ package business
 import (
 	"testing"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -58,10 +58,10 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 	// Setup mocks
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDepSyncedWithRS(), nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeRSSyncedWithPods(), nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakePods().Items, nil)
@@ -87,7 +87,7 @@ func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	return IstioValidationsService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 }
 
-func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *v1.PodList) IstioValidationsService {
+func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, services []string, podList *core_v1.PodList) IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetIstioDetails", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(istioObjects, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(fakeCombinedServices(services), nil)
@@ -147,8 +147,8 @@ func fakePolicies() []kubernetes.IstioObject {
 	}
 }
 
-func fakeNamespaces() []v1.Namespace {
-	return []v1.Namespace{
+func fakeNamespaces() []core_v1.Namespace {
+	return []core_v1.Namespace{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "test",
@@ -162,11 +162,11 @@ func fakeNamespaces() []v1.Namespace {
 	}
 }
 
-func fakeCombinedServices(services []string) []v1.Service {
-	items := []v1.Service{}
+func fakeCombinedServices(services []string) []core_v1.Service {
+	items := []core_v1.Service{}
 
 	for _, service := range services {
-		items = append(items, v1.Service{
+		items = append(items, core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: service,
 				Labels: map[string]string{
@@ -179,9 +179,9 @@ func fakeCombinedServices(services []string) []v1.Service {
 	return items
 }
 
-func fakePods() *v1.PodList {
-	return &v1.PodList{
-		Items: []v1.Pod{
+func fakePods() *core_v1.PodList {
+	return &core_v1.PodList{
+		Items: []core_v1.Pod{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "reviews-12345-hello",

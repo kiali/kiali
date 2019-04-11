@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -39,8 +39,8 @@ func TestAppMetricsDefault(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "_app=\"my_app\"")
 		assert.Contains(t, query, "_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
@@ -91,8 +91,8 @@ func TestAppMetricsWithParams(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "rate(")
 		assert.Contains(t, query, "[5h]")
 		if strings.Contains(query, "histogram_quantile") {
@@ -129,7 +129,7 @@ func TestAppMetricsInaccessibleNamespace(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/my_namespace/apps/my_app/metrics"
 
-	var nsNil *corev1.Namespace
+	var nsNil *core_v1.Namespace
 	k8s.On("GetNamespace", "my_namespace").Return(nsNil, errors.New("no privileges"))
 
 	resp, err := http.Get(url)
@@ -151,7 +151,7 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	}
 	prom.Inject(api)
 	k8s.On("IsOpenShift").Return(false)
-	k8s.On("GetNamespace", "ns").Return(&corev1.Namespace{}, nil)
+	k8s.On("GetNamespace", "ns").Return(&core_v1.Namespace{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}/metrics", http.HandlerFunc(
@@ -201,14 +201,14 @@ func TestAppsEndpoint(t *testing.T) {
 	defer ts.Close()
 
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDeployments(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.Pod{}, nil)
-	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]corev1.Service{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 
 	url := ts.URL + "/api/namespaces/ns/apps"
 
@@ -229,11 +229,11 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	defer ts.Close()
 
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDeployments(), nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.ReplicationController{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
-	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]corev1.Pod{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
+	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]core_v1.Pod{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetServices", mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string")).Return(business.FakeServices(), nil)

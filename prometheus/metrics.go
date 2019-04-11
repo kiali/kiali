@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/log"
@@ -19,7 +19,7 @@ var (
 	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
-func getMetrics(api v1.API, q *IstioMetricsQuery) Metrics {
+func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
 	labels, labelsError := buildLabelStrings(q)
 	grouping := strings.Join(q.ByLabels, ",")
 	metrics := fetchAllMetrics(api, q, labels, labelsError, grouping)
@@ -60,7 +60,7 @@ func buildLabelStrings(q *IstioMetricsQuery) (string, string) {
 	return full, errors
 }
 
-func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grouping string) Metrics {
+func fetchAllMetrics(api prom_v1.API, q *IstioMetricsQuery, labels, labelsError, grouping string) Metrics {
 	var wg sync.WaitGroup
 	fetchRate := func(p8sFamilyName string, metric **Metric, lbl string) {
 		defer wg.Done()
@@ -128,7 +128,7 @@ func fetchAllMetrics(api v1.API, q *IstioMetricsQuery, labels, labelsError, grou
 	}
 }
 
-func fetchRateRange(api v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
+func fetchRateRange(api prom_v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) *Metric {
 	var query string
 	// Example: round(sum(rate(my_counter{foo=bar}[5m])) by (baz), 0.001)
 	if grouping == "" {
@@ -140,7 +140,7 @@ func fetchRateRange(api v1.API, metricName, labels, grouping string, q *BaseMetr
 	return fetchRange(api, query, q.Range)
 }
 
-func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) Histogram {
+func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q *BaseMetricsQuery) Histogram {
 	histogram := make(Histogram)
 
 	// Note: the p8s queries are not run in parallel here, but they are at the caller's place.
@@ -175,7 +175,7 @@ func fetchHistogramRange(api v1.API, metricName, labels, grouping string, q *Bas
 	return histogram
 }
 
-func fetchTimestamp(api v1.API, query string, t time.Time) (model.Vector, error) {
+func fetchTimestamp(api prom_v1.API, query string, t time.Time) (model.Vector, error) {
 	result, err := api.Query(context.Background(), query, t)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func fetchTimestamp(api v1.API, query string, t time.Time) (model.Vector, error)
 	return nil, fmt.Errorf("Invalid query, vector expected: %s", query)
 }
 
-func fetchRange(api v1.API, query string, bounds v1.Range) *Metric {
+func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
 	result, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
 		return &Metric{err: err}
@@ -206,7 +206,7 @@ func replaceInvalidCharacters(metricName string) string {
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.
 // Uses source telemetry unless working on the Istio namespace.
-func getAllRequestRates(api v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+func getAllRequestRates(api prom_v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic originating outside the namespace to destinations inside the namespace
 	lbl := fmt.Sprintf(`destination_service_namespace="%s",source_workload_namespace!="%s"`, namespace, namespace)
 	fromOutside, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
@@ -226,7 +226,7 @@ func getAllRequestRates(api v1.API, namespace string, queryTime time.Time, rates
 
 // getNamespaceServicesRequestRates retrieves traffic rates for requests entering or internal to the namespace.
 // Uses source telemetry unless working on the Istio namespace.
-func getNamespaceServicesRequestRates(api v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+func getNamespaceServicesRequestRates(api prom_v1.API, namespace string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	// traffic for the namespace services
 	lblNs := fmt.Sprintf(`destination_service_namespace="%s"`, namespace)
 	ns, err := getRequestRatesForLabel(api, queryTime, lblNs, ratesInterval)
@@ -236,7 +236,7 @@ func getNamespaceServicesRequestRates(api v1.API, namespace string, queryTime ti
 	return ns, nil
 }
 
-func getServiceRequestRates(api v1.API, namespace, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
+func getServiceRequestRates(api prom_v1.API, namespace, service string, queryTime time.Time, ratesInterval string) (model.Vector, error) {
 	lbl := fmt.Sprintf(`destination_service_name="%s",destination_service_namespace="%s"`, service, namespace)
 	in, err := getRequestRatesForLabel(api, queryTime, lbl, ratesInterval)
 	if err != nil {
@@ -245,7 +245,7 @@ func getServiceRequestRates(api v1.API, namespace, service string, queryTime tim
 	return in, nil
 }
 
-func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
+func getItemRequestRates(api prom_v1.API, namespace, item, itemLabelSuffix string, queryTime time.Time, ratesInterval string) (model.Vector, model.Vector, error) {
 	lblIn := fmt.Sprintf(`destination_workload_namespace="%s",destination_%s="%s"`, namespace, itemLabelSuffix, item)
 	lblOut := fmt.Sprintf(`source_workload_namespace="%s",source_%s="%s"`, namespace, itemLabelSuffix, item)
 	in, err := getRequestRatesForLabel(api, queryTime, lblIn, ratesInterval)
@@ -259,7 +259,7 @@ func getItemRequestRates(api v1.API, namespace, item, itemLabelSuffix string, qu
 	return in, out, nil
 }
 
-func getRequestRatesForLabel(api v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
+func getRequestRatesForLabel(api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s])", labels, ratesInterval)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, err := api.Query(context.Background(), query, time)

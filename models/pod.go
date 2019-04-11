@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -40,7 +40,7 @@ type ContainerInfo struct {
 }
 
 // ParseDeployment extracts desired information from k8s []Pod info
-func (pods *Pods) Parse(list []v1.Pod) {
+func (pods *Pods) Parse(list []core_v1.Pod) {
 	if list == nil {
 		return
 	}
@@ -62,7 +62,7 @@ type sideCarStatus struct {
 }
 
 // ParsePod extracts desired information from k8s Pod info
-func (pod *Pod) Parse(p *v1.Pod) {
+func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
 	pod.CreatedAt = formatTime(p.CreationTimestamp.Time)
@@ -118,7 +118,7 @@ func (pod *Pod) Parse(p *v1.Pod) {
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func lookupImage(containerName string, containers []v1.Container) string {
+func lookupImage(containerName string, containers []core_v1.Container) string {
 	for _, c := range containers {
 		if c.Name == containerName {
 			return c.Image

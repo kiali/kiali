@@ -3,10 +3,9 @@ package business
 import (
 	"time"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
-	v1 "k8s.io/api/core/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -16,13 +15,13 @@ import (
 
 // Consolidate fake/mock data used in tests per package
 
-func FakeDeployments() []v1beta1.Deployment {
+func FakeDeployments() []apps_v1.Deployment {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta1.Deployment{
+	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "Deployment",
@@ -31,14 +30,14 @@ func FakeDeployments() []v1beta1.Deployment {
 				Name:              "httpbin-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin"},
 					},
 				},
 			},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            1,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 0,
@@ -52,14 +51,14 @@ func FakeDeployments() []v1beta1.Deployment {
 				Name:              "httpbin-v2",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 					},
 				},
 			},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 1,
@@ -73,14 +72,14 @@ func FakeDeployments() []v1beta1.Deployment {
 				Name:              "httpbin-v3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{},
 					},
 				},
 			},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   0,
 				UnavailableReplicas: 2,
@@ -89,13 +88,13 @@ func FakeDeployments() []v1beta1.Deployment {
 	}
 }
 
-func FakeDuplicatedDeployments() []v1beta1.Deployment {
+func FakeDuplicatedDeployments() []apps_v1.Deployment {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta1.Deployment{
+	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "Deployment",
@@ -104,14 +103,14 @@ func FakeDuplicatedDeployments() []v1beta1.Deployment {
 				Name:              "duplicated-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 					},
 				},
 			},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            1,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 0,
@@ -120,13 +119,13 @@ func FakeDuplicatedDeployments() []v1beta1.Deployment {
 	}
 }
 
-func FakeReplicaSets() []v1beta2.ReplicaSet {
+func FakeReplicaSets() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta2.ReplicaSet{
+	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "ReplicaSet",
@@ -135,14 +134,14 @@ func FakeReplicaSets() []v1beta2.ReplicaSet {
 				Name:              "httpbin-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.ReplicaSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin"},
 					},
 				},
 			},
-			Status: v1beta2.ReplicaSetStatus{
+			Status: apps_v1.ReplicaSetStatus{
 				Replicas:          1,
 				AvailableReplicas: 1,
 				ReadyReplicas:     1,
@@ -156,14 +155,14 @@ func FakeReplicaSets() []v1beta2.ReplicaSet {
 				Name:              "httpbin-v2",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.ReplicaSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 					},
 				},
 			},
-			Status: v1beta2.ReplicaSetStatus{
+			Status: apps_v1.ReplicaSetStatus{
 				Replicas:          2,
 				AvailableReplicas: 1,
 				ReadyReplicas:     1,
@@ -177,14 +176,14 @@ func FakeReplicaSets() []v1beta2.ReplicaSet {
 				Name:              "httpbin-v3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.ReplicaSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{},
 					},
 				},
 			},
-			Status: v1beta2.ReplicaSetStatus{
+			Status: apps_v1.ReplicaSetStatus{
 				Replicas:          2,
 				AvailableReplicas: 0,
 				ReadyReplicas:     2,
@@ -193,14 +192,14 @@ func FakeReplicaSets() []v1beta2.ReplicaSet {
 	}
 }
 
-func FakeDuplicatedReplicaSets() []v1beta2.ReplicaSet {
+func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return []v1beta2.ReplicaSet{
+	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "ReplicaSet",
@@ -214,14 +213,14 @@ func FakeDuplicatedReplicaSets() []v1beta2.ReplicaSet {
 					Name:       "duplicated-v1",
 				}},
 			},
-			Spec: v1beta2.ReplicaSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 					},
 				},
 			},
-			Status: v1beta2.ReplicaSetStatus{
+			Status: apps_v1.ReplicaSetStatus{
 				Replicas:          1,
 				AvailableReplicas: 1,
 				ReadyReplicas:     1,
@@ -230,13 +229,13 @@ func FakeDuplicatedReplicaSets() []v1beta2.ReplicaSet {
 	}
 }
 
-func FakeReplicationControllers() []v1.ReplicationController {
+func FakeReplicationControllers() []core_v1.ReplicationController {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1.ReplicationController{
+	return []core_v1.ReplicationController{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "ReplicationController",
@@ -245,14 +244,14 @@ func FakeReplicationControllers() []v1.ReplicationController {
 				Name:              "httpbin-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1.ReplicationControllerSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: core_v1.ReplicationControllerSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin"},
 					},
 				},
 			},
-			Status: v1.ReplicationControllerStatus{
+			Status: core_v1.ReplicationControllerStatus{
 				Replicas:          1,
 				AvailableReplicas: 1,
 				ReadyReplicas:     1,
@@ -266,14 +265,14 @@ func FakeReplicationControllers() []v1.ReplicationController {
 				Name:              "httpbin-v2",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1.ReplicationControllerSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: core_v1.ReplicationControllerSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 					},
 				},
 			},
-			Status: v1.ReplicationControllerStatus{
+			Status: core_v1.ReplicationControllerStatus{
 				Replicas:          2,
 				AvailableReplicas: 1,
 				ReadyReplicas:     1,
@@ -287,14 +286,14 @@ func FakeReplicationControllers() []v1.ReplicationController {
 				Name:              "httpbin-v3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1.ReplicationControllerSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: core_v1.ReplicationControllerSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{},
 					},
 				},
 			},
-			Status: v1.ReplicationControllerStatus{
+			Status: core_v1.ReplicationControllerStatus{
 				Replicas:          2,
 				AvailableReplicas: 0,
 				ReadyReplicas:     2,
@@ -303,13 +302,13 @@ func FakeReplicationControllers() []v1.ReplicationController {
 	}
 }
 
-func FakeDeploymentConfigs() []osappsv1.DeploymentConfig {
+func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []osappsv1.DeploymentConfig{
+	return []osapps_v1.DeploymentConfig{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "DeploymentConfig",
@@ -318,14 +317,14 @@ func FakeDeploymentConfigs() []osappsv1.DeploymentConfig {
 				Name:              "httpbin-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: osappsv1.DeploymentConfigSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: osapps_v1.DeploymentConfigSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin"},
 					},
 				},
 			},
-			Status: osappsv1.DeploymentConfigStatus{
+			Status: osapps_v1.DeploymentConfigStatus{
 				Replicas:            1,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 0,
@@ -339,14 +338,14 @@ func FakeDeploymentConfigs() []osappsv1.DeploymentConfig {
 				Name:              "httpbin-v2",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: osappsv1.DeploymentConfigSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: osapps_v1.DeploymentConfigSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 					},
 				},
 			},
-			Status: osappsv1.DeploymentConfigStatus{
+			Status: osapps_v1.DeploymentConfigStatus{
 				Replicas:            2,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 1,
@@ -360,14 +359,14 @@ func FakeDeploymentConfigs() []osappsv1.DeploymentConfig {
 				Name:              "httpbin-v3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: osappsv1.DeploymentConfigSpec{
-				Template: &v1.PodTemplateSpec{
+			Spec: osapps_v1.DeploymentConfigSpec{
+				Template: &core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{},
 					},
 				},
 			},
-			Status: osappsv1.DeploymentConfigStatus{
+			Status: osapps_v1.DeploymentConfigStatus{
 				Replicas:            2,
 				AvailableReplicas:   0,
 				UnavailableReplicas: 2,
@@ -376,13 +375,13 @@ func FakeDeploymentConfigs() []osappsv1.DeploymentConfig {
 	}
 }
 
-func FakeStatefulSets() []v1beta2.StatefulSet {
+func FakeStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta2.StatefulSet{
+	return []apps_v1.StatefulSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "StatefulSet",
@@ -391,14 +390,14 @@ func FakeStatefulSets() []v1beta2.StatefulSet {
 				Name:              "httpbin-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.StatefulSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.StatefulSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin"},
 					},
 				},
 			},
-			Status: v1beta2.StatefulSetStatus{
+			Status: apps_v1.StatefulSetStatus{
 				Replicas:      1,
 				ReadyReplicas: 1,
 			},
@@ -411,14 +410,14 @@ func FakeStatefulSets() []v1beta2.StatefulSet {
 				Name:              "httpbin-v2",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.StatefulSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.StatefulSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "httpbin", versionLabel: "v2"},
 					},
 				},
 			},
-			Status: v1beta2.StatefulSetStatus{
+			Status: apps_v1.StatefulSetStatus{
 				Replicas:      2,
 				ReadyReplicas: 1,
 			},
@@ -431,14 +430,14 @@ func FakeStatefulSets() []v1beta2.StatefulSet {
 				Name:              "httpbin-v3",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.StatefulSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.StatefulSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{},
 					},
 				},
 			},
-			Status: v1beta2.StatefulSetStatus{
+			Status: apps_v1.StatefulSetStatus{
 				Replicas:      2,
 				ReadyReplicas: 2,
 			},
@@ -446,13 +445,13 @@ func FakeStatefulSets() []v1beta2.StatefulSet {
 	}
 }
 
-func FakeDuplicatedStatefulSets() []v1beta2.StatefulSet {
+func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta2.StatefulSet{
+	return []apps_v1.StatefulSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "StatefulSet",
@@ -461,14 +460,14 @@ func FakeDuplicatedStatefulSets() []v1beta2.StatefulSet {
 				Name:              "duplicated-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta2.StatefulSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.StatefulSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 					},
 				},
 			},
-			Status: v1beta2.StatefulSetStatus{
+			Status: apps_v1.StatefulSetStatus{
 				Replicas:      1,
 				ReadyReplicas: 1,
 			},
@@ -476,13 +475,13 @@ func FakeDuplicatedStatefulSets() []v1beta2.StatefulSet {
 	}
 }
 
-func FakeDepSyncedWithRS() []v1beta1.Deployment {
+func FakeDepSyncedWithRS() []apps_v1.Deployment {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []v1beta1.Deployment{
+	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "Deployment",
@@ -491,14 +490,14 @@ func FakeDepSyncedWithRS() []v1beta1.Deployment {
 				Name:              "details-v1",
 				CreationTimestamp: meta_v1.NewTime(t1),
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "details", versionLabel: "v1"},
 					},
 				},
 			},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            1,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 0,
@@ -507,14 +506,14 @@ func FakeDepSyncedWithRS() []v1beta1.Deployment {
 	}
 }
 
-func FakeRSSyncedWithPods() []v1beta2.ReplicaSet {
+func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return []v1beta2.ReplicaSet{
+	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "ReplicaSet",
@@ -528,14 +527,14 @@ func FakeRSSyncedWithPods() []v1beta2.ReplicaSet {
 					Name:       "details-v1",
 				}},
 			},
-			Spec: v1beta2.ReplicaSetSpec{
-				Template: v1.PodTemplateSpec{
+			Spec: apps_v1.ReplicaSetSpec{
+				Template: core_v1.PodTemplateSpec{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{appLabel: "details", versionLabel: "v1"},
 					},
 				},
 			},
-			Status: v1beta2.ReplicaSetStatus{
+			Status: apps_v1.ReplicaSetStatus{
 				Replicas:          1,
 				AvailableReplicas: 1,
 				ReadyReplicas:     0,
@@ -544,14 +543,14 @@ func FakeRSSyncedWithPods() []v1beta2.ReplicaSet {
 	}
 }
 
-func FakePodsSyncedWithDeployments() []v1.Pod {
+func FakePodsSyncedWithDeployments() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return []v1.Pod{
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1-3618568057-dnkjp",
@@ -564,28 +563,28 @@ func FakePodsSyncedWithDeployments() []v1.Pod {
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					v1.Container{Name: "details", Image: "whatever"},
-					v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					core_v1.Container{Name: "details", Image: "whatever"},
+					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
-				InitContainers: []v1.Container{
-					v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				InitContainers: []core_v1.Container{
+					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
 	}
 }
 
-func FakePodSyncedWithDeployments() *v1.Pod {
+func FakePodSyncedWithDeployments() *core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return &v1.Pod{
+	return &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
@@ -597,14 +596,14 @@ func FakePodSyncedWithDeployments() *v1.Pod {
 			}},
 			Annotations: kubetest.FakeIstioAnnotations(),
 		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
-				v1.Container{Name: "details", Image: "whatever"},
-				v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				core_v1.Container{Name: "details", Image: "whatever"},
+				core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 			},
-			InitContainers: []v1.Container{
-				v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-				v1.Container{Name: "enable-core-dump", Image: "alpine"},
+			InitContainers: []core_v1.Container{
+				core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 			},
 		},
 	}
@@ -616,14 +615,14 @@ func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
 	}
 }
 
-func FakePodsSyncedWithDuplicated() []v1.Pod {
+func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return []v1.Pod{
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1-3618568057-1",
@@ -636,14 +635,14 @@ func FakePodsSyncedWithDuplicated() []v1.Pod {
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					v1.Container{Name: "details", Image: "whatever"},
-					v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					core_v1.Container{Name: "details", Image: "whatever"},
+					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
-				InitContainers: []v1.Container{
-					v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				InitContainers: []core_v1.Container{
+					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
@@ -659,28 +658,28 @@ func FakePodsSyncedWithDuplicated() []v1.Pod {
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					v1.Container{Name: "details", Image: "whatever"},
-					v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					core_v1.Container{Name: "details", Image: "whatever"},
+					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
-				InitContainers: []v1.Container{
-					v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				InitContainers: []core_v1.Container{
+					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
 	}
 }
 
-func FakePodsNoController() []v1.Pod {
+func FakePodsNoController() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 
-	return []v1.Pod{
+	return []core_v1.Pod{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind: "Pod",
@@ -691,28 +690,28 @@ func FakePodsNoController() []v1.Pod {
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				Annotations:       kubetest.FakeIstioAnnotations(),
 			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					v1.Container{Name: "details", Image: "whatever"},
-					v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					core_v1.Container{Name: "details", Image: "whatever"},
+					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
-				InitContainers: []v1.Container{
-					v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				InitContainers: []core_v1.Container{
+					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
 	}
 }
 
-func FakePodsFromDaemonSet() []v1.Pod {
+func FakePodsFromDaemonSet() []core_v1.Pod {
 	conf := config.NewConfig()
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	controller := true
-	return []v1.Pod{
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "daemon-pod",
@@ -725,25 +724,25 @@ func FakePodsFromDaemonSet() []v1.Pod {
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
 			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					v1.Container{Name: "details", Image: "whatever"},
-					v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					core_v1.Container{Name: "details", Image: "whatever"},
+					core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 				},
-				InitContainers: []v1.Container{
-					v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-					v1.Container{Name: "enable-core-dump", Image: "alpine"},
+				InitContainers: []core_v1.Container{
+					core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+					core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 				},
 			},
 		},
 	}
 }
 
-func FakeServices() []v1.Service {
-	return []v1.Service{
+func FakeServices() []core_v1.Service {
+	return []core_v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin"},
-			Spec: v1.ServiceSpec{
+			Spec: core_v1.ServiceSpec{
 				Selector: map[string]string{"app": "httpbin"},
 			},
 		},

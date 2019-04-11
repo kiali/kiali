@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -188,10 +188,10 @@ func fakeIstioDetails() *kubernetes.IstioDetails {
 	return &istioDetails
 }
 
-func fakeServiceDetails(services []string) []v1.Service {
-	items := []v1.Service{}
+func fakeServiceDetails(services []string) []core_v1.Service {
+	items := []core_v1.Service{}
 	for _, service := range services {
-		items = append(items, v1.Service{
+		items = append(items, core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: service,
 			},

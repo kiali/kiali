@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -87,7 +87,7 @@ func TestNoValidHost(t *testing.T) {
 			data.CreateWorkloadListItem("detailsv1", appVersionLabel("details", "v1")),
 			data.CreateWorkloadListItem("otherv1", appVersionLabel("other", "v1")),
 		),
-		Services:        []v1.Service{},
+		Services:        []core_v1.Service{},
 		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
 
@@ -156,8 +156,8 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 	assert.Equal("spec/subsets[0]", validations[0].Path)
 }
 
-func fakeServicesReview() []v1.Service {
-	return []v1.Service{
+func fakeServicesReview() []core_v1.Service {
+	return []core_v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "reviews",
@@ -165,7 +165,7 @@ func fakeServicesReview() []v1.Service {
 				Labels: map[string]string{
 					"app":     "reviews",
 					"version": "v1"}},
-			Spec: v1.ServiceSpec{
+			Spec: core_v1.ServiceSpec{
 				ClusterIP: "fromservice",
 				Type:      "ClusterIP",
 				Selector:  map[string]string{"app": "reviews"},

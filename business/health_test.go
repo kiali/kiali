@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -149,7 +149,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 
 	k8s.On("IsOpenShift").Return(false)
 	k8s.MockEmptyWorkloads("ns")
-	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]v1.Service{}, nil)
+	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
@@ -244,8 +244,8 @@ var (
 	}
 )
 
-func fakeServicesHealthReview() []v1.Service {
-	return []v1.Service{
+func fakeServicesHealthReview() []core_v1.Service {
+	return []core_v1.Service{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "reviews",
@@ -253,11 +253,11 @@ func fakeServicesHealthReview() []v1.Service {
 				Labels: map[string]string{
 					"app":     "reviews",
 					"version": "v1"}},
-			Spec: v1.ServiceSpec{
+			Spec: core_v1.ServiceSpec{
 				ClusterIP: "fromservice",
 				Type:      "ClusterIP",
 				Selector:  map[string]string{"app": "reviews"},
-				Ports: []v1.ServicePort{
+				Ports: []core_v1.ServicePort{
 					{
 						Name:     "http",
 						Protocol: "TCP",
@@ -268,8 +268,8 @@ func fakeServicesHealthReview() []v1.Service {
 						Port:     3000}}}}}
 }
 
-func fakePodsHealthReview() []v1.Pod {
-	return []v1.Pod{
+func fakePodsHealthReview() []core_v1.Pod {
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:        "reviews-v1",
@@ -287,8 +287,8 @@ func fakePodsHealthReview() []v1.Pod {
 	}
 }
 
-func fakePodsHealthReviewWithoutIstio() []v1.Pod {
-	return []v1.Pod{
+func fakePodsHealthReviewWithoutIstio() []core_v1.Pod {
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "reviews-v1",
@@ -304,26 +304,26 @@ func fakePodsHealthReviewWithoutIstio() []v1.Pod {
 	}
 }
 
-func fakeDeploymentsHealthReview() []v1beta1.Deployment {
-	return []v1beta1.Deployment{
+func fakeDeploymentsHealthReview() []apps_v1.Deployment {
+	return []apps_v1.Deployment{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-v1"},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            3,
 				AvailableReplicas:   2,
 				UnavailableReplicas: 1},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
 					MatchLabels: map[string]string{"app": "reviews", "version": "v1"}}}},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "reviews-v2"},
-			Status: v1beta1.DeploymentStatus{
+			Status: apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   1,
 				UnavailableReplicas: 1},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Selector: &meta_v1.LabelSelector{
 					MatchLabels: map[string]string{"app": "reviews", "version": "v2"}}}}}
 }

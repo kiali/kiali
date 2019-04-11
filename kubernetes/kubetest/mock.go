@@ -3,15 +3,14 @@ package kubetest
 import (
 	"fmt"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
-	osv1 "github.com/openshift/api/project/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 
@@ -56,11 +55,11 @@ func NewK8SClientMock() *K8SClientMock {
 
 // MockEmptyWorkloads setup the current mock to return empty workloads for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
-	o.On("GetDeployments", namespace).Return([]v1beta1.Deployment{}, nil)
-	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
-	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
-	o.On("GetDeploymentConfigs", namespace).Return([]osappsv1.DeploymentConfig{}, nil)
-	o.On("GetStatefulSets", namespace).Return([]v1beta2.StatefulSet{}, nil)
+	o.On("GetDeployments", namespace).Return([]apps_v1.Deployment{}, nil)
+	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
+	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)
+	o.On("GetDeploymentConfigs", namespace).Return([]osapps_v1.DeploymentConfig{}, nil)
+	o.On("GetStatefulSets", namespace).Return([]apps_v1.StatefulSet{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
 	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
 }
@@ -68,11 +67,11 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interface{}) {
 	notfound := fmt.Errorf("not found")
-	o.On("GetDeployment", namespace, workload).Return(&v1beta1.Deployment{}, notfound)
-	o.On("GetStatefulSet", namespace, workload).Return(&v1beta2.StatefulSet{}, notfound)
-	o.On("GetDeploymentConfig", namespace, workload).Return(&osappsv1.DeploymentConfig{}, notfound)
-	o.On("GetReplicaSets", namespace).Return([]v1beta2.ReplicaSet{}, nil)
-	o.On("GetReplicationControllers", namespace).Return([]v1.ReplicationController{}, nil)
+	o.On("GetDeployment", namespace, workload).Return(&apps_v1.Deployment{}, notfound)
+	o.On("GetStatefulSet", namespace, workload).Return(&apps_v1.StatefulSet{}, notfound)
+	o.On("GetDeploymentConfig", namespace, workload).Return(&osapps_v1.DeploymentConfig{}, notfound)
+	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
+	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
 	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
 }
@@ -102,24 +101,24 @@ func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, 
 	return args.Get(0).([]batch_v1beta1.CronJob), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*v1beta1.Deployment, error) {
+func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error) {
 	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(*v1beta1.Deployment), args.Error(1)
+	return args.Get(0).(*apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployments(namespace string) ([]v1beta1.Deployment, error) {
+func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta1.Deployment), args.Error(1)
+	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osappsv1.DeploymentConfig, error) {
+func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osapps_v1.DeploymentConfig, error) {
 	args := o.Called(namespace, deploymentName)
-	return args.Get(0).(*osappsv1.DeploymentConfig), args.Error(1)
+	return args.Get(0).(*osapps_v1.DeploymentConfig), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeploymentConfigs(namespace string) ([]osappsv1.DeploymentConfig, error) {
+func (o *K8SClientMock) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]osappsv1.DeploymentConfig), args.Error(1)
+	return args.Get(0).([]osapps_v1.DeploymentConfig), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDestinationRules(namespace string, serviceName string) ([]kubernetes.IstioObject, error) {
@@ -132,9 +131,9 @@ func (o *K8SClientMock) GetDestinationRule(namespace string, destinationrule str
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*v1.Endpoints, error) {
+func (o *K8SClientMock) GetEndpoints(namespace string, serviceName string) (*core_v1.Endpoints, error) {
 	args := o.Called(namespace, serviceName)
-	return args.Get(0).(*v1.Endpoints), args.Error(1)
+	return args.Get(0).(*core_v1.Endpoints), args.Error(1)
 }
 
 func (o *K8SClientMock) GetGateways(namespace string) ([]kubernetes.IstioObject, error) {
@@ -167,39 +166,39 @@ func (o *K8SClientMock) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	return args.Get(0).([]batch_v1.Job), args.Error(1)
 }
 
-func (o *K8SClientMock) GetNamespace(namespace string) (*v1.Namespace, error) {
+func (o *K8SClientMock) GetNamespace(namespace string) (*core_v1.Namespace, error) {
 	args := o.Called(namespace)
-	return args.Get(0).(*v1.Namespace), args.Error(1)
+	return args.Get(0).(*core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) GetNamespaces() ([]v1.Namespace, error) {
+func (o *K8SClientMock) GetNamespaces() ([]core_v1.Namespace, error) {
 	args := o.Called()
-	return args.Get(0).([]v1.Namespace), args.Error(1)
+	return args.Get(0).([]core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]v1.Pod, error) {
+func (o *K8SClientMock) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
 	args := o.Called(namespace, labelSelector)
-	return args.Get(0).([]v1.Pod), args.Error(1)
+	return args.Get(0).([]core_v1.Pod), args.Error(1)
 }
 
-func (o *K8SClientMock) GetPod(namespace, name string) (*v1.Pod, error) {
+func (o *K8SClientMock) GetPod(namespace, name string) (*core_v1.Pod, error) {
 	args := o.Called(namespace, name)
-	return args.Get(0).(*v1.Pod), args.Error(1)
+	return args.Get(0).(*core_v1.Pod), args.Error(1)
 }
 
-func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*kubernetes.PodLogs, error) {
+func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
 	args := o.Called(namespace, name, opts)
 	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
 }
 
-func (o *K8SClientMock) GetProject(project string) (*osv1.Project, error) {
+func (o *K8SClientMock) GetProject(project string) (*osproject_v1.Project, error) {
 	args := o.Called(project)
-	return args.Get(0).(*osv1.Project), args.Error(1)
+	return args.Get(0).(*osproject_v1.Project), args.Error(1)
 }
 
-func (o *K8SClientMock) GetProjects() ([]osv1.Project, error) {
+func (o *K8SClientMock) GetProjects() ([]osproject_v1.Project, error) {
 	args := o.Called()
-	return args.Get(0).([]osv1.Project), args.Error(1)
+	return args.Get(0).([]osproject_v1.Project), args.Error(1)
 }
 
 func (o *K8SClientMock) GetQuotaSpec(namespace string, quotaSpecName string) (kubernetes.IstioObject, error) {
@@ -222,14 +221,14 @@ func (o *K8SClientMock) GetQuotaSpecBindings(namespace string) ([]kubernetes.Ist
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]v1.ReplicationController, error) {
+func (o *K8SClientMock) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1.ReplicationController), args.Error(1)
+	return args.Get(0).([]core_v1.ReplicationController), args.Error(1)
 }
 
-func (o *K8SClientMock) GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error) {
+func (o *K8SClientMock) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta2.ReplicaSet), args.Error(1)
+	return args.Get(0).([]apps_v1.ReplicaSet), args.Error(1)
 }
 
 func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
@@ -237,14 +236,14 @@ func (o *K8SClientMock) GetSelfSubjectAccessReview(namespace, api, resourceType 
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
-func (o *K8SClientMock) GetService(namespace string, serviceName string) (*v1.Service, error) {
+func (o *K8SClientMock) GetService(namespace string, serviceName string) (*core_v1.Service, error) {
 	args := o.Called(namespace, serviceName)
-	return args.Get(0).(*v1.Service), args.Error(1)
+	return args.Get(0).(*core_v1.Service), args.Error(1)
 }
 
-func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) ([]v1.Service, error) {
+func (o *K8SClientMock) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	args := o.Called(namespace, selectorLabels)
-	return args.Get(0).([]v1.Service), args.Error(1)
+	return args.Get(0).([]core_v1.Service), args.Error(1)
 }
 
 func (o *K8SClientMock) GetServiceEntries(namespace string) ([]kubernetes.IstioObject, error) {
@@ -257,14 +256,14 @@ func (o *K8SClientMock) GetServiceEntry(namespace string, serviceEntryName strin
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*v1beta2.StatefulSet, error) {
+func (o *K8SClientMock) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
 	args := o.Called(namespace, statefulsetName)
-	return args.Get(0).(*v1beta2.StatefulSet), args.Error(1)
+	return args.Get(0).(*apps_v1.StatefulSet), args.Error(1)
 }
 
-func (o *K8SClientMock) GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error) {
+func (o *K8SClientMock) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]v1beta2.StatefulSet), args.Error(1)
+	return args.Get(0).([]apps_v1.StatefulSet), args.Error(1)
 }
 
 func (o *K8SClientMock) GetTemplate(namespace, templateType, templateName string) (kubernetes.IstioObject, error) {
@@ -371,15 +370,15 @@ func (o *K8SClientMock) MockService(namespace, name string) {
 }
 
 func (o *K8SClientMock) MockServices(namespace string, names []string) {
-	services := []v1.Service{}
+	services := []core_v1.Service{}
 	for _, name := range names {
 		services = append(services, fakeService(namespace, name))
 	}
 	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
 }
 
-func fakeService(namespace, name string) v1.Service {
-	return v1.Service{
+func fakeService(namespace, name string) core_v1.Service {
+	return core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -387,11 +386,11 @@ func fakeService(namespace, name string) v1.Service {
 				"app": name,
 			},
 		},
-		Spec: v1.ServiceSpec{
+		Spec: core_v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Type:      "ClusterIP",
 			Selector:  map[string]string{"app": name},
-			Ports: []v1.ServicePort{
+			Ports: []core_v1.ServicePort{
 				{
 					Name:     "http",
 					Protocol: "TCP",
@@ -407,8 +406,8 @@ func fakeService(namespace, name string) v1.Service {
 	}
 }
 
-func FakePodListWithoutSidecar() []v1.Pod {
-	return []v1.Pod{
+func FakePodListWithoutSidecar() []core_v1.Pod {
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:   "reviews-v1",
@@ -424,8 +423,8 @@ func FakePodListWithoutSidecar() []v1.Pod {
 	}
 }
 
-func FakePodList() []v1.Pod {
-	return []v1.Pod{
+func FakePodList() []core_v1.Pod {
+	return []core_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:        "reviews-v1",
@@ -454,8 +453,8 @@ func FakeIstioAnnotations() map[string]string {
 	return map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}
 }
 
-func FakeNamespace(name string) *v1.Namespace {
-	return &v1.Namespace{
+func FakeNamespace(name string) *core_v1.Namespace {
+	return &core_v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: name,
 		},

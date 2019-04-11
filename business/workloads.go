@@ -5,12 +5,11 @@ import (
 	"sync"
 	"time"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -118,17 +117,17 @@ func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
 	return &pod, nil
 }
 
-func (in *WorkloadService) GetPodLogs(namespace, name string, opts *v1.PodLogOptions) (*kubernetes.PodLogs, error) {
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
 	return in.k8s.GetPodLogs(namespace, name, opts)
 }
 
 func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, labelSelector string) (models.Workloads, error) {
-	var pods []v1.Pod
-	var repcon []v1.ReplicationController
-	var dep []v1beta1.Deployment
-	var repset []v1beta2.ReplicaSet
-	var depcon []osappsv1.DeploymentConfig
-	var fulset []v1beta2.StatefulSet
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep []apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon []osapps_v1.DeploymentConfig
+	var fulset []apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
 
@@ -517,7 +516,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 				}
 			}
 			if found {
-				w.SetPods([]v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]})
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", cname)
@@ -572,12 +571,12 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 }
 
 func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, workloadName string) (*models.Workload, error) {
-	var pods []v1.Pod
-	var repcon []v1.ReplicationController
-	var dep *v1beta1.Deployment
-	var repset []v1beta2.ReplicaSet
-	var depcon *osappsv1.DeploymentConfig
-	var fulset *v1beta2.StatefulSet
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep *apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon *osapps_v1.DeploymentConfig
+	var fulset *apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
 
@@ -907,7 +906,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 				}
 			}
 			if found {
-				w.SetPods([]v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]})
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", workloadName)

@@ -4,17 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
 )
 
 func TestPodFullyParsing(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	k8sPod := v1.Pod{
+	k8sPod := core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
@@ -24,14 +25,14 @@ func TestPodFullyParsing(t *testing.T) {
 				Name: "details-v1-3618568057",
 			}},
 			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
-				v1.Container{Name: "details", Image: "whatever"},
-				v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				core_v1.Container{Name: "details", Image: "whatever"},
+				core_v1.Container{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
 			},
-			InitContainers: []v1.Container{
-				v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-				v1.Container{Name: "enable-core-dump", Image: "alpine"},
+			InitContainers: []core_v1.Container{
+				core_v1.Container{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				core_v1.Container{Name: "enable-core-dump", Image: "alpine"},
 			},
 		}}
 
@@ -55,7 +56,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	k8sPod := v1.Pod{
+	k8sPod := core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
@@ -87,7 +88,7 @@ func TestPodParsingMissingAnnotations(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	k8sPod := v1.Pod{
+	k8sPod := core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),
@@ -108,7 +109,7 @@ func TestPodParsingInvalidAnnotations(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	k8sPod := v1.Pod{
+	k8sPod := core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "details-v1-3618568057-dnkjp",
 			CreationTimestamp: meta_v1.NewTime(t1),

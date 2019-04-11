@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	kmock "github.com/kiali/kiali/kubernetes/kiali_monitoring/mock"
@@ -284,7 +284,7 @@ func fakeHistogram(avg int) prometheus.Histogram {
 
 func fakeDashboard(id string) *v1alpha1.MonitoringDashboard {
 	return &v1alpha1.MonitoringDashboard{
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "dashboard" + id,
 		},
 		Spec: v1alpha1.MonitoringDashboardSpec{

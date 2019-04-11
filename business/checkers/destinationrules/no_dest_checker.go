@@ -3,7 +3,7 @@ package destinationrules
 import (
 	"strconv"
 
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -16,7 +16,7 @@ type NoDestinationChecker struct {
 	WorkloadList    models.WorkloadList
 	DestinationRule kubernetes.IstioObject
 	ServiceEntries  map[string][]string
-	Services        []v1.Service
+	Services        []core_v1.Service
 }
 
 // Check parses the DestinationRule definitions and verifies that they point to an existing service, including any subset definitions

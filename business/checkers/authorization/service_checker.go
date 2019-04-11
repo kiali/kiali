@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -12,7 +12,7 @@ import (
 
 type ServiceChecker struct {
 	ServiceRole kubernetes.IstioObject
-	Services    []v1.Service
+	Services    []core_v1.Service
 }
 
 // Check verifies that the services point to existing ones. ServiceRole can only affect the defined namespace, no other even if FQDN is used to point to different namespace

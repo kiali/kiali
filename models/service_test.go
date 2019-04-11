@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -168,10 +168,10 @@ func TestServiceParse(t *testing.T) {
 	assert.Equal(int32(3000), service.Ports[1].Port)
 }
 
-func fakeService() *v1.Service {
+func fakeService() *core_v1.Service {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 
-	return &v1.Service{
+	return &core_v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:              "Name",
 			Namespace:         "Namespace",
@@ -180,10 +180,10 @@ func fakeService() *v1.Service {
 			Labels: map[string]string{
 				"label1": "labelName1",
 				"label2": "labelName2"}},
-		Spec: v1.ServiceSpec{
+		Spec: core_v1.ServiceSpec{
 			ClusterIP: "127.0.0.9",
 			Type:      "ClusterIP",
-			Ports: []v1.ServicePort{
+			Ports: []core_v1.ServicePort{
 				{
 					Name:     "http",
 					Protocol: "TCP",
@@ -194,39 +194,39 @@ func fakeService() *v1.Service {
 					Port:     3000}}}}
 }
 
-func fakeEndpoints() *v1.Endpoints {
-	return &v1.Endpoints{
-		Subsets: []v1.EndpointSubset{
+func fakeEndpoints() *core_v1.Endpoints {
+	return &core_v1.Endpoints{
+		Subsets: []core_v1.EndpointSubset{
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []core_v1.EndpointAddress{
 					{
 						IP: "172.17.0.9",
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Kind: "Pod",
 							Name: "recommendation-v1"}},
 					{
 						IP: "172.17.0.8",
-						TargetRef: &v1.ObjectReference{
+						TargetRef: &core_v1.ObjectReference{
 							Kind: "Pod",
 							Name: "recommendation-v2"}},
 				},
-				Ports: []v1.EndpointPort{
+				Ports: []core_v1.EndpointPort{
 					{Name: "http", Protocol: "TCP", Port: 3001},
 					{Name: "http", Protocol: "TCP", Port: 3000},
 				}}}}
 }
 
-func fakePods() []v1.Pod {
+func fakePods() []core_v1.Pod {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	t2, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:45 +0300")
 
-	return []v1.Pod{
-		v1.Pod{
+	return []core_v1.Pod{
+		core_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "reviews-v1-1234",
 				CreationTimestamp: meta_v1.NewTime(t1),
 				Labels:            map[string]string{"apps": "reviews", "version": "v1"}}},
-		v1.Pod{
+		core_v1.Pod{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "reviews-v2-1234",
 				CreationTimestamp: meta_v1.NewTime(t2),
