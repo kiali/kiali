@@ -3,7 +3,7 @@ package business
 import (
 	"regexp"
 
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
@@ -82,7 +82,7 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	defer promtimer.ObserveNow(&err)
 
 	if in.hasProjects {
-		var project *osproj_v1.Project
+		var project *osproject_v1.Project
 		project, err = in.k8s.GetProject(namespace)
 		if err != nil {
 			return nil, err

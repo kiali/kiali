@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -191,14 +191,14 @@ func (o *K8SClientMock) GetPodLogs(namespace, name string, opts *core_v1.PodLogO
 	return args.Get(0).(*kubernetes.PodLogs), args.Error(1)
 }
 
-func (o *K8SClientMock) GetProject(project string) (*osproj_v1.Project, error) {
+func (o *K8SClientMock) GetProject(project string) (*osproject_v1.Project, error) {
 	args := o.Called(project)
-	return args.Get(0).(*osproj_v1.Project), args.Error(1)
+	return args.Get(0).(*osproject_v1.Project), args.Error(1)
 }
 
-func (o *K8SClientMock) GetProjects() ([]osproj_v1.Project, error) {
+func (o *K8SClientMock) GetProjects() ([]osproject_v1.Project, error) {
 	args := o.Called()
-	return args.Get(0).([]osproj_v1.Project), args.Error(1)
+	return args.Get(0).([]osproject_v1.Project), args.Error(1)
 }
 
 func (o *K8SClientMock) GetQuotaSpec(namespace string, quotaSpecName string) (kubernetes.IstioObject, error) {

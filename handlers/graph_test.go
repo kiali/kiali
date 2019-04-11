@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -46,13 +46,13 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 		}, nil)
 
 	k8s.On("GetProjects").Return(
-		[]osproj_v1.Project{
-			osproj_v1.Project{
+		[]osproject_v1.Project{
+			osproject_v1.Project{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "bookinfo",
 				},
 			},
-			osproj_v1.Project{
+			osproject_v1.Project{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "tutorial",
 				},

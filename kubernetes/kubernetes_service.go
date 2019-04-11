@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -43,8 +43,8 @@ func (in *IstioClient) GetNamespaces() ([]core_v1.Namespace, error) {
 // GetProject fetches and returns the definition of the project with
 // the specified name by querying the cluster API. GetProject will fail
 // if the underlying cluster is not Openshift.
-func (in *IstioClient) GetProject(name string) (*osproj_v1.Project, error) {
-	result := &osproj_v1.Project{}
+func (in *IstioClient) GetProject(name string) (*osproject_v1.Project, error) {
+	result := &osproject_v1.Project{}
 
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do().Into(result)
 
@@ -55,8 +55,8 @@ func (in *IstioClient) GetProject(name string) (*osproj_v1.Project, error) {
 	return result, nil
 }
 
-func (in *IstioClient) GetProjects() ([]osproj_v1.Project, error) {
-	result := &osproj_v1.ProjectList{}
+func (in *IstioClient) GetProjects() ([]osproject_v1.Project, error) {
+	result := &osproject_v1.ProjectList{}
 
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects").Do().Into(result)
 

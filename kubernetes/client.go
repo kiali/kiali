@@ -8,7 +8,7 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -60,8 +60,8 @@ type IstioClientInterface interface {
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*PodLogs, error)
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
-	GetProject(project string) (*osproj_v1.Project, error)
-	GetProjects() ([]osproj_v1.Project, error)
+	GetProject(project string) (*osproject_v1.Project, error)
+	GetProjects() ([]osproject_v1.Project, error)
 	GetQuotaSpec(namespace string, quotaSpecName string) (IstioObject, error)
 	GetQuotaSpecs(namespace string) ([]IstioObject, error)
 	GetQuotaSpecBinding(namespace string, quotaSpecBindingName string) (IstioObject, error)

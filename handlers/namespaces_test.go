@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osproj_v1 "github.com/openshift/api/project/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -122,7 +122,7 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/my_namespace/metrics"
 
-	var nsNil *osproj_v1.Project
+	var nsNil *osproject_v1.Project
 	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
 
 	resp, err := http.Get(url)
@@ -139,7 +139,7 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	if err != nil {
 		t.Fatal(err)
 	}
-	k8s.On("GetProject", "ns").Return(&osproj_v1.Project{}, nil)
+	k8s.On("GetProject", "ns").Return(&osproject_v1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(

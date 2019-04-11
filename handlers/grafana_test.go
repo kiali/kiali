@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -26,8 +25,8 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.DisplayLink = false
 	config.Set(conf)
-	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
+	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		return &core_v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
@@ -41,8 +40,8 @@ func TestGetGrafanaInfoFromConfig(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
+	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		return &core_v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
@@ -56,8 +55,8 @@ func TestGetGrafanaInfoFromConfig(t *testing.T) {
 func TestGetGrafanaInfoNoExternalIP(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		return &core_v1.ServiceSpec{
 			ExternalIPs: []string{},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
@@ -70,8 +69,8 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		return &core_v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
@@ -84,8 +83,8 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*v1.ServiceSpec, error) {
-		return &v1.ServiceSpec{
+	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		return &core_v1.ServiceSpec{
 			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
