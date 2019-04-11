@@ -51,6 +51,11 @@
 #    The namespace into which Kiali operator is to be installed.
 #    Default: "kiali-operator"
 #
+# OPERATOR_SKIP_WAIT
+#    If you do not want this script to wait for the operator to start in order to confirm
+#    it successfully installed, set this to "true".
+#    Default: "false"
+#
 # OPERATOR_VERSION_LABEL
 #    Kiali operator resources will be assigned a "version" label when they are deployed.
 #    To control what version label to use for Kiali resources, see VERSION_LABEL.
@@ -187,6 +192,7 @@ export OPERATOR_IMAGE_PULL_POLICY="${OPERATOR_IMAGE_PULL_POLICY:-IfNotPresent}"
 export OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION:-lastrelease}"
 export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
 export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
+export OPERATOR_SKIP_WAIT="${OPERATOR_SKIP_WAIT:-false}"
 export OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL:-$OPERATOR_IMAGE_VERSION}"
 
 # Make sure we have access to all required tools
@@ -231,6 +237,7 @@ echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
 echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
 echo OPERATOR_IMAGE_VERSION=$OPERATOR_IMAGE_VERSION
 echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
+echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
 echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
 echo "=== OPERATOR SETTINGS ==="
@@ -275,21 +282,25 @@ do
   fi
 done
 
-# Wait for the operator to start up so we can confirm it is OK.
-echo -n "Waiting for the operator to start."
-for run in {1..60}
-do
-  ${CLIENT_EXE} get pods -l app=kiali-operator -n ${OPERATOR_NAMESPACE} 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null && _OPERATOR_STARTED=true && break
-  echo -n "."
-  sleep 5
-done
-echo
+if [ "${OPERATOR_SKIP_WAIT}" != "true" ]; then
+  # Wait for the operator to start up so we can confirm it is OK.
+  echo -n "Waiting for the operator to start."
+  for run in {1..60}
+  do
+    ${CLIENT_EXE} get pods -l app=kiali-operator -n ${OPERATOR_NAMESPACE} 2>/dev/null | grep "^kiali-operator.*Running" > /dev/null && _OPERATOR_STARTED=true && break
+    echo -n "."
+    sleep 5
+  done
+  echo
 
-if [ -z ${_OPERATOR_STARTED} ]; then
-  echo "ERROR: The Kiali Operator is not running yet. Please make sure it was deployed successfully."
-  exit 1
+  if [ -z ${_OPERATOR_STARTED} ]; then
+    echo "ERROR: The Kiali Operator is not running yet. Please make sure it was deployed successfully."
+    exit 1
+  else
+    echo "The Kiali operator is installed!"
+  fi
 else
-  echo "The Kiali operator is installed!"
+  echo "The Kiali operator has been created but you have opted not to wait for it to start. It will take some time for the image to be pulled and start."
 fi
 
 # Now deploy Kiali if we were asked to do so.
