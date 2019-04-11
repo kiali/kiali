@@ -316,7 +316,7 @@ if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
   echo "An example Kiali CR with all settings documented can be found here:"
   echo "  https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
   echo "To install Kiali with all default settings, you can run:"
-  echo "  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "  ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
   echo "Do not forget to create a secret if you wish to use an auth strategy of 'login' (This is"
   echo "the default setting when installing in Kubernetes but not OpenShift)."
   echo "An example would be:"
