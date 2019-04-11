@@ -29,6 +29,7 @@ GO_VERSION_KIALI = 1.8.3
 CONTAINER_NAME ?= kiali/kiali
 CONTAINER_VERSION ?= dev
 
+# These two vars allow Jenkins to override values.
 DOCKER_NAME ?= ${CONTAINER_NAME}
 QUAY_NAME ?= quay.io/${CONTAINER_NAME}
 
