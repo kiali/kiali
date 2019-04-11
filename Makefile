@@ -28,9 +28,12 @@ GO_VERSION_KIALI = 1.8.3
 # Identifies the container image that will be built and deployed.
 CONTAINER_NAME ?= kiali/kiali
 CONTAINER_VERSION ?= dev
-CONTAINER_TAG = ${CONTAINER_NAME}:${CONTAINER_VERSION}
-DOCKER_TAG = ${CONTAINER_TAG}
-QUAY_TAG = quay.io/${CONTAINER_TAG}
+
+DOCKER_NAME ?= ${CONTAINER_NAME}
+QUAY_NAME ?= quay.io/${CONTAINER_NAME}
+
+DOCKER_TAG = ${DOCKER_NAME}:${CONTAINER_VERSION}
+QUAY_TAG = ${QUAY_NAME}:${CONTAINER_VERSION}
 
 # Declares the namespace where the objects are to be deployed.
 # For OpenShift, this is the name of the project.

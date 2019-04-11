@@ -144,6 +144,7 @@ endif
 	CONTAINER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
+	  OPERATOR_IMAGE_NAME="$(QUAY_OPERATOR_NAME)" \
 	  make docker-build docker-push
 ifneq ($(IS_SNAPSHOT),y)
    # docker.io
@@ -157,6 +158,7 @@ ifneq ($(IS_SNAPSHOT),y)
 endif
 	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
 	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
+	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
 
 backend-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
