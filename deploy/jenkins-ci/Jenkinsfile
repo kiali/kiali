@@ -186,7 +186,7 @@ node('kiali-build') {
                [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
                [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
                [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
-               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG']
+               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG'],
                [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
              ], wait: false
            )
