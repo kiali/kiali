@@ -7,7 +7,7 @@ VERSION ?= v0.18.0
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
-# in the docker image. If "local" the CONSOLE_LOCAL_DIR is
+# in the container image. If "local" the CONSOLE_LOCAL_DIR is
 # where the UI project has been git cloned and has its
 # content built in its build/ subdirectory.
 # WARNING: If you have previously run the 'docker' target but
@@ -25,10 +25,12 @@ VERSION_LABEL ?= ${VERSION}
 # The minimum Go version that must be used to build the app.
 GO_VERSION_KIALI = 1.8.3
 
-# Identifies the docker image that will be built and deployed.
-DOCKER_NAME ?= kiali/kiali
-DOCKER_VERSION ?= dev
-DOCKER_TAG = ${DOCKER_NAME}:${DOCKER_VERSION}
+# Identifies the container image that will be built and deployed.
+CONTAINER_NAME ?= kiali/kiali
+CONTAINER_VERSION ?= dev
+CONTAINER_TAG = ${CONTAINER_NAME}:${CONTAINER_VERSION}
+DOCKER_TAG = ${CONTAINER_TAG}
+QUAY_TAG = quay.io/${CONTAINER_TAG}
 
 # Declares the namespace where the objects are to be deployed.
 # For OpenShift, this is the name of the project.
@@ -179,22 +181,23 @@ swagger-travis: swagger-validate
 
 .prepare-docker-image-files:
 	@CONSOLE_VERSION=${CONSOLE_VERSION} CONSOLE_LOCAL_DIR=${CONSOLE_LOCAL_DIR} deploy/get-console.sh
-	@echo Preparing docker image files...
+	@echo Preparing container image files...
 	@mkdir -p _output/docker
 	@cp -r deploy/docker/* _output/docker
 	@cp ${GOPATH}/bin/kiali _output/docker
 
-## docker-build-kiali: Build Kiali docker image into local docker daemon. Runs `docker build` internally
+## docker-build-kiali: Build Kiali container image into local docker daemon.
 docker-build-kiali: .prepare-docker-image-files
-	@echo Building docker image for Kiali into local docker daemon...
+	@echo Building container image for Kiali into local docker daemon...
 	docker build -t ${DOCKER_TAG} _output/docker
+	docker tag ${DOCKER_TAG} ${QUAY_TAG}
 
-## docker-build-operator: Build Kiali operator docker image into local docker daemon. Runs `docker build` internally
+## docker-build-operator: Build Kiali operator container image into local docker daemon.
 docker-build-operator:
-	@echo Building docker image for Kiali operator into local docker daemon...
-	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-build
+	@echo Building container image for Kiali operator into local docker daemon...
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-build
 
-## docker-build: Build Kiali and Kiali operator docker images into local docker daemon.
+## docker-build: Build Kiali and Kiali operator container images into local docker daemon.
 docker-build: docker-build-kiali docker-build-operator
 
 .prepare-minikube:
@@ -208,26 +211,29 @@ docker-build: docker-build-kiali docker-build-operator
 		echo "/etc/hosts should have kiali so you can access the ingress"; \
 	fi
 
-## minikube-docker: Build docker image into minikube docker daemon. Runs `docker build` internally
+## minikube-docker: Build container image into minikube docker daemon.
 minikube-docker: .prepare-minikube .prepare-docker-image-files
-	@echo Building docker image into minikube docker daemon...
+	@echo Building container image into minikube docker daemon...
 	@eval $$(minikube docker-env) ; \
 	docker build -t ${DOCKER_TAG} _output/docker
-	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-build
+	docker tag ${DOCKER_TAG} ${QUAY_TAG}
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-build
 
-docker-push-operator:
-	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-push
+container-push-operator:
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-push
 
-docker-push-kiali:
-	@echo Pushing current docker image to ${DOCKER_TAG}
+container-push-kiali:
+	@echo Pushing current image to ${QUAY_TAG}
+	docker push ${QUAY_TAG}
+	@echo Pushing current image to ${DOCKER_TAG}
 	docker push ${DOCKER_TAG}
 
-## docker-push: Pushing current docker images to ${DOCKER_TAG}. Runs `docker push` internally
-docker-push: docker-push-kiali
+## container-push: Pushes current container images to remote container repos.
+container-push: container-push-kiali container-push-operator
 
 ## operator-create: Delgates to the operator-create target of the operator Makefile
 operator-create: docker-build-operator
-	OPERATOR_IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator operator-create
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-create
 
 .ensure-oc-exists:
 	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl))
@@ -241,11 +247,11 @@ operator-create: docker-build-operator
 
 ## openshift-deploy: Delgates to the kiali-create target of the operator Makefile
 openshift-deploy: openshift-undeploy
-	IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator kiali-create
+	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-create
 
 ## openshift-undeploy: Delgates to the kiali-delete target of the operator Makefile
 openshift-undeploy: .ensure-operator-is-running
-	IMAGE_VERSION=${DOCKER_VERSION} $(MAKE) -C operator kiali-delete
+	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-delete
 
 ## k8s-deploy: Delgates to the kiali-create target of the operator Makefile
 k8s-deploy: openshift-deploy
