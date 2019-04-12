@@ -77,3 +77,9 @@ def get_kiali_clusterrole_file(file_type):
     yaml_content = urlopen(file).read()
 
     return next(yaml.safe_load_all(yaml_content))
+
+def get_kiali_swagger_address():
+    return __get_environment_config__(ENV_FILE).get('kiali_swagger_address')
+
+def get_kiali_hostname():
+    return __get_environment_config__(ENV_FILE).get('kiali_hostname')
