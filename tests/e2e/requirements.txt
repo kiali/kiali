@@ -5,6 +5,6 @@ virtualenv
 pytest==3.6
 pyyaml
 requests
-kiali-client==0.8.0
+kiali-client==0.8.2
 swagger-parser
 

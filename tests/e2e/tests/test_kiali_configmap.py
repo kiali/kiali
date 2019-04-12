@@ -11,8 +11,8 @@ STRATEGY_LOGIN = 'login'
 STRATEGY_ANONYMOUS = 'anonymous'
 STRATEGY_OPENSHIFT = 'openshift'
 
-AUTH_CREDENTIALS = 'https-user-password'
 AUTH_NOAUTH = 'no-auth'
+AUTH_LOGIN = "https-user-password"
 
 STRATEGY_LIST = ['login', 'anonymous', 'openshift']
 WEB_ROOT_LIST = ['/']
@@ -23,11 +23,12 @@ def test_auth_anonymous():
             new_value=STRATEGY_ANONYMOUS, current_configmap_file=conftest.CURRENT_CONFIGMAP_FILE,
             new_configmap_file=conftest.NEW_CONFIG_MAP_FILE)
 
-        assert do_auth_strategy_test(auth_type = AUTH_NOAUTH)
+        assert make_request(auth_type = AUTH_NOAUTH)
 
     finally:
         # Return Auth strategy back to 'login'
         create_configmap_and_wait_for_kiali(conftest.CURRENT_CONFIGMAP_FILE)
+        make_request(auth_type = AUTH_LOGIN)
 
 def test_auth_openshift():
 
@@ -63,8 +64,10 @@ def test_auth_openshift():
         Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
 
     finally:
-        # Return Auth strategy back to 'login'
-         create_configmap_and_wait_for_kiali(conftest.CURRENT_CONFIGMAP_FILE)
+        # Return Auth strategy back to 'login' and wait for Kiali to be accessible
+        create_configmap_and_wait_for_kiali(conftest.CURRENT_CONFIGMAP_FILE)
+        make_request(auth_type = AUTH_LOGIN)
+
 
 def __test_change_web_root(kiali_client):
     new_web_root_value = '/e2e'
@@ -87,22 +90,24 @@ def __test_change_web_root(kiali_client):
 
 ##
 
-def do_auth_strategy_test(auth_type):
-    swagger = conftest.get_kiali_swagger_address()
-    hostname = conftest.get_kiali_hostname()
+def make_request(auth_type="auth"):
 
-    if AUTH_NOAUTH in auth_type:
-
-        with timeout(seconds=180, error_message='Timed out waiting for API call to complete'):
-            while True:
-                kiali_client = KialiClient(hostname=hostname, auth_type=AUTH_NOAUTH, verify=False, swagger_address=swagger)
+    with timeout(seconds=180, error_message='Timed out waiting for API call to complete'):
+        while True:
+            if auth_type == AUTH_LOGIN:
+                kiali_client = conftest.get_new_kiali_client()
                 response = kiali_client.request(method_name='namespaceList', path=None, params=None)
-                if response.status_code == 200:
-                    break
+            elif auth_type == AUTH_NOAUTH:
+                kiali_client = KialiClient(hostname=conftest.get_kiali_hostname(), auth_type=AUTH_NOAUTH, verify=False,
+                                           swagger_address=conftest.get_kiali_swagger_address())
+                response = kiali_client.request(method_name='namespaceList', path=None, params=None)
+            else:
+                assert False, "Error: Unsupported Auth Strategy Type: {}".format(auth_type)
 
-                time.sleep(2)
-    else:
-        assert False, "To Do"
+            if response.status_code == 200:
+                break
+
+            time.sleep(2)
 
     return True
 

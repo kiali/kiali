@@ -83,3 +83,6 @@ def get_kiali_swagger_address():
 
 def get_kiali_hostname():
     return __get_environment_config__(ENV_FILE).get('kiali_hostname')
+
+def get_new_kiali_client():
+    return __get_kiali_client__(__get_environment_config__(ENV_FILE))
