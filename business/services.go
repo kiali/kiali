@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/api/apps/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -32,7 +32,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 	var svcs []core_v1.Service
 	var pods []core_v1.Pod
-	var deployments []v1beta1.Deployment
+	var deployments []apps_v1.Deployment
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
@@ -78,7 +78,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods, deployments), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []v1.Pod, deployments []v1beta1.Deployment) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
 	validations := in.getServiceValidations(svcs, deployments)
@@ -112,7 +112,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		return nil, err
 	}
 
-	var pods []v1.Pod
+	var pods []core_v1.Pod
 	var hth models.ServiceHealth
 	var vs, dr []kubernetes.IstioObject
 	var ws models.Workloads
@@ -272,7 +272,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	return svc, eps, nil
 }
 
-func (in *SvcService) getServiceValidations(services []v1.Service, deployments []v1beta1.Deployment) models.IstioValidations {
+func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment) models.IstioValidations {
 	validations := checkers.ServiceChecker{
 		Services:    services,
 		Deployments: deployments,

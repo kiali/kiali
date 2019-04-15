@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/stretchr/testify/assert"
 
-	v1beta1 "k8s.io/api/apps/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -85,15 +85,15 @@ func getService(servicePort int32, portName string) v1.Service {
 	}
 }
 
-func getDeployment(containerPort int32) []v1beta1.Deployment {
-	return []v1beta1.Deployment{
-		v1beta1.Deployment{
+func getDeployment(containerPort int32) []apps_v1.Deployment {
+	return []apps_v1.Deployment{
+		apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Labels: map[string]string{
 					"dep": "one",
 				},
 			},
-			Spec: v1beta1.DeploymentSpec{
+			Spec: apps_v1.DeploymentSpec{
 				Template: v1.PodTemplateSpec{
 					Spec: v1.PodSpec{
 						Containers: []v1.Container{

@@ -3,7 +3,7 @@ package checkers
 import (
 	"github.com/kiali/kiali/business/checkers/services"
 	"github.com/kiali/kiali/models"
-	v1beta1 "k8s.io/api/apps/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -11,7 +11,7 @@ const ServiceCheckerType = "service"
 
 type ServiceChecker struct {
 	Services    []v1.Service
-	Deployments []v1beta1.Deployment
+	Deployments []apps_v1.Deployment
 }
 
 func (sc ServiceChecker) Check() models.IstioValidations {

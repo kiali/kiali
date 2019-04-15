@@ -6,14 +6,14 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	v1beta1 "k8s.io/api/apps/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
 type PortMappingChecker struct {
 	Service     v1.Service
-	Deployments []v1beta1.Deployment
+	Deployments []apps_v1.Deployment
 }
 
 func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
@@ -34,7 +34,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, len(validations) == 0
 }
 
-func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) *v1beta1.Deployment {
+func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) *apps_v1.Deployment {
 	if selectors == nil || len(selectors) == 0 {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) 
 	return nil
 }
 
-func (p PortMappingChecker) matchPorts(service *v1.Service, deployment *v1beta1.Deployment, validations *[]*models.IstioCheck) {
+func (p PortMappingChecker) matchPorts(service *v1.Service, deployment *apps_v1.Deployment, validations *[]*models.IstioCheck) {
 Service:
 	for portIndex, sp := range service.Spec.Ports {
 		for _, c := range deployment.Spec.Template.Spec.Containers {

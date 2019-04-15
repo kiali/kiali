@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"k8s.io/api/apps/v1beta1"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -50,7 +50,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	var gatewaysPerNamespace [][]kubernetes.IstioObject
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
-	var deployments []v1beta1.Deployment
+	var deployments []apps_v1.Deployment
 
 	wg.Add(5) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 
@@ -91,7 +91,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	return validations, nil
 }
 
-func (in *IstioValidationsService) getServiceCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, rbacDetails kubernetes.RBACDetails, deployments []v1beta1.Deployment) []ObjectChecker {
+func (in *IstioValidationsService) getServiceCheckers(namespace string, istioDetails kubernetes.IstioDetails, services []core_v1.Service, workloads models.WorkloadList, gatewaysPerNamespace [][]kubernetes.IstioObject, rbacDetails kubernetes.RBACDetails, deployments []apps_v1.Deployment) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails},
 		checkers.ServiceChecker{Services: services, Deployments: deployments},
@@ -101,7 +101,6 @@ func (in *IstioValidationsService) getServiceCheckers(namespace string, istioDet
 func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioDetails kubernetes.IstioDetails, gatewaysPerNamespace [][]kubernetes.IstioObject, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.VirtualServiceChecker{Namespace: namespace, DestinationRules: istioDetails.DestinationRules, VirtualServices: istioDetails.VirtualServices},
-		checkers.NoServiceChecker{Namespace: namespace, IstioDetails: &istioDetails, Services: services, WorkloadList: workloads, GatewaysPerNamespace: gatewaysPerNamespace, AuthorizationDetails: &rbacDetails},
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace},
 		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
@@ -264,7 +263,7 @@ func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, name
 	}
 }
 
-func (in *IstioValidationsService) fetchDeployments(rValue *[]v1beta1.Deployment, namespace string, errChan chan error, wg *sync.WaitGroup) {
+func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
 		deployments, err := in.k8s.GetDeployments(namespace)
