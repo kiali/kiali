@@ -403,13 +403,22 @@ export const getPod = (namespace: string, name: string) => {
   return newRequest<Pod>(HTTP_VERBS.GET, urls.pod(namespace, name), {}, {});
 };
 
-export const getPodLogs = (namespace: string, name: string, container?: string, sinceTime?: number) => {
+export const getPodLogs = (
+  namespace: string,
+  name: string,
+  container?: string,
+  tailLines?: number,
+  sinceTime?: number
+) => {
   const params: any = {};
   if (container) {
     params.container = container;
   }
   if (sinceTime) {
     params.sinceTime = sinceTime;
+  }
+  if (tailLines && tailLines > 0) {
+    params.tailLines = tailLines;
   }
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };

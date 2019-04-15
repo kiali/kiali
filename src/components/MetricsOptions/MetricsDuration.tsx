@@ -6,6 +6,8 @@ import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig } from '../../config/ServerConfig';
 
 type Props = {
+  disabled?: boolean;
+  tooltip?: string;
   onChanged: (duration: DurationInSeconds) => void;
 };
 
@@ -41,12 +43,12 @@ export default class MetricsDuration extends React.Component<Props> {
     return (
       <ToolbarDropdown
         id={'metrics_filter_interval_duration'}
-        disabled={false}
+        disabled={this.props.disabled}
         handleSelect={this.onDurationChanged}
         initialValue={this.duration}
         initialLabel={serverConfig.durations[this.duration]}
         options={serverConfig.durations}
-        tooltip={'Time range for metrics data'}
+        tooltip={this.props.tooltip || 'Time range for metrics data'}
       />
     );
   }

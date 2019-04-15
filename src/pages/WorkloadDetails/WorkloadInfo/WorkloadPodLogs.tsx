@@ -6,6 +6,8 @@ import { getPodLogs, Response } from '../../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDropdown';
 import { DurationInSeconds } from '../../../types/Common';
+import MetricsDurationContainer from '../../../components/MetricsOptions/MetricsDuration';
+import MetricsDuration from '../../../components/MetricsOptions/MetricsDuration';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -19,25 +21,24 @@ interface ContainerInfo {
 
 interface WorkloadPodLogsState {
   containerInfo?: ContainerInfo;
-  duration: string; // DurationInSeconds
+  duration: DurationInSeconds;
   loadingPodLogs: boolean;
   loadingPodLogsError?: string;
   podValue?: number;
   podLogs?: PodLogs;
+  tailLines: number;
 }
 
-const DurationDefault = '300';
-const DurationOptions = {
-  '60': 'Last 1m',
-  '300': 'Last 5m',
-  '600': 'Last 10m',
-  '1800': 'Last 30m',
-  '3600': 'Last 1h',
-  '10800': 'Last 3h',
-  '21600': 'Last 6h',
-  '43200': 'Last 12h',
-  '86400': 'Last 1d',
-  '604800': 'Last 7d'
+const TailLinesDefault = 500;
+const TailLinesOptions = {
+  '-1': 'All lines',
+  '10': '10 lines',
+  '50': '50 lines',
+  '100': '100 lines',
+  '300': '300 lines',
+  '500': '500 lines',
+  '1000': '1000 lines',
+  '5000': '5000 lines'
 };
 
 const logsTextarea = style({
@@ -49,10 +50,6 @@ const logsTextarea = style({
   backgroundColor: '#003145'
 });
 
-const leftPaddedSpan = style({
-  paddingLeft: '0.5em'
-});
-
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
   private loadPodLogsPromise?: CancelablePromise<Response<PodLogs>[]>;
   private podOptions: object = {};
@@ -62,9 +59,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     if (this.props.pods.length < 1) {
       this.state = {
-        duration: DurationDefault,
+        duration: MetricsDuration.initialDuration(),
         loadingPodLogs: false,
-        loadingPodLogsError: 'There are no logs to display because no pods are available.'
+        loadingPodLogsError: 'There are no logs to display because no pods are available.',
+        tailLines: TailLinesDefault
       };
       return;
     }
@@ -81,16 +79,23 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
 
     this.state = {
       containerInfo: containerInfo,
-      duration: DurationDefault,
+      duration: MetricsDuration.initialDuration(),
       loadingPodLogs: false,
-      podValue: podValue
+      podValue: podValue,
+      tailLines: TailLinesDefault
     };
   }
 
   componentDidMount() {
     if (this.state.containerInfo) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(this.props.namespace, pod.name, this.state.containerInfo.container, Number(this.state.duration));
+      this.fetchLogs(
+        this.props.namespace,
+        pod.name,
+        this.state.containerInfo.container,
+        this.state.tailLines,
+        this.state.duration
+      );
     }
   }
 
@@ -99,9 +104,10 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     const newContainer = this.state.containerInfo ? this.state.containerInfo.container : undefined;
     const updateContainer = newContainer && newContainer !== prevContainer;
     const updateDuration = this.state.duration && prevState.duration !== this.state.duration;
-    if (updateContainer || updateDuration) {
+    const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
+    if (updateContainer || updateDuration || updateTailLines) {
       const pod = this.props.pods[this.state.podValue!];
-      this.fetchLogs(this.props.namespace, pod.name, newContainer!, Number(this.state.duration));
+      this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.state.duration);
     }
   }
 
@@ -131,18 +137,20 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
               />
               <Toolbar.RightContent>
                 <ToolbarDropdown
-                  id={'wpl_duration'}
-                  handleSelect={key => this.setDuration(key)}
-                  value={this.state.duration}
-                  label={DurationOptions[this.state.duration]}
-                  options={DurationOptions}
-                  tooltip={'Time range for graph data'}
+                  id={'wpl_tailLines'}
+                  nameDropdown="Tail"
+                  handleSelect={key => this.setTailLines(Number(key))}
+                  value={this.state.tailLines}
+                  label={TailLinesOptions[this.state.tailLines]}
+                  options={TailLinesOptions}
+                  tooltip={'Show up to last N log lines'}
                 />
-                <span className={leftPaddedSpan}>
-                  <Button id={'wpl_refresh'} disabled={!this.state.podLogs} onClick={() => this.handleRefresh()}>
-                    <Icon name="refresh" />
-                  </Button>
-                </span>
+                {'   '}
+                <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
+                {'  '}
+                <Button id={'wpl_refresh'} disabled={!this.state.podLogs} onClick={() => this.handleRefresh()}>
+                  <Icon name="refresh" />
+                </Button>
               </Toolbar.RightContent>
             </Toolbar>
             <textarea
@@ -169,13 +177,23 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     });
   };
 
-  private setDuration = (duration: string) => {
+  private setDuration = (duration: DurationInSeconds) => {
     this.setState({ duration: duration });
+  };
+
+  private setTailLines = (tailLines: number) => {
+    this.setState({ tailLines: tailLines });
   };
 
   private handleRefresh = () => {
     const pod = this.props.pods[this.state.podValue!];
-    this.fetchLogs(this.props.namespace, pod.name, this.state.containerInfo!.container, Number(this.state.duration));
+    this.fetchLogs(
+      this.props.namespace,
+      pod.name,
+      this.state.containerInfo!.container,
+      this.state.tailLines,
+      this.state.duration
+    );
   };
 
   private getContainerInfo = (pod: Pod): ContainerInfo => {
@@ -189,9 +207,15 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     return { container: containerNames[0], containerOptions: options };
   };
 
-  private fetchLogs = (namespace: string, podName: string, container: string, duration: DurationInSeconds) => {
+  private fetchLogs = (
+    namespace: string,
+    podName: string,
+    container: string,
+    tailLines: number,
+    duration: DurationInSeconds
+  ) => {
     const sinceTime = Math.floor(Date.now() / 1000) - duration;
-    const promise: Promise<Response<PodLogs>> = getPodLogs(namespace, podName, container, sinceTime);
+    const promise: Promise<Response<PodLogs>> = getPodLogs(namespace, podName, container, tailLines, sinceTime);
     this.loadPodLogsPromise = makeCancelablePromise(Promise.all([promise]));
     this.loadPodLogsPromise.promise
       .then(response => {
