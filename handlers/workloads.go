@@ -147,6 +147,7 @@ func PodDetails(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, podDetails)
 }
 
+// PodLogs is the API handler to fetch logs for a single pod container
 func PodLogs(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	queryParams := r.URL.Query()
@@ -167,9 +168,19 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	if sinceTime := queryParams.Get("sinceTime"); sinceTime != "" {
 		if numTime, err := strconv.ParseInt(sinceTime, 10, 64); err == nil {
-			podLogOptions.SinceTime = &meta_v1.Time{time.Unix(numTime, 0)}
+			podLogOptions.SinceTime = &meta_v1.Time{Time: time.Unix(numTime, 0)}
 		} else {
 			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid sinceTime [%s]: %v", sinceTime, err))
+			return
+		}
+	}
+	if tailLines := queryParams.Get("tailLines"); tailLines != "" {
+		if numLines, err := strconv.ParseInt(tailLines, 10, 64); err == nil {
+			if numLines > 0 {
+				podLogOptions.TailLines = &numLines
+			}
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Invalid tailLines [%s]: %v", tailLines, err))
 			return
 		}
 	}
