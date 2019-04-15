@@ -1,4 +1,4 @@
-- name: "Create resource [{{ process_resource_item}}] on [{{ process_resource_cluster}}]"
+- name: "Create resource [{{ process_resource_item }}] on [{{ process_resource_cluster }}]"
   k8s:
     state: "present"
     definition: "{{ lookup('template', 'templates/' + process_resource_cluster + '/' + process_resource_item + '.yaml') }}"

@@ -25,6 +25,7 @@ kiali_defaults:
     strategy: ""
 
   deployment:
+    accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
     #additional_service_yaml:
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"

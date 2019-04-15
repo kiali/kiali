@@ -2,6 +2,8 @@ apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
+annotations:
+  ansible.operator-sdk/reconcile-period: "0s"
 spec:
 
 ###################################################################
@@ -70,6 +72,13 @@ spec:
 ##########
 #  ---
 #  deployment:
+#
+# A list of namespaces Kiali is to be given access to.
+# These namespaces have service mesh components that are to be observed by Kiali.
+# You can provide names using regex expressions matched against all namespaces the operator can see.
+# The default makes all namespaces accessible except for some internal namespaces that typically should be ignored.
+#    ---
+#    accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
 #
 # Additional custom yaml to add to the service definition. This is used mainly to customize the service type.
 # For example, if the deployment.service_type is set to "LoadBalancer" and you want to set the loadBalancerIP,

@@ -32,6 +32,7 @@
     msg: "CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}"
 
 - name: Print some debug information
+  ignore_errors: yes
   vars:
     msg: |
         Kiali Variables:
@@ -66,14 +67,24 @@
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ReplicaSet', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Pod', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Service', resource_name='kiali', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='CustomResourceDefinition', resource_name='monitoringdashboards.monitoring.kiali.io', api_version='apiextensions.k8s.io/v1beta1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ServiceAccount', resource_name='kiali-service-account', api_version='v1') }}"
-  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRoleBinding', resource_name='kiali', api_version='v1beta1') }}"
-  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
-  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='RoleBinding', resource_name='kiali', api_version='v1beta1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Role', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Role', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ConfigMap', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='MonitoringDashboard', api_version='monitoring.kiali.io/v1alpha1') }}"
   loop_control:
     loop_var: k8s_item
+
+- name: "Delete all additional Kiali roles in all accessible namespaces"
+  ignore_errors: yes
+  include_tasks: remove-roles.yml
+  when:
+  - is_openshift == True or is_k8s == True
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
 
 - name: "Delete OpenShift-specific Kiali resources"
   ignore_errors: yes

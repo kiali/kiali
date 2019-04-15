@@ -71,6 +71,13 @@
 # -----------
 # Environment variables that affect Kiali:
 #
+# ACCESSIBLE_NAMESPACES
+#   These are the namespaces that Kiali will be granted access to. These should be the namespaces
+#   that make up the service mesh - it will be those namespaces Kiali will observe and manage.
+#   The format of the value of this environment variable is a space-separated list (no commas).
+#   The namespaces can be regular expressions or explicit namespace names.
+#   Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
+#
 # AUTH_STRATEGY
 #    Determines what authentication strategy to use.
 #    Choose "login" to use a username and password.
@@ -599,6 +606,7 @@ else
 fi
 
 echo "=== KIALI SETTINGS ==="
+echo ACCESSIBLE_NAMESPACES=$ACCESSIBLE_NAMESPACES
 echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo CREDENTIALS_CREATE_SECRET=$CREDENTIALS_CREATE_SECRET
 echo GRAFANA_URL=$GRAFANA_URL
@@ -671,6 +679,27 @@ build_spec_value() {
   fi
 }
 
+build_spec_list_value() {
+  local var_name=${1}
+  local var_value=${!2-_undefined_}
+  local var_show_empty=${3:-false}
+  if [ "${var_value}" == "_undefined_" -a "${var_show_empty}" == "false" ]; then
+    return
+  else
+    if [ "${var_value}" == "" -o "${var_value}" == "_undefined_" ]; then
+      echo "$var_name: []"
+    else
+      local nl=$'\n'
+      local var_name_value="${var_name}:"
+      for item in $var_value
+      do
+        var_name_value="${var_name_value}${nl}    - ${item}"
+      done
+      echo "$var_name_value"
+    fi
+  fi
+}
+
 cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
@@ -681,6 +710,7 @@ spec:
   auth:
     $(build_spec_value strategy AUTH_STRATEGY)
   deployment:
+    $(build_spec_list_value accessible_namespaces ACCESSIBLE_NAMESPACES)
     $(build_spec_value image_name KIALI_IMAGE_NAME)
     $(build_spec_value image_pull_policy KIALI_IMAGE_PULL_POLICY)
     $(build_spec_value image_version KIALI_IMAGE_VERSION)
