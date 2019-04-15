@@ -49,6 +49,10 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     };
   }
 
+  componentDidMount(): void {
+    this.processTrafficData(this.props.trafficData);
+  }
+
   componentDidUpdate(prevProps: TrafficDetailsProps) {
     const isWorkloadSet =
       prevProps.itemType === MetricsObjectTypes.WORKLOAD &&
