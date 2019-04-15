@@ -2,8 +2,12 @@ import * as React from 'react';
 
 import NotificationDrawer from './NotificationDrawer';
 import NotificationList from './NotificationList';
-
+import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from '../../types/MessageCenter';
+
+const notificationStyle = style({
+  zIndex: 100
+});
 
 type StateType = {};
 
@@ -30,7 +34,7 @@ export default class MessageCenter extends React.Component<MessageCenterPropsTyp
 
   render() {
     return (
-      <>
+      <div className={notificationStyle}>
         <NotificationDrawer
           title={this.props.drawerTitle}
           isHidden={this.props.drawerIsHidden}
@@ -49,7 +53,7 @@ export default class MessageCenter extends React.Component<MessageCenterPropsTyp
           messages={this.getNotificationMessages(this.props.groups)}
           onDismiss={this.onDismissNotification}
         />
-      </>
+      </div>
     );
   }
 }

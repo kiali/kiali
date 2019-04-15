@@ -1,0 +1,52 @@
+/**
+  Third Party / Dependency imports here
+*/
+$font-path: '~patternfly/dist/fonts/';
+$img-path: '~patternfly/dist/img/';
+$icon-font-path: '~patternfly/dist/fonts/';
+
+// Set global base font size to 14px per current OpenShift design
+// https://github.com/openshift/console/blob/ef1212655ba60571aaeec666843cd9f1ef139189/frontend/public/style/_vars.scss#L16
+// Patternfly 3 defaults to 12px, which is too small in many cases.
+$font-size-base: 14px;
+
+/**
+  Patternfly Sass
+*/
+@import 'patternfly';
+
+/**
+  Patternfly React Specific Sass Extensions
+*/
+@import 'patternfly-react';
+
+/**
+  Patternfly React Extensions Sass
+*/
+@import 'patternfly-react-extensions';
+
+/**
+  PatternflyNext
+*/
+@import '../../node_modules/@patternfly/react-core/dist/styles/base.css';
+
+//PF4 Styles
+$pf-global--enable-reset: false;
+$pf-global--disable-fontawesome: true;
+$pf-global--font-path: '@patternfly/patternfly/assets/fonts/';
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: overpass;
+  font-size: 14px;
+  overflow: hidden;
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+@import '_overrides';
+@import '_layout';

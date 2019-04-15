@@ -41,8 +41,8 @@ const lockStyle = style({
   display: 'block',
   maxHeight: 18,
   padding: 2,
-  width: 'auto',
-  height: 'auto'
+  width: '18px',
+  height: '18px'
 });
 
 class Slider extends React.Component<Props, State> {
@@ -177,8 +177,9 @@ class Slider extends React.Component<Props, State> {
       </Button>
     );
 
+    const pinButtonStyle = { height: '23px' };
     const lockElement = (
-      <Button bsSize="xsmall" onClick={() => this.props.onLock(!this.props.locked)}>
+      <Button bsSize="xsmall" style={pinButtonStyle} onClick={() => this.props.onLock(!this.props.locked)}>
         {this.props.locked ? (
           <img src={solidPinIcon} className={lockStyle} />
         ) : (

@@ -1,0 +1,312 @@
+// Config
+@import '../../node_modules/patternfly/dist/sass/patternfly/color-variables';
+
+// External dependency variables or mixins that are required/extended by our custom styles (tilde tells Webpack not to use relative path)
+// IMPORTANT: Please put non-variable/mixin external dependency imports in vendor.scss!
+// Patternfly variables must be imported before Bootstrap
+@import '../../node_modules/patternfly/dist/sass/patternfly/variables';
+@import '../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables';
+@import '../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/mixins';
+@import '../../node_modules/font-awesome-sass/assets/stylesheets/font-awesome/variables';
+
+// Disable PatternFly 4 reset.
+$pf-global--enable-reset: false;
+
+$color-grey-background-border: #ccc;
+$grid-float-breakpoint: $screen-sm-min !default;
+// PatternFly 4 overrides
+
+// Webpack will not properly bundle the background-image from PatternFly
+@media only screen and (min-width: 576px) {
+  .pf-c-about-modal-box__hero {
+    background-image: url('../img/pfbg_992.jpg') !important;
+  }
+}
+
+.pf-c-dropdown__menu {
+  list-style: none;
+}
+
+// TEMP fix until https://github.com/patternfly/patternfly-next/issues/1543 is fixed upstream
+.pf-c-dropdown__menu-item {
+  &:focus,
+  &:hover {
+    color: var(--pf-global--Color--dark-100);
+  }
+}
+
+.pf-c-page {
+  &__header {
+    background-color: var(--pf-global--BackgroundColor--dark-200);
+    background-image: url('../img/pfbg_2000.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  &__main {
+    // `z-index: auto` is required for fullscreen terminal
+    --pf-c-page__main--ZIndex: auto;
+  }
+
+  // `.pf-c-page` specificity required
+  .pf-c-page__main-section {
+    --pf-c-page__main-section--PaddingBottom: 0;
+    --pf-c-page__main-section--PaddingLeft: 0;
+    --pf-c-page__main-section--PaddingRight: 0;
+    --pf-c-page__main-section--PaddingTop: 0;
+  }
+
+  .pf-c-page__sidebar {
+    --pf-c-page__sidebar--Transition: all 100ms ease;
+  }
+}
+
+.pf-c-page__sidebar {
+  --pf-c-page__sidebar--BackgroundColor: #{$color-pf-black-900};
+  --pf-c-page__sidebar--PaddingBottom: 0;
+  --pf-c-page__sidebar--PaddingTop: 0;
+  min-height: 100vh;
+  position: relative; // fix z-index bug in Edge
+  width: 0 !important; // only set size when expanded (.pf-m-expanded is added)
+
+  @media screen and (min-width: $grid-float-breakpoint) {
+    --pf-c-page__sidebar--BoxShadow: none;
+  }
+
+  &.pf-m-expanded {
+    width: var(
+      --pf-c-page__sidebar--md--Width
+    ) !important; // maintain desktop width so size doesn't animate before hiding when resizing to mobile
+  }
+
+  .pf-c-nav {
+    // List link
+    --pf-c-nav__list-link--active--after--BackgroundColor: var(--pf-c-nav__list-link--hover--after--BackgroundColor);
+    --pf-c-nav__list-link--active--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__list-link--active--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__list-link--after--Height: 100%;
+    --pf-c-nav__list-link--after--Left: 0;
+    --pf-c-nav__list-link--after--md--Left: var(--pf-c-nav__list-link--after--Left);
+    --pf-c-nav__list-link--after--Width: 3px;
+    --pf-c-nav__list-link--Color: #{$color-pf-black-300};
+    --pf-c-nav__list-link--focus--after--BackgroundColor: var(--pf-c-nav__list-link--hover--after--BackgroundColor);
+    --pf-c-nav__list-link--focus--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__list-link--focus--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__list-link--hover--after--BackgroundColor: transparent;
+    --pf-c-nav__list-link--hover--BackgroundColor: #{$color-pf-black-700};
+    --pf-c-nav__list-link--hover--Color: #{$color-pf-white};
+    --pf-c-nav__list-link--m-current--after--BackgroundColor: #{$color-pf-blue-300};
+    --pf-c-nav__list-link--m-current--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__list-link--md--PaddingLeft: 32px;
+    --pf-c-nav__list-link--PaddingBottom: var(--pf-c-nav__list-link--PaddingTop);
+    --pf-c-nav__list-link--PaddingLeft: 16px;
+    --pf-c-nav__list-link--PaddingTop: 17px;
+    // Simple List
+    --pf-c-nav__simple-list-link--active--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__simple-list-link--active--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__simple-list-link--Color: var(--pf-c-nav__list-link--Color);
+    --pf-c-nav__simple-list-link--focus--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__simple-list-link--focus--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__simple-list-link--focus--FontWeight: var(--pf-global--FontWeight--normal);
+    --pf-c-nav__simple-list-link--hover--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__simple-list-link--hover--Color: var(--pf-c-nav__list-link--hover--Color);
+    --pf-c-nav__simple-list-link--m-current--BackgroundColor: var(--pf-c-nav__list-link--hover--BackgroundColor);
+    --pf-c-nav__simple-list-link--m-current--Color: var(--pf-c-nav__simple-list-link--active--Color);
+    --pf-c-nav__simple-list-link--PaddingBottom: 2px;
+    --pf-c-nav__simple-list-link--PaddingRight: 5px;
+    --pf-c-nav__simple-list-link--PaddingTop: 2px;
+    // Subnav
+    --pf-c-nav__subnav--MarginTop: 0;
+    --pf-c-nav__subnav--MaxHeight: 100%;
+    // Toggle
+    --pf-c-nav__list-toggle--PaddingRight: 0;
+  }
+
+  .pf-c-nav__item .pf-c-nav__simple-list .pf-c-nav__link.pf-m-separator::after {
+    --pf-c-nav__simple-list-link--m-separator--after--Left: var(--pf-c-nav__list-link--PaddingLeft);
+    right: var(--pf-c-nav__list-link--PaddingRight);
+
+    @media screen and (min-width: $grid-float-breakpoint) {
+      --pf-c-nav__simple-list-link--m-separator--after--Left: var(--pf-c-nav__list-link--md--PaddingLeft);
+      right: var(--pf-c-nav__list-link--md--PaddingRight);
+    }
+  }
+
+  .pf-c-nav__list {
+    list-style: none; // turn off list-styles to fix bug in Edge
+    > .pf-c-nav__item {
+      border-bottom: 1px solid #{$color-pf-black};
+      margin-top: 0;
+
+      &:not(.pf-m-current) > .pf-c-nav__link {
+        &:active,
+        &:focus,
+        &:hover {
+          background-color: var(--pf-c-nav__list-link--hover--BackgroundColor);
+        }
+      }
+
+      &.pf-m-current {
+        background-color: #{$color-pf-black-800};
+
+        &.pf-m-expanded > .pf-c-nav__link::after {
+          display: none;
+        }
+
+        .pf-c-nav__simple-list .pf-c-nav__link.pf-m-separator:after {
+          --pf-c-nav__simple-list-link--m-separator--after--Background: #292929;
+        }
+      }
+
+      &.pf-m-expanded,
+      .pf-c-nav__link:hover {
+        .pf-c-nav__toggle {
+          display: block;
+        }
+      }
+    }
+
+    .pf-c-nav__link {
+      align-items: center;
+      padding-left: var(--pf-c-nav__list-link--PaddingLeft);
+
+      @media screen and (min-width: $grid-float-breakpoint) {
+        padding-left: var(--pf-c-nav__list-link--md--PaddingLeft);
+      }
+    }
+  }
+
+  .pf-c-nav__simple-list .pf-c-nav__link {
+    font-size: $font-size-base;
+    line-height: 25px;
+
+    // use `::before` so as not to conflict with `.pf-m-separator::after`
+    &.pf-m-current::before {
+      background-color: var(--pf-c-nav__list-link--m-current--after--BackgroundColor);
+      bottom: 0;
+      content: '';
+      display: block;
+      height: var(--pf-c-nav__list-link--after--Height);
+      left: var(--pf-c-nav__list-link--after--Left);
+      position: absolute;
+      width: var(--pf-c-nav__list-link--after--Width);
+    }
+
+    &.pf-m-separator {
+      margin-bottom: 17px;
+
+      &::after {
+        --pf-c-nav__simple-list-link--m-separator--after--Background: #{$color-pf-black};
+        --pf-c-nav__simple-list-link--m-separator--after--Bottom: -9px;
+      }
+    }
+  }
+
+  .pf-c-nav__subnav {
+    margin-bottom: 16px;
+  }
+
+  .pf-c-nav__toggle {
+    color: var(--pf-c-nav__list-link--Color);
+    display: none;
+  }
+}
+
+/**
+ Fix height in filter selector
+ */
+.filter-pf-select-dropdown {
+  height: 29px;
+}
+
+/**
+  Fix underline decoration in links
+*/
+
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+/*
+ Fix space between title and filter
+ */
+.breadcrumb {
+  margin-bottom: -5px;
+}
+
+/*
+ Remove height form-control
+ */
+.form-control {
+  height: unset;
+}
+/*
+
+Keep same height that buttons
+ */
+.slider-input-pf {
+  height: 23px;
+}
+
+/*
+
+Fix modal-title size
+ */
+.modal-title {
+  font-size: 18px;
+}
+
+/*
+
+keep test aligned vertically
+ */
+.table > tbody > tr > td {
+  vertical-align: middle;
+}
+
+/*
+
+Unset line-height stylefor connected text in suspend trafic wizard
+
+ */
+.list-group-item-text {
+  line-height: unset;
+  width: 100%;
+}
+
+/*
+
+Set width 100% parent in matching routing wizard
+ */
+.match-routing-wizard .list-group-item-text {
+  width: 100%;
+}
+
+button {
+  font-family: overpass;
+}
+
+input {
+  font-family: overpass;
+}
+
+/*
+
+Fix font size in graph help
+
+ */
+
+.modal-content {
+  font-size: 12px;
+}
+
+/*
+
+Fix icon in buttons of pagination pages
+
+ */
+
+.pagination > li > a > .i {
+  margin-top: 5px;
+}

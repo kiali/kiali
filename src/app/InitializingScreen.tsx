@@ -16,10 +16,7 @@ const kialiTitle = require('../assets/img/logo-login.svg');
 
 const InitializingScreen: React.FC<{ errorMsg?: string }> = (props: { errorMsg?: string }) => {
   if (document.documentElement) {
-    document.documentElement.className = 'login-pf';
-    if (isKioskMode()) {
-      document.documentElement.className += ' kiosk';
-    }
+    document.documentElement.className = isKioskMode() ? 'kiosk' : '';
   }
 
   return (

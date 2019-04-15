@@ -1,15 +1,11 @@
 import * as React from 'react';
-import { VerticalNav } from 'patternfly-react';
-import { navItems } from '../../routes';
 import RenderPage from './RenderPage';
-import { matchPath, RouteComponentProps } from 'react-router';
-import _ from 'lodash';
+import { RouteComponentProps } from 'react-router';
+import Masthead from './Masthead/Masthead';
+import Menu from './Menu';
+import { Page, PageHeader, PageSection, Brand } from '@patternfly/react-core';
 
-import { MessageCenterContainer, MessageCenterTriggerContainer } from '../../containers/MessageCenterContainer';
-import HelpDropdown from '../../containers/HelpDropdownContainer';
-import UserDropdown from '../../containers/UserDropdownContainer';
-import PfSpinnerContainer from '../../containers/PfSpinnerContainer';
-import { default as MeshMTLSStatus } from '../../components/MTls/MeshMTLSStatus';
+import { MessageCenterContainer } from '../../containers/MessageCenterContainer';
 import { kialiLogo, serverConfig } from '../../config';
 
 export const istioConfigTitle = 'Istio Config';
@@ -45,64 +41,45 @@ class Navigation extends React.Component<PropsType> {
     document.title = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali Console';
   }
 
-  renderMenuItems() {
-    const { location, jaegerIntegration, jaegerUrl } = this.props;
-    const activeItem = navItems.find(item => {
-      let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
-      if (!isRoute && item.pathsActive) {
-        isRoute = _.filter(item.pathsActive, path => path.test(location.pathname)).length > 0;
-      }
-      return isRoute;
-    });
-    return navItems.map(item => {
-      if (item.title === 'Distributed Tracing' && !jaegerIntegration && jaegerUrl !== '') {
-        return (
-          <VerticalNav.Item
-            key={item.to}
-            title={item.title}
-            iconClass={item.iconClass}
-            active={item === activeItem}
-            onClick={() => this.goTojaeger()}
-          />
-        );
-      }
-      return item.title === 'Distributed Tracing' && this.props.jaegerUrl === '' ? (
-        ''
-      ) : (
-        <VerticalNav.Item
-          key={item.to}
-          title={item.title}
-          iconClass={item.iconClass}
-          active={item === activeItem}
-          onClick={() => this.context.router.history.push(item.to)}
-        />
-      );
-    });
-  }
+  onNavToggle = () => {
+    this.props.setNavCollapsed(!this.props.navCollapsed);
+  };
+
+  isContentScrollable = () => {
+    const urlParams = new URLSearchParams(this.props.location.search);
+    let isMetricTab = false;
+    if (urlParams.has('tab')) {
+      isMetricTab = urlParams.get('tab') === 'metrics';
+    }
+    return !this.props.location.pathname.startsWith('/graph') && !isMetricTab;
+  };
 
   render() {
+    const Header = (
+      <PageHeader
+        logo={<Brand src={kialiLogo} alt="Patternfly Logo" />}
+        toolbar={<Masthead />}
+        showNavToggle={true}
+        onNavToggle={this.onNavToggle}
+      />
+    );
+
+    const Sidebar = (
+      <Menu
+        isNavOpen={!this.props.navCollapsed}
+        jaegerIntegration={this.props.jaegerIntegration}
+        location={this.props.location}
+        jaegerUrl={this.props.jaegerUrl}
+      />
+    );
+
     return (
-      <>
-        <VerticalNav
-          className="kiali-vertical-nav"
-          setControlledState={this.setControlledState}
-          navCollapsed={this.props.navCollapsed}
-        >
-          <VerticalNav.Masthead title="Kiali">
-            <VerticalNav.Brand iconImg={kialiLogo} />
-            <PfSpinnerContainer />
-            <VerticalNav.IconBar>
-              <MeshMTLSStatus />
-              <MessageCenterTriggerContainer />
-              <HelpDropdown />
-              <UserDropdown />
-            </VerticalNav.IconBar>
-            <MessageCenterContainer drawerTitle="Message Center" />
-          </VerticalNav.Masthead>
-          {this.renderMenuItems()}
-        </VerticalNav>
-        <RenderPage />
-      </>
+      <Page header={Header} sidebar={Sidebar}>
+        <MessageCenterContainer drawerTitle="Message Center" />
+        <PageSection variant={'light'}>
+          <RenderPage needScroll={this.isContentScrollable()} />
+        </PageSection>
+      </Page>
     );
   }
 }

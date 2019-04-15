@@ -1,3 +1,6 @@
+// Authentication
+
+import authenticationConfig from './AuthenticationConfig';
 // Configuration
 
 import { config } from './Config';
@@ -17,4 +20,4 @@ import { jaegerQuery } from './JaegerQuery';
 // ServerConfig
 import { serverConfig } from './ServerConfig';
 
-export { config, Paths, icons, kialiLogo, serverConfig, jaegerQuery };
+export { authenticationConfig, config, Paths, icons, kialiLogo, serverConfig, jaegerQuery };

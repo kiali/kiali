@@ -48,7 +48,7 @@ const validationStyle = style({
 });
 
 const createStyle = style({
-  marginTop: 90,
+  marginTop: 105,
   marginLeft: 20
 });
 
@@ -59,7 +59,7 @@ class RuleBuilder extends React.Component<Props> {
 
   render() {
     return (
-      <ListView>
+      <ListView className={'match-routing-wizard'}>
         <ListViewItem
           key={'match-builder'}
           description={

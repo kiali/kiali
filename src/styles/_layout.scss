@@ -1,0 +1,26 @@
+html,
+body,
+#app,
+#content,
+#content-scrollable,
+.pf-c-page__main-section {
+  height: 100%; // so .co-p-has-sidebar, .yaml-editor are full height
+}
+
+#content {
+  display: flex;
+  flex-direction: column;
+  font-size: $font-size-base; // so PatternFly 4's PatternFly 3 shield rules don't override
+}
+
+#content-scrollable {
+  overflow-x: auto;
+  overflow-y: auto;
+  height: 85vh;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pf-c-page__main {
+  height: 95vh;
+}

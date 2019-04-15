@@ -1,11 +1,30 @@
 import React from 'react';
-import { Alert, Button, Col, Form, FormControl, FormGroup, HelpBlock, Row } from 'patternfly-react';
-import { KEY_CODES } from '../../types/Common';
+import {
+  Button,
+  LoginPage as LoginNext,
+  LoginForm,
+  ListItem,
+  LoginFooterItem,
+  BackgroundImageSrc
+} from '@patternfly/react-core';
+import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
-import authenticationConfig from '../../config/AuthenticationConfig';
+import { authenticationConfig, kialiLogo } from '../../config';
 
-const kialiTitle = require('../../assets/img/logo-login.svg');
+/**
+ *
+ * Background Images
+ *
+ * Fix for Firefox browser
+ */
+
+const bgFilter = require('../../img/background-filter.svg');
+const pfBg576 = require('../../img/pfbg_576.jpg');
+const pfBg576R2x = require('../../img/pfbg_576@2x.jpg');
+const pfBg768 = require('../../img/pfbg_768.jpg');
+const pfBg768R2x = require('../../img/pfbg_768@2x.jpg');
+const pfBg1200 = require('../../img/pfbg_1200.jpg');
 
 type LoginProps = {
   status: LoginStatus;
@@ -19,6 +38,11 @@ type LoginProps = {
 type LoginState = {
   username: string;
   password: string;
+  isValidUsername: boolean;
+  isValidPassword: boolean;
+  filledInputs: boolean;
+  showHelperText: boolean;
+  errorInput?: string;
 };
 
 export default class LoginPage extends React.Component<LoginProps, LoginState> {
@@ -30,7 +54,12 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
 
     this.state = {
       username: '',
-      password: ''
+      password: '',
+      isValidUsername: true,
+      isValidPassword: true,
+      filledInputs: false,
+      showHelperText: false,
+      errorInput: ''
     };
   }
 
@@ -39,27 +68,76 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     this.props.checkCredentials();
   }
 
-  handleChange = (e: any) => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value } as Pick<LoginState, keyof LoginState>);
+  handleUsernameChange = value => {
+    this.setState({ username: value });
+  };
+
+  handlePasswordChange = passwordValue => {
+    this.setState({ password: passwordValue });
   };
 
   handleSubmit = (e: any) => {
     e.preventDefault();
+
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
       // If we are using OpenShift OAuth, take the user back to the OpenShift OAuth login
       window.location.href = authenticationConfig.authorizationEndpoint!;
     } else {
-      if (this.state.username.length > 0 && this.state.password.length > 0 && this.props.authenticate) {
+      this.setState({
+        isValidUsername: !!this.state.username,
+        isValidPassword: !!this.state.password,
+        filledInputs: !!this.state.username && !!this.state.password
+      });
+
+      if (!!this.state.username && !!this.state.password && this.props.authenticate) {
         this.props.authenticate(this.state.username, this.state.password);
+        this.setState({ showHelperText: false, errorInput: '' });
+      } else {
+        let message = 'Invalid login credentials.';
+        message +=
+          !!!this.state.username && !!!this.state.password
+            ? 'Username and password are required.'
+            : !!this.state.username
+            ? 'Password is required.'
+            : 'Username is required.';
+
+        this.setState({
+          showHelperText: true,
+          errorInput: message,
+          isValidUsername: false,
+          isValidPassword: false
+        });
       }
     }
   };
+  renderMessage = (message: string|undefined, type?: string) => {
+    if (!message) { return ''; }
+    const variant = type ? type : this.props.status === LoginStatus.error || this.state.filledInputs ? 'danger' : 'warning';
+    const icon = variant === 'danger' ? <ExclamationCircleIcon /> : <ExclamationTriangleIcon />;
+    return (
+      <span style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}>
+        {icon}
+        &nbsp; {message}
+      </span>
+    );
+  };
 
-  handleKeyPress = (e: any) => {
-    if (e.charCode === KEY_CODES.ENTER_KEY) {
-      this.handleSubmit(e);
+  getHelperMessage = () => {
+    const messages: any[] = [];
+    if (this.state.showHelperText) {
+      messages.push(this.renderMessage(this.state.errorInput));
     }
+    if (authenticationConfig.secretMissing) {
+      messages.push('The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
+      creates a valid secret. Please refer to the Kiali documentation for more details.', 'danger');
+    }
+    if (this.props.status === LoginStatus.expired) {
+      messages.push('Your session has expired or was terminated in another window.', 'warning');
+    }
+    if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
+      messages.push(this.props.message);
+    }
+    return (<>{messages}</>);
   };
 
   render() {
@@ -67,79 +145,66 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
       loginLabel = 'Log In With OpenShift';
     }
+    /**
+     * Note: When using background-filter.svg, you must also include #image_overlay as the fragment identifier
+     */
+
+    const backgroundLoginImg = {
+      [BackgroundImageSrc.lg]: pfBg1200,
+      [BackgroundImageSrc.sm]: pfBg768,
+      [BackgroundImageSrc.sm2x]: pfBg768R2x,
+      [BackgroundImageSrc.xs]: pfBg576,
+      [BackgroundImageSrc.xs2x]: pfBg576R2x,
+      [BackgroundImageSrc.filter]: `${bgFilter}#image_overlay`
+    };
+
+    const loginForm = (
+      <LoginForm
+        usernameLabel="Username"
+        showHelperText={this.state.showHelperText || this.props.message !== ''}
+        helperText={this.getHelperMessage()}
+        usernameValue={this.state.username}
+        onChangeUsername={this.handleUsernameChange}
+        isValidUsername={this.state.isValidUsername && this.props.status !== LoginStatus.error}
+        passwordLabel="Password"
+        passwordValue={this.state.password}
+        onChangePassword={this.handlePasswordChange}
+        isValidPassword={this.state.isValidPassword && this.props.status !== LoginStatus.error}
+        rememberMeAriaLabel="Remember me Checkbox"
+        onLoginButtonClick={(e: any) => this.handleSubmit(e)}
+        style={{ marginTop: '10px' }}
+      />
+    );
+
+    const listItem = (
+      <>
+        <ListItem>
+          <LoginFooterItem href="https://www.kiali.io/">Documentation</LoginFooterItem>
+        </ListItem>
+        <ListItem>
+          <LoginFooterItem href="https://github.com/kiali/kiali">Contribute</LoginFooterItem>
+        </ListItem>
+      </>
+    );
     return (
-      <div className={'login-pf-page'}>
-        <div className={'container-fluid'}>
-          <Row>
-            <Col sm={8} smOffset={2} md={6} mdOffset={3} lg={6} lgOffset={3}>
-              <header className={'login-pf-page-header'}>
-                <img className={'login-pf-brand'} src={kialiTitle} alt={'logo'} />
-              </header>
-              <Row>
-                <Col sm={10} smOffset={1} md={8} mdOffset={2} lg={8} lgOffset={2}>
-                  <div className={'card-pf'}>
-                    <header className={'login-pf-header'} />
-                    {authenticationConfig.secretMissing && (
-                      <Alert>
-                        The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
-                        creates a valid secret. Please refer to the Kiali documentation for more details.
-                      </Alert>
-                    )}
-                    {!authenticationConfig.secretMissing && this.props.status === LoginStatus.error && (
-                      <Alert>{this.props.message}</Alert>
-                    )}
-                    {this.props.status === LoginStatus.expired && (
-                      <Alert type="warning">Your session has expired or was terminated in another window.</Alert>
-                    )}
-                    <Form onSubmit={e => this.handleSubmit(e)} id={'kiali-login'}>
-                      {authenticationConfig.strategy === AuthStrategy.login && (
-                        <FormGroup>
-                          <FormControl
-                            id="username"
-                            type="text"
-                            name="username"
-                            onChange={this.handleChange}
-                            placeholder={'Username'}
-                            disabled={false}
-                            required={true}
-                            onKeyPress={this.handleKeyPress}
-                          />
-                          {this.props.status === LoginStatus.logging && !this.state.username && (
-                            <HelpBlock>Username is required</HelpBlock>
-                          )}
-                        </FormGroup>
-                      )}
-                      {authenticationConfig.strategy === AuthStrategy.login && (
-                        <FormGroup>
-                          <FormControl
-                            type="password"
-                            name="password"
-                            onChange={this.handleChange}
-                            placeholder={'Password'}
-                            disabled={false}
-                            required={true}
-                            onKeyPress={this.handleKeyPress}
-                          />
-                          {this.props.status === LoginStatus.logging && !this.state.password && (
-                            <HelpBlock>Password is required</HelpBlock>
-                          )}
-                        </FormGroup>
-                      )}
-                      <Button
-                        type="submit"
-                        onKeyPress={this.handleKeyPress}
-                        className="btn btn-primary btn-block btn-lg"
-                      >
-                        {loginLabel}
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-        </div>
-      </div>
+      <LoginNext
+        footerListVariants="inline"
+        brandImgSrc={kialiLogo}
+        brandImgAlt="pf-logo"
+        backgroundImgSrc={backgroundLoginImg}
+        backgroundImgAlt="Images"
+        footerListItems={listItem}
+        textContent="Service Mesh Observability."
+        loginTitle="Log in Kiali"
+      >
+        {authenticationConfig.strategy === AuthStrategy.login ? (
+          loginForm
+        ) : (
+          <Button onClick={this.handleSubmit} style={{ width: '100%' }} variant="primary">
+            {loginLabel}
+          </Button>
+        )}
+      </LoginNext>
     );
   }
 }

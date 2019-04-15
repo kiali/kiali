@@ -35,7 +35,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 class MeshMTLSStatus extends React.Component<Props> {
   iconStyle() {
     return style({
-      marginTop: 18,
+      marginTop: -3,
       marginRight: 8,
       width: 13
     });
@@ -43,9 +43,9 @@ class MeshMTLSStatus extends React.Component<Props> {
 
   render() {
     return (
-      <li className={this.iconStyle()}>
+      <div className={this.iconStyle()}>
         <MTLSStatus status={this.props.status} statusDescriptors={statusDescriptors} overlayPosition={'left'} />
-      </li>
+      </div>
     );
   }
 }

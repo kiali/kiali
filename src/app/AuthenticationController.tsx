@@ -105,10 +105,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
 
   private setDocLayout = () => {
     if (document.documentElement) {
-      document.documentElement.className = this.state.stage === 'logged-in' ? 'layout-pf layout-pf-fixed' : 'login-pf';
-      if (isKioskMode()) {
-        document.documentElement.className += ' kiosk';
-      }
+      document.documentElement.className = isKioskMode() ? 'kiosk' : '';
     }
   };
 }

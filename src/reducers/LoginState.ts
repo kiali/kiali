@@ -43,7 +43,8 @@ const loginState = (state: LoginStateInterface = INITIAL_LOGIN_STATE, action: Ki
     case getType(LoginActions.sessionExpired):
       return {
         ...INITIAL_LOGIN_STATE,
-        status: LoginStatus.expired
+        status: LoginStatus.expired,
+        message: 'Your session has expired or was terminated in another window.'
       };
     default:
       return state;

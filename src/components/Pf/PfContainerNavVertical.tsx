@@ -1,7 +1,12 @@
 import React from 'react';
+import { Toolbar, ToolbarGroup } from '@patternfly/react-core';
 
 const PfContainerNavVertical = props => {
-  return <div className="container-pf-nav-pf-vertical">{props.children}</div>;
+  return (
+    <Toolbar>
+      <ToolbarGroup>{props.children}</ToolbarGroup>
+    </Toolbar>
+  );
 };
 
 export default PfContainerNavVertical;

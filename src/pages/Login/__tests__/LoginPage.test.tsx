@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import LoginPage from '../LoginPage';
-import { KEY_CODES } from '../../../types/Common';
 import { LoginStatus } from '../../../store/Store';
 
 const LoginProps = {
@@ -21,33 +20,18 @@ describe('#LoginPage render correctly', () => {
   });
 
   it('should have a handles methods defined', () => {
-    expect('handleChange' in wrapper.instance()).toBeTruthy();
-    expect('handleSubmit' in wrapper.instance()).toBeTruthy();
-    expect('handleKeyPress' in wrapper.instance()).toBeTruthy();
+    const instance = wrapper.instance();
+    expect('handleUsernameChange' in instance).toBeTruthy();
+    expect('handlePasswordChange' in instance).toBeTruthy();
+    expect('handleSubmit' in instance).toBeTruthy();
   });
 
   it('handleChange should change state', () => {
     const instance = wrapper.instance() as LoginPage;
-    instance.handleChange({ target: { name: 'username', value: username } });
+    instance.handleUsernameChange(username);
     expect(instance.state.username).toBe(username);
-    instance.handleChange({ target: { name: 'password', value: password } });
+    instance.handlePasswordChange(password);
     expect(instance.state.password).toBe(password);
-  });
-
-  it('handleKeyPress should call handleSubmit if enterkey', () => {
-    const instance = wrapper.instance() as LoginPage;
-    const spy = jest.spyOn(instance, 'handleSubmit');
-    const event = {
-      charCode: KEY_CODES.TAB_KEY,
-      preventDefault: () => {
-        return null;
-      }
-    };
-    instance.handleKeyPress(event);
-    expect(spy).not.toHaveBeenCalled();
-    event.charCode = KEY_CODES.ENTER_KEY;
-    instance.handleKeyPress(event);
-    expect(spy).toHaveBeenCalled();
   });
 
   it('handleSubmit should call authenticate', () => {

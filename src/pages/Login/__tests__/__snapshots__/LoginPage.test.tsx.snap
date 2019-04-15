@@ -25,1765 +25,209 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "host",
+    "nodeType": "function",
     "props": Object {
-      "children": <div
-        className="container-fluid"
-      >
-        <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            lg={6}
-            lgOffset={3}
-            md={6}
-            mdOffset={3}
-            sm={8}
-            smOffset={2}
+      "backgroundImgAlt": "Images",
+      "backgroundImgSrc": Object {
+        "filter": "background-filter.svg#image_overlay",
+        "lg": "pfbg_1200.jpg",
+        "sm": "pfbg_768.jpg",
+        "sm2x": "pfbg_768@2x.jpg",
+        "xs": "pfbg_576.jpg",
+        "xs2x": "pfbg_576@2x.jpg",
+      },
+      "brandImgAlt": "pf-logo",
+      "brandImgSrc": "logo-alt.svg",
+      "children": <LoginForm
+        className=""
+        helperText={<UNDEFINED />}
+        isLoginButtonDisabled={false}
+        isRememberMeChecked={false}
+        isValidPassword={true}
+        isValidUsername={true}
+        loginButtonLabel="Log In"
+        onChangePassword={[Function]}
+        onChangeRememberMe={[Function]}
+        onChangeUsername={[Function]}
+        onLoginButtonClick={[Function]}
+        passwordLabel="Password"
+        passwordValue=""
+        rememberMeAriaLabel="Remember me Checkbox"
+        rememberMeLabel=""
+        showHelperText={true}
+        style={
+          Object {
+            "marginTop": "10px",
+          }
+        }
+        usernameLabel="Username"
+        usernameValue=""
+      />,
+      "className": "",
+      "footerListItems": <UNDEFINED>
+        <ListItem>
+          <LoginFooterItem
+            className=""
+            href="https://www.kiali.io/"
+            target="_blank"
           >
-            <header
-              className="login-pf-page-header"
-            >
-              <img
-                alt="logo"
-                className="login-pf-brand"
-                src="logo-login.svg"
-              />
-            </header>
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={8}
-                lgOffset={2}
-                md={8}
-                mdOffset={2}
-                sm={10}
-                smOffset={1}
-              >
-                <div
-                  className="card-pf"
-                >
-                  <header
-                    className="login-pf-header"
-                  />
-                  <Form
-                    bsClass="form"
-                    componentClass="form"
-                    horizontal={false}
-                    id="kiali-login"
-                    inline={false}
-                    onSubmit={[Function]}
-                  >
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        id="username"
-                        name="username"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Username"
-                        required={true}
-                        type="text"
-                      />
-                    </FormGroup>
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        name="password"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Password"
-                        required={true}
-                        type="password"
-                      />
-                    </FormGroup>
-                    <Button
-                      active={false}
-                      block={false}
-                      bsClass="btn"
-                      bsStyle="default"
-                      className="btn btn-primary btn-block btn-lg"
-                      disabled={false}
-                      onKeyPress={[Function]}
-                      type="submit"
-                    >
-                      Log In
-                    </Button>
-                  </Form>
-                </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </div>,
-      "className": "login-pf-page",
+            Documentation
+          </LoginFooterItem>
+        </ListItem>
+        <ListItem>
+          <LoginFooterItem
+            className=""
+            href="https://github.com/kiali/kiali"
+            target="_blank"
+          >
+            Contribute
+          </LoginFooterItem>
+        </ListItem>
+      </UNDEFINED>,
+      "footerListVariants": "inline",
+      "forgotCredentials": null,
+      "loginTitle": "Log in Kiali",
+      "signUpForAccountMessage": null,
+      "socialMediaLoginContent": null,
+      "textContent": "Service Mesh Observability.",
     },
     "ref": null,
     "rendered": Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "host",
+      "nodeType": "function",
       "props": Object {
-        "children": <Row
-          bsClass="row"
-          componentClass="div"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            lg={6}
-            lgOffset={3}
-            md={6}
-            mdOffset={3}
-            sm={8}
-            smOffset={2}
-          >
-            <header
-              className="login-pf-page-header"
-            >
-              <img
-                alt="logo"
-                className="login-pf-brand"
-                src="logo-login.svg"
-              />
-            </header>
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={8}
-                lgOffset={2}
-                md={8}
-                mdOffset={2}
-                sm={10}
-                smOffset={1}
-              >
-                <div
-                  className="card-pf"
-                >
-                  <header
-                    className="login-pf-header"
-                  />
-                  <Form
-                    bsClass="form"
-                    componentClass="form"
-                    horizontal={false}
-                    id="kiali-login"
-                    inline={false}
-                    onSubmit={[Function]}
-                  >
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        id="username"
-                        name="username"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Username"
-                        required={true}
-                        type="text"
-                      />
-                    </FormGroup>
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        name="password"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Password"
-                        required={true}
-                        type="password"
-                      />
-                    </FormGroup>
-                    <Button
-                      active={false}
-                      block={false}
-                      bsClass="btn"
-                      bsStyle="default"
-                      className="btn btn-primary btn-block btn-lg"
-                      disabled={false}
-                      onKeyPress={[Function]}
-                      type="submit"
-                    >
-                      Log In
-                    </Button>
-                  </Form>
-                </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>,
-        "className": "container-fluid",
+        "className": "",
+        "helperText": <UNDEFINED />,
+        "isLoginButtonDisabled": false,
+        "isRememberMeChecked": false,
+        "isValidPassword": true,
+        "isValidUsername": true,
+        "loginButtonLabel": "Log In",
+        "onChangePassword": [Function],
+        "onChangeRememberMe": [Function],
+        "onChangeUsername": [Function],
+        "onLoginButtonClick": [Function],
+        "passwordLabel": "Password",
+        "passwordValue": "",
+        "rememberMeAriaLabel": "Remember me Checkbox",
+        "rememberMeLabel": "",
+        "showHelperText": true,
+        "style": Object {
+          "marginTop": "10px",
+        },
+        "usernameLabel": "Username",
+        "usernameValue": "",
       },
       "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "bsClass": "row",
-          "children": <Col
-            bsClass="col"
-            componentClass="div"
-            lg={6}
-            lgOffset={3}
-            md={6}
-            mdOffset={3}
-            sm={8}
-            smOffset={2}
-          >
-            <header
-              className="login-pf-page-header"
-            >
-              <img
-                alt="logo"
-                className="login-pf-brand"
-                src="logo-login.svg"
-              />
-            </header>
-            <Row
-              bsClass="row"
-              componentClass="div"
-            >
-              <Col
-                bsClass="col"
-                componentClass="div"
-                lg={8}
-                lgOffset={2}
-                md={8}
-                mdOffset={2}
-                sm={10}
-                smOffset={1}
-              >
-                <div
-                  className="card-pf"
-                >
-                  <header
-                    className="login-pf-header"
-                  />
-                  <Form
-                    bsClass="form"
-                    componentClass="form"
-                    horizontal={false}
-                    id="kiali-login"
-                    inline={false}
-                    onSubmit={[Function]}
-                  >
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        id="username"
-                        name="username"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Username"
-                        required={true}
-                        type="text"
-                      />
-                    </FormGroup>
-                    <FormGroup
-                      bsClass="form-group"
-                    >
-                      <FormControl
-                        bsClass="form-control"
-                        componentClass="input"
-                        disabled={false}
-                        name="password"
-                        onChange={[Function]}
-                        onKeyPress={[Function]}
-                        placeholder="Password"
-                        required={true}
-                        type="password"
-                      />
-                    </FormGroup>
-                    <Button
-                      active={false}
-                      block={false}
-                      bsClass="btn"
-                      bsStyle="default"
-                      className="btn btn-primary btn-block btn-lg"
-                      disabled={false}
-                      onKeyPress={[Function]}
-                      type="submit"
-                    >
-                      Log In
-                    </Button>
-                  </Form>
-                </div>
-              </Col>
-            </Row>
-          </Col>,
-          "componentClass": "div",
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "bsClass": "col",
-            "children": Array [
-              <header
-                className="login-pf-page-header"
-              >
-                <img
-                  alt="logo"
-                  className="login-pf-brand"
-                  src="logo-login.svg"
-                />
-              </header>,
-              <Row
-                bsClass="row"
-                componentClass="div"
-              >
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={8}
-                  lgOffset={2}
-                  md={8}
-                  mdOffset={2}
-                  sm={10}
-                  smOffset={1}
-                >
-                  <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>,
-            ],
-            "componentClass": "div",
-            "lg": 6,
-            "lgOffset": 3,
-            "md": 6,
-            "mdOffset": 3,
-            "sm": 8,
-            "smOffset": 2,
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "host",
-              "props": Object {
-                "children": <img
-                  alt="logo"
-                  className="login-pf-brand"
-                  src="logo-login.svg"
-                />,
-                "className": "login-pf-page-header",
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "alt": "logo",
-                  "className": "login-pf-brand",
-                  "src": "logo-login.svg",
-                },
-                "ref": null,
-                "rendered": null,
-                "type": "img",
-              },
-              "type": "header",
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "class",
-              "props": Object {
-                "bsClass": "row",
-                "children": <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={8}
-                  lgOffset={2}
-                  md={8}
-                  mdOffset={2}
-                  sm={10}
-                  smOffset={1}
-                >
-                  <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>,
-                "componentClass": "div",
-              },
-              "ref": null,
-              "rendered": Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "col",
-                  "children": <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>,
-                  "componentClass": "div",
-                  "lg": 8,
-                  "lgOffset": 2,
-                  "md": 8,
-                  "mdOffset": 2,
-                  "sm": 10,
-                  "smOffset": 1,
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": Array [
-                      <header
-                        className="login-pf-header"
-                      />,
-                      false,
-                      false,
-                      false,
-                      <Form
-                        bsClass="form"
-                        componentClass="form"
-                        horizontal={false}
-                        id="kiali-login"
-                        inline={false}
-                        onSubmit={[Function]}
-                      >
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            id="username"
-                            name="username"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Username"
-                            required={true}
-                            type="text"
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            name="password"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Password"
-                            required={true}
-                            type="password"
-                          />
-                        </FormGroup>
-                        <Button
-                          active={false}
-                          block={false}
-                          bsClass="btn"
-                          bsStyle="default"
-                          className="btn btn-primary btn-block btn-lg"
-                          disabled={false}
-                          onKeyPress={[Function]}
-                          type="submit"
-                        >
-                          Log In
-                        </Button>
-                      </Form>,
-                    ],
-                    "className": "card-pf",
-                  },
-                  "ref": null,
-                  "rendered": Array [
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "host",
-                      "props": Object {
-                        "className": "login-pf-header",
-                      },
-                      "ref": null,
-                      "rendered": null,
-                      "type": "header",
-                    },
-                    false,
-                    false,
-                    false,
-                    Object {
-                      "instance": null,
-                      "key": undefined,
-                      "nodeType": "class",
-                      "props": Object {
-                        "bsClass": "form",
-                        "children": Array [
-                          <FormGroup
-                            bsClass="form-group"
-                          >
-                            <FormControl
-                              bsClass="form-control"
-                              componentClass="input"
-                              disabled={false}
-                              id="username"
-                              name="username"
-                              onChange={[Function]}
-                              onKeyPress={[Function]}
-                              placeholder="Username"
-                              required={true}
-                              type="text"
-                            />
-                          </FormGroup>,
-                          <FormGroup
-                            bsClass="form-group"
-                          >
-                            <FormControl
-                              bsClass="form-control"
-                              componentClass="input"
-                              disabled={false}
-                              name="password"
-                              onChange={[Function]}
-                              onKeyPress={[Function]}
-                              placeholder="Password"
-                              required={true}
-                              type="password"
-                            />
-                          </FormGroup>,
-                          <Button
-                            active={false}
-                            block={false}
-                            bsClass="btn"
-                            bsStyle="default"
-                            className="btn btn-primary btn-block btn-lg"
-                            disabled={false}
-                            onKeyPress={[Function]}
-                            type="submit"
-                          >
-                            Log In
-                          </Button>,
-                        ],
-                        "componentClass": "form",
-                        "horizontal": false,
-                        "id": "kiali-login",
-                        "inline": false,
-                        "onSubmit": [Function],
-                      },
-                      "ref": null,
-                      "rendered": Array [
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "bsClass": "form-group",
-                            "children": Array [
-                              <FormControl
-                                bsClass="form-control"
-                                componentClass="input"
-                                disabled={false}
-                                id="username"
-                                name="username"
-                                onChange={[Function]}
-                                onKeyPress={[Function]}
-                                placeholder="Username"
-                                required={true}
-                                type="text"
-                              />,
-                              false,
-                            ],
-                          },
-                          "ref": null,
-                          "rendered": Array [
-                            Object {
-                              "instance": null,
-                              "key": undefined,
-                              "nodeType": "class",
-                              "props": Object {
-                                "bsClass": "form-control",
-                                "componentClass": "input",
-                                "disabled": false,
-                                "id": "username",
-                                "name": "username",
-                                "onChange": [Function],
-                                "onKeyPress": [Function],
-                                "placeholder": "Username",
-                                "required": true,
-                                "type": "text",
-                              },
-                              "ref": null,
-                              "rendered": null,
-                              "type": [Function],
-                            },
-                            false,
-                          ],
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "bsClass": "form-group",
-                            "children": Array [
-                              <FormControl
-                                bsClass="form-control"
-                                componentClass="input"
-                                disabled={false}
-                                name="password"
-                                onChange={[Function]}
-                                onKeyPress={[Function]}
-                                placeholder="Password"
-                                required={true}
-                                type="password"
-                              />,
-                              false,
-                            ],
-                          },
-                          "ref": null,
-                          "rendered": Array [
-                            Object {
-                              "instance": null,
-                              "key": undefined,
-                              "nodeType": "class",
-                              "props": Object {
-                                "bsClass": "form-control",
-                                "componentClass": "input",
-                                "disabled": false,
-                                "name": "password",
-                                "onChange": [Function],
-                                "onKeyPress": [Function],
-                                "placeholder": "Password",
-                                "required": true,
-                                "type": "password",
-                              },
-                              "ref": null,
-                              "rendered": null,
-                              "type": [Function],
-                            },
-                            false,
-                          ],
-                          "type": [Function],
-                        },
-                        Object {
-                          "instance": null,
-                          "key": undefined,
-                          "nodeType": "class",
-                          "props": Object {
-                            "active": false,
-                            "block": false,
-                            "bsClass": "btn",
-                            "bsStyle": "default",
-                            "children": "Log In",
-                            "className": "btn btn-primary btn-block btn-lg",
-                            "disabled": false,
-                            "onKeyPress": [Function],
-                            "type": "submit",
-                          },
-                          "ref": null,
-                          "rendered": "Log In",
-                          "type": [Function],
-                        },
-                      ],
-                      "type": [Function],
-                    },
-                  ],
-                  "type": "div",
-                },
-                "type": [Function],
-              },
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      "type": "div",
+      "rendered": null,
+      "type": [Function],
     },
-    "type": "div",
+    "type": [Function],
   },
   Symbol(enzyme.__nodes__): Array [
     Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "host",
+      "nodeType": "function",
       "props": Object {
-        "children": <div
-          className="container-fluid"
-        >
-          <Row
-            bsClass="row"
-            componentClass="div"
-          >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              lg={6}
-              lgOffset={3}
-              md={6}
-              mdOffset={3}
-              sm={8}
-              smOffset={2}
+        "backgroundImgAlt": "Images",
+        "backgroundImgSrc": Object {
+          "filter": "background-filter.svg#image_overlay",
+          "lg": "pfbg_1200.jpg",
+          "sm": "pfbg_768.jpg",
+          "sm2x": "pfbg_768@2x.jpg",
+          "xs": "pfbg_576.jpg",
+          "xs2x": "pfbg_576@2x.jpg",
+        },
+        "brandImgAlt": "pf-logo",
+        "brandImgSrc": "logo-alt.svg",
+        "children": <LoginForm
+          className=""
+          helperText={<UNDEFINED />}
+          isLoginButtonDisabled={false}
+          isRememberMeChecked={false}
+          isValidPassword={true}
+          isValidUsername={true}
+          loginButtonLabel="Log In"
+          onChangePassword={[Function]}
+          onChangeRememberMe={[Function]}
+          onChangeUsername={[Function]}
+          onLoginButtonClick={[Function]}
+          passwordLabel="Password"
+          passwordValue=""
+          rememberMeAriaLabel="Remember me Checkbox"
+          rememberMeLabel=""
+          showHelperText={true}
+          style={
+            Object {
+              "marginTop": "10px",
+            }
+          }
+          usernameLabel="Username"
+          usernameValue=""
+        />,
+        "className": "",
+        "footerListItems": <UNDEFINED>
+          <ListItem>
+            <LoginFooterItem
+              className=""
+              href="https://www.kiali.io/"
+              target="_blank"
             >
-              <header
-                className="login-pf-page-header"
-              >
-                <img
-                  alt="logo"
-                  className="login-pf-brand"
-                  src="logo-login.svg"
-                />
-              </header>
-              <Row
-                bsClass="row"
-                componentClass="div"
-              >
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={8}
-                  lgOffset={2}
-                  md={8}
-                  mdOffset={2}
-                  sm={10}
-                  smOffset={1}
-                >
-                  <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-        </div>,
-        "className": "login-pf-page",
+              Documentation
+            </LoginFooterItem>
+          </ListItem>
+          <ListItem>
+            <LoginFooterItem
+              className=""
+              href="https://github.com/kiali/kiali"
+              target="_blank"
+            >
+              Contribute
+            </LoginFooterItem>
+          </ListItem>
+        </UNDEFINED>,
+        "footerListVariants": "inline",
+        "forgotCredentials": null,
+        "loginTitle": "Log in Kiali",
+        "signUpForAccountMessage": null,
+        "socialMediaLoginContent": null,
+        "textContent": "Service Mesh Observability.",
       },
       "ref": null,
       "rendered": Object {
         "instance": null,
         "key": undefined,
-        "nodeType": "host",
+        "nodeType": "function",
         "props": Object {
-          "children": <Row
-            bsClass="row"
-            componentClass="div"
-          >
-            <Col
-              bsClass="col"
-              componentClass="div"
-              lg={6}
-              lgOffset={3}
-              md={6}
-              mdOffset={3}
-              sm={8}
-              smOffset={2}
-            >
-              <header
-                className="login-pf-page-header"
-              >
-                <img
-                  alt="logo"
-                  className="login-pf-brand"
-                  src="logo-login.svg"
-                />
-              </header>
-              <Row
-                bsClass="row"
-                componentClass="div"
-              >
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={8}
-                  lgOffset={2}
-                  md={8}
-                  mdOffset={2}
-                  sm={10}
-                  smOffset={1}
-                >
-                  <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>
-            </Col>
-          </Row>,
-          "className": "container-fluid",
+          "className": "",
+          "helperText": <UNDEFINED />,
+          "isLoginButtonDisabled": false,
+          "isRememberMeChecked": false,
+          "isValidPassword": true,
+          "isValidUsername": true,
+          "loginButtonLabel": "Log In",
+          "onChangePassword": [Function],
+          "onChangeRememberMe": [Function],
+          "onChangeUsername": [Function],
+          "onLoginButtonClick": [Function],
+          "passwordLabel": "Password",
+          "passwordValue": "",
+          "rememberMeAriaLabel": "Remember me Checkbox",
+          "rememberMeLabel": "",
+          "showHelperText": true,
+          "style": Object {
+            "marginTop": "10px",
+          },
+          "usernameLabel": "Username",
+          "usernameValue": "",
         },
         "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "bsClass": "row",
-            "children": <Col
-              bsClass="col"
-              componentClass="div"
-              lg={6}
-              lgOffset={3}
-              md={6}
-              mdOffset={3}
-              sm={8}
-              smOffset={2}
-            >
-              <header
-                className="login-pf-page-header"
-              >
-                <img
-                  alt="logo"
-                  className="login-pf-brand"
-                  src="logo-login.svg"
-                />
-              </header>
-              <Row
-                bsClass="row"
-                componentClass="div"
-              >
-                <Col
-                  bsClass="col"
-                  componentClass="div"
-                  lg={8}
-                  lgOffset={2}
-                  md={8}
-                  mdOffset={2}
-                  sm={10}
-                  smOffset={1}
-                >
-                  <div
-                    className="card-pf"
-                  >
-                    <header
-                      className="login-pf-header"
-                    />
-                    <Form
-                      bsClass="form"
-                      componentClass="form"
-                      horizontal={false}
-                      id="kiali-login"
-                      inline={false}
-                      onSubmit={[Function]}
-                    >
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          id="username"
-                          name="username"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Username"
-                          required={true}
-                          type="text"
-                        />
-                      </FormGroup>
-                      <FormGroup
-                        bsClass="form-group"
-                      >
-                        <FormControl
-                          bsClass="form-control"
-                          componentClass="input"
-                          disabled={false}
-                          name="password"
-                          onChange={[Function]}
-                          onKeyPress={[Function]}
-                          placeholder="Password"
-                          required={true}
-                          type="password"
-                        />
-                      </FormGroup>
-                      <Button
-                        active={false}
-                        block={false}
-                        bsClass="btn"
-                        bsStyle="default"
-                        className="btn btn-primary btn-block btn-lg"
-                        disabled={false}
-                        onKeyPress={[Function]}
-                        type="submit"
-                      >
-                        Log In
-                      </Button>
-                    </Form>
-                  </div>
-                </Col>
-              </Row>
-            </Col>,
-            "componentClass": "div",
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "class",
-            "props": Object {
-              "bsClass": "col",
-              "children": Array [
-                <header
-                  className="login-pf-page-header"
-                >
-                  <img
-                    alt="logo"
-                    className="login-pf-brand"
-                    src="logo-login.svg"
-                  />
-                </header>,
-                <Row
-                  bsClass="row"
-                  componentClass="div"
-                >
-                  <Col
-                    bsClass="col"
-                    componentClass="div"
-                    lg={8}
-                    lgOffset={2}
-                    md={8}
-                    mdOffset={2}
-                    sm={10}
-                    smOffset={1}
-                  >
-                    <div
-                      className="card-pf"
-                    >
-                      <header
-                        className="login-pf-header"
-                      />
-                      <Form
-                        bsClass="form"
-                        componentClass="form"
-                        horizontal={false}
-                        id="kiali-login"
-                        inline={false}
-                        onSubmit={[Function]}
-                      >
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            id="username"
-                            name="username"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Username"
-                            required={true}
-                            type="text"
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            name="password"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Password"
-                            required={true}
-                            type="password"
-                          />
-                        </FormGroup>
-                        <Button
-                          active={false}
-                          block={false}
-                          bsClass="btn"
-                          bsStyle="default"
-                          className="btn btn-primary btn-block btn-lg"
-                          disabled={false}
-                          onKeyPress={[Function]}
-                          type="submit"
-                        >
-                          Log In
-                        </Button>
-                      </Form>
-                    </div>
-                  </Col>
-                </Row>,
-              ],
-              "componentClass": "div",
-              "lg": 6,
-              "lgOffset": 3,
-              "md": 6,
-              "mdOffset": 3,
-              "sm": 8,
-              "smOffset": 2,
-            },
-            "ref": null,
-            "rendered": Array [
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <img
-                    alt="logo"
-                    className="login-pf-brand"
-                    src="logo-login.svg"
-                  />,
-                  "className": "login-pf-page-header",
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "alt": "logo",
-                    "className": "login-pf-brand",
-                    "src": "logo-login.svg",
-                  },
-                  "ref": null,
-                  "rendered": null,
-                  "type": "img",
-                },
-                "type": "header",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "class",
-                "props": Object {
-                  "bsClass": "row",
-                  "children": <Col
-                    bsClass="col"
-                    componentClass="div"
-                    lg={8}
-                    lgOffset={2}
-                    md={8}
-                    mdOffset={2}
-                    sm={10}
-                    smOffset={1}
-                  >
-                    <div
-                      className="card-pf"
-                    >
-                      <header
-                        className="login-pf-header"
-                      />
-                      <Form
-                        bsClass="form"
-                        componentClass="form"
-                        horizontal={false}
-                        id="kiali-login"
-                        inline={false}
-                        onSubmit={[Function]}
-                      >
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            id="username"
-                            name="username"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Username"
-                            required={true}
-                            type="text"
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            name="password"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Password"
-                            required={true}
-                            type="password"
-                          />
-                        </FormGroup>
-                        <Button
-                          active={false}
-                          block={false}
-                          bsClass="btn"
-                          bsStyle="default"
-                          className="btn btn-primary btn-block btn-lg"
-                          disabled={false}
-                          onKeyPress={[Function]}
-                          type="submit"
-                        >
-                          Log In
-                        </Button>
-                      </Form>
-                    </div>
-                  </Col>,
-                  "componentClass": "div",
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "bsClass": "col",
-                    "children": <div
-                      className="card-pf"
-                    >
-                      <header
-                        className="login-pf-header"
-                      />
-                      <Form
-                        bsClass="form"
-                        componentClass="form"
-                        horizontal={false}
-                        id="kiali-login"
-                        inline={false}
-                        onSubmit={[Function]}
-                      >
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            id="username"
-                            name="username"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Username"
-                            required={true}
-                            type="text"
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          bsClass="form-group"
-                        >
-                          <FormControl
-                            bsClass="form-control"
-                            componentClass="input"
-                            disabled={false}
-                            name="password"
-                            onChange={[Function]}
-                            onKeyPress={[Function]}
-                            placeholder="Password"
-                            required={true}
-                            type="password"
-                          />
-                        </FormGroup>
-                        <Button
-                          active={false}
-                          block={false}
-                          bsClass="btn"
-                          bsStyle="default"
-                          className="btn btn-primary btn-block btn-lg"
-                          disabled={false}
-                          onKeyPress={[Function]}
-                          type="submit"
-                        >
-                          Log In
-                        </Button>
-                      </Form>
-                    </div>,
-                    "componentClass": "div",
-                    "lg": 8,
-                    "lgOffset": 2,
-                    "md": 8,
-                    "mdOffset": 2,
-                    "sm": 10,
-                    "smOffset": 1,
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": Array [
-                        <header
-                          className="login-pf-header"
-                        />,
-                        false,
-                        false,
-                        false,
-                        <Form
-                          bsClass="form"
-                          componentClass="form"
-                          horizontal={false}
-                          id="kiali-login"
-                          inline={false}
-                          onSubmit={[Function]}
-                        >
-                          <FormGroup
-                            bsClass="form-group"
-                          >
-                            <FormControl
-                              bsClass="form-control"
-                              componentClass="input"
-                              disabled={false}
-                              id="username"
-                              name="username"
-                              onChange={[Function]}
-                              onKeyPress={[Function]}
-                              placeholder="Username"
-                              required={true}
-                              type="text"
-                            />
-                          </FormGroup>
-                          <FormGroup
-                            bsClass="form-group"
-                          >
-                            <FormControl
-                              bsClass="form-control"
-                              componentClass="input"
-                              disabled={false}
-                              name="password"
-                              onChange={[Function]}
-                              onKeyPress={[Function]}
-                              placeholder="Password"
-                              required={true}
-                              type="password"
-                            />
-                          </FormGroup>
-                          <Button
-                            active={false}
-                            block={false}
-                            bsClass="btn"
-                            bsStyle="default"
-                            className="btn btn-primary btn-block btn-lg"
-                            disabled={false}
-                            onKeyPress={[Function]}
-                            type="submit"
-                          >
-                            Log In
-                          </Button>
-                        </Form>,
-                      ],
-                      "className": "card-pf",
-                    },
-                    "ref": null,
-                    "rendered": Array [
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "host",
-                        "props": Object {
-                          "className": "login-pf-header",
-                        },
-                        "ref": null,
-                        "rendered": null,
-                        "type": "header",
-                      },
-                      false,
-                      false,
-                      false,
-                      Object {
-                        "instance": null,
-                        "key": undefined,
-                        "nodeType": "class",
-                        "props": Object {
-                          "bsClass": "form",
-                          "children": Array [
-                            <FormGroup
-                              bsClass="form-group"
-                            >
-                              <FormControl
-                                bsClass="form-control"
-                                componentClass="input"
-                                disabled={false}
-                                id="username"
-                                name="username"
-                                onChange={[Function]}
-                                onKeyPress={[Function]}
-                                placeholder="Username"
-                                required={true}
-                                type="text"
-                              />
-                            </FormGroup>,
-                            <FormGroup
-                              bsClass="form-group"
-                            >
-                              <FormControl
-                                bsClass="form-control"
-                                componentClass="input"
-                                disabled={false}
-                                name="password"
-                                onChange={[Function]}
-                                onKeyPress={[Function]}
-                                placeholder="Password"
-                                required={true}
-                                type="password"
-                              />
-                            </FormGroup>,
-                            <Button
-                              active={false}
-                              block={false}
-                              bsClass="btn"
-                              bsStyle="default"
-                              className="btn btn-primary btn-block btn-lg"
-                              disabled={false}
-                              onKeyPress={[Function]}
-                              type="submit"
-                            >
-                              Log In
-                            </Button>,
-                          ],
-                          "componentClass": "form",
-                          "horizontal": false,
-                          "id": "kiali-login",
-                          "inline": false,
-                          "onSubmit": [Function],
-                        },
-                        "ref": null,
-                        "rendered": Array [
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "bsClass": "form-group",
-                              "children": Array [
-                                <FormControl
-                                  bsClass="form-control"
-                                  componentClass="input"
-                                  disabled={false}
-                                  id="username"
-                                  name="username"
-                                  onChange={[Function]}
-                                  onKeyPress={[Function]}
-                                  placeholder="Username"
-                                  required={true}
-                                  type="text"
-                                />,
-                                false,
-                              ],
-                            },
-                            "ref": null,
-                            "rendered": Array [
-                              Object {
-                                "instance": null,
-                                "key": undefined,
-                                "nodeType": "class",
-                                "props": Object {
-                                  "bsClass": "form-control",
-                                  "componentClass": "input",
-                                  "disabled": false,
-                                  "id": "username",
-                                  "name": "username",
-                                  "onChange": [Function],
-                                  "onKeyPress": [Function],
-                                  "placeholder": "Username",
-                                  "required": true,
-                                  "type": "text",
-                                },
-                                "ref": null,
-                                "rendered": null,
-                                "type": [Function],
-                              },
-                              false,
-                            ],
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "bsClass": "form-group",
-                              "children": Array [
-                                <FormControl
-                                  bsClass="form-control"
-                                  componentClass="input"
-                                  disabled={false}
-                                  name="password"
-                                  onChange={[Function]}
-                                  onKeyPress={[Function]}
-                                  placeholder="Password"
-                                  required={true}
-                                  type="password"
-                                />,
-                                false,
-                              ],
-                            },
-                            "ref": null,
-                            "rendered": Array [
-                              Object {
-                                "instance": null,
-                                "key": undefined,
-                                "nodeType": "class",
-                                "props": Object {
-                                  "bsClass": "form-control",
-                                  "componentClass": "input",
-                                  "disabled": false,
-                                  "name": "password",
-                                  "onChange": [Function],
-                                  "onKeyPress": [Function],
-                                  "placeholder": "Password",
-                                  "required": true,
-                                  "type": "password",
-                                },
-                                "ref": null,
-                                "rendered": null,
-                                "type": [Function],
-                              },
-                              false,
-                            ],
-                            "type": [Function],
-                          },
-                          Object {
-                            "instance": null,
-                            "key": undefined,
-                            "nodeType": "class",
-                            "props": Object {
-                              "active": false,
-                              "block": false,
-                              "bsClass": "btn",
-                              "bsStyle": "default",
-                              "children": "Log In",
-                              "className": "btn btn-primary btn-block btn-lg",
-                              "disabled": false,
-                              "onKeyPress": [Function],
-                              "type": "submit",
-                            },
-                            "ref": null,
-                            "rendered": "Log In",
-                            "type": [Function],
-                          },
-                        ],
-                        "type": [Function],
-                      },
-                    ],
-                    "type": "div",
-                  },
-                  "type": [Function],
-                },
-                "type": [Function],
-              },
-            ],
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        "type": "div",
+        "rendered": null,
+        "type": [Function],
       },
-      "type": "div",
+      "type": [Function],
     },
   ],
   Symbol(enzyme.__options__): Object {

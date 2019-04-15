@@ -4,7 +4,9 @@ import { style } from 'typestyle';
 const secondaryMastheadStyle = style({
   padding: '5px 5px',
   boxShadow: '0 2px 4px 0 #0000002B',
-  height: '42px'
+  height: '42px',
+  position: 'sticky',
+  zIndex: 10
 });
 
 export default class SecondaryMasthead extends React.PureComponent {

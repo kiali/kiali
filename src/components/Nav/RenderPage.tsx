@@ -2,10 +2,13 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import { pathRoutes, defaultRoute, secondaryMastheadRoutes } from '../../routes';
-import PfContainerNavVertical from '../Pf/PfContainerNavVertical';
 import { Path } from '../../types/Routes';
 
-class RenderPage extends React.Component {
+class RenderPage extends React.Component<{ needScroll: boolean }> {
+  constructor(props: { needScroll: boolean }) {
+    super(props);
+  }
+
   renderPaths(paths: Path[]) {
     return paths.map((item, index) => {
       return <Route key={index} path={item.path} component={item.component} />;
@@ -21,20 +24,21 @@ class RenderPage extends React.Component {
   }
 
   render() {
+    const component = (
+      <div className="container-fluid">
+        <SwitchErrorBoundary
+          fallBackComponent={() => <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>}
+        >
+          {this.renderPathRoutes()}
+          <Redirect from="/" to={defaultRoute} />
+        </SwitchErrorBoundary>
+      </div>
+    );
     return (
-      <PfContainerNavVertical>
+      <>
         <div>{this.renderSecondaryMastheadRoutes()}</div>
-        <div className="container-fluid">
-          <SwitchErrorBoundary
-            fallBackComponent={() => (
-              <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>
-            )}
-          >
-            {this.renderPathRoutes()}
-            <Redirect from="/" to={defaultRoute} />
-          </SwitchErrorBoundary>
-        </div>
-      </PfContainerNavVertical>
+        {this.props.needScroll ? <div id="content-scrollable">{component}</div> : component}
+      </>
     );
   }
 }

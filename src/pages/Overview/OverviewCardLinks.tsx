@@ -14,7 +14,7 @@ class OverviewCardLinks extends React.Component<Props> {
 
   render() {
     return (
-      <div>
+      <div style={{ marginTop: '10px' }}>
         <Link to={`/graph/namespaces?namespaces=` + this.props.name} title="Graph">
           <Icon type="pf" name="topology" style={{ paddingLeft: 10, paddingRight: 10 }} />
         </Link>
