@@ -3,7 +3,7 @@ import { style } from 'typestyle';
 
 const secondaryMastheadStyle = style({
   padding: '5px 5px',
-  boxShadow: '0 2px 4px 0 #0000002B',
+  borderBottom: '1px solid #ccc;',
   height: '42px',
   position: 'sticky',
   zIndex: 10
