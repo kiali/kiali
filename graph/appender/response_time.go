@@ -14,7 +14,9 @@ import (
 )
 
 const (
-	DefaultQuantile          = 0.95 // 95th percentile
+	// DefaultQuantile is 95th percentile
+	DefaultQuantile = 0.95
+	// ResponseTimeAppenderName uniquely identifies the appender
 	ResponseTimeAppenderName = "responseTime"
 )
 
@@ -141,7 +143,9 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 	for _, n := range trafficMap {
 		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
-			e.Metadata["responseTime"] = responseTimeMap[key]
+			if val, ok := responseTimeMap[key]; ok {
+				e.Metadata["responseTime"] = val
+			}
 		}
 	}
 }
@@ -200,9 +204,9 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 }
 
 func (a ResponseTimeAppender) addResponseTime(responseTimeMap map[string]float64, val float64, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string) {
-	sourceId, _ := graph.Id(sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
-	destId, _ := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
-	key := fmt.Sprintf("%s %s", sourceId, destId)
+	sourceID, _ := graph.Id(sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, a.GraphType)
+	destID, _ := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
+	key := fmt.Sprintf("%s %s", sourceID, destID)
 
 	responseTimeMap[key] = val
 }
