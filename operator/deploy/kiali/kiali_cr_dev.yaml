@@ -8,4 +8,5 @@ spec:
   deployment:
     image_version: $IMAGE_VERSION
     namespace: $NAMESPACE
+    service_type: $SERVICE_TYPE
     verbose_mode: $VERBOSE_MODE

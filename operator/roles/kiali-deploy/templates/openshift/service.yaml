@@ -9,7 +9,7 @@ metadata:
   annotations:
     service.alpha.openshift.io/serving-cert-secret-name: kiali-cert-secret
 spec:
-  type: NodePort
+  type: {{ kiali_vars.deployment.service_type }}
   ports:
   - name: tcp
     protocol: TCP

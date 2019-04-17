@@ -28,6 +28,7 @@ kiali_defaults:
     image_version: "lastrelease"
     namespace: "istio-system"
     secret_name: "kiali"
+    service_type: "NodePort"
     verbose_mode: "3"
     version_label: ""
     view_only_mode: false

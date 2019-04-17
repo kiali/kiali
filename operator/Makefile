@@ -13,6 +13,7 @@ CREDENTIALS_PASSPHRASE ?= admin
 IMAGE_VERSION ?= dev
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
+SERVICE_TYPE ?= NodePort
 
 # Find the client executable (either istiooc or oc or kubectl)
 OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
@@ -102,6 +103,7 @@ AUTH_STRATEGY="${AUTH_STRATEGY}" \
 IMAGE_VERSION=${IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
+SERVICE_TYPE="${SERVICE_TYPE}" \
 envsubst | ${OC} apply -n ${OPERATOR_NAMESPACE} -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
