@@ -30,6 +30,7 @@ import { ListComponent } from '../../components/ListPage/ListComponent';
 import { SortField } from '../../types/SortFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { arrayEquals } from '../../utils/Common';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {
@@ -78,10 +79,15 @@ class IstioConfigListComponent extends ListComponent.Component<
   }
 
   paramsAreSynced(prevProps: IstioConfigListComponentProps) {
+    const activeNamespacesCompare = arrayEquals(
+      prevProps.activeNamespaces,
+      this.props.activeNamespaces,
+      (n1, n2) => n1.name === n2.name
+    );
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
-      prevProps.activeNamespaces === this.props.activeNamespaces &&
+      activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
     );

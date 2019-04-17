@@ -24,6 +24,7 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { arrayEquals } from '../../utils/Common';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -75,11 +76,16 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   paramsAreSynced(prevProps: ServiceListComponentProps) {
+    const activeNamespacesCompare = arrayEquals(
+      prevProps.activeNamespaces,
+      this.props.activeNamespaces,
+      (n1, n2) => n1.name === n2.name
+    );
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.rateInterval === this.props.rateInterval &&
-      prevProps.activeNamespaces === this.props.activeNamespaces &&
+      activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
     );
