@@ -34,9 +34,7 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
               <Icon name="warning-triangle-o" type="pf" style={{ fontSize: '48px' }} />
             </Col>
             <Col xs={12} sm={10} md={10} lg={10}>
-              {authenticationConfig.strategy === AuthStrategy.login
-                ? this.textForLoginStrategy()
-                : this.textForOpenshiftStrategy()}
+              {this.textForAuthStrategy(authenticationConfig.strategy)}
             </Col>
           </Row>
         </Modal.Body>
@@ -69,22 +67,22 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
     }
   };
 
-  private textForLoginStrategy = () => {
-    return (
-      <p className={'lead'}>
-        Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
-        <br />
-        Would you like to extend your session?
-      </p>
-    );
-  };
+  private textForAuthStrategy = (strategy: AuthStrategy) => {
+    const line1 =
+      this.props.timeOutCountDown <= 0
+        ? 'Your session has expired.'
+        : `Your session will expire in ${this.props.timeOutCountDown.toFixed()} seconds.`;
 
-  private textForOpenshiftStrategy = () => {
+    const line2 =
+      strategy === AuthStrategy.openshift
+        ? 'You will need to re-login with your cluster credentials. Please save your changes, if any.'
+        : 'Would you like to extend your session?';
+
     return (
       <p className={'lead'}>
-        Your session will timeout in {this.props.timeOutCountDown.toFixed()} seconds.
+        {line1}
         <br />
-        You will need to re-login with your cluster credentials. Please, save your changes, if any.
+        {line2}
       </p>
     );
   };
