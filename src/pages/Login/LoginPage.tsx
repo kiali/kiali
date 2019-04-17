@@ -135,13 +135,15 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     }
     if (authenticationConfig.secretMissing) {
       messages.push(
-        'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
+        this.renderMessage(
+          'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
       creates a valid secret. Please refer to the Kiali documentation for more details.',
-        'danger'
+          'danger'
+        )
       );
     }
     if (this.props.status === LoginStatus.expired) {
-      messages.push('Your session has expired or was terminated in another window.', 'warning');
+      messages.push(this.renderMessage('Your session has expired or was terminated in another window.', 'warning'));
     }
     if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
