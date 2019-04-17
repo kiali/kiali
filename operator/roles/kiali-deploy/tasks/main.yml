@@ -42,7 +42,7 @@
   - kiali_vars.server.web_root == ""
 - name: Make sure web root never ends with a slash
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'server': {'web_root': kiali_server.web_root | regex_replace('\\/$', '')}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'server': {'web_root': kiali_vars.server.web_root | regex_replace('\\/$', '')}}, recursive=True) }}"
   when:
   - kiali_vars.server.web_root != "/"
   - kiali_vars.server.web_root is match(".*/$")
