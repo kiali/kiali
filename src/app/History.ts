@@ -1,5 +1,4 @@
-import { createBrowserHistory } from 'history';
-import createMemoryHistory from 'history/createMemoryHistory';
+import { createBrowserHistory, createMemoryHistory } from 'history';
 import { toValidDuration } from '../config/ServerConfig';
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
