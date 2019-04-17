@@ -75,7 +75,6 @@ const GraphDataThunkActions = {
           break;
       }
       restParams.appenders = appenders;
-      console.debug('Fetching graph with appenders: ' + appenders);
 
       if (node) {
         return setCurrentRequest(API.getNodeGraphElements(node, restParams)).then(
