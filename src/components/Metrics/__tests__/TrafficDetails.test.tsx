@@ -102,6 +102,7 @@ describe('TrafficDetails', () => {
           '->' +
           item
             .find('Link')
+            .first()
             .children()
             .text()
         );
@@ -113,6 +114,7 @@ describe('TrafficDetails', () => {
 
       return item
         .find('Link')
+        .first()
         .children()
         .text();
     };

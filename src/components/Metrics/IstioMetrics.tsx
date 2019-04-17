@@ -15,6 +15,8 @@ import MetricsHelper from './Helper';
 import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import history, { URLParam } from '../../app/History';
+import { AllLabelsValues, SingleLabelValues } from '../../types/Metrics';
 
 type MetricsState = {
   dashboard?: M.MonitoringDashboard;
@@ -63,7 +65,54 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   }
 
   componentDidMount() {
-    this.fetchMetrics();
+    this.fetchMetrics().then(() => {
+      const urlParams = new URLSearchParams(history.location.search);
+      const byLabels = urlParams.getAll(URLParam.BY_LABELS);
+
+      if (byLabels.length === 0 || !this.state.dashboard) {
+        return;
+      }
+
+      // On first load, if there are aggregations enabled,
+      // re-initialize the options.
+      MetricsHelper.initMetricsSettings(this.options, this.state.dashboard.aggregations);
+
+      // Get the labels passed by URL
+      const labelsMap = new Map<string, string[]>();
+      byLabels.forEach(val => {
+        const splitted = val.split('=', 2);
+        labelsMap.set(splitted[0], splitted[1] ? splitted[1].split(',') : []);
+      });
+
+      // Then, set label values using the URL, if aggregation was applied.
+      const newLabelValues: AllLabelsValues = new Map();
+      this.state.dashboard!.aggregations.forEach(aggregation => {
+        if (!this.state.labelValues.has(aggregation.displayName)) {
+          return;
+        }
+        const lblVal = this.state.labelValues.get(aggregation.displayName)!;
+        newLabelValues.set(aggregation.displayName, lblVal);
+
+        if (!this.options.byLabels!.includes(aggregation.label)) {
+          return;
+        }
+
+        const urlLabels = labelsMap.get(aggregation.displayName)!;
+        const newVals: SingleLabelValues = {};
+        urlLabels.forEach(val => {
+          newVals[val] = true;
+        });
+        newLabelValues.set(aggregation.displayName, newVals);
+      });
+
+      // Fetch again to display the right groupings for the initial load
+      this.setState(
+        {
+          labelValues: newLabelValues
+        },
+        this.fetchMetrics
+      );
+    });
   }
 
   fetchMetrics = () => {
@@ -80,7 +129,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
         promise = API.getServiceDashboard(this.props.namespace, this.props.object, this.options);
         break;
     }
-    promise
+    return promise
       .then(response => {
         const labelValues = MetricsHelper.extractLabelValues(response.data, this.state.labelValues);
         this.setState({
@@ -91,6 +140,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Cannot fetch metrics', error));
         console.error(error);
+        throw error;
       });
   };
 

@@ -110,9 +110,15 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
       }
     }
   };
-  renderMessage = (message: string|undefined, type?: string) => {
-    if (!message) { return ''; }
-    const variant = type ? type : this.props.status === LoginStatus.error || this.state.filledInputs ? 'danger' : 'warning';
+  renderMessage = (message: string | undefined, type?: string) => {
+    if (!message) {
+      return '';
+    }
+    const variant = type
+      ? type
+      : this.props.status === LoginStatus.error || this.state.filledInputs
+      ? 'danger'
+      : 'warning';
     const icon = variant === 'danger' ? <ExclamationCircleIcon /> : <ExclamationTriangleIcon />;
     return (
       <span style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}>
@@ -128,8 +134,11 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
       messages.push(this.renderMessage(this.state.errorInput));
     }
     if (authenticationConfig.secretMissing) {
-      messages.push('The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
-      creates a valid secret. Please refer to the Kiali documentation for more details.', 'danger');
+      messages.push(
+        'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
+      creates a valid secret. Please refer to the Kiali documentation for more details.',
+        'danger'
+      );
     }
     if (this.props.status === LoginStatus.expired) {
       messages.push('Your session has expired or was terminated in another window.', 'warning');
@@ -137,7 +146,7 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
-    return (<>{messages}</>);
+    return <>{messages}</>;
   };
 
   render() {

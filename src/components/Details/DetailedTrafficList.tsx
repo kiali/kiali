@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { NodeType, ProtocolTraffic } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
 import { REQUESTS_THRESHOLDS } from '../../types/Health';
+import history, { URLParam } from '../../app/History';
 
 type DetailedTrafficProps = {
   direction: Direction;
@@ -62,6 +63,7 @@ const workloadColumnSizes = {
   sm: 3,
   xs: 3
 };
+const metricsLinksColumnsSizes = workloadColumnSizes;
 const typeColumnSizes = statusColumnSizes;
 const trafficColumnSizes = workloadColumnSizes;
 
@@ -94,6 +96,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
                 {this.renderWorkloadColumn(item.node, item.proxy !== undefined)}
                 {this.renderTypeColumn(item.traffic)}
                 {this.renderTrafficColumn(item.traffic)}
+                {this.renderMetricsLinksColumn(item.node)}
               </TableGrid.Row>
             );
           })}
@@ -102,8 +105,44 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
     );
   }
 
+  private renderMetricsLinksColumn = (node: TrafficNode) => {
+    const metricsDirection = this.props.direction === 'inbound' ? 'in_metrics' : 'out_metrics';
+    let metricsLink = history.location.pathname + '?';
+    metricsLink += `tab=${metricsDirection}`;
+
+    if (node.type === NodeType.APP) {
+      // All metrics tabs can filter by remote app. No need to switch context.
+      metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('Remote app=' + node.name);
+    } else if (node.type === NodeType.SERVICE) {
+      // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
+      // switch context to the service details page.
+      if (this.props.direction === 'outbound') {
+        metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('Remote service=' + node.name);
+      } else {
+        // Services have only one metrics tab.
+        metricsLink = `/namespaces/${node.namespace}/services/${node.name}?tab=metrics`;
+      }
+    } else if (node.type === NodeType.WORKLOAD) {
+      // No filters available for workloads. Context switch is mandatory.
+
+      // Since this will switch context (i.e. will redirect the user to the workload details page),
+      // user is redirected to the "opposite" metrics. When looking at certain item, if traffic is *incoming*
+      // from a certain workload, that traffic is reflected in the *outbound* metrics of the workload (and vice-versa).
+      const inverseMetricsDirection = this.props.direction === 'inbound' ? 'out_metrics' : 'in_metrics';
+      metricsLink = `/namespaces/${node.namespace}/workloads/${node.name}?tab=${inverseMetricsDirection}`;
+    } else {
+      return null;
+    }
+
+    return (
+      <TableGrid.Col {...metricsLinksColumnsSizes}>
+        <Link to={metricsLink}>View metrics</Link>
+      </TableGrid.Col>
+    );
+  };
+
   private renderStatusColumn = (traffic: ProtocolTraffic) => {
-    if (traffic.protocol === 'tcp' || traffic.protocol === '') {
+    if (traffic.protocol === 'tcp' || !traffic.protocol) {
       return (
         <TableGrid.Col {...statusColumnSizes}>
           <Icon type="pf" name="unknown" />
@@ -182,7 +221,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   private renderTrafficColumn = (traffic: ProtocolTraffic) => {
     if (traffic.protocol === 'tcp') {
       return <TableGrid.Col {...trafficColumnSizes}>{Number(traffic.rates.tcp).toFixed(2)}</TableGrid.Col>;
-    } else if (traffic.protocol === '') {
+    } else if (!traffic.protocol) {
       return <TableGrid.Col {...trafficColumnSizes}>N/A</TableGrid.Col>;
     } else {
       let rps: number;
@@ -205,7 +244,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   };
 
   private renderTypeColumn = (traffic: ProtocolTraffic) => {
-    if (traffic.protocol === '') {
+    if (!traffic.protocol) {
       return <TableGrid.Col {...typeColumnSizes}>N/A</TableGrid.Col>;
     }
 

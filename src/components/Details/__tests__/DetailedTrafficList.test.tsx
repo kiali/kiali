@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Router } from 'react-router';
 import { mount, shallow } from 'enzyme';
 import { Icon } from 'patternfly-react';
 import DetailedTrafficList, { AppNode, ServiceNode, TrafficItem, WorkloadNode } from '../DetailedTrafficList';
+import history from '../../../app/History';
 import { NodeType } from '../../../types/Graph';
 import { REQUESTS_THRESHOLDS } from '../../../types/Health';
 
@@ -11,6 +12,7 @@ describe('DetailedTrafficList', () => {
   const WORKLOAD_COLUMN_IDX = 1;
   const PROTOCOL_COLUMN_IDX = 2;
   const TRAFFIC_COLUMN_IDX = 3;
+  const METRICS_LINK_COLUMN_IDX = 4;
 
   const buildHttpItemWithError = (error: number): TrafficItem => ({
     node: {
@@ -368,6 +370,95 @@ describe('DetailedTrafficList', () => {
         .text()
         .trim()
     ).toBe('svc1');
+  });
+
+  it('renders metrics link of an app node', () => {
+    const trafficItem = buildAppNode();
+
+    history.push('/myPrefix/foo?param=1');
+    const wrapper = mount(
+      <Router history={history}>
+        <>
+          <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
+          <DetailedTrafficList direction={'inbound'} traffic={[trafficItem]} />
+        </>
+      </Router>
+    );
+
+    let cell = wrapper
+      .find('DetailedTrafficList')
+      .first()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    let link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=Remote%20app%3Dapp3');
+
+    cell = wrapper
+      .find('DetailedTrafficList')
+      .last()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=in_metrics&bylbl=Remote%20app%3Dapp3');
+  });
+
+  it('renders metrics link of a workload node', () => {
+    const trafficItem = buildHttpItemWithError(0);
+
+    const wrapper = mount(
+      <MemoryRouter>
+        <>
+          <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
+          <DetailedTrafficList direction={'inbound'} traffic={[trafficItem]} />
+        </>
+      </MemoryRouter>
+    );
+
+    let cell = wrapper
+      .find('DetailedTrafficList')
+      .first()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    let link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=in_metrics');
+
+    cell = wrapper
+      .find('DetailedTrafficList')
+      .last()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=out_metrics');
+  });
+
+  it('renders metrics link of a service node', () => {
+    const trafficItem = buildServiceNode();
+
+    history.push('/myPrefix/foo?param=1');
+    const wrapper = mount(
+      <Router history={history}>
+        <>
+          <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
+          <DetailedTrafficList direction={'inbound'} traffic={[trafficItem]} />
+        </>
+      </Router>
+    );
+
+    let cell = wrapper
+      .find('DetailedTrafficList')
+      .first()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    let link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=Remote%20service%3Dsvc1');
+
+    cell = wrapper
+      .find('DetailedTrafficList')
+      .last()
+      .find('TableGridCol')
+      .at(METRICS_LINK_COLUMN_IDX);
+    link = cell.find('Link');
+    expect(link.first().prop('to')).toBe('/namespaces/ns/services/svc1?tab=metrics');
   });
 
   it("doesn't render link for inaccessible nodes", () => {

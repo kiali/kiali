@@ -61,6 +61,8 @@ namespace MetricsHelper {
         Object.keys(values).forEach(k => {
           if (previous.hasOwnProperty(k)) {
             values[k] = previous[k];
+          } else {
+            values[k] = false;
           }
         });
       }
