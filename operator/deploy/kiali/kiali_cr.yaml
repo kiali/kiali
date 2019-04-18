@@ -46,6 +46,10 @@ spec:
 #  ---
 #  deployment:
 #
+# Determines which Kiali image to download and install.
+#    ---
+#    image_name: "kiali/kiali"
+#
 # The Kubernetes pull policy for the Kiali deployment.
 # This is overridden to be "Always" if image_version is set to "latest".
 #    ---
@@ -59,10 +63,6 @@ spec:
 #    ---
 #    image_version: "lastrelease"
 #
-# Determines which Kiali image to download and install.
-#    ---
-#    image_name: "kiali/kiali"
-#
 # The namespace into which Kiali is to be installed.
 #    ---
 #    namespace: "istio-system"
@@ -72,6 +72,11 @@ spec:
 # Only used when auth_strategy is "login".
 #    ---
 #    secret_name: "kiali"
+#
+# The Kiali service type. Kubernetes determines what values are valid.
+# Common values are "NodePort", "ClusterIP", and "LoadBalancer".
+#    ---
+#    service_type: "NodePort"
 #
 # Determines which priority levels of log messages Kiali will output.
 # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
