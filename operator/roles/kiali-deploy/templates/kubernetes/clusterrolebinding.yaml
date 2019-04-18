@@ -12,5 +12,5 @@ roleRef:
   name: {{ 'kiali-viewer' if kiali_vars.deployment.view_only_mode == True else 'kiali' }}
 subjects:
 - kind: ServiceAccount
-  name: kiali
+  name: kiali-service-account
   namespace: {{ kiali_vars.deployment.namespace }}
