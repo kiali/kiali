@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _ from 'lodash';
 import { style } from 'typestyle';
-import { Button, Checkbox, ContextSelector } from '@patternfly/react-core';
+import { Button, TextInput, Select, InputGroup } from '@patternfly/react-core';
+import { CloseIcon } from '@patternfly/react-icons';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceItemsSelector, namespaceFilterSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
@@ -33,13 +34,14 @@ interface NamespaceListType {
 }
 
 interface NamespaceListState {
-  isOpen: boolean;
+  isExpanded: boolean;
+  namespaces: object;
 }
 
 export class NamespaceDropdown extends React.PureComponent<NamespaceListType, NamespaceListState> {
   constructor(props: NamespaceListType) {
     super(props);
-    this.state = { isOpen: false };
+    this.state = { isExpanded: false, namespaces: [] };
   }
 
   componentDidMount() {
@@ -68,8 +70,8 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, Na
     }
   };
 
-  onNamespaceToggled = (isChecked, event) => {
-    this.props.toggleNamespace({ name: event.target.name });
+  onNamespaceToggled = (event: any) => {
+    this.props.toggleNamespace({ name: event.target.value });
   };
 
   onFilterChange = value => {
@@ -92,68 +94,92 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, Na
   }
 
   getNamespaces = () => {
-    const activeMap = this.props.activeNamespaces.reduce((map, namespace) => {
-      map[namespace.name] = namespace.name;
-      return map;
-    }, {});
+    if (this.props.items.length > 0) {
+      const activeMap = this.props.activeNamespaces.reduce((map, namespace) => {
+        map[namespace.name] = namespace.name;
+        return map;
+      }, {});
 
-    return (
-      <div key={'div_namespace_selector'} className={namespaceListStyle}>
-        {this.props.items
-          .filter((namespace: Namespace) => namespace.name.includes(this.props.filter))
-          .map((namespace: Namespace) => (
-            <Checkbox
-              key={namespace.name}
-              name={namespace.name}
-              id={namespace.name}
-              isChecked={!!activeMap[namespace.name]}
-              onChange={this.onNamespaceToggled}
-              label={namespace.name}
-              aria-label={namespace.name}
-            />
-          ))}
-      </div>
-    );
+      return (
+        <div key={'div_namespace_selector'} className={namespaceListStyle}>
+          {this.props.items
+            .filter((namespace: Namespace) => namespace.name.includes(this.props.filter))
+            .map((namespace: Namespace) => (
+              <div id={`namespace-list-item[${namespace.name}]`} key={`namespace-list-item[${namespace.name}]`}>
+                <label>
+                  <input
+                    type="checkbox"
+                    value={namespace.name}
+                    checked={!!activeMap[namespace.name]}
+                    onChange={this.onNamespaceToggled}
+                  />
+                  <span>{namespace.name}</span>
+                </label>
+              </div>
+            ))}
+        </div>
+      );
+    } else {
+      return <>No namespaces found or they haven't loaded yet</>;
+    }
   };
 
-  onToggle = isOpen => {
+  onToggle = isExpanded => {
     this.setState({
-      isOpen
+      isExpanded
     });
   };
 
-  onButtonSearch = event => {
-    this.onFilterChange(this.props.filter);
+  onClearAll = () => {
+    this.clearFilter();
+    this.props.clearAll();
   };
 
   render() {
-    const { isOpen } = this.state;
-
-    const namespaces = this.props.items.length > 0 ? this.getNamespaces() : [];
+    const { isExpanded } = this.state;
 
     return (
       <div className="namespace-selector">
-        <ContextSelector
-          toggleText={this.namespaceButtonText()}
-          onSearchInputChange={this.onFilterChange}
-          isOpen={isOpen}
-          searchInputValue={this.props.filter}
+        <Select
           onToggle={this.onToggle}
-          onSearchButtonClick={this.onButtonSearch}
-          screenReaderLabel="Selected Namespace:"
+          onSelect={this.syncNamespacesURLParam}
+          isExpanded={isExpanded}
+          aria-label="Select Input"
+          placeholderText={this.namespaceButtonText()}
+          variant="single"
         >
+          <div className="filter-selector-namespace">
+            Filter by :
+            <InputGroup>
+              <TextInput
+                value={this.props.filter}
+                type="text"
+                onChange={this.onFilterChange}
+                aria-label="text input filter"
+              />
+              {this.props.filter !== '' && (
+                <Button
+                  variant={'tertiary'}
+                  aria-label="search button for search namespaces"
+                  onClick={() => this.clearFilter()}
+                >
+                  <CloseIcon />
+                </Button>
+              )}
+            </InputGroup>
+          </div>
           <Button
             variant="plain"
             key="clear_all_dropdown_ns"
             aria-label="Action"
             className={buttonClearStyle}
             isDisabled={this.props.activeNamespaces.length === 0}
-            onClick={this.props.clearAll}
+            onClick={this.onClearAll}
           >
             Clear all
           </Button>
-          {namespaces}
-        </ContextSelector>
+          {this.getNamespaces()}
+        </Select>
       </div>
     );
   }

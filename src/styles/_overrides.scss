@@ -317,14 +317,23 @@ Namespace Selector style
 
 */
 
-.namespace-selector .pf-c-context-selector {
-  --pf-c-context-selector__toggle--BorderWidth: 0px !important;
+.namespace-selector {
+  width: 20%;
+}
+
+.namespace-selector .filter-selector-namespace {
+  width: 90%;
+  margin-left: 7%;
+}
+
+.namespace-selector .pf-c-select {
+  --pf-c-select__toggle--BorderWidth: 0px !important;
 }
 
 .namespace-selector .pf-c-input-group {
   margin-left: -6px;
 }
 
-.namespace-selector .pf-c-check__input {
+.namespace-selector input {
   margin: 0 0 0;
 }
