@@ -7,7 +7,7 @@ metadata:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
 spec:
-  type: NodePort
+  type: {{ kiali_vars.deployment.service_type }}
   ports:
   - name: tcp
     protocol: TCP
