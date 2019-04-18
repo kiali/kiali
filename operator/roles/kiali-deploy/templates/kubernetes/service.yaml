@@ -15,3 +15,4 @@ spec:
   selector:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
+  {% if kiali_vars.deployment.additional_service_yaml is defined %}{{ kiali_vars.deployment.additional_service_yaml | to_nice_yaml(indent=0) | trim | indent(2) }}{% endif %}
