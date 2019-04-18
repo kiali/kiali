@@ -17,7 +17,7 @@ AUTH_LOGIN = "https-user-password"
 STRATEGY_LIST = ['login', 'anonymous', 'openshift']
 WEB_ROOT_LIST = ['/']
 
-def test_auth_anonymous():
+def _test_auth_anonymous():
     try:
         assert change_configmap_with_new_value(element_name='strategy:', list=STRATEGY_LIST,
             new_value=STRATEGY_ANONYMOUS, current_configmap_file=conftest.CURRENT_CONFIGMAP_FILE,
@@ -30,7 +30,7 @@ def test_auth_anonymous():
         create_configmap_and_wait_for_kiali(conftest.CURRENT_CONFIGMAP_FILE)
         make_request(auth_type = AUTH_LOGIN)
 
-def test_auth_openshift():
+def _test_auth_openshift():
 
     kiali_hostname = conftest.get_kiali_hostname()
     cookie_file = "./tmp_cookie_file"
