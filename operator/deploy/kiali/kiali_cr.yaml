@@ -24,9 +24,10 @@ spec:
 #  installation_tag: ""
 
 ##########
-# The namespace where Istio is installed.
+# The namespace where Istio is installed. If left empty, it is assumed to be the
+# same namespace as where Kiali is installed (i.e. deployment.namespace).
 #    ---
-#  istio_namespace: "istio-system"
+#  istio_namespace: ""
 
 ##########
 #  ---
@@ -41,6 +42,7 @@ spec:
 #      - "kube.*"
 #      - "openshift.*"
 #      - "ibm.*"
+#      - "kiali.*"
 
 ##########
 #  ---
@@ -104,7 +106,7 @@ spec:
 # Determines which priority levels of log messages Kiali will output.
 # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
 #    ---
-#    verbose_mode: "3"
+#    verbose_mode: "4"
 #
 # Kiali resources will be assigned a "version" label when they are deployed.
 # This determines what value those "version" labels will have.
@@ -132,7 +134,7 @@ spec:
 # password: Password to be used when making requests to Grafana. User only requires viewer permissions.
 # service: The Kubernetes service name for Grafana. Kiali uses this to connect within the cluster to Grafana.
 # service_dashboard_pattern: Search pattern for Grafana Service dashboard.
-# service_namespace: The Kubernetes namespace that holds the Grafana service.
+# service_namespace: The Kubernetes namespace that holds the Grafana service (if empty, assumes the same value as deployment.namespace)
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 # username: Username to be used when making requests to Grafana. User only requires viewer permissions.
@@ -147,7 +149,7 @@ spec:
 #      password: ""
 #      service: "grafana"
 #      service_dashboard_pattern: "Istio%20Service%20Dashboard"
-#      service_namespace: "istio-system"
+#      service_namespace: ""
 #      url: ""
 #      username: ""
 #      var_namespace: "var-namespace"
@@ -159,11 +161,12 @@ spec:
 # istio_identity_domain: The annotation used by Istio to identify domains.
 # istio_sidecar_annotation: The pod annotation used by Istio to identify the sidecar.
 # url_service_version: The Istio service used to determine the Istio version.
+#                      If empty, assumes it is in the istio namespace at the URL "http://istio-pilot.<istio_namespace>:8080/version"
 #    ---
 #    istio:
 #      istio_identity_domain: "svc.cluster.local"
 #      istio_sidecar_annotation: "sidecar.istio.io/status"
-#      url_service_version: "http://istio-pilot:8080/version"
+#      url_service_version: ""
 #
 # **Jaeger-specific settings:
 # service: The Kubernetes service name for Jaeger. Kiali uses this to connect within the cluster to Jaeger.
@@ -177,11 +180,13 @@ spec:
 # **Prometheus-specific settings:
 # custom_metrics_url: The URL used to query the Prometheus Server for building the runtime metrics dashboards.
 #                     This URL must be accessible from the Kiali pod.
+#                     If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
 # url: The URL used to query the Prometheus Server. This URL must be accessible from the Kiali pod.
+#      If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
 #    ---
 #    prometheus:
-#      custom_metrics_url: "http://prometheus.istio-system:9090"
-#      url: "http://prometheus.istio-system:9090"
+#      custom_metrics_url: ""
+#      url: ""
 
 ##########
 #  ---

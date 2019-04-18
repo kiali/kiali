@@ -118,8 +118,8 @@
 #    Default: "lastrelease"
 #
 # ISTIO_NAMESPACE
-#    The namespace where Istio is installed.
-#    Default: "istio-system"
+#    The namespace where Istio is installed. If empty, assumes the value of NAMESPACE.
+#    Default: ""
 #
 # JAEGER_URL
 #    The Jaeger URL that Kiali will use when integrating with Jaeger.

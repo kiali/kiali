@@ -235,7 +235,7 @@ container-push-kiali:
 ## container-push: Pushes current container images to remote container repos.
 container-push: container-push-kiali container-push-operator
 
-## operator-create: Delgates to the operator-create target of the operator Makefile
+## operator-create: Delegates to the operator-create target of the operator Makefile
 operator-create: docker-build-operator
 	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-create
 
@@ -249,18 +249,18 @@ operator-create: docker-build-operator
 	  echo "The Operator is not running. To start it, run: make operator-create"; exit 1; \
 	fi
 
-## openshift-deploy: Delgates to the kiali-create target of the operator Makefile
+## openshift-deploy: Delegates to the kiali-create target of the operator Makefile
 openshift-deploy: openshift-undeploy
 	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-create
 
-## openshift-undeploy: Delgates to the kiali-delete target of the operator Makefile
+## openshift-undeploy: Delegates to the kiali-delete target of the operator Makefile
 openshift-undeploy: .ensure-operator-is-running
 	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-delete
 
-## k8s-deploy: Delgates to the kiali-create target of the operator Makefile
+## k8s-deploy: Delegates to the kiali-create target of the operator Makefile
 k8s-deploy: openshift-deploy
 
-## k8s-undeploy: Delgates to the kiali-delete target of the operator Makefile
+## k8s-undeploy: Delegates to the kiali-delete target of the operator Makefile
 k8s-undeploy: openshift-undeploy
 
 ## openshift-reload-image: Refreshing image in Openshift project.

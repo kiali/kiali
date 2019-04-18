@@ -9,7 +9,7 @@
 
 kiali_defaults:
   installation_tag: ""
-  istio_namespace: "istio-system"
+  istio_namespace: ""
 
   api:
     namespaces:
@@ -18,6 +18,7 @@ kiali_defaults:
       - "kube.*"
       - "openshift.*"
       - "ibm.*"
+      - "kiali.*"
 
   auth:
     strategy: ""
@@ -30,7 +31,7 @@ kiali_defaults:
     namespace: "istio-system"
     secret_name: "kiali"
     service_type: "NodePort"
-    verbose_mode: "3"
+    verbose_mode: "4"
     version_label: ""
     view_only_mode: false
 
@@ -41,7 +42,7 @@ kiali_defaults:
       password: ""
       service: "grafana"
       service_dashboard_pattern: "Istio%20Service%20Dashboard"
-      service_namespace: "istio-system"
+      service_namespace: ""
       url: ""
       username: ""
       var_namespace: "var-namespace"
@@ -51,13 +52,13 @@ kiali_defaults:
     istio:
       istio_identity_domain: "svc.cluster.local"
       istio_sidecar_annotation: "sidecar.istio.io/status"
-      url_service_version: "http://istio-pilot:8080/version"
+      url_service_version: ""
     jaeger:
       service: "jaeger-query"
       url: ""
     prometheus:
-      custom_metrics_url: "http://prometheus.istio-system:9090"
-      url: "http://prometheus.istio-system:9090"
+      custom_metrics_url: ""
+      url: ""
 
   identity:
     cert_file: ""

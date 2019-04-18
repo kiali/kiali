@@ -35,6 +35,43 @@
     msg: "{{ msg.split('\n') }}"
   tags: test
 
+# We do not want to blindly default to istio-system for some namespaces. If the istio_namespace is not
+# provided, assume it is the same namespace where Kiali is being deployed. Set the other istio namespace
+# values accordingly.
+# We determine the default Istio namespace var first, and the rest will use it for their default as appropriate.
+
+- name: Set default istio namespace
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'istio_namespace': kiali_vars.deployment.namespace}, recursive=True) }}"
+  when:
+  - kiali_vars.istio_namespace == ""
+
+- name: Set default Grafana service namespace
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'grafana': {'service_namespace': kiali_vars.istio_namespace}}}, recursive=True) }}"
+  when:
+  - kiali_vars.external_services.grafana.service_namespace == ""
+
+- name: Set default Istio service that provides version info
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'istio': {'url_service_version': 'http://istio-pilot.' + kiali_vars.istio_namespace + ':8080/version'}}}, recursive=True) }}"
+  when:
+  - kiali_vars.external_services.istio.url_service_version == ""
+
+- name: Set default Prometheus URL
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'url': 'http://prometheus.' + kiali_vars.istio_namespace + ':9090'}}}, recursive=True) }}"
+  when:
+  - kiali_vars.external_services.prometheus.url == ""
+
+- name: Set default Prometheus Custom Metrics URL
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'custom_metrics_url': kiali_vars.external_services.prometheus.url}}}, recursive=True) }}"
+  when:
+  - kiali_vars.external_services.prometheus.custom_metrics_url == ""
+
+# Determine some more defaults.
+
 - name: Set default web root based on cluster type
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'server': {'web_root': '/' if is_openshift else '/kiali'}}, recursive=True) }}"
