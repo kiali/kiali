@@ -4,6 +4,20 @@ metadata:
   name: kiali
 spec:
 
+###################################################################
+# kiali_cr.yaml
+#
+# This is a fully documented Kiali custom resource yaml file.
+# It can be used to tell the Kiali Operator to install Kiali.
+#
+# This is actually an empty Kiali CR, however, it provides
+# documentation on all available settings.
+# In each documented section, you will see a "---" marker;
+# below that marker you will see the names of the settings along
+# with their default values. If the setting is not defined by
+# default, its name will be prefixed with "#".
+###################################################################
+
 ##########
 # Tag used to identify a particular instance/installation of the Kiali server.
 #    ---
@@ -45,6 +59,15 @@ spec:
 ##########
 #  ---
 #  deployment:
+#
+# Additional custom yaml to add to the service definition. This is used mainly to customize the service type.
+# For example, if the deployment.service_type is set to "LoadBalancer" and you want to set the loadBalancerIP,
+# you can do so here with: additional_service_yaml: { "loadBalancerIP": "78.11.24.19" }.
+# Another example would be if the deployment.service_type is set to "ExternalName" you will need to configure
+# the name via: additional_service_yaml: { "externalName": "my.kiali.example.com" }.
+# A final example would be if external IPs need to be set: additional_service_yaml: { "externalIPs": ["80.11.12.10"] }
+#    ---
+#    #additional_service_yaml:
 #
 # Determines which Kiali image to download and install.
 #    ---

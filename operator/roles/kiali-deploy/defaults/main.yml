@@ -23,6 +23,7 @@ kiali_defaults:
     strategy: ""
 
   deployment:
+    #additional_service_yaml:
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_version: "lastrelease"
