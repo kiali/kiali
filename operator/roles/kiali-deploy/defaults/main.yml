@@ -18,6 +18,7 @@ kiali_defaults:
       - "kube.*"
       - "openshift.*"
       - "ibm.*"
+      - "kiali.*"
 
   auth:
     strategy: ""

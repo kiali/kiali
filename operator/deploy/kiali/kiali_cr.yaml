@@ -42,6 +42,7 @@ spec:
 #      - "kube.*"
 #      - "openshift.*"
 #      - "ibm.*"
+#      - "kiali.*"
 
 ##########
 #  ---
