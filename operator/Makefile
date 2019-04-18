@@ -12,7 +12,7 @@ CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
 IMAGE_VERSION ?= dev
 NAMESPACE ?= istio-system
-VERBOSE_MODE ?= 3
+VERBOSE_MODE ?= 4
 SERVICE_TYPE ?= NodePort
 
 # Find the client executable (either istiooc or oc or kubectl)
