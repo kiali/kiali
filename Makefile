@@ -278,7 +278,7 @@ gometalinter-install:
 
 ## lint: Runs gometalinter
 lint:
-	gometalinter --disable-all  --enable=vet --tests  --vendor ./...
+	gometalinter --debug --disable-all  --enable=vet --tests  --vendor ./...
 
 ## lint-all: Runs gometalinter with items from good to have list but does not run during travis
 lint-all:
