@@ -215,7 +215,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 		err = business.OpenshiftOAuth.ValidateToken(claims.SessionId)
 		if err == nil {
 			// Internal header used to propagate the subject of the request for audit purposes
-			w.Header().Add("Kiali-User", claims.Subject)
+			r.Header.Add("Kiali-User", claims.Subject)
 			return http.StatusOK, claims.SessionId
 		}
 
@@ -235,7 +235,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes
-		w.Header().Add("Kiali-User", user)
+		r.Header.Add("Kiali-User", user)
 	} else {
 		user := checkKialiCredentials(r)
 		if len(user) == 0 {
@@ -249,7 +249,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes
-		w.Header().Add("Kiali-User", user)
+		r.Header.Add("Kiali-User", user)
 	}
 
 	return http.StatusOK
