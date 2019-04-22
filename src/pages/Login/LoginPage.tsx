@@ -121,7 +121,10 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
       : 'warning';
     const icon = variant === 'danger' ? <ExclamationCircleIcon /> : <ExclamationTriangleIcon />;
     return (
-      <span style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}>
+      <span
+        key={message}
+        style={{ color: variant === 'danger' ? '#c00' : '#f0ab00', fontWeight: 'bold', fontSize: 16 }}
+      >
         {icon}
         &nbsp; {message}
       </span>
@@ -148,7 +151,7 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
-    return <>{messages}</>;
+    return messages;
   };
 
   render() {
@@ -169,11 +172,13 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
       [BackgroundImageSrc.filter]: `${bgFilter}#image_overlay`
     };
 
+    const messages = this.getHelperMessage();
+
     const loginForm = (
       <LoginForm
         usernameLabel="Username"
-        showHelperText={this.state.showHelperText || this.props.message !== ''}
-        helperText={this.getHelperMessage()}
+        showHelperText={this.state.showHelperText || this.props.message !== '' || messages.length > 0}
+        helperText={<>{messages}</>}
         usernameValue={this.state.username}
         onChangeUsername={this.handleUsernameChange}
         isValidUsername={this.state.isValidUsername && this.props.status !== LoginStatus.error}
