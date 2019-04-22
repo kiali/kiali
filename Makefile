@@ -23,7 +23,7 @@ CONSOLE_LOCAL_DIR ?= ../../../../../kiali-ui
 VERSION_LABEL ?= ${VERSION}
 
 # The minimum Go version that must be used to build the app.
-GO_VERSION_KIALI = 1.8.3
+GO_VERSION_KIALI = 1.10.1
 
 # Identifies the container image that will be built and deployed.
 CONTAINER_NAME ?= kiali/kiali
