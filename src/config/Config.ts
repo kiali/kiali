@@ -35,12 +35,12 @@ const conf = {
   about: {
     project: {
       url: 'https://github.com/kiali',
-      icon: 'HomeIcon',
+      icon: 'RepositoryIcon',
       linkText: 'Find us on GitHub'
     },
     website: {
       url: 'http://kiali.io',
-      icon: 'RepositoryIcon',
+      icon: 'HomeIcon',
       linkText: 'Visit our web page'
     }
   },

@@ -92,7 +92,8 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config.about && config.about.website) {
       const Icon = icons[config.about.website.icon];
       return (
-        <Button href={config.about.website.url} variant="link" target="_blank">
+        // @ts-ignore
+        <Button component="a" href={config.about.website.url} variant="link" target="_blank">
           <Icon style={{ marginRight: '10px' }} />
           {config.about.website.linkText}
         </Button>
@@ -106,7 +107,8 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     if (config.about && config.about.project) {
       const Icon = icons[config.about.project.icon];
       return (
-        <Button href={config.about.project.url} variant="link" target="_blank">
+        // @ts-ignore
+        <Button component="a" href={config.about.project.url} variant="link" target="_blank">
           <Icon style={{ marginRight: '10px' }} />
           {config.about.project.linkText}
         </Button>
