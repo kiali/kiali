@@ -54,8 +54,9 @@ kiali_defaults:
       istio_sidecar_annotation: "sidecar.istio.io/status"
       url_service_version: ""
     jaeger:
-      service: "tracing"
       jaeger_service: "jaeger-query"
+      service: "tracing"
+      service_namespace: ""
       url: ""
     prometheus:
       custom_metrics_url: ""
