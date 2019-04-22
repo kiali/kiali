@@ -1,15 +1,3 @@
-- name: Detect Grafana URL when it is not defined
-  include: openshift/os-grafana.yml
-  when:
-  - is_openshift == True
-  - kiali_vars.external_services.grafana.url == ""
-
-- name: Detect Jaeger URL when it is not defined
-  include: openshift/os-jaeger.yml
-  when:
-  - is_openshift == True
-  - kiali_vars.external_services.jaeger.url == ""
-
 - name: "Create Kiali objects on OpenShift"
   include_tasks: process-resource.yml
   vars:

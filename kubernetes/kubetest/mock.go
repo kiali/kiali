@@ -5,6 +5,7 @@ import (
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
+	osroutesv1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -107,6 +108,11 @@ func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (
 func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
+}
+
+func (o *K8SClientMock) GetRoute(namespace, service string) (*osroutesv1.Route, error) {
+	args := o.Called(namespace, service)
+	return args.Get(0).(*osroutesv1.Route), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDeploymentConfig(namespace string, deploymentName string) (*osapps_v1.DeploymentConfig, error) {

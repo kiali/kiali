@@ -54,8 +54,10 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
-	EnvJaegerURL     = "JAEGER_URL"
-	EnvJaegerService = "JAEGER_SERVICE"
+	EnvJaegerURL              = "JAEGER_URL"
+	EnvJaegerService          = "JAEGER_SERVICE"
+	EnvTracingService         = "TRACING_SERVICE"
+	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
 
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
@@ -136,8 +138,10 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
-	URL     string `yaml:"url"`
-	Service string `yaml:"service"`
+	URL              string `yaml:"url"`
+	Service          string `yaml:"service"`
+	JaegerService    string `yaml:"jaeger_service"`
+	ServiceNamespace string `yaml:"service_namespace"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -205,6 +209,9 @@ type Config struct {
 	Auth             AuthConfig        `yaml:"auth,omitempty"`
 }
 
+// Istio System namespace by default
+var ISTIO_NAMESPACE = "istio-system"
+
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
@@ -214,7 +221,7 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
+	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, ISTIO_NAMESPACE))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
@@ -235,13 +242,13 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 
 	// Prometheus configuration
-	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))
+	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", ISTIO_NAMESPACE)))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
+	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, ISTIO_NAMESPACE))
 	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
 	c.ExternalServices.Grafana.WorkloadDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaWorkloadDashboardPattern, "Istio%20Workload%20Dashboard"))
 	c.ExternalServices.Grafana.ServiceDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaServiceDashboardPattern, "Istio%20Service%20Dashboard"))
@@ -257,7 +264,9 @@ func NewConfig() (c *Config) {
 
 	// Jaeger Configuration
 	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
-	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvTracingService, "tracing"))
+	c.ExternalServices.Jaeger.JaegerService = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	c.ExternalServices.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, ISTIO_NAMESPACE))
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
