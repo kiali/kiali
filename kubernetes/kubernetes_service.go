@@ -5,7 +5,7 @@ import (
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
-	osroutesv1 "github.com/openshift/api/route/v1"
+	osroutes_v1 "github.com/openshift/api/route/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -120,8 +120,8 @@ func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*apps_v1
 
 // GetRoute returns the external URL endpoint of a specific service.
 // It returns an error on any problem.
-func (in *IstioClient) GetRoute(namespace, service string) (*osroutesv1.Route, error) {
-	result := &osroutesv1.Route{}
+func (in *IstioClient) GetRoute(namespace, service string) (*osroutes_v1.Route, error) {
+	result := &osroutes_v1.Route{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(service).Do().Into(result)
 	if err != nil {
 		return nil, err

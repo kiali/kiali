@@ -1,9 +1,10 @@
 package status
 
 import (
+	"io/ioutil"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"io/ioutil"
 )
 
 // The Kiali ServiceAccount token.
