@@ -31,6 +31,16 @@ properties([
       trim: true,
       description: 'The name of the Docker repository to push the release'),
     string(
+      name: 'QUAY_NAME',
+      defaultValue: 'quay.io/kiali/kiali',
+      trim: true,
+      description: 'The name of the Quay repository to push the release'),
+    string(
+      name: 'QUAY_OPERATOR_NAME',
+      defaultValue: 'quay.io/kiali/kiali-operator',
+      trim: true,
+      description: 'The name of the Quay repository to push the operator release'),
+    string(
       name: 'BACKEND_PULL_URI',
       defaultValue: 'https://api.github.com/repos/kiali/kiali/pulls',
       trim: true,
@@ -65,6 +75,7 @@ node('kiali-build') {
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
   def buildUi = params.SKIP_UI_RELEASE != "y"
   def dockerTag = ""
+  def quayTag = ""
 
   try {
     cleanWs()
@@ -149,10 +160,11 @@ node('kiali-build') {
         }
       }
 
-      stage('Release Kiali to DockerHub') {
-        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+      stage('Release Kiali to Container Repositories') {
+        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER'), usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
           sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
           dockerTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
+          quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
         }
       }
 
@@ -173,7 +185,9 @@ node('kiali-build') {
              parameters: [
                [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
                [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
-               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG']
+               [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
+               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG'],
+               [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
              ], wait: false
            )
        }

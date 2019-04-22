@@ -65,7 +65,8 @@ BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 
 DOCKER_NAME ?= docker.io/kiali/kiali
-
+QUAY_NAME ?= quay.io/kiali/kiali
+QUAY_OPERATOR_NAME ?= quay.io/kiali/kiali-operator
 
 ifeq ($(RELEASE_TYPE_IS_SNAPSHOT_OR_EDGE),y)
   IS_SNAPSHOT ?= y
@@ -134,16 +135,30 @@ ifdef DOCKER_PASSWORD
 	@docker login -u "$(DOCKER_USER)" -p "$(DOCKER_PASSWORD)" docker.io
 endif
 endif
-	DOCKER_VERSION="$(VERSION_TAG)" \
+ifdef QUAY_USER
+ifdef QUAY_PASSWORD
+	@echo "Logging in to Quay.io..."
+	@docker login -u "$(QUAY_USER)" -p "$(QUAY_PASSWORD)" quay.io
+endif
+endif
+	CONTAINER_VERSION="$(VERSION_TAG)" \
 	  CONSOLE_VERSION="$(CONSOLE_VERSION)" \
 	  CONSOLE_LOCAL_DIR="$(CONSOLE_LOCAL_DIR)" \
-	  make docker-build docker-push
+	  OPERATOR_IMAGE_NAME="$(QUAY_OPERATOR_NAME)" \
+	  make docker-build container-push
 ifneq ($(IS_SNAPSHOT),y)
+   # docker.io
 	docker tag "$(DOCKER_NAME):$(VERSION_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
+   # quay.io
+	docker tag "$(QUAY_NAME):$(VERSION_TAG)" "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker push "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker rmi "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
 	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
+	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
+	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
 
 backend-push-version-tag:
 ifeq ($(PUSH_GITHUB_TAG),y)
