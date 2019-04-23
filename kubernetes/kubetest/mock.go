@@ -9,7 +9,7 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
-	batch_v1beta1 "k8s.io/api/batch/v1beta1"
+	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -61,7 +61,7 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 	o.On("GetDeploymentConfigs", namespace).Return([]osapps_v1.DeploymentConfig{}, nil)
 	o.On("GetStatefulSets", namespace).Return([]apps_v1.StatefulSet{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
-	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
 }
 
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
@@ -73,7 +73,7 @@ func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interf
 	o.On("GetReplicaSets", namespace).Return([]apps_v1.ReplicaSet{}, nil)
 	o.On("GetReplicationControllers", namespace).Return([]core_v1.ReplicationController{}, nil)
 	o.On("GetJobs", namespace).Return([]batch_v1.Job{}, nil)
-	o.On("GetCronJobs", namespace).Return([]batch_v1beta1.CronJob{}, nil)
+	o.On("GetCronJobs", namespace).Return([]batch_apps_v1.CronJob{}, nil)
 }
 
 func (o *K8SClientMock) CreateIstioObject(api, namespace, resourceType, json string) (kubernetes.IstioObject, error) {
@@ -96,9 +96,9 @@ func (o *K8SClientMock) GetAdapters(namespace string) ([]kubernetes.IstioObject,
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
+func (o *K8SClientMock) GetCronJobs(namespace string) ([]batch_apps_v1.CronJob, error) {
 	args := o.Called(namespace)
-	return args.Get(0).([]batch_v1beta1.CronJob), args.Error(1)
+	return args.Get(0).([]batch_apps_v1.CronJob), args.Error(1)
 }
 
 func (o *K8SClientMock) GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error) {
@@ -375,6 +375,7 @@ func (o *K8SClientMock) MockServices(namespace string, names []string) {
 		services = append(services, fakeService(namespace, name))
 	}
 	o.On("GetServices", namespace, mock.AnythingOfType("map[string]string")).Return(services, nil)
+	o.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 }
 
 func fakeService(namespace, name string) core_v1.Service {

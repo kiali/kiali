@@ -22,8 +22,9 @@ type ServiceOverview struct {
 }
 
 type ServiceList struct {
-	Namespace Namespace         `json:"namespace"`
-	Services  []ServiceOverview `json:"services"`
+	Namespace   Namespace         `json:"namespace"`
+	Services    []ServiceOverview `json:"services"`
+	Validations IstioValidations  `json:"validations"`
 }
 
 type ServiceDetails struct {

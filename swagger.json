@@ -4426,6 +4426,9 @@
             "$ref": "#/definitions/ServiceOverview"
           },
           "x-go-name": "Services"
+        },
+        "validations": {
+          "$ref": "#/definitions/IstioValidations"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"

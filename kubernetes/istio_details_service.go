@@ -15,7 +15,10 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-var portNameMatcher = regexp.MustCompile("^[\\-].*")
+var (
+	portNameMatcher = regexp.MustCompile("^[\\-].*")
+	portProtocols   = [...]string{"grpc", "http", "http2", "https", "mongo", "redis", "tcp", "tls", "udp"}
+)
 
 // GetIstioDetails returns Istio details for a given namespace,
 // on this version it collects the VirtualServices and DestinationRules defined for a namespace.
@@ -864,7 +867,7 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 
 // ValidaPort parses the Istio Port definition and validates the naming scheme
 func ValidatePort(portDef interface{}) bool {
-	return matchPortNameRule(parsePort(portDef))
+	return MatchPortNameRule(parsePort(portDef))
 }
 
 func parsePort(portDef interface{}) (string, string) {
@@ -885,7 +888,7 @@ func parsePort(portDef interface{}) (string, string) {
 	return name, proto
 }
 
-func matchPortNameRule(portName, protocol string) bool {
+func MatchPortNameRule(portName, protocol string) bool {
 	protocol = strings.ToLower(protocol)
 	// Check that portName begins with the protocol
 
@@ -907,6 +910,16 @@ func matchPortNameRule(portName, protocol string) bool {
 
 	// Case portName == protocolName
 	return true
+}
+
+func MatchPortNameWithValidProtocols(portName string) bool {
+	for _, protocol := range portProtocols {
+		if strings.HasPrefix(portName, protocol) &&
+			(strings.ToLower(portName) == protocol || portNameMatcher.MatchString(portName[len(protocol):])) {
+			return true
+		}
+	}
+	return false
 }
 
 // GatewayNames extracts the gateway names for easier matching

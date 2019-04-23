@@ -4,9 +4,11 @@ import (
 	"sync"
 	"time"
 
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -30,9 +32,10 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 
 	var svcs []core_v1.Service
 	var pods []core_v1.Pod
+	var deployments []apps_v1.Deployment
 
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 	errChan := make(chan error, 2)
 
 	go func() {
@@ -55,6 +58,16 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		var err error
+		deployments, err = in.k8s.GetDeployments(namespace)
+		if err != nil {
+			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
 	wg.Wait()
 	if len(errChan) != 0 {
 		err = <-errChan
@@ -62,12 +75,13 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	}
 
 	// Convert to Kiali model
-	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods), nil
+	return in.buildServiceList(models.Namespace{Name: namespace}, svcs, pods, deployments), nil
 }
 
-func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod) *models.ServiceList {
+func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment) *models.ServiceList {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := config.Get()
+	validations := in.getServiceValidations(svcs, deployments)
 	// Convert each k8s service into our model
 	for i, item := range svcs {
 		sPods := kubernetes.FilterPodsForService(&item, pods)
@@ -84,7 +98,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		}
 	}
 
-	return &models.ServiceList{Namespace: namespace, Services: services}
+	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
@@ -256,4 +270,13 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	}
 
 	return svc, eps, nil
+}
+
+func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment) models.IstioValidations {
+	validations := checkers.ServiceChecker{
+		Services:    services,
+		Deployments: deployments,
+	}.Check()
+
+	return validations
 }

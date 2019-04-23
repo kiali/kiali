@@ -179,6 +179,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Destination Rule enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"service.deployment.port.mismatch": {
+		Message:  "Service port and deployment port do not match",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {
