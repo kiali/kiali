@@ -56,7 +56,7 @@ kiali_defaults:
     jaeger:
       jaeger_service: "jaeger-query"
       service: "tracing"
-      service_namespace: ""
+      namespace: ""
       url: ""
     prometheus:
       custom_metrics_url: ""
