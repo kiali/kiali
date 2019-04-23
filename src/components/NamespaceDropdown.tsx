@@ -21,6 +21,10 @@ const buttonClearStyle = style({
   float: 'right'
 });
 
+const namespaceLabelStyle = style({
+  margin: '0 0 0 10px'
+});
+
 interface NamespaceListType {
   disabled: boolean;
   filter: string;
@@ -113,7 +117,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, Na
                     checked={!!activeMap[namespace.name]}
                     onChange={this.onNamespaceToggled}
                   />
-                  <span>{namespace.name}</span>
+                  <span className={namespaceLabelStyle}>{namespace.name}</span>
                 </label>
               </div>
             ))}
