@@ -150,7 +150,7 @@ debug "minikube is located at $(which minikube)"
 
 if [ "$_CMD" = "up" ]; then
   echo 'Starting minikube with 8gig RAM and 40gig disk space (disk space for docker images)'
-  minikube start --memory=8216 --disk-size=40g --vm-driver=virtualbox
+  minikube start --cpus=3 --memory=8216 --disk-size=40g --vm-driver=virtualbox
   echo 'Enabling the ingress addon'
   minikube addons enable ingress
 
