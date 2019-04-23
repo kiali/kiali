@@ -151,3 +151,4 @@ rules:
   - monitoringdashboards
   verbs:
   - get
+  - list
