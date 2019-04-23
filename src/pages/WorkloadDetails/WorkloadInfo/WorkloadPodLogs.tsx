@@ -47,7 +47,9 @@ const logsTextarea = style({
   overflow: 'auto',
   resize: 'vertical',
   color: '#fff',
-  backgroundColor: '#003145'
+  backgroundColor: '#003145',
+  fontFamily: 'monospace',
+  fontSize: '11pt'
 });
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
