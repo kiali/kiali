@@ -68,7 +68,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
       this.props.logout();
     }
 
-    return expiresOn.diff(moment(), 'seconds');
+    return expiresOn.diff(moment());
   };
 
   checkSession = () => {
