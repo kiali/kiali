@@ -38,7 +38,7 @@ help: Makefile
 # Requires operator-sdk - download it from https://github.com/operator-framework/operator-sdk/releases
 operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
-	${OP_SDK} build "${OPERATOR_IMAGE_NAME}":${OPERATOR_IMAGE_VERSION}
+	${OP_SDK} build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 ## operator-push: Push the Kiali operator container image to a remote repo
 operator-push:
@@ -77,7 +77,7 @@ deploy/deploy-kiali-operator.sh
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: purge-kiali
 	@echo Remove Operator
-	${OC} delete all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
 
 ## secret-create: Create a Kiali secret using CREDENTIALS_USERNAME and CREDENTIALS_PASSPHRASE.
