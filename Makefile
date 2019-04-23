@@ -98,6 +98,11 @@ format:
 			gofmt -w $$gofile; \
 	done
 
+## build-system-test: Building executable for system tests with code coverage enabled
+build-system-test:
+	@echo Building executable for system tests with code coverage enabled
+	go test -c -covermode=count -coverpkg ./...  -o ${GOPATH}/bin/kiali
+
 ## build-test: Run tests and installing test dependencies, excluding third party tests under vendor. Runs `go test -i` internally
 build-test:
 	@echo Building and installing test dependencies to help speed up test runs.
