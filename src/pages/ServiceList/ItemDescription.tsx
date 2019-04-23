@@ -5,6 +5,7 @@ import { ServiceHealth } from '../../types/Health';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
+import { ConfigIndicator } from '../../components/ConfigValidation/ConfigIndicator';
 
 interface Props {
   item: ServiceListItem;
@@ -56,6 +57,14 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
         </Col>
         <Col xs={12} sm={12} md={4} lg={4}>
           {!this.props.item.istioSidecar && <MissingSidecar />}
+        </Col>
+        <Col xs={12} sm={12} md={4} lg={4}>
+          <strong>Config: </strong>{' '}
+          <ConfigIndicator
+            id={this.props.item.name + '-config-validation'}
+            validations={[this.props.item.validation]}
+            size="medium"
+          />
         </Col>
         <Col xs={12} sm={12} md={4} lg={4} />
       </Row>

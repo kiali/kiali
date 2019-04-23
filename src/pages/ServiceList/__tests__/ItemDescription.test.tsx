@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 import ItemDescription from '../ItemDescription';
 import { ServiceHealth } from '../../../types/Health';
 import { ServiceListItem } from '../../../types/ServiceList';
+import { ObjectValidation } from 'src/types/IstioObjects';
 
 const health = new ServiceHealth(
   { errorRatio: 0.1, inboundErrorRatio: 0.17, outboundErrorRatio: -1 },
@@ -19,7 +20,8 @@ describe('ItemDescription', () => {
       name: 'svc',
       namespace: 'ns',
       istioSidecar: false,
-      healthPromise: new Promise<ServiceHealth>(r => (resolver = r))
+      healthPromise: new Promise<ServiceHealth>(r => (resolver = r)),
+      validation: {} as ObjectValidation
     };
   });
 

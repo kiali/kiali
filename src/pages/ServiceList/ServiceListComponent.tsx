@@ -24,6 +24,7 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { Validations, ObjectValidation } from 'src/types/IstioObjects';
 import { arrayEquals } from '../../utils/Common';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
@@ -133,7 +134,8 @@ class ServiceListComponent extends ListComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
-        healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar)
+        healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar),
+        validation: this.getServiceValidation(service.name, data.validations)
       }));
     }
     return [];
@@ -178,6 +180,11 @@ class ServiceListComponent extends ListComponent.Component<
           this.handleAxiosError('Could not fetch services list', err);
         }
       });
+  }
+
+  getServiceValidation(name: string, validations: Validations): ObjectValidation {
+    const type = 'service'; // Using 'service' directly is disallowed
+    return validations[type][name];
   }
 
   render() {

@@ -1,9 +1,11 @@
 import Namespace from './Namespace';
 import { ServiceHealth } from './Health';
+import { Validations, ObjectValidation } from './IstioObjects';
 
 export interface ServiceList {
   namespace: Namespace;
   services: ServiceOverview[];
+  validations: Validations;
 }
 
 export interface ServiceOverview {
@@ -14,4 +16,5 @@ export interface ServiceOverview {
 export interface ServiceListItem extends ServiceOverview {
   namespace: string;
   healthPromise: Promise<ServiceHealth>;
+  validation: ObjectValidation;
 }
