@@ -43,7 +43,7 @@ operator-build: .ensure-operator-sdk-exists
 ## operator-push: Push the Kiali operator container image to a remote repo
 operator-push:
 	@echo Push operator image to image repo
-	docker push ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
+	docker push "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 .ensure-operator-ns-does-not-exist:
 	@_cmd="${OC} get namespace ${OPERATOR_NAMESPACE}"; \
