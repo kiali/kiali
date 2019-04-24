@@ -14,7 +14,7 @@ import (
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard customDashboard
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -106,12 +106,12 @@ type SinceTimeParam struct {
 }
 
 // swagger:parameters customDashboard
-type TemplateParam struct {
-	// The dashboard template name.
+type DashboardParam struct {
+	// The dashboard resource name.
 	//
 	// in: path
 	// required: true
-	Name string `json:"template"`
+	Name string `json:"dashboard"`
 }
 
 // swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload workloadDashboard

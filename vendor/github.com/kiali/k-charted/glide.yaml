@@ -1,0 +1,8 @@
+package: github.com/kiali/k-charted
+import:
+- package: k8s.io/client-go
+  version: v8.0.0
+- package: k8s.io/apimachinery
+  version: kubernetes-1.11.1
+- package: github.com/prometheus/client_golang
+  version: v0.9.2

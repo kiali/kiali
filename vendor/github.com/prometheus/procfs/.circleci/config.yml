@@ -4,10 +4,10 @@ version: 2.1
 commands:
   default:
     steps:
-    - run: make style check_license vet test staticcheck
+    - run: make style check_license test lint
   no-test:
     steps:
-    - run: make style check_license vet staticcheck
+    - run: make style check_license lint
 
 jobs:
   test:
@@ -26,6 +26,15 @@ jobs:
     steps:
     - checkout
     - << parameters.command >>
+
+  codespell:
+    docker:
+    - image: circleci/python
+
+    steps:
+    - checkout
+    - run: sudo pip install codespell
+    - run: codespell --skip=".git,./vendor,ttar,go.mod,go.sum" -L uint,packages\'
 
 workflows:
   version: 2
@@ -51,3 +60,4 @@ workflows:
         name: windows-1-12
         os: windows
         go_version: "1.12"
+    - codespell

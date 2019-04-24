@@ -1,0 +1,20 @@
+matrix:
+  include:
+  - language: go
+    go:
+    - 1.10.3
+    install:
+    - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+    script:
+    - make gobuild golint gotest
+
+  - language: node_js
+    node_js:
+    - '10'
+    cache:
+      yarn: true
+      directories:
+      - node_modules
+    install: cd web/react && yarn --frozen-lockfile --non-interactive || (echo 'package.json is not in sync with yarn.lock, check that you include yarn.lock' && false)
+    script:
+    - yarn build && yarn lint && yarn test

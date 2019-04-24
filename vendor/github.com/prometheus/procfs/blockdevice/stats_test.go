@@ -24,7 +24,11 @@ const (
 )
 
 func TestDiskstats(t *testing.T) {
-	diskstats, err := ReadProcDiskstats(procfsFixtures)
+	blockdevice, err := NewFS(procfsFixtures, sysfsFixtures)
+	if err != nil {
+		t.Fatalf("failed to access blockdevice fs: %v", err)
+	}
+	diskstats, err := blockdevice.ProcDiskstats()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +54,11 @@ func TestDiskstats(t *testing.T) {
 }
 
 func TestBlockDevice(t *testing.T) {
-	devices, err := ListSysBlockDevices(sysfsFixtures)
+	blockdevice, err := NewFS("../fixtures/proc", "../fixtures/sys")
+	if err != nil {
+		t.Fatalf("failed to access blockdevice fs: %v", err)
+	}
+	devices, err := blockdevice.SysBlockDevices()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +69,7 @@ func TestBlockDevice(t *testing.T) {
 	if devices[0] != "dm-0" {
 		t.Errorf(failMsgFormat, "Incorrect device name", "dm-0", devices[0])
 	}
-	device0stats, count, err := ReadSysBlockDeviceStat(sysfsFixtures, devices[0])
+	device0stats, count, err := blockdevice.SysBlockDeviceStat(devices[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +82,7 @@ func TestBlockDevice(t *testing.T) {
 	if device0stats.WeightedIOTicks != 6088971 {
 		t.Errorf(failMsgFormat, "Incorrect time in queue", 6088971, device0stats.WeightedIOTicks)
 	}
-	device1stats, count, err := ReadSysBlockDeviceStat(sysfsFixtures, devices[1])
+	device1stats, count, err := blockdevice.SysBlockDeviceStat(devices[1])
 	if count != 15 {
 		t.Errorf(failMsgFormat, "Incorrect number of stats read", 15, count)
 	}

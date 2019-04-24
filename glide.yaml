@@ -30,3 +30,5 @@ import:
   version: release-3.11
 - package: k8s.io/kube-openapi
   version: 91cfa479c814065e420cee7ed227db0f63a5854e
+- package: github.com/kiali/k-charted
+  version: v0.1.0

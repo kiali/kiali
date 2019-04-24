@@ -971,14 +971,6 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The app name (label value).",
-            "name": "app",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -987,8 +979,8 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The dashboard template name.",
-            "name": "template",
+            "description": "The dashboard resource name.",
+            "name": "dashboard",
             "in": "path",
             "required": true
           },
@@ -4160,6 +4152,13 @@
       "description": "Pod holds a subset of v1.Pod data that is meaningful in Kiali",
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "appLabel": {
           "type": "boolean",
           "x-go-name": "AppLabel"
@@ -4206,13 +4205,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "runtimesAnnotation": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "RuntimesAnnotation"
         },
         "status": {
           "type": "string",
