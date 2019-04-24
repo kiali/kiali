@@ -3,26 +3,40 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _ from 'lodash';
 import { style } from 'typestyle';
-import { Button, TextInput, Select, InputGroup } from '@patternfly/react-core';
-import { CloseIcon } from '@patternfly/react-icons';
+import { Button, Icon, OverlayTrigger, Popover, FormControl, InputGroup } from 'patternfly-react';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceItemsSelector, namespaceFilterSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import Namespace from '../types/Namespace';
+import { PfColors } from './Pf/PfColors';
 import { HistoryManager, URLParam } from '../app/History';
 
-const namespaceListStyle = style({
-  margin: '40px 0 20px 5%'
-});
+const namespaceButtonColors = {
+  backgroundColor: PfColors.White,
+  fontSize: '1rem',
+  color: '#282d33',
+  textDecoration: 'none'
+};
 
-const buttonClearStyle = style({
-  float: 'right'
+const namespaceButtonStyle = style({
+  ...namespaceButtonColors,
+  height: '32px',
+  padding: '4px 6px 5px 6px',
+  // these properties are being overridden by btn:hover/focus and btn-link:hover/focus
+  $nest: {
+    '&:hover': namespaceButtonColors,
+    '&:focus': namespaceButtonColors
+  }
 });
 
 const namespaceLabelStyle = style({
-  margin: '0 0 0 10px'
+  fontWeight: 400
+});
+
+const namespaceValueStyle = style({
+  fontWeight: 400
 });
 
 interface NamespaceListType {
@@ -37,15 +51,9 @@ interface NamespaceListType {
   clearAll: () => void;
 }
 
-interface NamespaceListState {
-  isExpanded: boolean;
-  namespaces: object;
-}
-
-export class NamespaceDropdown extends React.PureComponent<NamespaceListType, NamespaceListState> {
+export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}> {
   constructor(props: NamespaceListType) {
     super(props);
-    this.state = { isExpanded: false, namespaces: [] };
   }
 
   componentDidMount() {
@@ -74,12 +82,12 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, Na
     }
   };
 
-  onNamespaceToggled = (event: any) => {
-    this.props.toggleNamespace({ name: event.target.value });
+  onNamespaceToggled = (a: any) => {
+    this.props.toggleNamespace({ name: a.target.value });
   };
 
-  onFilterChange = value => {
-    this.props.setFilter(value);
+  onFilterChange = (event: any) => {
+    this.props.setFilter(event.target.value);
   };
 
   clearFilter = () => {
@@ -87,104 +95,96 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, Na
   };
 
   namespaceButtonText() {
-    switch (this.props.activeNamespaces.length) {
-      case 0:
-        return 'Select a namespace';
-      case 1:
-        return `Namespace : ${this.props.activeNamespaces[0].name}`;
-      default:
-        return `Namespaces : ${this.props.activeNamespaces.length} namespaces`;
+    if (this.props.activeNamespaces.length === 0) {
+      return <span className={namespaceValueStyle}>Select a namespace</span>;
+    } else if (this.props.activeNamespaces.length === 1) {
+      return (
+        <>
+          <span className={namespaceLabelStyle}>Namespace:</span>
+          <span>&nbsp;</span>
+          <span className={namespaceValueStyle}>{this.props.activeNamespaces[0].name}</span>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <span className={namespaceLabelStyle}>Namespaces:</span>
+          <span>&nbsp;</span>
+          <span className={namespaceValueStyle}>{`${this.props.activeNamespaces.length} namespaces`}</span>
+        </>
+      );
     }
   }
 
-  getNamespaces = () => {
+  getPopoverContent() {
     if (this.props.items.length > 0) {
       const activeMap = this.props.activeNamespaces.reduce((map, namespace) => {
         map[namespace.name] = namespace.name;
         return map;
       }, {});
+      const checkboxStyle = style({ marginLeft: 5 });
+      const namespaces = this.props.items
+        .filter((namespace: Namespace) => namespace.name.includes(this.props.filter))
+        .map((namespace: Namespace) => (
+          <div id={`namespace-list-item[${namespace.name}]`} key={`namespace-list-item[${namespace.name}]`}>
+            <label>
+              <input
+                type="checkbox"
+                value={namespace.name}
+                checked={!!activeMap[namespace.name]}
+                onChange={this.onNamespaceToggled}
+              />
+              <span className={checkboxStyle}>{namespace.name}</span>
+            </label>
+          </div>
+        ));
 
       return (
-        <div key={'div_namespace_selector'} className={namespaceListStyle}>
-          {this.props.items
-            .filter((namespace: Namespace) => namespace.name.includes(this.props.filter))
-            .map((namespace: Namespace) => (
-              <div id={`namespace-list-item[${namespace.name}]`} key={`namespace-list-item[${namespace.name}]`}>
-                <label>
-                  <input
-                    type="checkbox"
-                    value={namespace.name}
-                    checked={!!activeMap[namespace.name]}
-                    onChange={this.onNamespaceToggled}
-                  />
-                  <span className={namespaceLabelStyle}>{namespace.name}</span>
-                </label>
-              </div>
-            ))}
-        </div>
-      );
-    } else {
-      return <>No namespaces found or they haven't loaded yet</>;
-    }
-  };
-
-  onToggle = isExpanded => {
-    this.setState({
-      isExpanded
-    });
-  };
-
-  onClearAll = () => {
-    this.clearFilter();
-    this.props.clearAll();
-  };
-
-  render() {
-    const { isExpanded } = this.state;
-
-    return (
-      <div className="namespace-selector">
-        <Select
-          onToggle={this.onToggle}
-          onSelect={this.syncNamespacesURLParam}
-          isExpanded={isExpanded}
-          aria-label="Select Input"
-          placeholderText={this.namespaceButtonText()}
-          variant="single"
-        >
-          <div className="filter-selector-namespace">
-            Filter by :
+        <>
+          <div>
             <InputGroup>
-              <TextInput
-                value={this.props.filter}
+              <FormControl
                 type="text"
+                name="namespace-filter"
+                placeholder="Filter by keyword..."
+                value={this.props.filter}
                 onChange={this.onFilterChange}
-                aria-label="text input filter"
               />
               {this.props.filter !== '' && (
-                <Button
-                  variant={'tertiary'}
-                  aria-label="search button for search namespaces"
-                  onClick={() => this.clearFilter()}
-                >
-                  <CloseIcon />
-                </Button>
+                <InputGroup.Button>
+                  <Button onClick={this.clearFilter}>
+                    <Icon name="close" />
+                  </Button>
+                </InputGroup.Button>
               )}
             </InputGroup>
           </div>
-          <Button
-            variant="plain"
-            key="clear_all_dropdown_ns"
-            aria-label="Action"
-            className={buttonClearStyle}
-            isDisabled={this.props.activeNamespaces.length === 0}
-            onClick={this.onClearAll}
-          >
-            Clear all
-          </Button>
-          {this.getNamespaces()}
-        </Select>
-      </div>
+          <div className="text-right">
+            <Button disabled={this.props.activeNamespaces.length === 0} bsStyle="link" onClick={this.props.clearAll}>
+              Clear all
+            </Button>
+          </div>
+          <div>{namespaces}</div>
+        </>
+      );
+    }
+    return <div>No namespaces found or they haven't loaded yet</div>;
+  }
+
+  render() {
+    const popover = <Popover id="namespace-list-layers-popover">{this.getPopoverContent()}</Popover>;
+    return (
+      <OverlayTrigger
+        onEnter={this.props.refresh}
+        overlay={popover}
+        placement="bottom"
+        trigger={['click']}
+        rootClose={true}
+      >
+        <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="namespace-selector">
+          {this.namespaceButtonText()} <Icon name="angle-down" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 }
