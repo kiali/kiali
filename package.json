@@ -70,7 +70,7 @@
     "cytoscape-dagre": "2.2.2",
     "d3-format": "1.3.2",
     "deep-freeze": "0.0.1",
-    "js-yaml": "3.13.0",
+    "js-yaml": "3.13.1",
     "json-beautify": "1.0.1",
     "lodash": "4.17.11",
     "logfmt": "1.2.1",
@@ -127,7 +127,8 @@
     "typescript": "3.3.4000"
   },
   "resolutions": {
-    "@types/react": "16.7.13"
+    "@types/react": "16.7.13",
+    "js-yaml": "3.13.1"
   },
   "engines": {
     "node": ">=10.0.0 ",
