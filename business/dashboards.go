@@ -27,9 +27,11 @@ func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
 func DashboardsConfig() dlgconfig.Config {
 	cfg := config.Get()
 	return dlgconfig.Config{
-		GlobalNamespace: cfg.IstioNamespace,
-		PrometheusURL:   cfg.ExternalServices.Prometheus.CustomMetricsURL,
-		Errorf:          log.Errorf,
+		GlobalNamespace:  cfg.IstioNamespace,
+		PrometheusURL:    cfg.ExternalServices.Prometheus.CustomMetricsURL,
+		AppLabelName:     cfg.IstioLabels.AppLabelName,
+		VersionLabelName: cfg.IstioLabels.VersionLabelName,
+		Errorf:           log.Errorf,
 	}
 }
 
