@@ -38,12 +38,12 @@ help: Makefile
 # Requires operator-sdk - download it from https://github.com/operator-framework/operator-sdk/releases
 operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
-	${OP_SDK} build ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
+	${OP_SDK} build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 ## operator-push: Push the Kiali operator container image to a remote repo
 operator-push:
 	@echo Push operator image to image repo
-	docker push ${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}
+	docker push "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 .ensure-operator-ns-does-not-exist:
 	@_cmd="${OC} get namespace ${OPERATOR_NAMESPACE}"; \
@@ -77,19 +77,19 @@ deploy/deploy-kiali-operator.sh
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: purge-kiali
 	@echo Remove Operator
-	${OC} delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector=app=kiali-operator -n ${OPERATOR_NAMESPACE}
-	${OC} delete --ignore-not-found=true namespace ${OPERATOR_NAMESPACE}
+	${OC} delete --ignore-not-found=true all,sa,deployments,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
 
 ## secret-create: Create a Kiali secret using CREDENTIALS_USERNAME and CREDENTIALS_PASSPHRASE.
 secret-create:
 	@echo Create the secret
-	${OC} create secret generic kiali -n ${NAMESPACE} --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}"
-	${OC} label secret kiali app=kiali -n ${NAMESPACE}
+	${OC} create secret generic kiali -n "${NAMESPACE}" --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}"
+	${OC} label secret kiali app=kiali -n "${NAMESPACE}"
 
 ## secret-delete: Delete the Kiali secret.
 secret-delete:
 	@echo Delete the secret
-	${OC} delete --ignore-not-found=true secret --selector=app=kiali -n ${NAMESPACE}
+	${OC} delete --ignore-not-found=true secret --selector="app=kiali" -n "${NAMESPACE}"
 
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
 ifeq ($(AUTH_STRATEGY), "login")
@@ -104,19 +104,19 @@ IMAGE_VERSION=${IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
-envsubst | ${OC} apply -n ${OPERATOR_NAMESPACE} -f -
+envsubst | ${OC} apply -n "${OPERATOR_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
 kiali-delete: secret-delete
 	@echo Remove Kiali
-	${OC} delete --ignore-not-found=true kiali kiali -n ${OPERATOR_NAMESPACE}
+	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_NAMESPACE}"
 
 ## purge-kiali: Purges all Kiali resources directly without going through the operator or ansible.
 purge-kiali:
 	@echo Purge Kiali resources
-	${OC} patch kiali kiali -n ${OPERATOR_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge ; true
-	${OC} delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector=app=kiali -n ${NAMESPACE}
-	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector=app=kiali -n ${NAMESPACE} ; true
+	${OC} patch kiali kiali -n "${OPERATOR_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
+	${OC} delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
 
 ## run-playbook: Run the dev playbook to run the Ansible script locally.
 run-playbook:

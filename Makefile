@@ -199,7 +199,7 @@ docker-build-kiali: .prepare-docker-image-files
 ## docker-build-operator: Build Kiali operator container image into local docker daemon.
 docker-build-operator:
 	@echo Building container image for Kiali operator into local docker daemon...
-	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-build
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-build
 
 ## docker-build: Build Kiali and Kiali operator container images into local docker daemon.
 docker-build: docker-build-kiali docker-build-operator
@@ -221,10 +221,10 @@ minikube-docker: .prepare-minikube .prepare-docker-image-files
 	@eval $$(minikube docker-env) ; \
 	docker build -t ${DOCKER_TAG} _output/docker
 	docker tag ${DOCKER_TAG} ${QUAY_TAG}
-	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-build
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-build
 
 container-push-operator:
-	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-push
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-push
 
 container-push-kiali:
 	@echo Pushing current image to ${QUAY_TAG}
@@ -237,7 +237,7 @@ container-push: container-push-kiali container-push-operator
 
 ## operator-create: Delegates to the operator-create target of the operator Makefile
 operator-create: docker-build-operator
-	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator operator-create
+	OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-create
 
 .ensure-oc-exists:
 	@$(eval OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl))
@@ -251,11 +251,11 @@ operator-create: docker-build-operator
 
 ## openshift-deploy: Delegates to the kiali-create target of the operator Makefile
 openshift-deploy: openshift-undeploy
-	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-create
+	IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator kiali-create
 
 ## openshift-undeploy: Delegates to the kiali-delete target of the operator Makefile
 openshift-undeploy: .ensure-operator-is-running
-	IMAGE_VERSION=${CONTAINER_VERSION} $(MAKE) -C operator kiali-delete
+	IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator kiali-delete
 
 ## k8s-deploy: Delegates to the kiali-create target of the operator Makefile
 k8s-deploy: openshift-deploy
