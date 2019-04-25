@@ -27,18 +27,27 @@ help: Makefile
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 
-.ensure-operator-sdk-exists:
-	@$(eval OP_SDK ?= $(shell which operator-sdk 2>/dev/null || echo -n ""))
-	@if [ "${OP_SDK}" == "" ]; then \
-	  echo "ERROR: You need operator-sdk in your PATH. You can get it from https://github.com/operator-framework/operator-sdk/releases"; \
-	  exit 1; \
+.download-operator-sdk-if-needed:
+	@if [ "$(shell which operator-sdk 2>/dev/null || echo -n "")" == "" ]; then \
+	  mkdir -p ../_output/operator-sdk-install ;\
+	  if [ -x "../_output/operator-sdk-install/operator-sdk" ]; then \
+	    echo "You do not have operator-sdk installed in your PATH. Will use the one found here: ../_output/operator-sdk-install/operator-sdk" ;\
+	  else \
+	    echo "You do not have operator-sdk installed in your PATH. The binary will be downloaded to ../_output/operator-sdk-install/operator-sdk" ;\
+	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.7.0/operator-sdk-v0.7.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
+	    chmod +x ../_output/operator-sdk-install/operator-sdk ;\
+	  fi ;\
 	fi
+
+.ensure-operator-sdk-exists: .download-operator-sdk-if-needed
+	@$(eval OP_SDK ?= $(shell which operator-sdk 2>/dev/null || echo "../_output/operator-sdk-install/operator-sdk"))
+	@"${OP_SDK}" --version
 
 ## operator-build: Build the Kiali operator container image
 # Requires operator-sdk - download it from https://github.com/operator-framework/operator-sdk/releases
 operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
-	${OP_SDK} build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
+	"${OP_SDK}" build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 ## operator-push: Push the Kiali operator container image to a remote repo
 operator-push:
