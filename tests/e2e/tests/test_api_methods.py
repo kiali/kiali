@@ -14,8 +14,10 @@ def before_all_tests(kiali_client):
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
-                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion', 'istioConfigDetailsSubtype',
-                          'serviceDashboard', 'workloadDashboard', 'appDashboard']
+                          'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion',
+                          'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
+                          'AuthenticationInfo', 'OpenshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
+                          'namespaceTls']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -28,6 +30,16 @@ def get_method_from_method_list(method_name):
     except ValueError:
         pytest.fail('Method not available on Tested Method List')
 
+def get_pod_id(kiali_client, namespace, pod_name):
+    try:
+        response = evaluate_response(kiali_client, method_name='workloadDetails',
+                                     path={'namespace': namespace, 'workload': pod_name})
+        pod_id = response.json().get('pods')[0].get('name')
+        assert pod_name in pod_id, "Expected pod name: {}   Actual pod ID: {}.format(pod_name, pod_id"
+    except AssertionError:
+        pytest.fail(response.content)
+
+    return pod_id
 
 def evaluate_response(kiali_client, method_name, path=None, params=None, status_code_expected=200):
     response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params)
@@ -38,6 +50,7 @@ def evaluate_response(kiali_client, method_name, path=None, params=None, status_
         pytest.fail(response.content)
     assert response.json() is not None
 
+    return response
 
 def __test_swagger_coverage():
     difference_set = set(swagger_method_list) - set(tested_method_list)
@@ -59,18 +72,31 @@ def test_root(kiali_client):
 def test_jaeger_info(kiali_client):
     evaluate_response(kiali_client, method_name='jaegerInfo')
 
+def test_authentication_info(kiali_client):
+    evaluate_response(kiali_client, method_name='AuthenticationInfo')
+
+def test_openshift_checkToken(kiali_client):
+    evaluate_response(kiali_client, method_name='OpenshiftCheckToken')
+
+def test_namespace_tls(kiali_client):
+    evaluate_response(kiali_client, method_name='namespaceTls', path={'namespace': 'istio-system'})
+
+def test_pod_details(kiali_client):
+    pod_id = get_pod_id(kiali_client, namespace='istio-system', pod_name='kiali')
+    evaluate_response(kiali_client, method_name='podDetails', path={'namespace': 'istio-system', 'pod': pod_id})
+
+def test_pod_logs(kiali_client):
+    pod_id = get_pod_id(kiali_client, namespace='istio-system', pod_name='kiali')
+    evaluate_response(kiali_client, method_name='podLogs', path={'namespace': 'istio-system', 'pod': pod_id})
 
 def test_grafana_info(kiali_client):
     evaluate_response(kiali_client, method_name='grafanaInfo')
 
-
 def test_get_status(kiali_client):
     evaluate_response(kiali_client, method_name='getStatus')
 
-
 def test_get_config(kiali_client):
     evaluate_response(kiali_client, method_name='getConfig')
-
 
 def test_get_token(kiali_client):
     evaluate_response(kiali_client, method_name='Authenticate')
