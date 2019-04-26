@@ -932,7 +932,7 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 }
 
 func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
-	if "" == query {
+	if query == "" {
 		return model.Vector{}
 	}
 

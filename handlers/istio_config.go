@@ -256,7 +256,6 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Subtype: "+objectSubtype+" Name: "+object)
 		RespondWithCode(w, http.StatusOK)
 	}
-	return
 }
 
 func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {

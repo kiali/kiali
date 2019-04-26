@@ -280,10 +280,14 @@ k8s-reload-image: openshift-reload-image
 gometalinter-install:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
+	curl -L https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_linux_amd64 -o $$GOPATH/bin/staticcheck
+	chmod +x $$GOPATH/bin/staticcheck
 
 ## lint: Runs gometalinter
+# doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	gometalinter --disable-all  --enable=vet --tests  --vendor ./...
+	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=300s --vendor $$(glide nv | grep -v '^\.$$')
+	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=300s --vendor kiali.go
 
 ## lint-all: Runs gometalinter with items from good to have list but does not run during travis
 lint-all:

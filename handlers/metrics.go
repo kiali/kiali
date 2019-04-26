@@ -23,7 +23,7 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 	dir := queryParams.Get("direction")
 	if dir != "" {
 		if dir != "inbound" && dir != "outbound" {
-			return errors.New("Bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
+			return errors.New("bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
 		}
 		q.Direction = dir
 	}
@@ -34,7 +34,7 @@ func extractIstioMetricsQueryParams(r *http.Request, q *prometheus.IstioMetricsQ
 	reporter := queryParams.Get("reporter")
 	if reporter != "" {
 		if reporter != "source" && reporter != "destination" {
-			return errors.New("Bad request, query parameter 'reporter' must be either 'source' or 'destination'")
+			return errors.New("bad request, query parameter 'reporter' must be either 'source' or 'destination'")
 		}
 		q.Reporter = reporter
 	}
@@ -63,7 +63,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 		// Only first is taken into consideration
 		if rateFuncs[0] != "rate" && rateFuncs[0] != "irate" {
 			// Bad request
-			return errors.New("Bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
+			return errors.New("bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
 		}
 		q.RateFunc = rateFuncs[0]
 	}
@@ -72,7 +72,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			q.End = time.Unix(num, 0)
 		} else {
 			// Bad request
-			return errors.New("Bad request, cannot parse query parameter 'queryTime'")
+			return errors.New("bad request, cannot parse query parameter 'queryTime'")
 		}
 	}
 	if durations, ok := queryParams["duration"]; ok && len(durations) > 0 {
@@ -81,7 +81,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			q.Start = q.End.Add(-duration)
 		} else {
 			// Bad request
-			return errors.New("Bad request, cannot parse query parameter 'duration'")
+			return errors.New("bad request, cannot parse query parameter 'duration'")
 		}
 	}
 	if steps, ok := queryParams["step"]; ok && len(steps) > 0 {
@@ -89,7 +89,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			q.Step = time.Duration(num) * time.Second
 		} else {
 			// Bad request
-			return errors.New("Bad request, cannot parse query parameter 'step'")
+			return errors.New("bad request, cannot parse query parameter 'step'")
 		}
 	}
 	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
@@ -97,10 +97,10 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			f, err := strconv.ParseFloat(quantile, 64)
 			if err != nil {
 				// Non parseable quantile
-				return errors.New("Bad request, cannot parse query parameter 'quantiles', float expected")
+				return errors.New("bad request, cannot parse query parameter 'quantiles', float expected")
 			}
 			if f < 0 || f > 1 {
-				return errors.New("Bad request, invalid quantile(s): should be between 0 and 1")
+				return errors.New("bad request, invalid quantile(s): should be between 0 and 1")
 			}
 		}
 		q.Quantiles = quantiles
@@ -110,7 +110,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			q.Avg = avgFlag
 		} else {
 			// Bad request
-			return errors.New("Bad request, cannot parse query parameter 'avg'")
+			return errors.New("bad request, cannot parse query parameter 'avg'")
 		}
 	}
 	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
@@ -138,7 +138,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.BaseMet
 			// This means that the query range does not fall in the range
 			// of life of the namespace. So, there are no metrics to query.
 			log.Debugf("[extractMetricsQueryParams] Query end time = %v; not querying metrics.", q.End)
-			return errors.New("After checks, query start time is after end time")
+			return errors.New("after checks, query start time is after end time")
 		}
 	}
 

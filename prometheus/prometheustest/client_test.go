@@ -9,11 +9,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -298,7 +295,7 @@ func TestGetAllRequestRates(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="ns"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -330,7 +327,7 @@ func TestGetAllRequestRatesIstioSystem(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{source_workload_namespace="istio-system"}[5m])`, queryTime, &vectorQ2)
 
-	rates, err := client.GetAllRequestRates("istio-system", "5m", queryTime)
+	rates, _ := client.GetAllRequestRates("istio-system", "5m", queryTime)
 	assert.Equal(t, 2, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 	assert.Equal(t, vectorQ2[0], rates[1])
@@ -354,7 +351,7 @@ func TestGetNamespaceServicesRequestRates(t *testing.T) {
 	}
 	mockQueryWithTime(api, `rate(istio_requests_total{destination_service_namespace="ns"}[5m])`, queryTime, &vectorQ1)
 
-	rates, err := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
+	rates, _ := client.GetNamespaceServicesRequestRates("ns", "5m", queryTime)
 	assert.Equal(t, 1, rates.Len())
 	assert.Equal(t, vectorQ1[0], rates[0])
 }
@@ -369,7 +366,7 @@ func TestConfig(t *testing.T) {
 		YAML: `{"status":"success","data":{"yaml":"global:\n  scrape_interval: 15s\n"}}`,
 	})
 
-	config, err := client.GetConfiguration()
+	config, _ := client.GetConfiguration()
 	assert.Contains(t, config.YAML, "scrape_interval")
 }
 
@@ -381,17 +378,8 @@ func TestFlags(t *testing.T) {
 	}
 	mockFlags(api, prom_v1.FlagsResult{"storage.tsdb.retention": "6h"})
 
-	flags, err := client.GetFlags()
+	flags, _ := client.GetFlags()
 	assert.Equal(t, flags["storage.tsdb.retention"], "6h")
-}
-
-func mockQuery(api *PromAPIMock, query string, ret *model.Vector) {
-	api.On(
-		"Query",
-		mock.AnythingOfType("*context.emptyCtx"),
-		query,
-		mock.AnythingOfType("time.Time")).
-		Return(*ret, nil)
 }
 
 func mockQueryWithTime(api *PromAPIMock, query string, queryTime time.Time, ret *model.Vector) {
@@ -401,18 +389,6 @@ func mockQueryWithTime(api *PromAPIMock, query string, queryTime time.Time, ret 
 		query,
 		queryTime).
 		Return(*ret, nil)
-}
-
-func mockSingle(api *PromAPIMock, query string, ret model.SampleValue) {
-	metric := model.Metric{
-		"__name__": "whatever",
-		"instance": "whatever",
-		"job":      "whatever"}
-	vector := model.Vector{
-		&model.Sample{
-			Metric: metric,
-			Value:  ret}}
-	mockQuery(api, query, &vector)
 }
 
 func mockQueryRange(api *PromAPIMock, query string, ret *model.Matrix) {
@@ -486,27 +462,10 @@ func mockEmptyHistogram(api *PromAPIMock, baseName string, suffix string) {
 	mockEmptyRange(api, round("sum(rate("+baseName+"_sum"+suffix+")) / sum(rate("+baseName+"_count"+suffix+"))"))
 }
 
-func mockGetNamespace(k8s *kubetest.K8SClientMock, name string, creationTime time.Time) {
-	namespace := core_v1.Namespace{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:              name,
-			CreationTimestamp: meta_v1.Time{Time: creationTime},
-		},
-	}
-	k8s.On("GetNamespace", name).Return(&namespace, nil)
-}
-
 func mockConfig(api *PromAPIMock, ret prom_v1.ConfigResult) {
 	api.On("Config", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
 }
 
 func mockFlags(api *PromAPIMock, ret prom_v1.FlagsResult) {
 	api.On("Flags", mock.AnythingOfType("*context.emptyCtx")).Return(ret, nil)
-}
-
-func setupExternal() (*prometheus.Client, error) {
-	conf := config.NewConfig()
-	conf.ExternalServices.Prometheus.URL = "http://prometheus-istio-system.127.0.0.1.nip.io"
-	config.Set(conf)
-	return prometheus.NewClient()
 }

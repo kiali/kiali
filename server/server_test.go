@@ -25,7 +25,6 @@ import (
 const (
 	authorizedUsername = "theUser"
 	authorizedPassword = "thePassword"
-	authorizedToken    = "theToken"
 )
 
 const (

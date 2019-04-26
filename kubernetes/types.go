@@ -143,10 +143,6 @@ const (
 	redisquotaType     = "redisquota"
 	redisquotaTypeList = "redisquotaList"
 
-	servicecontrols        = "servicecontrols"
-	servicecontrolType     = "servicecontrol"
-	servicecontrolTypeList = "servicecontrolList"
-
 	signalfxs        = "signalfxs"
 	signalfxType     = "signalfx"
 	signalfxTypeList = "signalfxList"
@@ -650,7 +646,6 @@ type RBACDetails struct {
 }
 
 type istioResponse struct {
-	result  IstioObject
 	results []IstioObject
 	err     error
 }

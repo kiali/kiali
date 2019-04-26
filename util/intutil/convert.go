@@ -13,7 +13,7 @@ func Convert(subject interface{}) (int, error) {
 	case int:
 		result = subject.(int)
 	default:
-		return 0, errors.New("It is not a numeric input")
+		return 0, errors.New("it is not a numeric input")
 	}
 
 	return result, nil

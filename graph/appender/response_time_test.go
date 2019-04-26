@@ -177,6 +177,7 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal(nil, reviews2.Metadata["responseTime"])
 	assert.Equal(1, len(reviews2.Edges))
 	_, ok = reviews2.Edges[0].Metadata["responseTime"]
+	assert.Equal(false, ok)
 
 	assert.Equal(ratingsService, reviews2.Edges[0].Dest)
 

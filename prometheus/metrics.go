@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -12,10 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/prometheus/internalmetrics"
-)
-
-var (
-	invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 )
 
 func getMetrics(api prom_v1.API, q *IstioMetricsQuery) Metrics {
@@ -82,7 +77,7 @@ func fetchAllMetrics(api prom_v1.API, q *IstioMetricsQuery, labels, labelsError,
 	if len(q.Filters) != 0 {
 		maxResults = len(q.Filters)
 	}
-	results := make([]*resultHolder, maxResults, maxResults)
+	results := make([]*resultHolder, maxResults)
 
 	for _, istioMetric := range istioMetrics {
 		// if filters is empty, fetch all anyway
@@ -172,18 +167,6 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 	return histogram
 }
 
-func fetchTimestamp(api prom_v1.API, query string, t time.Time) (model.Vector, error) {
-	result, err := api.Query(context.Background(), query, t)
-	if err != nil {
-		return nil, err
-	}
-	switch result.Type() {
-	case model.ValVector:
-		return result.(model.Vector), nil
-	}
-	return nil, fmt.Errorf("Invalid query, vector expected: %s", query)
-}
-
 func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
 	result, err := api.QueryRange(context.Background(), query, bounds)
 	if err != nil {
@@ -193,12 +176,7 @@ func fetchRange(api prom_v1.API, query string, bounds prom_v1.Range) *Metric {
 	case model.ValMatrix:
 		return &Metric{Matrix: result.(model.Matrix)}
 	}
-	return &Metric{err: fmt.Errorf("Invalid query, matrix expected: %s", query)}
-}
-
-func replaceInvalidCharacters(metricName string) string {
-	// See https://github.com/prometheus/prometheus/blob/master/util/strutil/strconv.go#L43
-	return invalidLabelCharRE.ReplaceAllString(metricName, "_")
+	return &Metric{err: fmt.Errorf("invalid query, matrix expected: %s", query)}
 }
 
 // getAllRequestRates retrieves traffic rates for requests entering, internal to, or exiting the namespace.

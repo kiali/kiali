@@ -57,7 +57,7 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 
 	// Check if URL is in the configuration
 	if grafanaConfig.URL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
+		return nil, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
 	}
 
 	// Check if URL is valid
@@ -126,13 +126,13 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 		var f map[string]string
 		err = json.Unmarshal(body, &f)
 		if err != nil {
-			return "", fmt.Errorf("Unknown error from Grafana (%d)", code)
+			return "", fmt.Errorf("unknown error from Grafana (%d)", code)
 		}
 		message, ok := f["message"]
 		if !ok {
-			return "", fmt.Errorf("Unknown error from Grafana (%d)", code)
+			return "", fmt.Errorf("unknown error from Grafana (%d)", code)
 		}
-		return "", fmt.Errorf("Error from Grafana (%d): %s", code, message)
+		return "", fmt.Errorf("error from Grafana (%d): %s", code, message)
 	}
 
 	// Status OK, read dashboards info
@@ -142,7 +142,7 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 		return "", err
 	}
 	if len(dashboards) == 0 {
-		return "", fmt.Errorf("No Grafana dashboard found for search pattern '%s'", searchPattern)
+		return "", fmt.Errorf("no Grafana dashboard found for search pattern '%s'", searchPattern)
 	}
 	if len(dashboards) > 1 {
 		log.Infof("Several Grafana dashboards found for pattern '%s', picking the first one", searchPattern)
@@ -180,7 +180,7 @@ func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
 		credHeader = "Bearer " + grafanaConfig.APIKey
 	} else if grafanaConfig.Username != "" {
 		if grafanaConfig.Password == "" {
-			return "", fmt.Errorf("Grafana username set but no Grafana password provided")
+			return "", fmt.Errorf("grafana username set but no Grafana password provided")
 		}
 		basicAuth := base64.StdEncoding.EncodeToString([]byte(grafanaConfig.Username + ":" + grafanaConfig.Password))
 		credHeader = "Basic " + basicAuth

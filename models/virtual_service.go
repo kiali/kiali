@@ -66,8 +66,5 @@ func (vService *VirtualService) IsValidHost(namespace string, serviceName string
 		"tcp":  vService.Spec.Tcp,
 	}
 
-	if kubernetes.FilterByRoute(protocols, protocolNames, serviceName, namespace, nil) {
-		return true
-	}
-	return false
+	return kubernetes.FilterByRoute(protocols, protocolNames, serviceName, namespace, nil)
 }
