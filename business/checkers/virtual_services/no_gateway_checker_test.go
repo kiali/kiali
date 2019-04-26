@@ -1,7 +1,6 @@
 package virtual_services
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/kiali/kiali/config"
@@ -40,8 +39,6 @@ func TestFoundGateway(t *testing.T) {
 			data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 		},
 	})
-
-	fmt.Printf("GatewayNames: %v\n", gatewayNames)
 
 	checker := NoGatewayChecker{
 		VirtualService: virtualService,
@@ -84,6 +81,30 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 
 	// virtualService is in "test" namespace
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.istio-system.svc.cluster.local", "mesh"}, data.CreateVirtualService())
+	gatewayNames := kubernetes.GatewayNames([][]kubernetes.IstioObject{
+		[]kubernetes.IstioObject{
+			data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
+		},
+	})
+
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
+	}
+
+	validations, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestNewIstioGatewayNameFormat(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// virtualService is in "test" namespace
+	virtualService := data.AddGatewaysToVirtualService([]string{"istio-system/my-gateway"}, data.CreateVirtualService())
 	gatewayNames := kubernetes.GatewayNames([][]kubernetes.IstioObject{
 		[]kubernetes.IstioObject{
 			data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),

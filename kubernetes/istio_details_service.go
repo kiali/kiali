@@ -948,7 +948,17 @@ func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames ma
 					if gate == "mesh" {
 						return true, -1
 					}
-					hostname := ParseHost(gate, namespace, clusterName).String()
+					var hostname string
+					if strings.Contains(gate, "/") {
+						parts := strings.Split(gate, "/")
+						hostname = Host{
+							Service:   parts[1],
+							Namespace: parts[0],
+							Cluster:   clusterName,
+						}.String()
+					} else {
+						hostname = ParseHost(gate, namespace, clusterName).String()
+					}
 					for gw := range gatewayNames {
 						if found := FilterByHost(hostname, gw, namespace); found {
 							return true, -1
