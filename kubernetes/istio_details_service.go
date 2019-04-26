@@ -941,6 +941,9 @@ func GatewayNames(gateways [][]IstioObject) map[string]struct{} {
 
 // ValidateVirtualServiceGateways checks all VirtualService gateways (except mesh, which is reserved word) and checks that they're found from the given list of gatewayNames. Also return index of missing gatways to show clearer error path in editor
 func ValidateVirtualServiceGateways(spec map[string]interface{}, gatewayNames map[string]struct{}, namespace, clusterName string) (bool, int) {
+	if clusterName == "" {
+		clusterName = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
 	if gatewaysSpec, found := spec["gateways"]; found {
 		if gateways, ok := gatewaysSpec.([]interface{}); ok {
 			for index, g := range gateways {
