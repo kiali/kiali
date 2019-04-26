@@ -469,6 +469,32 @@ if [ "${UNINSTALL_EXISTING_KIALI}" != "true" ]; then
   fi
 fi
 
+#===========================
+# Install the Monitoring Dashboard CRD. The reason for this is documented here:
+#   https://github.com/operator-framework/operator-sdk/pull/1329
+#   https://github.com/operator-framework/operator-sdk/pull/1473
+echo "Creating the Monitoring Dashboard CRD now."
+cat <<EOM | ${CLIENT_EXE} apply -f -
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: monitoringdashboards.monitoring.kiali.io
+  namespace: ${NAMESPACE}
+  labels:
+    app: kiali
+    version: ${OPERATOR_VERSION_LABEL}
+spec:
+  group: monitoring.kiali.io
+  names:
+    kind: MonitoringDashboard
+    listKind: MonitoringDashboardList
+    plural: monitoringdashboards
+    singular: monitoringdashboard
+  scope: Namespaced
+  version: v1alpha1
+EOM
+#===========================
+
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.
 
