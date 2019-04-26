@@ -18,13 +18,24 @@ type PropsType = RouteComponentProps & {
   jaegerIntegration: boolean;
 };
 
-class Navigation extends React.Component<PropsType> {
+type NavigationState = {
+  isMobileView: boolean;
+  isNavOpenDesktop: boolean;
+  isNavOpenMobile: boolean;
+};
+
+class Navigation extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
     router: () => null
   };
 
   constructor(props: PropsType) {
     super(props);
+    this.state = {
+      isMobileView: false,
+      isNavOpenDesktop: true,
+      isNavOpenMobile: false
+    };
   }
 
   setControlledState = event => {
@@ -41,10 +52,6 @@ class Navigation extends React.Component<PropsType> {
     document.title = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali Console';
   }
 
-  onNavToggle = () => {
-    this.props.setNavCollapsed(!this.props.navCollapsed);
-  };
-
   isContentScrollable = () => {
     const urlParams = new URLSearchParams(this.props.location.search);
     let isMetricTab = false;
@@ -54,19 +61,41 @@ class Navigation extends React.Component<PropsType> {
     return !this.props.location.pathname.startsWith('/graph') && !isMetricTab;
   };
 
+  onNavToggleDesktop = () => {
+    this.setState({
+      isNavOpenDesktop: !this.state.isNavOpenDesktop
+    });
+    this.props.setNavCollapsed(!this.props.navCollapsed);
+  };
+
+  onNavToggleMobile = () => {
+    this.setState({
+      isNavOpenMobile: !this.state.isNavOpenMobile
+    });
+  };
+
+  onPageResize = ({ mobileView, windowSize }) => {
+    this.setState({
+      isMobileView: mobileView
+    });
+  };
+
   render() {
+    const { isNavOpenDesktop, isNavOpenMobile, isMobileView } = this.state;
+
     const Header = (
       <PageHeader
         logo={<Brand src={kialiLogo} alt="Patternfly Logo" />}
         toolbar={<Masthead />}
         showNavToggle={true}
-        onNavToggle={this.onNavToggle}
+        onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}
+        isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
       />
     );
 
     const Sidebar = (
       <Menu
-        isNavOpen={!this.props.navCollapsed}
+        isNavOpen={isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed}
         jaegerIntegration={this.props.jaegerIntegration}
         location={this.props.location}
         jaegerUrl={this.props.jaegerUrl}
@@ -74,7 +103,7 @@ class Navigation extends React.Component<PropsType> {
     );
 
     return (
-      <Page header={Header} sidebar={Sidebar}>
+      <Page header={Header} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenterContainer drawerTitle="Message Center" />
         <PageSection variant={'light'}>
           <RenderPage needScroll={this.isContentScrollable()} />
