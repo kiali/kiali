@@ -199,6 +199,23 @@ func CheckMessage(checkId string) string {
 	return checkDescriptors[checkId].Message
 }
 
+func (iv IstioValidations) FilterBySingleType(objectType, name string) IstioValidations {
+	fiv := IstioValidations{}
+	for k, v := range iv {
+		// We don't want to filter other types
+		if k.ObjectType != objectType {
+			fiv[k] = v
+		} else {
+			// But for this exact type we're strict
+			if k.Name == name {
+				fiv[k] = v
+			}
+		}
+	}
+
+	return fiv
+}
+
 func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations {
 	fiv := IstioValidations{}
 	for k, v := range iv {
