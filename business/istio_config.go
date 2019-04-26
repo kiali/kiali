@@ -163,7 +163,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeAdapters {
-			if aa, aaErr = in.k8s.GetAdapters(criteria.Namespace); aaErr == nil {
+			if aa, aaErr = in.k8s.GetAdapters(criteria.Namespace, ""); aaErr == nil {
 				istioConfigList.Adapters = models.CastIstioAdaptersCollection(aa)
 			}
 		}
@@ -172,7 +172,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeTemplates {
-			if tt, ttErr = in.k8s.GetTemplates(criteria.Namespace); ttErr == nil {
+			if tt, ttErr = in.k8s.GetTemplates(criteria.Namespace, ""); ttErr == nil {
 				istioConfigList.Templates = models.CastIstioTemplatesCollection(tt)
 			}
 		}

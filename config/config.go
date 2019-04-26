@@ -57,6 +57,10 @@ const (
 	EnvTracingURL              = "TRACING_URL"
 	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
 
+	EnvThreeScaleAdapterName = "THREESCALE_ADAPTER_NAME"
+	EnvThreeScaleServiceName = "THREESCALE_SERVICE_NAME"
+	EnvThreeScaleServicePort = "THREESCALE_SERVICE_PORT"
+
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
 	EnvIstioNamespace              = "ISTIO_NAMESPACE"
@@ -152,12 +156,20 @@ type IstioConfig struct {
 	IstioSidecarAnnotation string `yaml:"istio_sidecar_annotation,omitempty"`
 }
 
+// ThreeScaleConfig describes configuration used for 3Scale adapter
+type ThreeScaleConfig struct {
+	AdapterName string `yaml:"adapter_name"`
+	AdapterService string `yaml:"adapter_service"`
+	AdapterPort string `yaml:"adapter_port"`
+}
+
 // ExternalServices holds configurations for other systems that Kiali depends on
 type ExternalServices struct {
 	Istio      IstioConfig      `yaml:"istio,omitempty"`
 	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
 	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
 	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
+	ThreeScale ThreeScaleConfig `yaml:"threescale,omitempty"`
 }
 
 // LoginToken holds config used in token-based authentication
@@ -279,6 +291,11 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
+
+	// ThreeScale Configuration
+	c.ExternalServices.ThreeScale.AdapterName = strings.TrimSpace(getDefaultString(EnvThreeScaleAdapterName, "threescale"))
+	c.ExternalServices.ThreeScale.AdapterService = strings.TrimSpace(getDefaultString(EnvThreeScaleServiceName, "threescale-istio-adapter"))
+	c.ExternalServices.ThreeScale.AdapterPort = strings.TrimSpace(getDefaultString(EnvThreeScaleServicePort, "3333"))
 
 	// Token-based authentication Configuration
 	c.LoginToken.SigningKey = strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali"))

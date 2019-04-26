@@ -93,8 +93,8 @@ func (o *K8SClientMock) GetAdapter(namespace, adapterType, adapterName string) (
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetAdapters(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetAdapters(namespace, labelSelector string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace, labelSelector)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
@@ -278,8 +278,8 @@ func (o *K8SClientMock) GetTemplate(namespace, templateType, templateName string
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetTemplates(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetTemplates(namespace, labelSelector string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace, labelSelector)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 

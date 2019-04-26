@@ -41,7 +41,7 @@ type IstioClientInterface interface {
 	CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error)
 	DeleteIstioObject(api, namespace, resourceType, name string) error
 	GetAdapter(namespace, adapterType, adapterName string) (IstioObject, error)
-	GetAdapters(namespace string) ([]IstioObject, error)
+	GetAdapters(namespace, labelSelector string) ([]IstioObject, error)
 	GetAuthorizationDetails(namespace string) (*RBACDetails, error)
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
@@ -79,7 +79,7 @@ type IstioClientInterface interface {
 	GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error)
 	GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	GetTemplate(namespace, templateType, templateName string) (IstioObject, error)
-	GetTemplates(namespace string) ([]IstioObject, error)
+	GetTemplates(namespace, labelSelector string) ([]IstioObject, error)
 	GetPolicy(namespace string, policyName string) (IstioObject, error)
 	GetPolicies(namespace string) ([]IstioObject, error)
 	GetMeshPolicy(namespace string, policyName string) (IstioObject, error)

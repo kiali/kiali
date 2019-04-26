@@ -17,6 +17,7 @@ type Layer struct {
 	k8s            kubernetes.IstioClientInterface
 	OpenshiftOAuth OpenshiftOAuthService
 	TLS            TLSService
+	ThreeScale     ThreeScaleService
 }
 
 // Global clientfactory and prometheus clients.
@@ -76,6 +77,7 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.k8s = k8s
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
 	temporaryLayer.TLS = TLSService{k8s: k8s, businessLayer: temporaryLayer}
+	temporaryLayer.ThreeScale = ThreeScaleService{k8s: k8s}
 
 	return temporaryLayer
 }
