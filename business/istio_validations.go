@@ -85,7 +85,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	// Get group validations for same kind istio objects
 	validations := runObjectCheckers(objectCheckers)
 	if service != "" {
-		validations = validations.FilterByKey("service", service)
+		validations = validations.FilterBySingleType("service", service)
 	}
 
 	return validations, nil
