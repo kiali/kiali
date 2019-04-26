@@ -171,15 +171,15 @@ spec:
 #
 # **Jaeger-specific settings:
 # jaeger_service: The Kubernetes service name for jaeger. Kiali uses this to connect within the cluster to Jaeger.
-# service: The Kubernetes service name for Tracing. Kiali uses this to connect within the cluster to Tracing.
 # namespace: The Kubernetes namespace that holds the Jaeger/Tracing service (if empty, assumes the same value as deployment.namespace)
+# service: The Kubernetes service name for Tracing. Kiali uses this to connect within the cluster to Tracing.
 # url: The URL that Kiali uses when integrating with Jaeger. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 #    ---
 #    jaeger:
 #      jaeger_service : "jaeger-query"
-#      service: "tracing"
 #      namespace: ""
+#      service: "tracing"
 #      url: ""
 #
 # **Prometheus-specific settings:
