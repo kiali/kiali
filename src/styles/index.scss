@@ -28,7 +28,7 @@ $font-size-base: 14px;
 /**
   PatternflyNext
 */
-@import '../../node_modules/@patternfly/react-core/dist/styles/base.css';
+@import '../../node_modules/@patternfly/patternfly/patternfly.css';
 
 //PF4 Styles
 $pf-global--enable-reset: false;

@@ -58,8 +58,8 @@
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
-    "@patternfly/react-core": "2.11.0",
-    "@patternfly/patternfly": "2.0.0",
+    "@patternfly/patternfly": "2.4.1",
+    "@patternfly/react-core": "3.2.6",
     "axios": "0.18.0",
     "csstips": "0.3.0",
     "csx": "9.0.0",
