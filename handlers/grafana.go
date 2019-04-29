@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kiali/kiali/status"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -49,6 +50,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
 func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+	status.DiscoverGrafana()
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.DisplayLink {
