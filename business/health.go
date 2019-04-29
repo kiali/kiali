@@ -55,18 +55,18 @@ func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, query
 func (in *HealthService) getAppHealth(namespace, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
-	// Perf: do not bother fetching request rate if not a single workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
+	fetchRate := false
 	for _, w := range ws {
 		if w.IstioSidecar {
-			hasSidecar = true
+			fetchRate = true
 			break
 		}
 	}
 
 	// Fetch services requests rates
 	var errRate error
-	if hasSidecar {
+	if fetchRate {
 		rate, err := in.getAppRequestsHealth(namespace, app, rateInterval, queryTime)
 		health.Requests = rate
 		errRate = err
@@ -125,8 +125,8 @@ func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, q
 func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities namespaceApps, rateInterval string, queryTime time.Time) (models.NamespaceAppHealth, error) {
 	allHealth := make(models.NamespaceAppHealth)
 
-	// Perf: do not bother fetching request rate if not a single workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
+	fetchRates := false
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -137,7 +137,7 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 				h.WorkloadStatuses = castWorkloadStatuses(entities.Workloads)
 				for _, w := range entities.Workloads {
 					if w.IstioSidecar {
-						hasSidecar = true
+						fetchRates = true
 						break
 					}
 				}
@@ -146,7 +146,7 @@ func (in *HealthService) getNamespaceAppHealth(namespace string, appEntities nam
 	}
 
 	var errRate error
-	if hasSidecar {
+	if fetchRates {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
 		errRate = err
@@ -212,8 +212,8 @@ func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval stri
 }
 
 func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.Workloads, rateInterval string, queryTime time.Time) models.NamespaceWorkloadHealth {
-	// Perf: do not bother fetching request rate if not a single workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
+	fetchRates := false
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
@@ -224,11 +224,11 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 			AvailableReplicas: w.AvailableReplicas,
 		}
 		if w.IstioSidecar {
-			hasSidecar = true
+			fetchRates = true
 		}
 	}
 
-	if hasSidecar {
+	if fetchRates {
 		// Fetch services requests rates
 		rates, _ := in.prom.GetAllRequestRates(namespace, rateInterval, queryTime)
 		// Fill with collected request rates

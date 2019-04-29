@@ -127,15 +127,19 @@ func lookupImage(containerName string, containers []core_v1.Container) string {
 	return ""
 }
 
-func (pods Pods) HasIstioSideCar() bool {
-	for _, pod := range pods {
-		if pod.HasIstioSideCar() {
-			return true
+// HasIstioSidecar returns true if there are no pods or all pods have a sidecar
+func (pods Pods) HasIstioSidecar() bool {
+	if len(pods) > 0 {
+		for _, p := range pods {
+			if !p.HasIstioSidecar() {
+				return false
+			}
 		}
 	}
-	return false
+	return true
 }
 
-func (pod Pod) HasIstioSideCar() bool {
+// HasIstioSidecar returns true if the pod has an Isio proxy sidecar
+func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
 }

@@ -106,7 +106,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.Type = w.Type
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
-	workload.IstioSidecar = w.Pods.HasIstioSideCar()
+	workload.IstioSidecar = w.HasIstioSidecar()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 
@@ -353,9 +353,23 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 
 func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
-	workload.IstioSidecar = workload.Pods.HasIstioSideCar()
+	workload.IstioSidecar = workload.HasIstioSidecar()
 }
 
 func (workload *Workload) SetServices(svcs []core_v1.Service) {
 	workload.Services.Parse(svcs)
+}
+
+// HasIstioSidecar return true if there is at least one pod and all pods have sidecars
+func (workload *Workload) HasIstioSidecar() bool {
+	// if no pods we can't prove there is no sidecar, so return true
+	if len(workload.Pods) == 0 {
+		return true
+	}
+	// All pods in a deployment should be the same
+	if workload.Type == "Deployment" {
+		return workload.Pods[0].HasIstioSidecar()
+	}
+	// Need to check each pod
+	return workload.Pods.HasIstioSidecar()
 }
