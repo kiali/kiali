@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/prometheus"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,9 +15,9 @@ type PromAPIMock struct {
 	mock.Mock
 }
 
-func (o *PromAPIMock) AlertManagers(ctx context.Context) (v1.AlertManagersResult, error) {
+func (o *PromAPIMock) AlertManagers(ctx context.Context) (prom_v1.AlertManagersResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(v1.AlertManagersResult), args.Error(1)
+	return args.Get(0).(prom_v1.AlertManagersResult), args.Error(1)
 }
 
 func (o *PromAPIMock) CleanTombstones(ctx context.Context) error {
@@ -25,9 +25,9 @@ func (o *PromAPIMock) CleanTombstones(ctx context.Context) error {
 	return args.Error(0)
 }
 
-func (o *PromAPIMock) Config(ctx context.Context) (v1.ConfigResult, error) {
+func (o *PromAPIMock) Config(ctx context.Context) (prom_v1.ConfigResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(v1.ConfigResult), args.Error(1)
+	return args.Get(0).(prom_v1.ConfigResult), args.Error(1)
 }
 
 func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) error {
@@ -35,9 +35,9 @@ func (o *PromAPIMock) DeleteSeries(ctx context.Context, matches []string, startT
 	return args.Error(0)
 }
 
-func (o *PromAPIMock) Flags(ctx context.Context) (v1.FlagsResult, error) {
+func (o *PromAPIMock) Flags(ctx context.Context) (prom_v1.FlagsResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(v1.FlagsResult), args.Error(1)
+	return args.Get(0).(prom_v1.FlagsResult), args.Error(1)
 }
 
 func (o *PromAPIMock) LabelValues(ctx context.Context, label string) (model.LabelValues, error) {
@@ -50,7 +50,7 @@ func (o *PromAPIMock) Query(ctx context.Context, query string, ts time.Time) (mo
 	return args.Get(0).(model.Value), args.Error(1)
 }
 
-func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r v1.Range) (model.Value, error) {
+func (o *PromAPIMock) QueryRange(ctx context.Context, query string, r prom_v1.Range) (model.Value, error) {
 	args := o.Called(ctx, query, r)
 	return args.Get(0).(model.Value), args.Error(1)
 }
@@ -60,14 +60,14 @@ func (o *PromAPIMock) Series(ctx context.Context, matches []string, startTime ti
 	return args.Get(0).([]model.LabelSet), args.Error(1)
 }
 
-func (o *PromAPIMock) Snapshot(ctx context.Context, skipHead bool) (v1.SnapshotResult, error) {
+func (o *PromAPIMock) Snapshot(ctx context.Context, skipHead bool) (prom_v1.SnapshotResult, error) {
 	args := o.Called(ctx, skipHead)
-	return args.Get(0).(v1.SnapshotResult), args.Error(1)
+	return args.Get(0).(prom_v1.SnapshotResult), args.Error(1)
 }
 
-func (o *PromAPIMock) Targets(ctx context.Context) (v1.TargetsResult, error) {
+func (o *PromAPIMock) Targets(ctx context.Context) (prom_v1.TargetsResult, error) {
 	args := o.Called(ctx)
-	return args.Get(0).(v1.TargetsResult), args.Error(1)
+	return args.Get(0).(prom_v1.TargetsResult), args.Error(1)
 }
 
 // AlwaysReturnEmpty mocks all possible queries to return empty result
@@ -138,19 +138,24 @@ func (o *PromClientMock) MockWorkloadRequestRates(namespace, wkld string, in, ou
 	o.On("GetWorkloadRequestRates", namespace, wkld, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(in, out, nil)
 }
 
+// MockEmptyMetricsDiscovery mocks GetMetricsForLabels (for runtimes metrics discovery) as being empty
+func (o *PromClientMock) MockEmptyMetricsDiscovery() {
+	o.On("GetMetricsForLabels", mock.AnythingOfType("[]string")).Return([]string{}, nil)
+}
+
 func (o *PromClientMock) GetAllRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
 	args := o.Called(namespace, ratesInterval, queryTime)
 	return args.Get(0).(model.Vector), args.Error(1)
 }
 
-func (o *PromClientMock) GetConfiguration() (v1.ConfigResult, error) {
+func (o *PromClientMock) GetConfiguration() (prom_v1.ConfigResult, error) {
 	args := o.Called()
-	return args.Get(0).(v1.ConfigResult), args.Error(1)
+	return args.Get(0).(prom_v1.ConfigResult), args.Error(1)
 }
 
-func (o *PromClientMock) GetFlags() (v1.FlagsResult, error) {
+func (o *PromClientMock) GetFlags() (prom_v1.FlagsResult, error) {
 	args := o.Called()
-	return args.Get(0).(v1.FlagsResult), args.Error(1)
+	return args.Get(0).(prom_v1.FlagsResult), args.Error(1)
 }
 
 func (o *PromClientMock) GetNamespaceServicesRequestRates(namespace, ratesInterval string, queryTime time.Time) (model.Vector, error) {
@@ -191,4 +196,9 @@ func (o *PromClientMock) FetchHistogramRange(metricName, labels, grouping string
 func (o *PromClientMock) GetMetrics(query *prometheus.IstioMetricsQuery) prometheus.Metrics {
 	args := o.Called(query)
 	return args.Get(0).(prometheus.Metrics)
+}
+
+func (o *PromClientMock) GetMetricsForLabels(labels []string) ([]string, error) {
+	args := o.Called(labels)
+	return args.Get(0).([]string), args.Error(1)
 }

@@ -31,6 +31,29 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 }
 
 // Context: DestinationRule ns-wide disabling mTLS connections
+// Context: Policy ns-wide in permissive mode
+// Context: Does have a MeshPolicy in strict mode
+// It doesn't return any validation
+func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{
+		Policies: []kubernetes.IstioObject{
+			data.CreateEmptyPolicy("default", "bookinfo", data.CreateMTLSPeers("PERMISSIVE")),
+		},
+		MeshPolicies: []kubernetes.IstioObject{
+			data.CreateEmptyMeshPolicy("default", data.CreateMTLSPeers("STRICT")),
+		},
+	}
+
+	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails)
+}
+
+// Context: DestinationRule ns-wide disabling mTLS connections
 // Context: Policy ns-wide in strict mode
 // It returns a policymtlsenabled validation
 func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {

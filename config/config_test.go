@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/kiali/kiali/config/security"
@@ -26,7 +27,7 @@ func TestEnvVar(t *testing.T) {
 	if conf.Server.Port != 12345 {
 		t.Error("server port is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
 		t.Error("prometheus dashboard url is wrong")
 	}
 	if !conf.Server.CORSAllowAll {
@@ -42,10 +43,10 @@ func TestPrometheusDashboardUrlFallback(t *testing.T) {
 
 	conf := NewConfig()
 
-	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+	if conf.ExternalServices.Prometheus.URL != "test-address" {
 		t.Error("prometheus service url is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
 		t.Error("prometheus dashboard url is not taking main prometheus url")
 	}
 
@@ -53,10 +54,10 @@ func TestPrometheusDashboardUrlFallback(t *testing.T) {
 
 	conf = NewConfig()
 
-	if conf.ExternalServices.PrometheusServiceURL != "test-address" {
+	if conf.ExternalServices.Prometheus.URL != "test-address" {
 		t.Error("prometheus service url is wrong")
 	}
-	if conf.ExternalServices.PrometheusCustomMetricsURL != "second-test-address" {
+	if conf.ExternalServices.Prometheus.CustomMetricsURL != "second-test-address" {
 		t.Error("prometheus dashboard url is not taking main prometheus url")
 	}
 }
@@ -265,4 +266,28 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if conf.Server.Credentials.Passphrase != "" {
 		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
 	}
+}
+
+func TestRaces(t *testing.T) {
+
+	wg := sync.WaitGroup{}
+	wg.Add(10)
+
+	cfg := NewConfig()
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			defer wg.Done()
+			Get()
+		}()
+	}
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			defer wg.Done()
+			Set(cfg)
+		}()
+	}
+
+	wg.Wait()
 }

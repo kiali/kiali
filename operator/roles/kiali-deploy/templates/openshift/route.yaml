@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kiali
+  namespace: {{ kiali_vars.deployment.namespace }}
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+spec:
+  tls:
+    termination: reencrypt
+  to:
+    kind: Service
+    targetPort: {{ kiali_vars.server.port }}
+    name: kiali

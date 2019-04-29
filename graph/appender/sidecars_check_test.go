@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -65,7 +64,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 func TestAppNoPodsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, []v1.Pod{})
+	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -86,7 +85,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 func TestAppSidecarsPasses(t *testing.T) {
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, buildFakeWorkloadPods())
+	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPods())
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -107,7 +106,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	config.Set(config.NewConfig())
 	trafficMap := buildAppTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
+	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -128,7 +127,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 
 func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
-	businessLayer := setupSidecarsCheckWorkloads([]v1beta1.Deployment{}, []v1.Pod{})
+	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
 
 	globalInfo := GlobalInfo{
 		Business: businessLayer,
@@ -173,15 +172,15 @@ func buildServiceTrafficMap() graph.TrafficMap {
 	return trafficMap
 }
 
-func buildFakeWorkloadDeployments() []v1beta1.Deployment {
-	return []v1beta1.Deployment{
+func buildFakeWorkloadDeployments() []apps_v1.Deployment {
+	return []apps_v1.Deployment{
 		{
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "workload-1",
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{"app": "myTest", "wk": "wk-1"},
 					},
 				},
@@ -190,15 +189,15 @@ func buildFakeWorkloadDeployments() []v1beta1.Deployment {
 	}
 }
 
-func buildFakeWorkloadPods() []v1.Pod {
+func buildFakeWorkloadPods() []core_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
-	return []v1.Pod{
+	return []core_v1.Pod{
 		{
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "wk-1-asdf",
 				Labels:            map[string]string{"app": "myTest", "wk": "wk-1"},
-				CreationTimestamp: metav1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
+				CreationTimestamp: meta_v1.NewTime(time.Date(2018, 8, 24, 14, 0, 0, 0, time.UTC)),
 				Annotations: map[string]string{
 					istioAnnotation: "{ \"containers\":[\"istio-proxy\"] }",
 				},
@@ -207,7 +206,7 @@ func buildFakeWorkloadPods() []v1.Pod {
 	}
 }
 
-func buildFakeWorkloadPodsNoSidecar() []v1.Pod {
+func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 	istioAnnotation := config.Get().ExternalServices.Istio.IstioSidecarAnnotation
 
 	podList := buildFakeWorkloadPods()
@@ -216,17 +215,17 @@ func buildFakeWorkloadPodsNoSidecar() []v1.Pod {
 	return podList
 }
 
-func setupSidecarsCheckWorkloads(deployments []v1beta1.Deployment, pods []v1.Pod) *business.Layer {
+func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(pods, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil)

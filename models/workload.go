@@ -1,12 +1,11 @@
 package models
 
 import (
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -116,7 +115,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func (workload *Workload) ParseDeployment(d *v1beta1.Deployment) {
+func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	conf := config.Get()
 	workload.Name = d.Name
 	workload.Type = "Deployment"
@@ -137,7 +136,7 @@ func (workload *Workload) ParseDeployment(d *v1beta1.Deployment) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicaSet(r *v1beta2.ReplicaSet) {
+func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	conf := config.Get()
 	workload.Name = r.Name
 	workload.Type = "ReplicaSet"
@@ -158,7 +157,7 @@ func (workload *Workload) ParseReplicaSet(r *v1beta2.ReplicaSet) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicationController(r *v1.ReplicationController) {
+func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
 	conf := config.Get()
 	workload.Name = r.Name
 	workload.Type = "ReplicationController"
@@ -179,7 +178,7 @@ func (workload *Workload) ParseReplicationController(r *v1.ReplicationController
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseDeploymentConfig(dc *osappsv1.DeploymentConfig) {
+func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
 	workload.Name = dc.Name
 	workload.Type = "DeploymentConfig"
 	workload.Labels = dc.Spec.Template.Labels
@@ -192,7 +191,7 @@ func (workload *Workload) ParseDeploymentConfig(dc *osappsv1.DeploymentConfig) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParseStatefulSet(s *v1beta2.StatefulSet) {
+func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	conf := config.Get()
 	workload.Name = s.Name
 	workload.Type = "StatefulSet"
@@ -213,7 +212,7 @@ func (workload *Workload) ParseStatefulSet(s *v1beta2.StatefulSet) {
 	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
-func (workload *Workload) ParsePod(pod *v1.Pod) {
+func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 	conf := config.Get()
 	workload.Name = pod.Name
 	workload.Type = "Pod"
@@ -309,7 +308,7 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
 	}
 }
 
-func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []v1.Pod) {
+func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []core_v1.Pod) {
 	conf := config.Get()
 	workload.Name = controllerName
 	workload.Type = controllerType
@@ -352,11 +351,11 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
 }
 
-func (workload *Workload) SetPods(pods []v1.Pod) {
+func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
 	workload.IstioSidecar = workload.Pods.HasIstioSideCar()
 }
 
-func (workload *Workload) SetServices(svcs []v1.Service) {
+func (workload *Workload) SetServices(svcs []core_v1.Service) {
 	workload.Services.Parse(svcs)
 }

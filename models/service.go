@@ -1,7 +1,7 @@
 package models
 
 import (
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -22,8 +22,9 @@ type ServiceOverview struct {
 }
 
 type ServiceList struct {
-	Namespace Namespace         `json:"namespace"`
-	Services  []ServiceOverview `json:"services"`
+	Namespace   Namespace         `json:"namespace"`
+	Services    []ServiceOverview `json:"services"`
+	Validations IstioValidations  `json:"validations"`
 }
 
 type ServiceDetails struct {
@@ -51,7 +52,7 @@ type Service struct {
 	Ports           Ports             `json:"ports"`
 }
 
-func (ss *Services) Parse(services []v1.Service) {
+func (ss *Services) Parse(services []core_v1.Service) {
 	if ss == nil {
 		return
 	}
@@ -63,7 +64,7 @@ func (ss *Services) Parse(services []v1.Service) {
 	}
 }
 
-func (s *Service) Parse(service *v1.Service) {
+func (s *Service) Parse(service *core_v1.Service) {
 	if service != nil {
 		s.Name = service.Name
 		s.Namespace = Namespace{Name: service.Namespace}
@@ -76,15 +77,15 @@ func (s *Service) Parse(service *v1.Service) {
 	}
 }
 
-func (s *ServiceDetails) SetService(svc *v1.Service) {
+func (s *ServiceDetails) SetService(svc *core_v1.Service) {
 	s.Service.Parse(svc)
 }
 
-func (s *ServiceDetails) SetEndpoints(eps *v1.Endpoints) {
+func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
 }
 
-func (s *ServiceDetails) SetPods(pods []v1.Pod) {
+func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)
 	s.IstioSidecar = mPods.HasIstioSideCar()

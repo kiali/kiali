@@ -1,0 +1,36 @@
+- name: Detect Grafana URL when it is not defined
+  include: openshift/os-grafana.yml
+  when:
+  - is_openshift == True
+  - kiali_vars.external_services.grafana.url == ""
+
+- name: Detect Jaeger URL when it is not defined
+  include: openshift/os-jaeger.yml
+  when:
+  - is_openshift == True
+  - kiali_vars.external_services.jaeger.url == ""
+
+- name: "Create Kiali objects on OpenShift"
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "openshift"
+  with_items:
+  - serviceaccount
+  - configmap
+  - clusterrole
+  - clusterrole-viewer
+  - clusterrolebinding
+  - crds
+  - deployment
+  - service
+  - ingress
+  - route
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_openshift == True
+
+- name: Process Kiali OAuth client on OpenShift
+  include: openshift/os-oauth.yml
+  when:
+  - is_openshift == True

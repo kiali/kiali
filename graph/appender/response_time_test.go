@@ -102,8 +102,8 @@ func TestResponseTime(t *testing.T) {
 	mockQuery(api, q2, &v2)
 
 	trafficMap := responseTimeTestTraffic()
-	ingressId, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
-	ingress, ok := trafficMap[ingressId]
+	ingressID, _ := graph.Id("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingress, ok := trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
@@ -111,8 +111,9 @@ func TestResponseTime(t *testing.T) {
 
 	duration, _ := time.ParseDuration("60s")
 	appender := ResponseTimeAppender{
-		GraphType:    graph.GraphTypeVersionedApp,
-		IncludeIstio: false,
+		GraphType:          graph.GraphTypeVersionedApp,
+		IncludeIstio:       false,
+		InjectServiceNodes: true,
 		Namespaces: map[string]graph.NamespaceInfo{
 			"bookinfo": {
 				Name:     "bookinfo",
@@ -125,69 +126,94 @@ func TestResponseTime(t *testing.T) {
 
 	appender.appendGraph(trafficMap, "bookinfo", client)
 
-	ingress, ok = trafficMap[ingressId]
+	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(10.0, ingress.Edges[0].Metadata["responseTime"])
+	_, ok = ingress.Edges[0].Metadata["responseTime"]
+	assert.Equal(false, ok)
 
-	productpage := ingress.Edges[0].Dest
+	productpageService := ingress.Edges[0].Dest
+	assert.Equal(graph.NodeTypeService, productpageService.NodeType)
+	assert.Equal("productpage", productpageService.Service)
+	assert.Equal(nil, productpageService.Metadata["responseTime"])
+	assert.Equal(1, len(productpageService.Edges))
+	assert.Equal(10.0, productpageService.Edges[0].Metadata["responseTime"])
+
+	productpage := productpageService.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)
 	assert.Equal("v1", productpage.Version)
 	assert.Equal(nil, productpage.Metadata["responseTime"])
-	assert.Equal(2, len(productpage.Edges))
-	assert.Equal(20.0, productpage.Edges[0].Metadata["responseTime"])
-	assert.Equal(20.0, productpage.Edges[1].Metadata["responseTime"])
+	assert.Equal(1, len(productpage.Edges))
+	_, ok = productpage.Edges[0].Metadata["responseTime"]
+	assert.Equal(false, ok)
 
-	reviews1 := productpage.Edges[0].Dest
+	reviewsService := productpage.Edges[0].Dest
+	assert.Equal(graph.NodeTypeService, reviewsService.NodeType)
+	assert.Equal("reviews", reviewsService.Service)
+	assert.Equal(nil, reviewsService.Metadata["responseTime"])
+	assert.Equal(2, len(reviewsService.Edges))
+	assert.Equal(20.0, reviewsService.Edges[0].Metadata["responseTime"])
+	assert.Equal(20.0, reviewsService.Edges[1].Metadata["responseTime"])
+
+	reviews1 := reviewsService.Edges[0].Dest
 	assert.Equal("reviews", reviews1.App)
 	assert.Equal("v1", reviews1.Version)
 	assert.Equal(nil, reviews1.Metadata["responseTime"])
 	assert.Equal(1, len(reviews1.Edges))
-	assert.Equal(30.0, reviews1.Edges[0].Metadata["responseTime"])
+	_, ok = reviews1.Edges[0].Metadata["responseTime"]
+	assert.Equal(false, ok)
 
-	reviews2 := productpage.Edges[1].Dest
+	ratingsService := reviews1.Edges[0].Dest
+	assert.Equal(graph.NodeTypeService, ratingsService.NodeType)
+	assert.Equal("ratings", ratingsService.Service)
+	assert.Equal(nil, ratingsService.Metadata["responseTime"])
+	assert.Equal(1, len(ratingsService.Edges))
+	assert.Equal(30.0, ratingsService.Edges[0].Metadata["responseTime"])
+
+	reviews2 := reviewsService.Edges[1].Dest
 	assert.Equal("reviews", reviews2.App)
 	assert.Equal("v2", reviews2.Version)
 	assert.Equal(nil, reviews2.Metadata["responseTime"])
 	assert.Equal(1, len(reviews2.Edges))
-	assert.Equal(30.0, reviews2.Edges[0].Metadata["responseTime"])
+	_, ok = reviews2.Edges[0].Metadata["responseTime"]
 
-	ratingsPath1 := reviews1.Edges[0].Dest
-	assert.Equal("ratings", ratingsPath1.App)
-	assert.Equal("v1", ratingsPath1.Version)
-	assert.Equal(nil, ratingsPath1.Metadata["responseTime"])
-	assert.Equal(0, len(ratingsPath1.Edges))
+	assert.Equal(ratingsService, reviews2.Edges[0].Dest)
 
-	ratingsPath2 := reviews2.Edges[0].Dest
-	assert.Equal("ratings", ratingsPath2.App)
-	assert.Equal("v1", ratingsPath2.Version)
-	assert.Equal(nil, ratingsPath2.Metadata["responseTime"])
-	assert.Equal(0, len(ratingsPath2.Edges))
-
-	assert.Equal(ratingsPath1, ratingsPath2)
+	ratings := ratingsService.Edges[0].Dest
+	assert.Equal("ratings", ratings.App)
+	assert.Equal("v1", ratings.Version)
+	assert.Equal(nil, ratings.Metadata["responseTime"])
+	assert.Equal(0, len(ratings.Edges))
 }
 
 func responseTimeTestTraffic() graph.TrafficMap {
 	ingress := graph.NewNode("istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	productpageService := graph.NewNode("bookinfo", "productpage", "", "", "", "", graph.GraphTypeVersionedApp)
 	productpage := graph.NewNode("bookinfo", "productpage", "bookinfo", "productpage-v1", "productpage", "v1", graph.GraphTypeVersionedApp)
+	reviewsService := graph.NewNode("bookinfo", "reviews", "", "", "", "", graph.GraphTypeVersionedApp)
 	reviewsV1 := graph.NewNode("bookinfo", "reviews", "bookinfo", "reviews-v1", "reviews", "v1", graph.GraphTypeVersionedApp)
 	reviewsV2 := graph.NewNode("bookinfo", "reviews", "bookinfo", "reviews-v2", "reviews", "v2", graph.GraphTypeVersionedApp)
-	ratingsPath1 := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	ratingsPath2 := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
+	ratingsService := graph.NewNode("bookinfo", "ratings", "", "", "", "", graph.GraphTypeVersionedApp)
+	ratings := graph.NewNode("bookinfo", "ratings", "bookinfo", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
 	trafficMap := graph.NewTrafficMap()
 	trafficMap[ingress.ID] = &ingress
+	trafficMap[productpageService.ID] = &productpageService
 	trafficMap[productpage.ID] = &productpage
+	trafficMap[reviewsService.ID] = &reviewsService
 	trafficMap[reviewsV1.ID] = &reviewsV1
 	trafficMap[reviewsV2.ID] = &reviewsV2
-	trafficMap[ratingsPath1.ID] = &ratingsPath1
-	trafficMap[ratingsPath2.ID] = &ratingsPath2
+	trafficMap[ratingsService.ID] = &ratingsService
+	trafficMap[ratings.ID] = &ratings
 
-	ingress.AddEdge(&productpage)
-	productpage.AddEdge(&reviewsV1)
-	productpage.AddEdge(&reviewsV2)
-	reviewsV1.AddEdge(&ratingsPath1)
-	reviewsV2.AddEdge(&ratingsPath2)
+	ingress.AddEdge(&productpageService)
+	productpageService.AddEdge(&productpage)
+	productpage.AddEdge(&reviewsService)
+	reviewsService.AddEdge(&reviewsV1)
+	reviewsService.AddEdge(&reviewsV2)
+	reviewsV1.AddEdge(&ratingsService)
+	reviewsV2.AddEdge(&ratingsService)
+	ratingsService.AddEdge(&ratings)
 
 	return trafficMap
 }

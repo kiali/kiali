@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -63,6 +63,18 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		return nil, err
 	}
 
+	var runtimes []models.Runtime
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		conf := config.Get()
+		app := workload.Labels[conf.IstioLabels.AppLabelName]
+		version := workload.Labels[conf.IstioLabels.VersionLabelName]
+		dash := NewDashboardsService(nil, in.prom)
+		runtimes = dash.GetCustomDashboardRefs(namespace, app, version, workload.Pods)
+	}()
+
 	if includeServices {
 		services, err := in.k8s.GetServices(namespace, workload.Labels)
 		if err != nil {
@@ -71,7 +83,8 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		workload.SetServices(services)
 	}
 
-	in.fillCustomDashboardRefs(namespace, workload)
+	wg.Wait()
+	workload.Runtimes = runtimes
 
 	return workload, nil
 }
@@ -90,13 +103,31 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	return pods, nil
 }
 
+func (in *WorkloadService) GetPod(namespace, name string) (*models.Pod, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPod")
+	defer promtimer.ObserveNow(&err)
+
+	p, err := in.k8s.GetPod(namespace, name)
+	if err != nil {
+		return nil, err
+	}
+	pod := models.Pod{}
+	pod.Parse(p)
+	return &pod, nil
+}
+
+func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (*kubernetes.PodLogs, error) {
+	return in.k8s.GetPodLogs(namespace, name, opts)
+}
+
 func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, labelSelector string) (models.Workloads, error) {
-	var pods []v1.Pod
-	var repcon []v1.ReplicationController
-	var dep []v1beta1.Deployment
-	var repset []v1beta2.ReplicaSet
-	var depcon []osappsv1.DeploymentConfig
-	var fulset []v1beta2.StatefulSet
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep []apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon []osapps_v1.DeploymentConfig
+	var fulset []apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
 
@@ -485,7 +516,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 				}
 			}
 			if found {
-				w.SetPods([]v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]})
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", cname)
@@ -540,12 +571,12 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 }
 
 func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, workloadName string) (*models.Workload, error) {
-	var pods []v1.Pod
-	var repcon []v1.ReplicationController
-	var dep *v1beta1.Deployment
-	var repset []v1beta2.ReplicaSet
-	var depcon *osappsv1.DeploymentConfig
-	var fulset *v1beta2.StatefulSet
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep *apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon *osapps_v1.DeploymentConfig
+	var fulset *apps_v1.StatefulSet
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1beta1.CronJob
 
@@ -875,7 +906,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 				}
 			}
 			if found {
-				w.SetPods([]v1.Pod{pods[iFound]})
+				w.SetPods([]core_v1.Pod{pods[iFound]})
 				w.ParsePod(&pods[iFound])
 			} else {
 				log.Errorf("Workload %s is not found as Pod", workloadName)
@@ -960,39 +991,4 @@ func controllerPriority(type1, type2 string) string {
 	} else {
 		return type2
 	}
-}
-
-// fillCustomDashboardRefs finds all dashboard IDs and Titles associated to this workload and add them to the model
-func (in *WorkloadService) fillCustomDashboardRefs(namespace string, workload *models.Workload) {
-	uniqueRefsList := getUniqueRuntimes(workload.Pods)
-	mon, err := kubernetes.NewKialiMonitoringClient()
-	if err != nil {
-		// Do not fail the whole query, just log & return
-		log.Error("Cannot initialize Kiali Monitoring Client")
-		return
-	}
-	dash := NewDashboardsService(mon, in.prom)
-	workload.Runtimes = dash.buildRuntimesList(namespace, uniqueRefsList)
-}
-
-func getUniqueRuntimes(pods models.Pods) []string {
-	// Get uniqueness from plain list rather than map to preserve ordering; anyway, very low amount of objects is expected
-	uniqueRefs := []string{}
-	for _, pod := range pods {
-		for _, ref := range pod.RuntimesAnnotation {
-			if ref != "" {
-				exists := false
-				for _, existingRef := range uniqueRefs {
-					if ref == existingRef {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					uniqueRefs = append(uniqueRefs, ref)
-				}
-			}
-		}
-	}
-	return uniqueRefs
 }

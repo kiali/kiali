@@ -1,0 +1,61 @@
+apiVersion: "monitoring.kiali.io/v1alpha1"
+kind: MonitoringDashboard
+metadata:
+  name: vertx-pool
+spec:
+  runtime: Vert.x
+  title: Vert.x Pools Metrics
+  discoverOn: "vertx_pool_ratio"
+  items:
+  - chart:
+      name: "Usage duration"
+      unit: "seconds"
+      spans: 6
+      metricName: "vertx_pool_usage_seconds"
+      dataType: "histogram"
+      aggregations:
+      - label: "pool_name"
+        displayName: "Name"
+      - label: "pool_type"
+        displayName: "Type"
+  - chart:
+      name: "Usage ratio"
+      spans: 6
+      metricName: "vertx_pool_ratio"
+      dataType: "raw"
+      aggregations:
+      - label: "pool_name"
+        displayName: "Name"
+      - label: "pool_type"
+        displayName: "Type"
+  - chart:
+      name: "Queue size"
+      spans: 6
+      metricName: "vertx_pool_queue_size"
+      dataType: "raw"
+      aggregations:
+      - label: "pool_name"
+        displayName: "Name"
+      - label: "pool_type"
+        displayName: "Type"
+  - chart:
+      name: "Time in queue"
+      unit: "seconds"
+      spans: 6
+      metricName: "vertx_pool_queue_delay_seconds"
+      dataType: "histogram"
+      aggregations:
+      - label: "pool_name"
+        displayName: "Name"
+      - label: "pool_type"
+        displayName: "Type"
+  - chart:
+      name: "Resources used"
+      spans: 6
+      metricName: "vertx_pool_inUse"
+      dataType: "raw"
+      aggregations:
+      - label: "pool_name"
+        displayName: "Name"
+      - label: "pool_type"
+        displayName: "Type"

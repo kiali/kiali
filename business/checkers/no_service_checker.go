@@ -6,7 +6,7 @@ import (
 	"github.com/kiali/kiali/business/checkers/virtual_services"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 )
 
 const ServiceRoleCheckerType = "servicerole"
@@ -14,7 +14,7 @@ const ServiceRoleCheckerType = "servicerole"
 type NoServiceChecker struct {
 	Namespace            string
 	IstioDetails         *kubernetes.IstioDetails
-	Services             []v1.Service
+	Services             []core_v1.Service
 	WorkloadList         models.WorkloadList
 	GatewaysPerNamespace [][]kubernetes.IstioObject
 	AuthorizationDetails *kubernetes.RBACDetails
@@ -76,7 +76,7 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 	return models.IstioValidations{key: validations}
 }
 
-func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, services []v1.Service, serviceHosts map[string][]string) models.IstioValidations {
+func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, services []core_v1.Service, serviceHosts map[string][]string) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.GetObjectMeta().Name, DestinationRuleCheckerType)
 
 	result, valid := destinationrules.NoDestinationChecker{
@@ -93,7 +93,7 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 	return models.IstioValidations{key: validations}
 }
 
-func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []v1.Service) models.IstioValidations {
+func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []core_v1.Service) models.IstioValidations {
 	key, validations := EmptyValidValidation(serviceRole.GetObjectMeta().Name, ServiceRoleCheckerType)
 
 	result, valid := authorization.ServiceChecker{
@@ -107,7 +107,7 @@ func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []v1.Servi
 	return models.IstioValidations{key: validations}
 }
 
-func getServiceNames(services []v1.Service) []string {
+func getServiceNames(services []core_v1.Service) []string {
 	serviceNames := make([]string, 0)
 	for _, item := range services {
 		serviceNames = append(serviceNames, item.Name)

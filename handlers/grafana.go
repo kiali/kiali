@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
@@ -17,7 +17,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-type serviceSupplier func(string, string, string) (*v1.ServiceSpec, error)
+type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
 type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
 // The Kiali ServiceAccount token.

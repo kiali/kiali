@@ -3,15 +3,14 @@ package appender
 import (
 	"testing"
 
-	osappsv1 "github.com/openshift/api/apps/v1"
+	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -23,80 +22,80 @@ func setupWorkloads() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
-	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]v1beta1.Deployment{
-		v1beta1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
+	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
+		apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "testPodsWithTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
 					},
 				},
 			},
 		},
-		v1beta1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
+		apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "testPodsNoTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
 					},
 				},
 			},
 		},
-		v1beta1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
+		apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "testNoPodsWithTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{"app": "testNoPodsWithTraffic", "version": "v1"},
 					},
 				},
 			},
 		},
-		v1beta1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
+		apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "testNoPodsNoTraffic-v1",
 			},
-			Spec: v1beta1.DeploymentSpec{
-				Template: v1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
 						Labels: map[string]string{"app": "testNoPodsNoTraffic", "version": "v1"},
 					},
 				},
 			},
 		},
 	}, nil)
-	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osappsv1.DeploymentConfig{}, nil)
+	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetJobs", mock.AnythingOfType("string")).Return([]batch_v1.Job{}, nil)
 	k8s.On("GetPods", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
-		[]v1.Pod{
+		[]core_v1.Pod{
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name:   "testPodsWithTraffic-v1-1234",
 					Labels: map[string]string{"app": "testPodsWithTraffic", "version": "v1"},
 				},
-				Status: v1.PodStatus{
+				Status: core_v1.PodStatus{
 					Message: "foo"},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name:   "testPodsNoTraffic-v1-1234",
 					Labels: map[string]string{"app": "testPodsNoTraffic", "version": "v1"},
 				},
-				Status: v1.PodStatus{
+				Status: core_v1.PodStatus{
 					Message: "foo"},
 			},
 		}, nil)
-	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]v1.ReplicationController{}, nil)
-	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]v1beta2.ReplicaSet{}, nil)
-	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]v1beta2.StatefulSet{}, nil)
+	k8s.On("GetReplicationControllers", mock.AnythingOfType("string")).Return([]core_v1.ReplicationController{}, nil)
+	k8s.On("GetReplicaSets", mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
+	k8s.On("GetStatefulSets", mock.AnythingOfType("string")).Return([]apps_v1.StatefulSet{}, nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil)

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	osv1 "github.com/openshift/api/project/v1"
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -36,8 +36,8 @@ func TestServiceMetricsDefault(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "destination_service_name=\"svc\"")
 		assert.Contains(t, query, "destination_service_namespace=\"ns\"")
 		assert.Contains(t, query, "[1m]")
@@ -87,8 +87,8 @@ func TestServiceMetricsWithParams(t *testing.T) {
 
 	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
 		query := args[1].(string)
-		assert.IsType(t, v1.Range{}, args[2])
-		r := args[2].(v1.Range)
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
 		assert.Contains(t, query, "destination_service_name=\"svc\"")
 		assert.Contains(t, query, "destination_service_namespace=\"ns\"")
 		assert.Contains(t, query, "rate(")
@@ -309,7 +309,7 @@ func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
 
 	url := ts.URL + "/api/namespaces/my_namespace/services/svc/metrics"
 
-	var nsNil *osv1.Project
+	var nsNil *osproject_v1.Project
 	k8s.On("GetProject", "my_namespace").Return(nsNil, errors.New("no privileges"))
 
 	resp, err := http.Get(url)
@@ -331,7 +331,7 @@ func setupServiceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustes
 		t.Fatal(err)
 	}
 	prom.Inject(api)
-	k8s.On("GetProject", "ns").Return(&osv1.Project{}, nil)
+	k8s.On("GetProject", "ns").Return(&osproject_v1.Project{}, nil)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/metrics", http.HandlerFunc(

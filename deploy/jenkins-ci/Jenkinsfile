@@ -31,6 +31,16 @@ properties([
       trim: true,
       description: 'The name of the Docker repository to push the release'),
     string(
+      name: 'QUAY_NAME',
+      defaultValue: 'quay.io/kiali/kiali',
+      trim: true,
+      description: 'The name of the Quay repository to push the release'),
+    string(
+      name: 'QUAY_OPERATOR_NAME',
+      defaultValue: 'quay.io/kiali/kiali-operator',
+      trim: true,
+      description: 'The name of the Quay repository to push the operator release'),
+    string(
       name: 'BACKEND_PULL_URI',
       defaultValue: 'https://api.github.com/repos/kiali/kiali/pulls',
       trim: true,
@@ -49,8 +59,13 @@ properties([
       name: 'SKIP_UI_RELEASE',
       defaultValue: 'n',
       trim: true,
-      description: "Set to 'y' if you don't want to release the UI. The UI release can be omitted \n" +
-                   "only if RELEASE_TYPE=patch")
+      description: "Set to 'y' if you don't want to release the UI"),
+    string(
+         name: 'UI_VERSION',
+         defaultValue: '',
+         trim: true,
+         description: "If you are skipping UI release. Specify the UI version to package, or leave \n" +
+                      "unset to use the version present in the main Makefile (e.g. leave unset for patch releases)")
   ])
 ])
 
@@ -58,8 +73,9 @@ node('kiali-build') {
   def (backendForkUri, uiForkUri) = ['git@github.com:kiali-bot/kiali.git', 'git@github.com:kiali-bot/kiali-ui.git']
   def (backendDir, uiDir) = ['src/github.com/kiali/kiali', 'src/github.com/kiali/kiali-ui']
   def (backendMakefile, uiMakefile) = ['deploy/jenkins-ci/Makefile', 'Makefile.jenkins']
-  def buildUi = params.RELEASE_TYPE != "patch" || params.SKIP_UI_RELEASE != "y"
+  def buildUi = params.SKIP_UI_RELEASE != "y"
   def dockerTag = ""
+  def quayTag = ""
 
   try {
     cleanWs()
@@ -144,10 +160,11 @@ node('kiali-build') {
         }
       }
 
-      stage('Release Kiali to DockerHub') {
-        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+      stage('Release Kiali to Container Repositories') {
+        withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER'), usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
           sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
           dockerTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
+          quayTag = sh(returnStdout: true, script: "sed -rn 's/^VERSION \\?= v(.*)/v\\1/p' ${backendDir}/Makefile").trim()
         }
       }
 
@@ -168,7 +185,9 @@ node('kiali-build') {
              parameters: [
                [$class: 'StringParameterValue', value: 'minor', name: 'RELEASE_TYPE'],
                [$class: 'StringParameterValue', value: "${params.DOCKER_NAME}", name: 'DOCKER_NAME'],
-               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG']
+               [$class: 'StringParameterValue', value: "${params.QUAY_NAME}", name: 'QUAY_NAME'],
+               [$class: 'StringParameterValue', value: dockerTag, name: 'DOCKER_TAG'],
+               [$class: 'StringParameterValue', value: quayTag, name: 'QUAY_TAG']
              ], wait: false
            )
        }

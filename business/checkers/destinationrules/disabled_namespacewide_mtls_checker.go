@@ -21,11 +21,18 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 
 	// otherwise, check among Policies for a rule enabling mTLS
 	for _, mp := range m.MTLSDetails.Policies {
-		// If Policy has mTLS enabled in the namespace
-		// traffic going through DestinationRule won't work
-		if strictMode := kubernetes.PolicyHasStrictMTLS(mp); strictMode {
-			check := models.Build("destinationrules.mtls.policymtlsenabled", "spec/trafficPolicy/tls/mode")
-			return append(validations, &check), false
+		if enabled, mode := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
+			// If Policy has mTLS enabled in STRICT mode
+			// traffic going through DestinationRule won't work
+			if mode != "PERMISSIVE" {
+				check := models.Build("destinationrules.mtls.policymtlsenabled", "spec/trafficPolicy/tls/mode")
+				return append(validations, &check), false
+			} else {
+				// If Policy has mTLS enabled in PERMISSIVE mode
+				// traffic going through DestinationRule will work
+				// no need for further analysis in MeshPolicies
+				return validations, true
+			}
 		}
 	}
 

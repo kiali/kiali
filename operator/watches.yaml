@@ -1,10 +1,9 @@
 ---
 - version: v1alpha1
-  group: op.kiali.io
+  group: kiali.io
   kind: Kiali
-  role: /opt/ansible/roles/kiali
+  playbook: /opt/ansible/playbooks/kiali-deploy.yml
   reconcilePeriod: 0
   finalizer:
     name: finalizer.kiali
-    vars:
-      state: absent
+    playbook: /opt/ansible/playbooks/kiali-remove.yml

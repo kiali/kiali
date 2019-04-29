@@ -1,8 +1,6 @@
 package models
 
-import (
-	"k8s.io/api/autoscaling/v1"
-)
+import autoscaling_v1 "k8s.io/api/autoscaling/v1"
 
 type Autoscaler struct {
 	Name      string            `json:"name"`
@@ -20,7 +18,7 @@ type Autoscaler struct {
 	CurrentCPUUtilizationPercentage int32  `json:"currentCPUUtilizationPercentage,omitempty"`
 }
 
-func (autoscaler *Autoscaler) Parse(d *v1.HorizontalPodAutoscaler) {
+func (autoscaler *Autoscaler) Parse(d *autoscaling_v1.HorizontalPodAutoscaler) {
 	autoscaler.Name = d.Name
 	autoscaler.Labels = d.Labels
 	autoscaler.CreatedAt = formatTime(d.CreationTimestamp.Time)

@@ -6,11 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/apps/v1beta2"
+	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
 	kube "k8s.io/client-go/kubernetes"
@@ -31,17 +30,17 @@ type (
 
 		// Business methods
 		GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
-		GetDeployment(namespace string, name string) (*v1beta1.Deployment, error)
-		GetDeployments(namespace string) ([]v1beta1.Deployment, error)
-		GetEndpoints(namespace, name string) (*v1.Endpoints, error)
+		GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
+		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+		GetEndpoints(namespace, name string) (*core_v1.Endpoints, error)
 		GetJobs(namespace string) ([]batch_v1.Job, error)
-		GetPods(namespace string) ([]v1.Pod, error)
-		GetReplicationControllers(namespace string) ([]v1.ReplicationController, error)
-		GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error)
-		GetService(namespace string, name string) (*v1.Service, error)
-		GetServices(namespace string) ([]v1.Service, error)
-		GetStatefulSet(namespace string, name string) (*v1beta2.StatefulSet, error)
-		GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error)
+		GetPods(namespace string) ([]core_v1.Pod, error)
+		GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
+		GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
+		GetService(namespace string, name string) (*core_v1.Service, error)
+		GetServices(namespace string) ([]core_v1.Service, error)
+		GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
+		GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
 	}
 
 	controllerImpl struct {
@@ -106,9 +105,9 @@ func initControllers(clientset kube.Interface, refreshDuration time.Duration) ma
 	controllers := make(map[string]cache.SharedIndexInformer)
 	controllers["Pod"] = sharedInformers.Core().V1().Pods().Informer()
 	controllers["ReplicationController"] = sharedInformers.Core().V1().ReplicationControllers().Informer()
-	controllers["Deployment"] = sharedInformers.Apps().V1beta1().Deployments().Informer()
-	controllers["ReplicaSet"] = sharedInformers.Apps().V1beta2().ReplicaSets().Informer()
-	controllers["StatefulSet"] = sharedInformers.Apps().V1beta2().StatefulSets().Informer()
+	controllers["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
+	controllers["ReplicaSet"] = sharedInformers.Apps().V1().ReplicaSets().Informer()
+	controllers["StatefulSet"] = sharedInformers.Apps().V1().StatefulSets().Informer()
 	controllers["Job"] = sharedInformers.Batch().V1().Jobs().Informer()
 	controllers["CronJob"] = sharedInformers.Batch().V1beta1().CronJobs().Informer()
 	controllers["Service"] = sharedInformers.Core().V1().Services().Informer()
@@ -221,7 +220,7 @@ func (c *controllerImpl) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob,
 	return []batch_v1beta1.CronJob{}, nil
 }
 
-func (c *controllerImpl) GetDeployment(namespace, name string) (*v1beta1.Deployment, error) {
+func (c *controllerImpl) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
@@ -231,39 +230,39 @@ func (c *controllerImpl) GetDeployment(namespace, name string) (*v1beta1.Deploym
 		return nil, err
 	}
 	if exist {
-		dep, ok := deps.(*v1beta1.Deployment)
+		dep, ok := deps.(*apps_v1.Deployment)
 		if !ok {
 			return nil, errors.New("Bad Deployment type found in cache")
 		}
 		return dep, nil
 	}
-	return nil, NewNotFound(name, "apps/v1beta1", "Deployment")
+	return nil, NewNotFound(name, "apps/v1", "Deployment")
 }
 
-func (c *controllerImpl) GetDeployments(namespace string) ([]v1beta1.Deployment, error) {
+func (c *controllerImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1beta1.Deployment{}, err
+		return []apps_v1.Deployment{}, err
 	}
 	indexer := c.controllers["Deployment"].GetIndexer()
 	deps, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1beta1.Deployment{}, err
+		return []apps_v1.Deployment{}, err
 	}
 	if len(deps) > 0 {
-		_, ok := deps[0].(*v1beta1.Deployment)
+		_, ok := deps[0].(*apps_v1.Deployment)
 		if !ok {
 			return nil, errors.New("Bad Deployment type found in cache")
 		}
-		nsDeps := make([]v1beta1.Deployment, len(deps))
+		nsDeps := make([]apps_v1.Deployment, len(deps))
 		for i, dep := range deps {
-			nsDeps[i] = *(dep.(*v1beta1.Deployment))
+			nsDeps[i] = *(dep.(*apps_v1.Deployment))
 		}
 		return nsDeps, nil
 	}
-	return []v1beta1.Deployment{}, nil
+	return []apps_v1.Deployment{}, nil
 }
 
-func (c *controllerImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, error) {
+func (c *controllerImpl) GetEndpoints(namespace, name string) (*core_v1.Endpoints, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
@@ -273,7 +272,7 @@ func (c *controllerImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, er
 		return nil, err
 	}
 	if exist {
-		endpoint, ok := endpoints.(*v1.Endpoints)
+		endpoint, ok := endpoints.(*core_v1.Endpoints)
 		if !ok {
 			return nil, errors.New("Bad Endpoints type found in cache")
 		}
@@ -305,76 +304,76 @@ func (c *controllerImpl) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	return []batch_v1.Job{}, nil
 }
 
-func (c *controllerImpl) GetPods(namespace string) ([]v1.Pod, error) {
+func (c *controllerImpl) GetPods(namespace string) ([]core_v1.Pod, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1.Pod{}, err
+		return []core_v1.Pod{}, err
 	}
 	indexer := c.controllers["Pod"].GetIndexer()
 	pods, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1.Pod{}, err
+		return []core_v1.Pod{}, err
 	}
 	if len(pods) > 0 {
-		_, ok := pods[0].(*v1.Pod)
+		_, ok := pods[0].(*core_v1.Pod)
 		if !ok {
-			return []v1.Pod{}, errors.New("Bad Pod type found in cache")
+			return []core_v1.Pod{}, errors.New("Bad Pod type found in cache")
 		}
-		nsPods := make([]v1.Pod, len(pods))
+		nsPods := make([]core_v1.Pod, len(pods))
 		for i, pod := range pods {
-			nsPods[i] = *(pod.(*v1.Pod))
+			nsPods[i] = *(pod.(*core_v1.Pod))
 		}
 		return nsPods, nil
 	}
-	return []v1.Pod{}, nil
+	return []core_v1.Pod{}, nil
 }
 
-func (c *controllerImpl) GetReplicationControllers(namespace string) ([]v1.ReplicationController, error) {
+func (c *controllerImpl) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1.ReplicationController{}, err
+		return []core_v1.ReplicationController{}, err
 	}
 	indexer := c.controllers["ReplicationController"].GetIndexer()
 	repcons, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1.ReplicationController{}, err
+		return []core_v1.ReplicationController{}, err
 	}
 	if len(repcons) > 0 {
-		_, ok := repcons[0].(*v1.ReplicationController)
+		_, ok := repcons[0].(*core_v1.ReplicationController)
 		if !ok {
-			return []v1.ReplicationController{}, errors.New("Bad ReplicationController type found in cache")
+			return []core_v1.ReplicationController{}, errors.New("Bad ReplicationController type found in cache")
 		}
-		nsRepcons := make([]v1.ReplicationController, len(repcons))
+		nsRepcons := make([]core_v1.ReplicationController, len(repcons))
 		for i, repcon := range repcons {
-			nsRepcons[i] = *(repcon.(*v1.ReplicationController))
+			nsRepcons[i] = *(repcon.(*core_v1.ReplicationController))
 		}
 		return nsRepcons, nil
 	}
-	return []v1.ReplicationController{}, nil
+	return []core_v1.ReplicationController{}, nil
 }
 
-func (c *controllerImpl) GetReplicaSets(namespace string) ([]v1beta2.ReplicaSet, error) {
+func (c *controllerImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1beta2.ReplicaSet{}, err
+		return []apps_v1.ReplicaSet{}, err
 	}
 	indexer := c.controllers["ReplicaSet"].GetIndexer()
 	repsets, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1beta2.ReplicaSet{}, err
+		return []apps_v1.ReplicaSet{}, err
 	}
 	if len(repsets) > 0 {
-		_, ok := repsets[0].(*v1beta2.ReplicaSet)
+		_, ok := repsets[0].(*apps_v1.ReplicaSet)
 		if !ok {
-			return []v1beta2.ReplicaSet{}, errors.New("Bad ReplicaSet type found in cache")
+			return []apps_v1.ReplicaSet{}, errors.New("Bad ReplicaSet type found in cache")
 		}
-		nsRepsets := make([]v1beta2.ReplicaSet, len(repsets))
+		nsRepsets := make([]apps_v1.ReplicaSet, len(repsets))
 		for i, repset := range repsets {
-			nsRepsets[i] = *(repset.(*v1beta2.ReplicaSet))
+			nsRepsets[i] = *(repset.(*apps_v1.ReplicaSet))
 		}
 		return nsRepsets, nil
 	}
-	return []v1beta2.ReplicaSet{}, nil
+	return []apps_v1.ReplicaSet{}, nil
 }
 
-func (c *controllerImpl) GetStatefulSet(namespace, name string) (*v1beta2.StatefulSet, error) {
+func (c *controllerImpl) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
@@ -384,39 +383,39 @@ func (c *controllerImpl) GetStatefulSet(namespace, name string) (*v1beta2.Statef
 		return nil, err
 	}
 	if exist {
-		fulset, ok := fulsets.(*v1beta2.StatefulSet)
+		fulset, ok := fulsets.(*apps_v1.StatefulSet)
 		if !ok {
 			return nil, errors.New("Bad StatefulSet type found in cache")
 		}
 		return fulset, nil
 	}
-	return nil, NewNotFound(name, "apps/v1beta2", "StatefulSet")
+	return nil, NewNotFound(name, "apps/v1", "StatefulSet")
 }
 
-func (c *controllerImpl) GetStatefulSets(namespace string) ([]v1beta2.StatefulSet, error) {
+func (c *controllerImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1beta2.StatefulSet{}, err
+		return []apps_v1.StatefulSet{}, err
 	}
 	indexer := c.controllers["StatefulSet"].GetIndexer()
 	fulsets, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1beta2.StatefulSet{}, err
+		return []apps_v1.StatefulSet{}, err
 	}
 	if len(fulsets) > 0 {
-		_, ok := fulsets[0].(*v1beta2.StatefulSet)
+		_, ok := fulsets[0].(*apps_v1.StatefulSet)
 		if !ok {
-			return []v1beta2.StatefulSet{}, errors.New("Bad StatefulSet type found in cache")
+			return []apps_v1.StatefulSet{}, errors.New("Bad StatefulSet type found in cache")
 		}
-		nsFulsets := make([]v1beta2.StatefulSet, len(fulsets))
+		nsFulsets := make([]apps_v1.StatefulSet, len(fulsets))
 		for i, fulset := range fulsets {
-			nsFulsets[i] = *(fulset.(*v1beta2.StatefulSet))
+			nsFulsets[i] = *(fulset.(*apps_v1.StatefulSet))
 		}
 		return nsFulsets, nil
 	}
-	return []v1beta2.StatefulSet{}, nil
+	return []apps_v1.StatefulSet{}, nil
 }
 
-func (c *controllerImpl) GetService(namespace, name string) (*v1.Service, error) {
+func (c *controllerImpl) GetService(namespace, name string) (*core_v1.Service, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
@@ -426,7 +425,7 @@ func (c *controllerImpl) GetService(namespace, name string) (*v1.Service, error)
 		return nil, err
 	}
 	if exist {
-		service, ok := services.(*v1.Service)
+		service, ok := services.(*core_v1.Service)
 		if !ok {
 			return nil, errors.New("Bad Service type found in cache")
 		}
@@ -435,25 +434,25 @@ func (c *controllerImpl) GetService(namespace, name string) (*v1.Service, error)
 	return nil, NewNotFound(name, "core/v1", "Service")
 }
 
-func (c *controllerImpl) GetServices(namespace string) ([]v1.Service, error) {
+func (c *controllerImpl) GetServices(namespace string) ([]core_v1.Service, error) {
 	if err := c.checkStateAndRetry(); err != nil {
-		return []v1.Service{}, err
+		return []core_v1.Service{}, err
 	}
 	indexer := c.controllers["Service"].GetIndexer()
 	services, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
-		return []v1.Service{}, err
+		return []core_v1.Service{}, err
 	}
 	if len(services) > 0 {
-		_, ok := services[0].(*v1.Service)
+		_, ok := services[0].(*core_v1.Service)
 		if !ok {
-			return []v1.Service{}, errors.New("Bad Service type found in cache")
+			return []core_v1.Service{}, errors.New("Bad Service type found in cache")
 		}
-		nsServices := make([]v1.Service, len(services))
+		nsServices := make([]core_v1.Service, len(services))
 		for i, service := range services {
-			nsServices[i] = *(service.(*v1.Service))
+			nsServices[i] = *(service.(*core_v1.Service))
 		}
 		return nsServices, nil
 	}
-	return []v1.Service{}, nil
+	return []core_v1.Service{}, nil
 }

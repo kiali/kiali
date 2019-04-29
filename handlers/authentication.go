@@ -27,6 +27,7 @@ type AuthInfo struct {
 	Strategy              string      `json:"strategy"`
 	AuthorizationEndpoint string      `json:"authorizationEndpoint,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
+	SecretMissing         bool        `json:"secretMissing,omitempty"`
 }
 
 type sessionInfo struct {
@@ -214,7 +215,7 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 		err = business.OpenshiftOAuth.ValidateToken(claims.SessionId)
 		if err == nil {
 			// Internal header used to propagate the subject of the request for audit purposes
-			w.Header().Add("Kiali-User", claims.Subject)
+			r.Header.Add("Kiali-User", claims.Subject)
 			return http.StatusOK, claims.SessionId
 		}
 
@@ -234,7 +235,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes
-		w.Header().Add("Kiali-User", user)
+		r.Header.Add("Kiali-User", user)
 	} else {
 		user := checkKialiCredentials(r)
 		if len(user) == 0 {
@@ -248,7 +249,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		}
 
 		// Internal header used to propagate the subject of the request for audit purposes
-		w.Header().Add("Kiali-User", user)
+		r.Header.Add("Kiali-User", user)
 	}
 
 	return http.StatusOK
@@ -360,6 +361,10 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.AuthorizationEndpoint = metadata.AuthorizationEndpoint
+	case config.AuthStrategyLogin:
+		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+			response.SecretMissing = true
+		}
 	}
 
 	token := getTokenStringFromRequest(r)

@@ -18,7 +18,7 @@ import (
 )
 
 func TestMDStat(t *testing.T) {
-	mdStates, err := FS("fixtures").ParseMDStat()
+	mdStates, err := FS(procTestFixtures).ParseMDStat()
 	if err != nil {
 		t.Fatalf("parsing of reference-file failed entirely: %s", err)
 	}

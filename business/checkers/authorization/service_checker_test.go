@@ -8,7 +8,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -86,24 +86,24 @@ func TestServiceRoleOnlyLocalNamespace(t *testing.T) {
 	assert.Equal(models.CheckMessage("servicerole.invalid.namespace"), checks[0].Message)
 }
 
-func getFourServices() []v1.Service {
-	return []v1.Service{
-		v1.Service{
+func getFourServices() []core_v1.Service {
+	return []core_v1.Service{
+		core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service1",
 			},
 		},
-		v1.Service{
+		core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service2",
 			},
 		},
-		v1.Service{
+		core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service21",
 			},
 		},
-		v1.Service{
+		core_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "service22",
 			},

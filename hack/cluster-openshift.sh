@@ -46,10 +46,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the istiooc command to be downloaded
-DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.9.0"
+DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.10.0"
 
 # The default installation custom resource used to define what to install
-DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.9/istio/istio-installation-minimal.yaml"
+DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.10/istio/istio-installation-minimal.yaml"
 
 # set the default openshift address here so that it can be used for the usage text
 #
@@ -122,6 +122,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_ENABLED="$2"
       shift;shift
       ;;
+    -kas|--kiali-auth-strategy)
+      KIALI_AUTH_STRATEGY="$2"
+      shift;shift
+      ;;
     -kv|--kiali-version)
       KIALI_VERSION="$2"
       shift;shift
@@ -183,6 +187,10 @@ Valid options:
   -ke|--kiali-enabled (true|false)
       When set to true, Kiali will be installed in OpenShift.
       Default: false
+      Used only for the 'up' command.
+  -kas|--kiali-auth-strategy (openshift,login,anonymous)
+      Determines what authentication strategy Kiali will use. See docs for what each auth-strategy does.
+      Default: openshift
       Used only for the 'up' command.
   -kn|--knative (true|false)
       When set to true, Knative will be installed in OpenShift.
@@ -283,6 +291,7 @@ WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
 # If that is set to false, the other KIALI_ environment variables will be ignored.
 KIALI_ENABLED="${KIALI_ENABLED:-false}"
 KIALI_VERSION="${KIALI_VERSION:-lastrelease}"
+KIALI_AUTH_STRATEGY="${KIALI_AUTH_STRATEGY:-openshift}"
 KIALI_USERNAME="${KIALI_USERNAME:-admin}"
 KIALI_PASSPHRASE="${KIALI_PASSPHRASE:-admin}"
 
@@ -363,6 +372,7 @@ debug "ENVIRONMENT:
   DOCKER_SUDO=$DOCKER_SUDO
   KIALI_ENABLED=$KIALI_ENABLED
   KIALI_VERSION=$KIALI_VERSION
+  KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
   KIALI_USERNAME=$KIALI_USERNAME
   KIALI_PASSPHRASE=$KIALI_PASSPHRASE
   ISTIO_ENABLED=$ISTIO_ENABLED
@@ -564,12 +574,15 @@ if [ "$_CMD" = "up" ]; then
     ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=kiali -n istio-system
     echo "Deploying Kiali..."
     get_downloader
-    eval ${DOWNLOADER} /tmp/deploy-kiali-to-openshift.sh https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/deploy/openshift/deploy-kiali-to-openshift.sh
-    chmod +x /tmp/deploy-kiali-to-openshift.sh
+    eval ${DOWNLOADER} /tmp/deploy-kiali-operator.sh https://raw.githubusercontent.com/kiali/kiali/${KIALI_VERSION}/operator/deploy/deploy-kiali-operator.sh
+    chmod +x /tmp/deploy-kiali-operator.sh
+    OPERATOR_VERSION_LABEL=${KIALI_VERSION} \
+    OPERATOR_IMAGE_VERSION=${KIALI_VERSION}  \
     VERSION_LABEL=${KIALI_VERSION} \
     IMAGE_VERSION=${KIALI_VERSION}  \
-    KIALI_USERNAME=${KIALI_USERNAME}  \
-    KIALI_PASSPHRASE=${KIALI_PASSPHRASE} /tmp/deploy-kiali-to-openshift.sh
+    AUTH_STRATEGY=${KIALI_AUTH_STRATEGY}  \
+    CREDENTIALS_USERNAME=${KIALI_USERNAME}  \
+    CREDENTIALS_PASSPHRASE=${KIALI_PASSPHRASE} /tmp/deploy-kiali-operator.sh
   fi
 
   if [ "${KNATIVE_ENABLED}" == "true" ]; then

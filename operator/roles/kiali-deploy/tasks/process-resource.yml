@@ -1,0 +1,11 @@
+- name: "Create resource [{{ process_resource_item}}] on [{{ process_resource_cluster}}]"
+  k8s:
+    state: "present"
+    definition: "{{ lookup('template', 'templates/' + process_resource_cluster + '/' + process_resource_item + '.yaml') }}"
+  register: process_resource_result
+  until:
+  - process_resource_result.error is not defined
+  - process_resource_result.result is defined
+  - process_resource_result.result.metadata is defined
+  retries: 6
+  delay: 10

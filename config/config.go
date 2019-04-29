@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -95,7 +96,8 @@ const (
 )
 
 // Global configuration for the application.
-var configuration *Config
+var configuration Config
+var rwMutex sync.RWMutex
 
 // Server configuration
 type Server struct {
@@ -108,6 +110,12 @@ type Server struct {
 	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
 	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
 	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+}
+
+// PrometheusConfig describes configuration of the Prometheus component
+type PrometheusConfig struct {
+	URL              string `yaml:"url,omitempty"`
+	CustomMetricsURL string `yaml:"custom_metrics_url,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -141,16 +149,15 @@ type IstioConfig struct {
 
 // ExternalServices holds configurations for other systems that Kiali depends on
 type ExternalServices struct {
-	Istio                      IstioConfig   `yaml:"istio,omitempty"`
-	PrometheusServiceURL       string        `yaml:"prometheus_service_url,omitempty"`
-	PrometheusCustomMetricsURL string        `yaml:"prometheus_custom_metrics_url,omitempty"`
-	Grafana                    GrafanaConfig `yaml:"grafana,omitempty"`
-	Jaeger                     JaegerConfig  `yaml:"jaeger,omitempty"`
+	Istio      IstioConfig      `yaml:"istio,omitempty"`
+	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
+	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
+	Jaeger     JaegerConfig     `yaml:"jaeger,omitempty"`
 }
 
 // LoginToken holds config used in token-based authentication
 type LoginToken struct {
-	SigningKey        []byte `yaml:"signing_key,omitempty"`
+	SigningKey        string `yaml:"signing_key,omitempty"`
 	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
 }
 
@@ -160,7 +167,7 @@ type IstioLabels struct {
 	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
-// Kubernetes client configuration
+// KubernetesConfig holds the k8s client configuration
 type KubernetesConfig struct {
 	Burst         int     `yaml:"burst,omitempty"`
 	QPS           float32 `yaml:"qps,omitempty"`
@@ -168,17 +175,17 @@ type KubernetesConfig struct {
 	CacheDuration int64   `yaml:"cache_duration,omitempty"`
 }
 
-// Exclude Blacklist holds regex strings defining a blacklist
+// ApiConfig contains API specific configuration.
 type ApiConfig struct {
 	Namespaces ApiNamespacesConfig
 }
 
-// Exclude Blacklist holds regex strings defining a blacklist
+// ApiNamespacesConfig provides a list of regex strings defining namespaces to blacklist.
 type ApiNamespacesConfig struct {
 	Exclude []string
 }
 
-// Authentication configuration
+// AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
 	Strategy string `yaml:"strategy,omitempty"`
 }
@@ -228,8 +235,8 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 
 	// Prometheus configuration
-	c.ExternalServices.PrometheusServiceURL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))
-	c.ExternalServices.PrometheusCustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.PrometheusServiceURL))
+	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))
+	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
@@ -258,7 +265,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
 
 	// Token-based authentication Configuration
-	c.LoginToken.SigningKey = []byte(strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali")))
+	c.LoginToken.SigningKey = strings.TrimSpace(getDefaultString(EnvLoginTokenSigningKey, "kiali"))
 	c.LoginToken.ExpirationSeconds = getDefaultInt64(EnvLoginTokenExpirationSeconds, 24*3600)
 
 	// Kubernetes client Configuration
@@ -285,12 +292,17 @@ func NewConfig() (c *Config) {
 
 // Get the global Config
 func Get() (conf *Config) {
-	return configuration
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	copy := configuration
+	return &copy
 }
 
 // Set the global Config
 func Set(conf *Config) {
-	configuration = conf
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
+	configuration = *conf
 }
 
 func getDefaultStringFromFile(filename string, defaultValue string) (retVal string) {

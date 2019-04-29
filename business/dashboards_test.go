@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	kmock "github.com/kiali/kiali/kubernetes/kiali_monitoring/mock"
@@ -28,6 +28,14 @@ func (o *k8sKialiMonitoringClientMock) GetDashboard(namespace string, name strin
 	return args.Get(0).(*v1alpha1.MonitoringDashboard), nil
 }
 
+func (o *k8sKialiMonitoringClientMock) GetDashboards(namespace string) ([]v1alpha1.MonitoringDashboard, error) {
+	args := o.Called(namespace)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]v1alpha1.MonitoringDashboard), nil
+}
+
 func TestGetDashboard(t *testing.T) {
 	assert := assert.New(t)
 
@@ -37,7 +45,7 @@ func TestGetDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	service := NewDashboardsService(k8s, prom)
-	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard(), nil)
+	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard("1"), nil)
 
 	expectedLabels := "{namespace=\"my-namespace\",app=\"my-app\"}"
 	query := prometheus.CustomMetricsQuery{
@@ -45,8 +53,8 @@ func TestGetDashboard(t *testing.T) {
 		App:       "my-app",
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_2", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeHistogram(11))
+	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeCounter(10))
+	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeHistogram(11))
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -55,8 +63,8 @@ func TestGetDashboard(t *testing.T) {
 	assert.Equal("Dashboard 1", dashboard.Title)
 	assert.Len(dashboard.Aggregations, 3)
 	assert.Len(dashboard.Charts, 2)
-	assert.Equal("My chart 1", dashboard.Charts[0].Name)
-	assert.Equal("My chart 2", dashboard.Charts[1].Name)
+	assert.Equal("My chart 1_1", dashboard.Charts[0].Name)
+	assert.Equal("My chart 1_2", dashboard.Charts[1].Name)
 	assert.Nil(dashboard.Charts[0].Histogram)
 	assert.Nil(dashboard.Charts[1].Metric)
 	assert.Equal(model.SampleValue(10), dashboard.Charts[0].Metric.Matrix[0].Values[0].Value)
@@ -73,7 +81,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	config.Set(conf)
 	service := NewDashboardsService(k8s, prom)
 	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(nil, errors.New("denied"))
-	k8s.On("GetDashboard", "istio-system", "dashboard1").Return(fakeDashboard(), nil)
+	k8s.On("GetDashboard", "istio-system", "dashboard1").Return(fakeDashboard("1"), nil)
 
 	expectedLabels := "{namespace=\"my-namespace\",app=\"my-app\"}"
 	query := prometheus.CustomMetricsQuery{
@@ -81,8 +89,8 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		App:       "my-app",
 	}
 	query.FillDefaults()
-	prom.On("FetchRateRange", "my_metric_1", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeCounter(10))
-	prom.On("FetchHistogramRange", "my_metric_2", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeHistogram(11))
+	prom.On("FetchRateRange", "my_metric_1_1", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeCounter(10))
+	prom.On("FetchHistogramRange", "my_metric_1_2", expectedLabels, "", &query.BaseMetricsQuery).Return(fakeHistogram(11))
 
 	dashboard, err := service.GetDashboard(query, "dashboard1")
 
@@ -131,23 +139,8 @@ func TestGetIstioDashboard(t *testing.T) {
 func TestGetComposedDashboard(t *testing.T) {
 	assert := assert.New(t)
 
-	composed := v1alpha1.MonitoringDashboard{
-		Spec: v1alpha1.MonitoringDashboardSpec{
-			Title: "Dashboard 2",
-			Items: []v1alpha1.MonitoringDashboardItem{
-				v1alpha1.MonitoringDashboardItem{
-					Chart: v1alpha1.MonitoringDashboardChart{
-						Name:       "My chart 2 - 1",
-						MetricName: "my_metric_2_1",
-						DataType:   "rate",
-					},
-				},
-				v1alpha1.MonitoringDashboardItem{
-					Include: "dashboard1",
-				},
-			},
-		},
-	}
+	composed := fakeDashboard("2")
+	composed.Spec.Items = append(composed.Spec.Items, v1alpha1.MonitoringDashboardItem{Include: "dashboard1"})
 
 	// Setup mocks
 	k8s := new(k8sKialiMonitoringClientMock)
@@ -155,71 +148,50 @@ func TestGetComposedDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	service := NewDashboardsService(k8s, prom)
-	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard(), nil)
-	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(&composed, nil)
+	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard("1"), nil)
+	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(composed, nil)
+
+	d, err := service.loadAndResolveDashboardResource("my-namespace", "dashboard2", map[string]bool{})
+	assert.Nil(err)
+	k8s.AssertNumberOfCalls(t, "GetDashboard", 2)
+	assert.Equal("Dashboard 2", d.Spec.Title)
+	assert.Len(d.Spec.Items, 4)
+	assert.Equal("My chart 2_1", d.Spec.Items[0].Chart.Name)
+	assert.Equal("My chart 2_2", d.Spec.Items[1].Chart.Name)
+	assert.Equal("My chart 1_1", d.Spec.Items[2].Chart.Name)
+	assert.Equal("My chart 1_2", d.Spec.Items[3].Chart.Name)
+}
+
+func TestGetComposedDashboardSingleChart(t *testing.T) {
+	assert := assert.New(t)
+
+	composed := fakeDashboard("2")
+	composed.Spec.Items = append(composed.Spec.Items, v1alpha1.MonitoringDashboardItem{Include: "dashboard1$My chart 1_2"})
+
+	// Setup mocks
+	k8s := new(k8sKialiMonitoringClientMock)
+	prom := new(prometheustest.PromClientMock)
+	conf := config.NewConfig()
+	config.Set(conf)
+	service := NewDashboardsService(k8s, prom)
+	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard("1"), nil)
+	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(composed, nil)
 
 	d, err := service.loadAndResolveDashboardResource("my-namespace", "dashboard2", map[string]bool{})
 	assert.Nil(err)
 	k8s.AssertNumberOfCalls(t, "GetDashboard", 2)
 	assert.Equal("Dashboard 2", d.Spec.Title)
 	assert.Len(d.Spec.Items, 3)
-	assert.Equal("My chart 2 - 1", d.Spec.Items[0].Chart.Name)
-	assert.Equal("My chart 1", d.Spec.Items[1].Chart.Name)
-	assert.Equal("My chart 2", d.Spec.Items[2].Chart.Name)
-}
-
-func TestGetComposedDashboardSingleChart(t *testing.T) {
-	assert := assert.New(t)
-
-	composed := v1alpha1.MonitoringDashboard{
-		Spec: v1alpha1.MonitoringDashboardSpec{
-			Title: "Dashboard 2",
-			Items: []v1alpha1.MonitoringDashboardItem{
-				v1alpha1.MonitoringDashboardItem{
-					Chart: v1alpha1.MonitoringDashboardChart{
-						Name:       "My chart 2 - 1",
-						MetricName: "my_metric_2_1",
-						DataType:   "rate",
-					},
-				},
-				v1alpha1.MonitoringDashboardItem{
-					Include: "dashboard1$My chart 2",
-				},
-			},
-		},
-	}
-
-	// Setup mocks
-	k8s := new(k8sKialiMonitoringClientMock)
-	prom := new(prometheustest.PromClientMock)
-	conf := config.NewConfig()
-	config.Set(conf)
-	service := NewDashboardsService(k8s, prom)
-	k8s.On("GetDashboard", "my-namespace", "dashboard1").Return(fakeDashboard(), nil)
-	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(&composed, nil)
-
-	d, err := service.loadAndResolveDashboardResource("my-namespace", "dashboard2", map[string]bool{})
-	assert.Nil(err)
-	k8s.AssertNumberOfCalls(t, "GetDashboard", 2)
-	assert.Equal("Dashboard 2", d.Spec.Title)
-	assert.Len(d.Spec.Items, 2)
-	assert.Equal("My chart 2 - 1", d.Spec.Items[0].Chart.Name)
-	assert.Equal("My chart 2", d.Spec.Items[1].Chart.Name)
+	assert.Equal("My chart 2_1", d.Spec.Items[0].Chart.Name)
+	assert.Equal("My chart 2_2", d.Spec.Items[1].Chart.Name)
+	assert.Equal("My chart 1_2", d.Spec.Items[2].Chart.Name)
 }
 
 func TestCircularDependency(t *testing.T) {
 	assert := assert.New(t)
 
-	composed := v1alpha1.MonitoringDashboard{
-		Spec: v1alpha1.MonitoringDashboardSpec{
-			Title: "Dashboard 2",
-			Items: []v1alpha1.MonitoringDashboardItem{
-				v1alpha1.MonitoringDashboardItem{
-					Include: "dashboard2",
-				},
-			},
-		},
-	}
+	composed := fakeDashboard("2")
+	composed.Spec.Items = append(composed.Spec.Items, v1alpha1.MonitoringDashboardItem{Include: "dashboard2"})
 
 	// Setup mocks
 	k8s := new(k8sKialiMonitoringClientMock)
@@ -227,11 +199,70 @@ func TestCircularDependency(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	service := NewDashboardsService(k8s, prom)
-	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(&composed, nil)
+	k8s.On("GetDashboard", "my-namespace", "dashboard2").Return(composed, nil)
 
 	_, err := service.loadAndResolveDashboardResource("my-namespace", "dashboard2", map[string]bool{})
 	assert.Contains(err.Error(), "circular dependency detected")
 	k8s.AssertNumberOfCalls(t, "GetDashboard", 1)
+}
+
+func TestDiscoveryMatcher(t *testing.T) {
+	assert := assert.New(t)
+
+	d1 := fakeDashboard("1")
+	d2 := fakeDashboard("2")
+	d3 := fakeDashboard("3")
+
+	dashboards := make(map[string]v1alpha1.MonitoringDashboard)
+	dashboards[d1.Name] = *d1
+	dashboards[d2.Name] = *d2
+	dashboards[d3.Name] = *d3
+
+	metrics := []string{
+		"my_metric_1_1",
+		"my_metric_1_2",
+		"my_metric_1_3",
+		"my_metric_2_1",
+	}
+
+	runtimes := runDiscoveryMatcher(metrics, dashboards)
+
+	assert.Len(runtimes, 2)
+	assert.Equal("Runtime 1", runtimes[0].Name)
+	assert.Len(runtimes[0].DashboardRefs, 1)
+	assert.Equal("dashboard1", runtimes[0].DashboardRefs[0].Template)
+	assert.Equal("Runtime 2", runtimes[1].Name)
+	assert.Len(runtimes[1].DashboardRefs, 1)
+	assert.Equal("dashboard2", runtimes[1].DashboardRefs[0].Template)
+}
+
+func TestDiscoveryMatcherWithComposition(t *testing.T) {
+	assert := assert.New(t)
+
+	d1 := fakeDashboard("1")
+	d2 := fakeDashboard("2")
+	d2.Spec.Items = append(d2.Spec.Items, v1alpha1.MonitoringDashboardItem{Include: d1.Name})
+	d3 := fakeDashboard("3")
+
+	dashboards := make(map[string]v1alpha1.MonitoringDashboard)
+	dashboards[d1.Name] = *d1
+	dashboards[d2.Name] = *d2
+	dashboards[d3.Name] = *d3
+
+	metrics := []string{
+		"my_metric_1_1",
+		"my_metric_1_2",
+		"my_metric_1_3",
+		"my_metric_2_1",
+	}
+
+	runtimes := runDiscoveryMatcher(metrics, dashboards)
+
+	// Only top-level runtime must appear
+	assert.Len(runtimes, 1)
+	assert.Equal("Runtime 2", runtimes[0].Name)
+	assert.Len(runtimes[0].DashboardRefs, 1)
+	assert.Equal("dashboard2", runtimes[0].DashboardRefs[0].Template)
 }
 
 func fakeCounter(value int) *prometheus.Metric {
@@ -251,19 +282,21 @@ func fakeHistogram(avg int) prometheus.Histogram {
 	}
 }
 
-func fakeDashboard() *v1alpha1.MonitoringDashboard {
+func fakeDashboard(id string) *v1alpha1.MonitoringDashboard {
 	return &v1alpha1.MonitoringDashboard{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "dashboard1",
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "dashboard" + id,
 		},
 		Spec: v1alpha1.MonitoringDashboardSpec{
-			Title: "Dashboard 1",
+			Title:      "Dashboard " + id,
+			Runtime:    "Runtime " + id,
+			DiscoverOn: "my_metric_" + id + "_1",
 			Items: []v1alpha1.MonitoringDashboardItem{
 				v1alpha1.MonitoringDashboardItem{
-					Chart: kmock.FakeChart("1", "rate"),
+					Chart: kmock.FakeChart(id+"_1", "rate"),
 				},
 				v1alpha1.MonitoringDashboardItem{
-					Chart: kmock.FakeChart("2", "histogram"),
+					Chart: kmock.FakeChart(id+"_2", "histogram"),
 				},
 			},
 		},

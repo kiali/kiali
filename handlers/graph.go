@@ -38,7 +38,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/prometheus/client_golang/api/prometheus/v1"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
@@ -90,12 +90,12 @@ func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client, glo
 		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
 	}
 
-	log.Debugf("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
+	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	trafficMap := graph.NewTrafficMap()
 
 	for _, namespace := range o.Namespaces {
-		log.Debugf("Build traffic map for namespace [%s]", namespace)
+		log.Tracef("Build traffic map for namespace [%s]", namespace)
 		namespaceTrafficMap := buildNamespaceTrafficMap(namespace.Name, o, client)
 		namespaceInfo := appender.NewNamespaceInfo(namespace.Name)
 		for _, a := range o.Appenders {
@@ -243,7 +243,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 					if e.Dest.NodeType == graph.NodeTypeService {
 						serviceEdges = append(serviceEdges, e)
 					} else {
-						log.Debugf("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
+						log.Tracef("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
 					}
 				}
 				n.Edges = serviceEdges
@@ -262,7 +262,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 			for _, serviceEdge := range workload.Edges {
 				// As above, ignore edges to non-service destinations
 				if serviceEdge.Dest.NodeType != graph.NodeTypeService {
-					log.Debugf("Service graph ignoring non-service destination [%s]", serviceEdge.Dest.Workload)
+					log.Tracef("Service graph ignoring non-service destination [%s]", serviceEdge.Dest.Workload)
 					continue
 				}
 				childService := serviceEdge.Dest
@@ -656,7 +656,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 
 	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
 
-	log.Debugf("Build graph for node [%+v]", n)
+	log.Tracef("Build graph for node [%+v]", n)
 
 	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
@@ -914,7 +914,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 }
 
 func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options.Options) {
-	log.Debugf("Generating config for [%s] service graph...", o.Vendor)
+	log.Tracef("Generating config for [%s] service graph...", o.Vendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -927,11 +927,11 @@ func generateGraph(trafficMap graph.TrafficMap, w http.ResponseWriter, o options
 		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
 	}
 
-	log.Debugf("Done generating config for [%s] service graph.", o.Vendor)
+	log.Tracef("Done generating config for [%s] service graph.", o.Vendor)
 	RespondWithJSONIndent(w, http.StatusOK, vendorConfig)
 }
 
-func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
+func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
 	if "" == query {
 		return model.Vector{}
 	}
@@ -941,7 +941,7 @@ func promQuery(query string, queryTime time.Time, api v1.API) model.Vector {
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Debugf("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
+	log.Tracef("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, err := api.Query(ctx, query, queryTime)
