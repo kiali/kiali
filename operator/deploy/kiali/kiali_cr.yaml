@@ -133,6 +133,7 @@ spec:
 # display_link: When true, a link to Grafana will be displayed for more dashboards.
 # password: Password to be used when making requests to Grafana. User only requires viewer permissions.
 # service: The Kubernetes service name for Grafana. Kiali uses this to connect within the cluster to Grafana.
+#          If "service" and "service_namespace" are empty then "url" is used for communication.
 # service_dashboard_pattern: Search pattern for Grafana Service dashboard.
 # service_namespace: The Kubernetes namespace that holds the Grafana service (if empty, assumes the same value as deployment.namespace)
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
