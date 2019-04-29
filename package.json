@@ -124,7 +124,7 @@
     "snyk": "^1.143.0",
     "source-map-explorer": "1.8.0",
     "tslint-no-circular-imports": "0.6.2",
-    "typescript": "3.3.4000"
+    "typescript": "3.4.5"
   },
   "resolutions": {
     "@types/react": "16.7.13",

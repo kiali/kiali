@@ -4,6 +4,7 @@
     "outDir": "build/dist",
     "module": "esnext",
     "target": "es5",
+    "incremental": true,
     "lib": ["es2016", "dom"],
     "sourceMap": true,
     "allowJs": true,
