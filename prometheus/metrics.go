@@ -11,7 +11,6 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -155,7 +154,6 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 		query := fmt.Sprintf("sum(rate(%s_sum%s[%s]))%s / sum(rate(%s_count%s[%s]))%s",
 			metricName, labels, q.RateInterval, groupingAvg, metricName, labels, q.RateInterval, groupingAvg)
 		query = roundSignificant(query, 0.001)
-		log.Debugf("Query: %s\n", query)
 		histogram["avg"] = fetchRange(api, query, q.Range)
 	}
 
@@ -169,7 +167,6 @@ func fetchHistogramRange(api prom_v1.API, metricName, labels, grouping string, q
 			quantile, metricName, labels, q.RateInterval, groupingQuantile)
 		query = roundSignificant(query, 0.001)
 		histogram[quantile] = fetchRange(api, query, q.Range)
-		log.Debugf("Query: %s\n", query)
 	}
 
 	return histogram
