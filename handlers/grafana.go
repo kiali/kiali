@@ -66,21 +66,28 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL in Kiali configuration: " + err.Error())
 	}
 
-	// Find the in-cluster URL to reach Grafana's REST API
-	spec, err := serviceSupplier(token, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
-	if err != nil {
-		if k8serr.IsNotFound(err) {
-			return nil, http.StatusServiceUnavailable, err
+	// use the external URL as the default case
+	grafanaUrl := grafanaConfig.URL
+
+	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
+	if grafanaConfig.ServiceNamespace != "" || grafanaConfig.Service != "" {
+		spec, err := serviceSupplier(token, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
+		if err != nil {
+			if k8serr.IsNotFound(err) {
+				return nil, http.StatusServiceUnavailable, err
+			}
+			return nil, http.StatusInternalServerError, err
 		}
-		return nil, http.StatusInternalServerError, err
+		if spec != nil && len(spec.Ports) == 0 {
+			return nil, http.StatusServiceUnavailable, errors.New("No port found for Grafana service, cannot access in-cluster service")
+		}
+		if spec != nil && len(spec.Ports) > 1 {
+			log.Warning("Several ports found for Grafana service, picking the first one")
+		}
+		if spec != nil {
+			grafanaUrl = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
+		}
 	}
-	if len(spec.Ports) == 0 {
-		return nil, http.StatusServiceUnavailable, errors.New("No port found for Grafana service, cannot access in-cluster service")
-	}
-	if len(spec.Ports) > 1 {
-		log.Warning("Several ports found for Grafana service, picking the first one")
-	}
-	internalURL := fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
 
 	credentials, err := buildAuthHeader(grafanaConfig)
 	if err != nil {
@@ -88,11 +95,11 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(grafanaUrl, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(internalURL, grafanaConfig.WorkloadDashboardPattern, credentials, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(grafanaUrl, grafanaConfig.WorkloadDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
