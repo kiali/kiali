@@ -79,7 +79,7 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 			return nil, http.StatusInternalServerError, err
 		}
 		if spec != nil && len(spec.Ports) == 0 {
-			return nil, http.StatusServiceUnavailable, errors.New("No port found for Grafana service, cannot access in-cluster service")
+			return nil, http.StatusServiceUnavailable, errors.New("no port found for Grafana service, cannot access in-cluster service")
 		}
 		if spec != nil && len(spec.Ports) > 1 {
 			log.Warning("Several ports found for Grafana service, picking the first one")

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestSuccessOrFailureMetric ensures that using defer with the ObserveNow(*error) function works.
@@ -29,7 +30,8 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 
 	// simulate a failure - our failure counter metric should increment to 1
 	doSomeWork(true)
-	metrics, _ = registry.Gather()
+	metrics, err = registry.Gather()
+	assert.Nil(t, err)
 	if len(metrics) != 2 {
 		t.Errorf("Should have metrics now")
 	}
@@ -49,7 +51,8 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 
 	// simulate a success
 	doSomeWork(false)
-	metrics, _ = registry.Gather()
+	metrics, err = registry.Gather()
+	assert.Nil(t, err)
 
 	for _, m := range metrics {
 		if m.GetName() == "kiali_go_function_failures_total" {

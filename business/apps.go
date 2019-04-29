@@ -21,6 +21,30 @@ type AppService struct {
 	k8s  kubernetes.IstioClientInterface
 }
 
+/*
+ * appWorkload type and fetchWorkloadsPerApp function are dead code
+ */
+//// Temporal map of Workloads group by app label
+//type appsWorkload map[string][]*models.Workload
+//
+//// Helper method to build a map of workloads for a given labelSelector
+//func (in *AppService) fetchWorkloadsPerApp(namespace, labelSelector string) (appsWorkload, error) {
+//	cfg := config.Get()
+//
+//	ws, err := fetchWorkloads(in.k8s, namespace, labelSelector)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	apps := make(appsWorkload)
+//	for _, w := range ws {
+//		if appLabel, ok := w.Labels[cfg.IstioLabels.AppLabelName]; ok {
+//			apps[appLabel] = append(apps[appLabel], w)
+//		}
+//	}
+//	return apps, nil
+//}
+
 // GetAppList is the API handler to fetch the list of applications in a given namespace
 func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 	var err error
