@@ -56,25 +56,6 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     return matrix;
   };
 
-  protected get axisDefinition() {
-    return {
-      x: {
-        type: 'timeseries',
-        tick: {
-          fit: true,
-          count: 15,
-          multiline: false,
-          format: '%H:%M:%S'
-        }
-      },
-      y: {
-        tick: {
-          format: this.formatYAxis
-        }
-      }
-    };
-  }
-
   formatYAxis = (val: number): string => {
     // Round to dismiss float imprecision
     val = Math.round(val * 10000) / 10000;
@@ -179,7 +160,7 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
     // Note: if any direct interaction is needed with the C3 chart,
     //  use "oninit" hook and reference "this" as the C3 chart object.
     //  see commented code
-    // const self = this;
+    const self = this;
     return (
       <div key={this.getControlKey()} style={{ height: '100%' }}>
         {this.props.onExpandRequested && this.renderExpand()}
@@ -188,14 +169,58 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
           id={this.props.chartName}
           title={{ text: this.props.chartName }}
           data={data}
-          axis={this.axisDefinition}
+          axis={this.getAxisDefinition()}
           point={{ show: false }}
+          onresized={function(this: any) {
+            // Hack due to axis definition not being updated on resize
+            const scaleInfo = self.scaledAxisInfo();
+            this.config.axis_x_tick_count = scaleInfo.count;
+            this.config.axis_x_tick_format = scaleInfo.format;
+          }}
           // oninit={function(this: any) {
           //   self.chartRef = this;
           // }}
         />
       </div>
     );
+  }
+
+  private getAxisDefinition() {
+    const scaleInfo = this.scaledAxisInfo();
+    return {
+      x: {
+        type: 'timeseries',
+        tick: {
+          fit: true,
+          count: scaleInfo.count,
+          multiline: false,
+          format: scaleInfo.format
+        }
+      },
+      y: {
+        tick: {
+          format: this.formatYAxis
+        }
+      }
+    };
+  }
+
+  private scaledAxisInfo() {
+    if (window.innerWidth < 900) {
+      return {
+        count: 5,
+        format: '%H:%M'
+      };
+    } else if (window.innerWidth < 1200) {
+      return {
+        count: 10,
+        format: '%H:%M'
+      };
+    }
+    return {
+      count: 15,
+      format: '%H:%M:%S'
+    };
   }
 }
 
