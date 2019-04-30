@@ -35,7 +35,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) *apps_v1.Deployment {
-	if selectors == nil || len(selectors) == 0 {
+	if len(selectors) == 0 {
 		return nil
 	}
 

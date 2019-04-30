@@ -63,7 +63,7 @@ func (dRule *DestinationRule) HasCircuitBreaker(namespace string, serviceName st
 				if subset, ok := subsetInterface.(map[string]interface{}); ok {
 					if trafficPolicy, ok := subset["trafficPolicy"]; ok && isCircuitBreakerTrafficPolicy(trafficPolicy) {
 						// set the service true if it has a subset with a CB
-						if "" == version {
+						if version == "" {
 							return true
 						}
 						if labels, ok := subset["labels"]; ok {

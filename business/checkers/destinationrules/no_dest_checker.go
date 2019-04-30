@@ -80,7 +80,7 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 	}
 
 	// Check workloads
-	if selectors == nil || len(selectors) == 0 {
+	if len(selectors) == 0 {
 		return false
 	}
 

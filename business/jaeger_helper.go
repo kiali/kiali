@@ -33,7 +33,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 	errorTraces = 0
 	err = nil
 	if !JaegerAvailable {
-		return -1, errors.New("Jaeger is not available")
+		return -1, errors.New("jaeger is not available")
 	}
 	if config.Get().ExternalServices.Jaeger.Service != "" {
 		u, errParse := url.Parse(fmt.Sprintf("http://%s/api/traces", config.Get().ExternalServices.Jaeger.Service))
@@ -107,13 +107,4 @@ func GetServices() (services JaegerServices, err error) {
 		}
 	}
 	return services, err
-}
-
-func contains(a []string, x string) bool {
-	for _, n := range a {
-		if x == n {
-			return true
-		}
-	}
-	return false
 }

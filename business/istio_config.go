@@ -369,7 +369,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			istioConfigDetail.ServiceRoleBinding.Parse(srb)
 		}
 	default:
-		err = fmt.Errorf("Object type not found: %v", objectType)
+		err = fmt.Errorf("object type not found: %v", objectType)
 	}
 
 	wg.Wait()
@@ -431,7 +431,7 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
 	default:
-		err = fmt.Errorf("Object type not found: %v", resourceType)
+		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
 	if err != nil {
 		return "", err
@@ -539,7 +539,7 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 		istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
 		istioConfigDetail.ServiceRoleBinding.Parse(result)
 	default:
-		err = fmt.Errorf("Object type not found: %v", resourceType)
+		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
 	return istioConfigDetail, err
 

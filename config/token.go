@@ -72,7 +72,7 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 	}
 
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, fmt.Errorf("Unexpected signing method: %s", token.Header["alg"])
+		return nil, fmt.Errorf("unexpected signing method: %s", token.Header["alg"])
 	}
 
 	if token.Valid {
@@ -92,5 +92,5 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		return token.Claims.(*IanaClaims), nil
 	}
 
-	return nil, errors.New("Invalid token")
+	return nil, errors.New("invalid token")
 }

@@ -32,15 +32,15 @@ type TLS struct {
 // installed Kiali most likely forgot to set credentials - therefore access should always be denied.
 func (c *Credentials) ValidateCredentials() error {
 	if c.Username != "" && c.Passphrase == "" {
-		return fmt.Errorf("A passphrase must be provided if a username is set")
+		return fmt.Errorf("a passphrase must be provided if a username is set")
 	}
 
 	if c.Username == "" && c.Passphrase != "" {
-		return fmt.Errorf("A username must be provided if a password is set")
+		return fmt.Errorf("a username must be provided if a password is set")
 	}
 
 	if c.Username != "" && c.Token != "" {
-		return fmt.Errorf("Username/passphrase cannot be specified if a token is specified also. Only Username/Passphrase or Token can be set but not both")
+		return fmt.Errorf("username/passphrase cannot be specified if a token is specified also. Only Username/Passphrase or Token can be set but not both")
 	}
 
 	return nil

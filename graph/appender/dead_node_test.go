@@ -133,7 +133,7 @@ func TestDeadNode(t *testing.T) {
 
 	assert.Equal(9, len(trafficMap))
 
-	unknownNode, found = trafficMap[unknownId]
+	_, found = trafficMap[unknownId]
 	assert.Equal(false, found)
 
 	ingressNode, found = trafficMap[ingressId]
@@ -210,43 +210,43 @@ func testTrafficMap() map[string]*graph.Node {
 	trafficMap[n9.ID] = &n9
 	trafficMap[n10.ID] = &n10
 
-	e := n0.AddEdge(&n1)
-	e = n00.AddEdge(&n1)
+	n0.AddEdge(&n1)
+	e := n00.AddEdge(&n1)
 	e.Metadata["http"] = 0.8
 
-	e = n0.AddEdge(&n2)
+	n0.AddEdge(&n2)
 	e = n00.AddEdge(&n2)
 	e.Metadata["http"] = 0.8
 
-	e = n0.AddEdge(&n3)
+	n0.AddEdge(&n3)
 	e = n00.AddEdge(&n3)
 	e.Metadata["http"] = 0.8
 
-	e = n0.AddEdge(&n4)
+	n0.AddEdge(&n4)
 	e = n00.AddEdge(&n4)
 	e.Metadata["http"] = 0.0
 
-	e = n0.AddEdge(&n5)
+	n0.AddEdge(&n5)
 	e = n00.AddEdge(&n5)
 	e.Metadata["http"] = 0.8
 
-	e = n0.AddEdge(&n6)
+	n0.AddEdge(&n6)
 	e = n00.AddEdge(&n6)
 	e.Metadata["http"] = 0.0
 
-	e = n0.AddEdge(&n7)
+	n0.AddEdge(&n7)
 	e = n00.AddEdge(&n7)
 	e.Metadata["tcp"] = 74.1
 
-	e = n0.AddEdge(&n8)
+	n0.AddEdge(&n8)
 	e = n00.AddEdge(&n8)
 	e.Metadata["tcp"] = 74.1
 
-	e = n0.AddEdge(&n9)
+	n0.AddEdge(&n9)
 	e = n00.AddEdge(&n9)
 	e.Metadata["http"] = 0.8
 
-	e = n0.AddEdge(&n10)
+	n0.AddEdge(&n10)
 	e = n00.AddEdge(&n10)
 	e.Metadata["http"] = 0.8
 

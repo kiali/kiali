@@ -95,6 +95,9 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 	// Check if user is already logged in
 	oldToken := getTokenStringFromRequest(r)
 	user, err := config.ValidateToken(oldToken)
+	if err != nil {
+		log.Debugf("(Re-)authentication was asked. Validation of old token failed with: %v", err)
+	}
 
 	// If user is already logged in, skip credential
 	// validation and just send a new JWT to extend
@@ -139,7 +142,7 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	err := r.ParseForm()
 
 	if err != nil {
-		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("Error parsing form info: %+v", err))
+		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
 		return false
 	}
 

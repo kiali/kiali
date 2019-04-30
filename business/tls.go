@@ -42,7 +42,7 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (string, error) {
 
 func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 	if len(namespaces) < 1 {
-		return false, fmt.Errorf("Can't find MeshPolicies without a namespace")
+		return false, fmt.Errorf("can't find MeshPolicies without a namespace")
 	}
 
 	// MeshPolicies are not namespaced. So any namespace user has access to
@@ -152,7 +152,7 @@ func (in TLSService) hasDesinationRuleEnablingNamespacemTLS(namespace string) (s
 		return "", nssErr
 	}
 
-	nsNames := make([]string, 0, 0)
+	nsNames := make([]string, 0)
 	for _, ns := range nss {
 		nsNames = append(nsNames, ns.Name)
 	}

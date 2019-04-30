@@ -63,7 +63,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 
 	if err != nil {
 		log.Error(err)
-		message := fmt.Errorf("Could not send request to the Openshift OAuth API: %v", err)
+		message := fmt.Errorf("could not send request to the Openshift OAuth API: %v", err)
 		return nil, message
 	}
 
@@ -71,7 +71,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 
 	if err != nil {
 		log.Error(err)
-		message := fmt.Errorf("Could not parse data from the Openshift API: %v", err)
+		message := fmt.Errorf("could not parse data from the Openshift API: %v", err)
 		return nil, message
 	}
 
@@ -79,7 +79,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 
 	if err != nil {
 		log.Error(err)
-		message := fmt.Errorf("Could not get Kiali route for OAuth redirect: %v", err)
+		message := fmt.Errorf("could not get Kiali route for OAuth redirect: %v", err)
 		return nil, message
 	}
 
@@ -121,14 +121,14 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 
 	if err != nil {
 		log.Error(err)
-		return nil, fmt.Errorf("Could not get user info from Openshift: %v", err)
+		return nil, fmt.Errorf("could not get user info from Openshift: %v", err)
 	}
 
 	err = json.Unmarshal(response, &user)
 
 	if err != nil {
 		log.Error(err)
-		return nil, fmt.Errorf("Could not parse user info from Openshift: %v", err)
+		return nil, fmt.Errorf("could not parse user info from Openshift: %v", err)
 	}
 
 	return user, nil
@@ -175,7 +175,7 @@ func request(method string, url string, auth *string) ([]byte, error) {
 	cert, err := ioutil.ReadFile("/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get root CA certificates: %s", err)
+		return nil, fmt.Errorf("failed to get root CA certificates: %s", err)
 	}
 
 	certPool.AppendCertsFromPEM(cert)
@@ -190,7 +190,7 @@ func request(method string, url string, auth *string) ([]byte, error) {
 	request, err := http.NewRequest(method, strings.Join([]string{serverPrefix, url}, ""), nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to get api endpoint %s for oauth consumption, error: %s", url, err)
 	}
 
 	if auth != nil {
@@ -200,7 +200,7 @@ func request(method string, url string, auth *string) ([]byte, error) {
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to get api endpoint %s for oauth consumption, error: %s", url, err)
 	}
 
 	defer response.Body.Close()
@@ -208,11 +208,11 @@ func request(method string, url string, auth *string) ([]byte, error) {
 	body, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, err)
+		return nil, fmt.Errorf("failed to get api endpoint %s for oauth consumption, error: %s", url, err)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Failed to get api endpoint %s for oauth consumption, error: %s", url, string(body))
+		return nil, fmt.Errorf("failed to get api endpoint %s for oauth consumption, error: %s", url, string(body))
 	}
 
 	return body, nil

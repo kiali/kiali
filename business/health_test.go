@@ -244,29 +244,32 @@ var (
 	}
 )
 
-func fakeServicesHealthReview() []core_v1.Service {
-	return []core_v1.Service{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "reviews",
-				Namespace: "tutorial",
-				Labels: map[string]string{
-					"app":     "reviews",
-					"version": "v1"}},
-			Spec: core_v1.ServiceSpec{
-				ClusterIP: "fromservice",
-				Type:      "ClusterIP",
-				Selector:  map[string]string{"app": "reviews"},
-				Ports: []core_v1.ServicePort{
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3001},
-					{
-						Name:     "http",
-						Protocol: "TCP",
-						Port:     3000}}}}}
-}
+/*
+ * fakeServicesHealthReview is dead code
+ */
+//func fakeServicesHealthReview() []core_v1.Service {
+//	return []core_v1.Service{
+//		{
+//			ObjectMeta: meta_v1.ObjectMeta{
+//				Name:      "reviews",
+//				Namespace: "tutorial",
+//				Labels: map[string]string{
+//					"app":     "reviews",
+//					"version": "v1"}},
+//			Spec: core_v1.ServiceSpec{
+//				ClusterIP: "fromservice",
+//				Type:      "ClusterIP",
+//				Selector:  map[string]string{"app": "reviews"},
+//				Ports: []core_v1.ServicePort{
+//					{
+//						Name:     "http",
+//						Protocol: "TCP",
+//						Port:     3001},
+//					{
+//						Name:     "http",
+//						Protocol: "TCP",
+//						Port:     3000}}}}}
+//}
 
 func fakePodsHealthReview() []core_v1.Pod {
 	return []core_v1.Pod{

@@ -127,7 +127,7 @@ func waitForSecret() {
 	foundSecretChan := make(chan security.Credentials)
 	go func() {
 		errs := 0
-		for true {
+		for {
 			username, uErr := ioutil.ReadFile(config.LoginSecretUsername)
 			passphrase, pErr := ioutil.ReadFile(config.LoginSecretPassphrase)
 			if uErr == nil && pErr == nil {

@@ -81,10 +81,10 @@ func getToken(r *http.Request) (string, error) {
 		if token, ok := tokenContext.(string); ok {
 			return token, nil
 		} else {
-			return "", errors.New("Token is not of type string")
+			return "", errors.New("token is not of type string")
 		}
 	} else {
-		return "", errors.New("Token missing from the request context")
+		return "", errors.New("token missing from the request context")
 	}
 }
 

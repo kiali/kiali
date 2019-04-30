@@ -75,7 +75,7 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(anError, 401))
-	assert.Equal(t, "Error from Grafana (401): unauthorized", err.Error())
+	assert.Equal(t, "error from Grafana (401): unauthorized", err.Error())
 	assert.Equal(t, 500, code)
 }
 

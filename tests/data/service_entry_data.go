@@ -45,7 +45,7 @@ func CreateEmptyMeshExternalServiceEntry(name, namespace string, hosts []string)
 func AddPortDefinitionToServiceEntry(portDef map[string]interface{}, se kubernetes.IstioObject) kubernetes.IstioObject {
 	if portsSpec, found := se.GetSpec()["ports"]; found {
 		if portsSlice, ok := portsSpec.([]interface{}); ok {
-			portsSlice = append(portsSlice, portDef)
+			se.GetSpec()["ports"] = append(portsSlice, portDef)
 		}
 	} else {
 		se.GetSpec()["ports"] = []interface{}{portDef}

@@ -407,7 +407,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse yaml data. error=%v", err)
+		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
 	}
 	return
 }
@@ -416,7 +416,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 func Marshal(conf *Config) (yamlString string, err error) {
 	yamlBytes, err := yaml.Marshal(&conf)
 	if err != nil {
-		return "", fmt.Errorf("Failed to produce yaml. error=%v", err)
+		return "", fmt.Errorf("failed to produce yaml. error=%v", err)
 	}
 
 	yamlString = string(yamlBytes)
@@ -428,7 +428,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	log.Debugf("Reading YAML config from [%s]", filename)
 	fileContent, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load config file [%v]. error=%v", filename, err)
+		return nil, fmt.Errorf("failed to load config file [%v]. error=%v", filename, err)
 	}
 
 	return Unmarshal(string(fileContent))
@@ -438,7 +438,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 func SaveToFile(filename string, conf *Config) (err error) {
 	fileContent, err := Marshal(conf)
 	if err != nil {
-		return fmt.Errorf("Failed to save config file [%v]. error=%v", filename, err)
+		return fmt.Errorf("failed to save config file [%v]. error=%v", filename, err)
 	}
 
 	log.Debugf("Writing YAML config to [%s]", filename)

@@ -63,7 +63,6 @@ const (
 	http3xx        = "http3xx"
 	http4xx        = "http4xx"
 	http5xx        = "http5xx"
-	httpErr        = "httpErr"
 	httpPercentErr = "httpPercentErr"
 	httpPercentReq = "httpPercentReq"
 	httpResponses  = "httpResponses"
@@ -71,7 +70,6 @@ const (
 	httpIn3xx      = "httpIn3xx"
 	httpIn4xx      = "httpIn4xx"
 	httpIn5xx      = "httpIn5xx"
-	httpInErr      = "httpInErr"
 	httpOut        = "httpOut"
 )
 
@@ -276,18 +274,19 @@ func addToMetadataResponses(md map[string]interface{}, k, code, flags string, v 
 	}
 }
 
-func averageMetadataValue(md map[string]interface{}, k string, v float64) {
-	total := v
-	count := 1.0
-	kTotal := k + "_total"
-	kCount := k + "_count"
-	if prevTotal, ok := md[kTotal]; ok {
-		total += prevTotal.(float64)
-	}
-	if prevCount, ok := md[kCount]; ok {
-		count += prevCount.(float64)
-	}
-	md[kTotal] = total
-	md[kCount] = count
-	md[k] = total / count
-}
+// averageMetadataValue is currently unused but shows how to perform averaging using metadata values.
+//func averageMetadataValue(md map[string]interface{}, k string, v float64) {
+//	total := v
+//	count := 1.0
+//	kTotal := k + "_total"
+//	kCount := k + "_count"
+//	if prevTotal, ok := md[kTotal]; ok {
+//		total += prevTotal.(float64)
+//	}
+//	if prevCount, ok := md[kCount]; ok {
+//		count += prevCount.(float64)
+//	}
+//	md[kTotal] = total
+//	md[kCount] = count
+//	md[k] = total / count
+//}

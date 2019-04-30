@@ -31,7 +31,7 @@ func (in *DashboardsService) k8s() (kubernetes.KialiMonitoringInterface, error) 
 	if in.k8sClient == nil {
 		client, err := kubernetes.NewKialiMonitoringClient()
 		if err != nil {
-			return nil, fmt.Errorf("Cannot initialize Kiali Monitoring Client: %v", err)
+			return nil, fmt.Errorf("cannot initialize Kiali Monitoring Client: %v", err)
 		}
 		in.k8sClient = client
 	}
@@ -101,7 +101,7 @@ func (in *DashboardsService) loadRawDashboardResources(namespace string) (map[st
 func (in *DashboardsService) loadAndResolveDashboardResource(namespace, template string, loaded map[string]bool) (*v1alpha1.MonitoringDashboard, error) {
 	// Circular dependency check
 	if _, ok := loaded[template]; ok {
-		return nil, fmt.Errorf("Cannot load dashboard %s due to circular dependency detected. Already loaded dependencies: %v", template, loaded)
+		return nil, fmt.Errorf("cannot load dashboard %s due to circular dependency detected. Already loaded dependencies: %v", template, loaded)
 	}
 	loaded[template] = true
 	dashboard, err := in.loadRawDashboardResource(namespace, template)

@@ -181,7 +181,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		roleBindChecker := checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails}
 		objectCheckers = []ObjectChecker{roleBindChecker}
 	default:
-		err = fmt.Errorf("Object type not found: %v", objectType)
+		err = fmt.Errorf("object type not found: %v", objectType)
 	}
 
 	close(errChan)

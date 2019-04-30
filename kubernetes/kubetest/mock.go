@@ -12,7 +12,6 @@ import (
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -21,8 +20,7 @@ import (
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	baseIstioConfig *rest.Config
-	k8s             kubernetes.IstioClientInterface
+	k8s kubernetes.IstioClientInterface
 }
 
 // Constructor
