@@ -1003,8 +1003,8 @@ func NewRoutes() (r *Routes) {
 			"ThreeScaleInfo",
 			"GET",
 			"/api/threescale",
-		handlers.ThreeScaleStatus,
-		true,
+			handlers.ThreeScaleStatus,
+			true,
 		},
 		// swagger:route GET /threescale/handlers getThreeScaleHandlers
 		// ---

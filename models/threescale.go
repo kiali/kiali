@@ -4,31 +4,31 @@ import "github.com/kiali/kiali/kubernetes"
 
 const (
 	BadThreeScaleHandlerJson = "Bad ThreeScaleHandler JSON"
-	BadThreeScaleRuleJson = "Bad ThreeScaleHandler JSON"
+	BadThreeScaleRuleJson    = "Bad ThreeScaleHandler JSON"
 )
 
 // ThreeScaleInfo shows if 3scale adapter is enabled in cluster and if user has permissions on adapter's configuration
 type ThreeScaleInfo struct {
-	Enabled bool `json:"enabled"`
+	Enabled     bool                `json:"enabled"`
 	Permissions ResourcePermissions `json:"permissions"`
 }
 
 // ThreeScaleHAndler represents the minimal info that a user needs to know from the UI to link a service with 3Scale site
 type ThreeScaleHandler struct {
-	Name string `json:"name"`
-	ServiceId string `json:"serviceId"`
-	SystemUrl string `json:"systemUrl"`
+	Name        string `json:"name"`
+	ServiceId   string `json:"serviceId"`
+	SystemUrl   string `json:"systemUrl"`
 	AccessToken string `json:"accessToken"`
 }
 
 type ThreeScaleHandlers []ThreeScaleHandler
 
 type ThreeScaleServiceRule struct {
-	ServiceName string `json:"serviceName"`
-	ServiceNamespace string `json:"serviceNamespace"`
-	AppName string `json:"appName"`
-	Versions []string `json:"versions"`
-	ThreeScaleHandlerName string `json:"threeScaleHandlerName"`
+	ServiceName           string   `json:"serviceName"`
+	ServiceNamespace      string   `json:"serviceNamespace"`
+	AppName               string   `json:"appName"`
+	Versions              []string `json:"versions"`
+	ThreeScaleHandlerName string   `json:"threeScaleHandlerName"`
 }
 
 func CastThreeScaleHandlers(handlers []kubernetes.IstioObject) ThreeScaleHandlers {

@@ -158,9 +158,9 @@ type IstioConfig struct {
 
 // ThreeScaleConfig describes configuration used for 3Scale adapter
 type ThreeScaleConfig struct {
-	AdapterName string `yaml:"adapter_name"`
+	AdapterName    string `yaml:"adapter_name"`
 	AdapterService string `yaml:"adapter_service"`
-	AdapterPort string `yaml:"adapter_port"`
+	AdapterPort    string `yaml:"adapter_port"`
 }
 
 // ExternalServices holds configurations for other systems that Kiali depends on

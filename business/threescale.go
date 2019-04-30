@@ -16,7 +16,7 @@ import (
 )
 
 type ThreeScaleService struct {
-	k8s           kubernetes.IstioClientInterface
+	k8s kubernetes.IstioClientInterface
 }
 
 func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) {
@@ -40,7 +40,7 @@ func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) 
 			Create: canCreate,
 			Update: canUpdate,
 			Delete: canDelete,
-	}}, nil
+		}}, nil
 }
 
 func (in *ThreeScaleService) GetThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
@@ -115,10 +115,10 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 	newHandler := kubernetes.GenericIstioObject{
 		TypeMeta: meta_v1.TypeMeta{
 			APIVersion: "config.istio.io/v1alpha2",
-			Kind: "handler",
+			Kind:       "handler",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: handler.Name,
+			Name:      handler.Name,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
 				"kiali_wizard": "threescale-handler",
@@ -127,8 +127,8 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 		Spec: map[string]interface{}{
 			"adapter": conf.ExternalServices.ThreeScale.AdapterName,
 			"params": map[string]interface{}{
-				"service_id": handler.ServiceId,
-				"system_url": handler.SystemUrl,
+				"service_id":   handler.ServiceId,
+				"system_url":   handler.SystemUrl,
 				"access_token": handler.AccessToken,
 			},
 			"connection": map[string]interface{}{
@@ -140,10 +140,10 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 	newInstance := kubernetes.GenericIstioObject{
 		TypeMeta: meta_v1.TypeMeta{
 			APIVersion: "config.istio.io/v1alpha2",
-			Kind: "instance",
+			Kind:       "instance",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "threescale-authorization-" + handler.Name,
+			Name:      "threescale-authorization-" + handler.Name,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
 				"kiali_wizard": "threescale-handler",
@@ -155,12 +155,12 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 				"subject": map[string]interface{}{
 					"user": "request.query_params[\"user_key\"] | request.headers[\"User-Key\"] | \"\"",
 					"properties": map[string]interface{}{
-						"app_id": "request.query_params[\"app_id\"] | request.headers[\"App-Id\"] | \"\"",
+						"app_id":  "request.query_params[\"app_id\"] | request.headers[\"App-Id\"] | \"\"",
 						"app_key": "request.query_params[\"app_key\"] | request.headers[\"App-Key\"] | \"\"",
 					},
 				},
 				"action": map[string]interface{}{
-					"path": "request.url_path",
+					"path":   "request.url_path",
 					"method": "request.method | \"get\"",
 				},
 			},
@@ -247,7 +247,7 @@ func generateMatch(threeScaleServiceRule models.ThreeScaleServiceRule) string {
 			if i > 0 {
 				match += "|| "
 			}
-			match += "destination.labels[\"" + conf.IstioLabels.VersionLabelName+ "\"] == \"" + version + "\" "
+			match += "destination.labels[\"" + conf.IstioLabels.VersionLabelName + "\"] == \"" + version + "\" "
 		}
 		match += ")"
 	}
@@ -259,13 +259,13 @@ func generateJsonRule(threeScaleServiceRule models.ThreeScaleServiceRule) (strin
 	newRule := kubernetes.GenericIstioObject{
 		TypeMeta: meta_v1.TypeMeta{
 			APIVersion: "config.istio.io/v1alpha2",
-			Kind: "rule",
+			Kind:       "rule",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "threescale-"+threeScaleServiceRule.ServiceNamespace+"-"+threeScaleServiceRule.ServiceName,
+			Name:      "threescale-" + threeScaleServiceRule.ServiceNamespace + "-" + threeScaleServiceRule.ServiceName,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
-				"kiali_wizard": threeScaleServiceRule.ServiceNamespace+"-"+threeScaleServiceRule.ServiceName,
+				"kiali_wizard": threeScaleServiceRule.ServiceNamespace + "-" + threeScaleServiceRule.ServiceName,
 			},
 		},
 		Spec: map[string]interface{}{
@@ -342,7 +342,7 @@ func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, bod
 		return models.ThreeScaleServiceRule{}, err
 	}
 
-	ruleName := "threescale-"+namespace+"-"+service
+	ruleName := "threescale-" + namespace + "-" + service
 
 	conf := config.Get()
 	_, errRule := in.k8s.UpdateIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", ruleName, jsonRule)
@@ -353,13 +353,13 @@ func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, bod
 	return *threeScaleServiceRule, nil
 }
 
-func (in *ThreeScaleService) DeleteThreeScaleRule(namespace, service string) (error) {
+func (in *ThreeScaleService) DeleteThreeScaleRule(namespace, service string) error {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "DeleteThreeScaleRule")
 	defer promtimer.ObserveNow(&err)
 
 	conf := config.Get()
-	ruleName := "threescale-"+namespace+"-"+service
+	ruleName := "threescale-" + namespace + "-" + service
 	err = in.k8s.DeleteIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", ruleName)
 	return err
 }

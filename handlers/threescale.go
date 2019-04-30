@@ -68,7 +68,7 @@ func ThreeScaleHandlersCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	audit(r, "CREATE on Namespace: "+conf.IstioNamespace+" ThreeScale Adapter. Json: " + string(body))
+	audit(r, "CREATE on Namespace: "+conf.IstioNamespace+" ThreeScale Adapter. Json: "+string(body))
 
 	RespondWithJSON(w, http.StatusOK, threeScaleHandlers)
 }
