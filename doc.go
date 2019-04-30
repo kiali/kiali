@@ -86,7 +86,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
 type ServiceParam struct {
 	// The service name.
 	//
