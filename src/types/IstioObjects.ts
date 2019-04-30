@@ -111,41 +111,12 @@ export interface Host {
   cluster?: string;
 }
 
-// RouteRule type
-
-export interface RouteRule {
-  name: string;
-  createdAt: string;
-  resourceVersion: string;
-  destination?: IstioService;
-  precedence?: number;
-  match?: MatchCondition;
-  route?: DestinationWeightV1Alpha1[];
-  redirect?: HTTPRedirect;
-  rewrite?: HTTPRewrite;
-  websocketUpgrade?: string;
-  httpReqTimeout?: HTTPTimeout;
-  httpReqRetries?: HTTPRetry;
-  httpFault?: HTTPFaultInjection;
-  l4Fault?: L4FaultInjection;
-  mirror?: IstioService;
-  corsPolicy?: CorsPolicy;
-  appendHeaders?: { [key: string]: string };
-}
-
 export interface IstioService {
   name?: string;
   namespace?: string;
   domain?: string;
   service?: string;
   labels?: { [key: string]: string };
-}
-
-export interface MatchCondition {
-  source?: IstioService;
-  tcp?: L4MatchAttributes;
-  udp?: L4MatchAttributes;
-  request?: MatchRequest;
 }
 
 export interface L4MatchAttributes {
@@ -161,23 +132,10 @@ export interface TLSMatchAttributes {
   gateways: string[];
 }
 
-export interface MatchRequest {
-  headers?: { [key: string]: StringMatch };
-  uri?: StringMatch;
-  scheme?: StringMatch;
-  method?: StringMatch;
-  authority?: StringMatch;
-}
-
 export interface StringMatch {
   exact?: string;
   prefix?: string;
   regex?: string;
-}
-
-export interface DestinationWeightV1Alpha1 {
-  labels: { [key: string]: string };
-  weight?: number;
 }
 
 export interface DestinationWeight {
@@ -193,16 +151,6 @@ export interface HTTPRedirect {
 export interface HTTPRewrite {
   uri: string;
   authority: string;
-}
-
-export interface HTTPTimeout {
-  simpleTimeout: SimpleTimeoutPolicy;
-  custom: string;
-}
-
-export interface SimpleTimeoutPolicy {
-  timeout: string;
-  overrideHeaderName: string;
 }
 
 export interface HTTPRetry {
@@ -238,11 +186,6 @@ export interface Abort {
   percentage?: Percent;
 }
 
-export interface L4FaultInjection {
-  throttle: Throttle;
-  terminate: Terminate;
-}
-
 export interface Throttle {
   percent: number;
   downstreamLimitBps: number;
@@ -252,11 +195,6 @@ export interface Throttle {
   throttleForPeriod: string;
 }
 
-export interface Terminate {
-  percent: number;
-  terminateAfterPeriod: string;
-}
-
 export interface CorsPolicy {
   allowOrigin: string[];
   allowMethods: string[];
@@ -264,39 +202,6 @@ export interface CorsPolicy {
   exposeHeaders: string[];
   maxAge: string;
   allowCredentials: string;
-}
-
-// Destination Policy
-
-export interface LoadBalancing {
-  name: string;
-}
-
-export interface CircuitBreakerPolicy {
-  maxConnections?: number;
-  httpMaxPendingRequests?: number;
-  httpMaxRequests?: number;
-  sleepWindow?: string;
-  httpConsecutiveErrors?: string;
-  httpDetectionInterval?: string;
-  httpMaxRequestsPerConnection?: number;
-  httpMaxEjectionPercent?: number;
-  httpMaxRetries?: number;
-}
-
-export interface CircuitBreaker {
-  simpleCb: CircuitBreakerPolicy;
-  custom: string;
-}
-
-export interface DestinationPolicy {
-  name: string;
-  createdAt: string;
-  resourceVersion: string;
-  destination?: IstioService;
-  source?: IstioService;
-  loadbalancing?: LoadBalancing;
-  circuitBreaker?: CircuitBreaker;
 }
 
 // Destination Rule
@@ -367,10 +272,7 @@ export interface DestinationRuleSpec {
   subsets?: Subset[];
 }
 
-export interface DestinationRule {
-  kind?: string;
-  apiVersion?: string;
-  metadata: K8sMetadata;
+export interface DestinationRule extends IstioObject {
   spec: DestinationRuleSpec;
 }
 

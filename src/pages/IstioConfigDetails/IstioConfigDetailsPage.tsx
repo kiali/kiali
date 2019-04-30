@@ -13,7 +13,7 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { ObjectValidation } from '../../types/IstioObjects';
+import { IstioObject, ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
@@ -195,17 +195,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   fetchYaml = () => {
-    let istioObject;
+    let istioObject: IstioObject | undefined;
     if (this.state.isModified) {
       return this.state.yamlModified;
     }
+
     if (this.state.istioObjectDetails) {
       if (this.state.istioObjectDetails.gateway) {
         istioObject = this.state.istioObjectDetails.gateway;
-      } else if (this.state.istioObjectDetails.routeRule) {
-        istioObject = this.state.istioObjectDetails.routeRule;
-      } else if (this.state.istioObjectDetails.destinationPolicy) {
-        istioObject = this.state.istioObjectDetails.destinationPolicy;
       } else if (this.state.istioObjectDetails.virtualService) {
         istioObject = this.state.istioObjectDetails.virtualService;
       } else if (this.state.istioObjectDetails.destinationRule) {
