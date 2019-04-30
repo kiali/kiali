@@ -2,6 +2,7 @@ import * as React from 'react';
 import { DropdownButton, MenuItem, MessageDialog } from 'patternfly-react';
 
 type Props = {
+  objectKind?: string;
   objectName: string;
   canDelete: boolean;
   onDelete: () => void;
@@ -33,6 +34,8 @@ class IstioActionDropdown extends React.Component<Props, State> {
   };
 
   render() {
+    const objectName = this.props.objectKind ? this.props.objectKind : 'Istio object';
+
     return (
       <>
         <DropdownButton id="actions" title="Actions" onSelect={this.onAction} pullRight={true}>
@@ -49,7 +52,7 @@ class IstioActionDropdown extends React.Component<Props, State> {
           secondaryActionButtonContent="Cancel"
           primaryActionButtonBsStyle="danger"
           title="Confirm Delete"
-          primaryContent={`Are you sure you want to delete the Istio object '${this.props.objectName}'? `}
+          primaryContent={`Are you sure you want to delete the ${objectName} '${this.props.objectName}'? `}
           secondaryContent="It cannot be undone. Make sure this is something you really want to do!"
           accessibleName="deleteConfirmationDialog"
           accessibleDescription="deleteConfirmationDialogContent"

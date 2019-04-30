@@ -194,12 +194,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
   };
 
-  fetchYaml = () => {
+  getIstioObject = () => {
     let istioObject: IstioObject | undefined;
-    if (this.state.isModified) {
-      return this.state.yamlModified;
-    }
-
     if (this.state.istioObjectDetails) {
       if (this.state.istioObjectDetails.gateway) {
         istioObject = this.state.istioObjectDetails.gateway;
@@ -233,6 +229,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         istioObject = this.state.istioObjectDetails.serviceRoleBinding;
       }
     }
+    return istioObject;
+  };
+
+  fetchYaml = () => {
+    if (this.state.isModified) {
+      return this.state.yamlModified;
+    }
+    const istioObject = this.getIstioObject();
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
@@ -295,9 +299,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   renderRightToolbar = () => {
     const canDelete = this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
+    const istioObject = this.getIstioObject();
+
     return (
       <span style={{ float: 'right' }}>
         <IstioActionDropdown
+          objectKind={istioObject ? istioObject.kind : undefined}
           objectName={this.props.match.params.object}
           canDelete={canDelete}
           onDelete={this.onDelete}
