@@ -108,15 +108,3 @@ func GetServices() (services JaegerServices, err error) {
 	}
 	return services, err
 }
-
-/*
- * contains function is dead code
- */
-//func contains(a []string, x string) bool {
-//	for _, n := range a {
-//		if x == n {
-//			return true
-//		}
-//	}
-//	return false
-//}
