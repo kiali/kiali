@@ -88,12 +88,12 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		/** Check if Service has istioSidecar deployed */
 		mPods := models.Pods{}
 		mPods.Parse(sPods)
-		hasSideCar := mPods.HasIstioSideCar()
+		hasSidecar := mPods.HasIstioSidecar()
 		/** Check if Service has the label app required by Istio */
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		services[i] = models.ServiceOverview{
 			Name:         item.Name,
-			IstioSidecar: hasSideCar,
+			IstioSidecar: hasSidecar,
 			AppLabel:     appLabel,
 		}
 	}

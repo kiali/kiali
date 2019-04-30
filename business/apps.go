@@ -38,12 +38,11 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 
 	for keyApp, valueApp := range apps {
 		appItem := &models.AppListItem{Name: keyApp}
-		appItem.IstioSidecar = false
-		if len(valueApp.Workloads) > 0 {
-			appItem.IstioSidecar = true
-		}
+		appItem.IstioSidecar = true
 		for _, w := range valueApp.Workloads {
-			appItem.IstioSidecar = appItem.IstioSidecar && w.Pods.HasIstioSideCar()
+			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
+				break
+			}
 		}
 		(*appList).Apps = append((*appList).Apps, *appItem)
 	}
@@ -73,7 +72,7 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 	(*appInstance).Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
 		wkdSvc := &models.WorkloadItem{WorkloadName: wkd.Name}
-		wkdSvc.IstioSidecar = wkd.Pods.HasIstioSideCar()
+		wkdSvc.IstioSidecar = wkd.IstioSidecar
 		(*appInstance).Workloads[i] = *wkdSvc
 	}
 
