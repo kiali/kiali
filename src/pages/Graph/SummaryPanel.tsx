@@ -16,11 +16,13 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
 };
 
 const expandedStyle = style({
+  fontSize: '74%', // TODO: Remove
   paddingTop: '1em',
   position: 'relative'
 });
 
 const collapsedStyle = style({
+  fontSize: '74%', // TODO: Remove
   paddingTop: '1em',
   position: 'relative',
   $nest: {
