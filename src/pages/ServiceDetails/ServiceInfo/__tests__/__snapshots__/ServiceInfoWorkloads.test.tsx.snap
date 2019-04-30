@@ -255,18 +255,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 0,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v2"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v2",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -283,18 +279,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 1,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v3"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v3",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -311,18 +303,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 2,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v1"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v1",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -542,18 +530,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 0,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v2"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v2",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -570,18 +554,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 1,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v3"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v3",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -598,18 +578,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 2,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v1"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v1",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -742,18 +718,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 0,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v2"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v2",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -770,18 +742,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 1,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v3"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v3",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -798,18 +766,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 2,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v1"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v1",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1025,18 +989,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 0,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v2"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v2",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -1053,18 +1013,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 1,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v3"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v3",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -1081,18 +1037,14 @@ ShallowWrapper {
                     time="2018-03-14T10:17:52Z\\""
                   />,
                   "id": 2,
-                  "labels": <div
-                    className="label-collection"
-                  >
-                    <Label
-                      name="app"
-                      value="reviews"
-                    />
-                    <Label
-                      name="version"
-                      value="v1"
-                    />
-                  </div>,
+                  "labels": <Labels
+                    labels={
+                      Object {
+                        "app": "reviews",
+                        "version": "v1",
+                      }
+                    }
+                  />,
                   "name": <span>
                     <Link
                       replace={false}
@@ -1322,18 +1274,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 0,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v2"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v2",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1350,18 +1298,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 1,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v3"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v3",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1378,18 +1322,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 2,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v1"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v1",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1609,18 +1549,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 0,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v2"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v2",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1637,18 +1573,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 1,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v3"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v3",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1665,18 +1597,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 2,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v1"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v1",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -1809,18 +1737,14 @@ ShallowWrapper {
                         time="2018-03-14T10:17:52Z\\""
                       />,
                       "id": 0,
-                      "labels": <div
-                        className="label-collection"
-                      >
-                        <Label
-                          name="app"
-                          value="reviews"
-                        />
-                        <Label
-                          name="version"
-                          value="v2"
-                        />
-                      </div>,
+                      "labels": <Labels
+                        labels={
+                          Object {
+                            "app": "reviews",
+                            "version": "v2",
+                          }
+                        }
+                      />,
                       "name": <span>
                         <Link
                           replace={false}
@@ -1837,18 +1761,14 @@ ShallowWrapper {
                         time="2018-03-14T10:17:52Z\\""
                       />,
                       "id": 1,
-                      "labels": <div
-                        className="label-collection"
-                      >
-                        <Label
-                          name="app"
-                          value="reviews"
-                        />
-                        <Label
-                          name="version"
-                          value="v3"
-                        />
-                      </div>,
+                      "labels": <Labels
+                        labels={
+                          Object {
+                            "app": "reviews",
+                            "version": "v3",
+                          }
+                        }
+                      />,
                       "name": <span>
                         <Link
                           replace={false}
@@ -1865,18 +1785,14 @@ ShallowWrapper {
                         time="2018-03-14T10:17:52Z\\""
                       />,
                       "id": 2,
-                      "labels": <div
-                        className="label-collection"
-                      >
-                        <Label
-                          name="app"
-                          value="reviews"
-                        />
-                        <Label
-                          name="version"
-                          value="v1"
-                        />
-                      </div>,
+                      "labels": <Labels
+                        labels={
+                          Object {
+                            "app": "reviews",
+                            "version": "v1",
+                          }
+                        }
+                      />,
                       "name": <span>
                         <Link
                           replace={false}
@@ -2092,18 +2008,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 0,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v2"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v2",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -2120,18 +2032,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 1,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v3"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v3",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}
@@ -2148,18 +2056,14 @@ ShallowWrapper {
                       time="2018-03-14T10:17:52Z\\""
                     />,
                     "id": 2,
-                    "labels": <div
-                      className="label-collection"
-                    >
-                      <Label
-                        name="app"
-                        value="reviews"
-                      />
-                      <Label
-                        name="version"
-                        value="v1"
-                      />
-                    </div>,
+                    "labels": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v1",
+                        }
+                      }
+                    />,
                     "name": <span>
                       <Link
                         replace={false}

@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { Service, Port } from '../../../types/IstioObjects';
-import { Row, Col, Table } from 'patternfly-react';
+import { Port, Service } from '../../../types/IstioObjects';
+import { Col, Row, Table } from 'patternfly-react';
 import { Link } from 'react-router-dom';
-import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import * as resolve from 'table-resolver';
+import Labels from '../../../components/Label/Labels';
 
 type WorkloadServicesProps = {
   services: Service[];
@@ -100,17 +100,6 @@ class WorkloadServices extends React.Component<WorkloadServicesProps, WorkloadSe
     };
   }
 
-  renderLabels(labels: { [key: string]: string }, u: Number) {
-    return labels ? (
-      <div key="labels" className="label-collection">
-        {Object.keys(labels).map((key, i) => (
-          <Label key={'pod_' + u + '_' + i} name={key} value={labels ? labels[key] : ''} />
-        ))}
-      </div>
-    ) : (
-      ''
-    );
-  }
   overviewLink(service: Service) {
     return (
       <Link
@@ -141,7 +130,7 @@ class WorkloadServices extends React.Component<WorkloadServicesProps, WorkloadSe
         name: this.overviewLink(service),
         createdAt: <LocalTime time={service.createdAt} />,
         type: service.type,
-        labels: this.renderLabels(service.labels || {}, vsIdx),
+        labels: <Labels key={'pod_' + vsIdx} labels={service.labels} />,
         resourceVersion: service.resourceVersion,
         ip: service.ip,
         ports: this.renderPorts(service.ports || [])

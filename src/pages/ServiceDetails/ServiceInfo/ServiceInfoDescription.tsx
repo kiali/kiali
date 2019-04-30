@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Col, Row } from 'patternfly-react';
-import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { ServiceHealth } from '../../../types/Health';
@@ -10,6 +9,7 @@ import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { style } from 'typestyle';
 
 import './ServiceInfoDescription.css';
+import Labels from '../../../components/Label/Labels';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -48,11 +48,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 <strong>Labels</strong>
               </div>
               <div className="label-collection">
-                {Object.keys(this.props.labels || {}).map((key, i) => (
-                  <div key={'label_' + i}>
-                    <Label name={key} value={this.props.labels ? this.props.labels[key] : ''} />
-                  </div>
-                ))}
+                <Labels labels={this.props.labels || {}} />
               </div>
               <div>
                 <strong>Type</strong> {this.props.type ? this.props.type : ''}

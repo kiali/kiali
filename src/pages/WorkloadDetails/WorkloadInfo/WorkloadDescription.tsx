@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { Row, Col } from 'patternfly-react';
+import { Col, Row } from 'patternfly-react';
 import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { Workload, WorkloadIcon } from '../../../types/Workload';
-import Label from '../../../components/Label/Label';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
 import { runtimesLogoProviders } from '../../../config/Logos';
+import Labels from '../../../components/Label/Labels';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -49,11 +49,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
                 <strong>{isTemplateLabels ? 'Template Labels' : 'Labels'}</strong>
               </div>
               <div className="label-collection">
-                {Object.keys(workload.labels || {}).map((key, i) => (
-                  <div key={'label_' + i}>
-                    <Label name={key} value={workload.labels ? workload.labels[key] : ''} />
-                  </div>
-                ))}
+                <Labels labels={workload.labels} />
               </div>
               <div>
                 <strong>Type</strong> {workload.type ? workload.type : ''}

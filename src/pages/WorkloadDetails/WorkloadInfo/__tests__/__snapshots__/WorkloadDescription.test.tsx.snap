@@ -69,7 +69,11 @@ ShallowWrapper {
           </div>
           <div
             className="label-collection"
-          />
+          >
+            <Labels
+              labels={Object {}}
+            />
+          </div>
           <div>
             <strong>
               Type
@@ -175,7 +179,11 @@ ShallowWrapper {
             </div>
             <div
               className="label-collection"
-            />
+            >
+              <Labels
+                labels={Object {}}
+              />
+            </div>
             <div>
               <strong>
                 Type

@@ -83,12 +83,13 @@ ShallowWrapper {
           <div
             className="label-collection"
           >
-            <div>
-              <Label
-                name="app"
-                value="reviews"
-              />
-            </div>
+            <Labels
+              labels={
+                Object {
+                  "app": "reviews",
+                }
+              }
+            />
           </div>
           <div>
             <strong>
@@ -258,12 +259,13 @@ ShallowWrapper {
             <div
               className="label-collection"
             >
-              <div>
-                <Label
-                  name="app"
-                  value="reviews"
-                />
-              </div>
+              <Labels
+                labels={
+                  Object {
+                    "app": "reviews",
+                  }
+                }
+              />
             </div>
             <div>
               <strong>
