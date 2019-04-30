@@ -7,6 +7,7 @@ import { TimeSeries, Metric, AllPromLabelsValues } from '../../types/Metrics';
 type MetricsChartBaseProps = {
   chartName: string;
   unit: string;
+  spans: number;
   onExpandRequested?: () => void;
 };
 
@@ -206,12 +207,12 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
   }
 
   private scaledAxisInfo() {
-    if (window.innerWidth < 900) {
+    if ((window.innerWidth * this.props.spans) / 12 < 450) {
       return {
         count: 5,
         format: '%H:%M'
       };
-    } else if (window.innerWidth < 1200) {
+    } else if ((window.innerWidth * this.props.spans) / 12 < 600) {
       return {
         count: 10,
         format: '%H:%M'
