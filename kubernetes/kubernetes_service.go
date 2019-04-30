@@ -101,7 +101,7 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 	var services []core_v1.Service
 	for _, svc := range allServices {
 		svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
-		if svcSelector.Matches(labels.Set(selectorLabels)) {
+		if !svcSelector.Empty() && svcSelector.Matches(labels.Set(selectorLabels)) {
 			services = append(services, svc)
 		}
 	}
