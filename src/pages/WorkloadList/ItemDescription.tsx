@@ -71,10 +71,10 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
       <Row>
         <Col xs={12} sm={12} md={4} lg={4}>
           {this.state.health && (
-            <td>
+            <>
               <strong>Health: </strong>
               <HealthIndicator id={object.name} health={this.state.health} mode={DisplayMode.SMALL} />
-            </td>
+            </>
           )}
         </Col>
         <Col xs={12} sm={12} md={4} lg={4}>

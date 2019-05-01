@@ -166,7 +166,7 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   render() {
-    const workloadList: React.ReactElement<{}>[] = [];
+    const workloadList: React.ReactElement<ItemDescription>[] = [];
     const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
     pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
