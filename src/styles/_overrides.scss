@@ -65,6 +65,7 @@ $grid-float-breakpoint: $screen-sm-min !default;
   --pf-c-page__sidebar--BackgroundColor: #{$color-pf-black-900};
   --pf-c-page__sidebar--PaddingBottom: 0;
   --pf-c-page__sidebar--PaddingTop: 0;
+  --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
   min-height: 100vh;
   position: relative; // fix z-index bug in Edge
   width: 0 !important; // only set size when expanded (.pf-m-expanded is added)
