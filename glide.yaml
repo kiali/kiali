@@ -40,3 +40,5 @@ import:
   version: v0.0.3
 - package: gopkg.in/ldap.v2
   version: v3.0.3
+- package: github.com/openshift/client-go
+  version: release-3.11

@@ -237,6 +237,12 @@ const (
 )
 
 var (
+	OpenshiftGroupVersion = schema.GroupVersion{
+		Group:   "project.openshift.io",
+		Version: "v1",
+	}
+	ApiOpenshiftVersion = OpenshiftGroupVersion.Group + "/" + OpenshiftGroupVersion.Version
+
 	ConfigGroupVersion = schema.GroupVersion{
 		Group:   "config.istio.io",
 		Version: "v1alpha2",

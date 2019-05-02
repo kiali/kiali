@@ -10,10 +10,15 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+
+	osproject_v1 "github.com/openshift/api/project/v1"
+	osproject_v1_client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
 
 	"github.com/kiali/kiali/log"
 )
@@ -41,10 +46,17 @@ type (
 		GetServices(namespace string) ([]core_v1.Service, error)
 		GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
 		GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+
+		// Openshift caches
+		GetProjects() ([]osproject_v1.Project, error)
+
+		// Istio caches
+		GetVirtualServices(namespace string) (*GenericIstioObjectList, error)
 	}
 
 	controllerImpl struct {
-		clientset       kube.Interface
+		istioClient     IstioClient
+		clientset       *kube.Clientset
 		refreshDuration time.Duration
 		stopChan        chan struct{}
 		syncCount       int
@@ -52,7 +64,9 @@ type (
 		isErrorState    bool
 		lastError       error
 		lastErrorLock   sync.Mutex
-		controllers     map[string]cache.SharedIndexInformer
+		controllers     map[string]map[string]cache.SharedIndexInformer
+		projectInformer cache.SharedIndexInformer
+		syncLock        sync.Mutex
 	}
 )
 
@@ -84,22 +98,36 @@ func registerErrorCallback(callback func(error)) {
 	errorCallbacks = append(errorCallbacks, callback)
 }
 
-func newCacheController(clientset kube.Interface, refreshDuration time.Duration) cacheController {
+func newCacheController(client IstioClient, refreshDuration time.Duration) cacheController {
+	clientset := client.k8s
 	newControllerImpl := controllerImpl{
+		istioClient:     client,
 		clientset:       clientset,
 		refreshDuration: refreshDuration,
 		stopChan:        nil,
-		controllers:     initControllers(clientset, refreshDuration),
-		syncCount:       0,
-		maxSyncCount:    20, // Move this to config ? or this constant is good enough ?
+		controllers:     make(map[string]map[string]cache.SharedIndexInformer),
+		projectInformer: createProjectsInformer(client.projectApi, refreshDuration),
+		// controllers:     initControllers(clientset, refreshDuration),
+		syncCount:    0,
+		maxSyncCount: 200, // Move this to config ? or this constant is good enough ?
 	}
 	registerErrorCallback(newControllerImpl.ErrorCallback)
 
 	return &newControllerImpl
 }
 
-func initControllers(clientset kube.Interface, refreshDuration time.Duration) map[string]cache.SharedIndexInformer {
-	sharedInformers := informers.NewSharedInformerFactory(clientset, refreshDuration)
+func initProjectInformer(clientset *kube.Clientset, refreshDuration time.Duration) cache.SharedIndexInformer {
+	// if c, ok := clientset.(*kube.Clientset); ok {
+	// TODO This is only for Openshift, we need separate code for Kubernetes
+	// projectsInformer := createProjectsInformer(c, refreshDuration)
+	// return projectsInformer
+	// }
+	// log.Errorf("Failed to init K8sCache, Clientset not compatible")
+	return nil
+}
+
+func (c *controllerImpl) initControllersNamespace(clientset kube.Interface, refreshDuration time.Duration, namespace string) map[string]cache.SharedIndexInformer {
+	sharedInformers := informers.NewSharedInformerFactoryWithOptions(clientset, refreshDuration, informers.WithNamespace(namespace))
 	controllers := make(map[string]cache.SharedIndexInformer)
 	controllers["Pod"] = sharedInformers.Core().V1().Pods().Informer()
 	controllers["ReplicationController"] = sharedInformers.Core().V1().ReplicationControllers().Informer()
@@ -110,26 +138,62 @@ func initControllers(clientset kube.Interface, refreshDuration time.Duration) ma
 	controllers["CronJob"] = sharedInformers.Batch().V1beta1().CronJobs().Informer()
 	controllers["Service"] = sharedInformers.Core().V1().Services().Informer()
 	controllers["Endpoints"] = sharedInformers.Core().V1().Endpoints().Informer()
+	// controllers["Namespaces"] = sharedInformers.Core().V1().Namespaces().Informer()
 
+	controllers = c.initIstioControllersNamespace(namespace, controllers)
 	return controllers
 }
 
+func (c *controllerImpl) initIstioControllersNamespace(namespace string, controllers map[string]cache.SharedIndexInformer) map[string]cache.SharedIndexInformer {
+	controllers["VirtualServices"] = cache.NewSharedIndexInformer(cache.NewListWatchFromClient(c.istioClient.istioNetworkingApi, "virtualservices", namespace, fields.Everything()),
+		&GenericIstioObjectList{},
+		c.refreshDuration,
+		cache.Indexers{},
+	)
+	return controllers
+}
+
+func (c *controllerImpl) ProjectListener() cache.ResourceEventHandlerFuncs {
+	// TODO Might need to sync with NamespaceService to make sure we're not running in Maistra with accessibleNamespaces modifier
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			project := obj.(*osproject_v1.Project)
+			name := project.GetObjectMeta().GetName()
+			if _, found := c.controllers[name]; found {
+				// TODO Existing project reappeared.. close and reopen?
+				return
+			}
+			c.syncLock.Lock()
+			defer c.syncLock.Unlock()
+			log.Infof("Starting controllers for project name: %s\n", name) // TODO Debugf
+			c.controllers[name] = c.initControllersNamespace(c.clientset, c.refreshDuration, name)
+			c.run(c.controllers[name])
+			synced := c.WaitForSync() // WaitForSync before allowing creation of more..
+			if !synced {
+				log.Errorf("Could not sync the cache..")
+			} else {
+				log.Infof("Synced, ready for more..")
+			}
+		},
+	}
+}
+
 func (c *controllerImpl) Start() {
+	c.projectInformer.AddEventHandler(c.ProjectListener())
+
 	if c.stopChan == nil {
 		c.stopChan = make(chan struct{})
-		go c.run(c.stopChan)
+		go c.projectInformer.Run(c.stopChan)
 		log.Infof("K8S cache started")
 	} else {
 		log.Warningf("K8S cache is already running")
 	}
 }
 
-func (c *controllerImpl) run(stop <-chan struct{}) {
-	for _, cn := range c.controllers {
-		go cn.Run(stop)
+func (c *controllerImpl) run(controllers map[string]cache.SharedIndexInformer) {
+	for _, cn := range controllers {
+		go cn.Run(c.stopChan)
 	}
-	<-stop
-	log.Infof("K8S cache stopped")
 }
 
 func (c *controllerImpl) HasSynced() bool {
@@ -139,8 +203,10 @@ func (c *controllerImpl) HasSynced() bool {
 		return false
 	}
 	hasSynced := true
-	for _, cn := range c.controllers {
-		hasSynced = hasSynced && cn.HasSynced()
+	for _, ns := range c.controllers {
+		for _, cn := range ns {
+			hasSynced = hasSynced && cn.HasSynced()
+		}
 	}
 	if hasSynced {
 		c.syncCount = 0
@@ -151,7 +217,13 @@ func (c *controllerImpl) HasSynced() bool {
 }
 
 func (c *controllerImpl) WaitForSync() bool {
-	return cache.WaitForCacheSync(c.stopChan, c.HasSynced)
+	synced := make([]cache.InformerSynced, 0, 128)
+	for _, ns := range c.controllers {
+		for _, cn := range ns {
+			synced = append(synced, cn.HasSynced)
+		}
+	}
+	return cache.WaitForCacheSync(c.stopChan, synced...)
 }
 
 func (c *controllerImpl) Stop() {
@@ -177,29 +249,36 @@ func (c *controllerImpl) checkStateAndRetry() error {
 		return nil
 	}
 
-	// Retry of the cache is hold by one single goroutine
-	c.lastErrorLock.Lock()
-	if c.isErrorState {
-		// ping to check if backend is still unavailable (used namespace endpoint)
-		_, err := c.clientset.CoreV1().Namespaces().List(emptyListOptions)
-		if err != nil {
-			c.lastError = fmt.Errorf("error retrying to connect to K8S API backend. %s", err)
-		} else {
-			c.lastError = nil
-			c.isErrorState = false
-			c.Start()
-			c.WaitForSync()
+	return fmt.Errorf("Errors errors everywhere")
+	/*
+		// Retry of the cache is hold by one single goroutine
+		c.lastErrorLock.Lock()
+		if c.isErrorState {
+			// ping to check if backend is still unavailable (used namespace endpoint)
+			_, err := c.clientset.CoreV1().Namespaces().List(emptyListOptions) // Not acceptable in Openshift?
+			if err != nil {
+				c.lastError = fmt.Errorf("error retrying to connect to K8S API backend. %s", err)
+			} else {
+				c.lastError = nil
+				c.isErrorState = false
+				c.Start()
+				c.WaitForSync()
+			}
 		}
-	}
-	c.lastErrorLock.Unlock()
-	return c.lastError
+		c.lastErrorLock.Unlock()
+		return c.lastError
+	*/
 }
 
 func (c *controllerImpl) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return []batch_v1beta1.CronJob{}, err
 	}
-	indexer := c.controllers["CronJob"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+
+	indexer := c.controllers[namespace]["CronJob"].GetIndexer()
 	cronjobs, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []batch_v1beta1.CronJob{}, err
@@ -222,7 +301,11 @@ func (c *controllerImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
-	indexer := c.controllers["Deployment"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+
+	indexer := c.controllers[namespace]["Deployment"].GetIndexer()
 	deps, exist, err := indexer.GetByKey(namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -241,7 +324,11 @@ func (c *controllerImpl) GetDeployments(namespace string) ([]apps_v1.Deployment,
 	if err := c.checkStateAndRetry(); err != nil {
 		return []apps_v1.Deployment{}, err
 	}
-	indexer := c.controllers["Deployment"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+
+	indexer := c.controllers[namespace]["Deployment"].GetIndexer()
 	deps, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []apps_v1.Deployment{}, err
@@ -264,7 +351,10 @@ func (c *controllerImpl) GetEndpoints(namespace, name string) (*core_v1.Endpoint
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
-	indexer := c.controllers["Endpoints"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["Endpoints"].GetIndexer()
 	endpoints, exist, err := indexer.GetByKey(namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -283,7 +373,10 @@ func (c *controllerImpl) GetJobs(namespace string) ([]batch_v1.Job, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return []batch_v1.Job{}, err
 	}
-	indexer := c.controllers["Job"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["Job"].GetIndexer()
 	jobs, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []batch_v1.Job{}, err
@@ -306,7 +399,10 @@ func (c *controllerImpl) GetPods(namespace string) ([]core_v1.Pod, error) {
 	if err := c.checkStateAndRetry(); err != nil {
 		return []core_v1.Pod{}, err
 	}
-	indexer := c.controllers["Pod"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["Pod"].GetIndexer()
 	pods, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []core_v1.Pod{}, err
@@ -329,7 +425,10 @@ func (c *controllerImpl) GetReplicationControllers(namespace string) ([]core_v1.
 	if err := c.checkStateAndRetry(); err != nil {
 		return []core_v1.ReplicationController{}, err
 	}
-	indexer := c.controllers["ReplicationController"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["ReplicationController"].GetIndexer()
 	repcons, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []core_v1.ReplicationController{}, err
@@ -352,7 +451,10 @@ func (c *controllerImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet,
 	if err := c.checkStateAndRetry(); err != nil {
 		return []apps_v1.ReplicaSet{}, err
 	}
-	indexer := c.controllers["ReplicaSet"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["ReplicaSet"].GetIndexer()
 	repsets, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []apps_v1.ReplicaSet{}, err
@@ -375,7 +477,10 @@ func (c *controllerImpl) GetStatefulSet(namespace, name string) (*apps_v1.Statef
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
-	indexer := c.controllers["StatefulSet"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["StatefulSet"].GetIndexer()
 	fulsets, exist, err := indexer.GetByKey(namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -394,7 +499,10 @@ func (c *controllerImpl) GetStatefulSets(namespace string) ([]apps_v1.StatefulSe
 	if err := c.checkStateAndRetry(); err != nil {
 		return []apps_v1.StatefulSet{}, err
 	}
-	indexer := c.controllers["StatefulSet"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["StatefulSet"].GetIndexer()
 	fulsets, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []apps_v1.StatefulSet{}, err
@@ -417,7 +525,11 @@ func (c *controllerImpl) GetService(namespace, name string) (*core_v1.Service, e
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
-	indexer := c.controllers["Service"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		log.Infof("No service informers for %s found", namespace)
+		return nil, nil
+	}
+	indexer := c.controllers[namespace]["Service"].GetIndexer()
 	services, exist, err := indexer.GetByKey(namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -436,7 +548,11 @@ func (c *controllerImpl) GetServices(namespace string) ([]core_v1.Service, error
 	if err := c.checkStateAndRetry(); err != nil {
 		return []core_v1.Service{}, err
 	}
-	indexer := c.controllers["Service"].GetIndexer()
+	if _, found := c.controllers[namespace]; !found {
+		log.Infof("No services informers for %s found", namespace)
+		return []core_v1.Service{}, nil
+	}
+	indexer := c.controllers[namespace]["Service"].GetIndexer()
 	services, err := indexer.ByIndex("namespace", namespace)
 	if err != nil {
 		return []core_v1.Service{}, err
@@ -453,4 +569,58 @@ func (c *controllerImpl) GetServices(namespace string) ([]core_v1.Service, error
 		return nsServices, nil
 	}
 	return []core_v1.Service{}, nil
+}
+
+func (c *controllerImpl) GetProjects() ([]osproject_v1.Project, error) {
+	if err := c.checkStateAndRetry(); err != nil {
+		return []osproject_v1.Project{}, err
+	}
+
+	projects := c.projectInformer.GetIndexer().List()
+	// projects := c.projectInformer.GetStore().List()
+	if len(projects) > 0 {
+		if _, ok := projects[0].(*osproject_v1.Project); ok {
+			osProjects := make([]osproject_v1.Project, len(projects))
+			for i, project := range projects {
+				osProjects[i] = *(project.(*osproject_v1.Project))
+			}
+			return osProjects, nil
+		}
+	}
+
+	return []osproject_v1.Project{}, nil
+}
+
+func createProjectsInformer(client *osproject_v1_client.ProjectV1Client, refreshDuration time.Duration) cache.SharedIndexInformer {
+	return cache.NewSharedIndexInformer(cache.NewListWatchFromClient(client.RESTClient(), "projects", meta_v1.NamespaceAll, fields.Everything()),
+		&osproject_v1.ProjectList{},
+		refreshDuration,
+		cache.Indexers{},
+	)
+}
+
+func (c *controllerImpl) GetVirtualServices(namespace string) (*GenericIstioObjectList, error) {
+	return c.getGenericIstioObjectList(namespace, "VirtualServices")
+}
+
+func (c *controllerImpl) getGenericIstioObjectList(namespace, istioType string) (*GenericIstioObjectList, error) {
+	// Do the parsing from GenericIstioObjectList to the correct one in istio_details_service.go so we don't replicate this..
+	if err := c.checkStateAndRetry(); err != nil {
+		return nil, err
+	}
+	if _, found := c.controllers[namespace]; !found {
+		log.Infof("No %s informers for %s found", istioType, namespace) // Debugf
+		return nil, nil
+	}
+
+	vss := c.controllers[namespace][istioType].GetIndexer().List()
+	if len(vss) > 0 {
+		log.Infof("Got %d %s items back from cache", len(vss), istioType) // Debugf
+		list, ok := vss[0].(*GenericIstioObjectList)
+		if ok {
+			return list, nil
+		}
+	}
+
+	return nil, nil
 }

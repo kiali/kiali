@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"bytes"
 
+	"github.com/kiali/kiali/log"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -73,6 +74,12 @@ func (in *IstioClient) GetProject(name string) (*osproject_v1.Project, error) {
 
 func (in *IstioClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
 	result := &osproject_v1.ProjectList{}
+
+	log.Infof("Requesting GetProjects")
+	if in.k8sCache != nil {
+		return in.k8sCache.GetProjects()
+	}
+	log.Infof("Cache was nil, trying something else")
 
 	request := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
 

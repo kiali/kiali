@@ -81,6 +81,8 @@ imports:
   - apps/v1
   - project/v1
   - route/v1
+- name: github.com/openshift/client-go
+  version: 431ec9a26e5021f35fa41ee9a89842db9bfdb370
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib

@@ -32,6 +32,7 @@ rules:
   - get
   - list
   - patch
+  - watch
 - apiGroups: ["apps"]
   resources:
   - deployments
@@ -289,6 +290,8 @@ rules:
   - projects
   verbs:
   - get
+  - list
+  - watch
 - apiGroups: ["route.openshift.io"]
   resources:
   - routes
