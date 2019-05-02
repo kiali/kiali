@@ -188,7 +188,7 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   render() {
-    const serviceList: any = [];
+    const serviceList: React.ReactElement<{}>[] = [];
     const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
     let pageEnd = pageStart + this.state.pagination.perPage;
     pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
