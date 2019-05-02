@@ -153,6 +153,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 ip={this.props.serviceDetails.service.ip}
                 endpoints={this.props.serviceDetails.endpoints}
                 health={this.props.serviceDetails.health}
+                externalName={this.props.serviceDetails.service.externalName}
               />
             </Col>
           </Row>

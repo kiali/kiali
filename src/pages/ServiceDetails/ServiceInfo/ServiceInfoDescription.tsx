@@ -19,6 +19,7 @@ interface ServiceInfoDescriptionProps {
   labels?: { [key: string]: string };
   type?: string;
   ip?: any;
+  externalName?: string;
   ports?: Port[];
   endpoints?: Endpoints[];
   health?: ServiceHealth;
@@ -28,6 +29,8 @@ const listStyle = style({
   listStyleType: 'none',
   padding: 0
 });
+
+const ExternalNameType = 'ExternalName';
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
   constructor(props: ServiceInfoDescriptionProps) {
@@ -53,9 +56,15 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <div>
                 <strong>Type</strong> {this.props.type ? this.props.type : ''}
               </div>
-              <div>
-                <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
-              </div>
+              {this.props.type !== ExternalNameType ? (
+                <div>
+                  <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
+                </div>
+              ) : (
+                <div>
+                  <strong>ExternalName</strong> {this.props.externalName ? this.props.externalName : ''}
+                </div>
+              )}
               <div>
                 <strong>Created at</strong> <LocalTime time={this.props.createdAt} />
               </div>

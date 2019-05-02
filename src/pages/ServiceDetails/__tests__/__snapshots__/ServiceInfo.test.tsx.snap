@@ -100,6 +100,7 @@ ShallowWrapper {
         "istioSidecar": true,
         "service": Object {
           "createdAt": "2018-06-29T16:43:18+02:00",
+          "externalName": "my.database.example.com",
           "ip": "172.30.196.248",
           "labels": Object {
             "app": "reviews",
@@ -385,6 +386,7 @@ ShallowWrapper {
                     },
                   ]
                 }
+                externalName="my.database.example.com"
                 health={undefined}
                 ip="172.30.196.248"
                 istioEnabled={true}
@@ -768,6 +770,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  externalName="my.database.example.com"
                   health={undefined}
                   ip="172.30.196.248"
                   istioEnabled={true}
@@ -1515,6 +1518,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  externalName="my.database.example.com"
                   health={undefined}
                   ip="172.30.196.248"
                   istioEnabled={true}
@@ -1579,6 +1583,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  externalName="my.database.example.com"
                   health={undefined}
                   ip="172.30.196.248"
                   istioEnabled={true}
@@ -1641,6 +1646,7 @@ ShallowWrapper {
                       ],
                     },
                   ],
+                  "externalName": "my.database.example.com",
                   "health": undefined,
                   "ip": "172.30.196.248",
                   "istioEnabled": true,
@@ -3065,6 +3071,7 @@ ShallowWrapper {
                       },
                     ]
                   }
+                  externalName="my.database.example.com"
                   health={undefined}
                   ip="172.30.196.248"
                   istioEnabled={true}
@@ -3448,6 +3455,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    externalName="my.database.example.com"
                     health={undefined}
                     ip="172.30.196.248"
                     istioEnabled={true}
@@ -4195,6 +4203,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    externalName="my.database.example.com"
                     health={undefined}
                     ip="172.30.196.248"
                     istioEnabled={true}
@@ -4259,6 +4268,7 @@ ShallowWrapper {
                         },
                       ]
                     }
+                    externalName="my.database.example.com"
                     health={undefined}
                     ip="172.30.196.248"
                     istioEnabled={true}
@@ -4321,6 +4331,7 @@ ShallowWrapper {
                         ],
                       },
                     ],
+                    "externalName": "my.database.example.com",
                     "health": undefined,
                     "ip": "172.30.196.248",
                     "istioEnabled": true,

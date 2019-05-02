@@ -5,6 +5,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
     name: 'reviews',
     createdAt: '2018-06-29T16:43:18+02:00',
     type: 'ClusterIP',
+    externalName: 'my.database.example.com',
     labels: {
       app: 'reviews'
     },

@@ -40,7 +40,8 @@ const emptyService = {
     name: '',
     createdAt: '',
     resourceVersion: '',
-    ip: ''
+    ip: '',
+    externalName: ''
   },
   virtualServices: {
     items: [],

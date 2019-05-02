@@ -48,6 +48,7 @@ export interface Service {
   resourceVersion: string;
   ip: string;
   ports?: Port[];
+  externalName: string;
 }
 
 export interface ServiceDetailsInfo {
