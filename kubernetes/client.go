@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/version"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -89,6 +90,7 @@ type IstioClientInterface interface {
 	GetServiceRoles(namespace string) ([]IstioObject, error)
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
+	GetServerVersion() (*version.Info, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsOpenShift() bool

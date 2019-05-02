@@ -14,6 +14,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -26,6 +27,11 @@ func (in *IstioClient) GetNamespace(namespace string) (*core_v1.Namespace, error
 	}
 
 	return ns, nil
+}
+
+// GetServerVersion fetches and returns information about the version Kubernetes that is running
+func (in *IstioClient) GetServerVersion() (*version.Info, error) {
+	return in.k8s.Discovery().ServerVersion()
 }
 
 // GetNamespaces returns a list of all namespaces of the cluster.

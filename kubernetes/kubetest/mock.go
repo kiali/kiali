@@ -12,6 +12,8 @@ import (
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -20,7 +22,8 @@ import (
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	k8s kubernetes.IstioClientInterface
+	baseIstioConfig *rest.Config
+	k8s             kubernetes.IstioClientInterface
 }
 
 // Constructor
@@ -352,6 +355,11 @@ func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.R
 func (o *K8SClientMock) IsOpenShift() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
+	args := o.Called()
+	return args.Get(0).(*version.Info), args.Error(1)
 }
 
 func (o *K8SClientMock) Stop() {

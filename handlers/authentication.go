@@ -26,6 +26,8 @@ type AuthenticationHandler struct {
 type AuthInfo struct {
 	Strategy              string      `json:"strategy"`
 	AuthorizationEndpoint string      `json:"authorizationEndpoint,omitempty"`
+	LogoutEndpoint        string      `json:"logoutEndpoint,omitempty"`
+	LogoutRedirect        string      `json:"logoutRedirect,omitempty"`
 	SessionInfo           sessionInfo `json:"sessionInfo"`
 	SecretMissing         bool        `json:"secretMissing,omitempty"`
 }
@@ -228,6 +230,28 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 	return http.StatusUnauthorized, ""
 }
 
+func performOpenshiftLogout(w http.ResponseWriter, r *http.Request) error {
+	tokenString := getTokenStringFromRequest(r)
+	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
+		log.Warningf("Token is invalid: %s", err.Error())
+		return err
+	} else {
+		business, err := business.Get(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not get the business layer : ", err)
+			return err
+		}
+
+		err = business.OpenshiftOAuth.Logout(claims.SessionId)
+		if err != nil {
+			log.Warning("Could not log out of OpenShift: ", err)
+			return err
+		}
+
+		return nil
+	}
+}
+
 func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	if token := getTokenStringFromRequest(r); len(token) > 0 {
 		user, err := config.ValidateToken(token)
@@ -364,6 +388,8 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.AuthorizationEndpoint = metadata.AuthorizationEndpoint
+		response.LogoutEndpoint = metadata.LogoutEndpoint
+		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyLogin:
 		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
 			response.SecretMissing = true
@@ -395,5 +421,10 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &tokenCookie)
 	}
 
+	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
+	conf := config.Get()
+	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
+		performOpenshiftLogout(w, r)
+	}
 	RespondWithCode(w, http.StatusNoContent)
 }
