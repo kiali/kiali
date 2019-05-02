@@ -196,14 +196,27 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 // If serviceName param is provided it will filter all VirtualServices having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).Do().Get()
-	if err != nil {
-		return nil, err
+	var virtualServiceList *GenericIstioObjectList
+	if in.k8sCache != nil {
+		list, err := in.k8sCache.GetVirtualServices(namespace)
+		if err != nil {
+			return nil, err
+		}
+		virtualServiceList = list
 	}
-	virtualServiceList, ok := result.(*GenericIstioObjectList)
-	if !ok {
-		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
+
+	if virtualServiceList == nil {
+		result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).Do().Get()
+		if err != nil {
+			return nil, err
+		}
+		list, ok := result.(*GenericIstioObjectList)
+		if !ok {
+			return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
+		}
+		virtualServiceList = list
 	}
+
 	typeMeta := meta_v1.TypeMeta{
 		Kind:       PluralType[virtualServices],
 		APIVersion: ApiNetworkingVersion,

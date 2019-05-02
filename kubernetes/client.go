@@ -10,6 +10,7 @@ import (
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
+	osproject_v1_client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -113,6 +114,8 @@ type IstioClientInterface interface {
 type IstioClient struct {
 	IstioClientInterface
 	k8s                      *kube.Clientset
+	projectApi             *osproject_v1_client.ProjectV1Client
+	okd                    *rest.RESTClient
 	istioConfigApi           *rest.RESTClient
 	istioNetworkingApi       *rest.RESTClient
 	istioAuthenticationApi   *rest.RESTClient
@@ -199,25 +202,21 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 	client.k8s = k8s
-
-	// Init client cache
-	// Note that cache will work only in full permissions scenarios (similar permissions as mixer/istio-telemetry component)
-	kialiK8sCfg := kialiConfig.Get().KubernetesConfig
-	if client.k8sCache == nil && kialiK8sCfg.CacheEnabled {
-		log.Infof("Kiali K8S Cache enabled")
-		client.stopCache = make(chan struct{})
-		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
-		client.k8sCache.Start()
-		if !client.k8sCache.WaitForSync() {
-			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
-		}
+	projectApi, err := osproject_v1_client.NewForConfig(config)
+	if err != nil {
+		log.Errorf("Failed to create ProjectClientV1")
 	}
+	client.projectApi = projectApi
 
 	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
 	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
+
+			scheme.AddKnownTypeWithName(OpenshiftGroupVersion.WithKind("Project"), &osproject_v1.Project{})
+			scheme.AddKnownTypeWithName(OpenshiftGroupVersion.WithKind("ProjectList"), &osproject_v1.ProjectList{})
+
 			// Register networking types
 			for _, nt := range networkingTypes {
 				scheme.AddKnownTypeWithName(NetworkingGroupVersion.WithKind(nt.objectKind), &GenericIstioObject{})
@@ -265,6 +264,7 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 			meta_v1.AddToGroupVersion(scheme, RbacGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, MaistraAuthenticationGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, MaistraRbacGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, OpenshiftGroupVersion)
 			return nil
 		})
 
@@ -304,12 +304,37 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	openshiftAPI, err := newClientForAPI(config, OpenshiftGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
+
+	client.okd = openshiftAPI
+
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioAuthenticationApi = istioAuthenticationAPI
 	client.istioRbacApi = istioRbacApi
 	client.maistraAuthenticationApi = maistraAuthenticationAPI
 	client.maistraRbacApi = maistraRbacApi
+
+	// Init client cache
+	// Note that cache will work only in full permissions scenarios (similar permissions as mixer/istio-telemetry component)
+	// kialiK8sCfg := kialiConfig.Get().KubernetesConfig
+	if client.k8sCache == nil {
+		// if client.k8sCache == nil && kialiK8sCfg.CacheEnabled {
+		log.Infof("Kiali K8S Cache enabled")
+		client.stopCache = make(chan struct{})
+		client.k8sCache = newCacheController(client, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
+		client.k8sCache.Start()
+		if !client.k8sCache.WaitForSync() {
+			log.Errorf("Failed to enable cache")
+			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
+		}
+	}
+
+
 	return &client, nil
 }
 
