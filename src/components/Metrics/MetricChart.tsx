@@ -6,6 +6,7 @@ type MetricChartProps = {
   series: TimeSeries[];
   chartName: string;
   unit: string;
+  spans: number;
   labelValues: AllPromLabelsValues;
   onExpandRequested?: () => void;
 };

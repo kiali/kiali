@@ -80,6 +80,7 @@ export class Dashboard extends React.Component<DashboardProps, {}> {
           chartName={chart.name}
           labelValues={this.props.labelValues}
           unit={chart.unit}
+          spans={chart.spans}
           series={chart.metric.matrix}
           onExpandRequested={expandHandler}
         />
@@ -91,6 +92,7 @@ export class Dashboard extends React.Component<DashboardProps, {}> {
           chartName={chart.name}
           labelValues={this.props.labelValues}
           unit={chart.unit}
+          spans={chart.spans}
           histogram={chart.histogram}
           onExpandRequested={expandHandler}
         />
