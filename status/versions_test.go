@@ -18,7 +18,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-tech-preview-0.1.2-1-3a13-Custom",
 			name:       "Maistra Project",
 			version:    "0.1.2",
-			supported:  true,
+			supported:  false,
 		},
 		{
 			rawVersion: "redhat@redhat-brew.abc.xyz.redhat.com:8888/openshift-istio-10.11.12-1-3a13-Custom",
@@ -36,6 +36,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "redhat@redhat-docker.io/maistra-0.1.0-1-3a13-unknown",
 			name:       "Maistra",
 			version:    "0.1.0",
+			supported:  false,
+		},
+		{
+			rawVersion: "redhat@redhat-docker.io/maistra-0.7.0-1-3a13-unknown",
+			name:       "Maistra",
+			version:    "0.7.0",
 			supported:  true,
 		},
 		{
@@ -72,6 +78,12 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-deadbeef-Clean",
 			name:       "Istio Snapshot",
 			version:    "1.0-20180927",
+			supported:  false,
+		},
+		{
+			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.1-20190327-21-10-deadbeef-Clean",
+			name:       "Istio Snapshot",
+			version:    "1.1-20190327",
 			supported:  true,
 		},
 		{
