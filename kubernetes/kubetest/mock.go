@@ -169,7 +169,7 @@ func (o *K8SClientMock) GetNamespace(namespace string) (*core_v1.Namespace, erro
 	return args.Get(0).(*core_v1.Namespace), args.Error(1)
 }
 
-func (o *K8SClientMock) GetNamespaces() ([]core_v1.Namespace, error) {
+func (o *K8SClientMock) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
 	args := o.Called()
 	return args.Get(0).([]core_v1.Namespace), args.Error(1)
 }
@@ -194,7 +194,7 @@ func (o *K8SClientMock) GetProject(project string) (*osproject_v1.Project, error
 	return args.Get(0).(*osproject_v1.Project), args.Error(1)
 }
 
-func (o *K8SClientMock) GetProjects() ([]osproject_v1.Project, error) {
+func (o *K8SClientMock) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
 	args := o.Called()
 	return args.Get(0).([]osproject_v1.Project), args.Error(1)
 }
