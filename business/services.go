@@ -6,6 +6,7 @@ import (
 
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -257,7 +258,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 		defer wg.Done()
 		var err2 error
 		eps, err2 = in.k8s.GetEndpoints(namespace, service)
-		if err2 != nil {
+		if err2 != nil && !errors.IsNotFound(err2) {
 			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
 		}

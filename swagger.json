@@ -4277,6 +4277,10 @@
           "type": "string",
           "x-go-name": "CreatedAt"
         },
+        "externalName": {
+          "type": "string",
+          "x-go-name": "ExternalName"
+        },
         "ip": {
           "type": "string",
           "x-go-name": "Ip"

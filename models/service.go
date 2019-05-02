@@ -50,6 +50,7 @@ type Service struct {
 	Type            string            `json:"type"`
 	Ip              string            `json:"ip"`
 	Ports           Ports             `json:"ports"`
+	ExternalName    string            `json:"externalName"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -71,6 +72,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.Labels = service.Labels
 		s.Type = string(service.Spec.Type)
 		s.Ip = service.Spec.ClusterIP
+		s.ExternalName = service.Spec.ExternalName
 		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
 		s.ResourceVersion = service.ResourceVersion
 		(&s.Ports).Parse(service.Spec.Ports)
