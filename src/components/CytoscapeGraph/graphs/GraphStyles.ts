@@ -106,8 +106,8 @@ export class GraphStyles {
           if (rate > 0) {
             if (pErr > 0) {
               let sErr = pErr.toFixed(1);
-              sErr = `, ${sErr.endsWith('.0') ? pErr.toFixed(0) : sErr}%`;
-              content = rate.toFixed(2) + sErr;
+              sErr = `${sErr.endsWith('.0') ? pErr.toFixed(0) : sErr}`;
+              content = `${rate.toFixed(2)}\n${sErr}%`;
             } else {
               content = rate.toFixed(2);
             }
@@ -117,7 +117,7 @@ export class GraphStyles {
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
           const responseTime = ele.data(CyEdge.responseTime) > 0 ? Number(ele.data(CyEdge.responseTime)) : 0;
           if (responseTime > 0) {
-            content = responseTime < 1000.0 ? responseTime.toFixed(0) + 'ms' : (responseTime / 1000.0).toFixed(2) + 's';
+            content = responseTime < 1000.0 ? `${responseTime.toFixed(0)}ms` : `${(responseTime / 1000.0).toFixed(2)}s`;
           }
           break;
         }
@@ -146,9 +146,9 @@ export class GraphStyles {
       const mtlsPercentage = Number(ele.data(CyEdge.isMTLS));
       if (cyGlobal.showSecurity && mtlsPercentage >= 0) {
         if (mtlsPercentage > 0 && !cyGlobal.mtlsEnabled) {
-          content = EdgeIconMTLS + ' ' + content;
+          content = `${EdgeIconMTLS} ${content}`;
         } else if (mtlsPercentage < 100 && cyGlobal.mtlsEnabled) {
-          content = EdgeIconDisabledMTLS + ' ' + content;
+          content = `${EdgeIconDisabledMTLS} ${content}`;
         }
       }
 
@@ -375,6 +375,7 @@ export class GraphStyles {
           },
           'text-outline-color': EdgeTextOutlineColor,
           'text-outline-width': EdgeTextOutlineWidth,
+          'text-wrap': 'wrap',
           width: EdgeWidth
         }
       },
