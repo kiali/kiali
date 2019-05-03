@@ -24,6 +24,8 @@ type OpenshiftOAuthService struct {
 
 type OAuthMetadata struct {
 	AuthorizationEndpoint string `json:"authorizationEndpoint"`
+	LogoutEndpoint        string `json:"logoutEndpoint"`
+	LogoutRedirect        string `json:"logoutRedirect"`
 }
 
 // Structure that's returned by the openshift oauth authorization server.
@@ -31,6 +33,7 @@ type OAuthMetadata struct {
 // more usable on our side.
 type OAuthAuthorizationServer struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
+	Issuer                string `json:"issuer"`
 }
 
 type OAuthUser struct {
@@ -57,6 +60,40 @@ type OAuthRouteTLSSpec struct {
 const serverPrefix = "https://kubernetes.default.svc/"
 
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
+	redirectURL, err := getKialiRoutePath()
+
+	if err != nil {
+		log.Error(err)
+		message := fmt.Errorf("could not get Kiali route for OAuth redirect: %v", err)
+		return nil, message
+	}
+
+	server, err := getOAuthAuthorizationServer()
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := in.k8s.GetServerVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	metadata = &OAuthMetadata{}
+
+	if version.Major == "1" && (strings.HasPrefix(version.Minor, "11") || strings.HasPrefix(version.Minor, "10")) {
+		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali", url.QueryEscape(*redirectURL), "token")
+	} else {
+		// The logout endpoint on the OpenShift OAuth Server
+		metadata.LogoutEndpoint = fmt.Sprintf("%s/logout", server.Issuer)
+		// The redirect path when logging out of the OpenShift OAuth Server. Note: this has to be a relative link to the OAuth server
+		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", "kiali", url.QueryEscape(*redirectURL), "token")
+		// The fully qualified endpoint to use logging into the OpenShift OAuth server.
+		metadata.AuthorizationEndpoint = fmt.Sprintf("%s%s", server.Issuer, metadata.LogoutRedirect)
+	}
+	return metadata, nil
+}
+
+func getOAuthAuthorizationServer() (*OAuthAuthorizationServer, error) {
 	var server *OAuthAuthorizationServer
 
 	response, err := request("GET", ".well-known/oauth-authorization-server", nil)
@@ -75,19 +112,7 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 		return nil, message
 	}
 
-	redirectURL, err := getKialiRoutePath()
-
-	if err != nil {
-		log.Error(err)
-		message := fmt.Errorf("could not get Kiali route for OAuth redirect: %v", err)
-		return nil, message
-	}
-
-	metadata = &OAuthMetadata{}
-
-	metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali", url.QueryEscape(*redirectURL), "token")
-
-	return metadata, nil
+	return server, nil
 }
 
 func (in *OpenshiftOAuthService) ValidateToken(token string) error {
@@ -168,6 +193,24 @@ func getKialiRoutePath() (*string, error) {
 	url := strings.Join([]string{protocol, route.Spec.Host}, "")
 
 	return &url, nil
+}
+
+func (in *OpenshiftOAuthService) Logout(token string) error {
+	conf, err := kubernetes.ConfigClient()
+
+	if err != nil {
+		log.Error(err)
+		return fmt.Errorf("could not connect to Openshift: %v", err)
+	}
+
+	// Delete the access token from the API server
+	_, err = request("DELETE", fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", token), &conf.BearerToken)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func request(method string, url string, auth *string) ([]byte, error) {
