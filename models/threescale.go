@@ -24,11 +24,10 @@ type ThreeScaleHandler struct {
 type ThreeScaleHandlers []ThreeScaleHandler
 
 type ThreeScaleServiceRule struct {
-	ServiceName           string   `json:"serviceName"`
-	ServiceNamespace      string   `json:"serviceNamespace"`
-	AppName               string   `json:"appName"`
-	Versions              []string `json:"versions"`
-	ThreeScaleHandlerName string   `json:"threeScaleHandlerName"`
+	ServiceName           string `json:"serviceName"`
+	ServiceNamespace      string `json:"serviceNamespace"`
+	App                   string `json:"app"`
+	ThreeScaleHandlerName string `json:"threeScaleHandlerName"`
 }
 
 func CastThreeScaleHandlers(handlers []kubernetes.IstioObject) ThreeScaleHandlers {

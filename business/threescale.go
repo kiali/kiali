@@ -3,6 +3,8 @@ package business
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -13,6 +15,10 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+)
+
+var (
+	appRegexp = regexp.MustCompile(`destination.labels\["app"\]\ ==\ "(.*)"`)
 )
 
 type ThreeScaleService struct {
@@ -228,29 +234,69 @@ func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models
 	return in.getThreeScaleHandlers()
 }
 
+func getThreeScaleRuleDetails(rule kubernetes.IstioObject) (string, string) {
+	app := ""
+	threeScaleHandlerName := ""
+	if rule.GetSpec() != nil {
+		if match, matchFound := rule.GetSpec()["match"]; matchFound {
+			if matchCast, matchString := match.(string); matchString {
+				find := appRegexp.FindStringSubmatch(matchCast)
+				if len(find) == 2 {
+					app = find[1]
+				}
+			}
+		}
+		if actions, actionsFound := rule.GetSpec()["actions"]; actionsFound {
+			if actionsCast, actionInterface := actions.([]interface{}); actionInterface {
+				if len(actionsCast) == 1 {
+					action := actionsCast[0]
+					if actionCast, actionInterface := action.(map[string]interface{}); actionInterface {
+						if handler, handlerFound := actionCast["handler"]; handlerFound {
+							if handlerCast, handlerString := handler.(string); handlerString {
+								if i := strings.Index(handlerCast, "."); i > -1 {
+									threeScaleHandlerName = handlerCast[:i]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return app, threeScaleHandlerName
+}
+
 func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleRule")
 	defer promtimer.ObserveNow(&err)
 
-	return models.ThreeScaleServiceRule{}, nil
+	conf := config.Get()
+
+	ruleName := "threescale-" + namespace + "-" + service
+	rule, err := in.k8s.GetIstioRule(conf.IstioNamespace, ruleName)
+	if err != nil {
+		return models.ThreeScaleServiceRule{}, err
+	}
+
+	app, threeScaleHandlerName := getThreeScaleRuleDetails(rule)
+
+	threeScaleServiceRule := models.ThreeScaleServiceRule{
+		ServiceName:           service,
+		ServiceNamespace:      namespace,
+		App:                   app,
+		ThreeScaleHandlerName: threeScaleHandlerName,
+	}
+
+	return threeScaleServiceRule, nil
 }
 
 func generateMatch(threeScaleServiceRule models.ThreeScaleServiceRule) string {
+	// Match granularity is set at service level so no need to use versions labels
 	conf := config.Get()
 	match := "destination.service.namespace == \"" + threeScaleServiceRule.ServiceNamespace + "\" && "
 	match += "destination.service.name == \"" + threeScaleServiceRule.ServiceName + "\" && "
-	match += "destination.labels[\"" + conf.IstioLabels.AppLabelName + "\"] == \"" + threeScaleServiceRule.AppName + "\" && "
-	if len(threeScaleServiceRule.Versions) > 0 {
-		match += "("
-		for i, version := range threeScaleServiceRule.Versions {
-			if i > 0 {
-				match += "|| "
-			}
-			match += "destination.labels[\"" + conf.IstioLabels.VersionLabelName + "\"] == \"" + version + "\" "
-		}
-		match += ")"
-	}
+	match += "destination.labels[\"" + conf.IstioLabels.AppLabelName + "\"] == \"" + threeScaleServiceRule.App + "\""
 	return match
 }
 
