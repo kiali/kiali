@@ -19,29 +19,43 @@ func DiscoverJaeger() (url string, err error) {
 	if conf.ExternalServices.Jaeger.URL != "" {
 		return conf.ExternalServices.Jaeger.URL, nil
 	}
-	tracing := conf.ExternalServices.Jaeger.TracingService
-	jaeger := conf.ExternalServices.Jaeger.JaegerService
-	ns := conf.ExternalServices.Jaeger.ServiceNamespace
-	// Check if there is a Tracing service in the namespace
-	log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
-	url, err = discoverUrlService(ns, tracing)
-	conf.ExternalServices.Jaeger.Service = tracing
-	if err != nil || url == "" {
-		log.Debugf("Kiali not found Tracing in service %s of ns %s error: %s", tracing, ns, err)
-		// Check if there is a Jaeger-Query service in the namespace
-		url, err = discoverUrlService(ns, jaeger)
-		if err != nil || url == "" {
-			conf.ExternalServices.Jaeger.EnableJaeger = false
-			conf.ExternalServices.Jaeger.Service = ""
-			log.Debugf("Kiali not found Jaeger in service %s of ns %s  error: %s", jaeger, ns, err)
-			return "", err
+
+	ns := config.IstioDefaultNamespace
+
+	// User set a service
+	if conf.ExternalServices.Jaeger.Service != "" {
+		url, err = discoverUrlService(conf.ExternalServices.Jaeger.Namespace, conf.ExternalServices.Jaeger.Service)
+		// If the service is correct set it
+		if err == nil {
+			conf.ExternalServices.Jaeger.EnableJaeger = true
+			conf.ExternalServices.Jaeger.URL = url
 		}
-		log.Debugf("Kiali found Jaeger in %s", url)
-		conf.ExternalServices.Jaeger.Service = jaeger
+	} else {
+		// No set a service, go discover
+		tracing := config.TracingDefaultService
+		jaeger := config.JaegerQueryDefaultService
+
+		// Check if there is a Tracing service in the namespace
+		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
+		url, err = discoverUrlService(ns, tracing)
+		conf.ExternalServices.Jaeger.Service = tracing
+		if err != nil || url == "" {
+			log.Debugf("Kiali not found Tracing in service %s of ns %s error: %s", tracing, ns, err)
+			// Check if there is a Jaeger-Query service in the namespace
+			url, err = discoverUrlService(ns, jaeger)
+			if err != nil || url == "" {
+				conf.ExternalServices.Jaeger.EnableJaeger = false
+				conf.ExternalServices.Jaeger.Service = ""
+				log.Debugf("Kiali not found Jaeger in service %s of ns %s  error: %s", jaeger, ns, err)
+				return "", err
+			}
+			log.Debugf("Kiali found Jaeger in %s", url)
+			conf.ExternalServices.Jaeger.Service = jaeger
+		}
+		log.Debugf("Kiali found Tracing in %s", url)
+		conf.ExternalServices.Jaeger.EnableJaeger = true
+		conf.ExternalServices.Jaeger.URL = url
 	}
-	log.Debugf("Kiali found Tracing in %s", url)
-	conf.ExternalServices.Jaeger.EnableJaeger = true
-	conf.ExternalServices.Jaeger.URL = url
 	config.Set(conf)
 	return url, err
 }

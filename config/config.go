@@ -138,12 +138,10 @@ type GrafanaConfig struct {
 
 // JaegerConfig describes configuration used for jaeger links
 type JaegerConfig struct {
-	EnableJaeger     bool
-	JaegerService    string `yaml:"jaeger_service"`
-	Service          string
-	ServiceNamespace string `yaml:"namespace"`
-	TracingService   string `yaml:"tracing_service"`
-	URL              string `yaml:"url"`
+	EnableJaeger bool
+	Namespace    string `yaml:"namespace"`
+	Service      string `yaml:"service"`
+	URL          string `yaml:"url"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -214,6 +212,12 @@ type Config struct {
 // Istio System namespace by default
 const IstioDefaultNamespace = "istio-system"
 
+// Tracing Service by default
+const TracingDefaultService = "tracing"
+
+// Jaeger Query Service by default
+const JaegerQueryDefaultService = "jaeger-query"
+
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
@@ -265,12 +269,10 @@ func NewConfig() (c *Config) {
 	}
 
 	// Jaeger Configuration
-	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
-	c.ExternalServices.Jaeger.TracingService = strings.TrimSpace(getDefaultString(EnvTracingService, "tracing"))
-	c.ExternalServices.Jaeger.JaegerService = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
-	c.ExternalServices.Jaeger.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, IstioDefaultNamespace))
 	c.ExternalServices.Jaeger.EnableJaeger = false
-	c.ExternalServices.Jaeger.Service = c.ExternalServices.Jaeger.TracingService
+	c.ExternalServices.Jaeger.Namespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, IstioDefaultNamespace))
+	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvTracingService, ""))
+	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
