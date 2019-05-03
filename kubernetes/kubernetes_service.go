@@ -37,8 +37,17 @@ func (in *IstioClient) GetServerVersion() (*version.Info, error) {
 // GetNamespaces returns a list of all namespaces of the cluster.
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
-func (in *IstioClient) GetNamespaces() ([]core_v1.Namespace, error) {
-	namespaces, err := in.k8s.CoreV1().Namespaces().List(emptyListOptions)
+func (in *IstioClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+	var listOptions meta_v1.ListOptions
+
+	// Apply labelSelector filtering if specified
+	if labelSelector != "" {
+		listOptions = meta_v1.ListOptions{LabelSelector: labelSelector}
+	} else {
+		listOptions = emptyListOptions
+	}
+
+	namespaces, err := in.k8s.CoreV1().Namespaces().List(listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -61,10 +70,17 @@ func (in *IstioClient) GetProject(name string) (*osproject_v1.Project, error) {
 	return result, nil
 }
 
-func (in *IstioClient) GetProjects() ([]osproject_v1.Project, error) {
+func (in *IstioClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
 	result := &osproject_v1.ProjectList{}
 
-	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects").Do().Into(result)
+	request := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
+
+	// Apply label selector filtering if specified
+	if labelSelector != "" {
+		request.Param("labelSelector", labelSelector)
+	}
+
+	err := request.Do().Into(result)
 
 	if err != nil {
 		return nil, err

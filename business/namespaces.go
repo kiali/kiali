@@ -40,16 +40,18 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespaces")
 	defer promtimer.ObserveNow(&err)
 
+	labelSelector := config.Get().API.Namespaces.LabelSelector
+
 	namespaces := []models.Namespace{}
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
-		projects, err2 := in.k8s.GetProjects()
+		projects, err2 := in.k8s.GetProjects(labelSelector)
 		if err2 == nil {
 			// Everything is good, return the projects we got from OpenShift / kube-project
 			namespaces = models.CastProjectCollection(projects)
 		}
 	} else {
-		nss, err := in.k8s.GetNamespaces()
+		nss, err := in.k8s.GetNamespaces(labelSelector)
 		if err != nil {
 			return nil, err
 		}

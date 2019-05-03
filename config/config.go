@@ -70,6 +70,8 @@ const (
 	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
 
 	EnvAuthStrategy = "AUTH_STRATEGY"
+
+	EnvNamespaceLabelSelector = "NAMESPACE_LABEL_SELECTOR"
 )
 
 // The versions that Kiali requires
@@ -182,7 +184,8 @@ type ApiConfig struct {
 
 // ApiNamespacesConfig provides a list of regex strings defining namespaces to blacklist.
 type ApiNamespacesConfig struct {
-	Exclude []string
+	Exclude       []string
+	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -218,6 +221,7 @@ func NewConfig() (c *Config) {
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
+	c.API.Namespaces.LabelSelector = strings.TrimSpace(getDefaultString(EnvNamespaceLabelSelector, ""))
 
 	// Server configuration
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
