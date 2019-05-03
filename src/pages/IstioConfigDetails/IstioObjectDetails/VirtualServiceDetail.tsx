@@ -72,6 +72,14 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   }
 
   parseHost(host: string): Host {
+    if (host.includes('/')) {
+      const gatewayParts = host.split('/');
+      return {
+        service: gatewayParts[1],
+        namespace: gatewayParts[0]
+      };
+    }
+
     const hostParts = host.split('.');
     const h = {
       service: hostParts[0],
