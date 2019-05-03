@@ -543,6 +543,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     return needsRelayout;
   }
 
+  // Tests if the element is still in the current graph
+  private isElementValid(ele: any) {
+    return ele.cy() === this.cy;
+  }
+
   // To know if we should re-layout, we need to know if any element changed
   // Do a quick round by comparing the number of nodes and edges, if different
   // a change is expected.
@@ -642,20 +647,26 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     ele.data('healthPromise', promise.then(nsHealth => nsHealth[key]));
     promise
       .then(nsHealth => {
-        const health = nsHealth[key];
-        if (health) {
-          const status = health.getGlobalStatus();
-          ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
-          if (status === H.DEGRADED || status === H.FAILURE) {
-            ele.addClass(status.name);
+        // Discard if the element is no longer valid
+        if (this.isElementValid(ele)) {
+          const health = nsHealth[key];
+          if (health) {
+            const status = health.getGlobalStatus();
+            ele.removeClass(H.DEGRADED.name + ' ' + H.FAILURE.name);
+            if (status === H.DEGRADED || status === H.FAILURE) {
+              ele.addClass(status.name);
+            }
+          } else {
+            ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
+            console.debug(`No health found for [${ele.data(CyNode.nodeType)}] [${key}]`);
           }
-        } else {
-          ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
-          console.debug(`No health found for [${ele.data(CyNode.nodeType)}] [${key}]`);
         }
       })
       .catch(err => {
-        ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
+        // Discard if the element is no longer valid
+        if (this.isElementValid(ele)) {
+          ele.removeClass(`${H.DEGRADED.name}  ${H.FAILURE.name} ${H.HEALTHY.name}`);
+        }
         console.error(API.getErrorMsg(`Could not fetch health for [${ele.data(CyNode.nodeType)}] [${key}]`, err));
       });
   }
