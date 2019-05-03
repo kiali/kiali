@@ -219,15 +219,15 @@ export class GraphStyles {
         } else {
           const contentArray: string[] = [];
           if ((isMultiNamespace || isOutside) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
-            contentArray.push(namespace);
+            contentArray.push('(' + namespace + ')');
           }
           switch (nodeType) {
             case NodeType.APP:
               if (cyGlobal.graphType === GraphType.APP || isGroup || version === 'unknown') {
                 contentArray.unshift(app);
               } else {
+                contentArray.unshift(version);
                 contentArray.unshift(app);
-                contentArray.push(version);
               }
               break;
             case NodeType.SERVICE:
@@ -350,9 +350,13 @@ export class GraphStyles {
         css: {
           'text-valign': 'top',
           'text-halign': 'right',
-          'text-margin-x': '2px',
-          'text-margin-y': '8px',
-          'text-rotation': '90deg',
+          'text-margin-x': (ele: any) => {
+            // numericStyle returns the size in the "preferred" units
+            // numericStyleUnits return the "preferred" unit
+            // Preferred unit for elements is model dimensions (px) (the same unit used for ele.width)
+            return '-' + (ele.width() + ele.numericStyle('padding') * 2) + ele.numericStyleUnits('padding');
+          },
+          'text-margin-y': '-2px',
           'background-color': NodeColorFillBox
         }
       },
