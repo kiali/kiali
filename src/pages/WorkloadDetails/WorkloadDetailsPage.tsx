@@ -231,11 +231,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   onRefresh={this.doRefresh}
                 />
               </TabPane>
-              {
-                // I don't know why but the TabContainer's parent height does not extend to the available space. Nothing
-                // I tried extended it to 100%, so below I set to 50vh to provide space to the logs textbox.
-              }
-              <TabPane eventKey="logs" mountOnEnter={true} unmountOnExit={true} style={{ height: '50vh' }}>
+              <TabPane eventKey="logs" mountOnEnter={true} unmountOnExit={true}>
                 {hasPods ? (
                   <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
                 ) : (

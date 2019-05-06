@@ -53,12 +53,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
   }
 
   isContentScrollable = () => {
-    const urlParams = new URLSearchParams(this.props.location.search);
-    let isMetricTab = false;
-    if (urlParams.has('tab')) {
-      isMetricTab = urlParams.get('tab') === 'metrics';
-    }
-    return !this.props.location.pathname.startsWith('/graph') && !isMetricTab;
+    return !this.props.location.pathname.startsWith('/graph');
   };
 
   onNavToggleDesktop = () => {
@@ -85,7 +80,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
 
     const Header = (
       <PageHeader
-        logo={<Brand src={kialiLogo} alt="Patternfly Logo" />}
+        logo={<Brand src={kialiLogo} alt="Kiali Logo" />}
         toolbar={<Masthead />}
         showNavToggle={true}
         onNavToggle={isMobileView ? this.onNavToggleMobile : this.onNavToggleDesktop}

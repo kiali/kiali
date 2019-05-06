@@ -11,6 +11,10 @@ const secondaryMastheadStyle = style({
 
 export default class SecondaryMasthead extends React.PureComponent {
   render() {
-    return <div className={`container-fluid ${secondaryMastheadStyle}`}>{this.props.children}</div>;
+    return (
+      <div id="global-namespace-selector" className={`container-fluid ${secondaryMastheadStyle}`}>
+        {this.props.children}
+      </div>
+    );
   }
 }

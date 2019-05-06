@@ -266,7 +266,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
                 theme="eclipse"
                 onChange={this.onEditorChange}
                 width={'100%'}
-                height={'50vh'}
+                height={'var(--kiali-yaml-editor-height)'}
                 className={'istio-ace-editor'}
                 readOnly={!this.canUpdate()}
                 setOptions={aceOptions}

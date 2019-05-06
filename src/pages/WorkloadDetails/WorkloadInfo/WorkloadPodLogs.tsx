@@ -43,7 +43,8 @@ const TailLinesOptions = {
 
 const logsTextarea = style({
   width: '100%',
-  height: '100%',
+  // 75px is the height of the toolbar inside "Logs" tab
+  height: 'calc(var(--kiali-details-pages-tab-content-height) - 75px)',
   overflow: 'auto',
   resize: 'vertical',
   color: '#fff',

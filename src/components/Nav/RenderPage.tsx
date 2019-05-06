@@ -36,7 +36,7 @@ class RenderPage extends React.Component<{ needScroll: boolean }> {
     );
     return (
       <>
-        <div>{this.renderSecondaryMastheadRoutes()}</div>
+        {this.renderSecondaryMastheadRoutes()}
         {this.props.needScroll ? <div id="content-scrollable">{component}</div> : component}
       </>
     );
