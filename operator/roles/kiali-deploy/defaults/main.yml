@@ -18,7 +18,7 @@ kiali_defaults:
       - "kube.*"
       - "openshift.*"
       - "ibm.*"
-      - "kiali.*"
+      - "kiali-operator"
       #label_selector:
 
   auth:
