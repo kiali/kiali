@@ -53,7 +53,7 @@ kiali_defaults:
       istio_identity_domain: "svc.cluster.local"
       istio_sidecar_annotation: "sidecar.istio.io/status"
       url_service_version: ""
-    jaeger:
+    tracing:
       namespace: ""
       service: ""
       url: ""

@@ -16,19 +16,19 @@ var clientFactory kubernetes.ClientFactory
 func DiscoverJaeger() (url string, err error) {
 	conf := config.Get()
 
-	if conf.ExternalServices.Jaeger.URL != "" {
-		return conf.ExternalServices.Jaeger.URL, nil
+	if conf.ExternalServices.Tracing.URL != "" {
+		return conf.ExternalServices.Tracing.URL, nil
 	}
 
 	ns := config.IstioDefaultNamespace
 
 	// User set a service
-	if conf.ExternalServices.Jaeger.Service != "" {
-		url, err = discoverUrlService(conf.ExternalServices.Jaeger.Namespace, conf.ExternalServices.Jaeger.Service)
+	if conf.ExternalServices.Tracing.Service != "" {
+		url, err = discoverUrlService(conf.ExternalServices.Tracing.Namespace, conf.ExternalServices.Tracing.Service)
 		// If the service is correct set it
 		if err == nil {
-			conf.ExternalServices.Jaeger.EnableJaeger = true
-			conf.ExternalServices.Jaeger.URL = url
+			conf.ExternalServices.Tracing.EnableJaeger = true
+			conf.ExternalServices.Tracing.URL = url
 		}
 	} else {
 		// No set a service, go discover
@@ -38,23 +38,23 @@ func DiscoverJaeger() (url string, err error) {
 		// Check if there is a Tracing service in the namespace
 		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
 		url, err = discoverUrlService(ns, tracing)
-		conf.ExternalServices.Jaeger.Service = tracing
+		conf.ExternalServices.Tracing.Service = tracing
 		if err != nil || url == "" {
 			log.Debugf("Kiali not found Tracing in service %s of ns %s error: %s", tracing, ns, err)
 			// Check if there is a Jaeger-Query service in the namespace
 			url, err = discoverUrlService(ns, jaeger)
 			if err != nil || url == "" {
-				conf.ExternalServices.Jaeger.EnableJaeger = false
-				conf.ExternalServices.Jaeger.Service = ""
+				conf.ExternalServices.Tracing.EnableJaeger = false
+				conf.ExternalServices.Tracing.Service = ""
 				log.Debugf("Kiali not found Jaeger in service %s of ns %s  error: %s", jaeger, ns, err)
 				return "", err
 			}
 			log.Debugf("Kiali found Jaeger in %s", url)
-			conf.ExternalServices.Jaeger.Service = jaeger
+			conf.ExternalServices.Tracing.Service = jaeger
 		}
 		log.Debugf("Kiali found Tracing in %s", url)
-		conf.ExternalServices.Jaeger.EnableJaeger = true
-		conf.ExternalServices.Jaeger.URL = url
+		conf.ExternalServices.Tracing.EnableJaeger = true
+		conf.ExternalServices.Tracing.URL = url
 	}
 	config.Set(conf)
 	return url, err

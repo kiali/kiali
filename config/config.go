@@ -54,10 +54,8 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
-	EnvJaegerURL              = "JAEGER_URL"
-	EnvJaegerService          = "JAEGER_SERVICE"
-	EnvTracingService         = "TRACING_SERVICE"
-	EnvJaegerServiceNamespace = "JAEGER_SERVICE_NAMESPACE"
+	EnvTracingURL              = "TRACING_URL"
+	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
 
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
@@ -136,8 +134,8 @@ type GrafanaConfig struct {
 	Password                 string `yaml:"password"`
 }
 
-// JaegerConfig describes configuration used for jaeger links
-type JaegerConfig struct {
+// TracingConfig describes configuration used for tracing links
+type TracingConfig struct {
 	EnableJaeger bool
 	Namespace    string `yaml:"namespace"`
 	Service      string `yaml:"service"`
@@ -156,7 +154,7 @@ type ExternalServices struct {
 	Istio      IstioConfig      `yaml:"istio,omitempty"`
 	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
 	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
-	Jaeger     JaegerConfig     `yaml:"jaeger,omitempty"`
+	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
 }
 
 // LoginToken holds config used in token-based authentication
@@ -268,11 +266,9 @@ func NewConfig() (c *Config) {
 		log.Error("Grafana username (\"GRAFANA_USERNAME\") requires that Grafana password (\"GRAFANA_PASSWORD\") is set.")
 	}
 
-	// Jaeger Configuration
-	c.ExternalServices.Jaeger.EnableJaeger = false
-	c.ExternalServices.Jaeger.Namespace = strings.TrimSpace(getDefaultString(EnvJaegerServiceNamespace, IstioDefaultNamespace))
-	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvTracingService, ""))
-	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
+	// Tracing Configuration
+	c.ExternalServices.Tracing.EnableJaeger = false
+	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, IstioDefaultNamespace))
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
