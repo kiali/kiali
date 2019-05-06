@@ -50,7 +50,7 @@ spec:
 #      - "kube.*"
 #      - "openshift.*"
 #      - "ibm.*"
-#      - "kiali.*"
+#      - "kiali-operator"
 #      #label_selector:
 
 ##########
