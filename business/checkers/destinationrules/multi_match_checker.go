@@ -29,6 +29,14 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
+				if fqdn.CompleteInput && (fqdn.Namespace != dr.GetObjectMeta().Namespace && fqdn.Service != "*") {
+					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
+					// "*" check removes the prefix errors
+					key, rrValidation := createError("validation.unable.cross-namespace", dr.GetObjectMeta().Name, true)
+					validations.MergeValidations(models.IstioValidations{key: rrValidation})
+					continue
+				}
+
 				// Skip DR validation if it enables mTLS either namespace or mesh-wide
 				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
 					continue
@@ -131,20 +139,26 @@ func checkCollisions(validations models.IstioValidations, destinationRulesName s
 
 func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
 	for _, destinationRuleName := range destinationRuleNames {
-		key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
-		checks := models.Build("destinationrules.multimatch", "spec/host")
-		rrValidation := &models.IstioValidation{
-			Name:       destinationRuleName,
-			ObjectType: DestinationRulesCheckerType,
-			Valid:      true,
-			Checks: []*models.IstioCheck{
-				&checks,
-			},
-		}
+		key, rrValidation := createError("destinationrules.multimatch", destinationRuleName, true)
 
 		if _, exists := validations[key]; !exists {
 			validations.MergeValidations(models.IstioValidations{key: rrValidation})
 		}
 	}
 	return validations
+}
+
+func createError(errorText, destinationRuleName string, valid bool) (models.IstioValidationKey, *models.IstioValidation) {
+	key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
+	checks := models.Build(errorText, "spec/host")
+	rrValidation := &models.IstioValidation{
+		Name:       destinationRuleName,
+		ObjectType: DestinationRulesCheckerType,
+		Valid:      valid,
+		Checks: []*models.IstioCheck{
+			&checks,
+		},
+	}
+
+	return key, rrValidation
 }

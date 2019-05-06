@@ -61,6 +61,7 @@ type SeverityLevel string
 const (
 	ErrorSeverity   SeverityLevel = "error"
 	WarningSeverity SeverityLevel = "warning"
+	Unknown         SeverityLevel = "unknown"
 )
 
 var ObjectTypeSingular = map[string]string{
@@ -83,8 +84,8 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "More than one DestinationRules for the same host subset combination",
 		Severity: WarningSeverity,
 	},
-	"destinationrules.nodest.matchingworkload": {
-		Message:  "This host has no matching workloads",
+	"destinationrules.nodest.matchingregistry": {
+		Message:  "This host has no matching entry in the service registry (service, workload or service entries)",
 		Severity: ErrorSeverity,
 	},
 	"destinationrules.nodest.subsetlabels": {
@@ -182,6 +183,10 @@ var checkDescriptors = map[string]IstioCheck{
 	"service.deployment.port.mismatch": {
 		Message:  "Service port and deployment port do not match",
 		Severity: ErrorSeverity,
+	},
+	"validation.unable.cross-namespace": {
+		Message:  "Unable to verify the validity, cross-namespace validation is not supported for this field",
+		Severity: Unknown,
 	},
 }
 

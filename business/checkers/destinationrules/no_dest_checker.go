@@ -27,10 +27,16 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := kubernetes.ParseHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
-			if !n.hasMatchingService(fqdn.Service, dHost) {
-				validation := models.Build("destinationrules.nodest.matchingworkload", "spec/host")
-				validations = append(validations, &validation)
-				valid = false
+			if !n.hasMatchingService(fqdn, dHost, n.DestinationRule.GetObjectMeta().Namespace) {
+				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace {
+					validation := models.Build("validation.unable.cross-namespace", "spec/host")
+					valid = true
+					validations = append(validations, &validation)
+				} else {
+					validation := models.Build("destinationrules.nodest.matchingregistry", "spec/host")
+					valid = false
+					validations = append(validations, &validation)
+				}
 			}
 			if subsets, ok := n.DestinationRule.GetSpec()["subsets"]; ok {
 				if dSubsets, ok := subsets.([]interface{}); ok {
@@ -100,26 +106,29 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 	return false
 }
 
-func (n NoDestinationChecker) hasMatchingService(service, origHost string) bool {
+func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, origHost, itemNamespace string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
 
 	// Check wildcard hosts
-	if service == "*" {
+	if host.Service == "*" {
 		return true
 	}
 
-	// Check Workloads
-	for _, wl := range n.WorkloadList.Workloads {
-		if service == wl.Labels[appLabel] {
-			return true
+	if host.Namespace == itemNamespace {
+		// Check Workloads
+		for _, wl := range n.WorkloadList.Workloads {
+			if host.Service == wl.Labels[appLabel] {
+				return true
+			}
+		}
+		// Check ServiceNames
+		for _, s := range n.Services {
+			if host.Service == s.Name {
+				return true
+			}
 		}
 	}
-	// Check ServiceNames
-	for _, s := range n.Services {
-		if service == s.Name {
-			return true
-		}
-	}
+
 	// Check ServiceEntries
 	if _, found := n.ServiceEntries[origHost]; found {
 		return true

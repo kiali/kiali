@@ -1,7 +1,6 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/business/checkers/serviceentries"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -26,7 +25,7 @@ func (s ServiceEntryChecker) runSingleChecks(se kubernetes.IstioObject) models.I
 	key, validations := EmptyValidValidation(se.GetObjectMeta().Name, ServiceEntryCheckerType)
 
 	enabledCheckers := []Checker{
-		serviceentries.PortChecker{ServiceEntry: se},
+		// serviceentries.PortChecker{ServiceEntry: se},
 	}
 
 	for _, checker := range enabledCheckers {

@@ -85,7 +85,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	validations, valid := NoHostChecker{
-		Namespace:      "test-namespace",
+		Namespace:      "wikipedia",
 		ServiceNames:   []string{"my-wiki-rule"},
 		VirtualService: virtualService,
 	}.Check()
@@ -97,7 +97,7 @@ func TestValidServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateExternalServiceEntry()
 
 	validations, valid = NoHostChecker{
-		Namespace:         "test-namespace",
+		Namespace:         "wikipedia",
 		ServiceNames:      []string{"my-wiki-rule"},
 		VirtualService:    virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
