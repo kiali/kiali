@@ -35,13 +35,14 @@ spec:
 #
 # Allows for controlling what namespaces/projects are returned by Kiali.
 #
-# 'exclude' is optional takes an list of namespace/projects to be excluded from the list 
-# of namespaces provided by the API and UI. Regex is supported. This does not affect 
+# 'exclude' is optional takes an list of namespace/projects to be excluded from the list
+# of namespaces provided by the API and UI. Regex is supported. This does not affect
 # explicit namespace access.
 #
-# 'label_selector' is optional and takes a string value of a Kubernetes label selector which
-# is used when fetching the list of available namespaces. This does not affect explicit namespace
-# access.
+# 'label_selector' is optional and takes a string value of a Kubernetes label selector
+# (e.g. "myLabel=myValue") which is used when fetching the list of available namespaces.
+# This does not affect explicit namespace access.
+#
 #    ---
 #    namespaces:
 #      exclude:
@@ -50,7 +51,7 @@ spec:
 #      - "openshift.*"
 #      - "ibm.*"
 #      - "kiali.*"
-#      label_selector: "myLabel=myValue"
+#      #label_selector:
 
 ##########
 #  ---

@@ -19,6 +19,7 @@ kiali_defaults:
       - "openshift.*"
       - "ibm.*"
       - "kiali.*"
+      #label_selector:
 
   auth:
     strategy: ""
