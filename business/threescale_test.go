@@ -1,7 +1,6 @@
 package business
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,20 +8,6 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 )
-
-func TestExtractAppFromMatchExpression(t *testing.T) {
-	assert := assert.New(t)
-
-	match := "destination.service.namespace == \"travel-agency\" && "
-	match += "destination.service.name == \"travels\" && "
-	match += "destination.labels[\"app\"] == \"travels\""
-
-	re := regexp.MustCompile(`destination.labels\["app"\]\ ==\ "(.*)"`)
-	find := re.FindStringSubmatch(match)
-
-	assert.Equal(2, len(find))
-	assert.Equal("travels", find[1])
-}
 
 func TestParseIstioConfigForExtract(t *testing.T) {
 	assert := assert.New(t)
@@ -52,8 +37,7 @@ func TestParseIstioConfigForExtract(t *testing.T) {
 		},
 	}
 
-	app, threeScaleHandlerName := getThreeScaleRuleDetails(&newRule)
+	threeScaleHandlerName := getThreeScaleRuleDetails(&newRule)
 
-	assert.Equal("travels", app)
 	assert.Equal("threescale-travel-agency-travels", threeScaleHandlerName)
 }

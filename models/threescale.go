@@ -26,7 +26,6 @@ type ThreeScaleHandlers []ThreeScaleHandler
 type ThreeScaleServiceRule struct {
 	ServiceName           string `json:"serviceName"`
 	ServiceNamespace      string `json:"serviceNamespace"`
-	App                   string `json:"app"`
 	ThreeScaleHandlerName string `json:"threeScaleHandlerName"`
 }
 
