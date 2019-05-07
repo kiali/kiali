@@ -59,7 +59,9 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 
   constructor(props: GraphFindProps) {
     super(props);
-    this.state = { errorMessage: '', findInputValue: '', hideInputValue: '' };
+    const findValue = props.findValue ? props.findValue : '';
+    const hideValue = props.hideValue ? props.hideValue : '';
+    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue };
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -99,47 +101,67 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
             <InputGroup>
               <FormControl
                 id="graph_find"
+                name="graph_find"
+                autoComplete="on"
                 type="text"
                 style={{ ...inputWidth }}
                 inputRef={ref => {
                   this.findInputRef = ref;
                 }}
                 onChange={this.updateFind}
-                defaultValue={this.state.findInputValue ? this.state.findInputValue : this.props.findValue}
+                defaultValue={this.state.findInputValue}
                 onKeyPress={this.checkSubmitFind}
                 placeholder="Find..."
               />
               {this.state.findInputValue && (
-                <InputGroup.Button>
-                  <Button onClick={this.clearFind}>
-                    <Icon name="close" type="fa" />
-                  </Button>
-                </InputGroup.Button>
+                <OverlayTrigger
+                  key="ot-clear_find"
+                  placement="top"
+                  trigger={['hover', 'focus']}
+                  delayShow={1000}
+                  overlay={<Tooltip id="tt-clear_find">Clear Find...</Tooltip>}
+                >
+                  <InputGroup.Button>
+                    <Button onClick={this.clearFind}>
+                      <Icon name="close" type="fa" />
+                    </Button>
+                  </InputGroup.Button>
+                </OverlayTrigger>
               )}
               <FormControl
                 id="graph_hide"
+                name="graph_hide"
+                autoComplete="on"
                 type="text"
                 style={{ ...inputWidth }}
                 inputRef={ref => {
                   this.hideInputRef = ref;
                 }}
                 onChange={this.updateHide}
-                defaultValue={this.state.hideInputValue ? this.state.hideInputValue : this.props.hideValue}
+                defaultValue={this.state.hideInputValue}
                 onKeyPress={this.checkSubmitHide}
                 placeholder="Hide..."
               />
               {this.state.hideInputValue && (
-                <InputGroup.Button>
-                  <Button onClick={this.clearHide}>
-                    <Icon name="close" type="fa" />
-                  </Button>
-                </InputGroup.Button>
+                <OverlayTrigger
+                  key="ot-clear_hide"
+                  placement="top"
+                  trigger={['hover', 'focus']}
+                  delayShow={1000}
+                  overlay={<Tooltip id="tt-clear_hide">Clear Hide...</Tooltip>}
+                >
+                  <InputGroup.Button>
+                    <Button onClick={this.clearHide}>
+                      <Icon name="close" type="fa" />
+                    </Button>
+                  </InputGroup.Button>
+                </OverlayTrigger>
               )}
             </InputGroup>
             <OverlayTrigger
               key={'graph-find-help-ot'}
               placement="top"
-              overlay={<Tooltip id={'graph-find-help-tt'}>Find/Hide help dialog...</Tooltip>}
+              overlay={<Tooltip id={'graph-find-help-tt'}>Find/Hide Help...</Tooltip>}
             >
               <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
                 <Icon name="help" type="pf" />
@@ -169,23 +191,31 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.setState({ hideInputValue: event.target.value, errorMessage: '' });
   };
 
-  private checkSubmitHide = event => {
-    const keyCode = event.keyCode ? event.keyCode : event.which;
-    if (keyCode === 13) {
-      event.preventDefault();
-      if (this.props.hideValue !== this.state.hideInputValue) {
-        this.props.setHideValue(this.state.hideInputValue);
-      }
-    }
-  };
-
   private checkSubmitFind = event => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     if (keyCode === 13) {
       event.preventDefault();
-      if (this.props.findValue !== this.state.findInputValue) {
-        this.props.setFindValue(this.state.findInputValue);
-      }
+      this.submitFind();
+    }
+  };
+
+  private checkSubmitHide = event => {
+    const keyCode = event.keyCode ? event.keyCode : event.which;
+    if (keyCode === 13) {
+      event.preventDefault();
+      this.submitHide();
+    }
+  };
+
+  private submitFind = () => {
+    if (this.props.findValue !== this.state.findInputValue) {
+      this.props.setFindValue(this.state.findInputValue);
+    }
+  };
+
+  private submitHide = () => {
+    if (this.props.hideValue !== this.state.hideInputValue) {
+      this.props.setHideValue(this.state.hideInputValue);
     }
   };
 
