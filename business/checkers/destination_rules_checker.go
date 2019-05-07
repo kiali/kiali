@@ -11,6 +11,7 @@ const DestinationRuleCheckerType = "destinationrule"
 type DestinationRulesChecker struct {
 	DestinationRules []kubernetes.IstioObject
 	MTLSDetails      kubernetes.MTLSDetails
+	ServiceEntries   []kubernetes.IstioObject
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -25,8 +26,10 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
+
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{DestinationRules: in.DestinationRules},
+		destinationrules.MultiMatchChecker{DestinationRules: in.DestinationRules, ServiceEntries: seHosts},
 		destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails},
 	}
 

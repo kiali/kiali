@@ -9,6 +9,7 @@ const DestinationRulesCheckerType = "destinationrule"
 
 type MultiMatchChecker struct {
 	DestinationRules []kubernetes.IstioObject
+	ServiceEntries   map[string][]string
 }
 
 type subset struct {
@@ -20,7 +21,7 @@ type subset struct {
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	// Equality search is: [fqdn][subset]
+	// Equality search is: [fqdn.Service][subset] except for ServiceEntry targets which use [host][subset]
 	seenHostSubsets := make(map[string]map[string]string)
 
 	for _, dr := range m.DestinationRules {
@@ -29,7 +30,14 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
-				if fqdn.CompleteInput && (fqdn.Namespace != dr.GetObjectMeta().Namespace && fqdn.Service != "*") {
+				if m.matchingServiceEntry(dHost) {
+					// These don't follow the FQDN parsing rules, we need to alter..
+					fqdn.Service = dHost
+					fqdn.Namespace = dr.GetObjectMeta().Namespace
+					fqdn.Cluster = dr.GetObjectMeta().ClusterName
+				}
+
+				if fqdn.Namespace != dr.GetObjectMeta().Namespace && fqdn.Service != "*" {
 					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
 					// "*" check removes the prefix errors
 					key, rrValidation := createError("validation.unable.cross-namespace", dr.GetObjectMeta().Name, true)
@@ -73,6 +81,16 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	}
 
 	return validations
+}
+
+func (m MultiMatchChecker) matchingServiceEntry(host string) bool {
+	for k := range m.ServiceEntries {
+		if k == host {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isNonLocalmTLSForServiceEnabled(dr kubernetes.IstioObject, service string) bool {
