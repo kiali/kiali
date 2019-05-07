@@ -342,7 +342,19 @@ if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] &&
 fi
 
 if [ "${AUTH_STRATEGY}" == "login" ]; then
+  # Because we need a secret for the user, we must ensure we have a valid secret name and namespace.
+  SECRET_NAME="${SECRET_NAME:-kiali}"
+  NAMESPACE="${NAMESPACE:-istio-system}"
+
   CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
+
+  # If the secret already exists, we will not create another one
+  ${CLIENT_EXE} get secret ${SECRET_NAME} -n ${NAMESPACE} > /dev/null 2>&1
+  if [ "$?" == "0" ]; then
+    _SECRET_EXISTS="true"
+    CREDENTIALS_CREATE_SECRET="false"
+  fi
+
   if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
     # If the username or passphrase is set but empty, the user will be asked for a value.
     CREDENTIALS_USERNAME="${CREDENTIALS_USERNAME=}" # note: the "=" inside ${} is on purpose
@@ -355,10 +367,6 @@ if [ "${AUTH_STRATEGY}" == "login" ]; then
       CREDENTIALS_PASSPHRASE=$(read -sp 'What do you want to use for the Kiali Passphrase: ' val && echo -n $val)
       echo
     fi
-
-    # Because we are to create the secret for the user, we must ensure we have a valid secret name and namespace.
-    SECRET_NAME="${SECRET_NAME:-kiali}"
-    NAMESPACE="${NAMESPACE:-istio-system}"
   fi
 else
   echo "Using auth strategy [${AUTH_STRATEGY}] - a secret is not needed so none will be created."
@@ -375,6 +383,7 @@ echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
 echo NAMESPACE=$NAMESPACE
 echo SECRET_NAME=$SECRET_NAME
+echo _SECRET_EXISTS=$_SECRET_EXISTS
 echo "=== KIALI SETTINGS ==="
 
 # Create the secret when required
@@ -404,7 +413,11 @@ if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
   fi
 else
   if [ "${AUTH_STRATEGY}" == "login" ]; then
-    echo "NOTE! A secret will not be created. You will need to create one yourself before you can log into Kiali."
+    if [ "${_SECRET_EXISTS}" == "true" ]; then
+      echo "NOTE! A secret already exists. To log into Kiali, you must use the credentials found in that secret."
+    else
+      echo "NOTE! A secret will not be created. You will need to create one yourself before you can log into Kiali."
+    fi
   fi
 fi
 
