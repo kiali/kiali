@@ -38,6 +38,7 @@ describe('#ServiceInfoDescription render correctly with data', () => {
     const wrapper = shallow(
       <ServiceInfoDescription
         name="reviews"
+        namespace="my-namespace"
         labels={labels}
         type="ClusterIP"
         ip="172.30.78.33"

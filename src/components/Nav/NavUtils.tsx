@@ -14,6 +14,7 @@ export type GraphUrlParams = {
   node?: NodeParamsType;
   refreshInterval: PollIntervalInMs;
   showServiceNodes: boolean;
+  showUnusedNodes: boolean;
 };
 
 const buildCommonQueryParams = (params: GraphUrlParams): string => {
@@ -23,6 +24,7 @@ const buildCommonQueryParams = (params: GraphUrlParams): string => {
   q += `&${URLParam.GRAPH_TYPE}=${params.graphType}`;
   q += `&${URLParam.DURATION}=${params.duration}`;
   q += `&${URLParam.POLL_INTERVAL}=${params.refreshInterval}`;
+  q += `&${URLParam.UNUSED_NODES}=${params.showUnusedNodes}`;
   return q;
 };
 

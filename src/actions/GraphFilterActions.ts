@@ -8,6 +8,7 @@ enum GraphFilterActionKeys {
   SET_FIND_VALUE = 'SET_FIND_VALUE',
   SET_GRAPH_TYPE = 'SET_GRAPH_TYPE',
   SET_HIDE_VALUE = 'SET_HIDE_VALUE',
+  SET_SHOW_UNUSED_NODES = 'SET_SHOW_UNUSED_NODES',
   // Toggle Actions
   TOGGLE_GRAPH_NODE_LABEL = 'TOGGLE_GRAPH_NODE_LABEL',
   TOGGLE_GRAPH_CIRCUIT_BREAKERS = 'TOGGLE_GRAPH_CIRCUIT_BREAKERS',
@@ -28,6 +29,7 @@ export const GraphFilterActions = {
   setFindValue: createStandardAction(GraphFilterActionKeys.SET_FIND_VALUE)<string>(),
   setGraphType: createStandardAction(GraphFilterActionKeys.SET_GRAPH_TYPE)<GraphType>(),
   setHideValue: createStandardAction(GraphFilterActionKeys.SET_HIDE_VALUE)<string>(),
+  setShowUnusedNodes: createStandardAction(GraphFilterActionKeys.SET_SHOW_UNUSED_NODES)<boolean>(),
   // Toggle actions
   showGraphFilters: createStandardAction(GraphFilterActionKeys.ENABLE_GRAPH_FILTERS)<boolean>(),
   toggleGraphNodeLabel: createAction(GraphFilterActionKeys.TOGGLE_GRAPH_NODE_LABEL),

@@ -108,6 +108,9 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
     case getType(GraphFilterActions.setHideValue):
       newState.filterState.hideValue = action.payload;
       break;
+    case getType(GraphFilterActions.setShowUnusedNodes):
+      newState.filterState.showUnusedNodes = action.payload;
+      break;
     case getType(GraphFilterActions.toggleFindHelp):
       newState.filterState.showFindHelp = !state.filterState.showFindHelp;
       break;

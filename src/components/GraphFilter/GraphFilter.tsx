@@ -7,7 +7,12 @@ import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
-import { graphTypeSelector, edgeLabelModeSelector, activeNamespacesSelector } from '../../store/Selectors';
+import {
+  graphTypeSelector,
+  edgeLabelModeSelector,
+  activeNamespacesSelector,
+  showUnusedNodesSelector
+} from '../../store/Selectors';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
 import { GraphType, NodeParamsType } from '../../types/Graph';
@@ -29,11 +34,13 @@ type ReduxProps = {
   edgeLabelMode: EdgeLabelMode;
   graphType: GraphType;
   node?: NodeParamsType;
+  showUnusedNodes: boolean;
 
   setActiveNamespaces: (activeNamespaces: Namespace[]) => void;
   setEdgeLabelMode: (edgeLabelMode: EdgeLabelMode) => void;
   setGraphType: (graphType: GraphType) => void;
   setNode: (node?: NodeParamsType) => void;
+  setShowUnusedNodes: (unusedNodes: boolean) => void;
 };
 
 type GraphFilterProps = ReduxProps & {
@@ -98,6 +105,15 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
       const activeNamespacesString = namespacesToString(props.activeNamespaces);
       HistoryManager.setParam(URLParam.NAMESPACES, activeNamespacesString);
     }
+
+    const unusedNodes = HistoryManager.getBooleanParam(URLParam.UNUSED_NODES);
+    if (unusedNodes !== undefined) {
+      if (props.showUnusedNodes !== unusedNodes) {
+        props.setShowUnusedNodes(unusedNodes);
+      }
+    } else {
+      HistoryManager.setParam(URLParam.UNUSED_NODES, String(this.props.showUnusedNodes));
+    }
   }
 
   componentDidUpdate() {
@@ -110,6 +126,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     }
     HistoryManager.setParam(URLParam.GRAPH_EDGES, String(this.props.edgeLabelMode));
     HistoryManager.setParam(URLParam.GRAPH_TYPE, String(this.props.graphType));
+    HistoryManager.setParam(URLParam.UNUSED_NODES, String(this.props.showUnusedNodes));
   }
 
   handleRefresh = () => {
@@ -183,7 +200,8 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabelMode: edgeLabelModeSelector(state),
   graphType: graphTypeSelector(state),
-  node: state.graph.node
+  node: state.graph.node,
+  showUnusedNodes: showUnusedNodesSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
@@ -191,7 +209,8 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
     setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),
     setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
     setGraphType: bindActionCreators(GraphFilterActions.setGraphType, dispatch),
-    setNode: bindActionCreators(GraphActions.setNode, dispatch)
+    setNode: bindActionCreators(GraphActions.setNode, dispatch),
+    setShowUnusedNodes: bindActionCreators(GraphFilterActions.setShowUnusedNodes, dispatch)
   };
 };
 

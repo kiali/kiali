@@ -7,9 +7,11 @@ import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthI
 import { WorkloadHealth } from '../../../types/Health';
 import { runtimesLogoProviders } from '../../../config/Logos';
 import Labels from '../../../components/Label/Labels';
+import { CytoscapeGraphSelectorBuilder } from '../../../components/CytoscapeGraph/CytoscapeGraphSelector';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
+  namespace: string;
   istioEnabled: boolean;
   health?: WorkloadHealth;
 };
@@ -30,6 +32,15 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
     return <span key={'runtime-' + idx}>{name}</span>;
   }
 
+  showOnGraphLink(workloadName: string, namespace: string) {
+    return `/graph/namespaces?graphType=workload&injectServiceNodes=true&unusedNodes=true&focusSelector=${encodeURI(
+      new CytoscapeGraphSelectorBuilder()
+        .workload(workloadName)
+        .namespace(namespace)
+        .build()
+    )}`;
+  }
+
   render() {
     const workload = this.props.workload;
     const isTemplateLabels =
@@ -42,6 +53,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
         iconName={WorkloadIcon}
         title={workload.name}
         istio={this.props.istioEnabled}
+        showOnGraphLink={this.showOnGraphLink(this.props.workload.name, this.props.namespace)}
         items={
           <Row>
             <Col xs={12} sm={8} md={6} lg={6}>

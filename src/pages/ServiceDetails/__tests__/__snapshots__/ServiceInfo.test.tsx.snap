@@ -396,6 +396,7 @@ ShallowWrapper {
                   }
                 }
                 name="reviews"
+                namespace="istio-system"
                 ports={
                   Array [
                     Object {
@@ -780,6 +781,7 @@ ShallowWrapper {
                     }
                   }
                   name="reviews"
+                  namespace="istio-system"
                   ports={
                     Array [
                       Object {
@@ -1528,6 +1530,7 @@ ShallowWrapper {
                     }
                   }
                   name="reviews"
+                  namespace="istio-system"
                   ports={
                     Array [
                       Object {
@@ -1593,6 +1596,7 @@ ShallowWrapper {
                     }
                   }
                   name="reviews"
+                  namespace="istio-system"
                   ports={
                     Array [
                       Object {
@@ -1654,6 +1658,7 @@ ShallowWrapper {
                     "app": "reviews",
                   },
                   "name": "reviews",
+                  "namespace": "istio-system",
                   "ports": Array [
                     Object {
                       "name": "http",
@@ -3081,6 +3086,7 @@ ShallowWrapper {
                     }
                   }
                   name="reviews"
+                  namespace="istio-system"
                   ports={
                     Array [
                       Object {
@@ -3465,6 +3471,7 @@ ShallowWrapper {
                       }
                     }
                     name="reviews"
+                    namespace="istio-system"
                     ports={
                       Array [
                         Object {
@@ -4213,6 +4220,7 @@ ShallowWrapper {
                       }
                     }
                     name="reviews"
+                    namespace="istio-system"
                     ports={
                       Array [
                         Object {
@@ -4278,6 +4286,7 @@ ShallowWrapper {
                       }
                     }
                     name="reviews"
+                    namespace="istio-system"
                     ports={
                       Array [
                         Object {
@@ -4339,6 +4348,7 @@ ShallowWrapper {
                       "app": "reviews",
                     },
                     "name": "reviews",
+                    "namespace": "istio-system",
                     "ports": Array [
                       Object {
                         "name": "http",

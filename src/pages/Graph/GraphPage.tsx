@@ -21,7 +21,7 @@ import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContaine
 import SummaryPanel from './SummaryPanel';
 import graphHelp from './GraphHelpTour';
 import { arrayEquals } from '../../utils/Common';
-import { isKioskMode } from '../../utils/SearchParamUtils';
+import { getFocusSelector, isKioskMode } from '../../utils/SearchParamUtils';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -280,6 +280,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
+    const focusSelector = getFocusSelector();
     return (
       <>
         <StatefulTour steps={graphHelp} isOpen={this.state.showHelp} onClose={this.toggleHelp} />
@@ -322,6 +323,7 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
                 containerClassName={cytoscapeGraphContainerStyle}
                 ref={refInstance => this.setCytoscapeGraph(refInstance)}
                 isMTLSEnabled={this.props.mtlsEnabled}
+                focusSelector={focusSelector}
               />
               {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>

@@ -92,6 +92,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             <Col xs={12} sm={12} md={12} lg={12}>
               <WorkloadDescription
                 workload={workload}
+                namespace={this.props.namespace}
                 istioEnabled={this.props.istioEnabled}
                 health={this.props.health}
               />

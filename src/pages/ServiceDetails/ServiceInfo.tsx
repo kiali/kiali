@@ -144,6 +144,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <ServiceInfoDescription
                 name={this.props.serviceDetails.service.name}
+                namespace={this.props.namespace}
                 createdAt={this.props.serviceDetails.service.createdAt}
                 resourceVersion={this.props.serviceDetails.service.resourceVersion}
                 istioEnabled={this.props.serviceDetails.istioSidecar}

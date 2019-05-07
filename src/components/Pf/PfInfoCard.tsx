@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
 import MissingSidecar from '../../components/MissingSidecar/MissingSidecar';
+import { Link } from 'react-router-dom';
 
 interface CardProps {
   iconType?: string;
@@ -8,6 +9,7 @@ interface CardProps {
   title?: string;
   items?: any;
   istio?: boolean;
+  showOnGraphLink?: string;
 }
 
 class PfInfoCard extends React.Component<CardProps> {
@@ -22,7 +24,14 @@ class PfInfoCard extends React.Component<CardProps> {
           <h2 className="card-pf-title">
             <Icon type={this.props.iconType} name={this.props.iconName} style={{ marginRight: '10px' }} />
             {this.props.title}
-            {!this.props.istio && (
+            {this.props.istio ? (
+              this.props.showOnGraphLink && (
+                <>
+                  {' '}
+                  (<Link to={this.props.showOnGraphLink}>Show on graph</Link>)
+                </>
+              )
+            ) : (
               <span style={{ marginLeft: '10px' }}>
                 <MissingSidecar />
               </span>

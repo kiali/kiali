@@ -45,6 +45,7 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
+import FocusAnimation from './FocusAnimation';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -76,6 +77,7 @@ type CytoscapeGraphProps = ReduxProps & {
   isMTLSEnabled: boolean;
   containerClassName?: string;
   refresh: () => void;
+  focusSelector?: string;
 };
 
 type CytoscapeGraphState = {};
@@ -103,6 +105,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   private graphHighlighter: GraphHighlighter;
   private trafficRenderer: TrafficRender;
+  private focusAnimation?: FocusAnimation;
+  private focusFinished: boolean;
   private cytoscapeReactWrapperRef: any;
   private namespaceChanged: boolean;
   private nodeChanged: boolean;
@@ -112,6 +116,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
+    this.focusFinished = false;
     this.namespaceChanged = false;
     this.nodeChanged = false;
     this.initialValues = {
@@ -186,11 +191,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
       const eles = cy.nodes(selector);
       if (eles.length > 0) {
-        this.selectTarget(eles[0]);
-        this.props.updateSummary({
-          summaryType: eles[0].data(CyNode.isGroup) ? 'group' : 'node',
-          summaryTarget: eles[0]
-        });
+        this.selectTargetAndUpdateSummary(eles[0]);
       }
     }
     if (this.props.elements !== prevProps.elements) {
@@ -345,7 +346,49 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     });
   }
 
+  private focus(cy: any, elements?: any) {
+    // We only want to focus once, but allow the url to be shared.
+    if (this.focusFinished) {
+      return;
+    }
+    let focusElements = elements;
+    if (!focusElements) {
+      if (this.props.focusSelector) {
+        const selectorResult = cy.$(this.props.focusSelector);
+        if (!selectorResult.empty()) {
+          focusElements = selectorResult;
+        }
+      }
+    }
+
+    if (focusElements) {
+      // If there is only one, select it
+      if (focusElements.length === 1) {
+        this.selectTargetAndUpdateSummary(focusElements[0]);
+      } else {
+        // If we have many elements, try to check if a compound in this query contains everything, if so, select it.
+        const compound = focusElements.filter('$node > node');
+        if (compound && compound.length === 1 && focusElements.subtract(compound).same(compound.children())) {
+          this.selectTargetAndUpdateSummary(compound[0]);
+          focusElements = compound;
+        }
+      }
+
+      // Start animation
+      if (this.focusAnimation) {
+        this.focusAnimation.stop();
+      }
+      this.focusAnimation = new FocusAnimation(cy);
+      this.focusAnimation.onFinished(() => {
+        this.focusFinished = true;
+      });
+      this.focusAnimation.start(focusElements);
+    }
+    return focusElements;
+  }
+
   private safeFit(cy: any) {
+    this.focus(cy);
     CytoscapeGraphUtils.safeFit(cy);
     this.initialValues.position = { ...cy.pan() };
     this.initialValues.zoom = cy.zoom();
@@ -448,6 +491,16 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
   };
 
+  private selectTargetAndUpdateSummary = (target: any) => {
+    this.selectTarget(target);
+    const event: CytoscapeClickEvent = {
+      summaryType: target.data(CyNode.isGroup) ? 'group' : 'node',
+      summaryTarget: target
+    };
+    this.props.updateSummary(event);
+    this.graphHighlighter.onClick(event);
+  };
+
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
     const target = event.summaryTarget;
     const targetType = event.summaryType;
@@ -513,7 +566,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       graphType: this.props.graphType,
       node: targetNode,
       refreshInterval: this.props.refreshInterval,
-      showServiceNodes: this.props.showServiceNodes
+      showServiceNodes: this.props.showServiceNodes,
+      showUnusedNodes: this.props.showUnusedNodes
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state

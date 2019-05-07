@@ -25,6 +25,7 @@ export enum URLParam {
   REPORTER = 'reporter',
   SHOW_AVERAGE = 'avg',
   SORT = 'sort',
+  UNUSED_NODES = 'unusedNodes',
   JAEGER_START_TIME = 'start',
   JAEGER_END_TIME = 'end',
   JAEGER_LIMIT_TRACES = 'limit',

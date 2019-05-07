@@ -30,7 +30,9 @@ const workload: Workload = {
 
 describe('WorkloadDescription', () => {
   it('should render with runtimes', () => {
-    const wrapper = shallow(<WorkloadDescription workload={workload} istioEnabled={false} />);
+    const wrapper = shallow(
+      <WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />
+    );
     expect(wrapper).toMatchSnapshot();
   });
 });
