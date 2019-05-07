@@ -136,7 +136,8 @@ type GrafanaConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	EnableJaeger bool
+	// EnableJaeger is false by default, in the discover feature will be true if the user set the configuration or Kiali found the service.
+	EnableJaeger bool   `yaml:"-"`
 	Namespace    string `yaml:"namespace"`
 	Service      string `yaml:"service"`
 	URL          string `yaml:"url"`

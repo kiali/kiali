@@ -13,51 +13,66 @@ var saToken string
 
 var clientFactory kubernetes.ClientFactory
 
+func checkTracingService() (url string, err error) {
+	conf := config.Get()
+	tracing := config.TracingDefaultService
+	jaeger := config.JaegerQueryDefaultService
+	ns := config.IstioDefaultNamespace
+	service := tracing
+
+	if conf.ExternalServices.Tracing.Namespace != "" {
+		ns = conf.ExternalServices.Tracing.Namespace
+	}
+
+	if conf.ExternalServices.Tracing.Service != "" {
+		// We need discover the URL
+		service = conf.ExternalServices.Tracing.Service
+		url, err = discoverUrlService(ns, service)
+		if err != nil {
+			// We found a URL and the user set the service so Tracing is ENABLED
+			conf.ExternalServices.Tracing.EnableJaeger = true
+		}
+	} else {
+		// User didn't set the service
+		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
+		// look in Tracing Default Service
+		url, err = discoverUrlService(ns, service)
+		if err == nil {
+			// Look in jaeger Query Default Service
+			service := jaeger
+			url, err = discoverUrlService(ns, service)
+		}
+
+		// We found the Tracing service in Tracing or Jaeger Default
+		if err != nil {
+			if conf.ExternalServices.Tracing.URL == "" {
+				conf.ExternalServices.Tracing.URL = url // Overwrite URL if the user didn't set
+			}
+			// Tracing is ENABLED
+			conf.ExternalServices.Tracing.EnableJaeger = true
+			// Set the service
+			conf.ExternalServices.Tracing.Service = service
+		}
+	}
+
+	// Save configuration
+	config.Set(conf)
+
+	return url, err
+
+}
+
 func DiscoverJaeger() (url string, err error) {
 	conf := config.Get()
 
-	if conf.ExternalServices.Tracing.URL != "" {
+	if conf.ExternalServices.Tracing.URL != "" && conf.ExternalServices.Tracing.Service != "" {
+		// User assume his configuration
+		conf.ExternalServices.Tracing.EnableJaeger = true
+		config.Set(conf)
 		return conf.ExternalServices.Tracing.URL, nil
 	}
 
-	ns := config.IstioDefaultNamespace
-
-	// User set a service
-	if conf.ExternalServices.Tracing.Service != "" {
-		url, err = discoverUrlService(conf.ExternalServices.Tracing.Namespace, conf.ExternalServices.Tracing.Service)
-		// If the service is correct set it
-		if err == nil {
-			conf.ExternalServices.Tracing.EnableJaeger = true
-			conf.ExternalServices.Tracing.URL = url
-		}
-	} else {
-		// No set a service, go discover
-		tracing := config.TracingDefaultService
-		jaeger := config.JaegerQueryDefaultService
-
-		// Check if there is a Tracing service in the namespace
-		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
-		url, err = discoverUrlService(ns, tracing)
-		conf.ExternalServices.Tracing.Service = tracing
-		if err != nil || url == "" {
-			log.Debugf("Kiali not found Tracing in service %s of ns %s error: %s", tracing, ns, err)
-			// Check if there is a Jaeger-Query service in the namespace
-			url, err = discoverUrlService(ns, jaeger)
-			if err != nil || url == "" {
-				conf.ExternalServices.Tracing.EnableJaeger = false
-				conf.ExternalServices.Tracing.Service = ""
-				log.Debugf("Kiali not found Jaeger in service %s of ns %s  error: %s", jaeger, ns, err)
-				return "", err
-			}
-			log.Debugf("Kiali found Jaeger in %s", url)
-			conf.ExternalServices.Tracing.Service = jaeger
-		}
-		log.Debugf("Kiali found Tracing in %s", url)
-		conf.ExternalServices.Tracing.EnableJaeger = true
-		conf.ExternalServices.Tracing.URL = url
-	}
-	config.Set(conf)
-	return url, err
+	return checkTracingService()
 }
 
 func DiscoverGrafana() (url string, err error) {
