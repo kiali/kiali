@@ -49,7 +49,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		// dead nodes tell no tales (er, have no pods)
-		if isDead, ok := n.Metadata["isDead"]; ok && isDead.(bool) {
+		if isDead, ok := n.Metadata[graph.IsDead]; ok && isDead.(bool) {
 			continue
 		}
 
@@ -77,7 +77,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		if !hasIstioSidecar {
-			n.Metadata["hasMissingSC"] = true
+			n.Metadata[graph.HasMissingSC] = true
 		}
 	}
 }

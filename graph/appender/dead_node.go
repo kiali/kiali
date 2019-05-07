@@ -46,7 +46,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// A service node that is a service entry is never considered dead
-			if _, ok := n.Metadata["isServiceEntry"]; ok {
+			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				continue
 			}
 
@@ -100,7 +100,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 				numRemoved++
 			} else {
 				if workload.PodCount == 0 {
-					n.Metadata["isDead"] = true
+					n.Metadata[graph.IsDead] = true
 				}
 			}
 		}

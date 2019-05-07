@@ -180,52 +180,52 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		addNodeTelemetry(n, nd)
 
 		// node may have deployment but no pods running)
-		if val, ok := n.Metadata["isDead"]; ok {
+		if val, ok := n.Metadata[graph.IsDead]; ok {
 			nd.IsDead = val.(bool)
 		}
 
 		// node may be a root
-		if val, ok := n.Metadata["isRoot"]; ok {
+		if val, ok := n.Metadata[graph.IsRoot]; ok {
 			nd.IsRoot = val.(bool)
 		}
 
 		// node may be unused
-		if val, ok := n.Metadata["isUnused"]; ok {
+		if val, ok := n.Metadata[graph.IsUnused]; ok {
 			nd.IsUnused = val.(bool)
 		}
 
 		// node is not accessible to the current user
-		if val, ok := n.Metadata["isInaccessible"]; ok {
+		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
 		}
 
 		// node may have a circuit breaker
-		if val, ok := n.Metadata["hasCB"]; ok {
+		if val, ok := n.Metadata[graph.HasCB]; ok {
 			nd.HasCB = val.(bool)
 		}
 
 		// node may have a virtual service
-		if val, ok := n.Metadata["hasVS"]; ok {
+		if val, ok := n.Metadata[graph.HasVS]; ok {
 			nd.HasVS = val.(bool)
 		}
 
 		// set sidecars checks, if available
-		if val, ok := n.Metadata["hasMissingSC"]; ok {
+		if val, ok := n.Metadata[graph.HasMissingSC]; ok {
 			nd.HasMissingSC = val.(bool)
 		}
 
 		// check if node is misconfigured
-		if val, ok := n.Metadata["isMisconfigured"]; ok {
+		if val, ok := n.Metadata[graph.IsMisconfigured]; ok {
 			nd.IsMisconfigured = val.(string)
 		}
 
 		// check if node is on another namespace
-		if val, ok := n.Metadata["isOutside"]; ok {
+		if val, ok := n.Metadata[graph.IsOutside]; ok {
 			nd.IsOutside = val.(bool)
 		}
 
 		// node may have destination service info
-		if val, ok := n.Metadata["destServices"]; ok {
+		if val, ok := n.Metadata[graph.DestServices]; ok {
 			nd.DestServices = []graph.Service{}
 			for _, val := range val.(map[string]graph.Service) {
 				nd.DestServices = append(nd.DestServices, val)
@@ -233,7 +233,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		}
 
 		// node may be a service entry
-		if val, ok := n.Metadata["isServiceEntry"]; ok {
+		if val, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			nd.IsServiceEntry = val.(string)
 		}
 
@@ -247,8 +247,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			sourceIdHash := nodeHash(n.ID)
 			destIdHash := nodeHash(e.Dest.ID)
 			protocol := ""
-			if e.Metadata["protocol"] != nil {
-				protocol = e.Metadata["protocol"].(string)
+			if e.Metadata[graph.ProtocolKey] != nil {
+				protocol = e.Metadata[graph.ProtocolKey].(string)
 			}
 			edgeId := edgeHash(sourceIdHash, destIdHash, protocol)
 			ed := EdgeData{
@@ -274,7 +274,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[r.Name] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -287,10 +287,10 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 }
 
 func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
-	if val, ok := e.Metadata["isMTLS"]; ok {
+	if val, ok := e.Metadata[graph.IsMTLS]; ok {
 		ed.IsMTLS = fmt.Sprintf("%.0f", val.(float64))
 	}
-	if val, ok := e.Metadata["responseTime"]; ok {
+	if val, ok := e.Metadata[graph.ResponseTime]; ok {
 		responseTime := val.(float64)
 		ed.ResponseTime = fmt.Sprintf("%.0f", responseTime)
 	}
@@ -322,7 +322,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[r.Name] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -330,7 +330,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if percentErr.Name != "" {
 					rateVal := err / total * 100
 					if rateVal > 0.0 {
-						protocolTraffic.Rates[percentErr.Name] = fmt.Sprintf("%.*f", percentErr.Precision, rateVal)
+						protocolTraffic.Rates[string(percentErr.Name)] = fmt.Sprintf("%.*f", percentErr.Precision, rateVal)
 					}
 				}
 				if percentReq.Name != "" {
@@ -343,7 +343,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 						break
 					}
 					if rateVal > 0.0 {
-						protocolTraffic.Rates[percentReq.Name] = fmt.Sprintf("%.*f", percentReq.Precision, rateVal)
+						protocolTraffic.Rates[string(percentReq.Name)] = fmt.Sprintf("%.*f", percentReq.Precision, rateVal)
 					}
 				}
 				mdResponses := e.Metadata[p.EdgeResponses].(graph.Responses)
@@ -365,7 +365,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 	}
 }
 
-func getRate(md map[string]interface{}, k string) float64 {
+func getRate(md graph.Metadata, k graph.MetadataKey) float64 {
 	if rate, ok := md[k]; ok {
 		return rate.(float64)
 	}

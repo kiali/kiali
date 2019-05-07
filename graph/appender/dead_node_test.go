@@ -151,7 +151,7 @@ func TestDeadNode(t *testing.T) {
 	id, _ := graph.Id("testNamespace", "testNoPodsNoTraffic", "testNamespace", "testNoPodsNoTraffic-v1", "testNoPodsNoTraffic", "v1", graph.GraphTypeVersionedApp)
 	noPodsNoTraffic, ok := trafficMap[id]
 	assert.Equal(true, ok)
-	isDead, ok := noPodsNoTraffic.Metadata["isDead"]
+	isDead, ok := noPodsNoTraffic.Metadata[graph.IsDead]
 	assert.Equal(true, ok)
 	assert.Equal(true, isDead)
 
@@ -192,7 +192,7 @@ func testTrafficMap() map[string]*graph.Node {
 
 	n9 := graph.NewNode("testNamespace", "egress.io", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n9.Metadata["httpIn"] = 0.8
-	n9.Metadata["isServiceEntry"] = "MESH_EXTERNAL"
+	n9.Metadata[graph.IsServiceEntry] = "MESH_EXTERNAL"
 
 	n10 := graph.NewNode("testNamespace", "egress.not.defined", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n10.Metadata["httpIn"] = 0.8

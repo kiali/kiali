@@ -11,8 +11,8 @@ import (
 const IstioAppenderName = "istio"
 
 // IstioAppender is responsible for badging nodes with special Istio significance:
-// - CircuitBreaker: n.Metadata["hasCB"] = true
-// - VirtualService: n.Metadata["hasVS"] = true
+// - CircuitBreaker: n.Metadata[HasCB] = true
+// - VirtualService: n.Metadata[HasVS] = true
 // Name: istio
 type IstioAppender struct{}
 
@@ -59,27 +59,27 @@ NODES:
 		case n.NodeType == graph.NodeTypeService:
 			for _, destinationRule := range istioCfg.DestinationRules.Items {
 				if destinationRule.HasCircuitBreaker(namespace, n.Service, "") {
-					n.Metadata["hasCB"] = true
+					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
 			}
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
-			if destServices, ok := n.Metadata["destServices"]; ok {
+			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(map[string]graph.Service) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, "") {
-							n.Metadata["hasCB"] = true
+							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
 					}
 				}
 			}
 		case versionOk:
-			if destServices, ok := n.Metadata["destServices"]; ok {
+			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(map[string]graph.Service) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, n.Version) {
-							n.Metadata["hasCB"] = true
+							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
 					}
@@ -102,7 +102,7 @@ NODES:
 		}
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
-				n.Metadata["hasVS"] = true
+				n.Metadata[graph.HasVS] = true
 				continue NODES
 			}
 		}

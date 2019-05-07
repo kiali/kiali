@@ -140,7 +140,7 @@ func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 			for _, nsEdge := range nsNode.Edges {
 				isDupEdge := false
 				for _, e := range node.Edges {
-					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata["protocol"] == e.Metadata["protocol"] {
+					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
 						isDupEdge = true
 						break
 					}
@@ -161,26 +161,26 @@ func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o options.Options) {
 	for _, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeUnknown:
-			n.Metadata["isInaccessible"] = true
+			n.Metadata[graph.IsInaccessible] = true
 		case graph.NodeTypeService:
-			if _, ok := n.Metadata["isServiceEntry"]; ok {
-				n.Metadata["isInaccessible"] = true
+			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+				n.Metadata[graph.IsInaccessible] = true
 			} else if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
-				n.Metadata["isInaccessible"] = true
+				n.Metadata[graph.IsInaccessible] = true
 			} else {
 				if isOutside(n, o.Namespaces) {
-					n.Metadata["isOutside"] = true
+					n.Metadata[graph.IsOutside] = true
 				}
 			}
 		default:
 			if isOutside(n, o.Namespaces) {
-				n.Metadata["isOutside"] = true
+				n.Metadata[graph.IsOutside] = true
 			}
 		}
-		if isOutsider, ok := n.Metadata["isOutside"]; ok && isOutsider.(bool) {
-			if _, ok2 := n.Metadata["isInaccessible"]; !ok2 {
+		if isOutsider, ok := n.Metadata[graph.IsOutside]; ok && isOutsider.(bool) {
+			if _, ok2 := n.Metadata[graph.IsInaccessible]; !ok2 {
 				if isInaccessible(n, o.AccessibleNamespaces) {
-					n.Metadata["isInaccessible"] = true
+					n.Metadata[graph.IsInaccessible] = true
 				}
 			}
 		}
@@ -219,7 +219,7 @@ func markTrafficGenerators(trafficMap graph.TrafficMap) {
 			continue
 		}
 		if _, isDest := destMap[n.ID]; !isDest {
-			n.Metadata["isRoot"] = true
+			n.Metadata[graph.IsRoot] = true
 		}
 	}
 }
@@ -233,7 +233,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 	for id, n := range trafficMap {
 		if n.NodeType != graph.NodeTypeService {
 			// if node isRoot then keep it to better understand traffic flow.
-			if val, ok := n.Metadata["isRoot"]; ok && val.(bool) {
+			if val, ok := n.Metadata[graph.IsRoot]; ok && val.(bool) {
 				// Remove any edge to a non-service node.  The service graph only shows non-service root
 				// nodes, all other nodes are service nodes.  The use case is direct workload-to-workload
 				// traffic, which is unusual but possible.  This can lead to nodes with outgoing traffic
@@ -268,7 +268,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 				childService := serviceEdge.Dest
 				var edge *graph.Edge
 				for _, e := range n.Edges {
-					if childService.ID == e.Dest.ID && serviceEdge.Metadata["protocol"] == e.Metadata["protocol"] {
+					if childService.ID == e.Dest.ID && serviceEdge.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
 						edge = e
 						break
 					}
@@ -470,14 +470,14 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags,
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
-		if dest.ID == e.Dest.ID && e.Metadata["protocol"] == protocol {
+		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
 			edge = e
 			break
 		}
 	}
 	if nil == edge {
 		edge = source.AddEdge(dest)
-		edge.Metadata["protocol"] = protocol
+		edge.Metadata[graph.ProtocolKey] = protocol
 	}
 
 	// A workload may mistakenly have multiple app and or version label values.
@@ -552,14 +552,14 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, so
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
-		if dest.ID == e.Dest.ID && e.Metadata["procotol"] == "tcp" {
+		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == "tcp" {
 			edge = e
 			break
 		}
 	}
 	if nil == edge {
 		edge = source.AddEdge(dest)
-		edge.Metadata["protocol"] = "tcp"
+		edge.Metadata[graph.ProtocolKey] = "tcp"
 	}
 
 	// A workload may mistakenly have multiple app and or version label values.
@@ -576,14 +576,14 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, so
 	return source, dest
 }
 
-func addToDestServices(md map[string]interface{}, namespace, service string) {
+func addToDestServices(md graph.Metadata, namespace, service string) {
 	if !graph.IsOK(service) {
 		return
 	}
-	destServices, ok := md["destServices"]
+	destServices, ok := md[graph.DestServices]
 	if !ok {
 		destServices = make(map[string]graph.Service)
-		md["destServices"] = destServices
+		md[graph.DestServices] = destServices
 	}
 	destService := graph.Service{Namespace: namespace, Name: service}
 	destServices.(map[string]graph.Service)[destService.Key()] = destService
@@ -603,7 +603,7 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 		}
 		// prefer the labels of an active time series as often the other labels are inactive
 		if len(labels) > 0 {
-			node.Metadata["isMisconfigured"] = fmt.Sprintf("labels=%v", labels)
+			node.Metadata[graph.IsMisconfigured] = fmt.Sprintf("labels=%v", labels)
 			if rate > 0.0 {
 				node.App = app
 				node.Version = version

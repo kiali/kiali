@@ -34,7 +34,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -55,7 +55,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata["hasMissingSC"].(bool)
+		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
 	}
@@ -77,7 +77,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -98,7 +98,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -119,7 +119,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata["hasMissingSC"].(bool)
+		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
 	}
@@ -140,7 +140,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }

@@ -63,7 +63,7 @@ func TestSecurityPolicy(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(nil, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(nil, ingress.Edges[0].Metadata[graph.IsMTLS])
 
 	duration, _ := time.ParseDuration("60s")
 	appender := SecurityPolicyAppender{
@@ -85,7 +85,7 @@ func TestSecurityPolicy(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(50.0, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(50.0, ingress.Edges[0].Metadata[graph.IsMTLS])
 
 	productpage := ingress.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)
@@ -130,7 +130,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(nil, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(nil, ingress.Edges[0].Metadata[graph.IsMTLS])
 
 	duration, _ := time.ParseDuration("60s")
 	appender := SecurityPolicyAppender{
@@ -152,12 +152,12 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(100.0, ingress.Edges[0].Metadata["isMTLS"])
+	assert.Equal(100.0, ingress.Edges[0].Metadata[graph.IsMTLS])
 
 	productpagesvc := ingress.Edges[0].Dest
 	assert.Equal("productpage", productpagesvc.Service)
 	assert.Equal(1, len(productpagesvc.Edges))
-	assert.Equal(100.0, productpagesvc.Edges[0].Metadata["isMTLS"])
+	assert.Equal(100.0, productpagesvc.Edges[0].Metadata[graph.IsMTLS])
 
 	productpage := productpagesvc.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)

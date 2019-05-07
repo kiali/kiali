@@ -46,7 +46,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		// If so flag it, don't discard it (kiali-1526, see also kiali-2014).
 		// The flag will be passed to the UI to inhibit links to non-existent detail pages.
 		if location, ok := a.getServiceEntry(n.Service, globalInfo); ok {
-			n.Metadata["isServiceEntry"] = location
+			n.Metadata[graph.IsServiceEntry] = location
 		}
 	}
 }

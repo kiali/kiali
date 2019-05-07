@@ -144,7 +144,7 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			if val, ok := responseTimeMap[key]; ok {
-				e.Metadata["responseTime"] = val
+				e.Metadata[graph.ResponseTime] = val
 			}
 		}
 	}
