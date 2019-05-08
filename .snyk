@@ -1,5 +1,5 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.13.1
+version: v1.13.3
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
   'npm:bootstrap:20160627':
@@ -775,4 +775,8 @@ ignore:
     - react-scripts-ts > webpack-dev-server:
         reason: None given
         expires: '2019-02-16T23:29:13.096Z'
-patch: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-AXIOS-174505:
+    - axios:
+        patched: '2019-05-06T06:42:36.811Z'
