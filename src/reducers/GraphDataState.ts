@@ -60,6 +60,15 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       newState.isError = true;
       newState.error = action.payload.error;
       break;
+    case getType(GraphDataActions.getGraphDataWithoutNamespaces):
+      newState.isLoading = false;
+      newState.isError = false;
+      newState.error = INITIAL_GRAPH_STATE.error;
+      newState.graphData = INITIAL_GRAPH_STATE.graphData;
+      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
+      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
+      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
+      break;
     case getType(GraphActions.changed):
       newState.graphData = INITIAL_GRAPH_STATE.graphData;
       newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;

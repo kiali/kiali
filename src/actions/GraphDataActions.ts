@@ -6,7 +6,8 @@ enum GraphDataActionKeys {
   GET_GRAPH_DATA_START = 'GET_GRAPH_DATA_START',
   GET_GRAPH_DATA_SUCCESS = 'GET_GRAPH_DATA_SUCCESS',
   GET_GRAPH_DATA_FAILURE = 'GET_GRAPH_DATA_FAILURE',
-  HANDLE_LEGEND = 'HANDLE_LEGEND'
+  HANDLE_LEGEND = 'HANDLE_LEGEND',
+  GET_GRAPH_DATA_WITHOUT_NAMESPACES = 'GET_GRAPH_DATA_WITHOUT_NAMESPACES'
 }
 
 // synchronous action creators
@@ -24,6 +25,7 @@ export const GraphDataActions = {
   getGraphDataFailure: createAction(GraphDataActionKeys.GET_GRAPH_DATA_FAILURE, resolve => (error: any) =>
     resolve({ error: error })
   ),
+  getGraphDataWithoutNamespaces: createAction(GraphDataActionKeys.GET_GRAPH_DATA_WITHOUT_NAMESPACES),
   handleLegend: createAction(GraphDataActionKeys.HANDLE_LEGEND)
 };
 

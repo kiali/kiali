@@ -34,6 +34,7 @@ const GraphDataThunkActions = {
   ) => {
     return (dispatch: ThunkDispatch<KialiAppState, undefined, KialiAppAction>, getState: () => KialiAppState) => {
       if (namespaces.length === 0) {
+        dispatch(GraphDataActions.getGraphDataWithoutNamespaces());
         return Promise.resolve();
       }
       dispatch(GraphDataActions.getGraphDataStart());
