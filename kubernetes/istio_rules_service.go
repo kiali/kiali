@@ -9,8 +9,8 @@ import (
 )
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
-func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Do().Get()
+func (in *IstioClient) GetIstioRules(namespace string, labelSelector string) ([]IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Param("labelSelector", labelSelector).Do().Get()
 	if err != nil {
 		return nil, err
 	}

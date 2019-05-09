@@ -163,8 +163,8 @@ func (o *K8SClientMock) GetIstioRule(namespace string, istiorule string) (kubern
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetIstioRules(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetIstioRules(namespace string, labelSelector string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace, labelSelector)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 

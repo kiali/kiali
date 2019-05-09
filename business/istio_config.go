@@ -154,7 +154,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func() {
 		defer wg.Done()
 		if criteria.IncludeRules {
-			if mr, mrErr = in.k8s.GetIstioRules(criteria.Namespace); mrErr == nil {
+			if mr, mrErr = in.k8s.GetIstioRules(criteria.Namespace, ""); mrErr == nil {
 				istioConfigList.Rules = models.CastIstioRulesCollection(mr)
 			}
 		}

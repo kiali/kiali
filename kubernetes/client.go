@@ -55,7 +55,7 @@ type IstioClientInterface interface {
 	GetGateways(namespace string) ([]IstioObject, error)
 	GetIstioDetails(namespace string, serviceName string) (*IstioDetails, error)
 	GetIstioRule(namespace string, istiorule string) (IstioObject, error)
-	GetIstioRules(namespace string) ([]IstioObject, error)
+	GetIstioRules(namespace string, labelSelector string) ([]IstioObject, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
