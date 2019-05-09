@@ -5032,10 +5032,6 @@
     "ThreeScaleServiceRule": {
       "type": "object",
       "properties": {
-        "appName": {
-          "type": "string",
-          "x-go-name": "AppName"
-        },
         "serviceName": {
           "type": "string",
           "x-go-name": "ServiceName"
@@ -5047,13 +5043,6 @@
         "threeScaleHandlerName": {
           "type": "string",
           "x-go-name": "ThreeScaleHandlerName"
-        },
-        "versions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Versions"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
