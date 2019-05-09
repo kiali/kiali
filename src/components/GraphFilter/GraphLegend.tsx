@@ -37,44 +37,49 @@ export default class GraphLegend extends React.Component<GraphLegendProps, Graph
     image.src = this.getLegendImage();
   }
 
-  getLegendImageStyle() {
-    return style({
-      backgroundImage: `url(${this.getLegendImage()})`,
-      margin: '5px 10px',
-      padding: 0
-    });
-  }
-
-  getLegendImage() {
-    let image = graphLegendImage;
-
-    if (this.props.isMTLSEnabled) {
-      image = graphmTLSEnabledLegendImage;
-    }
-
-    return image;
-  }
-
   render() {
     if (this.state.height === 0 && this.state.width === 0) {
       return null;
     }
-    const className = this.props.className ? this.props.className : '';
+
+    const parentClassName = this.props.className ? this.props.className : '';
+    const width = 'calc(100vw - 50px - var(--pf-c-page__sidebar--md--Width))'; // 50px prevents full coverage
+    const maxWidth = this.state.width + 2; // +2 includes border and prevents scroll
+
+    const legendImageStyle = style({
+      backgroundImage: `url(${this.getLegendImage()})`,
+      padding: 0
+    });
+    const contentStyle = style({
+      width: width,
+      maxWidth: maxWidth,
+      overflowX: 'auto',
+      overflowY: 'auto'
+    });
+    const headerStyle = style({
+      width: this.state.width
+    });
+    const bodyStyle = style({
+      width: this.state.width,
+      height: this.state.height
+    });
+
     return (
-      <Draggable>
-        <div className={`modal-content ${className}`}>
-          <div className="modal-header">
+      <Draggable bounds="#root">
+        <div className={`modal-content ${parentClassName} ${contentStyle}`}>
+          <div className={`modal-header ${headerStyle}`}>
             <Button className="close" bsClass="" onClick={this.props.closeLegend}>
               <Icon title="Close" type="pf" name="close" />
             </Button>
             <span className="modal-title">Graph Legend</span>
           </div>
-          <div
-            style={{ width: this.state.width, height: this.state.height }}
-            className={`modal-body ${this.getLegendImageStyle()}`}
-          />
+          <div className={`modal-body ${legendImageStyle} ${bodyStyle}`} />
         </div>
       </Draggable>
     );
   }
+
+  private getLegendImage = () => {
+    return this.props.isMTLSEnabled ? graphmTLSEnabledLegendImage : graphLegendImage;
+  };
 }
