@@ -88,9 +88,18 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       this.aceEditorRef.current!['editor'].onChangeAnnotation();
     }
 
-    if (this.props.match.params !== prevProps.match.params) {
+    if (!this.propsMatch(prevProps)) {
       this.fetchIstioObjectDetailsFromProps(this.props.match.params);
     }
+  }
+
+  propsMatch(prevProps: RouteComponentProps<IstioConfigId>) {
+    return (
+      this.props.match.params.namespace === prevProps.match.params.namespace &&
+      this.props.match.params.object === prevProps.match.params.object &&
+      this.props.match.params.objectType === prevProps.match.params.objectType &&
+      this.props.match.params.objectSubtype === prevProps.match.params.objectSubtype
+    );
   }
 
   componentWillUnmount() {
