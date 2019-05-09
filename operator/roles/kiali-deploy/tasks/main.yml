@@ -175,6 +175,22 @@
   - "templates/dashboards/*.yaml"
   ignore_errors: yes
 
+- name: Force the Kiali pod to restart if necessary
+  k8s:
+    state: "absent"
+    api_version: "v1"
+    kind: "Pod"
+    namespace: "{{ item.metadata.namespace }}"
+    name: "{{ item.metadata.name }}"
+  vars:
+    pods: "{{ query('k8s', kind='Pod', namespace=kiali_vars.deployment.namespace, label_selector='app=kiali') }}"
+  loop: "{{ pods }}"
+  when:
+  - pods is defined
+  - processed_resources.configmap is defined
+  - processed_resources.configmap.changed == True
+  - processed_resources.configmap.method == "patch"
+
 - name: Kiali operator has completed all processing for installation.
   debug:
     msg: "KIALI INSTALLATION IS DONE."
