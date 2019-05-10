@@ -9,7 +9,7 @@ import (
 
 // Get JaegerInfo provides the proxy Jaeger URL
 func GetJaegerInfo(w http.ResponseWriter, r *http.Request) {
-	jaegerConfig := config.Get().ExternalServices.Jaeger
+	jaegerConfig := config.Get().ExternalServices.Tracing
 	info := models.JaegerInfo{
 		URL: jaegerConfig.URL,
 	}

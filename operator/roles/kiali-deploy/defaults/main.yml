@@ -54,11 +54,12 @@ kiali_defaults:
       istio_identity_domain: "svc.cluster.local"
       istio_sidecar_annotation: "sidecar.istio.io/status"
       url_service_version: ""
-    jaeger:
-      service: "jaeger-query"
-      url: ""
     prometheus:
       custom_metrics_url: ""
+      url: ""
+    tracing:
+      namespace: ""
+      service: ""
       url: ""
 
   identity:

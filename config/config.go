@@ -54,8 +54,8 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
-	EnvJaegerURL     = "JAEGER_URL"
-	EnvJaegerService = "JAEGER_SERVICE"
+	EnvTracingURL              = "TRACING_URL"
+	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
 
 	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
 	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
@@ -136,10 +136,13 @@ type GrafanaConfig struct {
 	Password                 string `yaml:"password"`
 }
 
-// JaegerConfig describes configuration used for jaeger links
-type JaegerConfig struct {
-	URL     string `yaml:"url"`
-	Service string `yaml:"service"`
+// TracingConfig describes configuration used for tracing links
+type TracingConfig struct {
+	// EnableJaeger is false by default, in the discover feature will be true if the user set the configuration or Kiali found the service.
+	EnableJaeger bool   `yaml:"-"`
+	Namespace    string `yaml:"namespace"`
+	Service      string `yaml:"service"`
+	URL          string `yaml:"url"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -154,7 +157,7 @@ type ExternalServices struct {
 	Istio      IstioConfig      `yaml:"istio,omitempty"`
 	Prometheus PrometheusConfig `yaml:"prometheus,omitempty"`
 	Grafana    GrafanaConfig    `yaml:"grafana,omitempty"`
-	Jaeger     JaegerConfig     `yaml:"jaeger,omitempty"`
+	Tracing    TracingConfig    `yaml:"tracing,omitempty"`
 }
 
 // LoginToken holds config used in token-based authentication
@@ -208,6 +211,15 @@ type Config struct {
 	Auth             AuthConfig        `yaml:"auth,omitempty"`
 }
 
+// Istio System namespace by default
+const IstioDefaultNamespace = "istio-system"
+
+// Tracing Service by default
+const TracingDefaultService = "tracing"
+
+// Jaeger Query Service by default
+const JaegerQueryDefaultService = "jaeger-query"
+
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
@@ -217,7 +229,7 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
+	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, IstioDefaultNamespace))
 	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
 	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
@@ -239,13 +251,13 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 
 	// Prometheus configuration
-	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, "http://prometheus.istio-system:9090"))
+	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", IstioDefaultNamespace)))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, "istio-system"))
+	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, IstioDefaultNamespace))
 	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
 	c.ExternalServices.Grafana.WorkloadDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaWorkloadDashboardPattern, "Istio%20Workload%20Dashboard"))
 	c.ExternalServices.Grafana.ServiceDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaServiceDashboardPattern, "Istio%20Service%20Dashboard"))
@@ -259,9 +271,9 @@ func NewConfig() (c *Config) {
 		log.Error("Grafana username (\"GRAFANA_USERNAME\") requires that Grafana password (\"GRAFANA_PASSWORD\") is set.")
 	}
 
-	// Jaeger Configuration
-	c.ExternalServices.Jaeger.URL = strings.TrimSpace(getDefaultString(EnvJaegerURL, ""))
-	c.ExternalServices.Jaeger.Service = strings.TrimSpace(getDefaultString(EnvJaegerService, "jaeger-query"))
+	// Tracing Configuration
+	c.ExternalServices.Tracing.EnableJaeger = false
+	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, IstioDefaultNamespace))
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))

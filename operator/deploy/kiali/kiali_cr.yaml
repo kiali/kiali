@@ -178,14 +178,6 @@ spec:
 #      istio_sidecar_annotation: "sidecar.istio.io/status"
 #      url_service_version: ""
 #
-# **Jaeger-specific settings:
-# service: The Kubernetes service name for Jaeger. Kiali uses this to connect within the cluster to Jaeger.
-# url: The URL that Kiali uses when integrating with Jaeger. This URL must be accessible to clients external to
-#      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
-#    ---
-#    jaeger:
-#      service: "jaeger-query"
-#      url: ""
 #
 # **Prometheus-specific settings:
 # custom_metrics_url: The URL used to query the Prometheus Server for building the runtime metrics dashboards.
@@ -196,6 +188,17 @@ spec:
 #    ---
 #    prometheus:
 #      custom_metrics_url: ""
+#      url: ""
+# **Tracing-specific settings:
+#  - Right now we only support Jaeger
+# namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
+# service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
+# url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
+#      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+#    ---
+#    tracing:
+#      namespace: ""
+#      service : ""
 #      url: ""
 
 ##########

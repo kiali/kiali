@@ -35,8 +35,8 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 	if !JaegerAvailable {
 		return -1, errors.New("jaeger is not available")
 	}
-	if config.Get().ExternalServices.Jaeger.Service != "" {
-		u, errParse := url.Parse(fmt.Sprintf("http://%s/api/traces", config.Get().ExternalServices.Jaeger.Service))
+	if config.Get().ExternalServices.Tracing.EnableJaeger {
+		u, errParse := url.Parse(fmt.Sprintf("http://%s/api/traces", config.Get().ExternalServices.Tracing.Service))
 		if errParse != nil {
 			log.Errorf("Error parse Jaeger URL fetching Error Traces: %s", err)
 			err = errParse
@@ -80,7 +80,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 func GetServices() (services JaegerServices, err error) {
 	services = JaegerServices{Services: []string{}}
 	err = nil
-	u, err := url.Parse(fmt.Sprintf("http://%s/api/services", config.Get().ExternalServices.Jaeger.Service))
+	u, err := url.Parse(fmt.Sprintf("http://%s/api/services", config.Get().ExternalServices.Tracing.Service))
 	if err != nil {
 		log.Errorf("Error parse Jaeger URL fetching Services: %s", err)
 		return services, err
