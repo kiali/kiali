@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/status"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/status"
 )
 
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
