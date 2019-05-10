@@ -37,14 +37,21 @@ func checkTracingService() (url string, err error) {
 		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
 		// look in Tracing Default Service
 		url, err = discoverUrlService(ns, service)
-		if err == nil {
+		if err != nil {
 			// Look in jaeger Query Default Service
 			service := jaeger
 			url, err = discoverUrlService(ns, service)
+			if err == nil {
+				log.Debugf("Kiali found Jaeger in %s", url)
+			} else {
+				log.Debugf("Kiali not found Tracing/Jaerger")
+			}
+		} else {
+			log.Debugf("Kiali found Tracing in %s", url)
 		}
 
 		// We found the Tracing service in Tracing or Jaeger Default
-		if err != nil {
+		if err == nil {
 			if conf.ExternalServices.Tracing.URL == "" {
 				conf.ExternalServices.Tracing.URL = url // Overwrite URL if the user didn't set
 			}
