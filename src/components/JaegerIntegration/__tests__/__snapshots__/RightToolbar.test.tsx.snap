@@ -20,72 +20,43 @@ ShallowWrapper {
     "key": undefined,
     "nodeType": "function",
     "props": Object {
-      "children": <Button
-        active={false}
-        block={false}
-        bsClass="btn"
-        bsSize="lg"
-        bsStyle="primary"
-        disabled={false}
-        onClick={[Function]}
-        style={
-          Object {
-            "fontSize": "15px",
-          }
-        }
-        title="Search"
-      >
-        <Icon
-          name="search"
-          type="pf"
-        />
-         Search
-      </Button>,
+      "aria-label": "SearchTraces",
+      "children": Array [
+        <SearchIcon
+          color="currentColor"
+          size="sm"
+          title={null}
+        />,
+        " Search Traces",
+      ],
       "className": "",
+      "component": "button",
+      "isActive": false,
+      "isBlock": false,
+      "isDisabled": false,
+      "isFocus": false,
+      "isHover": false,
+      "onClick": [Function],
+      "type": "button",
+      "variant": "primary",
     },
     "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "active": false,
-        "block": false,
-        "bsClass": "btn",
-        "bsSize": "lg",
-        "bsStyle": "primary",
-        "children": Array [
-          <Icon
-            name="search"
-            type="pf"
-          />,
-          " Search",
-        ],
-        "disabled": false,
-        "onClick": [Function],
-        "style": Object {
-          "fontSize": "15px",
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "color": "currentColor",
+          "size": "sm",
+          "title": null,
         },
-        "title": "Search",
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
       },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "name": "search",
-            "type": "pf",
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        " Search",
-      ],
-      "type": [Function],
-    },
+      " Search Traces",
+    ],
     "type": [Function],
   },
   Symbol(enzyme.__nodes__): Array [
@@ -94,72 +65,43 @@ ShallowWrapper {
       "key": undefined,
       "nodeType": "function",
       "props": Object {
-        "children": <Button
-          active={false}
-          block={false}
-          bsClass="btn"
-          bsSize="lg"
-          bsStyle="primary"
-          disabled={false}
-          onClick={[Function]}
-          style={
-            Object {
-              "fontSize": "15px",
-            }
-          }
-          title="Search"
-        >
-          <Icon
-            name="search"
-            type="pf"
-          />
-           Search
-        </Button>,
+        "aria-label": "SearchTraces",
+        "children": Array [
+          <SearchIcon
+            color="currentColor"
+            size="sm"
+            title={null}
+          />,
+          " Search Traces",
+        ],
         "className": "",
+        "component": "button",
+        "isActive": false,
+        "isBlock": false,
+        "isDisabled": false,
+        "isFocus": false,
+        "isHover": false,
+        "onClick": [Function],
+        "type": "button",
+        "variant": "primary",
       },
       "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "active": false,
-          "block": false,
-          "bsClass": "btn",
-          "bsSize": "lg",
-          "bsStyle": "primary",
-          "children": Array [
-            <Icon
-              name="search"
-              type="pf"
-            />,
-            " Search",
-          ],
-          "disabled": false,
-          "onClick": [Function],
-          "style": Object {
-            "fontSize": "15px",
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "color": "currentColor",
+            "size": "sm",
+            "title": null,
           },
-          "title": "Search",
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
         },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "name": "search",
-              "type": "pf",
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          " Search",
-        ],
-        "type": [Function],
-      },
+        " Search Traces",
+      ],
       "type": [Function],
     },
   ],

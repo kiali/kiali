@@ -20,62 +20,36 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "function",
+    "nodeType": "class",
     "props": Object {
+      "aria-label": "FormSelect Input",
       "children": Array [
-        <Col
-          bsClass="col"
-          componentClass={[Function]}
-          style={
-            Object {
-              "marginRight": "10px",
-            }
-          }
-        >
-          Service :
-        </Col>,
-        <ToolbarDropdown
-          disabled={true}
-          handleSelect={[MockFunction]}
-          id="namespace-selector"
+        <FormSelectOption
+          className=""
+          isDisabled={false}
           label="Select a namespace"
-          onToggle={[Function]}
-          options={Object {}}
-          useName={true}
           value=""
         />,
+        Array [],
       ],
+      "className": "",
+      "isDisabled": true,
+      "isValid": true,
+      "onBlur": [Function],
+      "onChange": [MockFunction],
+      "onFocus": [Function],
+      "value": "",
     },
     "ref": null,
     "rendered": Array [
       Object {
         "instance": null,
-        "key": undefined,
-        "nodeType": "class",
+        "key": "help_test",
+        "nodeType": "function",
         "props": Object {
-          "bsClass": "col",
-          "children": "Service :",
-          "componentClass": [Function],
-          "style": Object {
-            "marginRight": "10px",
-          },
-        },
-        "ref": null,
-        "rendered": "Service :",
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "disabled": true,
-          "handleSelect": [MockFunction],
-          "id": "namespace-selector",
+          "className": "",
+          "isDisabled": false,
           "label": "Select a namespace",
-          "onToggle": [Function],
-          "options": Object {},
-          "useName": true,
           "value": "",
         },
         "ref": null,
@@ -83,68 +57,42 @@ ShallowWrapper {
         "type": [Function],
       },
     ],
-    "type": Symbol(react.fragment),
+    "type": [Function],
   },
   Symbol(enzyme.__nodes__): Array [
     Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "function",
+      "nodeType": "class",
       "props": Object {
+        "aria-label": "FormSelect Input",
         "children": Array [
-          <Col
-            bsClass="col"
-            componentClass={[Function]}
-            style={
-              Object {
-                "marginRight": "10px",
-              }
-            }
-          >
-            Service :
-          </Col>,
-          <ToolbarDropdown
-            disabled={true}
-            handleSelect={[MockFunction]}
-            id="namespace-selector"
+          <FormSelectOption
+            className=""
+            isDisabled={false}
             label="Select a namespace"
-            onToggle={[Function]}
-            options={Object {}}
-            useName={true}
             value=""
           />,
+          Array [],
         ],
+        "className": "",
+        "isDisabled": true,
+        "isValid": true,
+        "onBlur": [Function],
+        "onChange": [MockFunction],
+        "onFocus": [Function],
+        "value": "",
       },
       "ref": null,
       "rendered": Array [
         Object {
           "instance": null,
-          "key": undefined,
-          "nodeType": "class",
+          "key": "help_test",
+          "nodeType": "function",
           "props": Object {
-            "bsClass": "col",
-            "children": "Service :",
-            "componentClass": [Function],
-            "style": Object {
-              "marginRight": "10px",
-            },
-          },
-          "ref": null,
-          "rendered": "Service :",
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "disabled": true,
-            "handleSelect": [MockFunction],
-            "id": "namespace-selector",
+            "className": "",
+            "isDisabled": false,
             "label": "Select a namespace",
-            "onToggle": [Function],
-            "options": Object {},
-            "useName": true,
             "value": "",
           },
           "ref": null,
@@ -152,7 +100,7 @@ ShallowWrapper {
           "type": [Function],
         },
       ],
-      "type": Symbol(react.fragment),
+      "type": [Function],
     },
   ],
   Symbol(enzyme.__options__): Object {

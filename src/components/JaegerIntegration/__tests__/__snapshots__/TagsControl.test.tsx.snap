@@ -19,30 +19,18 @@ ShallowWrapper {
   Symbol(enzyme.__node__): Object {
     "instance": null,
     "key": undefined,
-    "nodeType": "class",
+    "nodeType": "function",
     "props": Object {
-      "bsClass": "form-group",
-      "children": Array [
-        <Col
-          bsClass="col"
-          componentClass={[Function]}
-        >
-          Tags
-          <FieldLevelHelp
-            buttonClass=""
-            close={undefined}
-            content={
-              <Card
-                accented={false}
-                aggregated={false}
-                aggregatedMini={false}
-                cardRef={null}
-                className=""
-                matchHeight={false}
-              >
-                <CardTitle
-                  className=""
-                >
+      "children": <FormGroup
+        className=""
+        fieldId="horizontal-form-name"
+        helperText={
+          <UNDEFINED>
+            <Popover
+              appendTo={[Function]}
+              aria-label=""
+              bodyContent={
+                <UNDEFINED>
                   Values should be in the
                    
                   <a
@@ -54,10 +42,6 @@ ShallowWrapper {
                   </a>
                    
                   format.
-                </CardTitle>
-                <CardBody
-                  className=""
-                >
                   <ul>
                     <li>
                       Use space for conjunctions
@@ -66,221 +50,208 @@ ShallowWrapper {
                       Values containing whitespace should be enclosed in quotes
                     </li>
                   </ul>
-                </CardBody>
-                <CardFooter
-                  className=""
-                >
                   <code>
                     error=true db.statement="select * from User"
                   </code>
-                </CardFooter>
-              </Card>
-            }
-            placement="bottom"
-            rootClose={true}
-          />
-        </Col>,
-        <FormControl
-          bsClass="form-control"
-          componentClass="input"
-          defaultValue=""
-          disabled={false}
-          onChange={[Function]}
-          placeholder="e.g. http.status_code=200 error=true"
-          style={
-            Object {
-              "marginLeft": "10px",
-              "width": "400px",
-            }
-          }
+                </UNDEFINED>
+              }
+              className={null}
+              closeBtnAriaLabel="Close"
+              enableFlip={true}
+              footerContent={null}
+              headerContent={null}
+              hideOnOutsideClick={true}
+              isVisible={null}
+              maxWidth="calc(1.5rem + 18.75rem)"
+              onHidden={[Function]}
+              onHide={[Function]}
+              onMount={[Function]}
+              onShow={[Function]}
+              onShown={[Function]}
+              position="right"
+              shouldClose={[Function]}
+              zIndex={9999}
+            >
+              <UNDEFINED>
+                <Button
+                  aria-label={null}
+                  className=""
+                  component="button"
+                  isActive={false}
+                  isBlock={false}
+                  isDisabled={false}
+                  isFocus={false}
+                  isHover={false}
+                  type="button"
+                  variant="plain"
+                >
+                  <InfoAltIcon
+                    color="currentColor"
+                    size="sm"
+                    title={null}
+                  />
+                </Button>
+                e.g. http.status_code=200 error=true
+              </UNDEFINED>
+            </Popover>
+          </UNDEFINED>
+        }
+        helperTextInvalid={undefined}
+        isInline={false}
+        isRequired={true}
+        isValid={true}
+        label="Tags"
+      >
+        <TextInput
+          aria-label="tagsJaegerTraces"
+          className=""
+          isDisabled={false}
+          isReadOnly={false}
+          isRequired={false}
+          isValid={true}
+          onChange={[MockFunction]}
           type="text"
-        />,
-      ],
-      "style": Object {
-        "display": "inline-flex",
-        "marginLeft": "-20px",
-      },
+          value=""
+        />
+      </FormGroup>,
+      "className": "",
+      "isHorizontal": true,
     },
     "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "bsClass": "col",
-          "children": Array [
-            "Tags",
-            <FieldLevelHelp
-              buttonClass=""
-              close={undefined}
-              content={
-                <Card
-                  accented={false}
-                  aggregated={false}
-                  aggregatedMini={false}
-                  cardRef={null}
-                  className=""
-                  matchHeight={false}
+    "rendered": Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "function",
+      "props": Object {
+        "children": <TextInput
+          aria-label="tagsJaegerTraces"
+          className=""
+          isDisabled={false}
+          isReadOnly={false}
+          isRequired={false}
+          isValid={true}
+          onChange={[MockFunction]}
+          type="text"
+          value=""
+        />,
+        "className": "",
+        "fieldId": "horizontal-form-name",
+        "helperText": <UNDEFINED>
+          <Popover
+            appendTo={[Function]}
+            aria-label=""
+            bodyContent={
+              <UNDEFINED>
+                Values should be in the
+                 
+                <a
+                  href="https://brandur.org/logfmt"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
-                  <CardTitle
-                    className=""
-                  >
-                    Values should be in the
-                     
-                    <a
-                      href="https://brandur.org/logfmt"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      logfmt
-                    </a>
-                     
-                    format.
-                  </CardTitle>
-                  <CardBody
-                    className=""
-                  >
-                    <ul>
-                      <li>
-                        Use space for conjunctions
-                      </li>
-                      <li>
-                        Values containing whitespace should be enclosed in quotes
-                      </li>
-                    </ul>
-                  </CardBody>
-                  <CardFooter
-                    className=""
-                  >
-                    <code>
-                      error=true db.statement="select * from User"
-                    </code>
-                  </CardFooter>
-                </Card>
-              }
-              placement="bottom"
-              rootClose={true}
-            />,
-          ],
-          "componentClass": [Function],
-        },
-        "ref": null,
-        "rendered": Array [
-          "Tags",
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "buttonClass": "",
-              "children": null,
-              "close": undefined,
-              "content": <Card
-                accented={false}
-                aggregated={false}
-                aggregatedMini={false}
-                cardRef={null}
+                  logfmt
+                </a>
+                 
+                format.
+                <ul>
+                  <li>
+                    Use space for conjunctions
+                  </li>
+                  <li>
+                    Values containing whitespace should be enclosed in quotes
+                  </li>
+                </ul>
+                <code>
+                  error=true db.statement="select * from User"
+                </code>
+              </UNDEFINED>
+            }
+            className={null}
+            closeBtnAriaLabel="Close"
+            enableFlip={true}
+            footerContent={null}
+            headerContent={null}
+            hideOnOutsideClick={true}
+            isVisible={null}
+            maxWidth="calc(1.5rem + 18.75rem)"
+            onHidden={[Function]}
+            onHide={[Function]}
+            onMount={[Function]}
+            onShow={[Function]}
+            onShown={[Function]}
+            position="right"
+            shouldClose={[Function]}
+            zIndex={9999}
+          >
+            <UNDEFINED>
+              <Button
+                aria-label={null}
                 className=""
-                matchHeight={false}
+                component="button"
+                isActive={false}
+                isBlock={false}
+                isDisabled={false}
+                isFocus={false}
+                isHover={false}
+                type="button"
+                variant="plain"
               >
-                <CardTitle
-                  className=""
-                >
-                  Values should be in the
-                   
-                  <a
-                    href="https://brandur.org/logfmt"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    logfmt
-                  </a>
-                   
-                  format.
-                </CardTitle>
-                <CardBody
-                  className=""
-                >
-                  <ul>
-                    <li>
-                      Use space for conjunctions
-                    </li>
-                    <li>
-                      Values containing whitespace should be enclosed in quotes
-                    </li>
-                  </ul>
-                </CardBody>
-                <CardFooter
-                  className=""
-                >
-                  <code>
-                    error=true db.statement="select * from User"
-                  </code>
-                </CardFooter>
-              </Card>,
-              "placement": "bottom",
-              "rootClose": true,
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
+                <InfoAltIcon
+                  color="currentColor"
+                  size="sm"
+                  title={null}
+                />
+              </Button>
+              e.g. http.status_code=200 error=true
+            </UNDEFINED>
+          </Popover>
+        </UNDEFINED>,
+        "helperTextInvalid": undefined,
+        "isInline": false,
+        "isRequired": true,
+        "isValid": true,
+        "label": "Tags",
       },
-      Object {
+      "ref": null,
+      "rendered": Object {
         "instance": null,
         "key": undefined,
         "nodeType": "class",
         "props": Object {
-          "bsClass": "form-control",
-          "componentClass": "input",
-          "defaultValue": "",
-          "disabled": false,
-          "onChange": [Function],
-          "placeholder": "e.g. http.status_code=200 error=true",
-          "style": Object {
-            "marginLeft": "10px",
-            "width": "400px",
-          },
+          "aria-label": "tagsJaegerTraces",
+          "className": "",
+          "isDisabled": false,
+          "isReadOnly": false,
+          "isRequired": false,
+          "isValid": true,
+          "onChange": [MockFunction],
           "type": "text",
+          "value": "",
         },
         "ref": null,
         "rendered": null,
         "type": [Function],
       },
-    ],
+      "type": [Function],
+    },
     "type": [Function],
   },
   Symbol(enzyme.__nodes__): Array [
     Object {
       "instance": null,
       "key": undefined,
-      "nodeType": "class",
+      "nodeType": "function",
       "props": Object {
-        "bsClass": "form-group",
-        "children": Array [
-          <Col
-            bsClass="col"
-            componentClass={[Function]}
-          >
-            Tags
-            <FieldLevelHelp
-              buttonClass=""
-              close={undefined}
-              content={
-                <Card
-                  accented={false}
-                  aggregated={false}
-                  aggregatedMini={false}
-                  cardRef={null}
-                  className=""
-                  matchHeight={false}
-                >
-                  <CardTitle
-                    className=""
-                  >
+        "children": <FormGroup
+          className=""
+          fieldId="horizontal-form-name"
+          helperText={
+            <UNDEFINED>
+              <Popover
+                appendTo={[Function]}
+                aria-label=""
+                bodyContent={
+                  <UNDEFINED>
                     Values should be in the
                      
                     <a
@@ -292,10 +263,6 @@ ShallowWrapper {
                     </a>
                      
                     format.
-                  </CardTitle>
-                  <CardBody
-                    className=""
-                  >
                     <ul>
                       <li>
                         Use space for conjunctions
@@ -304,191 +271,190 @@ ShallowWrapper {
                         Values containing whitespace should be enclosed in quotes
                       </li>
                     </ul>
-                  </CardBody>
-                  <CardFooter
-                    className=""
-                  >
                     <code>
                       error=true db.statement="select * from User"
                     </code>
-                  </CardFooter>
-                </Card>
-              }
-              placement="bottom"
-              rootClose={true}
-            />
-          </Col>,
-          <FormControl
-            bsClass="form-control"
-            componentClass="input"
-            defaultValue=""
-            disabled={false}
-            onChange={[Function]}
-            placeholder="e.g. http.status_code=200 error=true"
-            style={
-              Object {
-                "marginLeft": "10px",
-                "width": "400px",
-              }
-            }
+                  </UNDEFINED>
+                }
+                className={null}
+                closeBtnAriaLabel="Close"
+                enableFlip={true}
+                footerContent={null}
+                headerContent={null}
+                hideOnOutsideClick={true}
+                isVisible={null}
+                maxWidth="calc(1.5rem + 18.75rem)"
+                onHidden={[Function]}
+                onHide={[Function]}
+                onMount={[Function]}
+                onShow={[Function]}
+                onShown={[Function]}
+                position="right"
+                shouldClose={[Function]}
+                zIndex={9999}
+              >
+                <UNDEFINED>
+                  <Button
+                    aria-label={null}
+                    className=""
+                    component="button"
+                    isActive={false}
+                    isBlock={false}
+                    isDisabled={false}
+                    isFocus={false}
+                    isHover={false}
+                    type="button"
+                    variant="plain"
+                  >
+                    <InfoAltIcon
+                      color="currentColor"
+                      size="sm"
+                      title={null}
+                    />
+                  </Button>
+                  e.g. http.status_code=200 error=true
+                </UNDEFINED>
+              </Popover>
+            </UNDEFINED>
+          }
+          helperTextInvalid={undefined}
+          isInline={false}
+          isRequired={true}
+          isValid={true}
+          label="Tags"
+        >
+          <TextInput
+            aria-label="tagsJaegerTraces"
+            className=""
+            isDisabled={false}
+            isReadOnly={false}
+            isRequired={false}
+            isValid={true}
+            onChange={[MockFunction]}
             type="text"
-          />,
-        ],
-        "style": Object {
-          "display": "inline-flex",
-          "marginLeft": "-20px",
-        },
+            value=""
+          />
+        </FormGroup>,
+        "className": "",
+        "isHorizontal": true,
       },
       "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "bsClass": "col",
-            "children": Array [
-              "Tags",
-              <FieldLevelHelp
-                buttonClass=""
-                close={undefined}
-                content={
-                  <Card
-                    accented={false}
-                    aggregated={false}
-                    aggregatedMini={false}
-                    cardRef={null}
-                    className=""
-                    matchHeight={false}
+      "rendered": Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "children": <TextInput
+            aria-label="tagsJaegerTraces"
+            className=""
+            isDisabled={false}
+            isReadOnly={false}
+            isRequired={false}
+            isValid={true}
+            onChange={[MockFunction]}
+            type="text"
+            value=""
+          />,
+          "className": "",
+          "fieldId": "horizontal-form-name",
+          "helperText": <UNDEFINED>
+            <Popover
+              appendTo={[Function]}
+              aria-label=""
+              bodyContent={
+                <UNDEFINED>
+                  Values should be in the
+                   
+                  <a
+                    href="https://brandur.org/logfmt"
+                    rel="noopener noreferrer"
+                    target="_blank"
                   >
-                    <CardTitle
-                      className=""
-                    >
-                      Values should be in the
-                       
-                      <a
-                        href="https://brandur.org/logfmt"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        logfmt
-                      </a>
-                       
-                      format.
-                    </CardTitle>
-                    <CardBody
-                      className=""
-                    >
-                      <ul>
-                        <li>
-                          Use space for conjunctions
-                        </li>
-                        <li>
-                          Values containing whitespace should be enclosed in quotes
-                        </li>
-                      </ul>
-                    </CardBody>
-                    <CardFooter
-                      className=""
-                    >
-                      <code>
-                        error=true db.statement="select * from User"
-                      </code>
-                    </CardFooter>
-                  </Card>
-                }
-                placement="bottom"
-                rootClose={true}
-              />,
-            ],
-            "componentClass": [Function],
-          },
-          "ref": null,
-          "rendered": Array [
-            "Tags",
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "buttonClass": "",
-                "children": null,
-                "close": undefined,
-                "content": <Card
-                  accented={false}
-                  aggregated={false}
-                  aggregatedMini={false}
-                  cardRef={null}
+                    logfmt
+                  </a>
+                   
+                  format.
+                  <ul>
+                    <li>
+                      Use space for conjunctions
+                    </li>
+                    <li>
+                      Values containing whitespace should be enclosed in quotes
+                    </li>
+                  </ul>
+                  <code>
+                    error=true db.statement="select * from User"
+                  </code>
+                </UNDEFINED>
+              }
+              className={null}
+              closeBtnAriaLabel="Close"
+              enableFlip={true}
+              footerContent={null}
+              headerContent={null}
+              hideOnOutsideClick={true}
+              isVisible={null}
+              maxWidth="calc(1.5rem + 18.75rem)"
+              onHidden={[Function]}
+              onHide={[Function]}
+              onMount={[Function]}
+              onShow={[Function]}
+              onShown={[Function]}
+              position="right"
+              shouldClose={[Function]}
+              zIndex={9999}
+            >
+              <UNDEFINED>
+                <Button
+                  aria-label={null}
                   className=""
-                  matchHeight={false}
+                  component="button"
+                  isActive={false}
+                  isBlock={false}
+                  isDisabled={false}
+                  isFocus={false}
+                  isHover={false}
+                  type="button"
+                  variant="plain"
                 >
-                  <CardTitle
-                    className=""
-                  >
-                    Values should be in the
-                     
-                    <a
-                      href="https://brandur.org/logfmt"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      logfmt
-                    </a>
-                     
-                    format.
-                  </CardTitle>
-                  <CardBody
-                    className=""
-                  >
-                    <ul>
-                      <li>
-                        Use space for conjunctions
-                      </li>
-                      <li>
-                        Values containing whitespace should be enclosed in quotes
-                      </li>
-                    </ul>
-                  </CardBody>
-                  <CardFooter
-                    className=""
-                  >
-                    <code>
-                      error=true db.statement="select * from User"
-                    </code>
-                  </CardFooter>
-                </Card>,
-                "placement": "bottom",
-                "rootClose": true,
-              },
-              "ref": null,
-              "rendered": null,
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
+                  <InfoAltIcon
+                    color="currentColor"
+                    size="sm"
+                    title={null}
+                  />
+                </Button>
+                e.g. http.status_code=200 error=true
+              </UNDEFINED>
+            </Popover>
+          </UNDEFINED>,
+          "helperTextInvalid": undefined,
+          "isInline": false,
+          "isRequired": true,
+          "isValid": true,
+          "label": "Tags",
         },
-        Object {
+        "ref": null,
+        "rendered": Object {
           "instance": null,
           "key": undefined,
           "nodeType": "class",
           "props": Object {
-            "bsClass": "form-control",
-            "componentClass": "input",
-            "defaultValue": "",
-            "disabled": false,
-            "onChange": [Function],
-            "placeholder": "e.g. http.status_code=200 error=true",
-            "style": Object {
-              "marginLeft": "10px",
-              "width": "400px",
-            },
+            "aria-label": "tagsJaegerTraces",
+            "className": "",
+            "isDisabled": false,
+            "isReadOnly": false,
+            "isRequired": false,
+            "isValid": true,
+            "onChange": [MockFunction],
             "type": "text",
+            "value": "",
           },
           "ref": null,
           "rendered": null,
           "type": [Function],
         },
-      ],
+        "type": [Function],
+      },
       "type": [Function],
     },
   ],

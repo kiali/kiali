@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ToolbarRightContent, Button, Icon } from 'patternfly-react';
+import { Button } from '@patternfly/react-core';
+import { SearchIcon } from '@patternfly/react-icons';
 
 interface RightToolbarProps {
   disabled: boolean;
@@ -7,17 +8,8 @@ interface RightToolbarProps {
 }
 
 const RightToolbar = (props: RightToolbarProps) => (
-  <ToolbarRightContent>
-    <Button
-      bsStyle={'primary'}
-      bsSize={'lg'}
-      style={{ fontSize: '15px' }}
-      title={'Search'}
-      onClick={() => props.onSubmit()}
-      disabled={props.disabled}
-    >
-      <Icon type="pf" name="search" /> Search
-    </Button>
-  </ToolbarRightContent>
+  <Button variant="primary" aria-label="SearchTraces" onClick={() => props.onSubmit()} isDisabled={props.disabled}>
+    <SearchIcon /> Search Traces
+  </Button>
 );
 export default RightToolbar;

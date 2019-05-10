@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../store/Store';
-import { Col, Form } from 'patternfly-react';
-import ToolbarDropdown from '../../components/ToolbarDropdown/ToolbarDropdown';
+import { FormSelect, FormSelectOption, FormSelectOptionGroup } from '@patternfly/react-core';
 import * as Api from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceOverview } from '../../types/ServiceList';
@@ -14,13 +13,25 @@ interface ServiceDropdownProps {
   setService: (service: string) => void;
 }
 
-interface ServiceDropdownState {
-  servicesOfNs: string[];
+interface Service {
+  value: string;
+  label: string;
+  disabled: boolean;
 }
+
+interface ServiceGroup {
+  groupLabel: string;
+  disabled: boolean;
+  options: Service[];
+}
+interface ServiceDropdownState {
+  servicesGroups: ServiceGroup[];
+}
+
 export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, ServiceDropdownState> {
   constructor(props: ServiceDropdownProps) {
     super(props);
-    this.state = { servicesOfNs: [] };
+    this.state = { servicesGroups: [] };
     if (this.props.activeNamespaces.length > 0) {
       this.refreshServices(this.props.activeNamespaces);
     }
@@ -34,27 +45,30 @@ export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, S
 
   refreshServices = (namespaces: string[]) => {
     if (namespaces.length === 0) {
-      this.setState({ servicesOfNs: [] });
+      this.setState({ servicesGroups: [] });
     } else {
       const servicesPromises = namespaces.map(ns => Api.getServices(ns));
       const promises = new PromisesRegistry();
       promises
         .registerAll('services', servicesPromises)
         .then(responses => {
-          const serviceListItems: string[] = [];
+          const serviceList: ServiceGroup[] = [];
           responses.forEach(response => {
             const ns = response.data.namespace.name;
+            const serviceGroup: ServiceGroup = { groupLabel: ns, disabled: false, options: [] };
+
             response.data.services.forEach((service: ServiceOverview) => {
-              serviceListItems.push(`${service.name}.${ns}`);
+              serviceGroup.options.push({ value: `${service.name}.${ns}`, label: service.name, disabled: false });
             });
+            serviceList.push(serviceGroup);
           });
-          this.setState({ servicesOfNs: serviceListItems });
+          this.setState({ servicesGroups: serviceList });
         })
         .catch(() => console.log('Error'));
     }
   };
 
-  handleToggle = (isOpen: boolean) => isOpen && this.refreshServices(this.props.activeNamespaces);
+  handleFocus = () => this.refreshServices(this.props.activeNamespaces);
 
   labelServiceDropdown = (items: number) => {
     if (this.props.activeNamespaces.length > 0) {
@@ -68,28 +82,30 @@ export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, S
 
   render() {
     const { disabled } = this.props;
-    const { servicesOfNs } = this.state;
-    const items: { [key: string]: string } = servicesOfNs.reduce((list, item) => {
-      list[item] = item;
-      return list;
-    }, {});
+    const { servicesGroups } = this.state;
 
     return (
-      <>
-        <Col componentClass={Form.ControlLabel} style={{ marginRight: '10px' }}>
-          Service :
-        </Col>
-        <ToolbarDropdown
-          id="namespace-selector"
-          disabled={disabled || this.props.activeNamespaces.length === 0 || Object.keys(items).length === 0}
-          options={items}
+      <FormSelect
+        value={this.props.service}
+        isDisabled={disabled || this.props.activeNamespaces.length === 0 || Object.keys(servicesGroups).length === 0}
+        onFocus={() => this.handleFocus}
+        onChange={this.props.setService}
+        aria-label="FormSelect Input"
+      >
+        <FormSelectOption
+          isDisabled={false}
+          key={'help_test'}
           value={''}
-          label={this.props.service || this.labelServiceDropdown(Object.keys(items).length)}
-          useName={true}
-          handleSelect={this.props.setService}
-          onToggle={this.handleToggle}
+          label={this.labelServiceDropdown(Object.keys(servicesGroups).length)}
         />
-      </>
+        {servicesGroups.map((group, index) => (
+          <FormSelectOptionGroup isDisabled={group.disabled} key={index} label={group.groupLabel}>
+            {group.options.map((option, i) => (
+              <FormSelectOption isDisabled={option.disabled} key={i} value={option.value} label={option.label} />
+            ))}
+          </FormSelectOptionGroup>
+        ))}
+      </FormSelect>
     );
   }
 }

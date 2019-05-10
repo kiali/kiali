@@ -70,8 +70,12 @@ class Navigation extends React.Component<PropsType, NavigationState> {
   };
 
   onPageResize = ({ mobileView, windowSize }) => {
+    let ismobile = mobileView;
+    if (windowSize < 1000) {
+      ismobile = true;
+    }
     this.setState({
-      isMobileView: mobileView
+      isMobileView: ismobile
     });
   };
 

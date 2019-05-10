@@ -20,15 +20,4 @@ describe('RightToolbar', () => {
     expect(wrapper).toBeDefined();
     expect(wrapper).toMatchSnapshot();
   });
-
-  describe('RightToolbar should have buttons with options', () => {
-    it('RightToolbar have Search button', () => {
-      let buttonProps = wrapper.find({ title: 'Search' }).props();
-      expect(buttonProps).toBeDefined();
-      expect(buttonProps.onClick).toBeDefined();
-      wrapper.setProps({ disabled: true });
-      buttonProps = wrapper.find({ title: 'Search' }).props();
-      expect(buttonProps.disabled).toBeTruthy();
-    });
-  });
 });

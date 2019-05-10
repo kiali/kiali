@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Col, Form, FormControl, FormGroup, Grid, Row, Toolbar } from 'patternfly-react';
+import { ExpandCollapse } from 'patternfly-react';
+import { Form, FormGroup, Grid, GridItem, InputGroup, TextInput } from '@patternfly/react-core';
 import ServiceDropdown from './ServiceDropdown';
 import LookBack from './LookBack';
 import RightToolbar from './RightToolbar';
@@ -12,6 +13,9 @@ import {
   TracesDate
 } from './RouteHelper';
 import { HistoryManager, URLParam } from '../../app/History';
+import { style } from 'typestyle';
+
+const separator = style({ borderBottom: '1px solid #d1d1d1;', marginBottom: '10px' });
 
 interface JaegerToolbarProps {
   disableSelectorNs?: boolean;
@@ -94,76 +98,159 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
   };
 
   render() {
-    const { disabled, disableSelectorNs } = this.props;
+    const { disableSelectorNs } = this.props;
+    const { dateTimes, lookback } = this.state;
+
+    const tz = lookback === '0' ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
 
     return (
-      <Toolbar>
-        <Grid fluid={true}>
-          <Col md={8}>
-            <Row>
-              {!disableSelectorNs && (
-                <ServiceDropdown
-                  service={this.state.serviceSelected}
-                  setService={(service: string) => this.setState({ serviceSelected: service })}
-                />
-              )}
-              <LookBack
-                onChangeCustom={this.onChangeLookBackCustom}
-                lookback={this.state.lookback !== 'custom' ? Number(this.state.lookback) : 0}
-                setLookback={(lookback: string) => this.setState({ lookback: lookback })}
-                dates={this.state.dateTimes}
-              />
-            </Row>
-            <Row style={{ marginTop: '10px' }}>
-              <TagsControl tags={this.state.tags} onChange={e => this.setState({ tags: e.currentTarget.value })} />
-              <FormGroup style={{ display: 'inline-flex' }}>
-                <Col componentClass={Form.ControlLabel} style={{ marginTop: '4px' }}>
-                  Min Span Duration
-                </Col>
-                <FormControl
-                  type="text"
-                  disabled={disabled}
-                  value={this.state.minDuration}
-                  placeholder={'e.g. 1.2s, 100ms, 500us'}
-                  style={{ marginLeft: '10px', width: '200px' }}
-                  onChange={e => this.setState({ minDuration: e.currentTarget.value })}
+      <>
+        <Grid>
+          {!disableSelectorNs && (
+            <>
+              <GridItem span={4}>
+                <Form isHorizontal={true}>
+                  <FormGroup label={'Service'} isRequired={true} fieldId={'service_jaeger_form'}>
+                    <ServiceDropdown
+                      service={this.state.serviceSelected}
+                      setService={(service: string) => this.setState({ serviceSelected: service })}
+                    />
+                  </FormGroup>
+                </Form>
+              </GridItem>
+              <GridItem span={1} />
+            </>
+          )}
+          <GridItem span={4}>
+            <Form isHorizontal={true}>
+              <FormGroup label={'Lookback'} isRequired={true} fieldId={'lookback_jaeger_form'}>
+                <LookBack
+                  lookback={this.state.lookback !== 'custom' ? Number(this.state.lookback) : 0}
+                  setLookback={(value, event) => {
+                    this.setState({ lookback: value });
+                  }}
                 />
               </FormGroup>
-              <FormGroup style={{ display: 'inline-flex' }}>
-                <Col componentClass={Form.ControlLabel} style={{ marginTop: '4px' }}>
-                  Max Span Duration
-                </Col>
-                <FormControl
-                  type="text"
-                  disabled={disabled}
-                  value={this.state.maxDuration}
-                  placeholder={'e.g. 1.1s'}
-                  style={{ marginLeft: '10px', width: '200px' }}
-                  onChange={e => this.setState({ maxDuration: e.currentTarget.value })}
-                />
-              </FormGroup>
-              <FormGroup style={{ display: 'inline-flex' }}>
-                <Col componentClass={Form.ControlLabel} style={{ marginTop: '4px' }}>
-                  Limit Results
-                </Col>
-                <FormControl
-                  type="number"
-                  disabled={disabled}
-                  value={this.state.limit}
-                  defaultValue={this.state.limit}
-                  style={{ marginLeft: '10px', width: '80px' }}
-                  onChange={e => this.setState({ limit: e.currentTarget.value })}
-                />
-              </FormGroup>
-            </Row>
-          </Col>
-          <Col md={4}>
-            <Row>
-              <RightToolbar disabled={this.state.serviceSelected === ''} onSubmit={this.onRequestTraces} />
-            </Row>
-          </Col>
+            </Form>
+          </GridItem>
+          <GridItem span={1} />
+          <GridItem span={disableSelectorNs ? 7 : 2}>
+            <RightToolbar disabled={this.state.serviceSelected === ''} onSubmit={this.onRequestTraces} />
+          </GridItem>
+          {tz && (
+            <>
+              <GridItem span={12} className={separator}>
+                Custom Lookback
+              </GridItem>
+              <GridItem span={4}>
+                <Form isHorizontal={true}>
+                  <FormGroup
+                    label={'Start Time'}
+                    fieldId={'dateTimeStartJaegerTraces'}
+                    helperText={<>Times are expressed in {tz}</>}
+                  >
+                    <InputGroup>
+                      <TextInput
+                        value={dateTimes.start.date}
+                        type="date"
+                        onChange={value => this.onChangeLookBackCustom('start', value, '')}
+                        aria-label="datestartJaegerTraces"
+                      />
+                      <TextInput
+                        value={dateTimes.start.time}
+                        type="time"
+                        onChange={value => this.onChangeLookBackCustom('start', '', value)}
+                        aria-label="timestartJaegerTraces"
+                      />
+                    </InputGroup>
+                  </FormGroup>
+                </Form>
+              </GridItem>
+              <GridItem span={1} />
+              <GridItem span={4}>
+                <Form isHorizontal={true}>
+                  <FormGroup
+                    label={'End Time'}
+                    fieldId={'dateTimeEndJaegerTraces'}
+                    helperText={<>Times are expressed in {tz}</>}
+                  >
+                    <InputGroup>
+                      <TextInput
+                        value={dateTimes.end.date}
+                        type="date"
+                        onChange={value => this.onChangeLookBackCustom('end', value, '')}
+                        aria-label="dateendJaegerTraces"
+                      />
+                      <TextInput
+                        value={dateTimes.end.time}
+                        type="time"
+                        onChange={value => this.onChangeLookBackCustom('end', '', value)}
+                        aria-label="timeendJaegerTraces"
+                      />
+                    </InputGroup>
+                  </FormGroup>
+                </Form>
+              </GridItem>
+              <GridItem span={3} />
+              <GridItem span={12} className={separator} />
+            </>
+          )}
         </Grid>
-      </Toolbar>
+        <ExpandCollapse textCollapsed="Show Advanced Options" textExpanded="Hide Advanced Options">
+          <Grid>
+            <GridItem span={7}>
+              <TagsControl tags={this.state.tags} onChange={value => this.setState({ tags: value })} />
+            </GridItem>
+            <GridItem span={1} />
+            <GridItem span={3}>
+              <Form isHorizontal={true}>
+                <FormGroup label="Limit Results" isRequired={true} fieldId="horizontal-form-name">
+                  <TextInput
+                    value={this.state.limit}
+                    type="number"
+                    onChange={value => this.setState({ limit: Number(value) })}
+                    aria-label="tagsJaegerTraces"
+                  />
+                </FormGroup>
+              </Form>
+            </GridItem>
+            <GridItem span={1} />
+            <GridItem span={12} className={separator}>
+              Span Configuration
+            </GridItem>
+            <GridItem span={2}>
+              <Form isHorizontal={true}>
+                <FormGroup
+                  label="Min Duration"
+                  fieldId="form-minDurationSpanJaegerTraces"
+                  helperText="e.g. 1.2s, 100ms, 500us"
+                >
+                  <TextInput
+                    value={this.state.minDuration}
+                    type="text"
+                    onChange={value => this.setState({ minDuration: value })}
+                    aria-label="minDurationSpanJaegerTraces"
+                  />
+                </FormGroup>
+              </Form>
+            </GridItem>
+            <GridItem span={1} />
+            <GridItem span={2}>
+              <Form isHorizontal={true}>
+                <FormGroup label="Max Duration" fieldId="form-maxDurationSpanJaegerTraces" helperText="e.g. 1.1s">
+                  <TextInput
+                    value={this.state.minDuration}
+                    type="text"
+                    onChange={value => this.setState({ maxDuration: value })}
+                    aria-label="maxDurationSpanJaegerTraces"
+                  />
+                </FormGroup>
+              </Form>
+            </GridItem>
+            <GridItem span={1} />
+          </Grid>
+        </ExpandCollapse>
+      </>
     );
   }
 }
