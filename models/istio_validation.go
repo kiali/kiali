@@ -254,7 +254,17 @@ func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioV
 		if !ok {
 			iv[key] = validation
 		} else {
-			v.Checks = append(v.Checks, validation.Checks...)
+		AddUnique:
+			for _, toAdd := range validation.Checks {
+				for _, existing := range v.Checks {
+					if toAdd.Path == existing.Path &&
+						toAdd.Severity == existing.Severity &&
+						toAdd.Message == existing.Message {
+						continue AddUnique
+					}
+				}
+				v.Checks = append(v.Checks, toAdd)
+			}
 			v.Valid = v.Valid && validation.Valid
 		}
 	}
