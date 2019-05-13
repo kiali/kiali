@@ -264,6 +264,37 @@ echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
 echo "=== OPERATOR SETTINGS ==="
 
+# If Kiali is already installed, and the user doesn't want it uninstalled, we need to abort
+NAMESPACE="${NAMESPACE:-istio-system}"
+
+# Give the user an opportunity to tell us if they want to uninstall if they did not set the envar yet.
+# The default to the prompt is "yes" because the user will normally want to uninstall an already existing Kiali.
+# Note: to allow for non-interactive installations, the user can set UNINSTALL_EXISTING_KIALI=true to ensure
+# Kiali will always be removed if it exists. If the user does not want Kiali removed if it exists, that setting
+# can be set to false which will cause this script to abort if Kiali exists.
+if [ "${UNINSTALL_EXISTING_KIALI}" != "true" ]; then
+  if ${CLIENT_EXE} get deployment kiali -n "${NAMESPACE}" > /dev/null 2>&1 ; then
+    if [ -z "${UNINSTALL_EXISTING_KIALI}" ]; then
+      read -p 'It appears Kiali has already been installed. Do you want to uninstall it? [Y/n]: ' _yn
+      case "${_yn}" in
+        [yY][eE][sS]|[yY]|"")
+          echo "The existing Kiali will be uninstalled."
+          UNINSTALL_EXISTING_KIALI="true"
+          ;;
+        *)
+          echo "The existing Kiali will NOT be uninstalled. Aborting the Kiali operator installation."
+          exit 1
+          ;;
+      esac
+    else
+      echo "It appears Kiali has already been installed. It will NOT be uninstalled. Aborting the Kiali operator installation."
+      exit 1
+    fi
+  else
+    UNINSTALL_EXISTING_KIALI="false"
+  fi
+fi
+
 # It is assumed the yaml files are in the same location as this script.
 # Figure out where that is using a method that is valid for bash and sh.
 
@@ -350,29 +381,9 @@ else
   echo "Kiali will now be installed."
 fi
 
-# Give the user an opportunity to tell us if they want to uninstall if they did not set the envar yet.
-# The default to the prompt is "yes" because the user will normally want to uninstall an already existing Kiali.
-if [ -z "${UNINSTALL_EXISTING_KIALI}" ]; then
-  if ${CLIENT_EXE} get deployment kiali -n "${NAMESPACE}" > /dev/null 2>&1 ; then
-    read -p 'It appears Kiali has already been installed. Do you want to uninstall it? [Y/n]: ' _yn
-    case "${_yn}" in
-      [yY][eE][sS]|[yY]|"")
-        echo "The existing Kiali will be uninstalled."
-        UNINSTALL_EXISTING_KIALI="true"
-        ;;
-      *)
-        echo "The existing Kiali will NOT be uninstalled."
-        UNINSTALL_EXISTING_KIALI="false"
-        ;;
-    esac
-  fi
-fi
-
-# Some settings specific to Kiali installations
-NAMESPACE="${NAMESPACE:-istio-system}"
+# Some settings specific to Kiali secrets that need to be set even if no secret is ultimately to be created
 SECRET_NAME="${SECRET_NAME:-kiali}"
 CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
-UNINSTALL_EXISTING_KIALI=${UNINSTALL_EXISTING_KIALI:-false}
 
 # Check the login strategy. If using "openshift" there is no other checks to perform,
 # but if we are using "login" then we need to make sure there is a username and password set
