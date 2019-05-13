@@ -79,15 +79,12 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
@@ -143,10 +140,10 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
+	globalInfo := graph.AppenderGlobalInfo{
 		Business: businessLayer,
 	}
-	namespaceInfo := NamespaceInfo{
+	namespaceInfo := graph.AppenderNamespaceInfo{
 		Namespace: "testNamespace",
 	}
 
@@ -215,10 +212,10 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
+	globalInfo := graph.AppenderGlobalInfo{
 		Business: businessLayer,
 	}
-	namespaceInfo := NamespaceInfo{
+	namespaceInfo := graph.AppenderNamespaceInfo{
 		Namespace: "testNamespace",
 	}
 

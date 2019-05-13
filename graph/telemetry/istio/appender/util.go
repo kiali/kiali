@@ -14,7 +14,7 @@ import (
 
 // package-private util functions (used by multiple files)
 
-func promQuery(query string, queryTime time.Time, api prom_v1.API, a Appender) model.Vector {
+func promQuery(query string, queryTime time.Time, api prom_v1.API, a graph.Appender) model.Vector {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

@@ -23,18 +23,19 @@ func (a UnusedNodeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if graph.GraphTypeService == a.GraphType || a.IsNodeGraph {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if namespaceInfo.Telemetry["WorkloadList"] == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
 	}
 
-	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, namespaceInfo.WorkloadList.Workloads)
+	workloadList := namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)
+	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, workloadList.Workloads)
 }
 
 func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) {

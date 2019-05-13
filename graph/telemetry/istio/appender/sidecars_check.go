@@ -3,6 +3,7 @@ package appender
 import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 const SidecarsCheckAppenderName = "sidecarsCheck"
@@ -18,24 +19,24 @@ func (a SidecarsCheckAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if namespaceInfo.Telemetry["WorkloadList"] == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
 	}
 
 	a.applySidecarsChecks(trafficMap, namespaceInfo)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *NamespaceInfo) {
+func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
 	cfg := config.Get()
 	istioNamespace := cfg.IstioNamespace
-	workloadList := namespaceInfo.WorkloadList
+	workloadList := namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)
 
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces

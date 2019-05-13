@@ -73,17 +73,14 @@ func TestServiceEntry(t *testing.T) {
 	assert.Equal(0, len(defaultServiceEntryNode.Edges))
 	assert.Equal(nil, defaultServiceEntryNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
 	}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(nil, notServiceEntryNode.Metadata[graph.IsServiceEntry])
 	assert.Equal("MESH_EXTERNAL", extServiceEntryNode.Metadata[graph.IsServiceEntry])

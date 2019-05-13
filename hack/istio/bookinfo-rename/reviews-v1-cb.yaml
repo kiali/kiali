@@ -1,0 +1,23 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: circuitbreaker-reviews-v1
+  namespace: bookinfo2
+spec:
+  host: reviews
+  subsets:
+  - name: circuitbreaker-reviews-v1
+    labels:
+      version: v1
+    trafficPolicy:
+      connectionPool:
+        http:
+          maxRequestsPerConnection: 1
+          http2MaxRequests: 1
+      outlierDetection:
+        http:
+          consecutiveErrors: 1
+          interval: 1s
+          baseEjectionTime: 10s
+          maxEjectionPercent: 50

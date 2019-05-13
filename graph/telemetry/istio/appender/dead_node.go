@@ -2,6 +2,7 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/models"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -21,21 +22,21 @@ func (a DeadNodeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if namespaceInfo.Telemetry["WorkloadList"] == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
 	}
 
 	a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
@@ -95,7 +96,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
-			if workload, found := getWorkload(n.Workload, namespaceInfo.WorkloadList); !found {
+			if workload, found := getWorkload(n.Workload, namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)); !found {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {

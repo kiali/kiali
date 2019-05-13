@@ -39,7 +39,7 @@ func (a ResponseTimeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

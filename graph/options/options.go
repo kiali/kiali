@@ -14,7 +14,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/appender"
 )
 
 const (
@@ -56,10 +55,11 @@ type VendorOptions struct {
 // Options are all supported graph generation options.
 type Options struct {
 	AccessibleNamespaces map[string]time.Time
-	Appenders            []appender.Appender
-	IncludeIstio         bool // include istio-system services. Ignored for istio-system ns. Default false.
-	InjectServiceNodes   bool // inject destination service nodes between source and destination nodes.
+	Appenders            []string // nil if param not supplied
+	IncludeIstio         bool     // include istio-system services. Ignored for istio-system ns. Default false.
+	InjectServiceNodes   bool     // inject destination service nodes between source and destination nodes.
 	Namespaces           map[string]graph.NamespaceInfo
+	Params               url.Values
 	Vendor               string
 	NodeOptions
 	VendorOptions
@@ -80,6 +80,7 @@ func NewOptions(r *http.Request) Options {
 	var includeIstio bool
 	var injectServiceNodes bool
 	var queryTime int64
+	appenders := []string(nil)
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
@@ -89,6 +90,12 @@ func NewOptions(r *http.Request) Options {
 	queryTimeString := params.Get("queryTime")
 	vendor := params.Get("vendor")
 
+	if _, ok := params["appenders"]; ok {
+		appenders = strings.Split(params.Get("appenders"), ",")
+		for i, v := range appenders {
+			appenders[i] = strings.TrimSpace(v)
+		}
+	}
 	if durationString == "" {
 		duration, _ = model.ParseDuration(defaultDuration)
 	} else {
@@ -192,9 +199,11 @@ func NewOptions(r *http.Request) Options {
 
 	options := Options{
 		AccessibleNamespaces: accessibleNamespaces,
+		Appenders:            appenders,
 		IncludeIstio:         includeIstio,
 		InjectServiceNodes:   injectServiceNodes,
 		Namespaces:           namespaceMap,
+		Params:               params,
 		Vendor:               vendor,
 		NodeOptions: NodeOptions{
 			App:       app,
@@ -211,9 +220,6 @@ func NewOptions(r *http.Request) Options {
 		},
 	}
 
-	appenders := parseAppenders(params, options)
-	options.Appenders = appenders
-
 	return options
 }
 
@@ -227,101 +233,6 @@ func (o *Options) GetGraphKind() string {
 	} else {
 		return graphKindNamespace
 	}
-}
-
-func parseAppenders(params url.Values, o Options) []appender.Appender {
-	requestedAppenders := make(map[string]bool)
-	allAppenders := false
-	if _, ok := params["appenders"]; ok {
-		for _, requestedAppender := range strings.Split(params.Get("appenders"), ",") {
-			switch strings.TrimSpace(requestedAppender) {
-			case appender.DeadNodeAppenderName:
-				requestedAppenders[appender.DeadNodeAppenderName] = true
-			case appender.ServiceEntryAppenderName:
-				requestedAppenders[appender.ServiceEntryAppenderName] = true
-			case appender.IstioAppenderName:
-				requestedAppenders[appender.IstioAppenderName] = true
-			case appender.ResponseTimeAppenderName:
-				requestedAppenders[appender.ResponseTimeAppenderName] = true
-			case appender.SecurityPolicyAppenderName:
-				requestedAppenders[appender.SecurityPolicyAppenderName] = true
-			case appender.SidecarsCheckAppenderName:
-				requestedAppenders[appender.SidecarsCheckAppenderName] = true
-			case appender.UnusedNodeAppenderName:
-				requestedAppenders[appender.UnusedNodeAppenderName] = true
-			case "":
-				// skip
-			default:
-				graph.BadRequest(fmt.Sprintf("Invalid appender [%s]", strings.TrimSpace(requestedAppender)))
-			}
-		}
-	} else {
-		allAppenders = true
-	}
-
-	// The appender order is important
-	// To pre-process service nodes run service_entry appender first
-	// To reduce processing, filter dead nodes next
-	// To reduce processing, next run appenders that don't apply to unused services
-	// Add orphan (unused) services
-	// Run remaining appenders
-	var appenders []appender.Appender
-
-	if _, ok := requestedAppenders[appender.ServiceEntryAppenderName]; ok || allAppenders {
-		a := appender.ServiceEntryAppender{
-			AccessibleNamespaces: o.AccessibleNamespaces,
-		}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.DeadNodeAppenderName]; ok || allAppenders {
-		a := appender.DeadNodeAppender{}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.ResponseTimeAppenderName]; ok || allAppenders {
-		quantile := appender.DefaultQuantile
-		if _, ok := params["responseTimeQuantile"]; ok {
-			if responseTimeQuantile, err := strconv.ParseFloat(params.Get("responseTimeQuantile"), 64); err == nil {
-				quantile = responseTimeQuantile
-			}
-		}
-		a := appender.ResponseTimeAppender{
-			Quantile:           quantile,
-			GraphType:          o.GraphType,
-			InjectServiceNodes: o.InjectServiceNodes,
-			IncludeIstio:       o.IncludeIstio,
-			Namespaces:         o.Namespaces,
-			QueryTime:          o.QueryTime,
-		}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.SecurityPolicyAppenderName]; ok || allAppenders {
-		a := appender.SecurityPolicyAppender{
-			GraphType:          o.GraphType,
-			IncludeIstio:       o.IncludeIstio,
-			InjectServiceNodes: o.InjectServiceNodes,
-			Namespaces:         o.Namespaces,
-			QueryTime:          o.QueryTime,
-		}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.UnusedNodeAppenderName]; ok || allAppenders {
-		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
-		a := appender.UnusedNodeAppender{
-			GraphType:   o.GraphType,
-			IsNodeGraph: hasNodeOptions,
-		}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.IstioAppenderName]; ok || allAppenders {
-		a := appender.IstioAppender{}
-		appenders = append(appenders, a)
-	}
-	if _, ok := requestedAppenders[appender.SidecarsCheckAppenderName]; ok || allAppenders {
-		a := appender.SidecarsCheckAppender{}
-		appenders = append(appenders, a)
-	}
-
-	return appenders
 }
 
 // getAccessibleNamespaces returns a Set of all namespaces accessible to the user.

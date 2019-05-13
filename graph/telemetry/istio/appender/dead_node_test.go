@@ -121,15 +121,12 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := DeadNodeAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(9, len(trafficMap))
 
