@@ -3,6 +3,7 @@ package kubetest
 import (
 	"fmt"
 
+	"github.com/kiali/kiali/kubernetes"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -14,16 +15,12 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/client-go/rest"
-
-	"github.com/kiali/kiali/kubernetes"
 )
 
 //// Mock for the K8SClientFactory
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	baseIstioConfig *rest.Config
 	k8s             kubernetes.IstioClientInterface
 }
 

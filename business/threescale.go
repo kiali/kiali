@@ -197,12 +197,15 @@ func (in *ThreeScaleService) UpdateThreeScaleHandler(handlerName string, body []
 
 	// We need the handler structure generated from the ThreeScaleHandler to update it
 	jsonUpdatedHandler, _, err2 := generateJsonHandlerInstance(*threeScaleHandler)
+	if err2 != nil {
+		return nil, err
+	}
 
 	conf := config.Get()
 
-	_, err = in.k8s.UpdateIstioObject(resourceTypesToAPI["adapters"], conf.IstioNamespace, "handlers", handlerName, jsonUpdatedHandler)
-	if err != nil {
-		return nil, err
+	_, err2 = in.k8s.UpdateIstioObject(resourceTypesToAPI["adapters"], conf.IstioNamespace, "handlers", handlerName, jsonUpdatedHandler)
+	if err2 != nil {
+		return nil, err2
 	}
 
 	return in.getThreeScaleHandlers()

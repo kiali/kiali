@@ -3,8 +3,8 @@ package models
 import "github.com/kiali/kiali/kubernetes"
 
 const (
-	BadThreeScaleHandlerJson = "Bad ThreeScaleHandler JSON"
-	BadThreeScaleRuleJson    = "Bad ThreeScaleHandler JSON"
+	BadThreeScaleHandlerJson = "bad ThreeScaleHandler JSON"
+	BadThreeScaleRuleJson    = "bad ThreeScaleHandler JSON"
 )
 
 // ThreeScaleInfo shows if 3scale adapter is enabled in cluster and if user has permissions on adapter's configuration
