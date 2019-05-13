@@ -21,7 +21,7 @@ import (
 
 type K8SClientFactoryMock struct {
 	mock.Mock
-	k8s             kubernetes.IstioClientInterface
+	k8s kubernetes.IstioClientInterface
 }
 
 // Constructor
