@@ -143,6 +143,14 @@
 #    already (or will) contain the credentials (i.e. the secret you must create manually).
 #    Default: kiali
 #
+# UNINSTALL_EXISTING_KIALI
+#    If true, when installing Kiali, this script first will attempt to
+#    uninstall any currently existing Kiali resources.
+#    This will only remove resources from Kiali itself, not a previously installed
+#    Kiali Operator. If you have a previously installed Kiali that was installed by
+#    a Kiali Operator, use that operator to uninstall that Kiali (i.e. remove the Kiali CR).
+#    Default: false
+#
 ##############################################################################
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
@@ -165,6 +173,20 @@ get_downloader() {
       echo "Using downloader: $downloader"
     fi
   fi
+}
+
+delete_kiali_resources() {
+  echo "Deleting resources for any existing Kiali installation"
+
+  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
+
+  # Note we do not delete any existing secrets unless this script was told the user wants his own secret
+  if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
+    ${CLIENT_EXE} delete --ignore-not-found=true secrets --selector="app=kiali" -n "${NAMESPACE}"
+  fi
+
+  # purge OpenShift specific resources
+  ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}"
 }
 
 # Determine what cluster client tool we are using.
@@ -328,6 +350,12 @@ else
   echo "Kiali will now be installed."
 fi
 
+# Some settings specific to Kiali installations
+NAMESPACE="${NAMESPACE:-istio-system}"
+SECRET_NAME="${SECRET_NAME:-kiali}"
+CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
+UNINSTALL_EXISTING_KIALI=${UNINSTALL_EXISTING_KIALI:-false}
+
 # Check the login strategy. If using "openshift" there is no other checks to perform,
 # but if we are using "login" then we need to make sure there is a username and password set
 if [ "${AUTH_STRATEGY}" == "" ]; then
@@ -342,12 +370,6 @@ if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] &&
 fi
 
 if [ "${AUTH_STRATEGY}" == "login" ]; then
-  # Because we need a secret for the user, we must ensure we have a valid secret name and namespace.
-  SECRET_NAME="${SECRET_NAME:-kiali}"
-  NAMESPACE="${NAMESPACE:-istio-system}"
-
-  CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
-
   # If the secret already exists, we will not create another one
   ${CLIENT_EXE} get secret ${SECRET_NAME} -n ${NAMESPACE} > /dev/null 2>&1
   if [ "$?" == "0" ]; then
@@ -383,8 +405,14 @@ echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
 echo NAMESPACE=$NAMESPACE
 echo SECRET_NAME=$SECRET_NAME
+echo UNINSTALL_EXISTING_KIALI=$UNINSTALL_EXISTING_KIALI
 echo _SECRET_EXISTS=$_SECRET_EXISTS
 echo "=== KIALI SETTINGS ==="
+
+# Uninstall any Kiali that already exists if we were asked to do so
+if [ "${UNINSTALL_EXISTING_KIALI}" == "true" ]; then
+  delete_kiali_resources
+fi
 
 # Create the secret when required
 
