@@ -24,6 +24,9 @@ func TestValidateWebRoot(t *testing.T) {
 		"/kiali/",
 		"kiali/",
 		"/^kiali",
+		"/foo/../bar",
+		"/../bar",
+		"../bar",
 	}
 
 	for _, webroot := range validWebRoots {

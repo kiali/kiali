@@ -194,6 +194,9 @@ func validateConfig() error {
 	if webRoot != "/" && strings.HasSuffix(webRoot, "/") {
 		return fmt.Errorf("web root must not contain a trailing /: %v", webRoot)
 	}
+	if strings.Contains(webRoot, "/../") {
+		return fmt.Errorf("for security purposes, web root must not contain '/../': %v", webRoot)
+	}
 
 	// log some messages to let the administrator know when credentials are configured certain ways
 	auth := config.Get().Auth
