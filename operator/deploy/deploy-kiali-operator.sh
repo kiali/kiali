@@ -350,6 +350,24 @@ else
   echo "Kiali will now be installed."
 fi
 
+# Give the user an opportunity to tell us if they want to uninstall if they did not set the envar yet.
+# The default to the prompt is "yes" because the user will normally want to uninstall an already existing Kiali.
+if [ -z "${UNINSTALL_EXISTING_KIALI}" ]; then
+  if ${CLIENT_EXE} get deployment kiali -n "${NAMESPACE}" > /dev/null 2>&1 ; then
+    read -p 'It appears Kiali has already been installed. Do you want to uninstall it? [Y/n]: ' _yn
+    case "${_yn}" in
+      [yY][eE][sS]|[yY]|"")
+        echo "The existing Kiali will be uninstalled."
+        UNINSTALL_EXISTING_KIALI="true"
+        ;;
+      *)
+        echo "The existing Kiali will NOT be uninstalled."
+        UNINSTALL_EXISTING_KIALI="false"
+        ;;
+    esac
+  fi
+fi
+
 # Some settings specific to Kiali installations
 NAMESPACE="${NAMESPACE:-istio-system}"
 SECRET_NAME="${SECRET_NAME:-kiali}"
