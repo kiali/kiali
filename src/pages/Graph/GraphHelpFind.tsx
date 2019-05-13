@@ -412,36 +412,36 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                           {
                             id: 'e00',
                             e: 'name = reviews',
-                            d: `"find by name": find nodes with app label, service name or workload name equal to 'reviews'`
+                            d: `"by name": nodes with app label, service name or workload name equal to 'reviews'`
                           },
                           {
                             id: 'e10',
                             e: 'name not contains rev',
-                            d: `"find by name": find nodes with app label, service name and workload name not containing 'rev'`
+                            d: `"by name": nodes with app label, service name and workload name not containing 'rev'`
                           },
                           {
                             id: 'e20',
                             e: 'app startswith product',
-                            d: `find nodes with app label starting with 'product'`
+                            d: `nodes with app label starting with 'product'`
                           },
                           {
                             id: 'e30',
                             e: 'app != details and version=v1',
-                            d: `find nodes with app label not equal to 'details' and with version equal to 'v1'`
+                            d: `nodes with app label not equal to 'details' and with version equal to 'v1'`
                           },
-                          { id: 'e40', e: '!sc', d: `find nodes without a sidecar` },
-                          { id: 'e50', e: 'httpin > 0.5', d: `find nodes with incoming http rate > 0.5 rps` },
-                          { id: 'e60', e: 'tcpout >= 1000', d: `find nodes with outgoing tcp rates >= 1000 bps` },
-                          { id: 'e70', e: 'http > 0.5', d: `find edges with http rate > 0.5 rps` },
+                          { id: 'e40', e: '!sc', d: `nodes without a sidecar` },
+                          { id: 'e50', e: 'httpin > 0.5', d: `nodes with incoming http rate > 0.5 rps` },
+                          { id: 'e60', e: 'tcpout >= 1000', d: `nodes with outgoing tcp rates >= 1000 bps` },
+                          { id: 'e70', e: 'http > 0.5', d: `edges with http rate > 0.5 rps` },
                           {
                             id: 'e80',
                             e: 'rt > 500',
-                            d: `find edges with response time > 500ms. (requires response time edge labels)`
+                            d: `edges with response time > 500ms. (requires response time edge labels)`
                           },
                           {
                             id: 'e90',
                             e: '%httptraffic >= 50.0',
-                            d: `find edges with >= 50% of the outgoing http request traffic of the parent`
+                            d: `edges with >= 50% of the outgoing http request traffic of the parent`
                           }
                         ]}
                       />
