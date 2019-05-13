@@ -21,21 +21,21 @@
 # following environment variables.
 #
 # -----------
-# Environment variables that affect the Kiali Operator:
+# Environment variables that affect the Kiali operator:
 #
 # OPERATOR_IMAGE_NAME
 #    Determines which image of the operator to download and install.
-#    To control what image name of Kiali to install, see IMAGE_NAME.
+#    To control what image name of Kiali to install, see KIALI_IMAGE_NAME.
 #    Default: "quay.io/kiali/kiali-operator"
 #
 # OPERATOR_IMAGE_PULL_POLICY
-#    The Kubernetes pull policy for the Kiali Operator deployment.
+#    The Kubernetes pull policy for the Kiali operator deployment.
 #    This is overridden to be "Always" if OPERATOR_IMAGE_VERSION is set to "latest".
 #    Default: "IfNotPresent"
 #
 # OPERATOR_IMAGE_VERSION
 #    Determines which version of the operator to install.
-#    To control what image version of Kiali to install, see IMAGE_VERSION.
+#    To control what image version of Kiali to install, see KIALI_IMAGE_VERSION.
 #    This can be set to "latest" in which case the latest image is installed (which may or
 #    may not be a released version of Kiali operator).
 #    This can be set to "lastrelease" in which case the last Kiali operator release is installed.
@@ -96,25 +96,25 @@
 #    The Grafana URL that Kiali will use when integrating with Grafana.
 #    This URL must be accessible to clients external to the cluster
 #    in order for the integration to work properly.
-#    If empty, the operator will attempt to auto-detect it.
+#    If empty, Kiali will attempt to auto-detect it.
 #    Default: ""
 #
-# IMAGE_NAME
+# KIALI_IMAGE_NAME
 #    Determines which image of Kiali to download and install.
 #    Default: "kiali/kiali"
 #
-# IMAGE_PULL_POLICY
+# KIALI_IMAGE_PULL_POLICY
 #    The Kubernetes pull policy for the Kiali deployment.
-#    The operator will overide this to be "Always" if IMAGE_VERSION is set to "latest".
+#    The operator will overide this to be "Always" if KIALI_IMAGE_VERSION is set to "latest".
 #    Default: "IfNotPresent"
 #
-# IMAGE_VERSION
+# KIALI_IMAGE_VERSION
 #    Determines which version of Kiali to install.
 #    This can be set to "latest" in which case the latest image is installed (which may or
 #    may not be a released version of Kiali). This is normally for developer use only.
 #    This can be set to "lastrelease" in which case the last Kiali release is installed.
 #    Otherwise, you can set to this any valid Kiali version (such as "v0.12").
-#    NOTE: If this is set to "latest" then the IMAGE_PULL_POLICY will be "Always".
+#    NOTE: If this is set to "latest" then the KIALI_IMAGE_PULL_POLICY will be "Always".
 #    Default: "lastrelease"
 #
 # ISTIO_NAMESPACE
@@ -125,7 +125,7 @@
 #    The Jaeger URL that Kiali will use when integrating with Jaeger.
 #    This URL must be accessible to clients external to the cluster
 #    in order for the integration to work properly.
-#    If empty, the operator will attempt to auto-detect it.
+#    If empty, Kiali will attempt to auto-detect it.
 #    Default: ""
 #
 # NAMESPACE
@@ -144,14 +144,188 @@
 #    Default: kiali
 #
 # UNINSTALL_EXISTING_KIALI
-#    If true, when installing Kiali, this script first will attempt to
-#    uninstall any currently existing Kiali resources.
+#    If true this script first will attempt to uninstall any currently existing Kiali resources.
+#    Note that if Kiali is already installed and you opt not to uninstall it, this script
+#    will abort and the operator will not be installed.
 #    This will only remove resources from Kiali itself, not a previously installed
 #    Kiali Operator. If you have a previously installed Kiali that was installed by
 #    a Kiali Operator, use that operator to uninstall that Kiali (i.e. remove the Kiali CR).
 #    Default: false
 #
 ##############################################################################
+
+# process command line args to override environment
+_CMD=""
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    -as|--auth-strategy)
+      AUTH_STRATEGY="$2"
+      shift;shift
+      ;;
+    -ccs|--credentials-create-secret)
+      CREDENTIALS_CREATE_SECRET="$2"
+      shift;shift
+      ;;
+    -cp|--credentials-passphrase)
+      CREDENTIALS_PASSPHRASE="$2"
+      shift;shift
+      ;;
+    -cu|--credentials-username)
+      CREDENTIALS_USERNAME="$2"
+      shift;shift
+      ;;
+    -gu|--grafana-url)
+      GRAFANA_URL="$2"
+      shift;shift
+      ;;
+    -kin|--kiali-image-name)
+      KIALI_IMAGE_NAME="$2"
+      shift;shift
+      ;;
+    -kipp|--kiali-image-pull-policy)
+      KIALI_IMAGE_PULL_POLICY="$2"
+      shift;shift
+      ;;
+    -kiv|--kiali-image-version)
+      KIALI_IMAGE_VERSION="$2"
+      shift;shift
+      ;;
+    -in|--istio-namespace)
+      ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -ju|--jaeger-url)
+      JAEGER_URL="$2"
+      shift;shift
+      ;;
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift;shift
+      ;;
+    -oin|--operator-image-name)
+      OPERATOR_IMAGE_NAME="$2"
+      shift;shift
+      ;;
+    -oipp|--operator-image-pull-policy)
+      OPERATOR_IMAGE_PULL_POLICY="$2"
+      shift;shift
+      ;;
+    -oiv|--operator-image-version)
+      OPERATOR_IMAGE_VERSION="$2"
+      shift;shift
+      ;;
+    -oik|--operator-install-kiali)
+      OPERATOR_INSTALL_KIALI="$2"
+      shift;shift
+      ;;
+    -on|--operator-namespace)
+      OPERATOR_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -osw|--operator-skip-wait)
+      OPERATOR_SKIP_WAIT="$2"
+      shift;shift
+      ;;
+    -ovl|--operator-version-label)
+      OPERATOR_VERSION_LABEL="$2"
+      shift;shift
+      ;;
+    -sn|--secret-name)
+      SECRET_NAME="$2"
+      shift;shift
+      ;;
+    -uek|--uninstall-existing-kiali)
+      UNINSTALL_EXISTING_KIALI="$2"
+      shift;shift
+      ;;
+    -h|--help)
+      cat <<HELPMSG
+
+$0 [option...]
+
+Valid options for the operator installation:
+  -oin|--operator-image-name
+      Image of the Kiali operator to download and install.
+      Default: "quay.io/kiali/kiali-operator"
+  -oipp|--operator-image-pull-policy
+      The Kubernetes pull policy for the Kiali operator deployment.
+      Default: "IfNotPresent"
+  -oiv|--operator-image-version
+      The version of the Kiali operator to install.
+      Can be a version string or "latest" or "lastrelease".
+      Default: "lastrelease"
+  -oik|--operator-install-kiali
+      If "true" this script will immediately command the Kiali operator to install Kiali.
+      Default: "true"
+  -on|--operator-namespace
+      The namespace into which the Kiali operator is to be installed.
+      Default: "kiali-operator"
+  -osw|--operator-skip-wait
+      Indicates if this script should not wait for the Kiali operator to be fully started.
+      Default: "false"
+  -ovl|--operator-version-label
+      A Kubernetes label named "version" will be set on the Kiali operator resources.
+      The value of this label is determined by this setting.
+      Default: Determined by the operator image version being installed
+  -uek|--uninstall-existing-kiali
+      If true, this script will attempt to uninstall any currently existing Kiali resources.
+      Note that if Kiali is already installed and you opt not to uninstall it, this script
+      will abort and the operator will not be installed.
+      Default: "false"
+
+Valid options for Kiali installation (if Kiali is to be installed):
+  -as|--auth-strategy
+      Determines what authentication strategy to use.
+      Valid values are "login", "anonymous", and "openshift"
+      Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
+  -ccs|--credentials-create-secret
+      When "true" a secret will be created with the credentials provided to this script.
+      Only used when the authentication strategy is set to "login".
+      Default: "true"
+  -cp|--credentials-passphrase
+      When this script creates a secret, this will be the passphrase stored in the secret.
+  -cu|--credentials-username
+      When this script creates a secret, this will be the username stored in the secret.
+  -gu|--grafana-url
+      The Grafana URL that Kiali will use when integrating with Grafana.
+      This URL must be accessible to clients external to the cluster.
+      If not set, Kiali will attempt to auto-detect it.
+  -kin|--kiali-image-name
+      Determines which image of Kiali to download and install.
+      Default: "kiali/kiali"
+  -kipp|--kiali-image-pull-policy
+      The Kubernetes pull policy for the Kiali deployment.
+      Default: "IfNotPresent"
+  -kiv|--kiali-image-version
+      Determines which version of Kiali to install.
+      Can be a version string or "latest" or "lastrelease".
+      Default: "lastrelease"
+  -in|--istio-namespace
+      The namespace where Istio is installed.
+      If empty, assumes the value of the namespace option.
+  -ju|--jaeger-url
+      The Jaeger URL that Kiali will use when integrating with Jaeger.
+      This URL must be accessible to clients external to the cluster.
+      If not set, Kiali will attempt to auto-detect it.
+  -n|--namespace
+      The namespace into which Kiali is to be installed.
+      Default: "istio-system"
+  -sn|--secret-name
+      The name of the secret that contains the credentials that will be
+      required when logging into Kiali. This is only needed when the
+      authentication strategy is "login".
+      Default: "kiali"
+
+HELPMSG
+      exit 1
+      ;;
+    *)
+      echo "Unknown argument [$key]. Aborting."
+      exit 1
+      ;;
+  esac
+done
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
 # After return, $downloader will be a command to stream a URL's content to stdout.
@@ -347,7 +521,7 @@ if [ "${OPERATOR_SKIP_WAIT}" != "true" ]; then
   echo
 
   if [ -z ${_OPERATOR_STARTED} ]; then
-    echo "ERROR: The Kiali Operator is not running yet. Please make sure it was deployed successfully."
+    echo "ERROR: The Kiali operator is not running yet. Please make sure it was deployed successfully."
     exit 1
   else
     echo "The Kiali operator is installed!"
@@ -427,9 +601,9 @@ echo "=== KIALI SETTINGS ==="
 echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo CREDENTIALS_CREATE_SECRET=$CREDENTIALS_CREATE_SECRET
 echo GRAFANA_URL=$GRAFANA_URL
-echo IMAGE_NAME=$IMAGE_NAME
-echo IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY
-echo IMAGE_VERSION=$IMAGE_VERSION
+echo KIALI_IMAGE_NAME=$KIALI_IMAGE_NAME
+echo KIALI_IMAGE_PULL_POLICY=$KIALI_IMAGE_PULL_POLICY
+echo KIALI_IMAGE_VERSION=$KIALI_IMAGE_VERSION
 echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
 echo NAMESPACE=$NAMESPACE
@@ -506,9 +680,9 @@ spec:
   auth:
     $(build_spec_value strategy AUTH_STRATEGY)
   deployment:
-    $(build_spec_value image_name IMAGE_NAME)
-    $(build_spec_value image_pull_policy IMAGE_PULL_POLICY)
-    $(build_spec_value image_version IMAGE_VERSION)
+    $(build_spec_value image_name KIALI_IMAGE_NAME)
+    $(build_spec_value image_pull_policy KIALI_IMAGE_PULL_POLICY)
+    $(build_spec_value image_version KIALI_IMAGE_VERSION)
     $(build_spec_value namespace NAMESPACE)
     $(build_spec_value secret_name SECRET_NAME)
   external_services:
