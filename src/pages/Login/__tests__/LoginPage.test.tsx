@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import LoginPage from '../LoginPage';
+import { LoginPage } from '../LoginPage';
 import { LoginStatus } from '../../../store/Store';
 
 const LoginProps = {

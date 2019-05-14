@@ -6,7 +6,7 @@ import { ObjectCheck, Validations } from '../../types/IstioObjects';
 import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
-import WorkloadMetricsContainer from '../../containers/WorkloadMetricsContainer';
+import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
@@ -239,7 +239,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 )}
               </TabPane>
               <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <WorkloadMetricsContainer
+                <IstioMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}
                   objectType={MetricsObjectTypes.WORKLOAD}
@@ -247,7 +247,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 />
               </TabPane>
               <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <WorkloadMetricsContainer
+                <IstioMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.workload}
                   objectType={MetricsObjectTypes.WORKLOAD}

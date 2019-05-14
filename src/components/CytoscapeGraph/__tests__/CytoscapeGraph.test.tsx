@@ -4,7 +4,7 @@ import { shallow } from 'enzyme';
 import { CytoscapeGraph } from '../CytoscapeGraph';
 import * as GRAPH_DATA from '../../../services/__mockData__/getGraphElements';
 import { Layout, EdgeLabelMode } from '../../../types/GraphFilter';
-import EmptyGraphLayout from '../../../containers/EmptyGraphLayoutContainer';
+import EmptyGraphLayoutContainer from '../../EmptyGraphLayout';
 import { GraphType } from '../../../types/Graph';
 import { decorateGraphData } from '../../../store/Selectors/GraphData';
 
@@ -57,7 +57,7 @@ describe('CytoscapeGraph component test', () => {
         graphType={GraphType.VERSIONED_APP}
       />
     );
-    const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayout);
+    const emptyGraphLayoutWrapper = wrapper.find(EmptyGraphLayoutContainer);
     const emptyGraphDecorated = decorateGraphData(GRAPH_DATA[testNamespace].elements);
     expect(emptyGraphLayoutWrapper.prop('elements').nodes).toEqual(emptyGraphDecorated.nodes);
     expect(emptyGraphLayoutWrapper.prop('elements').edges).toEqual(emptyGraphDecorated.edges);

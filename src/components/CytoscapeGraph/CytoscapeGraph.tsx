@@ -7,7 +7,7 @@ import ReactResizeDetector from 'react-resize-detector';
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRender from './TrafficAnimation/TrafficRenderer';
-import EmptyGraphLayout from '../../containers/EmptyGraphLayoutContainer';
+import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
 import { CyNode } from './CytoscapeGraphUtils';
@@ -205,7 +205,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     return (
       <div id="cytoscape-container" className={this.props.containerClassName}>
         <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={this.onResize} />
-        <EmptyGraphLayout
+        <EmptyGraphLayoutContainer
           elements={this.props.elements}
           namespaces={this.props.activeNamespaces}
           action={this.props.refresh}
@@ -213,7 +213,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           isError={this.props.isError}
         >
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
-        </EmptyGraphLayout>
+        </EmptyGraphLayoutContainer>
       </div>
     );
   }

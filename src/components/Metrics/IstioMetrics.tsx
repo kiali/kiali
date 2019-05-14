@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
+import { connect } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
-import { GrafanaInfo } from '../../store/Store';
+import { GrafanaInfo, KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import * as M from '../../types/Metrics';
 import { Direction, MetricsOptions, Reporter } from '../../types/MetricsOptions';
@@ -155,6 +156,8 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?${
             this.props.grafanaInfo.varNamespace
           }=${this.props.namespace}&${this.props.grafanaInfo.varWorkload}=${this.props.object}`;
+        case M.MetricsObjectTypes.APP:
+          return undefined;
         default:
           return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?${
             this.props.grafanaInfo.varNamespace
@@ -235,4 +238,14 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 }
 
 export { IstioMetricsProps };
-export default IstioMetrics;
+
+const mapStateToProps = (state: KialiAppState) => ({
+  isPageVisible: state.globalState.isPageVisible,
+  grafanaInfo: state.grafanaInfo
+});
+
+const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps>(
+  connect(mapStateToProps)(IstioMetrics)
+);
+
+export default IstioMetricsContainer;

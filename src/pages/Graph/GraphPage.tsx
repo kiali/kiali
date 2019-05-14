@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import FlexView from 'react-flexview';
 import { Breadcrumb, Icon, Button, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
@@ -17,11 +20,25 @@ import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
 import GraphFilterContainer from '../../components/GraphFilter/GraphFilter';
 import GraphLegend from '../../components/GraphFilter/GraphLegend';
 import StatefulTour from '../../components/Tour/StatefulTour';
-import EmptyGraphLayoutContainer from '../../containers/EmptyGraphLayoutContainer';
+import EmptyGraphLayoutContainer from '../../components/EmptyGraphLayout';
 import SummaryPanel from './SummaryPanel';
 import graphHelp from './GraphHelpTour';
 import { arrayEquals } from '../../utils/Common';
 import { getFocusSelector, isKioskMode } from '../../utils/SearchParamUtils';
+import {
+  activeNamespacesSelector,
+  durationSelector,
+  edgeLabelModeSelector,
+  graphDataSelector,
+  graphTypeSelector,
+  meshWideMTLSEnabledSelector,
+  refreshIntervalSelector
+} from '../../store/Selectors';
+import { KialiAppState } from '../../store/Store';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
+import { GraphActions } from '../../actions/GraphActions';
+import { GraphFilterActions } from '../../actions/GraphFilterActions';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -127,7 +144,7 @@ const timeDisplayOptions = {
   hour12: false
 };
 
-export default class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
+export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private pollTimeoutRef?: number;
   private pollPromise?: CancelablePromise<any>;
   private readonly errorBoundaryRef: any;
@@ -426,3 +443,61 @@ export default class GraphPage extends React.Component<GraphPageProps, GraphPage
     );
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state),
+  duration: durationSelector(state),
+  edgeLabelMode: edgeLabelModeSelector(state),
+  graphData: graphDataSelector(state),
+  graphDuration: state.graph.graphDataDuration,
+  graphTimestamp: state.graph.graphDataTimestamp,
+  graphType: graphTypeSelector(state),
+  isError: state.graph.isError,
+  isLoading: state.graph.isLoading,
+  isPageVisible: state.globalState.isPageVisible,
+  layout: state.graph.layout,
+  node: state.graph.node,
+  pollInterval: refreshIntervalSelector(state),
+  showLegend: state.graph.filterState.showLegend,
+  showSecurity: state.graph.filterState.showSecurity,
+  showServiceNodes: state.graph.filterState.showServiceNodes,
+  showUnusedNodes: state.graph.filterState.showUnusedNodes,
+  summaryData: state.graph.summaryData,
+  mtlsEnabled: meshWideMTLSEnabledSelector(state)
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  fetchGraphData: (
+    namespaces: Namespace[],
+    duration: DurationInSeconds,
+    graphType: GraphType,
+    injectServiceNodes: boolean,
+    edgeLabelMode: EdgeLabelMode,
+    showSecurity: boolean,
+    showUnusedNodes: boolean,
+    node?: NodeParamsType
+  ) =>
+    dispatch(
+      GraphDataThunkActions.fetchGraphData(
+        namespaces,
+        duration,
+        graphType,
+        injectServiceNodes,
+        edgeLabelMode,
+        showSecurity,
+        showUnusedNodes,
+        node
+      )
+    ),
+  graphChanged: bindActionCreators(GraphActions.changed, dispatch),
+  setNode: bindActionCreators(GraphActions.setNode, dispatch),
+  toggleLegend: bindActionCreators(GraphFilterActions.toggleLegend, dispatch)
+});
+
+const GraphPageContainer = withRouter<RouteComponentProps<{}>>(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(GraphPage)
+);
+export default GraphPageContainer;

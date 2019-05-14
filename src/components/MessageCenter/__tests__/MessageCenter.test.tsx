@@ -2,7 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import NotificationList from '../NotificationList';
-import MessageCenter from '../MessageCenter';
+import { MessageCenter } from '../MessageCenter';
 import { NotificationGroup, MessageType } from '../../../types/MessageCenter';
 
 describe('MessageCenter', () => {

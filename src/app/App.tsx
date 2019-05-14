@@ -5,13 +5,13 @@ import { Provider } from 'react-redux';
 import { Router, withRouter } from 'react-router-dom';
 import * as Visibility from 'visibilityjs';
 import { GlobalActions } from '../actions/GlobalActions';
-import NavigationContainer from '../containers/NavigationContainer';
+import NavigationContainer from '../components/Nav/Navigation';
 import { store, persistor } from '../store/ConfigStore';
 import AuthenticationControllerContainer from './AuthenticationController';
 import history from './History';
 import InitializingScreen from './InitializingScreen';
 import StartupInitializer from './StartupInitializer';
-import LoginPageConnected from '../containers/LoginPageContainer';
+import LoginPageContainer from '../pages/Login/LoginPage';
 import { LoginActions } from '../actions/LoginActions';
 
 /**
@@ -113,7 +113,7 @@ class App extends React.Component<{}, AppState> {
         <PersistGate loading={<InitializingScreen />} persistor={persistor}>
           {this.state.isInitialized ? (
             <AuthenticationControllerContainer
-              publicAreaComponent={<LoginPageConnected />}
+              publicAreaComponent={<LoginPageContainer />}
               protectedAreaComponent={this.protectedArea}
             />
           ) : (

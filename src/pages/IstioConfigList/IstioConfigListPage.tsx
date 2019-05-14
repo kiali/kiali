@@ -1,8 +1,8 @@
 import * as React from 'react';
-import IstioConfigListComponent from '../../containers/IstioConfigListComponentContainer';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { IstioConfigListFilters } from './FiltersAndSorts';
+import IstioConfigListContainer from './IstioConfigListComponent';
 
 const IstioConfigListPage: React.SFC<{}> = () => {
   return (
@@ -10,7 +10,7 @@ const IstioConfigListPage: React.SFC<{}> = () => {
       <Breadcrumb title={true}>
         <Breadcrumb.Item active={true}>Istio Config</Breadcrumb.Item>
       </Breadcrumb>
-      <IstioConfigListComponent
+      <IstioConfigListContainer
         pagination={ListPagesHelper.currentPagination()}
         currentSortField={ListPagesHelper.currentSortField(IstioConfigListFilters.sortFields)}
         isSortAscending={ListPagesHelper.isCurrentSortAscending()}

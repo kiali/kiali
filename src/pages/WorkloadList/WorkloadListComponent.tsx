@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
@@ -13,6 +14,8 @@ import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { arrayEquals } from '../../utils/Common';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector } from '../../store/Selectors';
 
 interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
   rateInterval: number;
@@ -215,4 +218,12 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 }
 
-export default WorkloadListComponent;
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state)
+});
+
+const WorkloadListContainer = connect(
+  mapStateToProps,
+  null
+)(WorkloadListComponent);
+export default WorkloadListContainer;

@@ -1,12 +1,17 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import RenderPage from './RenderPage';
 import { RouteComponentProps } from 'react-router';
 import Masthead from './Masthead/Masthead';
 import Menu from './Menu';
 import { Page, PageHeader, PageSection, Brand } from '@patternfly/react-core';
 
-import { MessageCenterContainer } from '../../containers/MessageCenterContainer';
+import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
+import { KialiAppState } from '../../store/Store';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
 
 export const istioConfigTitle = 'Istio Config';
 export const servicesTitle = 'Services';
@@ -112,4 +117,18 @@ class Navigation extends React.Component<PropsType, NavigationState> {
   }
 }
 
-export default Navigation;
+const mapStateToProps = (state: KialiAppState) => ({
+  navCollapsed: state.userSettings.interface.navCollapse,
+  jaegerUrl: state.jaegerState.jaegerURL,
+  jaegerIntegration: state.jaegerState.enableIntegration
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
+});
+
+const NavigationContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Navigation);
+export default NavigationContainer;

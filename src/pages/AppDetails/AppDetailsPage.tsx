@@ -5,7 +5,7 @@ import { AppId, App } from '../../types/App';
 import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
 import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
-import AppMetricsContainer from '../../containers/AppMetricsContainer';
+import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { AppHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
@@ -164,7 +164,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                 />
               </TabPane>
               <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <AppMetricsContainer
+                <IstioMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
                   objectType={MetricsObjectTypes.APP}
@@ -172,7 +172,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                 />
               </TabPane>
               <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <AppMetricsContainer
+                <IstioMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.app}
                   objectType={MetricsObjectTypes.APP}

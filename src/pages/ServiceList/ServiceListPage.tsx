@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ServiceListComponent from '../../containers/ServiceListComponentContainer';
+import ServiceListContainer from '../../pages/ServiceList/ServiceListComponent';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { ServiceListFilters } from './FiltersAndSorts';
@@ -10,7 +10,7 @@ const ServiceListPage: React.SFC<{}> = () => {
       <Breadcrumb title={true}>
         <Breadcrumb.Item active={true}>Services</Breadcrumb.Item>
       </Breadcrumb>
-      <ServiceListComponent
+      <ServiceListContainer
         pagination={ListPagesHelper.currentPagination()}
         currentSortField={ListPagesHelper.currentSortField(ServiceListFilters.sortFields)}
         isSortAscending={ListPagesHelper.isCurrentSortAscending()}

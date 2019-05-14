@@ -1,7 +1,7 @@
 import * as React from 'react';
 import AboutUIModal from '../../About/AboutUIModal';
 import { Component, KialiAppState } from '../../../store/Store';
-import DebugInformationContainer from '../../../containers/DebugInformationContainer';
+import DebugInformationContainer from '../../../components/DebugInformation/DebugInformation';
 import { Dropdown, DropdownToggle, DropdownItem } from '@patternfly/react-core';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';

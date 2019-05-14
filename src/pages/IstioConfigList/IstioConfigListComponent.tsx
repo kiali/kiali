@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import {
   Button,
   Icon,
@@ -31,6 +32,8 @@ import { SortField } from '../../types/SortFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { arrayEquals } from '../../utils/Common';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector } from '../../store/Selectors';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {
@@ -358,4 +361,12 @@ class IstioConfigListComponent extends ListComponent.Component<
   }
 }
 
-export default IstioConfigListComponent;
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state)
+});
+
+const IstioConfigListContainer = connect(
+  mapStateToProps,
+  null
+)(IstioConfigListComponent);
+export default IstioConfigListContainer;

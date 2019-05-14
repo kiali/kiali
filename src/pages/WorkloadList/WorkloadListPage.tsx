@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import WorkloadListComponent from '../../containers/WorkloadListComponentContainer';
+import WorkloadListContainer from './WorkloadListComponent';
 import { WorkloadListFilters } from './FiltersAndSorts';
 
 const WorkloadListPage: React.SFC<{}> = () => {
@@ -10,7 +10,7 @@ const WorkloadListPage: React.SFC<{}> = () => {
       <Breadcrumb title={true}>
         <Breadcrumb.Item active={true}>Workloads</Breadcrumb.Item>
       </Breadcrumb>
-      <WorkloadListComponent
+      <WorkloadListContainer
         pagination={ListPagesHelper.currentPagination()}
         currentSortField={ListPagesHelper.currentSortField(WorkloadListFilters.sortFields)}
         isSortAscending={ListPagesHelper.isCurrentSortAscending()}

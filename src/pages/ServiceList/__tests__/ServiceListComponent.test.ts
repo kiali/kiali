@@ -53,7 +53,7 @@ describe('SortField#compare', () => {
   });
 });
 
-describe('ServiceListComponent#sortServices', () => {
+describe('ServiceListContainer#sortServices', () => {
   const sortField = ServiceListFilters.sortFields.find(s => s.title === 'Service Name')!;
   const services = [makeService('A', -1), makeService('B', -1)];
   it('should sort ascending', done => {

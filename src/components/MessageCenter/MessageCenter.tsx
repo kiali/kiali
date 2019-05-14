@@ -1,9 +1,15 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 
 import NotificationDrawer from './NotificationDrawer';
 import NotificationList from './NotificationList';
 import { style } from 'typestyle';
 import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from '../../types/MessageCenter';
+import { KialiAppState } from '../../store/Store';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import { MessageCenterActions } from '../../actions/MessageCenterActions';
+import MessageCenterThunkActions from '../../actions/MessageCenterThunkActions';
 
 const notificationStyle = style({
   zIndex: 100
@@ -11,7 +17,7 @@ const notificationStyle = style({
 
 type StateType = {};
 
-export default class MessageCenter extends React.Component<MessageCenterPropsType, StateType> {
+export class MessageCenter extends React.Component<MessageCenterPropsType, StateType> {
   // Get messages that are meant to be show as notifications (Toast), appending
   // the groupId to allow to recognize the group they belong. (see onDismissNotification)
   getNotificationMessages = (groups: NotificationGroup[]) => {
@@ -57,3 +63,36 @@ export default class MessageCenter extends React.Component<MessageCenterPropsTyp
     );
   }
 }
+
+const mapStateToPropsMessageCenter = (state: KialiAppState) => {
+  return {
+    groups: state.messageCenter.groups,
+    drawerIsHidden: state.messageCenter.hidden,
+    drawerIsExpanded: state.messageCenter.expanded,
+    drawerExpandedGroupId: state.messageCenter.expandedGroupId
+  };
+};
+
+const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+  return {
+    onExpandDrawer: () => dispatch(MessageCenterActions.toggleExpandedMessageCenter()),
+    onHideDrawer: () => dispatch(MessageCenterActions.hideMessageCenter()),
+    onToggleGroup: group => dispatch(MessageCenterActions.toggleGroup(group.id)),
+    onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
+    onClearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
+    onNotificationClick: message => dispatch(MessageCenterActions.markAsRead(message.id)),
+    onDismissNotification: (message, group, userDismissed) => {
+      if (userDismissed) {
+        dispatch(MessageCenterActions.markAsRead(message.id));
+      } else {
+        dispatch(MessageCenterActions.hideNotification(message.id));
+      }
+    }
+  };
+};
+
+const MessageCenterContainer = connect(
+  mapStateToPropsMessageCenter,
+  mapDispatchToPropsMessageCenter
+)(MessageCenter);
+export default MessageCenterContainer;

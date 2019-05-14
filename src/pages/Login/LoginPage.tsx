@@ -1,4 +1,6 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 import {
   Button,
   LoginPage as LoginNext,
@@ -8,9 +10,11 @@ import {
   BackgroundImageSrc
 } from '@patternfly/react-core';
 import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
-import { LoginSession, LoginStatus } from '../../store/Store';
+import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
+import { KialiAppAction } from '../../actions/KialiAppAction';
+import LoginThunkActions from '../../actions/LoginThunkActions';
 
 /**
  *
@@ -45,7 +49,7 @@ type LoginState = {
   errorInput?: string;
 };
 
-export default class LoginPage extends React.Component<LoginProps, LoginState> {
+export class LoginPage extends React.Component<LoginProps, LoginState> {
   static contextTypes = {
     store: () => null
   };
@@ -224,3 +228,19 @@ export default class LoginPage extends React.Component<LoginProps, LoginState> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  status: state.authentication.status,
+  message: state.authentication.message
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
+  authenticate: (username: string, password: string) => dispatch(LoginThunkActions.authenticate(username, password)),
+  checkCredentials: () => dispatch(LoginThunkActions.checkCredentials())
+});
+
+const LoginPageContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(LoginPage);
+export default LoginPageContainer;

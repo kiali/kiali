@@ -5,7 +5,7 @@ import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import MatchingRouting from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
-import TrafficPolicyConnected from '../../containers/TrafficPolicyContainer';
+import TrafficPolicyContainer from '../../components/IstioWizards/TrafficPolicy';
 import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
 import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 import { Rule } from './MatchingRouting/Rules';
@@ -254,7 +254,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
                 {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
                   this.props.type === WIZARD_MATCHING_ROUTING ||
                   this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
-                  <TrafficPolicyConnected
+                  <TrafficPolicyContainer
                     mtlsMode={this.state.mtlsMode}
                     loadBalancer={this.state.loadBalancer}
                     onTlsChange={this.onTLS}

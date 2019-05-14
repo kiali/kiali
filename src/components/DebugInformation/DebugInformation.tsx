@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { Modal, Icon, Button, Alert } from 'patternfly-react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { style } from 'typestyle';
@@ -46,7 +47,7 @@ const copyToClipboardOptions = {
   message: 'We failed to automatically copy the text, please use: #{key}, Enter\t'
 };
 
-export default class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
+export class DebugInformation extends React.PureComponent<DebugInformationProps, DebugInformationState> {
   private textareaRef;
 
   constructor(props: DebugInformationProps) {
@@ -144,3 +145,16 @@ export default class DebugInformation extends React.PureComponent<DebugInformati
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  appState: state
+});
+
+const DebugInformationContainer = connect(
+  mapStateToProps,
+  null,
+  null,
+  { withRef: true }
+)(DebugInformation);
+
+export default DebugInformationContainer;

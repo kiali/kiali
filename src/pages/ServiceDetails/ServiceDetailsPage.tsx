@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import { Nav, NavItem, TabContainer, TabContent, TabPane, Icon } from 'patternfly-react';
 import ServiceId from '../../types/ServiceId';
@@ -6,7 +7,7 @@ import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
-import ServiceMetricsContainer from '../../containers/ServiceMetricsContainer';
+import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
@@ -17,6 +18,7 @@ import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
+import { KialiAppState } from '../../store/Store';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -318,7 +320,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                 />
               </TabPane>
               <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
-                <ServiceMetricsContainer
+                <IstioMetricsContainer
                   namespace={this.props.match.params.namespace}
                   object={this.props.match.params.service}
                   objectType={MetricsObjectTypes.SERVICE}
@@ -377,4 +379,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 }
 
-export default ServiceDetails;
+const mapStateToProps = (state: KialiAppState) => ({
+  jaegerUrl: state.jaegerState.jaegerURL,
+  jaegerIntegration: state.jaegerState.enableIntegration
+});
+
+const ServiceDetailsPageContainer = connect(mapStateToProps)(ServiceDetails);
+export default ServiceDetailsPageContainer;

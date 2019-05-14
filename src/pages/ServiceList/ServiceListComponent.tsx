@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import {
   Button,
   Icon,
@@ -26,6 +27,8 @@ import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { Validations, ObjectValidation } from 'src/types/IstioObjects';
 import { arrayEquals } from '../../utils/Common';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector } from '../../store/Selectors';
 
 interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
   rateInterval: number;
@@ -250,4 +253,12 @@ class ServiceListComponent extends ListComponent.Component<
   }
 }
 
-export default ServiceListComponent;
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state)
+});
+
+const ServiceListComponentContainer = connect(
+  mapStateToProps,
+  null
+)(ServiceListComponent);
+export default ServiceListComponentContainer;

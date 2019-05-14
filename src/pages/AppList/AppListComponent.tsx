@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { AppListItem } from '../../types/AppList';
@@ -12,6 +13,8 @@ import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector } from '../../store/Selectors';
 import { arrayEquals } from '../../utils/Common';
 
 interface AppListComponentState extends ListComponent.State<AppListItem> {
@@ -193,4 +196,12 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 }
 
-export default AppListComponent;
+const mapStateToProps = (state: KialiAppState) => ({
+  activeNamespaces: activeNamespacesSelector(state)
+});
+
+const AppListComponentContainer = connect(
+  mapStateToProps,
+  null
+)(AppListComponent);
+export default AppListComponentContainer;

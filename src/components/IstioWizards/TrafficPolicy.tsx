@@ -1,7 +1,10 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { Col, ControlLabel, DropdownButton, ExpandCollapse, Icon, MenuItem, Row } from 'patternfly-react';
 import { style } from 'typestyle';
 import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
+import { KialiAppState } from '../../store/Store';
+import { meshWideMTLSStatusSelector } from '../../store/Selectors';
 
 export const DISABLE = 'DISABLE';
 export const ISTIO_MUTUAL = 'ISTIO_MUTUAL';
@@ -107,4 +110,9 @@ class TrafficPolicy extends React.Component<Props> {
   }
 }
 
-export default TrafficPolicy;
+const mapStateToProps = (state: KialiAppState) => ({
+  meshWideStatus: meshWideMTLSStatusSelector(state)
+});
+
+const TraffiPolicyContainer = connect(mapStateToProps)(TrafficPolicy);
+export default TraffiPolicyContainer;

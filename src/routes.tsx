@@ -8,9 +8,9 @@ import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import OverviewPageContainer from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
-import GraphPageContainer from './containers/GraphPageContainer';
+import GraphPageContainer from './pages/Graph/GraphPage';
 import { icons, Paths } from './config';
-import ServiceDetailsPageContainer from './containers/ServiceDetailsPageContainer';
+import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 /**

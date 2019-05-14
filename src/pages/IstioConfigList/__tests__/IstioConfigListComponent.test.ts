@@ -57,7 +57,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
 
 const unfiltered = mockIstioConfigList(['white', 'red', 'blue']);
 
-describe('IstioConfigListComponent#filterByName', () => {
+describe('IstioConfigListContainer#filterByName', () => {
   it('should filter IstioConfigList by name', () => {
     let filtered = filterByName(unfiltered, ['white', 'red']);
     expect(filtered).toBeDefined();
@@ -110,7 +110,7 @@ describe('IstioConfigListComponent#filterByName', () => {
   });
 });
 
-describe('IstioConfigListComponent#toIstioItems', () => {
+describe('IstioConfigListContainer#toIstioItems', () => {
   it('should convert IstioConfigList in IstioConfigItems', () => {
     const istioItems = toIstioItems(unfiltered);
 
