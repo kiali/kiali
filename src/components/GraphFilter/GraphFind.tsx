@@ -113,13 +113,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 onKeyPress={this.checkSubmitFind}
                 placeholder="Find..."
               />
-              {this.state.findInputValue && (
+              {this.props.findValue && (
                 <OverlayTrigger
-                  key="ot-clear_find"
+                  key="ot_clear_find"
                   placement="top"
                   trigger={['hover', 'focus']}
                   delayShow={1000}
-                  overlay={<Tooltip id="tt-clear_find">Clear Find...</Tooltip>}
+                  overlay={<Tooltip id="tt_clear_find">Clear Find...</Tooltip>}
                 >
                   <InputGroup.Button>
                     <Button onClick={this.clearFind}>
@@ -142,13 +142,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 onKeyPress={this.checkSubmitHide}
                 placeholder="Hide..."
               />
-              {this.state.hideInputValue && (
+              {this.props.hideValue && (
                 <OverlayTrigger
-                  key="ot-clear_hide"
+                  key="ot_clear_hide"
                   placement="top"
                   trigger={['hover', 'focus']}
                   delayShow={1000}
-                  overlay={<Tooltip id="tt-clear_hide">Clear Hide...</Tooltip>}
+                  overlay={<Tooltip id="tt_clear_hide">Clear Hide...</Tooltip>}
                 >
                   <InputGroup.Button>
                     <Button onClick={this.clearHide}>
@@ -159,9 +159,9 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
               )}
             </InputGroup>
             <OverlayTrigger
-              key={'graph-find-help-ot'}
+              key={'ot_graph_find_help'}
               placement="top"
-              overlay={<Tooltip id={'graph-find-help-tt'}>Find/Hide Help...</Tooltip>}
+              overlay={<Tooltip id={'tt_graph_find_help'}>Find/Hide Help...</Tooltip>}
             >
               <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
                 <Icon name="help" type="pf" />
@@ -184,11 +184,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   };
 
   private updateFind = event => {
-    this.setState({ findInputValue: event.target.value, errorMessage: '' });
+    if ('' === event.target.value) {
+      this.clearFind();
+    } else {
+      this.setState({ findInputValue: event.target.value, errorMessage: '' });
+    }
   };
 
   private updateHide = event => {
-    this.setState({ hideInputValue: event.target.value, errorMessage: '' });
+    if ('' === event.target.value) {
+      this.clearHide();
+    } else {
+      this.setState({ hideInputValue: event.target.value, errorMessage: '' });
+    }
   };
 
   private checkSubmitFind = event => {
