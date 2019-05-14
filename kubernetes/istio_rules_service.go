@@ -9,8 +9,8 @@ import (
 )
 
 // GetIstioRules returns a list of mixer rules for a given namespace.
-func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
-	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Do().Get()
+func (in *IstioClient) GetIstioRules(namespace string, labelSelector string) ([]IstioObject, error) {
+	result, err := in.istioConfigApi.Get().Namespace(namespace).Resource(rules).Param("labelSelector", labelSelector).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -31,12 +31,12 @@ func (in *IstioClient) GetIstioRules(namespace string) ([]IstioObject, error) {
 	return istioRules, nil
 }
 
-func (in *IstioClient) GetAdapters(namespace string) ([]IstioObject, error) {
-	return in.getAdaptersTemplates(namespace, "adapter", adapterPlurals)
+func (in *IstioClient) GetAdapters(namespace, labelSelector string) ([]IstioObject, error) {
+	return in.getAdaptersTemplates(namespace, "adapter", adapterPlurals, labelSelector)
 }
 
-func (in *IstioClient) GetTemplates(namespace string) ([]IstioObject, error) {
-	return in.getAdaptersTemplates(namespace, "template", templatePlurals)
+func (in *IstioClient) GetTemplates(namespace, labelSelector string) ([]IstioObject, error) {
+	return in.getAdaptersTemplates(namespace, "template", templatePlurals, labelSelector)
 }
 
 func (in *IstioClient) GetIstioRule(namespace string, istiorule string) (IstioObject, error) {
@@ -65,11 +65,11 @@ func (in *IstioClient) GetTemplate(namespace, templateType, templateName string)
 	return in.getAdapterTemplate(namespace, "template", templateType, templateName, templatePlurals)
 }
 
-func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, pluralsMap map[string]string) ([]IstioObject, error) {
+func (in *IstioClient) getAdaptersTemplates(namespace string, itemType string, pluralsMap map[string]string, labelSelector string) ([]IstioObject, error) {
 	resultsChan := make(chan istioResponse)
 	for name, plural := range pluralsMap {
 		go func(name, plural string) {
-			results, err := in.istioConfigApi.Get().Namespace(namespace).Resource(plural).Do().Get()
+			results, err := in.istioConfigApi.Get().Namespace(namespace).Resource(plural).Param("labelSelector", labelSelector).Do().Get()
 			istioObjects := istioResponse{}
 			typeMeta := meta_v1.TypeMeta{
 				Kind:       PluralType[plural],
