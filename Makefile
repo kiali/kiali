@@ -286,8 +286,8 @@ gometalinter-install:
 ## lint: Runs gometalinter
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=300s --vendor $$(glide nv | grep -v '^\.$$')
-	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=300s --vendor kiali.go
+	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=500s --vendor $$(glide nv | grep -v '^\.$$')
+	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=500s --vendor kiali.go
 
 ## lint-all: Runs gometalinter with items from good to have list but does not run during travis
 lint-all:
