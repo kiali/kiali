@@ -11,11 +11,13 @@ import {
   WIZARD_ACTIONS,
   WIZARD_MATCHING_ROUTING,
   WIZARD_SUSPEND_TRAFFIC,
+  WIZARD_THREESCALE_INTEGRATION,
   WIZARD_TITLES,
   WIZARD_UPDATE_TITLES,
   WIZARD_WEIGHTED_ROUTING
 } from './IstioWizardActions';
 import IstioWizard from './IstioWizard';
+import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 
 type Props = {
   namespace: string;
@@ -25,6 +27,8 @@ type Props = {
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
   tlsStatus?: TLSStatus;
+  threeScaleInfo: ThreeScaleInfo;
+  threeScaleServiceRule?: ThreeScaleServiceRule;
   onChange: () => void;
 };
 
@@ -33,10 +37,12 @@ type State = {
   updateWizard: boolean;
   wizardType: string;
   showConfirmDelete: boolean;
+  deleteAction: string;
   isDeleting: boolean;
 };
 
 const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
+const DELETE_THREESCALE_INTEGRATION = 'delete_threescale_integration';
 
 class IstioWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -45,6 +51,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
       showWizard: props.show,
       wizardType: '',
       showConfirmDelete: false,
+      deleteAction: '',
       isDeleting: false,
       updateWizard: false
     };
@@ -84,8 +91,20 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         this.setState({ showWizard: true, wizardType: key, updateWizard: key === updateLabel });
         break;
       }
+      case WIZARD_THREESCALE_INTEGRATION: {
+        this.setState({
+          showWizard: true,
+          wizardType: key,
+          updateWizard: this.props.threeScaleServiceRule !== undefined
+        });
+        break;
+      }
       case DELETE_TRAFFIC_ROUTING: {
-        this.setState({ showConfirmDelete: true });
+        this.setState({ showConfirmDelete: true, deleteAction: key });
+        break;
+      }
+      case DELETE_THREESCALE_INTEGRATION: {
+        this.setState({ showConfirmDelete: true, deleteAction: key });
         break;
       }
       default:
@@ -98,16 +117,24 @@ class IstioWizardDropdown extends React.Component<Props, State> {
       isDeleting: true
     });
     const deletePromises: Promise<any>[] = [];
-    this.props.virtualServices.items.forEach(vs => {
-      deletePromises.push(
-        API.deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
-      );
-    });
-    this.props.destinationRules.items.forEach(dr => {
-      deletePromises.push(
-        API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
-      );
-    });
+    switch (this.state.deleteAction) {
+      case DELETE_TRAFFIC_ROUTING:
+        this.props.virtualServices.items.forEach(vs => {
+          deletePromises.push(
+            API.deleteIstioConfigDetail(vs.metadata.namespace || '', 'virtualservices', vs.metadata.name)
+          );
+        });
+        this.props.destinationRules.items.forEach(dr => {
+          deletePromises.push(
+            API.deleteIstioConfigDetail(dr.metadata.namespace || '', 'destinationrules', dr.metadata.name)
+          );
+        });
+        break;
+      case DELETE_THREESCALE_INTEGRATION:
+        deletePromises.push(API.deleteThreeScaleServiceRule(this.props.namespace, this.props.serviceName));
+        break;
+      default:
+    }
     // For slow scenarios, dialog is hidden and Delete All action blocked until promises have finished
     this.hideConfirmDelete();
     Promise.all(deletePromises)
@@ -181,6 +208,50 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         ) : (
           deleteMenuItem
         );
+      case WIZARD_THREESCALE_INTEGRATION:
+        const threeScaleEnabledItem =
+          !this.props.threeScaleServiceRule || (this.props.threeScaleServiceRule && updateLabel === eventKey);
+        const threeScaleMenuItem = (
+          <MenuItem disabled={!threeScaleEnabledItem} key={eventKey} eventKey={eventKey}>
+            {updateLabel === eventKey ? WIZARD_UPDATE_TITLES[eventKey] : WIZARD_TITLES[eventKey]}
+          </MenuItem>
+        );
+        const toolTipMsgExists = '3scale API Integration Rule already exists for this service';
+        return !threeScaleEnabledItem ? (
+          <OverlayTrigger
+            placement={'left'}
+            overlay={<Tooltip id={'mtls-status-masthead'}>{toolTipMsgExists}</Tooltip>}
+            trigger={['hover', 'focus']}
+            rootClose={false}
+          >
+            {threeScaleMenuItem}
+          </OverlayTrigger>
+        ) : (
+          threeScaleMenuItem
+        );
+      case DELETE_THREESCALE_INTEGRATION:
+        const deleteThreeScaleMenuItem = (
+          <MenuItem
+            disabled={!this.props.threeScaleServiceRule || this.state.isDeleting}
+            key={eventKey}
+            eventKey={eventKey}
+          >
+            Delete 3Scale API Management Rule
+          </MenuItem>
+        );
+        const toolTipMsgDelete = 'There is not a 3scale API Integration Rule for this service';
+        return !this.props.threeScaleServiceRule ? (
+          <OverlayTrigger
+            placement={'left'}
+            overlay={<Tooltip id={'mtls-status-masthead'}>{toolTipMsgDelete}</Tooltip>}
+            trigger={['hover', 'focus']}
+            rootClose={false}
+          >
+            {deleteThreeScaleMenuItem}
+          </OverlayTrigger>
+        ) : (
+          deleteThreeScaleMenuItem
+        );
       default:
         return <>Unsupported</>;
     }
@@ -188,20 +259,28 @@ class IstioWizardDropdown extends React.Component<Props, State> {
 
   getDeleteMessage = () => {
     let deleteMessage = 'Are you sure you want to delete ';
-    deleteMessage +=
-      this.props.virtualServices.items.length > 0
-        ? `VirtualService${
-            this.props.virtualServices.items.length > 1 ? 's' : ''
-          }: '${this.props.virtualServices.items.map(vs => vs.metadata.name)}'`
-        : '';
-    deleteMessage +=
-      this.props.virtualServices.items.length > 0 && this.props.destinationRules.items.length > 0 ? ' and ' : '';
-    deleteMessage +=
-      this.props.destinationRules.items.length > 0
-        ? `DestinationRule${
-            this.props.destinationRules.items.length > 1 ? 's' : ''
-          }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
-        : '';
+    switch (this.state.deleteAction) {
+      case DELETE_TRAFFIC_ROUTING:
+        deleteMessage +=
+          this.props.virtualServices.items.length > 0
+            ? `VirtualService${
+                this.props.virtualServices.items.length > 1 ? 's' : ''
+              }: '${this.props.virtualServices.items.map(vs => vs.metadata.name)}'`
+            : '';
+        deleteMessage +=
+          this.props.virtualServices.items.length > 0 && this.props.destinationRules.items.length > 0 ? ' and ' : '';
+        deleteMessage +=
+          this.props.destinationRules.items.length > 0
+            ? `DestinationRule${
+                this.props.destinationRules.items.length > 1 ? 's' : ''
+              }: '${this.props.destinationRules.items.map(dr => dr.metadata.name)}'`
+            : '';
+        break;
+      case DELETE_THREESCALE_INTEGRATION:
+        deleteMessage += ' 3scale API Management Integration Rule ';
+        break;
+      default:
+    }
     deleteMessage += ' ?.  ';
     return deleteMessage;
   };
@@ -215,6 +294,13 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             WIZARD_ACTIONS.map(action => this.renderMenuItem(action, updateLabel))}
           <MenuItem divider={true} />
           {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING, '')}
+          {this.props.threeScaleInfo.enabled && <MenuItem divider={true} />}
+          {this.props.threeScaleInfo.enabled &&
+            this.renderMenuItem(
+              WIZARD_THREESCALE_INTEGRATION,
+              this.props.threeScaleServiceRule ? WIZARD_THREESCALE_INTEGRATION : ''
+            )}
+          {this.props.threeScaleInfo.enabled && this.renderMenuItem(DELETE_THREESCALE_INTEGRATION, '')}
         </DropdownButton>
         <IstioWizard
           show={this.state.showWizard}
@@ -229,6 +315,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
           })}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
+          threeScaleServiceRule={this.props.threeScaleServiceRule}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}
         />

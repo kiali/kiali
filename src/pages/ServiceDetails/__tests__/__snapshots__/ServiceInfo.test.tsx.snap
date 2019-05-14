@@ -175,6 +175,16 @@ ShallowWrapper {
         "workloads": Array [],
       }
     }
+    threeScaleInfo={
+      Object {
+        "enabled": false,
+        "permissions": Object {
+          "create": false,
+          "delete": false,
+          "update": false,
+        },
+      }
+    }
     validations={
       Object {
         "destinationrule": Object {
@@ -298,6 +308,17 @@ ShallowWrapper {
                   onChange={[MockFunction]}
                   serviceName="reviews"
                   show={false}
+                  threeScaleInfo={
+                    Object {
+                      "enabled": false,
+                      "permissions": Object {
+                        "create": false,
+                        "delete": false,
+                        "update": false,
+                      },
+                    }
+                  }
+                  threeScaleServiceRule={undefined}
                   tlsStatus={undefined}
                   virtualServices={
                     Object {
@@ -407,6 +428,7 @@ ShallowWrapper {
                   ]
                 }
                 resourceVersion="2652"
+                threeScaleServiceRule={undefined}
                 type="ClusterIP"
               />
             </Col>
@@ -683,6 +705,17 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    threeScaleInfo={
+                      Object {
+                        "enabled": false,
+                        "permissions": Object {
+                          "create": false,
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    threeScaleServiceRule={undefined}
                     tlsStatus={undefined}
                     virtualServices={
                       Object {
@@ -792,6 +825,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  threeScaleServiceRule={undefined}
                   type="ClusterIP"
                 />
               </Col>
@@ -1062,6 +1096,17 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    threeScaleInfo={
+                      Object {
+                        "enabled": false,
+                        "permissions": Object {
+                          "create": false,
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    threeScaleServiceRule={undefined}
                     tlsStatus={undefined}
                     virtualServices={
                       Object {
@@ -1182,6 +1227,17 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    threeScaleInfo={
+                      Object {
+                        "enabled": false,
+                        "permissions": Object {
+                          "create": false,
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    threeScaleServiceRule={undefined}
                     tlsStatus={undefined}
                     virtualServices={
                       Object {
@@ -1297,6 +1353,17 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      threeScaleInfo={
+                        Object {
+                          "enabled": false,
+                          "permissions": Object {
+                            "create": false,
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      threeScaleServiceRule={undefined}
                       tlsStatus={undefined}
                       virtualServices={
                         Object {
@@ -1425,6 +1492,15 @@ ShallowWrapper {
                       "onChange": [MockFunction],
                       "serviceName": "reviews",
                       "show": false,
+                      "threeScaleInfo": Object {
+                        "enabled": false,
+                        "permissions": Object {
+                          "create": false,
+                          "delete": false,
+                          "update": false,
+                        },
+                      },
+                      "threeScaleServiceRule": undefined,
                       "tlsStatus": undefined,
                       "virtualServices": Object {
                         "items": Array [
@@ -1541,6 +1617,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  threeScaleServiceRule={undefined}
                   type="ClusterIP"
                 />
               </Col>,
@@ -1607,6 +1684,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  threeScaleServiceRule={undefined}
                   type="ClusterIP"
                 />,
                 "componentClass": "div",
@@ -1667,6 +1745,7 @@ ShallowWrapper {
                     },
                   ],
                   "resourceVersion": "2652",
+                  "threeScaleServiceRule": undefined,
                   "type": "ClusterIP",
                 },
                 "ref": null,
@@ -2988,6 +3067,17 @@ ShallowWrapper {
                     onChange={[MockFunction]}
                     serviceName="reviews"
                     show={false}
+                    threeScaleInfo={
+                      Object {
+                        "enabled": false,
+                        "permissions": Object {
+                          "create": false,
+                          "delete": false,
+                          "update": false,
+                        },
+                      }
+                    }
+                    threeScaleServiceRule={undefined}
                     tlsStatus={undefined}
                     virtualServices={
                       Object {
@@ -3097,6 +3187,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  threeScaleServiceRule={undefined}
                   type="ClusterIP"
                 />
               </Col>
@@ -3373,6 +3464,17 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      threeScaleInfo={
+                        Object {
+                          "enabled": false,
+                          "permissions": Object {
+                            "create": false,
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      threeScaleServiceRule={undefined}
                       tlsStatus={undefined}
                       virtualServices={
                         Object {
@@ -3482,6 +3584,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    threeScaleServiceRule={undefined}
                     type="ClusterIP"
                   />
                 </Col>
@@ -3752,6 +3855,17 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      threeScaleInfo={
+                        Object {
+                          "enabled": false,
+                          "permissions": Object {
+                            "create": false,
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      threeScaleServiceRule={undefined}
                       tlsStatus={undefined}
                       virtualServices={
                         Object {
@@ -3872,6 +3986,17 @@ ShallowWrapper {
                       onChange={[MockFunction]}
                       serviceName="reviews"
                       show={false}
+                      threeScaleInfo={
+                        Object {
+                          "enabled": false,
+                          "permissions": Object {
+                            "create": false,
+                            "delete": false,
+                            "update": false,
+                          },
+                        }
+                      }
+                      threeScaleServiceRule={undefined}
                       tlsStatus={undefined}
                       virtualServices={
                         Object {
@@ -3987,6 +4112,17 @@ ShallowWrapper {
                         onChange={[MockFunction]}
                         serviceName="reviews"
                         show={false}
+                        threeScaleInfo={
+                          Object {
+                            "enabled": false,
+                            "permissions": Object {
+                              "create": false,
+                              "delete": false,
+                              "update": false,
+                            },
+                          }
+                        }
+                        threeScaleServiceRule={undefined}
                         tlsStatus={undefined}
                         virtualServices={
                           Object {
@@ -4115,6 +4251,15 @@ ShallowWrapper {
                         "onChange": [MockFunction],
                         "serviceName": "reviews",
                         "show": false,
+                        "threeScaleInfo": Object {
+                          "enabled": false,
+                          "permissions": Object {
+                            "create": false,
+                            "delete": false,
+                            "update": false,
+                          },
+                        },
+                        "threeScaleServiceRule": undefined,
                         "tlsStatus": undefined,
                         "virtualServices": Object {
                           "items": Array [
@@ -4231,6 +4376,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    threeScaleServiceRule={undefined}
                     type="ClusterIP"
                   />
                 </Col>,
@@ -4297,6 +4443,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    threeScaleServiceRule={undefined}
                     type="ClusterIP"
                   />,
                   "componentClass": "div",
@@ -4357,6 +4504,7 @@ ShallowWrapper {
                       },
                     ],
                     "resourceVersion": "2652",
+                    "threeScaleServiceRule": undefined,
                     "type": "ClusterIP",
                   },
                   "ref": null,

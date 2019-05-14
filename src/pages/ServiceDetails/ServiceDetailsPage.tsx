@@ -16,11 +16,14 @@ import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
+import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
   trafficData: GraphDefinition | null;
   validations: Validations;
+  threeScaleInfo: ThreeScaleInfo;
+  threeScaleServiceRule?: ThreeScaleServiceRule;
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
@@ -68,7 +71,15 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.state = {
       serviceDetailsInfo: emptyService,
       trafficData: null,
-      validations: {}
+      validations: {},
+      threeScaleInfo: {
+        enabled: false,
+        permissions: {
+          create: false,
+          update: false,
+          delete: false
+        }
+      }
     };
   }
 
@@ -152,12 +163,31 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       this.props.match.params.service,
       true
     );
-    promiseDetails
-      .then(resultDetails => {
+    const promiseThreeScale = API.getThreeScaleInfo();
+    Promise.all([promiseDetails, promiseThreeScale])
+      .then(results => {
         this.setState({
-          serviceDetailsInfo: resultDetails,
-          validations: this.addFormatValidation(resultDetails, resultDetails.validations)
+          serviceDetailsInfo: results[0],
+          validations: this.addFormatValidation(results[0], results[0].validations),
+          threeScaleInfo: results[1].data
         });
+        if (results[1].data.enabled) {
+          API.getThreeScaleServiceRule(this.props.match.params.namespace, this.props.match.params.service)
+            .then(result => {
+              this.setState({
+                threeScaleServiceRule: result.data
+              });
+            })
+            .catch(error => {
+              this.setState({
+                threeScaleServiceRule: undefined
+              });
+              // Only log 500 errors. 404 response is a valid response on this composition case
+              if (error.response && error.response.status >= 500) {
+                MessageCenter.add(API.getErrorMsg('Could not fetch ThreeScaleServiceRule', error));
+              }
+            });
+        }
       })
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Service Details', error));
@@ -272,6 +302,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
+                  threeScaleInfo={this.state.threeScaleInfo}
+                  threeScaleServiceRule={this.state.threeScaleServiceRule}
                 />
               </TabPane>
               <TabPane eventKey="traffic">

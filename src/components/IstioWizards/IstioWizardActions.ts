@@ -14,23 +14,27 @@ import {
   VirtualServices
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
+import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 
 export const WIZARD_WEIGHTED_ROUTING = 'weighted_routing';
 export const WIZARD_MATCHING_ROUTING = 'matching_routing';
 export const WIZARD_SUSPEND_TRAFFIC = 'suspend_traffic';
+export const WIZARD_THREESCALE_INTEGRATION = 'threescale';
 
 export const WIZARD_ACTIONS = [WIZARD_WEIGHTED_ROUTING, WIZARD_MATCHING_ROUTING, WIZARD_SUSPEND_TRAFFIC];
 
 export const WIZARD_TITLES = {
   [WIZARD_WEIGHTED_ROUTING]: 'Create Weighted Routing',
   [WIZARD_MATCHING_ROUTING]: 'Create Matching Routing',
-  [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic'
+  [WIZARD_SUSPEND_TRAFFIC]: 'Suspend Traffic',
+  [WIZARD_THREESCALE_INTEGRATION]: 'Add 3scale API Management Rule'
 };
 
 export const WIZARD_UPDATE_TITLES = {
   [WIZARD_WEIGHTED_ROUTING]: 'Update Weighted Routing',
   [WIZARD_MATCHING_ROUTING]: 'Update Matching Routing',
-  [WIZARD_SUSPEND_TRAFFIC]: 'Update Suspended Traffic'
+  [WIZARD_SUSPEND_TRAFFIC]: 'Update Suspended Traffic',
+  [WIZARD_THREESCALE_INTEGRATION]: 'Update 3scale API Management Rule'
 };
 
 export type WizardProps = {
@@ -43,6 +47,7 @@ export type WizardProps = {
   workloads: WorkloadOverview[];
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
+  threeScaleServiceRule?: ThreeScaleServiceRule;
   onClose: (changed: boolean) => void;
 };
 
@@ -56,6 +61,7 @@ export type WizardState = {
   tlsModified: boolean;
   loadBalancer: string;
   lbModified: boolean;
+  threeScaleServiceRule?: ThreeScaleServiceRule;
 };
 
 const SERVICE_UNAVAILABLE = 503;

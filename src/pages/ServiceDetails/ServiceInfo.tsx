@@ -22,6 +22,7 @@ import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { Validations } from '../../types/IstioObjects';
 import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
+import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -29,6 +30,8 @@ interface ServiceDetails extends ServiceId {
   onRefresh: () => void;
   onSelectTab: (tabName: string, postHandler?: (tabName: string) => void) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
+  threeScaleInfo: ThreeScaleInfo;
+  threeScaleServiceRule?: ThreeScaleServiceRule;
 }
 
 type ServiceInfoState = {
@@ -136,6 +139,8 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   destinationRules={destinationRules}
                   tlsStatus={this.props.serviceDetails.namespaceMTLS}
                   onChange={this.props.onRefresh}
+                  threeScaleInfo={this.props.threeScaleInfo}
+                  threeScaleServiceRule={this.props.threeScaleServiceRule}
                 />
               </span>
             </Col>
@@ -155,6 +160,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 endpoints={this.props.serviceDetails.endpoints}
                 health={this.props.serviceDetails.health}
                 externalName={this.props.serviceDetails.service.externalName}
+                threeScaleServiceRule={this.props.threeScaleServiceRule}
               />
             </Col>
           </Row>

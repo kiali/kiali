@@ -18,6 +18,7 @@ import {
   getInitWeights,
   WIZARD_MATCHING_ROUTING,
   WIZARD_SUSPEND_TRAFFIC,
+  WIZARD_THREESCALE_INTEGRATION,
   WIZARD_TITLES,
   WIZARD_UPDATE_TITLES,
   WIZARD_WEIGHTED_ROUTING,
@@ -26,6 +27,8 @@ import {
 } from './IstioWizardActions';
 import { Response } from '../../services/Api';
 import { MessageType } from '../../types/MessageCenter';
+import ThreeScaleIntegration from './ThreeScaleIntegration';
+import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 
 class IstioWizard extends React.Component<WizardProps, WizardState> {
   constructor(props: WizardProps) {
@@ -93,18 +96,42 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
   };
 
   onCreateUpdate = () => {
-    const [dr, vs] = buildIstioConfig(this.props, this.state);
     const promises: Promise<Response<string>>[] = [];
-    if (this.props.update) {
-      promises.push(
-        API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
-      );
-      promises.push(
-        API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
-      );
-    } else {
-      promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
-      promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+    switch (this.props.type) {
+      case WIZARD_WEIGHTED_ROUTING:
+      case WIZARD_MATCHING_ROUTING:
+      case WIZARD_SUSPEND_TRAFFIC:
+        const [dr, vs] = buildIstioConfig(this.props, this.state);
+        if (this.props.update) {
+          promises.push(
+            API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
+          );
+          promises.push(
+            API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
+          );
+        } else {
+          promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
+          promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
+        }
+        break;
+      case WIZARD_THREESCALE_INTEGRATION:
+        if (this.state.threeScaleServiceRule) {
+          if (this.props.update) {
+            promises.push(
+              API.updateThreeScaleServiceRule(
+                this.props.namespace,
+                this.props.serviceName,
+                JSON.stringify(this.state.threeScaleServiceRule)
+              )
+            );
+          } else {
+            promises.push(
+              API.createThreeScaleServiceRule(this.props.namespace, JSON.stringify(this.state.threeScaleServiceRule))
+            );
+          }
+        }
+        break;
+      default:
     }
     // Disable button before promise is completed. Then Wizard is closed.
     this.setState({
@@ -112,15 +139,17 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     });
     Promise.all(promises)
       .then(results => {
-        MessageCenter.add(
-          'Istio Config ' +
-            (this.props.update ? 'updated' : 'created') +
-            ' for ' +
-            this.props.serviceName +
-            ' service.',
-          'default',
-          MessageType.SUCCESS
-        );
+        if (results.length > 0) {
+          MessageCenter.add(
+            'Istio Config ' +
+              (this.props.update ? 'updated' : 'created') +
+              ' for ' +
+              this.props.serviceName +
+              ' service.',
+            'default',
+            MessageType.SUCCESS
+          );
+        }
         this.props.onClose(true);
       })
       .catch(error => {
@@ -166,6 +195,13 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     });
   };
 
+  onThreeScaleChange = (valid: boolean, threeScaleServiceRule: ThreeScaleServiceRule) => {
+    this.setState({
+      valid: valid,
+      threeScaleServiceRule: threeScaleServiceRule
+    });
+  };
+
   render() {
     return (
       <Wizard show={this.state.showWizard} onHide={this.onClose}>
@@ -201,14 +237,32 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
                     onChange={this.onSuspendedChange}
                   />
                 )}
-                <TrafficPolicyConnected
-                  mtlsMode={this.state.mtlsMode}
-                  loadBalancer={this.state.loadBalancer}
-                  onTlsChange={this.onTLS}
-                  onLoadbalancerChange={this.onLoadBalancer}
-                  expanded={false}
-                  nsWideStatus={this.props.tlsStatus}
-                />
+                {this.props.type === WIZARD_THREESCALE_INTEGRATION && (
+                  <ThreeScaleIntegration
+                    serviceName={this.props.serviceName}
+                    serviceNamespace={this.props.namespace}
+                    threeScaleServiceRule={
+                      this.props.threeScaleServiceRule || {
+                        serviceName: this.props.serviceName,
+                        serviceNamespace: this.props.namespace,
+                        threeScaleHandlerName: ''
+                      }
+                    }
+                    onChange={this.onThreeScaleChange}
+                  />
+                )}
+                {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
+                  this.props.type === WIZARD_MATCHING_ROUTING ||
+                  this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
+                  <TrafficPolicyConnected
+                    mtlsMode={this.state.mtlsMode}
+                    loadBalancer={this.state.loadBalancer}
+                    onTlsChange={this.onTLS}
+                    onLoadbalancerChange={this.onLoadBalancer}
+                    expanded={false}
+                    nsWideStatus={this.props.tlsStatus}
+                  />
+                )}
               </Wizard.Contents>
             </Wizard.Main>
           </Wizard.Row>

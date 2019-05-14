@@ -20,6 +20,14 @@ describe('#ServiceInfo render correctly with data', () => {
           onRefresh={jest.fn()}
           onSelectTab={jest.fn()}
           activeTab={jest.fn()}
+          threeScaleInfo={{
+            enabled: false,
+            permissions: {
+              create: false,
+              update: false,
+              delete: false
+            }
+          }}
         />
       );
       expect(wrapper).toBeDefined();
