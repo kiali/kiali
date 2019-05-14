@@ -29,13 +29,17 @@ func CreateExternalServiceEntry() kubernetes.IstioObject {
 }
 
 func CreateEmptyMeshExternalServiceEntry(name, namespace string, hosts []string) kubernetes.IstioObject {
+	hostsI := make([]interface{}, len(hosts))
+	for i, h := range hosts {
+		hostsI[i] = interface{}(h)
+	}
 	return (&kubernetes.GenericIstioObject{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: map[string]interface{}{
-			"hosts":      hosts,
+			"hosts":      hostsI,
 			"location":   "MESH_EXTERNAL",
 			"resolution": "DNS",
 		},
@@ -45,7 +49,8 @@ func CreateEmptyMeshExternalServiceEntry(name, namespace string, hosts []string)
 func AddPortDefinitionToServiceEntry(portDef map[string]interface{}, se kubernetes.IstioObject) kubernetes.IstioObject {
 	if portsSpec, found := se.GetSpec()["ports"]; found {
 		if portsSlice, ok := portsSpec.([]interface{}); ok {
-			se.GetSpec()["ports"] = append(portsSlice, portDef)
+			portsSlice = append(portsSlice, portDef)
+			se.GetSpec()["ports"] = portsSlice
 		}
 	} else {
 		se.GetSpec()["ports"] = []interface{}{portDef}

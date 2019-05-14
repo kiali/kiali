@@ -205,3 +205,23 @@ func TestReviewsExample(t *testing.T) {
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(1, len(validation.Checks))
 }
+
+func TestMultiServiceEntry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
+	seB := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-b", "test", []string{"api.service_b.com"}))
+
+	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
+	drB := data.CreateEmptyDestinationRule("test", "service-b", "api.service_b.com")
+
+	validations := MultiMatchChecker{
+		DestinationRules: []kubernetes.IstioObject{drA, drB},
+		ServiceEntries:   kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{seA, seB}),
+	}.Check()
+
+	assert.Empty(validations)
+}

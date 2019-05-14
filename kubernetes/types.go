@@ -771,9 +771,10 @@ func (in *GenericIstioObjectList) DeepCopyObject() runtime.Object {
 
 // Host represents the FQDN format for Istio hostnames
 type Host struct {
-	Service   string
-	Namespace string
-	Cluster   string
+	Service       string
+	Namespace     string
+	Cluster       string
+	CompleteInput bool
 }
 
 // Parse takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
@@ -787,7 +788,10 @@ func ParseHost(hostName, namespace, cluster string) Host {
 
 		if len(domainParts) > 2 {
 			host.Cluster = strings.Join(domainParts[2:], ".")
+			host.CompleteInput = true
 		}
+	} else {
+		host.CompleteInput = true
 	}
 
 	// Fill in missing details, we take precedence from the full hostname and not from DestinationRule details

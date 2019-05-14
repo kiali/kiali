@@ -17,6 +17,7 @@ type NoHostChecker struct {
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
+	valid := true
 
 	routeProtocols := []string{"http", "tcp", "tls"}
 	countOfDefinedProtocols := 0
@@ -29,10 +30,21 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 						if route, ok := mHttpRoute["route"]; ok {
 							if aDestinationWeight, ok := route.([]interface{}); ok {
 								for i, destination := range aDestinationWeight {
-									if !n.checkDestination(destination, protocol) {
-										validation := models.Build("virtualservices.nohost.hostnotfound",
-											fmt.Sprintf("spec/%s[%d]/route[%d]/destination/host", protocol, k, i))
-										validations = append(validations, &validation)
+									host := parseHost(destination)
+									if host == "" {
+										continue
+									}
+									if !n.checkDestination(parseHost(destination), protocol) {
+										fqdn := kubernetes.ParseHost(host, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName)
+										path := fmt.Sprintf("spec/%s[%d]/route[%d]/destination/host", protocol, k, i)
+										if fqdn.Namespace != n.VirtualService.GetObjectMeta().Namespace && fqdn.CompleteInput {
+											validation := models.Build("validation.unable.cross-namespace", path)
+											validations = append(validations, &validation)
+										} else {
+											validation := models.Build("virtualservices.nohost.hostnotfound", path)
+											validations = append(validations, &validation)
+											valid = false
+										}
 									}
 								}
 							}
@@ -46,32 +58,41 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	if countOfDefinedProtocols < 1 {
 		validation := models.Build("virtualservices.nohost.invalidprotocol", "")
 		validations = append(validations, &validation)
+		valid = false
 	}
 
-	return validations, len(validations) == 0
+	return validations, valid
 }
 
-func (n NoHostChecker) checkDestination(destination interface{}, protocol string) bool {
+func parseHost(destination interface{}) string {
 	if mDestination, ok := destination.(map[string]interface{}); ok {
 		if destinationW, ok := mDestination["destination"]; ok {
 			if mDestinationW, ok := destinationW.(map[string]interface{}); ok {
 				if host, ok := mDestinationW["host"]; ok {
 					if sHost, ok := host.(string); ok {
-						for _, service := range n.ServiceNames {
-							if kubernetes.FilterByHost(sHost, service, n.Namespace) {
-								return true
-							}
-						}
-						if protocols, found := n.ServiceEntryHosts[sHost]; found {
-							// We have ServiceEntry to check
-							for _, prot := range protocols {
-								if prot == strings.ToLower(protocol) {
-									return true
-								}
-							}
-						}
+						return sHost
 					}
 				}
+			}
+		}
+	}
+	return ""
+}
+
+func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
+	fqdn := kubernetes.ParseHost(sHost, n.VirtualService.GetObjectMeta().Namespace, n.VirtualService.GetObjectMeta().ClusterName)
+	if fqdn.Namespace == n.VirtualService.GetObjectMeta().Namespace {
+		// We need to check for namespace equivalent so that two services from different namespaces do not collide
+		for _, service := range n.ServiceNames {
+			if kubernetes.FilterByHost(sHost, service, n.Namespace) {
+				return true
+			}
+		}
+	}
+	if protocols, found := n.ServiceEntryHosts[sHost]; found {
+		for _, prot := range protocols {
+			if prot == strings.ToLower(protocol) {
+				return true
 			}
 		}
 	}

@@ -109,6 +109,7 @@ func (checker SubsetPresenceChecker) getDestinationRule(virtualServiceHost strin
 			namespace = domainParts[1]
 		}
 
+		// TODO Host could be in another namespace (FQDN)
 		if kubernetes.FilterByHost(virtualServiceHost, serviceName, namespace) {
 			return destinationRule, true
 		}

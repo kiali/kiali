@@ -8,6 +8,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -94,7 +95,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 	assert.Equal(models.ErrorSeverity, validations[0].Severity)
-	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingworkload"), validations[0].Message)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), validations[0].Message)
 	assert.Equal("spec/host", validations[0].Path)
 }
 
@@ -172,4 +173,46 @@ func fakeServicesReview() []core_v1.Service {
 			},
 		},
 	}
+}
+
+func TestFailCrossNamespaceHost(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		Services: fakeServicesReview(),
+		// Intentionally using the same serviceName, but different NS. This shouldn't fail to match the above workloads
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
+	}.Check()
+
+	assert.True(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.Unknown, validations[0].Severity)
+	assert.Equal(models.CheckMessage("validation.unable.cross-namespace"), validations[0].Message)
+	assert.Equal("spec/host", validations[0].Path)
+}
+
+func TestSNIProxyExample(t *testing.T) {
+	// https://istio.io/docs/examples/advanced-gateways/wildcard-egress-hosts/#setup-egress-gateway-with-sni-proxy
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("test", "disable-mtls-for-sni-proxy", "sni-proxy.local")
+	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
+		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"sni-proxy.local"}))
+
+	validations, valid := NoDestinationChecker{
+		Namespace:       "test",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
 }

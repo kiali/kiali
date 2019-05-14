@@ -83,7 +83,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
-	assert.Equal("This host has no matching workloads", customerDr.Checks[0].Message)
+	assert.Equal(models.CheckMessage("destinationrules.nodest.matchingregistry"), customerDr.Checks[0].Message)
 
 	validations = NoServiceChecker{
 		Namespace: "test",
