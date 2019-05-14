@@ -2,7 +2,6 @@ import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
-import { COMPOUND_PARENT_NODE_CLASS } from '../Layout/GroupCompoundLayout';
 import { icons } from '../../../config';
 import { CyEdge, CyNode } from '../CytoscapeGraphUtils';
 
@@ -300,6 +299,7 @@ export class GraphStyles {
     };
 
     return [
+      // Node Defaults
       {
         selector: 'node',
         css: {
@@ -340,24 +340,56 @@ export class GraphStyles {
           'z-index': '10'
         }
       },
+      // Node is an App Box
+      {
+        selector: `node[?isGroup]`,
+        css: {
+          'background-color': NodeColorFillBox,
+          'text-margin-y': '4px',
+          'text-valign': 'bottom'
+        }
+      },
+      // Node is selected
       {
         selector: 'node:selected',
         style: nodeSelectedStyle
       },
+      // Node is highlighted (see GraphHighlighter.ts)
       {
-        // app box
-        selector: `$node > node, node.${COMPOUND_PARENT_NODE_CLASS}`,
-        css: {
-          'text-valign': 'top',
-          'text-halign': 'right',
-          'text-margin-x': (ele: any) => {
-            // numericStyle returns the size in the "preferred" units
-            // numericStyleUnits return the "preferred" unit
-            // Preferred unit for elements is model dimensions (px) (the same unit used for ele.width)
-            return '-' + (ele.width() + ele.numericStyle('padding') * 2) + ele.numericStyleUnits('padding');
+        selector: 'node.mousehighlight',
+        style: {
+          'font-size': NodeTextFontSizeHover
+        }
+      },
+      // Node other than App Box is highlighted (see GraphHighlighter.ts)
+      {
+        selector: 'node.mousehighlight[^isGroup]',
+        style: {
+          'background-color': (ele: any) => {
+            if (ele.hasClass(DEGRADED.name)) {
+              return NodeColorFillHoverDegraded;
+            }
+            if (ele.hasClass(FAILURE.name)) {
+              return NodeColorFillHoverFailure;
+            }
+            return NodeColorFillHover;
           },
-          'text-margin-y': '-2px',
-          'background-color': NodeColorFillBox
+          'border-color': (ele: any) => {
+            if (ele.hasClass(DEGRADED.name)) {
+              return NodeColorBorderDegraded;
+            }
+            if (ele.hasClass(FAILURE.name)) {
+              return NodeColorBorderFailure;
+            }
+            return NodeColorBorderHover;
+          }
+        }
+      },
+      // Node is dimmed (see GraphHighlighter.ts)
+      {
+        selector: `node.${DimClass}`,
+        style: {
+          opacity: '0.6'
         }
       },
       {
@@ -398,32 +430,6 @@ export class GraphStyles {
           'target-arrow-color': PfColors.Blue600
         }
       },
-      // When you mouse over a node, all nodes other than the moused over node
-      // and its direct incoming/outgoing edges/nodes are dimmed by these styles.
-      {
-        selector: 'node.mousehighlight',
-        style: {
-          'background-color': (ele: any) => {
-            if (ele.hasClass(DEGRADED.name)) {
-              return NodeColorFillHoverDegraded;
-            }
-            if (ele.hasClass(FAILURE.name)) {
-              return NodeColorFillHoverFailure;
-            }
-            return NodeColorFillHover;
-          },
-          'border-color': (ele: any) => {
-            if (ele.hasClass(DEGRADED.name)) {
-              return NodeColorBorderDegraded;
-            }
-            if (ele.hasClass(FAILURE.name)) {
-              return NodeColorBorderFailure;
-            }
-            return NodeColorBorderHover;
-          },
-          'font-size': NodeTextFontSizeHover
-        }
-      },
       {
         selector: 'edge.mousehighlight',
         style: {
@@ -439,13 +445,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: 'node.' + DimClass,
-        style: {
-          opacity: '0.6'
-        }
-      },
-      {
-        selector: 'edge.' + DimClass,
+        selector: `edge.${DimClass}`,
         style: {
           opacity: '0.3'
         }

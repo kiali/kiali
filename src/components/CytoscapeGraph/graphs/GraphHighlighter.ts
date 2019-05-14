@@ -5,6 +5,14 @@ const DIM_CLASS: string = DimClass;
 const HIGHLIGHT_CLASS: string = 'mousehighlight';
 const HOVERED_CLASS: string = 'mousehover';
 
+// When a node or edge is selected we highlight the end-to-end paths (nodes and edges) for which the
+// element participates.  Other nodes and edges are dimmed.
+//
+// When no node or edge is selected, hovering on a node or edge will highlight it and its neighborhood. Other
+// nodes and edges are dimmed.
+//
+// When an app box element is selected, we will highlight the contained nodes and their related nodes
+// (including edges).
 export class GraphHighlighter {
   cy: any;
   selected: CytoscapeClickEvent;
@@ -66,28 +74,13 @@ export class GraphHighlighter {
     this.cy.elements('.' + HIGHLIGHT_CLASS).removeClass(HIGHLIGHT_CLASS);
   };
 
-  // When you click a service node, that node and the nodes it connects (including the edges)
-  // remain the same, but all other nodes and edges will get dimmed, thus highlighting
-  // the clicked node and its "neighborhood".
-  //
-  // When you click an edge (i.e. a connector betwen nodes), that edge and
-  // the nodes it connects will remain the same, but all others will get dimmed,
-  // thus highlighting the clicked edge and its nodes.
-  //
-  // Note that we never dim the service group box elements. We know an element is a group box if its isParent() returns true.
-  // When a service group box element is selected, we will highlight the nodes it contain,
-  // their related nodes (including edges).
   refresh = () => {
     const toHighlight = this.getHighlighted();
     if (!toHighlight) {
       return;
     }
 
-    toHighlight
-      .filter((ele: any) => {
-        return !ele.isParent();
-      })
-      .addClass(HIGHLIGHT_CLASS);
+    toHighlight.addClass(HIGHLIGHT_CLASS);
 
     this.cy
       .elements()
