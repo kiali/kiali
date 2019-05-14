@@ -17,6 +17,7 @@ describe('#ServiceInfo render correctly with data', () => {
           service="reviews"
           serviceDetails={data}
           validations={data.validations}
+          onRateIntervalChanged={jest.fn()}
           onRefresh={jest.fn()}
           onSelectTab={jest.fn()}
           activeTab={jest.fn()}

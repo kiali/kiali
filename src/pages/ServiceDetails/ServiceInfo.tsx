@@ -23,10 +23,13 @@ import { Validations, ObjectValidation } from '../../types/IstioObjects';
 import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
+import MetricsDurationContainer from '../../components/MetricsOptions/MetricsDuration';
+import { DurationInSeconds } from '../../types/Common';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   validations: Validations;
+  onRateIntervalChanged: (rateInterval: DurationInSeconds) => void;
   onRefresh: () => void;
   onSelectTab: (tabName: string, postHandler?: (tabName: string) => void) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
@@ -133,6 +136,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
+                <MetricsDurationContainer onChanged={this.props.onRateIntervalChanged} />{' '}
                 <Button onClick={this.props.onRefresh}>
                   <Icon name="refresh" />
                 </Button>

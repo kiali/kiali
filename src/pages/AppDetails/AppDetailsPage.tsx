@@ -15,11 +15,13 @@ import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import PfTitle from '../../components/Pf/PfTitle';
+import { DurationInSeconds } from '../../types/Common';
 
 type AppDetailsState = {
   app: App;
   health?: AppHealth;
   trafficData: GraphDefinition | null;
+  rateInterval: DurationInSeconds;
 };
 
 const emptyApp = {
@@ -35,6 +37,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     super(props);
     this.state = {
       app: emptyApp,
+      rateInterval: MetricsDuration.initialDuration(),
       trafficData: null
     };
   }
@@ -76,7 +79,12 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       .then(details => {
         this.setState({ app: details.data });
         const hasSidecar = details.data.workloads.some(w => w.istioSidecar);
-        return API.getAppHealth(this.props.match.params.namespace, this.props.match.params.app, 600, hasSidecar);
+        return API.getAppHealth(
+          this.props.match.params.namespace,
+          this.props.match.params.app,
+          this.state.rateInterval,
+          hasSidecar
+        );
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
@@ -116,6 +124,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     });
     return istioSidecar;
   }
+
+  updateRateInterval = (rateInterval: DurationInSeconds) => {
+    this.setState({ rateInterval }, () => this.doRefresh());
+  };
 
   render() {
     const istioSidecar = this.istioSidecar();
@@ -158,6 +170,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                 <AppInfo
                   app={this.state.app}
                   namespace={this.props.match.params.namespace}
+                  onRateIntervalChanged={this.updateRateInterval}
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}

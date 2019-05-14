@@ -18,6 +18,7 @@ import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
+import { DurationInSeconds } from '../../types/Common';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -25,6 +26,7 @@ type WorkloadDetailsState = {
   istioEnabled: boolean;
   health?: WorkloadHealth;
   trafficData: GraphDefinition | null;
+  rateInterval: DurationInSeconds;
 };
 
 class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, WorkloadDetailsState> {
@@ -34,6 +36,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       workload: emptyWorkload,
       validations: {},
       istioEnabled: true, // true until proven otherwise
+      rateInterval: MetricsDuration.initialDuration(),
       trafficData: null
     };
   }
@@ -144,7 +147,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         return API.getWorkloadHealth(
           this.props.match.params.namespace,
           this.props.match.params.workload,
-          600,
+          this.state.rateInterval,
           details.data.istioSidecar
         );
       })
@@ -152,6 +155,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not fetch Workload', error));
       });
+  };
+
+  updateRateInterval = (rateInterval: DurationInSeconds) => {
+    this.setState({ rateInterval }, () => this.doRefresh());
   };
 
   checkIstioEnabled = (validations: Validations) => {
@@ -215,6 +222,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   workload={this.state.workload}
                   namespace={this.props.match.params.namespace}
                   validations={this.state.validations}
+                  onRateIntervalChanged={this.updateRateInterval}
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}

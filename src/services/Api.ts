@@ -20,7 +20,7 @@ import { App } from '../types/App';
 import { ServerStatus } from '../types/ServerStatus';
 import { AppList } from '../types/AppList';
 import { AuthInfo } from '../types/Auth';
-import { HTTP_VERBS, UserName, Password } from '../types/Common';
+import { HTTP_VERBS, UserName, Password, DurationInSeconds } from '../types/Common';
 import { NodeParamsType, NodeType, GraphDefinition } from '../types/Graph';
 import { ServiceList } from '../types/ServiceList';
 import { config } from '../config';
@@ -376,17 +376,24 @@ export const getServerConfig = () => {
 export const getServiceDetail = (
   namespace: string,
   service: string,
-  validate: boolean
+  validate: boolean,
+  rateInterval?: DurationInSeconds
 ): Promise<ServiceDetailsInfo> => {
   const params: any = {};
   if (validate) {
     params.validate = true;
   }
+  if (rateInterval) {
+    params.rateInterval = `${rateInterval}s`;
+  }
   return newRequest<ServiceDetailsInfo>(HTTP_VERBS.GET, urls.service(namespace, service), params, {}).then(r => {
     const info: ServiceDetailsInfo = r.data;
     if (info.health) {
       // Default rate interval in backend = 600s
-      info.health = ServiceHealth.fromJson(info.health, { rateInterval: 600, hasSidecar: info.istioSidecar });
+      info.health = ServiceHealth.fromJson(info.health, {
+        rateInterval: rateInterval || 600,
+        hasSidecar: info.istioSidecar
+      });
     }
     return info;
   });

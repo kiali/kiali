@@ -15,6 +15,7 @@ ShallowWrapper {
       }
     }
     namespace="istio-system"
+    onRateIntervalChanged={[MockFunction]}
     onRefresh={[MockFunction]}
     onSelectTab={
       [MockFunction] {
@@ -247,6 +248,10 @@ ShallowWrapper {
                   }
                 }
               >
+                <MetricsDuration
+                  onChanged={[MockFunction]}
+                />
+                 
                 <Button
                   active={false}
                   block={false}
@@ -645,6 +650,10 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <MetricsDuration
+                    onChanged={[MockFunction]}
+                  />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1037,6 +1046,10 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <MetricsDuration
+                    onChanged={[MockFunction]}
+                  />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1168,6 +1181,10 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <MetricsDuration
+                    onChanged={[MockFunction]}
+                  />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1294,6 +1311,10 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
+                    <MetricsDuration
+                      onChanged={[MockFunction]}
+                    />,
+                    " ",
                     <Button
                       active={false}
                       block={false}
@@ -1413,6 +1434,18 @@ ShallowWrapper {
                 },
                 "ref": null,
                 "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "onChanged": [MockFunction],
+                    },
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  " ",
                   Object {
                     "instance": null,
                     "key": undefined,
@@ -3011,6 +3044,10 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <MetricsDuration
+                    onChanged={[MockFunction]}
+                  />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -3409,6 +3446,10 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <MetricsDuration
+                      onChanged={[MockFunction]}
+                    />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -3801,6 +3842,10 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <MetricsDuration
+                      onChanged={[MockFunction]}
+                    />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -3932,6 +3977,10 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <MetricsDuration
+                      onChanged={[MockFunction]}
+                    />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -4058,6 +4107,10 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
+                      <MetricsDuration
+                        onChanged={[MockFunction]}
+                      />,
+                      " ",
                       <Button
                         active={false}
                         block={false}
@@ -4177,6 +4230,18 @@ ShallowWrapper {
                   },
                   "ref": null,
                   "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "onChanged": [MockFunction],
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                    " ",
                     Object {
                       "instance": null,
                       "key": undefined,
