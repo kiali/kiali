@@ -16,7 +16,7 @@ def test_grafana_url_endpoint(kiali_client):
 
 def test_jaeger_url_endpoint(kiali_client):
     url = kiali_client.request(method_name='jaegerInfo').json().get('url')
-    assert url != None and 'jaeger-query-istio-system' in url
+    assert url != None and 'tracing-istio-system' in url
 
     if VALIDATE_JAEGER_URL_CONNECTION:
         content =  url_connection.open_url_connection(url)
