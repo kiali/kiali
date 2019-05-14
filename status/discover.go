@@ -65,7 +65,7 @@ func checkTracingService() (url string, err error) {
 	// Save configuration
 	config.Set(conf)
 
-	return url, err
+	return conf.ExternalServices.Tracing.URL, err
 
 }
 
