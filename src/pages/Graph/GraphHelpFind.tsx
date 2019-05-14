@@ -392,7 +392,8 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                             n: `unit: millis, 'Response Time' edge labels required`
                           },
                           { id: 'ec50', c: 'tcp <op> <number>', n: 'unit: requests per second' },
-                          { id: 'ec60', c: 'mtls' }
+                          { id: 'ec60', c: 'mtls' },
+                          { id: 'ec70', c: 'traffic', n: 'any traffic for any protocol' }
                         ]}
                       />
                     </TablePfProvider>
@@ -432,6 +433,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                           { id: 'e40', e: '!sc', d: `nodes without a sidecar` },
                           { id: 'e50', e: 'httpin > 0.5', d: `nodes with incoming http rate > 0.5 rps` },
                           { id: 'e60', e: 'tcpout >= 1000', d: `nodes with outgoing tcp rates >= 1000 bps` },
+                          { id: 'e65', e: '!traffic', d: 'edges with no traffic' },
                           { id: 'e70', e: 'http > 0.5', d: `edges with http rate > 0.5 rps` },
                           {
                             id: 'e80',

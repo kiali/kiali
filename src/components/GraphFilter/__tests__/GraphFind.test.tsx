@@ -65,25 +65,25 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('wl = foo')).toEqual('node[workload = "foo"]');
 
     // @ts-ignore
-    expect(instance.parseValue('circuitBreaker')).toEqual('node[hasCB]');
+    expect(instance.parseValue('circuitBreaker')).toEqual('node[?hasCB]');
     // @ts-ignore
-    expect(instance.parseValue('cb')).toEqual('node[hasCB]');
+    expect(instance.parseValue('cb')).toEqual('node[?hasCB]');
     // @ts-ignore
     expect(instance.parseValue('sidecar')).toEqual('node[^hasMissingSC]');
     // @ts-ignore
     expect(instance.parseValue('sc')).toEqual('node[^hasMissingSC]');
     // @ts-ignore
-    expect(instance.parseValue('outside')).toEqual('node[isOutside]');
+    expect(instance.parseValue('outside')).toEqual('node[?isOutside]');
     // @ts-ignore
-    expect(instance.parseValue('outsider')).toEqual('node[isOutside]');
+    expect(instance.parseValue('outsider')).toEqual('node[?isOutside]');
     // @ts-ignore
-    expect(instance.parseValue('root')).toEqual('node[isRoot]');
+    expect(instance.parseValue('root')).toEqual('node[?isRoot]');
     // @ts-ignore
-    expect(instance.parseValue('trafficsource')).toEqual('node[isRoot]');
+    expect(instance.parseValue('trafficsource')).toEqual('node[?isRoot]');
     // @ts-ignore
-    expect(instance.parseValue('virtualService')).toEqual('node[hasVS]');
+    expect(instance.parseValue('virtualService')).toEqual('node[?hasVS]');
     // @ts-ignore
-    expect(instance.parseValue('vs')).toEqual('node[hasVS]');
+    expect(instance.parseValue('vs')).toEqual('node[?hasVS]');
 
     // check coverage of edge operands
     // @ts-ignore
@@ -111,6 +111,10 @@ describe('Parse find value test', () => {
 
     // @ts-ignore
     expect(instance.parseValue('mtls')).toEqual('edge[isMTLS > 0]');
+    // @ts-ignore
+    expect(instance.parseValue('traffic')).toEqual('edge[?protocol]');
+    // @ts-ignore
+    expect(instance.parseValue('!traffic')).toEqual('edge[^protocol]');
 
     // check all numeric operators
     // @ts-ignore
