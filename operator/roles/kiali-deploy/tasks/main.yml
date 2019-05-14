@@ -145,6 +145,10 @@
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': github_lastrelease.stdout}}, recursive=True) }}"
   when:
   - kiali_vars.deployment.image_version == "lastrelease"
+- fail:
+    msg: "Could not determine what the image version should be. Set deployment.image_version to a valid value"
+  when:
+  - kiali_vars.deployment.image_version == ""
 
 - name: Determine version_label based on image_version
   set_fact:
