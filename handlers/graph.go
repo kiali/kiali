@@ -112,6 +112,7 @@ func handlePanic(w http.ResponseWriter) {
 func respond(w http.ResponseWriter, code int, payload interface{}) {
 	if code == http.StatusOK {
 		RespondWithJSONIndent(w, code, payload)
+	} else {
+		RespondWithError(w, code, payload.(string))
 	}
-	RespondWithError(w, code, payload.(string))
 }
