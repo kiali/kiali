@@ -46,6 +46,7 @@ type IstioClientInterface interface {
 	GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error)
 	GetDeployment(namespace string, deploymentName string) (*apps_v1.Deployment, error)
 	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+	GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error)
 	GetDeploymentConfig(namespace string, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error)
 	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
 	GetDestinationRule(namespace string, destinationrule string) (IstioObject, error)
