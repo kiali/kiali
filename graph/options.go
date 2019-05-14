@@ -1,9 +1,9 @@
 // Package options holds the option settings for a single graph generation.
-package options
+package graph
 
 import (
 	"fmt"
-	"net/http"
+	net_http "net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/graph"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 	NamespaceIstio            string = "istio-system"
 	VendorCytoscape           string = "cytoscape"
 	defaultDuration           string = "10m"
-	defaultGraphType          string = graph.GraphTypeWorkload
+	defaultGraphType          string = GraphTypeWorkload
 	defaultGroupBy            string = GroupByNone
 	defaultIncludeIstio       bool   = false
 	defaultInjectServiceNodes bool   = false
@@ -58,14 +57,14 @@ type Options struct {
 	Appenders            []string // nil if param not supplied
 	IncludeIstio         bool     // include istio-system services. Ignored for istio-system ns. Default false.
 	InjectServiceNodes   bool     // inject destination service nodes between source and destination nodes.
-	Namespaces           map[string]graph.NamespaceInfo
+	Namespaces           map[string]NamespaceInfo
 	Params               url.Values
 	Vendor               string
 	NodeOptions
 	VendorOptions
 }
 
-func NewOptions(r *http.Request) Options {
+func NewOptions(r *net_http.Request) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
 	app := vars["app"]
@@ -102,22 +101,22 @@ func NewOptions(r *http.Request) Options {
 		var durationErr error
 		duration, durationErr = model.ParseDuration(durationString)
 		if durationErr != nil {
-			graph.BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
+			BadRequest(fmt.Sprintf("Invalid duration [%s]", durationString))
 		}
 	}
 	if graphType == "" {
 		graphType = defaultGraphType
-	} else if graphType != graph.GraphTypeApp && graphType != graph.GraphTypeService && graphType != graph.GraphTypeVersionedApp && graphType != graph.GraphTypeWorkload {
-		graph.BadRequest(fmt.Sprintf("Invalid graphType [%s]", graphType))
+	} else if graphType != GraphTypeApp && graphType != GraphTypeService && graphType != GraphTypeVersionedApp && graphType != GraphTypeWorkload {
+		BadRequest(fmt.Sprintf("Invalid graphType [%s]", graphType))
 	}
 	// app node graphs require an app graph type
-	if app != "" && graphType != graph.GraphTypeApp && graphType != graph.GraphTypeVersionedApp {
-		graph.BadRequest(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType))
+	if app != "" && graphType != GraphTypeApp && graphType != GraphTypeVersionedApp {
+		BadRequest(fmt.Sprintf("Invalid graphType [%s]. This node detail graph supports only graphType app or versionedApp.", graphType))
 	}
 	if groupBy == "" {
 		groupBy = defaultGroupBy
 	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
-		graph.BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
+		BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
 	}
 	if includeIstioString == "" {
 		includeIstio = defaultIncludeIstio
@@ -125,7 +124,7 @@ func NewOptions(r *http.Request) Options {
 		var includeIstioErr error
 		includeIstio, includeIstioErr = strconv.ParseBool(includeIstioString)
 		if includeIstioErr != nil {
-			graph.BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
+			BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
 		}
 	}
 	if injectServiceNodesString == "" {
@@ -134,7 +133,7 @@ func NewOptions(r *http.Request) Options {
 		var injectServiceNodesErr error
 		injectServiceNodes, injectServiceNodesErr = strconv.ParseBool(injectServiceNodesString)
 		if injectServiceNodesErr != nil {
-			graph.BadRequest(fmt.Sprintf("Invalid injectServiceNodes [%s]", injectServiceNodesString))
+			BadRequest(fmt.Sprintf("Invalid injectServiceNodes [%s]", injectServiceNodesString))
 		}
 	}
 	if queryTimeString == "" {
@@ -143,28 +142,28 @@ func NewOptions(r *http.Request) Options {
 		var queryTimeErr error
 		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
 		if queryTimeErr != nil {
-			graph.BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
+			BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
 		}
 	}
 	if vendor == "" {
 		vendor = defaultVendor
 	} else if vendor != VendorCytoscape {
-		graph.BadRequest(fmt.Sprintf("Invalid vendor [%s]", vendor))
+		BadRequest(fmt.Sprintf("Invalid vendor [%s]", vendor))
 	}
 
 	// Process namespaces options:
-	namespaceMap := make(map[string]graph.NamespaceInfo)
+	namespaceMap := make(map[string]NamespaceInfo)
 
 	tokenContext := r.Context().Value("token")
 	var token string
 	if tokenContext != nil {
 		if tokenString, ok := tokenContext.(string); !ok {
-			graph.Error("token is not of type string")
+			Error("token is not of type string")
 		} else {
 			token = tokenString
 		}
 	} else {
-		graph.Error("token missing in request context")
+		Error("token missing in request context")
 	}
 
 	accessibleNamespaces := getAccessibleNamespaces(token)
@@ -177,23 +176,23 @@ func NewOptions(r *http.Request) Options {
 	}
 
 	if namespaces == "" {
-		graph.BadRequest(fmt.Sprintf("At least one namespace must be specified via the namespaces query parameter."))
+		BadRequest(fmt.Sprintf("At least one namespace must be specified via the namespaces query parameter."))
 	}
 
 	for _, namespaceToken := range strings.Split(namespaces, ",") {
 		namespaceToken = strings.TrimSpace(namespaceToken)
 		if creationTime, found := accessibleNamespaces[namespaceToken]; found {
-			namespaceMap[namespaceToken] = graph.NamespaceInfo{
+			namespaceMap[namespaceToken] = NamespaceInfo{
 				Name:     namespaceToken,
 				Duration: resolveNamespaceDuration(creationTime, time.Duration(duration), queryTime),
 			}
 		} else {
-			graph.Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
+			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))
 		}
 	}
 
 	// Service graphs require service injection
-	if graphType == graph.GraphTypeService {
+	if graphType == GraphTypeService {
 		injectServiceNodes = true
 	}
 
@@ -242,10 +241,10 @@ func (o *Options) GetGraphKind() string {
 func getAccessibleNamespaces(token string) map[string]time.Time {
 	// Get the namespaces
 	business, err := business.Get(token)
-	graph.CheckError(err)
+	CheckError(err)
 
 	namespaces, err := business.Namespace.GetNamespaces()
-	graph.CheckError(err)
+	CheckError(err)
 
 	// Create a map to store the namespaces
 	namespaceMap := make(map[string]time.Time)

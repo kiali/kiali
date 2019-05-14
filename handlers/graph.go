@@ -37,7 +37,6 @@ import (
 	"runtime/debug"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/telemetry/istio"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
@@ -55,7 +54,7 @@ func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 
 // graphNamespaces provides a testing hook that can supply a mock client
 func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
-	o := options.NewOptions(r)
+	o := graph.NewOptions(r)
 
 	business, err := getBusiness(r)
 	graph.CheckError(err)
@@ -76,7 +75,7 @@ func GraphNode(w http.ResponseWriter, r *http.Request) {
 
 // graphNode provides a testing hook that can supply a mock client
 func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
-	o := options.NewOptions(r)
+	o := graph.NewOptions(r)
 
 	business, err := getBusiness(r)
 	graph.CheckError(err)

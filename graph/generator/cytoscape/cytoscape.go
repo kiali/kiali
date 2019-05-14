@@ -19,7 +19,6 @@ import (
 	"sort"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/options"
 )
 
 // ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -104,7 +103,7 @@ func edgeHash(from, to, protocol string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
 }
 
-func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Config) {
+func NewConfig(trafficMap graph.TrafficMap, o graph.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
@@ -112,11 +111,11 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 
 	// Add compound nodes as needed
 	switch o.GroupBy {
-	case options.GroupByApp:
+	case graph.GroupByApp:
 		if o.GraphType != graph.GraphTypeService {
 			groupByApp(&nodes)
 		}
-	case options.GroupByVersion:
+	case graph.GroupByVersion:
 		if o.GraphType == graph.GraphTypeVersionedApp {
 			groupByVersion(&nodes)
 		}
@@ -163,7 +162,7 @@ func NewConfig(trafficMap graph.TrafficMap, o options.VendorOptions) (result Con
 	return result
 }
 
-func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o options.VendorOptions) {
+func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o graph.VendorOptions) {
 	for id, n := range trafficMap {
 		nodeId := nodeHash(id)
 
@@ -383,7 +382,7 @@ func groupByVersion(nodes *[]*NodeWrapper) {
 		}
 	}
 
-	generateGroupCompoundNodes(appBox, nodes, options.GroupByVersion)
+	generateGroupCompoundNodes(appBox, nodes, graph.GroupByVersion)
 }
 
 // groupByApp adds compound nodes to group all nodes for the same app
@@ -397,7 +396,7 @@ func groupByApp(nodes *[]*NodeWrapper) {
 		}
 	}
 
-	generateGroupCompoundNodes(appBox, nodes, options.GroupByApp)
+	generateGroupCompoundNodes(appBox, nodes, graph.GroupByApp)
 }
 
 func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWrapper, groupBy string) {

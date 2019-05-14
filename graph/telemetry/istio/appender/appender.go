@@ -6,11 +6,10 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/models"
 )
 
-func ParseAppenders(appenderNames []string, o options.Options) []graph.Appender {
+func ParseAppenders(appenderNames []string, o graph.Options) []graph.Appender {
 	requestedAppenders := make(map[string]bool)
 	allAppenders := false
 	if nil != appenderNames {

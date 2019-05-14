@@ -44,7 +44,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/generator/cytoscape"
-	"github.com/kiali/kiali/graph/options"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
@@ -52,7 +51,7 @@ import (
 )
 
 // graphNamespaces provides a testing hook that can supply a mock client
-func GraphNamespaces(business *business.Layer, client *prometheus.Client, o options.Options) (int, interface{}) {
+func GraphNamespaces(business *business.Layer, client *prometheus.Client, o graph.Options) (int, interface{}) {
 	// time how long it takes to generate this graph
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
@@ -70,7 +69,7 @@ func GraphNamespaces(business *business.Layer, client *prometheus.Client, o opti
 	return code, json
 }
 
-func buildNamespacesTrafficMap(o options.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func buildNamespacesTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders := appender.ParseAppenders(o.Appenders, o)
@@ -139,7 +138,7 @@ func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 	}
 }
 
-func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o options.Options) {
+func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.Options) {
 	for _, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeUnknown:
@@ -283,7 +282,7 @@ func checkNodeType(expected string, n *graph.Node) {
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
-func buildNamespaceTrafficMap(namespace string, o options.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNamespaceTrafficMap(namespace string, o graph.Options, client *prometheus.Client) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 
@@ -390,7 +389,7 @@ func buildNamespaceTrafficMap(namespace string, o options.Options, client *prome
 	return trafficMap
 }
 
-func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
+func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o graph.Options) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -444,7 +443,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o opt
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o options.Options) (source, dest *graph.Node) {
+func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.Options) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
 
@@ -476,7 +475,7 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags,
 	return source, dest
 }
 
-func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o options.Options) {
+func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o graph.Options) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -526,7 +525,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 	}
 }
 
-func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o options.Options) (source, dest *graph.Node) {
+func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.Options) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
 
@@ -571,7 +570,7 @@ func addToDestServices(md graph.Metadata, namespace, service string) {
 	destServices.(map[string]graph.Service)[destService.Key()] = destService
 }
 
-func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o options.Options) {
+func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o graph.Options) {
 	isVersionedAppGraph := o.VendorOptions.GraphType == graph.GraphTypeVersionedApp
 	isWorkloadNode := node.NodeType == graph.NodeTypeWorkload
 	isVersionedAppNode := node.NodeType == graph.NodeTypeApp && isVersionedAppGraph
@@ -594,7 +593,7 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 	}
 }
 
-func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, workload, app, version string, o options.Options) (*graph.Node, bool) {
+func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, workload, app, version string, o graph.Options) (*graph.Node, bool) {
 	id, nodeType := graph.Id(serviceNs, service, workloadNs, workload, app, version, o.GraphType)
 	node, found := trafficMap[id]
 	if !found {
@@ -610,7 +609,7 @@ func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, worklo
 }
 
 // graphNode provides a testing hook that can supply a mock client
-func GraphNode(business *business.Layer, client *prometheus.Client, o options.Options) (int, interface{}) {
+func GraphNode(business *business.Layer, client *prometheus.Client, o graph.Options) (int, interface{}) {
 	if len(o.Namespaces) != 1 {
 		graph.Error(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace"))
 	}
@@ -657,7 +656,7 @@ func GraphNode(business *business.Layer, client *prometheus.Client, o options.Op
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
-func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNodeTrafficMap(namespace string, n graph.Node, o graph.Options, client *prometheus.Client) graph.TrafficMap {
 	httpMetric := "istio_requests_total"
 	interval := o.Namespaces[namespace].Duration
 
@@ -878,7 +877,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o options.Options, clie
 	return trafficMap
 }
 
-func generateGraph(trafficMap graph.TrafficMap, o options.Options) (int, interface{}) {
+func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
 	log.Tracef("Generating config for [%s] service graph...", o.Vendor)
 
 	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
