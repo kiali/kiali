@@ -5,6 +5,8 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+type AppenderVendorInfo map[string]interface{}
+
 // AppenderGlobalInfo caches information relevant to a single graph. It allows
 // an appender to populate the cache and then it, or another appender
 // can re-use the information.  A new instance is generated for graph and
@@ -12,12 +14,7 @@ import (
 type AppenderGlobalInfo struct {
 	Business   *business.Layer
 	PromClient *prometheus.Client
-	Telemetry  map[string]interface{} // Telemetry impl-specific information
-}
-
-//
-func NewAppenderGlobalInfo() *AppenderGlobalInfo {
-	return &AppenderGlobalInfo{Telemetry: make(map[string]interface{})}
+	Vendor     AppenderVendorInfo // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows
@@ -25,12 +22,20 @@ func NewAppenderGlobalInfo() *AppenderGlobalInfo {
 // A new instance is generated for each namespace of a single graph and is initially
 // seeded with only Namespace.
 type AppenderNamespaceInfo struct {
-	Namespace string                 // always provided
-	Telemetry map[string]interface{} // Telemetry impl-specific information
+	Namespace string             // always provided
+	Vendor    AppenderVendorInfo // telemetry vendor's namespace info
+}
+
+func NewAppenderVendorInfo() AppenderVendorInfo {
+	return make(map[string]interface{})
+}
+
+func NewAppenderGlobalInfo() *AppenderGlobalInfo {
+	return &AppenderGlobalInfo{Vendor: NewAppenderVendorInfo()}
 }
 
 func NewAppenderNamespaceInfo(namespace string) *AppenderNamespaceInfo {
-	return &AppenderNamespaceInfo{Namespace: namespace, Telemetry: make(map[string]interface{})}
+	return &AppenderNamespaceInfo{Namespace: namespace, Vendor: NewAppenderVendorInfo()}
 }
 
 // Appender is implemented by any code offering to append a service graph with

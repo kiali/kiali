@@ -28,13 +28,13 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		return
 	}
 
-	if namespaceInfo.Telemetry["WorkloadList"] == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
-	workloadList := namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)
+	workloadList := getWorkloadList(namespaceInfo)
 	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, workloadList.Workloads)
 }
 

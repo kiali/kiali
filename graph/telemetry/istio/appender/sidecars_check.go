@@ -3,7 +3,6 @@ package appender
 import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/models"
 )
 
 const SidecarsCheckAppenderName = "sidecarsCheck"
@@ -24,10 +23,10 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 		return
 	}
 
-	if namespaceInfo.Telemetry["WorkloadList"] == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
 	a.applySidecarsChecks(trafficMap, namespaceInfo)
@@ -36,7 +35,6 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
 	cfg := config.Get()
 	istioNamespace := cfg.IstioNamespace
-	workloadList := namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)
 
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
@@ -60,11 +58,11 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		hasIstioSidecar := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Workload, workloadList); found {
+			if workload, found := getWorkload(n.Workload, namespaceInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
 			}
 		case graph.NodeTypeApp:
-			workloads := getAppWorkloads(n.App, n.Version, workloadList)
+			workloads := getAppWorkloads(n.App, n.Version, namespaceInfo)
 			if len(workloads) > 0 {
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {

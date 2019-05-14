@@ -104,12 +104,37 @@ func ParseAppenders(appenderNames []string, o graph.Options) []graph.Appender {
 	return appenders
 }
 
-func getWorkload(workloadName string, workloadList *models.WorkloadList) (*models.WorkloadListItem, bool) {
+const (
+	serviceEntriesKey = "serviceEntries" // global vendor info
+	workloadListKey   = "workloadList"   // namespace vendor info
+)
+
+type serviceEntries map[string]string
+
+func newServiceEntries() serviceEntries {
+	return make(map[string]string)
+}
+
+func getServiceEntries(gi *graph.AppenderGlobalInfo) (serviceEntries, bool) {
+	if se, ok := gi.Vendor[serviceEntriesKey]; ok {
+		return se.(serviceEntries), true
+	}
+	return newServiceEntries(), false
+}
+
+func getWorkloadList(ni *graph.AppenderNamespaceInfo) *models.WorkloadList {
+	if wll, ok := ni.Vendor[workloadListKey]; ok {
+		return wll.(*models.WorkloadList)
+	}
+	return nil
+}
+
+func getWorkload(workloadName string, ni *graph.AppenderNamespaceInfo) (*models.WorkloadListItem, bool) {
 	if workloadName == "" || workloadName == graph.Unknown {
 		return nil, false
 	}
 
-	for _, workload := range workloadList.Workloads {
+	for _, workload := range getWorkloadList(ni).Workloads {
 		if workload.Name == workloadName {
 			return &workload, true
 		}
@@ -117,14 +142,14 @@ func getWorkload(workloadName string, workloadList *models.WorkloadList) (*model
 	return nil, false
 }
 
-func getAppWorkloads(app, version string, workloadList *models.WorkloadList) []models.WorkloadListItem {
+func getAppWorkloads(app, version string, ni *graph.AppenderNamespaceInfo) []models.WorkloadListItem {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
 
 	result := []models.WorkloadListItem{}
 	versionOk := graph.IsOK(version)
-	for _, workload := range workloadList.Workloads {
+	for _, workload := range getWorkloadList(ni).Workloads {
 		if appVal, ok := workload.Labels[appLabel]; ok && app == appVal {
 			if !versionOk {
 				result = append(result, workload)

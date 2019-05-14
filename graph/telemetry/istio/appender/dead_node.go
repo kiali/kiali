@@ -2,7 +2,6 @@ package appender
 
 import (
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/models"
 )
 
 const DeadNodeAppenderName = "deadNode"
@@ -27,10 +26,10 @@ func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 		return
 	}
 
-	if namespaceInfo.Telemetry["WorkloadList"] == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.Telemetry["WorkloadList"] = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
 	a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
@@ -96,7 +95,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
-			if workload, found := getWorkload(n.Workload, namespaceInfo.Telemetry["WorkloadList"].(*models.WorkloadList)); !found {
+			if workload, found := getWorkload(n.Workload, namespaceInfo); !found {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {

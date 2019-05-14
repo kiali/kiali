@@ -56,9 +56,8 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 // Istio does not distinguish where a ServiceEntry is created when routing traffic (i.e.
 // a ServiceEntry can be in any namespace and it will still work).
 func (a ServiceEntryAppender) getServiceEntry(service string, globalInfo *graph.AppenderGlobalInfo) (string, bool) {
-	if globalInfo.Telemetry["ServiceEntries"] == nil {
-		globalInfo.Telemetry["ServiceEntries"] = make(map[string]string)
-
+	serviceEntries, found := getServiceEntries(globalInfo)
+	if !found {
 		for ns := range a.AccessibleNamespaces {
 			istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 				IncludeServiceEntries: true,
@@ -73,14 +72,14 @@ func (a ServiceEntryAppender) getServiceEntry(service string, globalInfo *graph.
 						location = "MESH_INTERNAL"
 					}
 					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						globalInfo.Telemetry["ServiceEntries"].(map[string]string)[host.(string)] = location
+						serviceEntries[host.(string)] = location
 					}
 				}
 			}
 		}
-		log.Tracef("Found [%v] service entries", len(globalInfo.Telemetry["ServiceEntries"].(map[string]string)))
+		log.Tracef("Found [%v] service entries", len(serviceEntries))
 	}
 
-	location, ok := globalInfo.Telemetry["ServiceEntries"].(map[string]string)[service]
+	location, ok := serviceEntries[service]
 	return location, ok
 }
