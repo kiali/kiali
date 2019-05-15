@@ -7,6 +7,11 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+const (
+	requestsPerSecond = "requests per second"
+	rps               = "rps"
+)
+
 type Rate struct {
 	Name         string
 	IsErr        bool
@@ -28,16 +33,14 @@ type Protocol struct {
 }
 
 const (
-	grpc              = "grpc"
-	grpcErr           = "grpcErr"
-	grpcPercentErr    = "grpcPercentErr"
-	grpcPercentReq    = "grpcPercentReq"
-	grpcResponses     = "grpcResponses"
-	grpcIn            = "grpcIn"
-	grpcInErr         = "grpcInErr"
-	grpcOut           = "grpcOut"
-	requestsPerSecond = "requests per second"
-	rps               = "rps"
+	grpc           = "grpc"
+	grpcErr        = "grpcErr"
+	grpcPercentErr = "grpcPercentErr"
+	grpcPercentReq = "grpcPercentReq"
+	grpcResponses  = "grpcResponses"
+	grpcIn         = "grpcIn"
+	grpcInErr      = "grpcInErr"
+	grpcOut        = "grpcOut"
 )
 
 var GRPC Protocol = Protocol{
@@ -198,10 +201,16 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface
 }
 
 func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
-	protocol := toEdge.Metadata["protocol"]
+	protocol, ok := toEdge.Metadata["protocol"]
+	if !ok {
+		return
+	}
+
 	switch protocol {
 	case grpc:
-		addToMetadataValue(toEdge.Metadata, grpc, fromEdge.Metadata[grpc].(float64))
+		if val, ok := fromEdge.Metadata[grpc]; ok {
+			addToMetadataValue(toEdge.Metadata, grpc, val.(float64))
+		}
 		if val, ok := fromEdge.Metadata[grpcErr]; ok {
 			addToMetadataValue(toEdge.Metadata, grpcErr, val.(float64))
 		}
@@ -209,7 +218,9 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 			addToResponses(toEdge.Metadata, grpcResponses, responses.(Responses))
 		}
 	case http:
-		addToMetadataValue(toEdge.Metadata, http, fromEdge.Metadata[http].(float64))
+		if val, ok := fromEdge.Metadata[http]; ok {
+			addToMetadataValue(toEdge.Metadata, http, val.(float64))
+		}
 		if val, ok := fromEdge.Metadata[http3xx]; ok {
 			addToMetadataValue(toEdge.Metadata, http3xx, val.(float64))
 		}
@@ -223,7 +234,9 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 			addToResponses(toEdge.Metadata, httpResponses, responses.(Responses))
 		}
 	case tcp:
-		addToMetadataValue(toEdge.Metadata, tcp, fromEdge.Metadata[tcp].(float64))
+		if val, ok := fromEdge.Metadata[tcp]; ok {
+			addToMetadataValue(toEdge.Metadata, grpc, val.(float64))
+		}
 		if responses, ok := fromEdge.Metadata[tcpResponses]; ok {
 			addToResponses(toEdge.Metadata, tcpResponses, responses.(Responses))
 		}
@@ -238,6 +251,9 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 }
 
 func addToMetadataValue(md map[string]interface{}, k string, v float64) {
+	if v <= 0 {
+		return
+	}
 	if curr, ok := md[k]; ok {
 		md[k] = curr.(float64) + v
 	} else {
