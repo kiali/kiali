@@ -37,7 +37,7 @@ import (
 	"runtime/debug"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/telemetry/istio"
+	"github.com/kiali/kiali/graph/api"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -45,7 +45,6 @@ import (
 // GraphNamespaces is a REST http.HandlerFunc handling graph generation for 1 or more namespaces
 func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
-
 	client, err := prometheus.NewClient()
 	graph.CheckError(err)
 
@@ -59,7 +58,7 @@ func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := istio.GraphNamespaces(business, client, o)
+	code, payload := api.GraphNamespaces(business, client, o)
 	respond(w, code, payload)
 }
 
@@ -80,7 +79,7 @@ func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := istio.GraphNode(business, client, o)
+	code, payload := api.GraphNode(business, client, o)
 	respond(w, code, payload)
 }
 

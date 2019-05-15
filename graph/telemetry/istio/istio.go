@@ -34,42 +34,20 @@ package istio
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/generator/cytoscape"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-// graphNamespaces provides a testing hook that can supply a mock client
-func GraphNamespaces(business *business.Layer, client *prometheus.Client, o graph.Options) (int, interface{}) {
-	// time how long it takes to generate this graph
-	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
-
-	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.Business = business
-
-	trafficMap := buildNamespacesTrafficMap(o, client, globalInfo)
-	code, json := generateGraph(trafficMap, o)
-
-	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
-
-	return code, json
-}
-
-func buildNamespacesTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNamespacesTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders := appender.ParseAppenders(o.Appenders, o)
@@ -608,25 +586,13 @@ func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, worklo
 	return node, found
 }
 
-// graphNode provides a testing hook that can supply a mock client
-func GraphNode(business *business.Layer, client *prometheus.Client, o graph.Options) (int, interface{}) {
-	if len(o.Namespaces) != 1 {
-		graph.Error(fmt.Sprintf("Node graph does not support the 'namespaces' query parameter or the 'all' namespace"))
-	}
-
-	// time how long it takes to generate this graph
-	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
-
+func BuildNodeTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
 
 	log.Tracef("Build graph for node [%+v]", n)
 
 	appenders := appender.ParseAppenders(o.Appenders, o)
 	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
-
-	globalInfo := graph.NewAppenderGlobalInfo()
-	globalInfo.Business = business
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)
 
@@ -647,12 +613,7 @@ func GraphNode(business *business.Layer, client *prometheus.Client, o graph.Opti
 	// the current decision is to not reduce the node graph to provide more detail.  This may be
 	// confusing to users, we'll see...
 
-	code, json := generateGraph(trafficMap, o)
-
-	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes, len(trafficMap))
-
-	return code, json
+	return trafficMap
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
@@ -875,24 +836,6 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.Options, client
 	populateTrafficMapTcp(trafficMap, &tcpOutVector, o)
 
 	return trafficMap
-}
-
-func generateGraph(trafficMap graph.TrafficMap, o graph.Options) (int, interface{}) {
-	log.Tracef("Generating config for [%s] service graph...", o.Vendor)
-
-	promtimer := internalmetrics.GetGraphMarshalTimePrometheusTimer(o.GetGraphKind(), o.GraphType, o.InjectServiceNodes)
-	defer promtimer.ObserveDuration()
-
-	var vendorConfig interface{}
-	switch o.Vendor {
-	case "cytoscape":
-		vendorConfig = cytoscape.NewConfig(trafficMap, o.VendorOptions)
-	default:
-		graph.Error(fmt.Sprintf("Vendor [%s] not supported", o.Vendor))
-	}
-
-	log.Tracef("Done generating config for [%s] service graph.", o.Vendor)
-	return http.StatusOK, vendorConfig
 }
 
 func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector {
