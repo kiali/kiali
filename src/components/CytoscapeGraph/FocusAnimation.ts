@@ -1,10 +1,13 @@
 import { PfColors } from '../Pf/PfColors';
 
+// How fast refresh (frame rate)
 const FRAME_RATE = 1 / 30;
+// Radio of the biggest circle (i.e. when it starts)
 const MAX_RADIO = 60;
 const LINE_WIDTH = 1;
 
-const ANIMATION_DURATION = 800;
+// Time the animation will take in ms
+const ANIMATION_DURATION = 2000;
 
 type OnFinishedCallback = () => void;
 
@@ -63,7 +66,7 @@ export default class FocusAnimation {
         return;
       }
 
-      this.elements.forEach(element => this.render(element, (1 - step) * MAX_RADIO));
+      this.elements.forEach(element => this.render(element, this.easingFunction(step) * MAX_RADIO));
     } catch (exception) {
       // If a step failed, the next step is likely to fail.
       // Stop the rendering and throw the exception
@@ -71,6 +74,19 @@ export default class FocusAnimation {
       throw exception;
     }
   };
+
+  private easingFunction(t: number) {
+    // Do a focus animation in, out and in again.
+    // Make the first focus slower and the subsequent bit faster
+    if (t < 0.5) {
+      // %50 of the time is spent on the first in
+      return 1 - t * 2;
+    } else if (t < 0.75) {
+      // 25% is spent in the out animation
+      return (t - 0.5) * 4;
+    }
+    return 1 - (t - 0.75) * 4; // 25% is spent in the second in
+  }
 
   private getCenter(element: any) {
     if (element.isNode()) {
