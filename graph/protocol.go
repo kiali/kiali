@@ -266,7 +266,7 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 	// we can't average quantiles (kiali-2297).
 }
 
-func addToMetadataValue(md map[string]interface{}, k string, v float64) {
+func addToMetadataValue(md Metadata, k MetadataKey, v float64) {
 	if v <= 0 {
 		return
 	}
