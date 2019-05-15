@@ -154,7 +154,7 @@ const parseMarker = (
 };
 
 const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
-  const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'error';
+  const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'info';
   const marker = {
     startRow: 0,
     startCol: 0,

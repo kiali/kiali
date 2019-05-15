@@ -19,3 +19,18 @@
   position: absolute;
   background: rgba(236, 122, 8, 0.5);
 }
+
+.istio-validation-info {
+  position: absolute;
+  background: #d1d1d1;
+}
+
+div.ace_gutter-cell.ace_info {
+  background-image: none;
+  &::before {
+    content: '\E935';
+    font-family: 'PatternFlyIcons-webfont';
+    left: 5px;
+    position: absolute;
+  }
+}
