@@ -595,6 +595,7 @@ if [ "${AUTH_STRATEGY}" == "login" ]; then
   fi
 else
   echo "Using auth strategy [${AUTH_STRATEGY}] - a secret is not needed so none will be created."
+  CREDENTIALS_CREATE_SECRET="false"
 fi
 
 echo "=== KIALI SETTINGS ==="
