@@ -1,4 +1,4 @@
-// Cytoscape package provides conversion from our graph to the CystoscapeJS
+// Package cytoscape provides conversion from our graph to the CystoscapeJS
 // configuration json model.
 //
 // The following links are useful for understanding CytoscapeJS and it's configuration:
@@ -11,6 +11,7 @@
 //            with information provided.  An optional second pass generates compound
 //            nodes for version grouping.
 //
+// The package provides the Cytoscape implementation of graph/GeneratorProvider.
 package cytoscape
 
 import (
@@ -103,6 +104,7 @@ func edgeHash(from, to, protocol string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
 }
 
+// NewConfig is required by the graph/GeneratorVendor interface
 func NewConfig(trafficMap graph.TrafficMap, o graph.VendorOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
