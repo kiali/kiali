@@ -4,13 +4,16 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// Appender is implemented by any code offering to append a service graph with
-// supplemental information.  On error the appender should panic and it will be
-// handled as an error response.
-type Telemetry interface {
+// TelemetryVendor is an interface that must be satisfied for each telemetry implementation.
+type TelemetryVendor interface {
 
-	// GraphNamespaces is implemented by any supported telemetry provider. It is required produce
+	// BuildNamespaceTrafficMap must be implemented to satisfy TelemetryVendor.  It must produce a valid
+	// TrafficMap for the requested namespaces, It is recommended to use the graph/util.go definitions for
+	// error handling. It should be modeled after the Istio implementation.
 	BuildNamespacesTrafficMap(o Options, client *prometheus.Client, globalInfo *AppenderGlobalInfo) TrafficMap
 
+	// BuildNodeTrafficMap must be implemented to satisfy TelemetryVendor.  It must produce a valid
+	// TrafficMap for the requested node, It is recommended to use the graph/util.go definitions for
+	// error handling. It should be modeled after the Istio implementation.
 	BuildNodeTrafficMap(o Options, client *prometheus.Client, globalInfo *AppenderGlobalInfo) TrafficMap
 }

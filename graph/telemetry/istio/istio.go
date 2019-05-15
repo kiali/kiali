@@ -1,3 +1,4 @@
+// Package istio provides the Istio implementation of graph/TelemetryProvider.
 package istio
 
 // Istio.go is responsible for generating TrafficMaps using vendor-specific telemetry.   The handlers return configuration
@@ -47,6 +48,7 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
+// BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNamespacesTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
@@ -586,6 +588,7 @@ func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, worklo
 	return node, found
 }
 
+// BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
 func BuildNodeTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
 
