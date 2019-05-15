@@ -19,7 +19,7 @@ def test_service_list_endpoint(kiali_client):
     assert service_list_json.get('namespace').get('name') == bookinfo_namespace
 
     services = service_list_json.get('services')
-    assert (len (services) == BOOKINFO_EXPECTED_SERVICES) or (len (services) == BOOKINFO_EXPECTED_SERVICES_MONGODB)
+    assert (len (services) == BOOKINFO_EXPECTED_SERVICES) or (len (services) >= BOOKINFO_EXPECTED_SERVICES_MONGODB)
 
     for service in services:
       assert service != None
