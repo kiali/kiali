@@ -1,7 +1,10 @@
 package status
 
 import (
+	"errors"
 	"io/ioutil"
+
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -12,6 +15,73 @@ import (
 var saToken string
 
 var clientFactory kubernetes.ClientFactory
+
+func getClient() (kubernetes.IstioClientInterface, error) {
+	if saToken == "" {
+		token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+		if err != nil {
+			return nil, err
+		}
+		saToken = string(token)
+	}
+
+	if clientFactory == nil {
+		userClientFactory, err := kubernetes.GetClientFactory()
+		if err != nil {
+			return nil, err
+		}
+		clientFactory = userClientFactory
+	}
+
+	client, err := clientFactory.GetClient(saToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// If the client is not openshift return and avoid discover
+	if !client.IsOpenShift() {
+		return nil, errors.New("Client is not Openshift")
+	}
+
+	return client, nil
+}
+
+func checkIfQueryBasePath(ns string, service string) (path string, err error) {
+	path = ""
+	client, err := getClient()
+
+	if err != nil {
+		return path, err
+	}
+	svc, err := client.GetService(ns, service)
+	if err != nil {
+		return path, err
+	}
+	labelSelectorService := labels.Set(svc.Spec.Selector).String()
+	deployments, err := client.GetDeploymentsByLabel(ns, labelSelectorService)
+
+	if err != nil {
+		return path, nil
+	}
+
+	switch len(deployments) {
+	case 0:
+		log.Debugf("Kiali didn't found a deployment for service %s", service)
+	case 1:
+		if len(deployments[0].Spec.Template.Spec.Containers) > 0 {
+			for _, v := range deployments[0].Spec.Template.Spec.Containers[0].Env {
+				if v.Name == "QUERY_BASE_PATH" {
+					path = v.Value
+					break
+				}
+			}
+		}
+	default:
+		log.Debugf("Kiali found 2 or + deployments for service %s", service)
+	}
+
+	return path, nil
+}
 
 func checkTracingService() (url string, err error) {
 	conf := config.Get()
@@ -44,7 +114,7 @@ func checkTracingService() (url string, err error) {
 			if err == nil {
 				log.Debugf("Kiali found Jaeger in %s", url)
 			} else {
-				log.Debugf("Kiali not found Tracing/Jaerger")
+				log.Debugf("Kiali didn't found Tracing/Jaerger")
 			}
 		} else {
 			log.Debugf("Kiali found Tracing in %s", url)
@@ -53,7 +123,11 @@ func checkTracingService() (url string, err error) {
 		// We found the Tracing service in Tracing or Jaeger Default
 		if err == nil {
 			if conf.ExternalServices.Tracing.URL == "" {
-				conf.ExternalServices.Tracing.URL = url // Overwrite URL if the user didn't set
+				path, err := checkIfQueryBasePath(ns, service)
+				if err != nil {
+					log.Debugf("Error checking the query base path")
+				}
+				conf.ExternalServices.Tracing.URL = url + path // Overwrite URL if the user didn't set
 			}
 			// Tracing is ENABLED
 			conf.ExternalServices.Tracing.EnableJaeger = true
@@ -94,7 +168,7 @@ func DiscoverGrafana() (url string, err error) {
 	log.Debugf("Kiali is looking for Grafana service ...")
 	url, err = discoverUrlService(config.Get().ExternalServices.Grafana.ServiceNamespace, config.Get().ExternalServices.Grafana.Service)
 	if err != nil {
-		log.Debugf("Kiali not found Grafana in service %s error: %s", config.Get().ExternalServices.Grafana.Service, err)
+		log.Debugf("Kiali didn't found Grafana in service %s error: %s", config.Get().ExternalServices.Grafana.Service, err)
 	} else {
 		log.Debugf("Kiali found Grafana in %s", url)
 	}
@@ -104,29 +178,10 @@ func DiscoverGrafana() (url string, err error) {
 }
 
 func discoverUrlService(ns string, service string) (url string, err error) {
-	if saToken == "" {
-		token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-		if err != nil {
-			return "", err
-		}
-		saToken = string(token)
-	}
+	client, err := getClient()
 
-	if clientFactory == nil {
-		userClientFactory, err := kubernetes.GetClientFactory()
-		if err != nil {
-			return "", err
-		}
-		clientFactory = userClientFactory
-	}
-
-	client, err := clientFactory.GetClient(saToken)
 	if err != nil {
 		return "", err
-	}
-	// If the client is not openshift return and avoid discover
-	if !client.IsOpenShift() {
-		return "", nil
 	}
 	route, err := client.GetRoute(ns, service)
 	if err != nil {

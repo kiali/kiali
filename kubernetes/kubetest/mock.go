@@ -110,6 +110,12 @@ func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, 
 	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }
 
+// It returns an error on any problem.
+func (o *K8SClientMock) GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
+	args := o.Called(namespace, labelSelector)
+	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
+}
+
 func (o *K8SClientMock) GetRoute(namespace, service string) (*osroutes_v1.Route, error) {
 	args := o.Called(namespace, service)
 	return args.Get(0).(*osroutes_v1.Route), args.Error(1)
