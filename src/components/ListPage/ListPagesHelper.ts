@@ -105,10 +105,10 @@ export namespace ListPagesHelper {
   };
 
   export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> => {
-    const queriedSortedField = HistoryManager.getParam(URLParam.SORT) || [sortFields[0].param];
+    const queriedSortedField = HistoryManager.getParam(URLParam.SORT) || sortFields[0].param;
     return (
       sortFields.find(sortField => {
-        return sortField.param === queriedSortedField[0];
+        return sortField.param === queriedSortedField;
       }) || sortFields[0]
     );
   };
