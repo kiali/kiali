@@ -98,7 +98,7 @@ export default class FocusAnimation {
 
   private render(element: any, radio: number) {
     const { x, y } = this.getCenter(element);
-    this.context.strokeStyle = PfColors.Black;
+    this.context.strokeStyle = PfColors.Blue300;
     this.context.lineWidth = LINE_WIDTH;
     this.context.beginPath();
     this.context.arc(x, y, radio, 0, 2 * Math.PI, true);
