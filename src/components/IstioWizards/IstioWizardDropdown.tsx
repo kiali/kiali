@@ -300,7 +300,9 @@ class IstioWizardDropdown extends React.Component<Props, State> {
       <>
         <DropdownButton id="service_actions" title="Actions" onSelect={this.onAction} pullRight={true}>
           {(this.canCreate() || this.canUpdate()) &&
-            WIZARD_ACTIONS.map(action => this.renderMenuItem(action, updateLabel))}
+            WIZARD_ACTIONS.map(action => (
+              <React.Fragment key={action}>{this.renderMenuItem(action, updateLabel)}</React.Fragment>
+            ))}
           <MenuItem divider={true} />
           {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING, '')}
           {this.props.threeScaleInfo.enabled && <MenuItem divider={true} />}
