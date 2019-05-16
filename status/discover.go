@@ -57,7 +57,7 @@ func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 	if err != nil {
 		return path, err
 	}
-	labelSelectorService := labels.Set(svc.Labels).String()
+	labelSelectorService := labels.Set(svc.Spec.Selector).String()
 	deployments, err := client.GetDeploymentsByLabel(ns, labelSelectorService)
 
 	if err != nil {
@@ -66,7 +66,7 @@ func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 
 	switch len(deployments) {
 	case 0:
-		log.Debugf("Kiali not found a deployment for service %s", service)
+		log.Debugf("Kiali didn't found a deployment for service %s", service)
 	case 1:
 		if len(deployments[0].Spec.Template.Spec.Containers) > 0 {
 			for _, v := range deployments[0].Spec.Template.Spec.Containers[0].Env {
@@ -114,7 +114,7 @@ func checkTracingService() (url string, err error) {
 			if err == nil {
 				log.Debugf("Kiali found Jaeger in %s", url)
 			} else {
-				log.Debugf("Kiali not found Tracing/Jaerger")
+				log.Debugf("Kiali didn't found Tracing/Jaerger")
 			}
 		} else {
 			log.Debugf("Kiali found Tracing in %s", url)
@@ -168,7 +168,7 @@ func DiscoverGrafana() (url string, err error) {
 	log.Debugf("Kiali is looking for Grafana service ...")
 	url, err = discoverUrlService(config.Get().ExternalServices.Grafana.ServiceNamespace, config.Get().ExternalServices.Grafana.Service)
 	if err != nil {
-		log.Debugf("Kiali not found Grafana in service %s error: %s", config.Get().ExternalServices.Grafana.Service, err)
+		log.Debugf("Kiali didn't found Grafana in service %s error: %s", config.Get().ExternalServices.Grafana.Service, err)
 	} else {
 		log.Debugf("Kiali found Grafana in %s", url)
 	}
