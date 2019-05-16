@@ -12,7 +12,7 @@ export const ROUND_ROBIN = 'ROUND_ROBIN';
 
 export const loadBalancerSimple: string[] = [ROUND_ROBIN, 'LEAST_CONN', 'RANDOM', 'PASSTHROUGH'];
 
-export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, 'MUTUAL', 'SIMPLE'];
+export const mTLSMode: string[] = [DISABLE, ISTIO_MUTUAL, 'SIMPLE'];
 
 type ReduxProps = {
   meshWideStatus: string;
