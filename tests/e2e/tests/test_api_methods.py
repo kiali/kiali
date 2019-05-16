@@ -69,7 +69,7 @@ def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
 
-def test_jaeger_info(kiali_client):
+def __test_jaeger_info(kiali_client):
     evaluate_response(kiali_client, method_name='jaegerInfo')
 
 def test_authentication_info(kiali_client):
