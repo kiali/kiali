@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { DropdownButton, MenuItem, MessageDialog } from 'patternfly-react';
+import { style } from 'typestyle';
 
 type Props = {
   objectKind?: string;
@@ -11,6 +12,14 @@ type Props = {
 type State = {
   showConfirmModal: boolean;
 };
+
+const msgDialogStyle = style({
+  $nest: {
+    ['.modal-content']: {
+      fontSize: '14px'
+    }
+  }
+});
 
 class IstioActionDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -44,6 +53,7 @@ class IstioActionDropdown extends React.Component<Props, State> {
           </MenuItem>
         </DropdownButton>
         <MessageDialog
+          className={msgDialogStyle}
           show={this.state.showConfirmModal}
           primaryAction={this.onDelete}
           secondaryAction={this.hideConfirmModal}

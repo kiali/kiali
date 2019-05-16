@@ -18,6 +18,7 @@ import {
 } from './IstioWizardActions';
 import IstioWizard from './IstioWizard';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
+import { style } from 'typestyle';
 
 type Props = {
   namespace: string;
@@ -43,6 +44,14 @@ type State = {
 
 const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 const DELETE_THREESCALE_INTEGRATION = 'delete_threescale_integration';
+
+const msgDialogStyle = style({
+  $nest: {
+    ['.modal-content']: {
+      fontSize: '14px'
+    }
+  }
+});
 
 class IstioWizardDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -320,6 +329,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
           onClose={this.onClose}
         />
         <MessageDialog
+          className={msgDialogStyle}
           show={this.state.showConfirmDelete}
           primaryAction={this.onDelete}
           secondaryAction={this.hideConfirmDelete}
