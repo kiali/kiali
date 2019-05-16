@@ -39,7 +39,7 @@ interface ParsedSearch {
 }
 
 const emptyService = {
-  istioSidecar: false,
+  istioSidecar: true, // true until proven otherwise (workload with missing sidecar exists)
   service: {
     type: '',
     name: '',

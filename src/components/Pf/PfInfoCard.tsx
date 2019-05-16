@@ -24,17 +24,15 @@ class PfInfoCard extends React.Component<CardProps> {
           <h2 className="card-pf-title">
             <Icon type={this.props.iconType} name={this.props.iconName} style={{ marginRight: '10px' }} />
             {this.props.title}
-            {this.props.istio ? (
-              this.props.showOnGraphLink && (
-                <>
-                  {' '}
-                  (<Link to={this.props.showOnGraphLink}>Show on graph</Link>)
-                </>
-              )
-            ) : (
+            {this.props.title && this.props.istio !== undefined && !this.props.istio && (
               <span style={{ marginLeft: '10px' }}>
                 <MissingSidecar />
               </span>
+            )}
+            {this.props.title && this.props.showOnGraphLink && (
+              <>
+                {'  '}(<Link to={this.props.showOnGraphLink}>Show on graph</Link>)
+              </>
             )}
           </h2>
         </div>

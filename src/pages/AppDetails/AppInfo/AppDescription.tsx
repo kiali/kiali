@@ -25,7 +25,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
   }
 
   istioSidecar() {
-    let istioSidecar = this.props.app.workloads && this.props.app.workloads.length > 0 ? true : false;
+    let istioSidecar = true; // true until proven otherwise (workload with missing sidecar exists)
     this.props.app.workloads.forEach(wkd => {
       istioSidecar = istioSidecar && wkd.istioSidecar;
     });

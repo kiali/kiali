@@ -28,7 +28,7 @@ export const emptyWorkload: Workload = {
   type: '',
   createdAt: '',
   resourceVersion: '',
-  istioSidecar: false,
+  istioSidecar: true, // true until proven otherwise
   labels: {},
   appLabel: false,
   versionLabel: false,
