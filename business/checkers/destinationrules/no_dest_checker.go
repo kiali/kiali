@@ -2,6 +2,7 @@ package destinationrules
 
 import (
 	"strconv"
+	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -27,8 +28,8 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 	if host, ok := n.DestinationRule.GetSpec()["host"]; ok {
 		if dHost, ok := host.(string); ok {
 			fqdn := kubernetes.ParseHost(dHost, n.DestinationRule.GetObjectMeta().Namespace, n.DestinationRule.GetObjectMeta().ClusterName)
-			if !n.hasMatchingService(fqdn, dHost, n.DestinationRule.GetObjectMeta().Namespace) {
-				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace {
+			if !n.hasMatchingService(fqdn, n.DestinationRule.GetObjectMeta().Namespace) {
+				if fqdn.Namespace != n.DestinationRule.GetObjectMeta().Namespace && fqdn.Namespace != "" {
 					validation := models.Build("validation.unable.cross-namespace", "spec/host")
 					valid = true
 					validations = append(validations, &validation)
@@ -71,8 +72,8 @@ func (n NoDestinationChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels map[string]string) bool {
-	// Check wildcard hosts
-	if service == "*" {
+	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
+	if strings.HasPrefix(service, "*") {
 		return true
 	}
 
@@ -106,11 +107,11 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 	return false
 }
 
-func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, origHost, itemNamespace string) bool {
+func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNamespace string) bool {
 	appLabel := config.Get().IstioLabels.AppLabelName
 
-	// Check wildcard hosts
-	if host.Service == "*" {
+	// Check wildcard hosts - needs to match "*" and "*.suffix" also..
+	if strings.HasPrefix(host.Service, "*") {
 		return true
 	}
 
@@ -130,7 +131,7 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, origHost,
 	}
 
 	// Check ServiceEntries
-	if _, found := n.ServiceEntries[origHost]; found {
+	if _, found := n.ServiceEntries[host.Service]; found {
 		return true
 	}
 	return false
