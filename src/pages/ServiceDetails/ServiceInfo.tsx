@@ -19,7 +19,7 @@ import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '..
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
-import { Validations } from '../../types/IstioObjects';
+import { Validations, ObjectValidation } from '../../types/IstioObjects';
 import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
@@ -84,6 +84,13 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
   errorBoundaryMessage(resourceName: string) {
     return `One of the ${resourceName} associated to this service has an invalid format`;
+  }
+
+  getServiceValidation(): ObjectValidation {
+    if (this.props.validations && this.props.validations.service) {
+      return this.props.validations.service[this.props.serviceDetails.service.name];
+    }
+    return {} as ObjectValidation;
   }
 
   render() {
@@ -161,6 +168,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 health={this.props.serviceDetails.health}
                 externalName={this.props.serviceDetails.service.externalName}
                 threeScaleServiceRule={this.props.threeScaleServiceRule}
+                validations={this.getServiceValidation()}
               />
             </Col>
           </Row>

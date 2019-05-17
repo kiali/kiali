@@ -134,6 +134,15 @@ ShallowWrapper {
           <div
             className="progress-description"
           >
+            <ConfigIndicator
+              id="reviews-config-validation"
+              size="18px"
+              validations={
+                Array [
+                  Object {},
+                ]
+              }
+            />
             <strong>
               Ports
             </strong>
@@ -311,6 +320,15 @@ ShallowWrapper {
             <div
               className="progress-description"
             >
+              <ConfigIndicator
+                id="reviews-config-validation"
+                size="18px"
+                validations={
+                  Array [
+                    Object {},
+                  ]
+                }
+              />
               <strong>
                 Ports
               </strong>
