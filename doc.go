@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/kiali/kiali/graph/generator/cytoscape"
+	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"

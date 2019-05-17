@@ -136,7 +136,7 @@ var TCP Protocol = Protocol{
 	UnitShort: bps,
 }
 
-// Protools defines the supported protocols to be handled by the generators and the vendors.
+// Protocols defines the supported protocols to be handled by the vendor code.
 var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
 func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {

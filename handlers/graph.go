@@ -1,35 +1,35 @@
 package handlers
 
-// Graph.go provides handlers for graph request endpoints.   The handlers return configuration
-// for a specified vendor (default cytoscape).  The configuration format is vendor-specific, typically
-// JSON, and provides what is necessary to allow the vendor's graphing tool to render the graph.
+// Graph.go provides handlers for graph request endpoints.   The handlers access vendor-specific
+// telemetry (default istio) and return vendor-specific configuration (default cytoscape). The
+// configuration format depends on the vendor but is typically JSON and provides what is necessary
+// to allow the vendor's tool to render the graph.
 //
-// The algorithm is three-pass:
-//   First Pass: Query Prometheus (istio-requests-total metric) to retrieve the source-destination
-//               dependencies. Build a traffic map to provide a full representation of nodes and edges.
+// The algorithm is two-phased:
+//   Phase One: Generate a TrafficMap using the requested TelemetryVendor. This typically queries
+//              Prometheus, Istio and Kubernetes.
 //
-//   Second Pass: Apply any requested appenders to alter or append to the graph.
-//
-//   Third Pass: Supply the traffic map to a vendor-specific config generator that
-//               constructs the vendor-specific output.
+//   Phase Two: Provide the TrafficMap to the requested ConfigVendor which returns the vendor-specific
+//              configuration retuened to the caller.
 //
 // The current Handlers:
-//   GraphNamespace:  Generate a graph for all services in a namespace (whether source or destination)
-//   GraphNode:       Generate a graph centered on a specified node, limited to requesting and requested nodes.
+//   GraphNamespaces: Generate a graph for one or more requested namespaces.
+//   GraphNode:       Generate a graph for a specific node, detailing the immediate incoming and outgoing traffic.
 //
-// The handlers accept the following query parameters (some handlers may ignore some parameters):
-//   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service...] (default all)
-//                   Note, appenders may support appender-specific query parameters
-//   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   graphType:      Determines how to present the telemetry data. app | service | versionedApp | workload (default workload)
-//   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
-//   includeIstio:   Include istio-system (infra) services (default false)
-//   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
-//   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
-//   vendor:         cytoscape (default cytoscape)
+// The handlers accept the following query parameters (see notes below)
+//   appenders:       Comma-separated list of TelemetryVendor-specific appenders to run. (default: all)
+//   configVendor:    default: cytoscape
+//   duration:        time.Duration indicating desired query range duration, (default: 10m)
+//   graphType:       Determines how to present the telemetry data. app | service | versionedApp | workload (default: workload)
+//   groupBy:         If supported by vendor, visually group by a specified node attribute (default: version)
+//   includeIstio:    Include istio-system (infra) services (default false)
+//   namespaces:      Comma-separated list of namespace names to use in the graph. Will override namespace path param
+//   queryTime:       Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
+//   TelemetryVendor: default: istio
+//   vendor:          Deprecated: use configVendor
 //
-// * Error% is the percentage of requests with response code != 2XX
-// * See the vendor-specific config generators for more details about the specific vendor.
+//  Note: some handlers may ignore some query parameters.
+//  Note: vendors may support additional, vendor-specific query parameters.
 //
 import (
 	"fmt"

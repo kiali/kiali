@@ -1,5 +1,6 @@
-// Package options holds the option settings for a single graph generation.
 package graph
+
+// Options.go holds the option settings for a single graph request.
 
 import (
 	"fmt"
@@ -15,18 +16,23 @@ import (
 	"github.com/kiali/kiali/business"
 )
 
+// The supported vendors
+const (
+	VendorCytoscape        string = "cytoscape"
+	VendorIstio            string = "istio"
+	defaultConfigVendor    string = VendorCytoscape
+	defaultTelemetryVendor string = VendorIstio
+)
+
 const (
 	GroupByApp                string = "app"
 	GroupByNone               string = "none"
 	GroupByVersion            string = "version"
 	NamespaceIstio            string = "istio-system"
-	VendorCytoscape           string = "cytoscape"
 	defaultDuration           string = "10m"
 	defaultGraphType          string = GraphTypeWorkload
 	defaultGroupBy            string = GroupByNone
-	defaultIncludeIstio       bool   = false
 	defaultInjectServiceNodes bool   = false
-	defaultVendor             string = VendorCytoscape
 )
 
 const (
@@ -43,25 +49,39 @@ type NodeOptions struct {
 	Workload  string
 }
 
-// VendorOptions are those that are supplied to the vendor-specific generators.
-type VendorOptions struct {
+// CommonOptions are those supplied to Telemetry and Config Vendors
+type CommonOptions struct {
 	Duration  time.Duration
 	GraphType string
-	GroupBy   string
-	QueryTime int64 // unix time in seconds
+	Params    url.Values // make available the raw query params for vendor-specific handling
+	QueryTime int64      // unix time in seconds
 }
 
-// Options are all supported graph generation options.
-type Options struct {
+// ConfigOptions are those supplied to Config Vendors
+type ConfigOptions struct {
+	GroupBy string
+	CommonOptions
+}
+
+// AppenderName is a synonym for string
+type AppenderName string
+
+// TelemetryOptions are those supplied to Telemetry Vendors
+type TelemetryOptions struct {
 	AccessibleNamespaces map[string]time.Time
-	Appenders            []string // nil if param not supplied
-	IncludeIstio         bool     // include istio-system services. Ignored for istio-system ns. Default false.
-	InjectServiceNodes   bool     // inject destination service nodes between source and destination nodes.
+	Appenders            []AppenderName // requested appenders, nil if param not supplied
+	InjectServiceNodes   bool           // inject destination service nodes between source and destination nodes.
 	Namespaces           map[string]NamespaceInfo
-	Params               url.Values
-	Vendor               string
+	CommonOptions
 	NodeOptions
-	VendorOptions
+}
+
+// Options comprises all available options
+type Options struct {
+	ConfigVendor    string
+	TelemetryVendor string
+	ConfigOptions
+	TelemetryOptions
 }
 
 func NewOptions(r *net_http.Request) Options {
@@ -76,24 +96,33 @@ func NewOptions(r *net_http.Request) Options {
 	// query params
 	params := r.URL.Query()
 	var duration model.Duration
-	var includeIstio bool
 	var injectServiceNodes bool
 	var queryTime int64
-	appenders := []string(nil)
+	appenders := []AppenderName(nil)
+	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
 	groupBy := params.Get("groupBy")
-	includeIstioString := params.Get("includeIstio")
 	injectServiceNodesString := params.Get("injectServiceNodes")
 	namespaces := params.Get("namespaces") // csl of namespaces
 	queryTimeString := params.Get("queryTime")
-	vendor := params.Get("vendor")
+	telemetryVendor := params.Get("telemetryVendor")
+	vendor := params.Get("vendor") // deprecated, use configVendor
 
 	if _, ok := params["appenders"]; ok {
-		appenders = strings.Split(params.Get("appenders"), ",")
+		appenders := strings.Split(params.Get("appenders"), ",")
 		for i, v := range appenders {
 			appenders[i] = strings.TrimSpace(v)
 		}
+	}
+	// vendor is deprecated, configVendor is preferred
+	if configVendor == "" && vendor != "" {
+		configVendor = vendor
+	}
+	if configVendor == "" {
+		configVendor = defaultConfigVendor
+	} else if configVendor != VendorCytoscape {
+		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
 	}
 	if durationString == "" {
 		duration, _ = model.ParseDuration(defaultDuration)
@@ -118,15 +147,6 @@ func NewOptions(r *net_http.Request) Options {
 	} else if groupBy != GroupByApp && groupBy != GroupByNone && groupBy != GroupByVersion {
 		BadRequest(fmt.Sprintf("Invalid groupBy [%s]", groupBy))
 	}
-	if includeIstioString == "" {
-		includeIstio = defaultIncludeIstio
-	} else {
-		var includeIstioErr error
-		includeIstio, includeIstioErr = strconv.ParseBool(includeIstioString)
-		if includeIstioErr != nil {
-			BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
-		}
-	}
 	if injectServiceNodesString == "" {
 		injectServiceNodes = defaultInjectServiceNodes
 	} else {
@@ -145,10 +165,10 @@ func NewOptions(r *net_http.Request) Options {
 			BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
 		}
 	}
-	if vendor == "" {
-		vendor = defaultVendor
-	} else if vendor != VendorCytoscape {
-		BadRequest(fmt.Sprintf("Invalid vendor [%s]", vendor))
+	if telemetryVendor == "" {
+		telemetryVendor = defaultTelemetryVendor
+	} else if telemetryVendor != VendorIstio {
+		BadRequest(fmt.Sprintf("Invalid telemetryVendor [%s]", telemetryVendor))
 	}
 
 	// Process namespaces options:
@@ -197,25 +217,35 @@ func NewOptions(r *net_http.Request) Options {
 	}
 
 	options := Options{
-		AccessibleNamespaces: accessibleNamespaces,
-		Appenders:            appenders,
-		IncludeIstio:         includeIstio,
-		InjectServiceNodes:   injectServiceNodes,
-		Namespaces:           namespaceMap,
-		Params:               params,
-		Vendor:               vendor,
-		NodeOptions: NodeOptions{
-			App:       app,
-			Namespace: namespace,
-			Service:   service,
-			Version:   version,
-			Workload:  workload,
+		ConfigVendor:    configVendor,
+		TelemetryVendor: telemetryVendor,
+		ConfigOptions: ConfigOptions{
+			GroupBy: groupBy,
+			CommonOptions: CommonOptions{
+				Duration:  time.Duration(duration),
+				GraphType: graphType,
+				Params:    params,
+				QueryTime: queryTime,
+			},
 		},
-		VendorOptions: VendorOptions{
-			Duration:  time.Duration(duration),
-			GraphType: graphType,
-			GroupBy:   groupBy,
-			QueryTime: queryTime,
+		TelemetryOptions: TelemetryOptions{
+			AccessibleNamespaces: accessibleNamespaces,
+			Appenders:            appenders,
+			InjectServiceNodes:   injectServiceNodes,
+			Namespaces:           namespaceMap,
+			CommonOptions: CommonOptions{
+				Duration:  time.Duration(duration),
+				GraphType: graphType,
+				Params:    params,
+				QueryTime: queryTime,
+			},
+			NodeOptions: NodeOptions{
+				App:       app,
+				Namespace: namespace,
+				Service:   service,
+				Version:   version,
+				Workload:  workload,
+			},
 		},
 	}
 
@@ -223,15 +253,14 @@ func NewOptions(r *net_http.Request) Options {
 }
 
 // GetGraphKind will return the kind of graph represented by the options.
-func (o *Options) GetGraphKind() string {
+func (o *TelemetryOptions) GetGraphKind() string {
 	if o.NodeOptions.App != "" ||
 		o.NodeOptions.Version != "" ||
 		o.NodeOptions.Workload != "" ||
 		o.NodeOptions.Service != "" {
 		return graphKindNode
-	} else {
-		return graphKindNamespace
 	}
+	return graphKindNamespace
 }
 
 // getAccessibleNamespaces returns a Set of all namespaces accessible to the user.

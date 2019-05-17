@@ -11,7 +11,7 @@
 //            with information provided.  An optional second pass generates compound
 //            nodes for version grouping.
 //
-// The package provides the Cytoscape implementation of graph/GeneratorProvider.
+// The package provides the Cytoscape implementation of graph/ConfigVendor.
 package cytoscape
 
 import (
@@ -104,8 +104,8 @@ func edgeHash(from, to, protocol string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
 }
 
-// NewConfig is required by the graph/GeneratorVendor interface
-func NewConfig(trafficMap graph.TrafficMap, o graph.VendorOptions) (result Config) {
+// NewConfig is required by the graph/ConfigVendor interface
+func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Config) {
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
@@ -164,7 +164,7 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.VendorOptions) (result Confi
 	return result
 }
 
-func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o graph.VendorOptions) {
+func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o graph.ConfigOptions) {
 	for id, n := range trafficMap {
 		nodeId := nodeHash(id)
 

@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	// DefaultQuantile is 95th percentile
-	DefaultQuantile = 0.95
 	// ResponseTimeAppenderName uniquely identifies the appender
 	ResponseTimeAppenderName = "responseTime"
 )
@@ -56,8 +54,8 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
 	quantile := a.Quantile
 	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
-		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
-		quantile = DefaultQuantile
+		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, defaultQuantile)
+		quantile = defaultQuantile
 	}
 	log.Tracef("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
 	duration := a.Namespaces[namespace].Duration

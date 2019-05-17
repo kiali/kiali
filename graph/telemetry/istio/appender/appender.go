@@ -9,7 +9,13 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func ParseAppenders(appenderNames []string, o graph.Options) []graph.Appender {
+const (
+	defaultQuantile          = 0.95
+	defaultIncludeIstio bool = false
+)
+
+func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions) []graph.Appender {
+	includeIstio := IncludeIstio(o)
 	requestedAppenders := make(map[string]bool)
 	allAppenders := false
 	if nil != appenderNames {
@@ -58,17 +64,19 @@ func ParseAppenders(appenderNames []string, o graph.Options) []graph.Appender {
 		appenders = append(appenders, a)
 	}
 	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || allAppenders {
-		quantile := DefaultQuantile
-		if _, ok := o.Params["responseTimeQuantile"]; ok {
-			if responseTimeQuantile, err := strconv.ParseFloat(o.Params.Get("responseTimeQuantile"), 64); err == nil {
-				quantile = responseTimeQuantile
+		quantile := defaultQuantile
+		quantileString := o.Params.Get("responseTimeQuantile")
+		if quantileString != "" {
+			var err error
+			if quantile, err = strconv.ParseFloat(quantileString, 64); err != nil {
+				graph.BadRequest(fmt.Sprintf("Invalid quantile, expecting float between 0.0 and 100.0 [%s]", quantileString))
 			}
 		}
 		a := ResponseTimeAppender{
 			Quantile:           quantile,
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
-			IncludeIstio:       o.IncludeIstio,
+			IncludeIstio:       includeIstio,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
 		}
@@ -77,7 +85,7 @@ func ParseAppenders(appenderNames []string, o graph.Options) []graph.Appender {
 	if _, ok := requestedAppenders[SecurityPolicyAppenderName]; ok || allAppenders {
 		a := SecurityPolicyAppender{
 			GraphType:          o.GraphType,
-			IncludeIstio:       o.IncludeIstio,
+			IncludeIstio:       includeIstio,
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
@@ -159,4 +167,19 @@ func getAppWorkloads(app, version string, ni *graph.AppenderNamespaceInfo) []mod
 		}
 	}
 	return result
+}
+
+func IncludeIstio(o graph.TelemetryOptions) bool {
+	includeIstio := defaultIncludeIstio
+	includeIstioString := o.Params.Get("includeIstio")
+	if includeIstioString == "" {
+		includeIstio = defaultIncludeIstio
+	} else {
+		var err error
+		if includeIstio, err = strconv.ParseBool(includeIstioString); err != nil {
+			graph.BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
+		}
+	}
+
+	return includeIstio
 }

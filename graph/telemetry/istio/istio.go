@@ -1,36 +1,19 @@
 // Package istio provides the Istio implementation of graph/TelemetryProvider.
 package istio
 
-// Istio.go is responsible for generating TrafficMaps using vendor-specific telemetry.   The handlers return configuration
-// for a specified vendor (default cytoscape).  The configuration format is vendor-specific, typically
-// JSON, and provides what is necessary to allow the vendor's graphing tool to render the graph.
+// Istio.go is responsible for generating TrafficMaps using Istio telemetry.  It implements the
+// TelemetryVendor interface.
 //
-// The algorithm is three-pass:
+// The algorithm is two-pass:
 //   First Pass: Query Prometheus (istio-requests-total metric) to retrieve the source-destination
 //               dependencies. Build a traffic map to provide a full representation of nodes and edges.
 //
 //   Second Pass: Apply any requested appenders to alter or append to the graph.
 //
-//   Third Pass: Supply the traffic map to a vendor-specific config generator that
-//               constructs the vendor-specific output.
 //
-// The current Handlers:
-//   GraphNamespace:  Generate a graph for all services in a namespace (whether source or destination)
-//   GraphNode:       Generate a graph centered on a specified node, limited to requesting and requested nodes.
-//
-// The handlers accept the following query parameters (some handlers may ignore some parameters):
-//   appenders:      Comma-separated list of appenders to run from [circuit_breaker, unused_service...] (default all)
-//                   Note, appenders may support appender-specific query parameters
-//   duration:       time.Duration indicating desired query range duration, (default 10m)
-//   graphType:      Determines how to present the telemetry data. app | service | versionedApp | workload (default workload)
-//   groupBy:        If supported by vendor, visually group by a specified node attribute (default version)
-//   includeIstio:   Include istio-system (infra) services (default false)
-//   namespaces:     Comma-separated list of namespace names to use in the graph. Will override namespace path param
-//   queryTime:      Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
-//   vendor:         cytoscape (default cytoscape)
-//
-// * Error% is the percentage of requests with response code != 2XX
-// * See the vendor-specific config generators for more details about the specific vendor.
+// Supports two vendor-specific query parameters:
+//   includeIstio:   Include istio-system (infra) services (default: false)
+//   responseTimeQuantile: Must be a valid quantile (default: 0.95)
 //
 import (
 	"context"
@@ -49,7 +32,7 @@ import (
 )
 
 // BuildNamespacesTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNamespacesTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
 	appenders := appender.ParseAppenders(o.Appenders, o)
@@ -118,7 +101,7 @@ func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph
 	}
 }
 
-func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.Options) {
+func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.TelemetryOptions) {
 	for _, n := range trafficMap {
 		switch n.NodeType {
 		case graph.NodeTypeUnknown:
@@ -262,7 +245,7 @@ func checkNodeType(expected string, n *graph.Node) {
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
 // nodes either directly send and/or receive requests from a node in the namespace.
-func buildNamespaceTrafficMap(namespace string, o graph.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	// create map to aggregate traffic by protocol and response code
 	trafficMap := graph.NewTrafficMap()
 
@@ -304,7 +287,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.Options, client *prometh
 	populateTrafficMap(trafficMap, &intVector, o)
 
 	// istio component telemetry is only reported destination-side, so we must perform additional queries
-	if o.IncludeIstio {
+	if appender.IncludeIstio(o) {
 		istioNamespace := config.Get().IstioNamespace
 
 		// 4) if the target namespace is istioNamespace re-query for traffic originating from outside (other than unknown, covered in query #1)
@@ -369,7 +352,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.Options, client *prometh
 	return trafficMap
 }
 
-func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o graph.Options) {
+func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -423,7 +406,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.Options) (source, dest *graph.Node) {
+func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
 
@@ -455,7 +438,7 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags,
 	return source, dest
 }
 
-func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o graph.Options) {
+func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -505,7 +488,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 	}
 }
 
-func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.Options) (source, dest *graph.Node) {
+func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
 
@@ -550,8 +533,8 @@ func addToDestServices(md graph.Metadata, namespace, service string) {
 	destServices.(map[string]graph.Service)[destService.Key()] = destService
 }
 
-func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o graph.Options) {
-	isVersionedAppGraph := o.VendorOptions.GraphType == graph.GraphTypeVersionedApp
+func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o graph.TelemetryOptions) {
+	isVersionedAppGraph := o.GraphType == graph.GraphTypeVersionedApp
 	isWorkloadNode := node.NodeType == graph.NodeTypeWorkload
 	isVersionedAppNode := node.NodeType == graph.NodeTypeApp && isVersionedAppGraph
 	if isWorkloadNode || isVersionedAppNode {
@@ -573,7 +556,7 @@ func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float
 	}
 }
 
-func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, workload, app, version string, o graph.Options) (*graph.Node, bool) {
+func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, workload, app, version string, o graph.TelemetryOptions) (*graph.Node, bool) {
 	id, nodeType := graph.Id(serviceNs, service, workloadNs, workload, app, version, o.GraphType)
 	node, found := trafficMap[id]
 	if !found {
@@ -589,7 +572,7 @@ func addNode(trafficMap graph.TrafficMap, serviceNs, service, workloadNs, worklo
 }
 
 // BuildNodeTrafficMap is required by the graph/TelemtryVendor interface
-func BuildNodeTrafficMap(o graph.Options, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
+func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	n := graph.NewNode(o.NodeOptions.Namespace, o.NodeOptions.Service, o.NodeOptions.Namespace, o.NodeOptions.Workload, o.NodeOptions.App, o.NodeOptions.Version, o.GraphType)
 
 	log.Tracef("Build graph for node [%+v]", n)
@@ -620,7 +603,7 @@ func BuildNodeTrafficMap(o graph.Options, client *prometheus.Client, globalInfo 
 }
 
 // buildNodeTrafficMap returns a map of all nodes requesting or requested by the target node (key=id).
-func buildNodeTrafficMap(namespace string, n graph.Node, o graph.Options, client *prometheus.Client) graph.TrafficMap {
+func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOptions, client *prometheus.Client) graph.TrafficMap {
 	httpMetric := "istio_requests_total"
 	interval := o.Namespaces[namespace].Duration
 
@@ -715,7 +698,8 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.Options, client
 	populateTrafficMap(trafficMap, &outVector, o)
 
 	// istio component telemetry is only reported destination-side, so we must perform additional queries
-	if o.IncludeIstio {
+
+	if appender.IncludeIstio(o) {
 		istioNamespace := config.Get().IstioNamespace
 
 		// 3) supplemental query for outbound traffic to the istio namespace
