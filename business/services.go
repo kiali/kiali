@@ -120,19 +120,33 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var nsmtls models.MTLSStatus
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
+	wg.Add(7)
 	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
+	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
+	if labelsSelector != "" {
+		wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		var err2 error
-		pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
-		if err2 != nil {
-			errChan <- err2
-		}
-	}()
+		go func() {
+			defer wg.Done()
+			var err2 error
+			pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+			if err2 != nil {
+				errChan <- err2
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			var err2 error
+			ws, err2 = fetchWorkloads(in.k8s, namespace, labelsSelector)
+			if err2 != nil {
+				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
+				errChan <- err2
+			}
+		}()
+	}
 
 	go func() {
 		defer wg.Done()
@@ -166,16 +180,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		var err2 error
 		dr, err2 = in.k8s.GetDestinationRules(namespace, service)
 		if err2 != nil {
-			errChan <- err2
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		ws, err2 = fetchWorkloads(in.k8s, namespace, labelsSelector)
-		if err2 != nil {
-			log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
 		}
 	}()
