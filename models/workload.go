@@ -73,20 +73,20 @@ type WorkloadOverviews []*WorkloadListItem
 type Workload struct {
 	WorkloadListItem
 
-	// Number of desired replicas
+	// Number of desired replicas defined by the user in the controller Spec
 	// required: true
 	// example: 2
-	Replicas int32 `json:"replicas"`
+	DesiredReplicas int32 `json:"desiredReplicas"`
+
+	// Number of current replicas pods that matches controller selector labels
+	// required: true
+	// example: 2
+	CurrentReplicas int32 `json:"currentReplicas"`
 
 	// Number of available replicas
 	// required: true
 	// example: 1
 	AvailableReplicas int32 `json:"availableReplicas"`
-
-	// Number of unavailable replicas
-	// required: true
-	// example: 1
-	UnavailableReplicas int32 `json:"unavailableReplicas"`
 
 	// Pods bound to the workload
 	Pods Pods `json:"pods"`
@@ -128,12 +128,10 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	workload.CreatedAt = formatTime(d.CreationTimestamp.Time)
 	workload.ResourceVersion = d.ResourceVersion
 	if d.Spec.Replicas != nil {
-		workload.Replicas = *d.Spec.Replicas
+		workload.DesiredReplicas = *d.Spec.Replicas
 	}
+	workload.CurrentReplicas = d.Status.Replicas
 	workload.AvailableReplicas = d.Status.AvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
@@ -149,12 +147,10 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
 	workload.ResourceVersion = r.ResourceVersion
 	if r.Spec.Replicas != nil {
-		workload.Replicas = *r.Spec.Replicas
+		workload.DesiredReplicas = *r.Spec.Replicas
 	}
+	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
@@ -170,12 +166,10 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 	workload.CreatedAt = formatTime(r.CreationTimestamp.Time)
 	workload.ResourceVersion = r.ResourceVersion
 	if r.Spec.Replicas != nil {
-		workload.Replicas = *r.Spec.Replicas
+		workload.DesiredReplicas = *r.Spec.Replicas
 	}
+	workload.CurrentReplicas = r.Status.Replicas
 	workload.AvailableReplicas = r.Status.AvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
@@ -184,11 +178,9 @@ func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) 
 	workload.Labels = dc.Spec.Template.Labels
 	workload.CreatedAt = formatTime(dc.CreationTimestamp.Time)
 	workload.ResourceVersion = dc.ResourceVersion
-	workload.Replicas = dc.Spec.Replicas
+	workload.DesiredReplicas = dc.Spec.Replicas
+	workload.CurrentReplicas = dc.Status.Replicas
 	workload.AvailableReplicas = dc.Status.AvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
@@ -204,12 +196,10 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	workload.CreatedAt = formatTime(s.CreationTimestamp.Time)
 	workload.ResourceVersion = s.ResourceVersion
 	if s.Spec.Replicas != nil {
-		workload.Replicas = *s.Spec.Replicas
+		workload.DesiredReplicas = *s.Spec.Replicas
 	}
+	workload.CurrentReplicas = s.Status.Replicas
 	workload.AvailableReplicas = s.Status.ReadyReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParsePod(pod *core_v1.Pod) {
@@ -239,11 +229,10 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 		podAvailableReplicas = 0
 	}
 
-	workload.Replicas = podReplicas
+	workload.DesiredReplicas = podReplicas
+	// Pod has not concept of replica
+	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = podAvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
 }
 
 func (workload *Workload) ParseJob(job *batch_v1.Job) {
@@ -258,13 +247,11 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 
 	workload.CreatedAt = formatTime(job.CreationTimestamp.Time)
 	workload.ResourceVersion = job.ResourceVersion
-
-	workload.Replicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
+	// Job controller does not use replica parameters as other controllers
+	// this is a workaround to use same values from Workload perspective
+	workload.DesiredReplicas = job.Status.Active + job.Status.Succeeded + job.Status.Failed
+	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = job.Status.Active + job.Status.Succeeded
-
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	workload.UnavailableReplicas = job.Status.Failed
 }
 
 func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
@@ -295,17 +282,9 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
 			podAvailableReplicas++
 		}
 	}
-	workload.Replicas = podReplicas
+	workload.DesiredReplicas = podReplicas
+	workload.DesiredReplicas = workload.CurrentReplicas
 	workload.AvailableReplicas = podAvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	if podReplicas > podAvailableReplicas {
-		workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
-	} else {
-		// On this case a Job may have all pods terminated
-		// Then it is not an unhealth condition
-		workload.UnavailableReplicas = 0
-	}
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []core_v1.Pod) {
@@ -327,17 +306,9 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 			podAvailableReplicas++
 		}
 	}
-	workload.Replicas = podReplicas
+	workload.DesiredReplicas = podReplicas
+	workload.CurrentReplicas = workload.DesiredReplicas
 	workload.AvailableReplicas = podAvailableReplicas
-	// Deployments/ReplicaSets have a different parameters to indicate unavailable
-	// calculate "desired" - "current" sounds reasonable on this context
-	if podReplicas > podAvailableReplicas {
-		workload.UnavailableReplicas = workload.Replicas - workload.AvailableReplicas
-	} else {
-		// On this case a Job may have all pods terminated
-		// Then it is not an unhealth condition
-		workload.UnavailableReplicas = 0
-	}
 	// We fetch one pod as template for labels
 	// There could be corner cases not correct, then we should support more controllers
 	if len(pods) > 0 {

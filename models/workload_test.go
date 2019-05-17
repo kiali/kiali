@@ -24,9 +24,9 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("Deployment", w.Type)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func TestParseReplicaSetToWorkload(t *testing.T) {
@@ -41,9 +41,9 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("ReplicaSet", w.Type)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func TestParseReplicationControllerToWorkload(t *testing.T) {
@@ -58,9 +58,9 @@ func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("ReplicationController", w.Type)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func TestParseDeploymentConfigToWorkload(t *testing.T) {
@@ -74,9 +74,9 @@ func TestParseDeploymentConfigToWorkload(t *testing.T) {
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func TestParsePodToWorkload(t *testing.T) {
@@ -91,9 +91,9 @@ func TestParsePodToWorkload(t *testing.T) {
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("Pod", w.Type)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func TestParsePodsToWorkload(t *testing.T) {
@@ -108,9 +108,9 @@ func TestParsePodsToWorkload(t *testing.T) {
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("Controller", w.Type)
-	assert.Equal(int32(1), w.Replicas)
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
-	assert.Equal(int32(0), w.UnavailableReplicas)
 }
 
 func fakeDeployment() *apps_v1.Deployment {
@@ -134,8 +134,8 @@ func fakeDeployment() *apps_v1.Deployment {
 			Replicas: &replicas,
 		},
 		Status: apps_v1.DeploymentStatus{
+			Replicas: 1,
 			AvailableReplicas:   1,
-			UnavailableReplicas: 0,
 		},
 	}
 }
@@ -161,6 +161,7 @@ func fakeReplicaSet() *apps_v1.ReplicaSet {
 			Replicas: &replicas,
 		},
 		Status: apps_v1.ReplicaSetStatus{
+			Replicas: 1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -187,6 +188,7 @@ func fakeReplicationController() *core_v1.ReplicationController {
 			Replicas: &replicas,
 		},
 		Status: core_v1.ReplicationControllerStatus{
+			Replicas: 1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -212,8 +214,8 @@ func fakeDeploymentConfig() *osapps_v1.DeploymentConfig {
 			Replicas: 1,
 		},
 		Status: osapps_v1.DeploymentConfigStatus{
+			Replicas: 1,
 			AvailableReplicas:   1,
-			UnavailableReplicas: 0,
 		},
 	}
 }
