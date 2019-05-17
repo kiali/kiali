@@ -193,6 +193,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             overlay={<Tooltip id={'mtls-status-masthead'}>Traffic routing already exists for this service</Tooltip>}
             trigger={['hover', 'focus']}
             rootClose={false}
+            key={eventKey}
           >
             {menuItem}
           </OverlayTrigger>
@@ -211,6 +212,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             overlay={<Tooltip id={'mtls-status-masthead'}>Traffic routing doesn't exist for this service</Tooltip>}
             trigger={['hover', 'focus']}
             rootClose={false}
+            key={eventKey}
           >
             {deleteMenuItem}
           </OverlayTrigger>
@@ -232,6 +234,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             overlay={<Tooltip id={'mtls-status-masthead'}>{toolTipMsgExists}</Tooltip>}
             trigger={['hover', 'focus']}
             rootClose={false}
+            key={eventKey}
           >
             {threeScaleMenuItem}
           </OverlayTrigger>
@@ -255,6 +258,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
             overlay={<Tooltip id={'mtls-status-masthead'}>{toolTipMsgDelete}</Tooltip>}
             trigger={['hover', 'focus']}
             rootClose={false}
+            key={eventKey}
           >
             {deleteThreeScaleMenuItem}
           </OverlayTrigger>
@@ -300,9 +304,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
       <>
         <DropdownButton id="service_actions" title="Actions" onSelect={this.onAction} pullRight={true}>
           {(this.canCreate() || this.canUpdate()) &&
-            WIZARD_ACTIONS.map(action => (
-              <React.Fragment key={action}>{this.renderMenuItem(action, updateLabel)}</React.Fragment>
-            ))}
+            WIZARD_ACTIONS.map(action => this.renderMenuItem(action, updateLabel))}
           <MenuItem divider={true} />
           {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING, '')}
           {this.props.threeScaleInfo.enabled && <MenuItem divider={true} />}
