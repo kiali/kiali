@@ -2,13 +2,6 @@ server:
   address: localhost
   port: 8000
 
-  # Uncomment credentials to enable basic authentication for server
-  # If you are deploying Kiali in Kubernetes or Openshift, to enable authentication you should use Secrets
-  # and pass credentials through environment variables.
-  # credentials:
-  #  username: admin
-  #  password: admin
-
   # Web context path to serve Kiali API and frontend from.
   # Default is /
   # web_root: /kiali
