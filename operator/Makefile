@@ -41,7 +41,7 @@ help: Makefile
 
 .ensure-operator-sdk-exists: .download-operator-sdk-if-needed
 	@$(eval OP_SDK ?= $(shell which operator-sdk 2>/dev/null || echo "../_output/operator-sdk-install/operator-sdk"))
-	@"${OP_SDK}" --version
+	@"${OP_SDK}" version
 
 ## operator-build: Build the Kiali operator container image
 # Requires operator-sdk - download it from https://github.com/operator-framework/operator-sdk/releases
