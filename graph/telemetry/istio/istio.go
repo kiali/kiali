@@ -35,7 +35,7 @@ import (
 func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, globalInfo *graph.AppenderGlobalInfo) graph.TrafficMap {
 	log.Tracef("Build [%s] graph for [%v] namespaces [%s]", o.GraphType, len(o.Namespaces), o.Namespaces)
 
-	appenders := appender.ParseAppenders(o.Appenders, o)
+	appenders := appender.ParseAppenders(o)
 	trafficMap := graph.NewTrafficMap()
 
 	for _, namespace := range o.Namespaces {
@@ -577,7 +577,7 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 
 	log.Tracef("Build graph for node [%+v]", n)
 
-	appenders := appender.ParseAppenders(o.Appenders, o)
+	appenders := appender.ParseAppenders(o)
 	trafficMap := buildNodeTrafficMap(o.NodeOptions.Namespace, n, o, client)
 
 	namespaceInfo := graph.NewAppenderNamespaceInfo(o.NodeOptions.Namespace)

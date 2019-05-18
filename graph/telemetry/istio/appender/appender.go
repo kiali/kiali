@@ -14,12 +14,11 @@ const (
 	defaultIncludeIstio bool = false
 )
 
-func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions) []graph.Appender {
+func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	includeIstio := IncludeIstio(o)
 	requestedAppenders := make(map[string]bool)
-	allAppenders := false
-	if nil != appenderNames {
-		for _, appenderName := range appenderNames {
+	if !o.Appenders.All {
+		for _, appenderName := range o.Appenders.AppenderNames {
 			switch appenderName {
 			case DeadNodeAppenderName:
 				requestedAppenders[DeadNodeAppenderName] = true
@@ -41,8 +40,6 @@ func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions
 				graph.BadRequest(fmt.Sprintf("Invalid appender [%s]", appenderName))
 			}
 		}
-	} else {
-		allAppenders = true
 	}
 
 	// The appender order is important
@@ -53,17 +50,17 @@ func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions
 	// Run remaining appenders
 	var appenders []graph.Appender
 
-	if _, ok := requestedAppenders[ServiceEntryAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[ServiceEntryAppenderName]; ok || o.Appenders.All {
 		a := ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[DeadNodeAppenderName]; ok || o.Appenders.All {
 		a := DeadNodeAppender{}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[ResponseTimeAppenderName]; ok || o.Appenders.All {
 		quantile := defaultQuantile
 		quantileString := o.Params.Get("responseTimeQuantile")
 		if quantileString != "" {
@@ -82,7 +79,7 @@ func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[SecurityPolicyAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[SecurityPolicyAppenderName]; ok || o.Appenders.All {
 		a := SecurityPolicyAppender{
 			GraphType:          o.GraphType,
 			IncludeIstio:       includeIstio,
@@ -92,7 +89,7 @@ func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[UnusedNodeAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[UnusedNodeAppenderName]; ok || o.Appenders.All {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		a := UnusedNodeAppender{
 			GraphType:   o.GraphType,
@@ -100,11 +97,11 @@ func ParseAppenders(appenderNames []graph.AppenderName, o graph.TelemetryOptions
 		}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[IstioAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[IstioAppenderName]; ok || o.Appenders.All {
 		a := IstioAppender{}
 		appenders = append(appenders, a)
 	}
-	if _, ok := requestedAppenders[SidecarsCheckAppenderName]; ok || allAppenders {
+	if _, ok := requestedAppenders[SidecarsCheckAppenderName]; ok || o.Appenders.All {
 		a := SidecarsCheckAppender{}
 		appenders = append(appenders, a)
 	}

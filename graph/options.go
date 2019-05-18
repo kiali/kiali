@@ -63,14 +63,16 @@ type ConfigOptions struct {
 	CommonOptions
 }
 
-// AppenderName is a synonym for string
-type AppenderName string
+type RequestedAppenders struct {
+	All           bool
+	AppenderNames []string
+}
 
 // TelemetryOptions are those supplied to Telemetry Vendors
 type TelemetryOptions struct {
 	AccessibleNamespaces map[string]time.Time
-	Appenders            []AppenderName // requested appenders, nil if param not supplied
-	InjectServiceNodes   bool           // inject destination service nodes between source and destination nodes.
+	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
+	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
 	Namespaces           map[string]NamespaceInfo
 	CommonOptions
 	NodeOptions
@@ -98,7 +100,7 @@ func NewOptions(r *net_http.Request) Options {
 	var duration model.Duration
 	var injectServiceNodes bool
 	var queryTime int64
-	appenders := []AppenderName(nil)
+	appenders := RequestedAppenders{All: true}
 	configVendor := params.Get("configVendor")
 	durationString := params.Get("duration")
 	graphType := params.Get("graphType")
@@ -110,11 +112,13 @@ func NewOptions(r *net_http.Request) Options {
 	vendor := params.Get("vendor") // deprecated, use configVendor
 
 	if _, ok := params["appenders"]; ok {
-		appenders := strings.Split(params.Get("appenders"), ",")
-		for i, v := range appenders {
-			appenders[i] = strings.TrimSpace(v)
+		appenderNames := strings.Split(params.Get("appenders"), ",")
+		for i, appenderName := range appenderNames {
+			appenderNames[i] = strings.TrimSpace(appenderName)
 		}
+		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
+
 	// vendor is deprecated, configVendor is preferred
 	if configVendor == "" && vendor != "" {
 		configVendor = vendor
