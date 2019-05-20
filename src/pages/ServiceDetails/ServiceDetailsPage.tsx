@@ -269,6 +269,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                 <div>Inbound Metrics</div>
               </NavItem>
               {errorTraces !== undefined &&
+                errorTraces > -1 &&
                 (this.props.jaegerIntegration ? (
                   <NavItem eventKey="traces">
                     {errorTraces > 0 ? (
