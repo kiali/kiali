@@ -132,6 +132,10 @@ export default class GroupCompoundLayout {
       });
       compoundLayout.run();
 
+      // Starting from cytoscape 3.4.3, When setting cy.json and this "run" (because we call boundingBox) function in
+      // the same batch throws an error  "trying to access x of undefined". This might be a bug or I'm doing something
+      // wrong here, the way to workaround this is to have the run outside of a batch operation,
+      // see https://github.com/cytoscape/cytoscape.js/issues/2402
       const boundingBox = targetElements.boundingBox();
 
       const parentPosition = positionFromBoundingBox(boundingBox);
@@ -202,6 +206,9 @@ export default class GroupCompoundLayout {
 
     // (2) Add a one-time callback to be fired when the layout stops
     layout.one('layoutstop', event => {
+      // This part of the code needs to be executed inside a batch to work, else the relative position is not correctly
+      // updated
+      this.cy.startBatch();
       // (3) Remove synthetic edges
       this.cy.remove(syntheticEdges);
 
@@ -230,6 +237,7 @@ export default class GroupCompoundLayout {
           .add(elementsToRemove)
           .edges()
       );
+      this.cy.endBatch();
     });
     layout.run();
   }

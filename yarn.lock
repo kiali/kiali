@@ -3085,10 +3085,10 @@ cytoscape-dagre@2.2.2:
   dependencies:
     dagre "^0.8.2"
 
-cytoscape@3.3.2:
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.3.2.tgz#7c81a5a07ddbe573044ad2a176b10e6350f58cc3"
-  integrity sha512-DkLcpbxZ1tHCT6x9RevtYuFWdxvc8ZvLXAktgBf++YGWOdkwH/6qE25Omzk2vnbZnYjf2dy81gIYay+wF0z1RQ==
+cytoscape@3.6.1:
+  version "3.6.1"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.6.1.tgz#96cfc9c60b7147b043a4a47bd55bde2cc6d333eb"
+  integrity sha512-Mj+4K20zQpe7sz0lNv6eZXqdsQ8s682BNA2KDcFgxo4E+/opOz0QJ0cWo9nzRQWiJGgalqGzQLv0c4G6sxknHQ==
   dependencies:
     heap "^0.2.6"
     lodash.debounce "^4.0.8"

@@ -436,10 +436,13 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     // update the entire set of nodes and edges to keep the graph up-to-date
     cy.json({ elements: this.props.elements });
 
+    cy.endBatch();
+
     if (updateLayout) {
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
     }
 
+    cy.startBatch();
     // Create and destroy labels
     this.turnNodeLabelsTo(cy, this.props.showNodeLabels);
 
