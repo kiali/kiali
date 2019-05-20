@@ -105,8 +105,10 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
 
   render() {
     const { isDropdownOpen } = this.state;
+    const isAnonymous = authenticationConfig.strategy === AuthStrategy.anonymous;
+
     const userDropdownItems = (
-      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout}>
+      <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={isAnonymous}>
         Logout
       </DropdownItem>
     );
