@@ -1,15 +1,11 @@
 import * as React from 'react';
 import { Row, Col, ListView, ListViewItem, ListViewIcon, Icon } from 'patternfly-react';
-import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
 import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
 import { WorkloadIcon } from '../../../types/Workload';
 import { Link } from 'react-router-dom';
-import { CytoscapeGraphSelectorBuilder } from '../../../components/CytoscapeGraph/CytoscapeGraphSelector';
-import { NodeType } from '../../../types/Graph';
-import Namespace from '../../../types/Namespace';
 
 type AppDescriptionProps = {
   app: App;
@@ -30,17 +26,6 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
       istioSidecar = istioSidecar && wkd.istioSidecar;
     });
     return istioSidecar;
-  }
-
-  showOnGraphLink(application: string, namespace: Namespace) {
-    return `/graph/namespaces?graphType=app&injectServiceNodes=true&unusedNodes=true&focusSelector=${encodeURI(
-      new CytoscapeGraphSelectorBuilder()
-        .app(application)
-        .nodeType(NodeType.APP)
-        .isGroup(null)
-        .namespace(namespace.name)
-        .build()
-    )}`;
   }
 
   serviceLink(namespace: string, service: string) {
@@ -133,39 +118,31 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
 
   render() {
     const app = this.props.app;
-    const istioSidecar = this.istioSidecar();
     return app ? (
-      <PfInfoCard
-        iconType="pf"
-        iconName="applications"
-        title={app.name}
-        istio={istioSidecar}
-        showOnGraphLink={this.showOnGraphLink(app.name, app.namespace)}
-        items={
-          <>
-            <Row>
-              <Col xs={12} sm={6} md={4} lg={4}>
-                <ListView>{this.workloadList()}</ListView>
-              </Col>
-              <Col xs={12} sm={6} md={4} lg={4}>
-                <ListView>{this.serviceList()}</ListView>
-              </Col>
-              <Col xs={0} sm={0} md={1} lg={1} />
-              <Col xs={12} sm={6} md={3} lg={3}>
-                <div className="progress-description">
-                  <strong>Health</strong>
-                </div>
-                <HealthIndicator
-                  id={app.name}
-                  health={this.props.health}
-                  mode={DisplayMode.LARGE}
-                  tooltipPlacement="left"
-                />
-              </Col>
-            </Row>
-          </>
-        }
-      />
+      <div className="card-pf">
+        <div className="card-pf-body">
+          <Row>
+            <Col xs={12} sm={6} md={4} lg={4}>
+              <ListView>{this.workloadList()}</ListView>
+            </Col>
+            <Col xs={12} sm={6} md={4} lg={4}>
+              <ListView>{this.serviceList()}</ListView>
+            </Col>
+            <Col xs={0} sm={0} md={1} lg={1} />
+            <Col xs={12} sm={6} md={3} lg={3}>
+              <div className="progress-description">
+                <strong>Health</strong>
+              </div>
+              <HealthIndicator
+                id={app.name}
+                health={this.props.health}
+                mode={DisplayMode.LARGE}
+                tooltipPlacement="left"
+              />
+            </Col>
+          </Row>
+        </div>
+      </div>
     ) : (
       'Loading'
     );

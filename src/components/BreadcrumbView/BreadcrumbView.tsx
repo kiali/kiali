@@ -18,7 +18,6 @@ interface BreadCumbViewState {
   itemName: string;
   item: string;
   pathItem: string;
-  tab: string;
   istioType?: string;
 }
 
@@ -35,29 +34,6 @@ const ISTIO_TYPES = ['templates', 'adapters'];
 export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCumbViewState> {
   static capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
-  static getTab = (location: string) => {
-    const urlParams = new URLSearchParams(location);
-    switch (urlParams.get('tab')) {
-      case 'info':
-        return 'Info';
-        break;
-      case 'metrics':
-        return 'Metrics';
-        break;
-      case 'in_metrics':
-        return 'Inbound Metrics';
-        break;
-      case 'out_metrics':
-        return 'Outbound Metrics';
-        break;
-      case 'traces':
-        return 'Traces';
-        break;
-      default:
-        return 'Info';
-    }
   };
 
   constructor(props: BreadCumbViewProps) {
@@ -80,8 +56,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
       pathItem: page,
       item: itemName,
       itemName: ItemNames[page],
-      istioType: istioType,
-      tab: BreadcrumbView.getTab(this.props.location.search)
+      istioType: istioType
     };
   };
 
@@ -119,7 +94,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   };
 
   render() {
-    const { namespace, tab, itemName, item, istioType, pathItem } = this.state;
+    const { namespace, itemName, item, istioType, pathItem } = this.state;
     const isIstio = this.isIstio();
     const linkItem = isIstio ? (
       <Breadcrumb.Item componentClass="span" active={true}>
@@ -152,11 +127,6 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
           </Breadcrumb.Item>
         )}
         {linkItem}
-        {!isIstio && (
-          <Breadcrumb.Item active={true}>
-            {itemName} {tab}
-          </Breadcrumb.Item>
-        )}
       </Breadcrumb>
     );
   }

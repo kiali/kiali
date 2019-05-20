@@ -12,6 +12,7 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
 import { serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
+import PfTitle from '../../components/Pf/PfTitle';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
@@ -179,7 +180,8 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           activeKey={this.activeTab('tab', 'info')}
           onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
         >
-          <div>
+          <>
+            <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
               <NavItem eventKey="info">
                 <div>Info</div>
@@ -275,7 +277,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   });
                 })}
             </TabContent>
-          </div>
+          </>
         </TabContainer>
       </>
     );

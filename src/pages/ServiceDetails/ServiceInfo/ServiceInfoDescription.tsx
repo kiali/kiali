@@ -5,7 +5,6 @@ import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthI
 import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { Port, ObjectValidation } from '../../../types/IstioObjects';
-import PfInfoCard from '../../../components/Pf/PfInfoCard';
 import { style } from 'typestyle';
 import {
   ConfigIndicator,
@@ -16,7 +15,6 @@ import {
 import { Popover, OverlayTrigger, Icon } from 'patternfly-react';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
-import { CytoscapeGraphSelectorBuilder } from '../../../components/CytoscapeGraph/CytoscapeGraphSelector';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
 
 interface ServiceInfoDescriptionProps {
@@ -48,15 +46,6 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
     super(props);
   }
 
-  showOnGraphLink(serviceName: string, namespace: string) {
-    return `/graph/namespaces?graphType=service&injectServiceNodes=true&unusedNodes=true&focusSelector=${encodeURI(
-      new CytoscapeGraphSelectorBuilder()
-        .service(serviceName)
-        .namespace(namespace)
-        .build()
-    )}`;
-  }
-
   getValidations(): ObjectValidation {
     return this.props.validations ? this.props.validations : ({} as ObjectValidation);
   }
@@ -86,13 +75,8 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
 
   render() {
     return (
-      <PfInfoCard
-        iconType="pf"
-        iconName="service"
-        title={this.props.name}
-        istio={this.props.istioEnabled}
-        showOnGraphLink={this.showOnGraphLink(this.props.name, this.props.namespace)}
-        items={
+      <div className="card-pf">
+        <div className="card-pf-body">
           <Row>
             <Col xs={12} sm={6} md={5} lg={5}>
               <div className="progress-description">
@@ -192,8 +176,8 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               />
             </Col>
           </Row>
-        }
-      />
+        </div>
+      </div>
     );
   }
 }

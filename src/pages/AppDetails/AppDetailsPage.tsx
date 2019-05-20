@@ -14,6 +14,7 @@ import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../type
 import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
+import PfTitle from '../../components/Pf/PfTitle';
 
 type AppDetailsState = {
   app: App;
@@ -108,10 +109,21 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     });
   };
 
+  istioSidecar() {
+    let istioSidecar = this.state.app.workloads && this.state.app.workloads.length > 0 ? true : false;
+    this.state.app.workloads.forEach(wkd => {
+      istioSidecar = istioSidecar && wkd.istioSidecar;
+    });
+    return istioSidecar;
+  }
+
   render() {
+    const istioSidecar = this.istioSidecar();
+
     return (
       <>
         <BreadcrumbView location={this.props.location} />
+        <PfTitle location={this.props.location} istio={istioSidecar} />
         <TabContainer
           id="basic-tabs"
           activeKey={this.activeTab('tab', 'info')}

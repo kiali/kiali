@@ -26,7 +26,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     const app = this.props.app;
 
     return (
-      <div>
+      <>
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
@@ -41,7 +41,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             </Col>
           </Row>
         </div>
-      </div>
+      </>
     );
   }
 }

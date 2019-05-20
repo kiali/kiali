@@ -311,3 +311,12 @@ Fix icon in buttons of pagination pages
 .pagination > li > a > .i {
   margin-top: 5px;
 }
+
+/*
+
+Top line in tabs
+
+ */
+.nav-tabs {
+  border-top: 1px solid #ededed;
+}
