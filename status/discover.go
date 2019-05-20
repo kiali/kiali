@@ -3,6 +3,7 @@ package status
 import (
 	"errors"
 	"io/ioutil"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -83,6 +84,14 @@ func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 	return path, nil
 }
 
+func getPathURL(endpoint string) (path string) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return ""
+	}
+	return u.Path
+}
+
 func checkTracingService() (url string, err error) {
 	conf := config.Get()
 	tracing := config.TracingDefaultService
@@ -98,10 +107,6 @@ func checkTracingService() (url string, err error) {
 		// We need discover the URL
 		service = conf.ExternalServices.Tracing.Service
 		url, err = discoverUrlService(ns, service)
-		if err != nil {
-			// We found a URL and the user set the service so Tracing is ENABLED
-			conf.ExternalServices.Tracing.EnableJaeger = true
-		}
 	} else {
 		// User didn't set the service
 		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
@@ -120,20 +125,26 @@ func checkTracingService() (url string, err error) {
 			log.Debugf("Kiali found Tracing in %s", url)
 		}
 
-		// We found the Tracing service in Tracing or Jaeger Default
-		if err == nil {
-			if conf.ExternalServices.Tracing.URL == "" {
-				path, err := checkIfQueryBasePath(ns, service)
-				if err != nil {
-					log.Debugf("Error checking the query base path")
-				}
-				conf.ExternalServices.Tracing.URL = url + path // Overwrite URL if the user didn't set
-			}
-			// Tracing is ENABLED
-			conf.ExternalServices.Tracing.EnableJaeger = true
-			// Set the service
-			conf.ExternalServices.Tracing.Service = service
+	}
+
+	// The user set the service or We found the service in tracing or jaeger-query
+	if err == nil {
+		// Calculate if Path
+		path, err := checkIfQueryBasePath(ns, service)
+		if err != nil {
+			log.Debugf("Error checking the query base path")
 		}
+		// The user didn't set the URL, so we need to set
+		if conf.ExternalServices.Tracing.URL == "" {
+			conf.ExternalServices.Tracing.URL = url + path // Overwrite URL if the user didn't set
+		}
+
+		// We store the path
+		conf.ExternalServices.Tracing.Path = path
+		// Tracing is ENABLED
+		conf.ExternalServices.Tracing.EnableJaeger = true
+		// Set the service
+		conf.ExternalServices.Tracing.Service = service
 	}
 
 	// Save configuration
@@ -149,6 +160,7 @@ func DiscoverJaeger() (url string, err error) {
 	if conf.ExternalServices.Tracing.URL != "" && conf.ExternalServices.Tracing.Service != "" {
 		// User assume his configuration
 		conf.ExternalServices.Tracing.EnableJaeger = true
+		conf.ExternalServices.Tracing.Path = getPathURL(conf.ExternalServices.Tracing.URL)
 		config.Set(conf)
 		return conf.ExternalServices.Tracing.URL, nil
 	}

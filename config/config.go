@@ -147,6 +147,8 @@ type TracingConfig struct {
 	Namespace    string `yaml:"namespace"`
 	Service      string `yaml:"service"`
 	URL          string `yaml:"url"`
+	// Path store the value of QUERY_BASE_PATH
+	Path string `yaml:"-"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -285,6 +287,7 @@ func NewConfig() (c *Config) {
 
 	// Tracing Configuration
 	c.ExternalServices.Tracing.EnableJaeger = false
+	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, IstioDefaultNamespace))
 
 	// Istio Configuration
