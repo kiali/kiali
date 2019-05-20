@@ -114,13 +114,15 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
   dispatch(
     HelpDropdownActions.statusRefresh(serverStatus.status, serverStatus.externalServices, serverStatus.warningMessages)
   );
-
   // Get the jaeger URL
   const hasJaeger = serverStatus.externalServices.filter(item => item.name === 'Jaeger');
   if (hasJaeger.length === 1 && hasJaeger[0].url) {
     dispatch(JaegerActions.setUrl(hasJaeger[0].url));
     // If same protocol enable integration
     dispatch(JaegerActions.setEnableIntegration(hasJaeger[0].url.startsWith(window.location.protocol)));
+  } else {
+    dispatch(JaegerActions.setUrl(''));
+    dispatch(JaegerActions.setEnableIntegration(false));
   }
 
   serverStatus.warningMessages.forEach(wMsg => {

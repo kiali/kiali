@@ -287,11 +287,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                     )}
                   </NavItem>
                 ) : (
-                  <NavItem onClick={this.navigateToJaeger}>
-                    <>
-                      Traces <Icon type={'fa'} name={'external-link'} />
-                    </>
-                  </NavItem>
+                  this.props.jaegerUrl && (
+                    <NavItem onClick={this.navigateToJaeger}>
+                      <>
+                        Traces <Icon type={'fa'} name={'external-link'} />
+                      </>
+                    </NavItem>
+                  )
                 ))}
             </Nav>
             <TabContent>

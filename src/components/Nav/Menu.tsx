@@ -3,13 +3,14 @@ import { navItems } from '../../routes';
 import { matchPath } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Nav, NavList, NavItem, PageSidebar } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+
 import _ from 'lodash';
 
 const ExternalLink = ({ href, name }) => (
   <NavItem isActive={false} key={name}>
     <a className="pf-c-nav__link" href={href} target="_blank">
-      {name}
-      <span className="co-external-link" />
+      {name} <ExternalLinkAltIcon style={{ margin: '-4px 0 0 5px' }} />
     </a>
   </NavItem>
 );
