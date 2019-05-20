@@ -134,8 +134,8 @@ func fakeDeployment() *apps_v1.Deployment {
 			Replicas: &replicas,
 		},
 		Status: apps_v1.DeploymentStatus{
-			Replicas: 1,
-			AvailableReplicas:   1,
+			Replicas:          1,
+			AvailableReplicas: 1,
 		},
 	}
 }
@@ -161,7 +161,7 @@ func fakeReplicaSet() *apps_v1.ReplicaSet {
 			Replicas: &replicas,
 		},
 		Status: apps_v1.ReplicaSetStatus{
-			Replicas: 1,
+			Replicas:          1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -188,7 +188,7 @@ func fakeReplicationController() *core_v1.ReplicationController {
 			Replicas: &replicas,
 		},
 		Status: core_v1.ReplicationControllerStatus{
-			Replicas: 1,
+			Replicas:          1,
 			AvailableReplicas: 1,
 		},
 	}
@@ -214,8 +214,8 @@ func fakeDeploymentConfig() *osapps_v1.DeploymentConfig {
 			Replicas: 1,
 		},
 		Status: osapps_v1.DeploymentConfigStatus{
-			Replicas: 1,
-			AvailableReplicas:   1,
+			Replicas:          1,
+			AvailableReplicas: 1,
 		},
 	}
 }
