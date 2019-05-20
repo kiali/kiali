@@ -19,7 +19,6 @@ interface PfTitleProps {
     search: string;
   };
   istio?: boolean;
-  hideGraphLink?: boolean;
 }
 
 interface PfTitleState {
@@ -90,17 +89,15 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
     return (
       <h2 className={PfTitleStyle}>
         {this.state.icon} {this.state.name}
-        {this.props.istio ? (
-          !this.props.hideGraphLink && (
-            <>
-              {' '}
-              (<Link to={this.showOnGraphLink()}>Show on graph</Link>)
-            </>
-          )
-        ) : (
+        {this.state.name && this.props.istio !== undefined && !this.props.istio && (
           <span style={{ marginLeft: '10px' }}>
             <MissingSidecar />
           </span>
+        )}
+        {this.state.name && (
+          <>
+            {'  '}(<Link to={this.showOnGraphLink()}>Show on graph</Link>)
+          </>
         )}
       </h2>
     );

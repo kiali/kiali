@@ -33,7 +33,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     this.state = {
       workload: emptyWorkload,
       validations: {},
-      istioEnabled: false,
+      istioEnabled: true, // true until proven otherwise
       trafficData: null
     };
   }
@@ -51,7 +51,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         {
           workload: emptyWorkload,
           validations: {},
-          istioEnabled: false,
+          istioEnabled: true, // true until proven otherwise
           health: undefined
         },
         () => this.doRefresh()

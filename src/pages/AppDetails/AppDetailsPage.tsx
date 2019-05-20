@@ -110,7 +110,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   };
 
   istioSidecar() {
-    let istioSidecar = this.state.app.workloads && this.state.app.workloads.length > 0 ? true : false;
+    let istioSidecar = true; // assume true until proven otherwise
     this.state.app.workloads.forEach(wkd => {
       istioSidecar = istioSidecar && wkd.istioSidecar;
     });
