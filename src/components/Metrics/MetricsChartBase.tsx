@@ -1,8 +1,11 @@
 import * as React from 'react';
 import { LineChart, Icon } from 'patternfly-react';
+import { InfoAltIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { format } from 'd3-format';
 import { TimeSeries, Metric, AllPromLabelsValues } from '../../types/Metrics';
+
+const chartHeight = 350;
 
 type MetricsChartBaseProps = {
   chartName: string;
@@ -16,6 +19,27 @@ const expandBlockStyle = style({
   zIndex: 1,
   position: 'relative',
   textAlign: 'right'
+});
+
+const emptyMetricsStyle = style({
+  width: '100%',
+  height: chartHeight,
+  textAlign: 'center',
+  $nest: {
+    '& > p': {
+      font: '14px sans-serif',
+      margin: 0
+    },
+    '& div': {
+      width: '100%',
+      height: 'calc(100% - 5ex)',
+      backgroundColor: '#fafafa',
+      border: '1px solid #d1d1d1'
+    },
+    '& div p:first-child': {
+      marginTop: '8ex'
+    }
+  }
 });
 
 interface C3ChartData {
@@ -156,32 +180,41 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
 
   render() {
     const data = this.getSeriesData();
+    const hasData = this.hasData(data);
     this.checkUnload(data);
-    const height = 350;
     // Note: if any direct interaction is needed with the C3 chart,
     //  use "oninit" hook and reference "this" as the C3 chart object.
     //  see commented code
     const self = this;
     return (
-      <div key={this.getControlKey()} style={{ height: '100%' }}>
-        {this.props.onExpandRequested && this.renderExpand()}
-        <LineChart
-          style={{ height: this.props.onExpandRequested ? height : '99%' }}
-          id={this.props.chartName}
-          title={{ text: this.props.chartName }}
-          data={data}
-          axis={this.getAxisDefinition()}
-          point={{ show: false }}
-          onresized={function(this: any) {
-            // Hack due to axis definition not being updated on resize
-            const scaleInfo = self.scaledAxisInfo();
-            this.config.axis_x_tick_count = scaleInfo.count;
-            this.config.axis_x_tick_format = scaleInfo.format;
-          }}
-          // oninit={function(this: any) {
-          //   self.chartRef = this;
-          // }}
-        />
+      <div key={this.getControlKey()}>
+        {this.props.onExpandRequested && hasData && this.renderExpand()}
+        {hasData ? (
+          <LineChart
+            style={{ height: this.props.onExpandRequested ? chartHeight : '99%' }}
+            id={this.props.chartName}
+            title={{ text: this.props.chartName }}
+            data={data}
+            axis={this.getAxisDefinition()}
+            point={{ show: false }}
+            onresized={function(this: any) {
+              // Hack due to axis definition not being updated on resize
+              const scaleInfo = self.scaledAxisInfo();
+              this.config.axis_x_tick_count = scaleInfo.count;
+              this.config.axis_x_tick_format = scaleInfo.format;
+            }}
+          />
+        ) : (
+          <div className={emptyMetricsStyle}>
+            <p>{this.props.chartName}</p>
+            <div>
+              <p>
+                <InfoAltIcon />
+              </p>
+              <p>No data available</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -204,6 +237,14 @@ abstract class MetricsChartBase<Props extends MetricsChartBaseProps> extends Rea
         }
       }
     };
+  }
+
+  private hasData(data: C3ChartData): boolean {
+    // Get "x", which has the timestamps
+    const timestamps = data.columns.find(val => val[0] === data.x);
+
+    // If there are timestamps, assume there is data
+    return !!(timestamps && timestamps.length > 1);
   }
 
   private scaledAxisInfo() {
