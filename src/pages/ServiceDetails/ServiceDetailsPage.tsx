@@ -309,7 +309,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                 ))}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <ServiceInfo
                   namespace={this.props.match.params.namespace}
                   service={this.props.match.params.service}
@@ -323,7 +323,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   threeScaleServiceRule={this.state.threeScaleServiceRule}
                 />
               </TabPane>
-              <TabPane eventKey="traffic">
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}

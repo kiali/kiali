@@ -217,7 +217,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 })}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadInfo
                   workload={this.state.workload}
                   namespace={this.props.match.params.namespace}
@@ -230,7 +230,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey={'traffic'}>
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}

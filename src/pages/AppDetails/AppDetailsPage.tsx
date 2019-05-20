@@ -166,7 +166,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
               })}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <AppInfo
                   app={this.state.app}
                   namespace={this.props.match.params.namespace}
@@ -177,7 +177,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey="traffic">
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
