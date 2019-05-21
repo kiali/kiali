@@ -90,7 +90,8 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 	}
 	status := models.WorkloadStatus{
 		Name:              w.Name,
-		Replicas:          w.Replicas,
+		DesiredReplicas:   w.DesiredReplicas,
+		CurrentReplicas:   w.CurrentReplicas,
 		AvailableReplicas: w.AvailableReplicas,
 	}
 
@@ -220,7 +221,8 @@ func (in *HealthService) getNamespaceWorkloadHealth(namespace string, ws models.
 		allHealth[w.Name] = &models.WorkloadHealth{}
 		allHealth[w.Name].WorkloadStatus = models.WorkloadStatus{
 			Name:              w.Name,
-			Replicas:          w.Replicas,
+			DesiredReplicas:   w.DesiredReplicas,
+			CurrentReplicas:   w.CurrentReplicas,
 			AvailableReplicas: w.AvailableReplicas,
 		}
 		if w.IstioSidecar {
@@ -308,7 +310,8 @@ func castWorkloadStatuses(ws models.Workloads) []models.WorkloadStatus {
 	for _, w := range ws {
 		status := models.WorkloadStatus{
 			Name:              w.Name,
-			Replicas:          w.Replicas,
+			DesiredReplicas:   w.DesiredReplicas,
+			CurrentReplicas:   w.CurrentReplicas,
 			AvailableReplicas: w.AvailableReplicas}
 		statuses = append(statuses, status)
 

@@ -5101,9 +5101,9 @@
         "appLabel",
         "versionLabel",
         "podCount",
-        "replicas",
-        "availableReplicas",
-        "unavailableReplicas"
+        "desiredReplicas",
+        "currentReplicas",
+        "availableReplicas"
       ],
       "properties": {
         "appLabel": {
@@ -5124,6 +5124,20 @@
           "type": "string",
           "x-go-name": "CreatedAt",
           "example": "2018-07-31T12:24:17Z"
+        },
+        "currentReplicas": {
+          "description": "Number of current replicas pods that matches controller selector labels",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentReplicas",
+          "example": 2
+        },
+        "desiredReplicas": {
+          "description": "Number of desired replicas defined by the user in the controller Spec",
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "DesiredReplicas",
+          "example": 2
         },
         "istioSidecar": {
           "description": "Define if Pods related to this Workload has an IstioSidecar deployed",
@@ -5155,13 +5169,6 @@
         "pods": {
           "$ref": "#/definitions/Pods"
         },
-        "replicas": {
-          "description": "Number of desired replicas",
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "Replicas",
-          "example": 2
-        },
         "resourceVersion": {
           "description": "Kubernetes ResourceVersion",
           "type": "string",
@@ -5184,13 +5191,6 @@
           "type": "string",
           "x-go-name": "Type",
           "example": "deployment"
-        },
-        "unavailableReplicas": {
-          "description": "Number of unavailable replicas",
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "UnavailableReplicas",
-          "example": 1
         },
         "versionLabel": {
           "description": "Define if Pods related to this Workload has the label Version",
@@ -5339,22 +5339,27 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "WorkloadStatus": {
-      "description": "WorkloadStatus gives the available / total replicas in a deployment of a pod",
+      "description": "WorkloadStatus gives\nnumber of desired replicas defined in the Spec of a controller\nnumber of current replicas that matches selector of a controller\nnumber of available replicas for a given workload\nIn healthy scenarios all variables should point same value.\nWhen something wrong happens the different values can indicate an unhealthy situation.\ni.e.\ndesired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1\nbut in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload",
       "type": "object",
       "properties": {
-        "available": {
+        "availableReplicas": {
           "type": "integer",
           "format": "int32",
           "x-go-name": "AvailableReplicas"
         },
+        "currentReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "CurrentReplicas"
+        },
+        "desiredReplicas": {
+          "type": "integer",
+          "format": "int32",
+          "x-go-name": "DesiredReplicas"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "replicas": {
-          "type": "integer",
-          "format": "int32",
-          "x-go-name": "Replicas"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"

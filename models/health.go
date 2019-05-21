@@ -49,11 +49,20 @@ type WorkloadHealth struct {
 	Requests       RequestHealth  `json:"requests"`
 }
 
-// WorkloadStatus gives the available / total replicas in a deployment of a pod
+// WorkloadStatus gives
+// - number of desired replicas defined in the Spec of a controller
+// - number of current replicas that matches selector of a controller
+// - number of available replicas for a given workload
+// In healthy scenarios all variables should point same value.
+// When something wrong happens the different values can indicate an unhealthy situation.
+// i.e.
+// 	desired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1
+//  but in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload
 type WorkloadStatus struct {
 	Name              string `json:"name"`
-	Replicas          int32  `json:"replicas"`
-	AvailableReplicas int32  `json:"available"`
+	DesiredReplicas   int32  `json:"desiredReplicas"`
+	CurrentReplicas   int32  `json:"currentReplicas"`
+	AvailableReplicas int32  `json:"availableReplicas"`
 }
 
 // RequestHealth holds several stats about recent request errors
