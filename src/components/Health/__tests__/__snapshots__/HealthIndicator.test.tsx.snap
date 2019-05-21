@@ -77,14 +77,16 @@ ShallowWrapper {
         },
         "workloadStatuses": Array [
           Object {
-            "available": 1,
+            "availableReplicas": 1,
+            "currentReplicas": 1,
+            "desiredReplicas": 1,
             "name": "A",
-            "replicas": 1,
           },
           Object {
-            "available": 2,
+            "availableReplicas": 2,
+            "currentReplicas": 2,
+            "desiredReplicas": 2,
             "name": "B",
-            "replicas": 2,
           },
         ],
       }
@@ -197,14 +199,16 @@ ShallowWrapper {
               },
               "workloadStatuses": Array [
                 Object {
-                  "available": 1,
+                  "availableReplicas": 1,
+                  "currentReplicas": 1,
+                  "desiredReplicas": 1,
                   "name": "A",
-                  "replicas": 1,
                 },
                 Object {
-                  "available": 2,
+                  "availableReplicas": 2,
+                  "currentReplicas": 2,
+                  "desiredReplicas": 2,
                   "name": "B",
-                  "replicas": 2,
                 },
               ],
             }
@@ -336,14 +340,16 @@ ShallowWrapper {
                 },
                 "workloadStatuses": Array [
                   Object {
-                    "available": 1,
+                    "availableReplicas": 1,
+                    "currentReplicas": 1,
+                    "desiredReplicas": 1,
                     "name": "A",
-                    "replicas": 1,
                   },
                   Object {
-                    "available": 2,
+                    "availableReplicas": 2,
+                    "currentReplicas": 2,
+                    "desiredReplicas": 2,
                     "name": "B",
-                    "replicas": 2,
                   },
                 ],
               }

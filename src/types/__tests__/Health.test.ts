@@ -2,16 +2,20 @@ import * as H from '../Health';
 
 describe('Health', () => {
   it('should check ratio with 0 valid', () => {
-    expect(H.ratioCheck(0, 3)).toEqual(H.FAILURE);
+    expect(H.ratioCheck(0, 3, 3)).toEqual(H.FAILURE);
   });
   it('should check ratio with some valid', () => {
-    expect(H.ratioCheck(1, 3)).toEqual(H.DEGRADED);
+    expect(H.ratioCheck(1, 3, 3)).toEqual(H.DEGRADED);
   });
   it('should check ratio with all valid', () => {
-    expect(H.ratioCheck(3, 3)).toEqual(H.HEALTHY);
+    expect(H.ratioCheck(3, 3, 3)).toEqual(H.HEALTHY);
   });
   it('should check ratio with no item', () => {
-    expect(H.ratioCheck(0, 0)).toEqual(H.NA);
+    expect(H.ratioCheck(0, 0, 0)).toEqual(H.NA);
+  });
+  it('should check ratio pending Pods', () => {
+    // 3 Pods with problems
+    expect(H.ratioCheck(3, 6, 3)).toEqual(H.FAILURE);
   });
   it('should merge status with correct priority', () => {
     let status = H.mergeStatus(H.NA, H.HEALTHY);
@@ -58,7 +62,7 @@ describe('Health', () => {
   });
   it('should aggregate without reporter', () => {
     const health = new H.AppHealth(
-      [{ available: 0, replicas: 1, name: 'a' }],
+      [{ availableReplicas: 0, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
       { errorRatio: 1, inboundErrorRatio: 1, outboundErrorRatio: 1 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -66,7 +70,10 @@ describe('Health', () => {
   });
   it('should aggregate healthy', () => {
     const health = new H.AppHealth(
-      [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
+      [
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
+        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b' }
+      ],
       { errorRatio: 0, inboundErrorRatio: 0, outboundErrorRatio: 0 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -74,7 +81,10 @@ describe('Health', () => {
   });
   it('should aggregate degraded workload', () => {
     const health = new H.AppHealth(
-      [{ available: 1, replicas: 1, name: 'a' }, { available: 1, replicas: 2, name: 'b' }],
+      [
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 2, name: 'b' }
+      ],
       { errorRatio: 0, inboundErrorRatio: 0, outboundErrorRatio: 0 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -82,7 +92,10 @@ describe('Health', () => {
   });
   it('should aggregate failing requests', () => {
     const health = new H.AppHealth(
-      [{ available: 1, replicas: 1, name: 'a' }, { available: 2, replicas: 2, name: 'b' }],
+      [
+        { availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' },
+        { availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, name: 'b' }
+      ],
       { errorRatio: 0.2, inboundErrorRatio: 0.3, outboundErrorRatio: 0.1 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -90,7 +103,10 @@ describe('Health', () => {
   });
   it('should aggregate multiple issues', () => {
     const health = new H.AppHealth(
-      [{ available: 0, replicas: 0, name: 'a' }, { available: 0, replicas: 0, name: 'b' }],
+      [
+        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'a' },
+        { availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, name: 'b' }
+      ],
       { errorRatio: 0.2, inboundErrorRatio: 0.3, outboundErrorRatio: 0.1 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -98,7 +114,7 @@ describe('Health', () => {
   });
   it('should not ignore error rates when has sidecar', () => {
     const health = new H.AppHealth(
-      [{ available: 1, replicas: 1, name: 'a' }],
+      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
       { errorRatio: 0, inboundErrorRatio: 0, outboundErrorRatio: 0 },
       { rateInterval: 60, hasSidecar: true }
     );
@@ -106,7 +122,7 @@ describe('Health', () => {
   });
   it('should ignore error rates when no sidecar', () => {
     const health = new H.AppHealth(
-      [{ available: 1, replicas: 1, name: 'a' }],
+      [{ availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1, name: 'a' }],
       { errorRatio: 0, inboundErrorRatio: 0, outboundErrorRatio: 0 },
       { rateInterval: 60, hasSidecar: false }
     );

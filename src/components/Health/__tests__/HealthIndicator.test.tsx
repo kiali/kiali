@@ -17,7 +17,10 @@ describe('HealthIndicator', () => {
 
   it('renders healthy', () => {
     const health = new AppHealth(
-      [{ name: 'A', available: 1, replicas: 1 }, { name: 'B', available: 2, replicas: 2 }],
+      [
+        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+      ],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       { rateInterval: 600, hasSidecar: true }
     );
@@ -36,7 +39,10 @@ describe('HealthIndicator', () => {
 
   it('renders workloads degraded', () => {
     const health = new AppHealth(
-      [{ name: 'A', available: 1, replicas: 10 }, { name: 'B', available: 2, replicas: 2 }],
+      [
+        { name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 10 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+      ],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       { rateInterval: 600, hasSidecar: true }
     );
@@ -55,7 +61,10 @@ describe('HealthIndicator', () => {
 
   it('renders some scaled down workload', () => {
     const health = new AppHealth(
-      [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 2, replicas: 2 }],
+      [
+        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 },
+        { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2 }
+      ],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       { rateInterval: 600, hasSidecar: true }
     );
@@ -74,7 +83,10 @@ describe('HealthIndicator', () => {
 
   it('renders all workloads down', () => {
     const health = new AppHealth(
-      [{ name: 'A', available: 0, replicas: 0 }, { name: 'B', available: 0, replicas: 0 }],
+      [
+        { name: 'A', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 },
+        { name: 'B', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0 }
+      ],
       { errorRatio: -1, inboundErrorRatio: -1, outboundErrorRatio: -1 },
       { rateInterval: 600, hasSidecar: true }
     );
@@ -92,7 +104,7 @@ describe('HealthIndicator', () => {
 
   it('renders error rate failure', () => {
     const health = new AppHealth(
-      [{ name: 'A', available: 1, replicas: 1 }],
+      [{ name: 'A', availableReplicas: 1, currentReplicas: 1, desiredReplicas: 1 }],
       { errorRatio: 0.3, inboundErrorRatio: 0.1, outboundErrorRatio: 0.2 },
       { rateInterval: 600, hasSidecar: true }
     );

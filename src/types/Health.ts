@@ -15,8 +15,9 @@ interface HealthSubItem {
 
 export interface WorkloadStatus {
   name: string;
-  replicas: number;
-  available: number;
+  desiredReplicas: number;
+  currentReplicas: number;
+  availableReplicas: number;
 }
 
 export interface RequestHealth {
@@ -79,14 +80,24 @@ interface ThresholdStatus {
 // Use -1 rather than NaN to allow straigthforward comparison
 const RATIO_NA = -1;
 
-export const ratioCheck = (valid: number, total: number): Status => {
-  if (total === 0) {
+export const ratioCheck = (availableReplicas: number, currentReplicas: number, desiredReplicas: number): Status => {
+  // No Pods returns No Health Info
+  if (desiredReplicas === 0 && currentReplicas === 0) {
     return NA;
-  } else if (valid === 0) {
+  }
+  // No available Pods when there are desired and current means a Failure
+  if (desiredReplicas > 0 && currentReplicas > 0 && availableReplicas === 0) {
     return FAILURE;
-  } else if (valid === total) {
+  }
+  // Pending Pods means problems
+  if (desiredReplicas === availableReplicas && availableReplicas !== currentReplicas) {
+    return FAILURE;
+  }
+  // Health condition
+  if (desiredReplicas === currentReplicas && currentReplicas === availableReplicas) {
     return HEALTHY;
   }
+  // Other combination could mean a degraded situation
   return DEGRADED;
 };
 
@@ -201,12 +212,12 @@ export class AppHealth extends Health {
       // Pods
       let countInactive = 0;
       const children: HealthSubItem[] = workloadStatuses.map(d => {
-        const status = ratioCheck(d.available, d.replicas);
+        const status = ratioCheck(d.availableReplicas, d.currentReplicas, d.desiredReplicas);
         if (status === NA) {
           countInactive++;
         }
         return {
-          text: d.name + ': ' + d.available + ' / ' + d.replicas,
+          text: d.name + ': ' + d.availableReplicas + ' / ' + d.desiredReplicas,
           status: status
         };
       });
@@ -256,12 +267,38 @@ export class WorkloadHealth extends Health {
     const items: HealthItem[] = [];
     {
       // Pods
-      const podsStatus = ratioCheck(workloadStatus.available, workloadStatus.replicas);
+      const podsStatus = ratioCheck(
+        workloadStatus.availableReplicas,
+        workloadStatus.currentReplicas,
+        workloadStatus.desiredReplicas
+      );
       const item: HealthItem = {
         title: 'Pods Status',
         status: podsStatus,
-        text: String(workloadStatus.available + ' / ' + workloadStatus.replicas)
+        text: String(workloadStatus.availableReplicas + ' / ' + workloadStatus.desiredReplicas)
       };
+      if (podsStatus !== NA && podsStatus !== HEALTHY) {
+        item.children = [
+          {
+            status: podsStatus,
+            text: String(
+              workloadStatus.desiredReplicas + ' desired pod' + (workloadStatus.desiredReplicas !== 1 ? 's' : '')
+            )
+          },
+          {
+            status: podsStatus,
+            text: String(
+              workloadStatus.currentReplicas + ' current pod' + (workloadStatus.currentReplicas !== 1 ? 's' : '')
+            )
+          },
+          {
+            status: podsStatus,
+            text: String(
+              workloadStatus.availableReplicas + ' available pod' + (workloadStatus.availableReplicas !== 1 ? 's' : '')
+            )
+          }
+        ];
+      }
       items.push(item);
     }
     {

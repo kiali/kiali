@@ -64,6 +64,9 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     const noIstiosidecar: ObjectCheck = { message: 'Pod has no Istio sidecar', severity: 'warning', path: '' };
     const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: 'warning', path: '' };
     const noVersionLabel: ObjectCheck = { message: 'Pod has no version label', severity: 'warning', path: '' };
+    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: 'warning', path: '' };
+    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: 'warning', path: '' };
+    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: 'error', path: '' };
 
     const validations: Validations = {};
     if (workload.pods.length > 0) {
@@ -88,6 +91,19 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           if (!pod.versionLabel) {
             validations.pod[pod.name].checks.push(noVersionLabel);
           }
+        }
+        switch (pod.status) {
+          case 'Pending':
+            validations.pod[pod.name].checks.push(pendingPod);
+            break;
+          case 'Unknown':
+            validations.pod[pod.name].checks.push(unknownPod);
+            break;
+          case 'Failed':
+            validations.pod[pod.name].checks.push(failedPod);
+            break;
+          default:
+          // Pod healthy
         }
         validations.pod[pod.name].valid = validations.pod[pod.name].checks.length === 0;
       });
