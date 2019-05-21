@@ -262,15 +262,9 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         >
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
-              <NavItem eventKey="info">
-                <div>Overview</div>
-              </NavItem>
-              <NavItem eventKey="traffic">
-                <div>Traffic</div>
-              </NavItem>
-              <NavItem eventKey="metrics">
-                <div>Inbound Metrics</div>
-              </NavItem>
+              <NavItem eventKey="info">Overview</NavItem>
+              <NavItem eventKey="traffic">Traffic</NavItem>
+              <NavItem eventKey="metrics">Inbound Metrics</NavItem>
               {errorTraces !== undefined &&
                 errorTraces > -1 &&
                 (this.props.jaegerIntegration ? (
@@ -293,9 +287,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                 ) : (
                   this.props.jaegerUrl && (
                     <NavItem onClick={this.navigateToJaeger}>
-                      <>
-                        Traces <Icon type={'fa'} name={'external-link'} />
-                      </>
+                      Traces <Icon type={'fa'} name={'external-link'} />
                     </NavItem>
                   )
                 ))}

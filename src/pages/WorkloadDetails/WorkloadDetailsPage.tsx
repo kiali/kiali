@@ -199,27 +199,17 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
           <>
             <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
-              <NavItem eventKey="info">
-                <div>Info</div>
-              </NavItem>
-              <NavItem eventKey="traffic">
-                <div>Traffic</div>
-              </NavItem>
-              <NavItem eventKey="logs">
-                <div>Logs</div>
-              </NavItem>
-              <NavItem eventKey="in_metrics">
-                <div>Inbound Metrics</div>
-              </NavItem>
-              <NavItem eventKey="out_metrics">
-                <div>Outbound Metrics</div>
-              </NavItem>
+              <NavItem eventKey="info">Overview</NavItem>
+              <NavItem eventKey="traffic">Traffic</NavItem>
+              <NavItem eventKey="logs">Logs</NavItem>
+              <NavItem eventKey="in_metrics">Inbound Metrics</NavItem>
+              <NavItem eventKey="out_metrics">Outbound Metrics</NavItem>
               {isLabeled &&
                 this.state.workload.runtimes.map(runtime => {
                   return runtime.dashboardRefs.map(dashboard => {
                     return (
                       <NavItem key={dashboard.template} eventKey={dashboard.template}>
-                        <div>{dashboard.title}</div>
+                        {dashboard.title}
                       </NavItem>
                     );
                   });
@@ -253,7 +243,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 {hasPods ? (
                   <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
                 ) : (
-                  <div>There are no logs to display because the workload has no pods.</div>
+                  'There are no logs to display because the workload has no pods.'
                 )}
               </TabPane>
               <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>

@@ -131,23 +131,15 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         >
           <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
-              <NavItem eventKey="info">
-                <div>Info</div>
-              </NavItem>
-              <NavItem eventKey="traffic">
-                <div>Traffic</div>
-              </NavItem>
-              <NavItem eventKey="in_metrics">
-                <div>Inbound Metrics</div>
-              </NavItem>
-              <NavItem eventKey="out_metrics">
-                <div>Outbound Metrics</div>
-              </NavItem>
+              <NavItem eventKey="info">Overview</NavItem>
+              <NavItem eventKey="traffic">Traffic</NavItem>
+              <NavItem eventKey="in_metrics">Inbound Metrics</NavItem>
+              <NavItem eventKey="out_metrics">Outbound Metrics</NavItem>
               {this.state.app.runtimes.map(runtime => {
                 return runtime.dashboardRefs.map(dashboard => {
                   return (
                     <NavItem key={dashboard.template} eventKey={dashboard.template}>
-                      <div>{dashboard.title}</div>
+                      {dashboard.title}
                     </NavItem>
                   );
                 });
