@@ -91,7 +91,7 @@
     "react-iframe": "1.5.0",
     "react-redux": "5.1.1",
     "react-resize-detector": "3.4.0",
-    "react-router-dom": "4.3.1",
+    "react-router-dom": "5.0.0",
     "react-scripts-ts": "2.17.0",
     "redux": "4.0.1",
     "redux-persist": "5.10.0",

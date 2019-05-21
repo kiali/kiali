@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import ReactResizeDetector from 'react-resize-detector';
 
+import history from '../../app/History';
 import Namespace from '../../types/Namespace';
 import { GraphHighlighter } from './graphs/GraphHighlighter';
 import TrafficRender from './TrafficAnimation/TrafficRenderer';
@@ -576,7 +577,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    this.context.router.history.push(makeNodeGraphUrlFromParams(urlParams));
+    history.push(makeNodeGraphUrlFromParams(urlParams));
     this.props.setNode(targetNode);
   };
 

@@ -40,7 +40,7 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams): string
   return `/graph/namespaces?` + queryParams;
 };
 
-export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string | undefined => {
+export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string => {
   const node = params.node;
   if (node) {
     switch (node.nodeType) {
@@ -68,6 +68,6 @@ export const makeNodeGraphUrlFromParams = (params: GraphUrlParams): string | und
     }
   } else {
     // this should never happen but typescript needs this
-    return undefined;
+    return '';
   }
 };

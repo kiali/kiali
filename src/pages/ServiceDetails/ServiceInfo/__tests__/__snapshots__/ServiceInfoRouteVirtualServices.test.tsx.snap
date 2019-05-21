@@ -275,7 +275,6 @@ ShallowWrapper {
               Array [
                 Object {
                   "actions": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
@@ -285,7 +284,6 @@ ShallowWrapper {
                   />,
                   "id": 0,
                   "name": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
@@ -501,7 +499,6 @@ ShallowWrapper {
               Array [
                 Object {
                   "actions": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
@@ -511,7 +508,6 @@ ShallowWrapper {
                   />,
                   "id": 0,
                   "name": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
@@ -640,7 +636,6 @@ ShallowWrapper {
                 Array [
                   Object {
                     "actions": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
@@ -650,7 +645,6 @@ ShallowWrapper {
                     />,
                     "id": 0,
                     "name": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
@@ -862,7 +856,6 @@ ShallowWrapper {
               "rows": Array [
                 Object {
                   "actions": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                   >
                     View YAML
@@ -872,7 +865,6 @@ ShallowWrapper {
                   />,
                   "id": 0,
                   "name": <Link
-                    replace={false}
                     to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                   >
                     reviews-default
@@ -1098,7 +1090,6 @@ ShallowWrapper {
                 Array [
                   Object {
                     "actions": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
@@ -1108,7 +1099,6 @@ ShallowWrapper {
                     />,
                     "id": 0,
                     "name": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
@@ -1324,7 +1314,6 @@ ShallowWrapper {
                 Array [
                   Object {
                     "actions": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
@@ -1334,7 +1323,6 @@ ShallowWrapper {
                     />,
                     "id": 0,
                     "name": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default
@@ -1463,7 +1451,6 @@ ShallowWrapper {
                   Array [
                     Object {
                       "actions": <Link
-                        replace={false}
                         to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                       >
                         View YAML
@@ -1473,7 +1460,6 @@ ShallowWrapper {
                       />,
                       "id": 0,
                       "name": <Link
-                        replace={false}
                         to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                       >
                         reviews-default
@@ -1685,7 +1671,6 @@ ShallowWrapper {
                 "rows": Array [
                   Object {
                     "actions": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
                     >
                       View YAML
@@ -1695,7 +1680,6 @@ ShallowWrapper {
                     />,
                     "id": 0,
                     "name": <Link
-                      replace={false}
                       to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
                     >
                       reviews-default

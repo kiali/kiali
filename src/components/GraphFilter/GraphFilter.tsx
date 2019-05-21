@@ -135,7 +135,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
 
   handleNamespaceReturn = () => {
     this.props.setNode(undefined);
-    this.context.router.history.push('/graph/namespaces');
+    history.push('/graph/namespaces');
   };
 
   // TODO [jshaughn] Is there a better typescript way than the style attribute with the spread syntax (here and other places)

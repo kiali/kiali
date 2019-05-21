@@ -1,11 +1,12 @@
+import _ from 'lodash';
 import * as React from 'react';
-import { navItems } from '../../routes';
 import { matchPath } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Nav, NavList, NavItem, PageSidebar } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
-import _ from 'lodash';
+import history from '../../app/History';
+import { navItems } from '../../routes';
 
 const ExternalLink = ({ href, name }) => (
   <NavItem isActive={false} key={name}>
@@ -56,7 +57,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
         ''
       ) : (
         <NavItem isActive={activeItem === item} key={item.to}>
-          <Link id={item.title} to={item.to} onClick={() => this.context.router.history.push(item.to)}>
+          <Link id={item.title} to={item.to} onClick={() => history.push(item.to)}>
             {item.title}
           </Link>
         </NavItem>

@@ -265,7 +265,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v2"
                     >
                       reviews-v2
@@ -289,7 +288,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v3"
                     >
                       reviews-v3
@@ -313,7 +311,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v1"
                     >
                       reviews-v1
@@ -540,7 +537,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v2"
                     >
                       reviews-v2
@@ -564,7 +560,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v3"
                     >
                       reviews-v3
@@ -588,7 +583,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v1"
                     >
                       reviews-v1
@@ -728,7 +722,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v2"
                       >
                         reviews-v2
@@ -752,7 +745,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v3"
                       >
                         reviews-v3
@@ -776,7 +768,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v1"
                       >
                         reviews-v1
@@ -999,7 +990,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v2"
                     >
                       reviews-v2
@@ -1023,7 +1013,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v3"
                     >
                       reviews-v3
@@ -1047,7 +1036,6 @@ ShallowWrapper {
                   />,
                   "name": <span>
                     <Link
-                      replace={false}
                       to="/namespaces/ns/workloads/reviews-v1"
                     >
                       reviews-v1
@@ -1284,7 +1272,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v2"
                       >
                         reviews-v2
@@ -1308,7 +1295,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v3"
                       >
                         reviews-v3
@@ -1332,7 +1318,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v1"
                       >
                         reviews-v1
@@ -1559,7 +1544,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v2"
                       >
                         reviews-v2
@@ -1583,7 +1567,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v3"
                       >
                         reviews-v3
@@ -1607,7 +1590,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v1"
                       >
                         reviews-v1
@@ -1747,7 +1729,6 @@ ShallowWrapper {
                       />,
                       "name": <span>
                         <Link
-                          replace={false}
                           to="/namespaces/ns/workloads/reviews-v2"
                         >
                           reviews-v2
@@ -1771,7 +1752,6 @@ ShallowWrapper {
                       />,
                       "name": <span>
                         <Link
-                          replace={false}
                           to="/namespaces/ns/workloads/reviews-v3"
                         >
                           reviews-v3
@@ -1795,7 +1775,6 @@ ShallowWrapper {
                       />,
                       "name": <span>
                         <Link
-                          replace={false}
                           to="/namespaces/ns/workloads/reviews-v1"
                         >
                           reviews-v1
@@ -2018,7 +1997,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v2"
                       >
                         reviews-v2
@@ -2042,7 +2020,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v3"
                       >
                         reviews-v3
@@ -2066,7 +2043,6 @@ ShallowWrapper {
                     />,
                     "name": <span>
                       <Link
-                        replace={false}
                         to="/namespaces/ns/workloads/reviews-v1"
                       >
                         reviews-v1
