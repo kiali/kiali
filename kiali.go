@@ -100,6 +100,8 @@ func main() {
 	internalmetrics.RegisterInternalMetrics()
 
 	// check if Jaeger is available
+	// we need first discover Jaeger
+	status.DiscoverJaeger()
 	_, err := business.GetServices()
 	if err != nil {
 		business.JaegerAvailable = false
