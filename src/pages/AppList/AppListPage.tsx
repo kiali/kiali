@@ -14,7 +14,6 @@ const AppListPage: React.SFC<{}> = () => {
         pagination={ListPagesHelper.currentPagination()}
         currentSortField={ListPagesHelper.currentSortField(AppListFilters.sortFields)}
         isSortAscending={ListPagesHelper.isCurrentSortAscending()}
-        rateInterval={ListPagesHelper.currentDuration()}
       />
     </>
   );

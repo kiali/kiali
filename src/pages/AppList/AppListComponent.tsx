@@ -14,15 +14,15 @@ import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { arrayEquals } from '../../utils/Common';
+import { DurationInSeconds } from '../../types/Common';
+import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
 
-interface AppListComponentState extends ListComponent.State<AppListItem> {
-  rateInterval: number;
-}
+interface AppListComponentState extends ListComponent.State<AppListItem> {}
 
 interface AppListComponentProps extends ListComponent.Props<AppListItem> {
-  rateInterval: number;
+  duration: DurationInSeconds;
   activeNamespaces: Namespace[];
 }
 
@@ -35,8 +35,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
       listItems: [],
       pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
-      isSortAscending: this.props.isSortAscending,
-      rateInterval: this.props.rateInterval
+      isSortAscending: this.props.isSortAscending
     };
   }
 
@@ -49,8 +48,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
       this.setState({
         pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
-        isSortAscending: this.props.isSortAscending,
-        rateInterval: this.props.rateInterval
+        isSortAscending: this.props.isSortAscending
       });
       this.updateListItems();
     }
@@ -69,7 +67,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
-      prevProps.rateInterval === this.props.rateInterval &&
+      prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
@@ -98,7 +96,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
           this.fetchApps(
             namespaces.map(namespace => namespace.name),
             activeFilters,
-            this.props.rateInterval,
+            this.props.duration,
             resetPagination
           );
         })
@@ -108,7 +106,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
           }
         });
     } else {
-      this.fetchApps(namespacesSelected, activeFilters, this.props.rateInterval, resetPagination);
+      this.fetchApps(namespacesSelected, activeFilters, this.props.duration, resetPagination);
     }
   }
 
@@ -178,6 +176,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
+            <DurationDropdownContainer />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>
@@ -197,11 +196,10 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  duration: durationSelector(state)
 });
 
-const AppListComponentContainer = connect(
-  mapStateToProps,
-  null
-)(AppListComponent);
+const AppListComponentContainer = connect(mapStateToProps)(AppListComponent);
+
 export default AppListComponentContainer;
