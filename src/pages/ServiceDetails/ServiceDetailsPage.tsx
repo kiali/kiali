@@ -22,6 +22,7 @@ import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { KialiAppState } from '../../store/Store';
 import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
+import { durationSelector } from '../../store/Selectors';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -29,10 +30,10 @@ type ServiceDetailsState = {
   validations: Validations;
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
-  rateInterval: DurationInSeconds;
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
+  duration: DurationInSeconds;
   jaegerUrl: string;
   jaegerIntegration: boolean;
 }
@@ -76,7 +77,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     super(props);
     this.state = {
       serviceDetailsInfo: emptyService,
-      rateInterval: MetricsDuration.initialDuration(),
       trafficData: null,
       validations: {},
       threeScaleInfo: {
@@ -135,10 +135,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<ServiceId>, prevState: ServiceDetailsState) {
+  componentDidUpdate(prevProps: ServiceDetailsProps, prevState: ServiceDetailsState) {
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
-      prevProps.match.params.service !== this.props.match.params.service
+      prevProps.match.params.service !== this.props.match.params.service ||
+      prevProps.duration !== this.props.duration
     ) {
       this.setState(
         {
@@ -169,7 +170,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       this.props.match.params.namespace,
       this.props.match.params.service,
       true,
-      this.state.rateInterval
+      this.props.duration
     );
     const promiseThreeScale = API.getThreeScaleInfo();
     Promise.all([promiseDetails, promiseThreeScale])
@@ -225,10 +226,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         this.setState({ trafficData: trafficData });
       }
     });
-  };
-
-  updateRateInterval = (rateInterval: DurationInSeconds) => {
-    this.setState({ rateInterval }, () => this.doRefresh());
   };
 
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
@@ -315,7 +312,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   service={this.props.match.params.service}
                   serviceDetails={this.state.serviceDetailsInfo}
                   validations={this.state.validations}
-                  onRateIntervalChanged={this.updateRateInterval}
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
@@ -395,6 +391,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
   jaegerUrl: state.jaegerState.jaegerURL,
   jaegerIntegration: state.jaegerState.enableIntegration
 });

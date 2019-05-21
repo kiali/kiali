@@ -2,20 +2,18 @@ import * as React from 'react';
 import { style } from 'typestyle';
 import { Validations } from '../../types/IstioObjects';
 import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
-import MetricsDurationContainer from '../../components/MetricsOptions/MetricsDuration';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
-import { DurationInSeconds } from '../../types/Common';
+import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
 
 type WorkloadInfoProps = {
   workload: Workload;
   validations: Validations;
   namespace: string;
-  onRateIntervalChanged: (rateInterval: DurationInSeconds) => void;
   onRefresh: () => void;
   onSelectTab: (tabName: string, postHandler?: (k: string) => void) => (tabKey: string) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
@@ -87,7 +85,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
-                <MetricsDurationContainer onChanged={this.props.onRateIntervalChanged} />{' '}
+                <DurationDropdownContainer />{' '}
                 <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
                   <Icon name="refresh" />
                 </Button>

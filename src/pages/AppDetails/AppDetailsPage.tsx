@@ -16,12 +16,18 @@ import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
+import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
+import { connect } from 'react-redux';
 
 type AppDetailsState = {
   app: App;
   health?: AppHealth;
   trafficData: GraphDefinition | null;
-  rateInterval: DurationInSeconds;
+};
+
+type AppDetailsProps = RouteComponentProps<AppId> & {
+  duration: DurationInSeconds;
 };
 
 const emptyApp = {
@@ -32,12 +38,11 @@ const emptyApp = {
   runtimes: []
 };
 
-class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsState> {
-  constructor(props: RouteComponentProps<AppId>) {
+class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
+  constructor(props: AppDetailsProps) {
     super(props);
     this.state = {
       app: emptyApp,
-      rateInterval: MetricsDuration.initialDuration(),
       trafficData: null
     };
   }
@@ -46,10 +51,11 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<AppId>) {
+  componentDidUpdate(prevProps: AppDetailsProps) {
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
-      this.props.match.params.app !== prevProps.match.params.app
+      this.props.match.params.app !== prevProps.match.params.app ||
+      this.props.duration !== prevProps.duration
     ) {
       this.setState(
         {
@@ -82,7 +88,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
         return API.getAppHealth(
           this.props.match.params.namespace,
           this.props.match.params.app,
-          this.state.rateInterval,
+          this.props.duration,
           hasSidecar
         );
       })
@@ -125,10 +131,6 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     return istioSidecar;
   }
 
-  updateRateInterval = (rateInterval: DurationInSeconds) => {
-    this.setState({ rateInterval }, () => this.doRefresh());
-  };
-
   render() {
     const istioSidecar = this.istioSidecar();
 
@@ -170,7 +172,6 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                 <AppInfo
                   app={this.state.app}
                   namespace={this.props.match.params.namespace}
-                  onRateIntervalChanged={this.updateRateInterval}
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}
                   onSelectTab={this.tabSelectHandler}
@@ -261,4 +262,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   };
 }
 
-export default AppDetails;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state)
+});
+
+const AppDetailsContainer = connect(mapStateToProps)(AppDetails);
+
+export default AppDetailsContainer;

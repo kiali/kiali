@@ -4,13 +4,11 @@ import AppDescription from './AppInfo/AppDescription';
 import { AppHealth } from '../../types/Health';
 import { App } from '../../types/App';
 import './AppInfo.css';
-import MetricsDurationContainer from '../../components/MetricsOptions/MetricsDuration';
-import { DurationInSeconds } from '../../types/Common';
+import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
 
 type AppInfoProps = {
   app: App;
   namespace: string;
-  onRateIntervalChanged: (rateInterval: DurationInSeconds) => void;
   onRefresh: () => void;
   onSelectTab: (tabName: string, postHandler?: (k: string) => void) => (tabKey: string) => void;
   activeTab: (tabName: string, whenEmpty: string) => string;
@@ -34,7 +32,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
-                <MetricsDurationContainer onChanged={this.props.onRateIntervalChanged} />{' '}
+                <DurationDropdownContainer />{' '}
                 <Button onClick={this.props.onRefresh}>
                   <Icon name="refresh" />
                 </Button>
