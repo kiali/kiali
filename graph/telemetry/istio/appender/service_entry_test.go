@@ -53,42 +53,39 @@ func TestServiceEntry(t *testing.T) {
 	notServiceEntryNode, found := trafficMap[notServiceEntryId]
 	assert.Equal(true, found)
 	assert.Equal(1, len(notServiceEntryNode.Edges))
-	assert.Equal(nil, notServiceEntryNode.Metadata["isServiceEntry"])
+	assert.Equal(nil, notServiceEntryNode.Metadata[graph.IsServiceEntry])
 
 	extServiceEntryId, _ := graph.Id("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	extServiceEntryNode, found2 := trafficMap[extServiceEntryId]
 	assert.Equal(true, found2)
 	assert.Equal(0, len(extServiceEntryNode.Edges))
-	assert.Equal(nil, extServiceEntryNode.Metadata["isServiceEntry"])
+	assert.Equal(nil, extServiceEntryNode.Metadata[graph.IsServiceEntry])
 
 	intServiceEntryId, _ := graph.Id("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	intServiceEntryNode, found3 := trafficMap[intServiceEntryId]
 	assert.Equal(true, found3)
 	assert.Equal(0, len(intServiceEntryNode.Edges))
-	assert.Equal(nil, extServiceEntryNode.Metadata["isServiceEntry"])
+	assert.Equal(nil, extServiceEntryNode.Metadata[graph.IsServiceEntry])
 
 	defaultServiceEntryId, _ := graph.Id("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	defaultServiceEntryNode, found4 := trafficMap[defaultServiceEntryId]
 	assert.Equal(true, found4)
 	assert.Equal(0, len(defaultServiceEntryNode.Edges))
-	assert.Equal(nil, defaultServiceEntryNode.Metadata["isServiceEntry"])
+	assert.Equal(nil, defaultServiceEntryNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: map[string]time.Time{"testNamespace": time.Now()},
 	}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
-	assert.Equal(nil, notServiceEntryNode.Metadata["isServiceEntry"])
-	assert.Equal("MESH_EXTERNAL", extServiceEntryNode.Metadata["isServiceEntry"])
-	assert.Equal("MESH_INTERNAL", intServiceEntryNode.Metadata["isServiceEntry"])
-	assert.Equal("MESH_EXTERNAL", defaultServiceEntryNode.Metadata["isServiceEntry"])
+	assert.Equal(nil, notServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", extServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", intServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", defaultServiceEntryNode.Metadata[graph.IsServiceEntry])
 }
 
 func serviceEntriesTrafficMap() map[string]*graph.Node {

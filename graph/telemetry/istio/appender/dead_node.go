@@ -21,21 +21,21 @@ func (a DeadNodeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a DeadNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
 	a.applyDeadNodes(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	numRemoved := 0
 	for id, n := range trafficMap {
 		switch n.NodeType {
@@ -46,7 +46,7 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// A service node that is a service entry is never considered dead
-			if _, ok := n.Metadata["isServiceEntry"]; ok {
+			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				continue
 			}
 
@@ -95,12 +95,12 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
-			if workload, found := getWorkload(n.Workload, namespaceInfo.WorkloadList); !found {
+			if workload, found := getWorkload(n.Workload, namespaceInfo); !found {
 				delete(trafficMap, id)
 				numRemoved++
 			} else {
 				if workload.PodCount == 0 {
-					n.Metadata["isDead"] = true
+					n.Metadata[graph.IsDead] = true
 				}
 			}
 		}

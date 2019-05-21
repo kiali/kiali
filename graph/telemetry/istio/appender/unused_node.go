@@ -23,18 +23,19 @@ func (a UnusedNodeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if graph.GraphTypeService == a.GraphType || a.IsNodeGraph {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
-	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, namespaceInfo.WorkloadList.Workloads)
+	workloadList := getWorkloadList(namespaceInfo)
+	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, workloadList.Workloads)
 }
 
 func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, workloads []models.WorkloadListItem) {
@@ -67,7 +68,7 @@ func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, n
 				log.Tracef("Adding unused node for workload [%s] with labels [%v]", w.Name, labels)
 				node := graph.NewNodeExplicit(id, namespace, w.Name, app, version, "", nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-				node.Metadata = map[string]interface{}{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}
+				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}
 				unusedTrafficMap[id] = &node
 			}
 		}

@@ -7,13 +7,15 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// constanst usable by any protocol
 const (
 	requestsPerSecond = "requests per second"
 	rps               = "rps"
 )
 
+// Rate describes one rate provided by a protocol
 type Rate struct {
-	Name         string
+	Name         MetadataKey
 	IsErr        bool
 	IsIn         bool
 	IsOut        bool
@@ -23,15 +25,22 @@ type Rate struct {
 	Precision    int
 }
 
+// Protocol describes a supported protocol and the rates it provides
 type Protocol struct {
 	Name          string
 	EdgeRates     []Rate
-	EdgeResponses string
+	EdgeResponses MetadataKey
 	NodeRates     []Rate
 	Unit          string
 	UnitShort     string
 }
 
+// Each supported protocol is defined below.  Each rate provided as node or edge metadata must be defined.
+// Each method below should have a section handling each supported protocol.
+
+//
+// GRPC Protocol
+//
 const (
 	grpc           = "grpc"
 	grpcErr        = "grpcErr"
@@ -61,6 +70,9 @@ var GRPC Protocol = Protocol{
 	UnitShort: rps,
 }
 
+//
+// HTTP Protocol
+//
 const (
 	http           = "http"
 	http3xx        = "http3xx"
@@ -98,6 +110,9 @@ var HTTP Protocol = Protocol{
 	UnitShort: rps,
 }
 
+//
+// TCP Protocol
+//
 const (
 	tcp            = "tcp"
 	tcpResponses   = "tcpResponses"
@@ -121,9 +136,10 @@ var TCP Protocol = Protocol{
 	UnitShort: bps,
 }
 
+// Protocols defines the supported protocols to be handled by the vendor code.
 var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
-func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	if val <= 0.0 {
 		return
 	}
@@ -140,7 +156,7 @@ func AddToMetadata(protocol string, val float64, code, flags string, sourceMetad
 	}
 }
 
-func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, grpcOut, val)
 	addToMetadataValue(destMetadata, grpcIn, val)
 	addToMetadataValue(edgeMetadata, grpc, val)
@@ -160,7 +176,7 @@ func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMeta
 	}
 }
 
-func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, httpOut, val)
 	addToMetadataValue(destMetadata, httpIn, val)
 	addToMetadataValue(edgeMetadata, http, val)
@@ -181,14 +197,14 @@ func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMeta
 	}
 }
 
-func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, edgeMetadata map[string]interface{}) {
+func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, tcpOut, val)
 	addToMetadataValue(destMetadata, tcpIn, val)
 	addToMetadataValue(edgeMetadata, tcp, val)
 	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, val)
 }
 
-func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata map[string]interface{}) {
+func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	if val, valOk := edgeMetadata[grpc]; valOk {
 		addToMetadataValue(sourceMetadata, grpcOut, val.(float64))
 	}
@@ -250,7 +266,7 @@ func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 	// we can't average quantiles (kiali-2297).
 }
 
-func addToMetadataValue(md map[string]interface{}, k string, v float64) {
+func addToMetadataValue(md Metadata, k MetadataKey, v float64) {
 	if v <= 0 {
 		return
 	}
@@ -270,7 +286,7 @@ func addToMetadataValue(md map[string]interface{}, k string, v float64) {
 type ResponseFlags map[string]float64
 type Responses map[string]ResponseFlags
 
-func addToResponses(md map[string]interface{}, k string, responses Responses) {
+func addToResponses(md Metadata, k MetadataKey, responses Responses) {
 	for code, flagsValMap := range responses {
 		for flags, val := range flagsValMap {
 			addToMetadataResponses(md, k, code, flags, val)
@@ -278,7 +294,7 @@ func addToResponses(md map[string]interface{}, k string, responses Responses) {
 	}
 }
 
-func addToMetadataResponses(md map[string]interface{}, k, code, flags string, v float64) {
+func addToMetadataResponses(md Metadata, k MetadataKey, code, flags string, v float64) {
 	if responses, ok := md[k]; ok {
 		if flagsValueMap, ok2 := responses.(Responses)[code]; ok2 {
 			flagsValueMap[flags] += v
@@ -291,7 +307,7 @@ func addToMetadataResponses(md map[string]interface{}, k, code, flags string, v 
 }
 
 // averageMetadataValue is currently unused but shows how to perform averaging using metadata values.
-//func averageMetadataValue(md map[string]interface{}, k string, v float64) {
+//func averageMetadataValue(md Metadata, k string, v float64) {
 //	total := v
 //	count := 1.0
 //	kTotal := k + "_total"

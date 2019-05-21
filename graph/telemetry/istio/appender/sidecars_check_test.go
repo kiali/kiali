@@ -24,17 +24,15 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -44,18 +42,15 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata["hasMissingSC"].(bool)
+		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
 	}
@@ -66,18 +61,15 @@ func TestAppNoPodsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -87,18 +79,15 @@ func TestAppSidecarsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPods())
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -108,18 +97,15 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		flag, ok := node.Metadata["hasMissingSC"].(bool)
+		flag, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.True(t, ok)
 		assert.True(t, flag)
 	}
@@ -129,18 +115,15 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads([]apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testing",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := SidecarsCheckAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	for _, node := range trafficMap {
-		_, ok := node.Metadata["hasMissingSC"].(bool)
+		_, ok := node.Metadata[graph.HasMissingSC].(bool)
 		assert.False(t, ok)
 	}
 }
@@ -148,7 +131,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 func buildWorkloadTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", "", "testing", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
+	node := graph.NewNode("testNamespace", "", "testNamespace", "workload-1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -157,7 +140,7 @@ func buildWorkloadTrafficMap() graph.TrafficMap {
 func buildAppTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", "", "testing", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testNamespace", "", "testNamespace", graph.Unknown, "myTest", graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap
@@ -166,7 +149,7 @@ func buildAppTrafficMap() graph.TrafficMap {
 func buildServiceTrafficMap() graph.TrafficMap {
 	trafficMap := graph.NewTrafficMap()
 
-	node := graph.NewNode("testing", "svc", "testing", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
+	node := graph.NewNode("testNamespace", "svc", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[node.ID] = &node
 
 	return trafficMap

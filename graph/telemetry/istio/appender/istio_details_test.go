@@ -19,22 +19,22 @@ func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, 
 	trafficMap := graph.NewTrafficMap()
 
 	appNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
-	appNode.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNode.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNode.ID] = &appNode
 
 	appNodeV1 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	appNodeV1.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNodeV1.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNodeV1.ID] = &appNodeV1
 
 	appNodeV2 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
-	appNodeV2.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNodeV2.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[appNodeV2.ID] = &appNodeV2
 
 	serviceNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = &serviceNode
 
 	workloadNode := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
-	workloadNode.Metadata["destServices"] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	workloadNode.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
 	trafficMap[workloadNode.ID] = &workloadNode
 
 	fooServiceNode := graph.NewNode("testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
@@ -68,38 +68,35 @@ func TestCBAll(t *testing.T) {
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := NamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(true, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(true, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(true, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(true, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(true, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(true, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(true, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 }
 
 func TestCBSubset(t *testing.T) {
@@ -132,21 +129,21 @@ func TestCBSubset(t *testing.T) {
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _ := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
+	globalInfo := graph.AppenderGlobalInfo{
 		Business: businessLayer,
 	}
-	namespaceInfo := NamespaceInfo{
+	namespaceInfo := graph.AppenderNamespaceInfo{
 		Namespace: "testNamespace",
 	}
 
@@ -154,16 +151,16 @@ func TestCBSubset(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(true, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(true, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(true, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVs"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
+	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(true, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(true, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 }
 
 func TestVS(t *testing.T) {
@@ -203,22 +200,22 @@ func TestVS(t *testing.T) {
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId := setupTrafficMap()
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 
-	globalInfo := GlobalInfo{
+	globalInfo := graph.AppenderGlobalInfo{
 		Business: businessLayer,
 	}
-	namespaceInfo := NamespaceInfo{
+	namespaceInfo := graph.AppenderNamespaceInfo{
 		Namespace: "testNamespace",
 	}
 
@@ -226,15 +223,15 @@ func TestVS(t *testing.T) {
 	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasCB"])
-	assert.Equal(nil, trafficMap[appNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[svcNodeId].Metadata["hasVS"])
-	assert.Equal(nil, trafficMap[wlNodeId].Metadata["hasVS"])
-	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata["hasVS"])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasCB])
+	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV1Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[appNodeV2Id].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
+	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
+	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 }

@@ -18,24 +18,23 @@ func (a SidecarsCheckAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
 
-	if namespaceInfo.WorkloadList == nil {
+	if getWorkloadList(namespaceInfo) == nil {
 		workloadList, err := globalInfo.Business.Workload.GetWorkloadList(namespaceInfo.Namespace)
 		graph.CheckError(err)
-		namespaceInfo.WorkloadList = &workloadList
+		namespaceInfo.Vendor[workloadListKey] = &workloadList
 	}
 
 	a.applySidecarsChecks(trafficMap, namespaceInfo)
 }
 
-func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *NamespaceInfo) {
+func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
 	cfg := config.Get()
 	istioNamespace := cfg.IstioNamespace
-	workloadList := namespaceInfo.WorkloadList
 
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
@@ -49,7 +48,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		// dead nodes tell no tales (er, have no pods)
-		if isDead, ok := n.Metadata["isDead"]; ok && isDead.(bool) {
+		if isDead, ok := n.Metadata[graph.IsDead]; ok && isDead.(bool) {
 			continue
 		}
 
@@ -59,11 +58,11 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		hasIstioSidecar := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
-			if workload, found := getWorkload(n.Workload, workloadList); found {
+			if workload, found := getWorkload(n.Workload, namespaceInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
 			}
 		case graph.NodeTypeApp:
-			workloads := getAppWorkloads(n.App, n.Version, workloadList)
+			workloads := getAppWorkloads(n.App, n.Version, namespaceInfo)
 			if len(workloads) > 0 {
 				for _, workload := range workloads {
 					if !workload.IstioSidecar {
@@ -77,7 +76,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		if !hasIstioSidecar {
-			n.Metadata["hasMissingSC"] = true
+			n.Metadata[graph.HasMissingSC] = true
 		}
 	}
 }

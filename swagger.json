@@ -3319,7 +3319,7 @@
           "x-go-name": "Timestamp"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "ContainerInfo": {
       "description": "ContainerInfo holds container name and image",
@@ -3379,7 +3379,7 @@
           "$ref": "#/definitions/ProtocolTraffic"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "EdgeWrapper": {
       "type": "object",
@@ -3388,7 +3388,7 @@
           "$ref": "#/definitions/EdgeData"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Elements": {
       "type": "object",
@@ -3408,7 +3408,7 @@
           "x-go-name": "Nodes"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Endpoint": {
       "type": "object",
@@ -3983,7 +3983,7 @@
           "x-go-name": "Workload"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "NodeWrapper": {
       "type": "object",
@@ -3992,7 +3992,7 @@
           "$ref": "#/definitions/NodeData"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "ObjectMeta": {
       "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects\nusers must create.",
@@ -4299,7 +4299,7 @@
           "$ref": "#/definitions/Responses"
         }
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "QuotaSpec": {
       "type": "object",
@@ -4484,14 +4484,14 @@
       "additionalProperties": {
         "type": "string"
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Responses": {
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/ResponseFlags"
       },
-      "x-go-package": "github.com/kiali/kiali/graph/cytoscape"
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Runtime": {
       "description": "Runtime holds the runtime title and associated dashboard template(s)",

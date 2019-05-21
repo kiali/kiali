@@ -107,7 +107,7 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	assert.Equal(nil, ingress.Edges[0].Metadata["responseTime"])
+	assert.Equal(nil, ingress.Edges[0].Metadata[graph.ResponseTime])
 
 	duration, _ := time.ParseDuration("60s")
 	appender := ResponseTimeAppender{
@@ -130,53 +130,53 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal(true, ok)
 	assert.Equal("ingressgateway", ingress.App)
 	assert.Equal(1, len(ingress.Edges))
-	_, ok = ingress.Edges[0].Metadata["responseTime"]
+	_, ok = ingress.Edges[0].Metadata[graph.ResponseTime]
 	assert.Equal(false, ok)
 
 	productpageService := ingress.Edges[0].Dest
 	assert.Equal(graph.NodeTypeService, productpageService.NodeType)
 	assert.Equal("productpage", productpageService.Service)
-	assert.Equal(nil, productpageService.Metadata["responseTime"])
+	assert.Equal(nil, productpageService.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(productpageService.Edges))
-	assert.Equal(10.0, productpageService.Edges[0].Metadata["responseTime"])
+	assert.Equal(10.0, productpageService.Edges[0].Metadata[graph.ResponseTime])
 
 	productpage := productpageService.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)
 	assert.Equal("v1", productpage.Version)
-	assert.Equal(nil, productpage.Metadata["responseTime"])
+	assert.Equal(nil, productpage.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(productpage.Edges))
-	_, ok = productpage.Edges[0].Metadata["responseTime"]
+	_, ok = productpage.Edges[0].Metadata[graph.ResponseTime]
 	assert.Equal(false, ok)
 
 	reviewsService := productpage.Edges[0].Dest
 	assert.Equal(graph.NodeTypeService, reviewsService.NodeType)
 	assert.Equal("reviews", reviewsService.Service)
-	assert.Equal(nil, reviewsService.Metadata["responseTime"])
+	assert.Equal(nil, reviewsService.Metadata[graph.ResponseTime])
 	assert.Equal(2, len(reviewsService.Edges))
-	assert.Equal(20.0, reviewsService.Edges[0].Metadata["responseTime"])
-	assert.Equal(20.0, reviewsService.Edges[1].Metadata["responseTime"])
+	assert.Equal(20.0, reviewsService.Edges[0].Metadata[graph.ResponseTime])
+	assert.Equal(20.0, reviewsService.Edges[1].Metadata[graph.ResponseTime])
 
 	reviews1 := reviewsService.Edges[0].Dest
 	assert.Equal("reviews", reviews1.App)
 	assert.Equal("v1", reviews1.Version)
-	assert.Equal(nil, reviews1.Metadata["responseTime"])
+	assert.Equal(nil, reviews1.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(reviews1.Edges))
-	_, ok = reviews1.Edges[0].Metadata["responseTime"]
+	_, ok = reviews1.Edges[0].Metadata[graph.ResponseTime]
 	assert.Equal(false, ok)
 
 	ratingsService := reviews1.Edges[0].Dest
 	assert.Equal(graph.NodeTypeService, ratingsService.NodeType)
 	assert.Equal("ratings", ratingsService.Service)
-	assert.Equal(nil, ratingsService.Metadata["responseTime"])
+	assert.Equal(nil, ratingsService.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(ratingsService.Edges))
-	assert.Equal(30.0, ratingsService.Edges[0].Metadata["responseTime"])
+	assert.Equal(30.0, ratingsService.Edges[0].Metadata[graph.ResponseTime])
 
 	reviews2 := reviewsService.Edges[1].Dest
 	assert.Equal("reviews", reviews2.App)
 	assert.Equal("v2", reviews2.Version)
-	assert.Equal(nil, reviews2.Metadata["responseTime"])
+	assert.Equal(nil, reviews2.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(reviews2.Edges))
-	_, ok = reviews2.Edges[0].Metadata["responseTime"]
+	_, ok = reviews2.Edges[0].Metadata[graph.ResponseTime]
 	assert.False(ok)
 
 	assert.Equal(ratingsService, reviews2.Edges[0].Dest)
@@ -184,7 +184,7 @@ func TestResponseTime(t *testing.T) {
 	ratings := ratingsService.Edges[0].Dest
 	assert.Equal("ratings", ratings.App)
 	assert.Equal("v1", ratings.Version)
-	assert.Equal(nil, ratings.Metadata["responseTime"])
+	assert.Equal(nil, ratings.Metadata[graph.ResponseTime])
 	assert.Equal(0, len(ratings.Edges))
 }
 

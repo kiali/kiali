@@ -21,21 +21,21 @@ const (
 )
 
 type Node struct {
-	ID        string                 // unique identifier for the node
-	NodeType  string                 // Node type
-	Namespace string                 // Namespace
-	Workload  string                 // Workload (deployment) name
-	App       string                 // Workload app label value
-	Version   string                 // Workload version label value
-	Service   string                 // Service name
-	Edges     []*Edge                // child nodes
-	Metadata  map[string]interface{} // app-specific data
+	ID        string   // unique identifier for the node
+	NodeType  string   // Node type
+	Namespace string   // Namespace
+	Workload  string   // Workload (deployment) name
+	App       string   // Workload app label value
+	Version   string   // Workload version label value
+	Service   string   // Service name
+	Edges     []*Edge  // child nodes
+	Metadata  Metadata // app-specific data
 }
 
 type Edge struct {
 	Source   *Node
 	Dest     *Node
-	Metadata map[string]interface{} // app-specific data
+	Metadata Metadata // app-specific data
 }
 
 type NamespaceInfo struct {
@@ -106,7 +106,7 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 		Version:   version,
 		Service:   service,
 		Edges:     []*Edge{},
-		Metadata:  make(map[string]interface{}),
+		Metadata:  make(Metadata),
 	}
 }
 
@@ -120,7 +120,7 @@ func NewEdge(source, dest *Node) Edge {
 	return Edge{
 		Source:   source,
 		Dest:     dest,
-		Metadata: make(map[string]interface{}),
+		Metadata: NewMetadata(),
 	}
 }
 

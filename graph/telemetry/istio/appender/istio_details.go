@@ -11,8 +11,8 @@ import (
 const IstioAppenderName = "istio"
 
 // IstioAppender is responsible for badging nodes with special Istio significance:
-// - CircuitBreaker: n.Metadata["hasCB"] = true
-// - VirtualService: n.Metadata["hasVS"] = true
+// - CircuitBreaker: n.Metadata[HasCB] = true
+// - VirtualService: n.Metadata[HasVS] = true
 // Name: istio
 type IstioAppender struct{}
 
@@ -22,7 +22,7 @@ func (a IstioAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -31,8 +31,8 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *Glob
 	addLabels(trafficMap, globalInfo)
 }
 
-func addBadging(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
-	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in NamespaceInfo
+func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
 	istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(business.IstioConfigCriteria{
 		IncludeDestinationRules: true,
 		IncludeVirtualServices:  true,
@@ -59,27 +59,27 @@ NODES:
 		case n.NodeType == graph.NodeTypeService:
 			for _, destinationRule := range istioCfg.DestinationRules.Items {
 				if destinationRule.HasCircuitBreaker(namespace, n.Service, "") {
-					n.Metadata["hasCB"] = true
+					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
 			}
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
-			if destServices, ok := n.Metadata["destServices"]; ok {
+			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(map[string]graph.Service) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, "") {
-							n.Metadata["hasCB"] = true
+							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
 					}
 				}
 			}
 		case versionOk:
-			if destServices, ok := n.Metadata["destServices"]; ok {
+			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(map[string]graph.Service) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, n.Version) {
-							n.Metadata["hasCB"] = true
+							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
 					}
@@ -102,7 +102,7 @@ NODES:
 		}
 		for _, virtualService := range istioCfg.VirtualServices.Items {
 			if virtualService.IsValidHost(namespace, n.Service) {
-				n.Metadata["hasVS"] = true
+				n.Metadata[graph.HasVS] = true
 				continue NODES
 			}
 		}
@@ -114,8 +114,8 @@ NODES:
 //       exist at this writing).  As written we pull each service individually, which can be a fair number of round
 //       trips when services are injected (as they are by default). Note also that currently we do query for
 //       outsider service nodes.  That may be a security problem f the outside namespace is inaccessible to the user. If
-//       that becomes an issue we can limit to accessible namespaces or only to the NamespaceInfo namespace.
-func addLabels(trafficMap graph.TrafficMap, globalInfo *GlobalInfo) {
+//       that becomes an issue we can limit to accessible namespaces or only to the AppenderNamespaceInfo namespace.
+func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.

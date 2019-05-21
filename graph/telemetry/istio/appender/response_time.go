@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	// DefaultQuantile is 95th percentile
-	DefaultQuantile = 0.95
 	// ResponseTimeAppenderName uniquely identifies the appender
 	ResponseTimeAppenderName = "responseTime"
 )
@@ -39,7 +37,7 @@ func (a ResponseTimeAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -56,8 +54,8 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
 	quantile := a.Quantile
 	if a.Quantile <= 0.0 || a.Quantile >= 100.0 {
-		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, DefaultQuantile)
-		quantile = DefaultQuantile
+		log.Warningf("Replacing invalid quantile [%.2f] with default [%.2f]", a.Quantile, defaultQuantile)
+		quantile = defaultQuantile
 	}
 	log.Tracef("Generating responseTime using quantile [%.2f]; namespace = %v", quantile, namespace)
 	duration := a.Namespaces[namespace].Duration
@@ -144,7 +142,7 @@ func applyResponseTime(trafficMap graph.TrafficMap, responseTimeMap map[string]f
 		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			if val, ok := responseTimeMap[key]; ok {
-				e.Metadata["responseTime"] = val
+				e.Metadata[graph.ResponseTime] = val
 			}
 		}
 	}

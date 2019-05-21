@@ -36,7 +36,7 @@ func (a SecurityPolicyAppender) Name() string {
 }
 
 // AppendGraph implements Appender
-func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *GlobalInfo, namespaceInfo *NamespaceInfo) {
+func (a SecurityPolicyAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -162,7 +162,7 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 						other += rate
 					}
 				}
-				e.Metadata["isMTLS"] = mtls / (mtls + other) * 100
+				e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
 			}
 		}
 	}
