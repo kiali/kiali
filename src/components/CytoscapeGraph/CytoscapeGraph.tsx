@@ -38,8 +38,8 @@ import {
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
+import { MessageType } from '../../types/MessageCenter';
 import { NamespaceAppHealth, NamespaceServiceHealth, NamespaceWorkloadHealth } from '../../types/Health';
-
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
@@ -503,13 +503,22 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (targetType !== 'node' && targetType !== 'group') {
       return;
     }
-
     if (target.data(CyNode.isInaccessible)) {
       return;
     }
     if (target.data(CyNode.hasMissingSC)) {
       MessageCenterUtils.add(
-        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`
+        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
+        undefined,
+        MessageType.WARNING
+      );
+      return;
+    }
+    if (target.data(CyNode.isUnused)) {
+      MessageCenterUtils.add(
+        `An unused node has no node-specific traffic and can not provide a node detail graph.`,
+        undefined,
+        MessageType.WARNING
       );
       return;
     }
