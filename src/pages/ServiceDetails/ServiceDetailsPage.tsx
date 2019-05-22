@@ -313,7 +313,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               </TabPane>
               <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
-                  duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
                   itemType={MetricsObjectTypes.SERVICE}
                   namespace={this.props.match.params.namespace}

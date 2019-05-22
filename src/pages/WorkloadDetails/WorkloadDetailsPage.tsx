@@ -239,7 +239,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
               </TabPane>
               <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
-                  duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
                   itemType={MetricsObjectTypes.WORKLOAD}
                   namespace={this.props.match.params.namespace}
