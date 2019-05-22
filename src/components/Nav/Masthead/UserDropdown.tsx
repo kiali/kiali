@@ -121,14 +121,16 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
           show={this.state.showSessionTimeOut && !this.state.isSessionTimeoutDismissed}
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
-        <Dropdown
-          isPlain={true}
-          position="right"
-          onSelect={this.onDropdownSelect}
-          isOpen={isDropdownOpen}
-          toggle={<DropdownToggle onToggle={this.onDropdownToggle}>{this.props.session.username}</DropdownToggle>}
-          dropdownItems={[userDropdownItems]}
-        />
+        {this.props.session && (
+          <Dropdown
+            isPlain={true}
+            position="right"
+            onSelect={this.onDropdownSelect}
+            isOpen={isDropdownOpen}
+            toggle={<DropdownToggle onToggle={this.onDropdownToggle}>{this.props.session.username}</DropdownToggle>}
+            dropdownItems={[userDropdownItems]}
+          />
+        )}
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">
             <input type="hidden" name="then" value={authenticationConfig.logoutRedirect} />
@@ -144,7 +146,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  session: state.authentication.session!
+  session: state.authentication.session
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
