@@ -13,7 +13,7 @@ import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
 import 'brace/theme/eclipse';
-import { IstioObject, ObjectValidation } from '../../types/IstioObjects';
+import { ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
@@ -24,6 +24,7 @@ import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
+import { mergeJsonPatch, getIstioObject } from '../../utils/IstioConfigUtils';
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -149,8 +150,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
   };
 
   onUpdate = () => {
-    jsYaml.safeLoadAll(this.state.yamlModified, (doc: string) => {
-      const jsonPatch = JSON.stringify(doc);
+    jsYaml.safeLoadAll(this.state.yamlModified, (objectModified: object) => {
+      const jsonPatch = JSON.stringify(mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails)));
       const updatePromise = this.props.match.params.objectSubtype
         ? API.updateIstioConfigDetailSubtype(
             this.props.match.params.namespace,
@@ -203,49 +204,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     }
   };
 
-  getIstioObject = () => {
-    let istioObject: IstioObject | undefined;
-    if (this.state.istioObjectDetails) {
-      if (this.state.istioObjectDetails.gateway) {
-        istioObject = this.state.istioObjectDetails.gateway;
-      } else if (this.state.istioObjectDetails.virtualService) {
-        istioObject = this.state.istioObjectDetails.virtualService;
-      } else if (this.state.istioObjectDetails.destinationRule) {
-        istioObject = this.state.istioObjectDetails.destinationRule;
-      } else if (this.state.istioObjectDetails.serviceEntry) {
-        istioObject = this.state.istioObjectDetails.serviceEntry;
-      } else if (this.state.istioObjectDetails.rule) {
-        istioObject = this.state.istioObjectDetails.rule;
-      } else if (this.state.istioObjectDetails.adapter) {
-        istioObject = this.state.istioObjectDetails.adapter;
-      } else if (this.state.istioObjectDetails.template) {
-        istioObject = this.state.istioObjectDetails.template;
-      } else if (this.state.istioObjectDetails.quotaSpec) {
-        istioObject = this.state.istioObjectDetails.quotaSpec;
-      } else if (this.state.istioObjectDetails.quotaSpecBinding) {
-        istioObject = this.state.istioObjectDetails.quotaSpecBinding;
-      } else if (this.state.istioObjectDetails.policy) {
-        istioObject = this.state.istioObjectDetails.policy;
-      } else if (this.state.istioObjectDetails.meshPolicy) {
-        istioObject = this.state.istioObjectDetails.meshPolicy;
-      } else if (this.state.istioObjectDetails.clusterRbacConfig) {
-        istioObject = this.state.istioObjectDetails.clusterRbacConfig;
-      } else if (this.state.istioObjectDetails.rbacConfig) {
-        istioObject = this.state.istioObjectDetails.rbacConfig;
-      } else if (this.state.istioObjectDetails.serviceRole) {
-        istioObject = this.state.istioObjectDetails.serviceRole;
-      } else if (this.state.istioObjectDetails.serviceRoleBinding) {
-        istioObject = this.state.istioObjectDetails.serviceRoleBinding;
-      }
-    }
-    return istioObject;
-  };
-
   fetchYaml = () => {
     if (this.state.isModified) {
       return this.state.yamlModified;
     }
-    const istioObject = this.getIstioObject();
+    const istioObject = getIstioObject(this.state.istioObjectDetails);
     return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
   };
 
@@ -308,7 +271,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   renderRightToolbar = () => {
     const canDelete = this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
-    const istioObject = this.getIstioObject();
+    const istioObject = getIstioObject(this.state.istioObjectDetails);
 
     return (
       <span style={{ float: 'right' }}>
