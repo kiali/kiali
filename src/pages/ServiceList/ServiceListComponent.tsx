@@ -28,16 +28,18 @@ import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyle
 import { Validations, ObjectValidation } from 'src/types/IstioObjects';
 import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import { DurationInSeconds } from '../../types/Common';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
-interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {
-  rateInterval: number;
-}
+type ServiceListComponentState = ListComponent.State<ServiceListItem>;
 
-interface ServiceListComponentProps extends ListComponent.Props<ServiceListItem> {
-  rateInterval: number;
+type ReduxProps = {
+  duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-}
+};
+
+type ServiceListComponentProps = ReduxProps & ListComponent.Props<ServiceListItem>;
 
 class ServiceListComponent extends ListComponent.Component<
   ServiceListComponentProps,
@@ -53,8 +55,7 @@ class ServiceListComponent extends ListComponent.Component<
       listItems: [],
       pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
-      isSortAscending: this.props.isSortAscending,
-      rateInterval: this.props.rateInterval
+      isSortAscending: this.props.isSortAscending
     };
   }
 
@@ -67,8 +68,7 @@ class ServiceListComponent extends ListComponent.Component<
       this.setState({
         pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
-        isSortAscending: this.props.isSortAscending,
-        rateInterval: this.props.rateInterval
+        isSortAscending: this.props.isSortAscending
       });
 
       this.updateListItems();
@@ -88,7 +88,7 @@ class ServiceListComponent extends ListComponent.Component<
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
-      prevProps.rateInterval === this.props.rateInterval &&
+      prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
@@ -117,7 +117,7 @@ class ServiceListComponent extends ListComponent.Component<
           this.fetchServices(
             namespaces.map(namespace => namespace.name),
             activeFilters,
-            this.state.rateInterval,
+            this.props.duration,
             resetPagination
           );
         })
@@ -127,7 +127,7 @@ class ServiceListComponent extends ListComponent.Component<
           }
         });
     } else {
-      this.fetchServices(namespacesSelected, activeFilters, this.state.rateInterval, resetPagination);
+      this.fetchServices(namespacesSelected, activeFilters, this.props.duration, resetPagination);
     }
   }
 
@@ -235,6 +235,7 @@ class ServiceListComponent extends ListComponent.Component<
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
+            <DurationDropdownContainer id="service-list-duration-dropdown" />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>
@@ -254,11 +255,9 @@ class ServiceListComponent extends ListComponent.Component<
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  duration: durationSelector(state)
 });
 
-const ServiceListComponentContainer = connect(
-  mapStateToProps,
-  null
-)(ServiceListComponent);
+const ServiceListComponentContainer = connect(mapStateToProps)(ServiceListComponent);
 export default ServiceListComponentContainer;

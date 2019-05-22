@@ -18,8 +18,8 @@ type ReduxProps = {
 };
 
 type BasicDurationDropdownProps = ReduxProps & {
+  id: string;
   disabled?: boolean;
-  id?: string;
   tooltip?: string;
 };
 

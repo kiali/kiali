@@ -14,7 +14,6 @@ const WorkloadListPage: React.SFC<{}> = () => {
         pagination={ListPagesHelper.currentPagination()}
         currentSortField={ListPagesHelper.currentSortField(WorkloadListFilters.sortFields)}
         isSortAscending={ListPagesHelper.isCurrentSortAscending()}
-        rateInterval={ListPagesHelper.currentDuration()}
       />
     </>
   );

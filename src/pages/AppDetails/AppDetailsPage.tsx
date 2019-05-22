@@ -174,7 +174,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
               </TabPane>
               <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
-                  duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
                   itemType={MetricsObjectTypes.APP}
                   namespace={this.state.app.namespace.name}

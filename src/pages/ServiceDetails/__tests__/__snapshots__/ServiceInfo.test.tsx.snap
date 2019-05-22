@@ -247,7 +247,9 @@ ShallowWrapper {
                   }
                 }
               >
-                <Connect(class_1) />
+                <Connect(class_1)
+                  id="service-info-duration-dropdown"
+                />
                  
                 <Button
                   active={false}
@@ -647,7 +649,9 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(class_1) />
+                  <Connect(class_1)
+                    id="service-info-duration-dropdown"
+                  />
                    
                   <Button
                     active={false}
@@ -1041,7 +1045,9 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(class_1) />
+                  <Connect(class_1)
+                    id="service-info-duration-dropdown"
+                  />
                    
                   <Button
                     active={false}
@@ -1174,7 +1180,9 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(class_1) />
+                  <Connect(class_1)
+                    id="service-info-duration-dropdown"
+                  />
                    
                   <Button
                     active={false}
@@ -1302,7 +1310,9 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Connect(class_1) />,
+                    <Connect(class_1)
+                      id="service-info-duration-dropdown"
+                    />,
                     " ",
                     <Button
                       active={false}
@@ -1427,7 +1437,9 @@ ShallowWrapper {
                     "instance": null,
                     "key": undefined,
                     "nodeType": "class",
-                    "props": Object {},
+                    "props": Object {
+                      "id": "service-info-duration-dropdown",
+                    },
                     "ref": null,
                     "rendered": null,
                     "type": [Function],
@@ -3031,7 +3043,9 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(class_1) />
+                  <Connect(class_1)
+                    id="service-info-duration-dropdown"
+                  />
                    
                   <Button
                     active={false}
@@ -3431,7 +3445,9 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(class_1) />
+                    <Connect(class_1)
+                      id="service-info-duration-dropdown"
+                    />
                      
                     <Button
                       active={false}
@@ -3825,7 +3841,9 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(class_1) />
+                    <Connect(class_1)
+                      id="service-info-duration-dropdown"
+                    />
                      
                     <Button
                       active={false}
@@ -3958,7 +3976,9 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(class_1) />
+                    <Connect(class_1)
+                      id="service-info-duration-dropdown"
+                    />
                      
                     <Button
                       active={false}
@@ -4086,7 +4106,9 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Connect(class_1) />,
+                      <Connect(class_1)
+                        id="service-info-duration-dropdown"
+                      />,
                       " ",
                       <Button
                         active={false}
@@ -4211,7 +4233,9 @@ ShallowWrapper {
                       "instance": null,
                       "key": undefined,
                       "nodeType": "class",
-                      "props": Object {},
+                      "props": Object {
+                        "id": "service-info-duration-dropdown",
+                      },
                       "ref": null,
                       "rendered": null,
                       "type": [Function],

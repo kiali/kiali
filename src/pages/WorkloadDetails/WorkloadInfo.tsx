@@ -85,7 +85,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
-                <DurationDropdownContainer />{' '}
+                <DurationDropdownContainer id="workload-info-duration-dropdown" />{' '}
                 <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
                   <Icon name="refresh" />
                 </Button>

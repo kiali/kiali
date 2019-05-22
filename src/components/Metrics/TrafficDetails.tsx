@@ -25,7 +25,6 @@ type WorkloadProps = {
 };
 
 type TrafficDetailsProps = {
-  duration: DurationInSeconds;
   onDurationChanged: (duration: DurationInSeconds) => void;
   onRefresh: () => void;
   trafficData: GraphDefinition | null;

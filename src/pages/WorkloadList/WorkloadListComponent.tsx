@@ -15,16 +15,18 @@ import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
+import { DurationInSeconds } from '../../types/Common';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
-interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {
-  rateInterval: number;
-}
+type WorkloadListComponentState = ListComponent.State<WorkloadListItem>;
 
-interface WorkloadListComponentProps extends ListComponent.Props<WorkloadListItem> {
-  rateInterval: number;
+type ReduxProps = {
+  duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-}
+};
+
+type WorkloadListComponentProps = ReduxProps & ListComponent.Props<WorkloadListItem>;
 
 class WorkloadListComponent extends ListComponent.Component<
   WorkloadListComponentProps,
@@ -39,8 +41,7 @@ class WorkloadListComponent extends ListComponent.Component<
       listItems: [],
       pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
-      isSortAscending: this.props.isSortAscending,
-      rateInterval: this.props.rateInterval
+      isSortAscending: this.props.isSortAscending
     };
   }
 
@@ -53,8 +54,7 @@ class WorkloadListComponent extends ListComponent.Component<
       this.setState({
         pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
-        isSortAscending: this.props.isSortAscending,
-        rateInterval: this.props.rateInterval
+        isSortAscending: this.props.isSortAscending
       });
 
       this.updateListItems();
@@ -74,7 +74,7 @@ class WorkloadListComponent extends ListComponent.Component<
     return (
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
-      prevProps.rateInterval === this.props.rateInterval &&
+      prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
       prevProps.currentSortField.title === this.props.currentSortField.title
@@ -120,7 +120,7 @@ class WorkloadListComponent extends ListComponent.Component<
         healthPromise: API.getWorkloadHealth(
           data.namespace.name,
           deployment.name,
-          this.state.rateInterval,
+          this.props.duration,
           deployment.istioSidecar
         )
       }));
@@ -200,6 +200,7 @@ class WorkloadListComponent extends ListComponent.Component<
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
+            <DurationDropdownContainer id="workload-list-duration-dropdown" />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>
@@ -219,11 +220,9 @@ class WorkloadListComponent extends ListComponent.Component<
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  duration: durationSelector(state)
 });
 
-const WorkloadListContainer = connect(
-  mapStateToProps,
-  null
-)(WorkloadListComponent);
+const WorkloadListContainer = connect(mapStateToProps)(WorkloadListComponent);
 export default WorkloadListContainer;
