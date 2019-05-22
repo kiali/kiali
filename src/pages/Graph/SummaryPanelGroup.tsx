@@ -51,6 +51,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
   };
 
   private metricsPromise?: CancelablePromise<Response<Metrics>[]>;
+  private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -67,6 +68,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       healthLoading: false,
       metricsLoadError: null
     };
+
+    this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
   componentDidMount() {
@@ -80,6 +83,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
         requestCountIn: null,
         loading: true
       });
+      if (this.mainDivRef.current) {
+        this.mainDivRef.current.scrollTop = 0;
+      }
     }
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateRpsCharts(this.props);
@@ -101,7 +107,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const workloadList = this.renderWorkloadList(group);
 
     return (
-      <div className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
+      <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelGroup.panelStyle}>
         <div className="panel-heading">
           {this.state.healthLoading ? (
             // Remove glitch while health is being reloaded

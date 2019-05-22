@@ -60,11 +60,13 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   private metricsPromise?: CancelablePromise<Response<Metrics>>;
+  private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
 
     this.state = { ...defaultSummaryPanelState };
+    this.mainDivRef = React.createRef<HTMLDivElement>();
   }
 
   componentDidMount() {
@@ -77,6 +79,9 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         loading: true,
         reqRates: null
       });
+      if (this.mainDivRef.current) {
+        this.mainDivRef.current.scrollTop = 0;
+      }
     }
     if (shouldRefreshData(prevProps, this.props)) {
       this.updateCharts(this.props);
@@ -116,7 +121,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     };
 
     return (
-      <div className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
+      <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelEdge.panelStyle}>
         <HeadingBlock prefix="From" node={source} />
         <HeadingBlock prefix="To" node={dest} />
         {isMtls && <MTLSBlock />}
