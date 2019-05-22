@@ -27,7 +27,7 @@ func TestServiceDetailParsing(t *testing.T) {
 
 	assert.Equal(service.Service.Name, "Name")
 	assert.Equal(service.Service.Namespace.Name, "Namespace")
-	assert.Equal(service.Service.CreatedAt, "2018-03-08T17:44:00+03:00")
+	assert.Equal(service.Service.CreatedAt, "2018-03-08T14:44:00Z")
 	assert.Equal(service.Service.ResourceVersion, "1234")
 	assert.Equal(service.Service.Type, "ClusterIP")
 	assert.Equal(service.Service.Ip, "127.0.0.9")
