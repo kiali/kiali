@@ -2,6 +2,7 @@ package virtual_services
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -88,9 +89,15 @@ func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
 			}
 		}
 	}
-	// TODO ServiceEntries can be wildcarded also..
-	if _, found := n.ServiceEntryHosts[sHost]; found {
-		return true
+	// Check ServiceEntries
+	for k := range n.ServiceEntryHosts {
+		hostKey := k
+		if i := strings.Index(k, "*"); i > -1 {
+			hostKey = k[i+1:]
+		}
+		if strings.HasSuffix(sHost, hostKey) {
+			return true
+		}
 	}
 	return false
 }

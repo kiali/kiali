@@ -131,6 +131,16 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 	}
 
 	// Check ServiceEntries
+	for k := range n.ServiceEntries {
+		hostKey := k
+		if i := strings.Index(k, "*"); i > -1 {
+			hostKey = k[i+1:]
+		}
+		if strings.HasSuffix(host.Service, hostKey) {
+			return true
+		}
+	}
+
 	if _, found := n.ServiceEntries[host.Service]; found {
 		return true
 	}
