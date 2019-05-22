@@ -8,6 +8,7 @@ import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -83,9 +84,12 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-                <Icon name="refresh" />
-              </Button>
+              <span style={{ float: 'right' }}>
+                <DurationDropdownContainer />{' '}
+                <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
+                  <Icon name="refresh" />
+                </Button>
+              </span>
             </Col>
           </Row>
           <Row className="row-cards-pf">

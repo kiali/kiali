@@ -10,7 +10,6 @@ import { StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { PollIntervalInMs, DurationInSeconds } from '../../types/Common';
@@ -20,11 +19,11 @@ import NamespaceInfo from './NamespaceInfo';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { Sorts } from './Sorts';
 import { Filters } from './Filters';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: PollIntervalInMs;
-  setDuration: (duration: DurationInSeconds) => void;
   setRefreshInterval: (refresh: PollIntervalInMs) => void;
 };
 
@@ -65,11 +64,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     super(props);
     // Let URL override current redux state at construction time
     const urlParams = new URLSearchParams(history.location.search);
-    const urlDuration = HistoryManager.getDuration(urlParams);
     const urlPollInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL, urlParams);
-    if (urlDuration !== undefined && urlDuration !== props.duration) {
-      props.setDuration(urlDuration);
-    }
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
@@ -83,14 +78,14 @@ export class OverviewToolbar extends React.Component<Props, State> {
     };
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: Props) {
     // ensure redux state and URL are aligned
     HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
     const urlSortField = ListPagesHelper.currentSortField(Sorts.sortFields);
     const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
-    if (!this.paramsAreSynced(urlSortField, urlIsSortAscending)) {
+    if (!this.paramsAreSynced(urlSortField, urlIsSortAscending) || this.props.duration !== prevProps.duration) {
       this.setState({
         sortField: urlSortField,
         isSortAscending: urlIsSortAscending
@@ -114,11 +109,6 @@ export class OverviewToolbar extends React.Component<Props, State> {
     this.props.sort(this.state.sortField, newDir);
     HistoryManager.setParam(URLParam.DIRECTION, newDir ? 'asc' : 'desc');
     this.setState({ isSortAscending: newDir });
-  };
-
-  updateDuration = (duration: string) => {
-    this.props.setDuration(Number(duration));
-    this.props.onRefresh();
   };
 
   updateOverviewType = (otype: OverviewType) => {
@@ -174,15 +164,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
           </ButtonGroup>
         </FormGroup>
         <ToolbarRightContent style={{ ...AlignRightStyle }}>
-          <ToolbarDropdown
-            id="overview-duration"
-            disabled={false}
-            handleSelect={this.updateDuration}
-            value={this.props.duration}
-            label={serverConfig.durations[this.props.duration]}
-            options={serverConfig.durations}
-            tooltip={'Time range for overview data'}
-          />
+          <DurationDropdownContainer id="overview-duration" disabled={false} tooltip={'Time range for overview data'} />
           <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />
         </ToolbarRightContent>
       </StatefulFilters>
@@ -197,9 +179,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setDuration: (duration: DurationInSeconds) => {
-      dispatch(UserSettingsActions.setDuration(duration));
-    },
     setRefreshInterval: (refreshInterval: PollIntervalInMs) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     }

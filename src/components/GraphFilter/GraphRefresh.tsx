@@ -15,7 +15,7 @@ import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { config } from '../../config/Config';
 import { HistoryManager, URLParam } from '../../app/History';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import { serverConfig } from '../../config/ServerConfig';
+import { DurationDropdownContainer } from '../DurationDropdown/DurationDropdown';
 
 //
 // GraphRefresh actually handles the Duration dropdown, the RefreshInterval dropdown and the Refresh button.
@@ -25,7 +25,6 @@ type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: PollIntervalInMs;
 
-  setDuration: (duration: DurationInSeconds) => void;
   setRefreshInterval: (refreshInterval: PollIntervalInMs) => void;
 };
 
@@ -38,11 +37,6 @@ type GraphRefreshProps = ReduxProps & {
 export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
   static readonly POLL_INTERVAL_LIST = config.toolbar.pollInterval;
 
-  static readonly durationLabelStyle = style({
-    paddingRight: '0.5em',
-    marginLeft: '1.5em'
-  });
-
   static readonly refreshButtonStyle = style({
     paddingLeft: '0.5em'
   });
@@ -51,11 +45,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
     super(props);
 
     // Let URL override current redux state at construction time
-    const urlDuration = HistoryManager.getDuration();
     const urlPollInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL);
-    if (urlDuration !== undefined && urlDuration !== props.duration) {
-      props.setDuration(urlDuration);
-    }
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
@@ -72,13 +62,9 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
   render() {
     return (
       <>
-        <ToolbarDropdown
+        <DurationDropdownContainer
           id={'graph_filter_duration'}
           disabled={this.props.disabled}
-          handleSelect={key => this.props.setDuration(Number(key))}
-          value={this.props.duration}
-          label={String(serverConfig.durations[this.props.duration])}
-          options={serverConfig.durations}
           tooltip={'Time range for graph data'}
         />
         <ToolbarDropdown
@@ -107,7 +93,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
     setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch)
   };
 };

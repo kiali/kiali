@@ -21,6 +21,8 @@ import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { KialiAppState } from '../../store/Store';
 import PfTitle from '../../components/Pf/PfTitle';
+import { DurationInSeconds } from '../../types/Common';
+import { durationSelector } from '../../store/Selectors';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -31,6 +33,7 @@ type ServiceDetailsState = {
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
+  duration: DurationInSeconds;
   jaegerUrl: string;
   jaegerIntegration: boolean;
 }
@@ -132,10 +135,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<ServiceId>, prevState: ServiceDetailsState) {
+  componentDidUpdate(prevProps: ServiceDetailsProps, prevState: ServiceDetailsState) {
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
-      prevProps.match.params.service !== this.props.match.params.service
+      prevProps.match.params.service !== this.props.match.params.service ||
+      prevProps.duration !== this.props.duration
     ) {
       this.setState(
         {
@@ -165,7 +169,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const promiseDetails = API.getServiceDetail(
       this.props.match.params.namespace,
       this.props.match.params.service,
-      true
+      true,
+      this.props.duration
     );
     const promiseThreeScale = API.getThreeScaleInfo();
     Promise.all([promiseDetails, promiseThreeScale])
@@ -293,7 +298,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                 ))}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <ServiceInfo
                   namespace={this.props.match.params.namespace}
                   service={this.props.match.params.service}
@@ -306,7 +311,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   threeScaleServiceRule={this.state.threeScaleServiceRule}
                 />
               </TabPane>
-              <TabPane eventKey="traffic">
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
@@ -378,6 +383,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state),
   jaegerUrl: state.jaegerState.jaegerURL,
   jaegerIntegration: state.jaegerState.enableIntegration
 });

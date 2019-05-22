@@ -15,12 +15,22 @@ import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import PfTitle from '../../components/Pf/PfTitle';
+import { DurationInSeconds } from '../../types/Common';
+import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
+import { connect } from 'react-redux';
 
 type AppDetailsState = {
   app: App;
   health?: AppHealth;
   trafficData: GraphDefinition | null;
 };
+
+type ReduxProps = {
+  duration: DurationInSeconds;
+};
+
+type AppDetailsProps = RouteComponentProps<AppId> & ReduxProps;
 
 const emptyApp = {
   namespace: { name: '' },
@@ -30,8 +40,8 @@ const emptyApp = {
   runtimes: []
 };
 
-class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsState> {
-  constructor(props: RouteComponentProps<AppId>) {
+class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
+  constructor(props: AppDetailsProps) {
     super(props);
     this.state = {
       app: emptyApp,
@@ -43,10 +53,11 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<AppId>) {
+  componentDidUpdate(prevProps: AppDetailsProps) {
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
-      this.props.match.params.app !== prevProps.match.params.app
+      this.props.match.params.app !== prevProps.match.params.app ||
+      this.props.duration !== prevProps.duration
     ) {
       this.setState(
         {
@@ -76,7 +87,12 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
       .then(details => {
         this.setState({ app: details.data });
         const hasSidecar = details.data.workloads.some(w => w.istioSidecar);
-        return API.getAppHealth(this.props.match.params.namespace, this.props.match.params.app, 600, hasSidecar);
+        return API.getAppHealth(
+          this.props.match.params.namespace,
+          this.props.match.params.app,
+          this.props.duration,
+          hasSidecar
+        );
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
@@ -146,7 +162,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
               })}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <AppInfo
                   app={this.state.app}
                   namespace={this.props.match.params.namespace}
@@ -156,7 +172,7 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey="traffic">
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
@@ -240,4 +256,10 @@ class AppDetails extends React.Component<RouteComponentProps<AppId>, AppDetailsS
   };
 }
 
-export default AppDetails;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state)
+});
+
+const AppDetailsContainer = connect(mapStateToProps)(AppDetails);
+
+export default AppDetailsContainer;

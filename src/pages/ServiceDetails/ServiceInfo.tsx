@@ -23,6 +23,7 @@ import { Validations, ObjectValidation } from '../../types/IstioObjects';
 import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -133,6 +134,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
+                <DurationDropdownContainer />{' '}
                 <Button onClick={this.props.onRefresh}>
                   <Icon name="refresh" />
                 </Button>

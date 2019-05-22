@@ -4,6 +4,7 @@ import AppDescription from './AppInfo/AppDescription';
 import { AppHealth } from '../../types/Health';
 import { App } from '../../types/App';
 import './AppInfo.css';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type AppInfoProps = {
   app: App;
@@ -30,9 +31,12 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-                <Icon name="refresh" />
-              </Button>
+              <span style={{ float: 'right' }}>
+                <DurationDropdownContainer />{' '}
+                <Button onClick={this.props.onRefresh}>
+                  <Icon name="refresh" />
+                </Button>
+              </span>
             </Col>
           </Row>
           <Row className="row-cards-pf">

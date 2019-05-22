@@ -18,6 +18,10 @@ import { fetchTrafficDetails } from '../../helpers/TrafficDetailsHelper';
 import TrafficDetails from '../../components/Metrics/TrafficDetails';
 import MetricsDuration from '../../components/MetricsOptions/MetricsDuration';
 import WorkloadPodLogs from './WorkloadInfo/WorkloadPodLogs';
+import { DurationInSeconds } from '../../types/Common';
+import { connect } from 'react-redux';
+import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -27,8 +31,12 @@ type WorkloadDetailsState = {
   trafficData: GraphDefinition | null;
 };
 
-class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, WorkloadDetailsState> {
-  constructor(props: RouteComponentProps<WorkloadId>) {
+type WorkloadDetailsPageProps = RouteComponentProps<WorkloadId> & {
+  duration: DurationInSeconds;
+};
+
+class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
+  constructor(props: WorkloadDetailsPageProps) {
     super(props);
     this.state = {
       workload: emptyWorkload,
@@ -42,10 +50,11 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<WorkloadId>) {
+  componentDidUpdate(prevProps: WorkloadDetailsPageProps) {
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
-      this.props.match.params.workload !== prevProps.match.params.workload
+      this.props.match.params.workload !== prevProps.match.params.workload ||
+      this.props.duration !== prevProps.duration
     ) {
       this.setState(
         {
@@ -160,7 +169,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
         return API.getWorkloadHealth(
           this.props.match.params.namespace,
           this.props.match.params.workload,
-          600,
+          this.props.duration,
           details.data.istioSidecar
         );
       })
@@ -216,7 +225,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                 })}
             </Nav>
             <TabContent>
-              <TabPane eventKey="info">
+              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
                 <WorkloadInfo
                   workload={this.state.workload}
                   namespace={this.props.match.params.namespace}
@@ -228,7 +237,7 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
                   health={this.state.health}
                 />
               </TabPane>
-              <TabPane eventKey={'traffic'}>
+              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
                 <TrafficDetails
                   duration={MetricsDuration.initialDuration()}
                   trafficData={this.state.trafficData}
@@ -321,4 +330,10 @@ class WorkloadDetails extends React.Component<RouteComponentProps<WorkloadId>, W
   };
 }
 
-export default WorkloadDetails;
+const mapStateToProps = (state: KialiAppState) => ({
+  duration: durationSelector(state)
+});
+
+const WorkloadDetailsContainer = connect(mapStateToProps)(WorkloadDetails);
+
+export default WorkloadDetailsContainer;

@@ -247,6 +247,8 @@ ShallowWrapper {
                   }
                 }
               >
+                <Connect(class_1) />
+                 
                 <Button
                   active={false}
                   block={false}
@@ -645,6 +647,8 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <Connect(class_1) />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1037,6 +1041,8 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <Connect(class_1) />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1168,6 +1174,8 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <Connect(class_1) />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -1294,6 +1302,8 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
+                    <Connect(class_1) />,
+                    " ",
                     <Button
                       active={false}
                       block={false}
@@ -1413,6 +1423,16 @@ ShallowWrapper {
                 },
                 "ref": null,
                 "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {},
+                    "ref": null,
+                    "rendered": null,
+                    "type": [Function],
+                  },
+                  " ",
                   Object {
                     "instance": null,
                     "key": undefined,
@@ -3011,6 +3031,8 @@ ShallowWrapper {
                     }
                   }
                 >
+                  <Connect(class_1) />
+                   
                   <Button
                     active={false}
                     block={false}
@@ -3409,6 +3431,8 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <Connect(class_1) />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -3801,6 +3825,8 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <Connect(class_1) />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -3932,6 +3958,8 @@ ShallowWrapper {
                       }
                     }
                   >
+                    <Connect(class_1) />
+                     
                     <Button
                       active={false}
                       block={false}
@@ -4058,6 +4086,8 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
+                      <Connect(class_1) />,
+                      " ",
                       <Button
                         active={false}
                         block={false}
@@ -4177,6 +4207,16 @@ ShallowWrapper {
                   },
                   "ref": null,
                   "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {},
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                    " ",
                     Object {
                       "instance": null,
                       "key": undefined,
