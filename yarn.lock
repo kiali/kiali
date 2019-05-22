@@ -3085,6 +3085,13 @@ cytoscape-dagre@2.2.2:
   dependencies:
     dagre "^0.8.2"
 
+cytoscape-popper@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/cytoscape-popper/-/cytoscape-popper-1.0.2.tgz#0c2bab6cf5ca504144c7eb42fe44638ff0e3bb9c"
+  integrity sha512-1ihKND9OTgG24U/vBzUuOEsMem9gAek83b98QjP7piKkyRdpPwwxZFVDuDCsjWendNocAKFOsxHDF7RD3J5/Pw==
+  dependencies:
+    popper.js "^1.0.0"
+
 cytoscape@3.6.1:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.6.1.tgz#96cfc9c60b7147b043a4a47bd55bde2cc6d333eb"
@@ -8170,6 +8177,11 @@ pn@^1.1.0:
   resolved "https://registry.yarnpkg.com/pn/-/pn-1.1.0.tgz#e2f4cef0e219f463c179ab37463e4e1ecdccbafb"
   integrity sha512-2qHaIQr2VLRFoxe2nASzsV6ef4yOOH+Fi9FBOVH6cqeSgUnoyySPZkxzLuzd+RYOQTRpROA0ztTMqxROKSb/nA==
 
+popper.js@^1.0.0:
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.15.0.tgz#5560b99bbad7647e9faa475c6b8056621f5a4ff2"
+  integrity sha512-w010cY1oCUmI+9KwwlWki+r5jxKfTFDVoadl7MSrIujHU5MJ5OR6HTDj6Xo8aoR/QsA56x8jKjA59qGH4ELtrA==
+
 popper.js@^1.14.4:
   version "1.14.6"
   resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.14.6.tgz#ab20dd4edf9288b8b3b6531c47c361107b60b4b0"
@@ -10977,7 +10989,7 @@ tiny-warning@^1.0.0:
   resolved "https://registry.yarnpkg.com/tiny-warning/-/tiny-warning-1.0.2.tgz#1dfae771ee1a04396bdfde27a3adcebc6b648b28"
   integrity sha512-rru86D9CpQRLvsFG5XFdy0KdLAvjdQDyZCsRcuu60WtzFylDM3eAWSxEVz5kzL2Gp544XiUvPbVKtOA/txLi9Q==
 
-tippy.js@^3.2.0:
+tippy.js@3.4.1, tippy.js@^3.2.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/tippy.js/-/tippy.js-3.4.1.tgz#f0eb3081824ad6c5d364336451ad77ae2f543da8"
   integrity sha512-ZiyGP9WZyCCcjxKM4G88cm4U1r1ytjeMDGa5FSKPaPzwc/3yZJVZsb1ffcmqUMCpryRp5LNxRNGKLzbs11sb/Q==

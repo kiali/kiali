@@ -1,0 +1,26 @@
+/**
+ * Right-click Context menu styles for graph (using Tippy.js)
+ */
+.kiali-graph-context-menu-container {
+  text-align: left;
+}
+
+.kiali-graph-context-menu-title {
+  text-align: center;
+  font-size: 12px;
+}
+
+.kiali-graph-context-menu-item {
+  text-align: center;
+  font-size: 12px;
+  text-decoration: none;
+  color: #363636;
+  &:hover {
+    background-color: #def3ff;
+    color: #4d5258;
+  }
+}
+
+.kiali-graph-context-menu-item-link {
+  color: #363636;
+}
