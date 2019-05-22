@@ -39,7 +39,7 @@ func TestPodFullyParsing(t *testing.T) {
 	pod := Pod{}
 	pod.Parse(&k8sPod)
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
-	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
+	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
 	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
@@ -71,7 +71,7 @@ func TestPodParsingMissingImage(t *testing.T) {
 	pod := Pod{}
 	pod.Parse(&k8sPod)
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
-	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
+	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
 	assert.Equal([]Reference{Reference{Name: "details-v1-3618568057", Kind: "ReplicaSet"}}, pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 1)
@@ -98,7 +98,7 @@ func TestPodParsingMissingAnnotations(t *testing.T) {
 	pod := Pod{}
 	pod.Parse(&k8sPod)
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
-	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
+	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
 	assert.Empty(pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 0)
@@ -120,7 +120,7 @@ func TestPodParsingInvalidAnnotations(t *testing.T) {
 	pod := Pod{}
 	pod.Parse(&k8sPod)
 	assert.Equal("details-v1-3618568057-dnkjp", pod.Name)
-	assert.Equal("2018-03-08T17:44:00+03:00", pod.CreatedAt)
+	assert.Equal("2018-03-08T14:44:00Z", pod.CreatedAt)
 	assert.Equal(map[string]string{"apps": "details", "version": "v1"}, pod.Labels)
 	assert.Empty(pod.CreatedBy)
 	assert.Len(pod.IstioContainers, 0)
