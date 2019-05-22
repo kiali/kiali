@@ -30,14 +30,16 @@ import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
-import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
-interface ServiceListComponentState extends ListComponent.State<ServiceListItem> {}
+type ServiceListComponentState = ListComponent.State<ServiceListItem>;
 
-interface ServiceListComponentProps extends ListComponent.Props<ServiceListItem> {
+type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-}
+};
+
+type ServiceListComponentProps = ReduxProps & ListComponent.Props<ServiceListItem>;
 
 class ServiceListComponent extends ListComponent.Component<
   ServiceListComponentProps,

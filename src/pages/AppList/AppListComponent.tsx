@@ -17,14 +17,16 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { arrayEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
-import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
-interface AppListComponentState extends ListComponent.State<AppListItem> {}
+type AppListComponentState = ListComponent.State<AppListItem>;
 
-interface AppListComponentProps extends ListComponent.Props<AppListItem> {
+type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-}
+};
+
+type AppListComponentProps = ReduxProps & ListComponent.Props<AppListItem>;
 
 class AppListComponent extends ListComponent.Component<AppListComponentProps, AppListComponentState, AppListItem> {
   private promises = new PromisesRegistry();

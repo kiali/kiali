@@ -17,14 +17,16 @@ import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
-import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
-interface WorkloadListComponentState extends ListComponent.State<WorkloadListItem> {}
+type WorkloadListComponentState = ListComponent.State<WorkloadListItem>;
 
-interface WorkloadListComponentProps extends ListComponent.Props<WorkloadListItem> {
+type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
-}
+};
+
+type WorkloadListComponentProps = ReduxProps & ListComponent.Props<WorkloadListItem>;
 
 class WorkloadListComponent extends ListComponent.Component<
   WorkloadListComponentProps,
