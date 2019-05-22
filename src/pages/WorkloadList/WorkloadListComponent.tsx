@@ -200,7 +200,7 @@ class WorkloadListComponent extends ListComponent.Component<
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer />
+            <DurationDropdownContainer id="workload-list-duration-dropdown" />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>

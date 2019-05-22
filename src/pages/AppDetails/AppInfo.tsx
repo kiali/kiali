@@ -32,7 +32,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
-                <DurationDropdownContainer />{' '}
+                <DurationDropdownContainer id="app-info-duration-dropdown" />{' '}
                 <Button onClick={this.props.onRefresh}>
                   <Icon name="refresh" />
                 </Button>

@@ -178,7 +178,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer />
+            <DurationDropdownContainer id="app-list-dropdown" />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>

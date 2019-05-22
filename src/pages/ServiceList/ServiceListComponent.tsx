@@ -235,7 +235,7 @@ class ServiceListComponent extends ListComponent.Component<
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer />
+            <DurationDropdownContainer id="service-list-duration-dropdown" />
             <Button onClick={this.updateListItems}>
               <Icon name="refresh" />
             </Button>
