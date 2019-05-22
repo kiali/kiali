@@ -19,12 +19,11 @@ import NamespaceInfo from './NamespaceInfo';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { Sorts } from './Sorts';
 import { Filters } from './Filters';
-import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: PollIntervalInMs;
-  setDuration: (duration: DurationInSeconds) => void;
   setRefreshInterval: (refresh: PollIntervalInMs) => void;
 };
 
@@ -65,11 +64,7 @@ export class OverviewToolbar extends React.Component<Props, State> {
     super(props);
     // Let URL override current redux state at construction time
     const urlParams = new URLSearchParams(history.location.search);
-    const urlDuration = HistoryManager.getDuration(urlParams);
     const urlPollInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL, urlParams);
-    if (urlDuration !== undefined && urlDuration !== props.duration) {
-      props.setDuration(urlDuration);
-    }
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
@@ -184,9 +179,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setDuration: (duration: DurationInSeconds) => {
-      dispatch(UserSettingsActions.setDuration(duration));
-    },
     setRefreshInterval: (refreshInterval: PollIntervalInMs) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
     }

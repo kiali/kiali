@@ -9,21 +9,26 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
+import { HistoryManager, URLParam } from '../../app/History';
+import history from '../../app/History';
 
-type BasicDurationDropdownProps = {
+type ReduxProps = {
   duration: DurationInSeconds;
+  setDuration: (duration: DurationInSeconds) => void;
+};
+
+type BasicDurationDropdownProps = ReduxProps & {
   disabled?: boolean;
   id?: string;
-  setDuration: (duration: DurationInSeconds) => void;
   tooltip?: string;
 };
 
 // These are taken from the serverConfig
-type ExtendedDurationDropdownProps = BasicDurationDropdownProps & {
+type DurationDropdownProps = BasicDurationDropdownProps & {
   durations: Durations;
 };
 
-export class DurationDropdown extends React.Component<ExtendedDurationDropdownProps> {
+export class DurationDropdown extends React.Component<DurationDropdownProps> {
   render() {
     return (
       <ToolbarDropdown
@@ -39,8 +44,32 @@ export class DurationDropdown extends React.Component<ExtendedDurationDropdownPr
   }
 }
 
-export const DurationIntervalWithDurations = (props: BasicDurationDropdownProps) => {
-  return <DurationDropdown durations={serverConfig.durations} {...props} />;
+export const withDurations = DurationDropdownComponent => {
+  return (props: BasicDurationDropdownProps) => {
+    return <DurationDropdownComponent durations={serverConfig.durations} {...props} />;
+  };
+};
+
+export const withURLAwareness = DurationDropdownComponent => {
+  return class extends React.Component<BasicDurationDropdownProps> {
+    constructor(props: BasicDurationDropdownProps) {
+      super(props);
+      const urlParams = new URLSearchParams(history.location.search);
+      const urlDuration = HistoryManager.getDuration(urlParams);
+      if (urlDuration !== undefined && urlDuration !== props.duration) {
+        props.setDuration(urlDuration);
+      }
+      HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
+    }
+
+    componentDidUpdate() {
+      HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
+    }
+
+    render() {
+      return <DurationDropdownComponent {...this.props} />;
+    }
+  };
 };
 
 const mapStateToProps = (state: KialiAppState) => ({
@@ -53,9 +82,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAp
   };
 };
 
-const DurationDropdownContainer = connect(
+export const DurationDropdownContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(DurationIntervalWithDurations);
-
-export default DurationDropdownContainer;
+)(withURLAwareness(withDurations(DurationDropdown)));

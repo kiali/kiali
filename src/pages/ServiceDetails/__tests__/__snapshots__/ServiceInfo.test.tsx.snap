@@ -247,7 +247,7 @@ ShallowWrapper {
                   }
                 }
               >
-                <Connect(Component) />
+                <Connect(class_1) />
                  
                 <Button
                   active={false}
@@ -647,7 +647,7 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(Component) />
+                  <Connect(class_1) />
                    
                   <Button
                     active={false}
@@ -1041,7 +1041,7 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(Component) />
+                  <Connect(class_1) />
                    
                   <Button
                     active={false}
@@ -1174,7 +1174,7 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(Component) />
+                  <Connect(class_1) />
                    
                   <Button
                     active={false}
@@ -1302,7 +1302,7 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": Array [
-                    <Connect(Component) />,
+                    <Connect(class_1) />,
                     " ",
                     <Button
                       active={false}
@@ -3031,7 +3031,7 @@ ShallowWrapper {
                     }
                   }
                 >
-                  <Connect(Component) />
+                  <Connect(class_1) />
                    
                   <Button
                     active={false}
@@ -3431,7 +3431,7 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(Component) />
+                    <Connect(class_1) />
                      
                     <Button
                       active={false}
@@ -3825,7 +3825,7 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(Component) />
+                    <Connect(class_1) />
                      
                     <Button
                       active={false}
@@ -3958,7 +3958,7 @@ ShallowWrapper {
                       }
                     }
                   >
-                    <Connect(Component) />
+                    <Connect(class_1) />
                      
                     <Button
                       active={false}
@@ -4086,7 +4086,7 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": Array [
-                      <Connect(Component) />,
+                      <Connect(class_1) />,
                       " ",
                       <Button
                         active={false}

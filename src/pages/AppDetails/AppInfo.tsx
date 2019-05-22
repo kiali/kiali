@@ -4,7 +4,7 @@ import AppDescription from './AppInfo/AppDescription';
 import { AppHealth } from '../../types/Health';
 import { App } from '../../types/App';
 import './AppInfo.css';
-import DurationDropdownContainer from '../../components/DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type AppInfoProps = {
   app: App;

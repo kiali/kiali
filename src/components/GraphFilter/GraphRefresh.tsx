@@ -15,7 +15,7 @@ import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import { config } from '../../config/Config';
 import { HistoryManager, URLParam } from '../../app/History';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
-import DurationDropdownContainer from '../DurationDropdown/DurationDropdown';
+import { DurationDropdownContainer } from '../DurationDropdown/DurationDropdown';
 
 //
 // GraphRefresh actually handles the Duration dropdown, the RefreshInterval dropdown and the Refresh button.
@@ -25,7 +25,6 @@ type ReduxProps = {
   duration: DurationInSeconds;
   refreshInterval: PollIntervalInMs;
 
-  setDuration: (duration: DurationInSeconds) => void;
   setRefreshInterval: (refreshInterval: PollIntervalInMs) => void;
 };
 
@@ -46,11 +45,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
     super(props);
 
     // Let URL override current redux state at construction time
-    const urlDuration = HistoryManager.getDuration();
     const urlPollInterval = HistoryManager.getNumericParam(URLParam.POLL_INTERVAL);
-    if (urlDuration !== undefined && urlDuration !== props.duration) {
-      props.setDuration(urlDuration);
-    }
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
@@ -98,7 +93,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch),
     setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch)
   };
 };

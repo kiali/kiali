@@ -26,9 +26,11 @@ type AppDetailsState = {
   trafficData: GraphDefinition | null;
 };
 
-type AppDetailsProps = RouteComponentProps<AppId> & {
+type ReduxProps = {
   duration: DurationInSeconds;
 };
+
+type AppDetailsProps = RouteComponentProps<AppId> & ReduxProps;
 
 const emptyApp = {
   namespace: { name: '' },
