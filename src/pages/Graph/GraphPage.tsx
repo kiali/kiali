@@ -4,13 +4,13 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import FlexView from 'react-flexview';
-import { Breadcrumb, Icon, Button, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Breadcrumb, Button, Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
-import { DurationInSeconds, PollIntervalInMs, TimeInSeconds, TimeInMilliseconds } from '../../types/Common';
+import { DurationInSeconds, PollIntervalInMs, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { SummaryData, NodeParamsType, NodeType, GraphType } from '../../types/Graph';
-import { Layout, EdgeLabelMode } from '../../types/GraphFilter';
+import { GraphType, NodeParamsType, NodeType, SummaryData } from '../../types/Graph';
+import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
@@ -306,7 +306,9 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
           <div>
             <Breadcrumb title={true}>
               <Breadcrumb.Item active={true}>
-                Graph
+                {this.props.node && this.props.node.nodeType !== NodeType.UNKNOWN
+                  ? `Graph for ${this.props.node.nodeType}: ${this.getTitle(this.props.node)}`
+                  : 'Graph'}
                 <OverlayTrigger
                   key={'graph-tour-help-ot'}
                   placement="right"
@@ -372,6 +374,23 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
         </FlexView>
       </>
     );
+  }
+
+  private getTitle(node: NodeParamsType) {
+    if (node.nodeType === NodeType.APP) {
+      let title = node.app;
+      if (node.version) {
+        title += ' - ' + node.version;
+      }
+
+      return title;
+    } else if (node.nodeType === NodeType.SERVICE) {
+      return node.service;
+    } else if (node.nodeType === NodeType.WORKLOAD) {
+      return node.workload;
+    }
+
+    return 'unknown';
   }
 
   private setCytoscapeGraph(cytoscapeGraph: any) {
