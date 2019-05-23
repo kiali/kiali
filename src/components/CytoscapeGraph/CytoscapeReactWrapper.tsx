@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { GraphStyles } from './graphs/GraphStyles';
+import history from '../../app/History';
 
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
@@ -68,6 +69,17 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
       app = workload;
     }
     return `/namespaces/${namespace}/${urlNodeType}/${app}`;
+  }
+
+  private static redirectContextLink(e: MouseEvent) {
+    e.preventDefault();
+    if (e.target) {
+      const anchor = e.target as HTMLAnchorElement;
+      const href = anchor.getAttribute('href');
+      if (href) {
+        history.push(href);
+      }
+    }
   }
 
   constructor(props: CytoscapeReactWrapperProps) {
@@ -145,6 +157,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
           const divDetailsItem = document.createElement('div');
           divDetailsItem.setAttribute('class', 'kiali-graph-context-menu-item');
           divDetailsItem.innerHTML = `<a class='kiali-graph-context-menu-item-link' href="${detailsPageUrl}" >Show Details</a>`;
+          divDetailsItem.onclick = CytoscapeReactWrapper.redirectContextLink;
 
           tippyDiv.append(divTitle);
           tippyDiv.append(divDetailsItem);
@@ -176,6 +189,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
               tipNode.hide();
             }, 6000);
             tipNode.show();
+            this.cy.on('destroy', () => tipNode.hide());
           }
         });
       }
@@ -224,5 +238,3 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     // });
   }
 }
-
-export default CytoscapeReactWrapper;
