@@ -27,11 +27,10 @@ func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
 func DashboardsConfig() dlgconfig.Config {
 	cfg := config.Get()
 	return dlgconfig.Config{
-		GlobalNamespace:  cfg.IstioNamespace,
-		PrometheusURL:    cfg.ExternalServices.Prometheus.CustomMetricsURL,
-		AppLabelName:     cfg.IstioLabels.AppLabelName,
-		VersionLabelName: cfg.IstioLabels.VersionLabelName,
-		Errorf:           log.Errorf,
+		GlobalNamespace: cfg.IstioNamespace,
+		PrometheusURL:   cfg.ExternalServices.Prometheus.CustomMetricsURL,
+		Errorf:          log.Errorf,
+		Tracef:          log.Tracef,
 	}
 }
 
@@ -118,33 +117,28 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 }
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
-func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods models.Pods) []model.Runtime {
+func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []model.Runtime {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "DashboardsService", "GetCustomDashboardRefs")
 	defer promtimer.ObserveNow(&err)
 
-	uniqueRefsList := getUniqueRuntimes(pods)
-	return in.delegate.GetCustomDashboardRefs(namespace, app, version, uniqueRefsList)
-}
-
-func getUniqueRuntimes(pods models.Pods) []string {
-	// Get uniqueness from plain list rather than map to preserve ordering; anyway, very low amount of objects is expected
-	uniqueRefs := []string{}
-	for _, pod := range pods {
-		for _, ref := range pod.RuntimesAnnotation {
-			if ref != "" {
-				exists := false
-				for _, existingRef := range uniqueRefs {
-					if ref == existingRef {
-						exists = true
-						break
-					}
-				}
-				if !exists {
-					uniqueRefs = append(uniqueRefs, ref)
-				}
-			}
-		}
+	// A better way to do?
+	var podsCast []model.Pod
+	for _, p := range pods {
+		podsCast = append(podsCast, p)
 	}
-	return uniqueRefs
+	runtimes := in.delegate.SearchExplicitDashboards(namespace, podsCast)
+
+	if len(runtimes) == 0 {
+		cfg := config.Get()
+		filters := make(map[string]string)
+		if app != "" {
+			filters[cfg.IstioLabels.AppLabelName] = app
+		}
+		if version != "" {
+			filters[cfg.IstioLabels.VersionLabelName] = version
+		}
+		runtimes = in.delegate.DiscoverDashboards(namespace, filters)
+	}
+	return runtimes
 }

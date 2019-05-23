@@ -630,122 +630,6 @@
         }
       }
     },
-    "/namespaces/{namespace}/apps/{app}/customdashboard/{template}": {
-      "get": {
-        "description": "Endpoint to fetch custom dashboard to be displayed, based on the provided template",
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "http",
-          "https"
-        ],
-        "tags": [
-          "apps"
-        ],
-        "operationId": "customDashboard",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The app name (label value).",
-            "name": "app",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The dashboard template name.",
-            "name": "template",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "default": "true",
-            "x-go-name": "Name",
-            "description": "Flag for fetching histogram average. Default is true.",
-            "name": "avg",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1800",
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "[]",
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "rate",
-            "x-go-name": "Name",
-            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
-            "name": "rateFunc",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "1m",
-            "x-go-name": "Name",
-            "description": "Interval used for rate and histogram calculation.",
-            "name": "rateInterval",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "15",
-            "x-go-name": "Name",
-            "description": "Step between [graph] datapoints, in seconds.",
-            "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Filters metrics by the specified version.",
-            "name": "version",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/dashboardResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "503": {
-            "$ref": "#/responses/serviceUnavailableError"
-          }
-        }
-      }
-    },
     "/namespaces/{namespace}/apps/{app}/dashboard": {
       "get": {
         "description": "Endpoint to fetch dashboard to be displayed, related to a single app",
@@ -1061,6 +945,120 @@
         "responses": {
           "200": {
             "$ref": "#/responses/metricsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "503": {
+            "$ref": "#/responses/serviceUnavailableError"
+          }
+        }
+      }
+    },
+    "/namespaces/{namespace}/customdashboard/{dashboard}": {
+      "get": {
+        "description": "Label filters, such as app or version, can be provided as query parameters.",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "summary": "Endpoint to fetch custom dashboard to be displayed, based on the provided template.",
+        "operationId": "customDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The dashboard template name.",
+            "name": "template",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "true",
+            "x-go-name": "Name",
+            "description": "Flag for fetching histogram average. Default is true.",
+            "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1800",
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "[]",
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "rate",
+            "x-go-name": "Name",
+            "description": "Prometheus function used to calculate rate: 'rate' or 'irate'.",
+            "name": "rateFunc",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "1m",
+            "x-go-name": "Name",
+            "description": "Interval used for rate and histogram calculation.",
+            "name": "rateInterval",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "15",
+            "x-go-name": "Name",
+            "description": "Step between [graph] datapoints, in seconds.",
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "Filters metrics by the specified version.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/dashboardResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -3259,6 +3257,10 @@
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
       "type": "object",
       "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error"
+        },
         "histogram": {
           "type": "object",
           "additionalProperties": {

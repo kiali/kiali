@@ -88,9 +88,9 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 }
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
-func CustomDashboard() func(http.ResponseWriter, *http.Request) {
+func CustomDashboard(w http.ResponseWriter, r *http.Request) {
 	cfg := business.DashboardsConfig()
-	return khttp.DashboardHandler(cfg)
+	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg)
 }
 
 // AppDashboard is the API handler to fetch Istio dashboard, related to a single app
