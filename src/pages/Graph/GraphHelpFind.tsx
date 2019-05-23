@@ -192,7 +192,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     const contentStyle = style({
       width: contentWidth,
       maxWidth: maxWidth,
-      height: 'auto',
+      height: '550px',
       right: '0',
       top: '10px',
       zIndex: 9999,
