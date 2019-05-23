@@ -39,7 +39,7 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 		u, errParse := url.Parse(fmt.Sprintf("http://%s%s/api/traces", config.Get().ExternalServices.Tracing.Service, config.Get().ExternalServices.Tracing.Path))
 		if errParse != nil {
 			log.Errorf("Error parse Jaeger URL fetching Error Traces: %s", err)
-			err = errParse
+			return -1, errParse
 		} else {
 			q := u.Query()
 			q.Set("lookback", "1h")
@@ -55,8 +55,8 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 			}
 			resp, reqError := client.Get(u.String())
 			if reqError != nil {
-				log.Errorf("Error new: %s", reqError)
-				err = reqError
+				log.Errorf("Error fetching Jaeger Error Traces: %s", reqError)
+				return -1, reqError
 			} else {
 				defer resp.Body.Close()
 				body, errRead := ioutil.ReadAll(resp.Body)
