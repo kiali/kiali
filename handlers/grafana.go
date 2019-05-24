@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -21,25 +21,10 @@ import (
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
 type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
-// The Kiali ServiceAccount token.
-var saToken string
-
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-
-	// Be careful with how you use this token. This is the Kiali Service Account token, not the user token.
-	// We need the Service Account token to get the Grafana service in order to generate the Grafana dashboard links.
-	if saToken == "" {
-		token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		saToken = string(token)
-	}
-
-	info, code, err := getGrafanaInfo(saToken, getService, findDashboard)
+	info, code, err := getGrafanaInfo(getService, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -49,31 +34,33 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
-	status.DiscoverGrafana()
+func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.DisplayLink {
 		return nil, http.StatusNoContent, nil
 	}
 
-	// Check if URL is in the configuration
-	if grafanaConfig.URL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
+	externalURL, _ := status.DiscoverGrafana()
+	if externalURL == "" {
+		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
 	}
 
 	// Check if URL is valid
-	_, err := validateURL(grafanaConfig.URL)
+	_, err := validateURL(externalURL)
 	if err != nil {
-		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL in Kiali configuration: " + err.Error())
+		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL: " + err.Error())
 	}
 
-	// use the external URL as the default case
-	grafanaUrl := grafanaConfig.URL
+	apiURL := externalURL
 
 	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
-	if grafanaConfig.ServiceNamespace != "" || grafanaConfig.Service != "" {
-		spec, err := serviceSupplier(token, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
+	if grafanaConfig.InCluster {
+		saToken, err := kubernetes.GetKialiToken()
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		spec, err := serviceSupplier(saToken, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
 		if err != nil {
 			if k8serr.IsNotFound(err) {
 				return nil, http.StatusServiceUnavailable, err
@@ -87,7 +74,7 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 			log.Warning("Several ports found for Grafana service, picking the first one")
 		}
 		if spec != nil {
-			grafanaUrl = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
+			apiURL = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
 		}
 	}
 
@@ -97,17 +84,17 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(grafanaUrl, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(apiURL, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(grafanaUrl, grafanaConfig.WorkloadDashboardPattern, credentials, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(apiURL, grafanaConfig.WorkloadDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 
 	grafanaInfo := models.GrafanaInfo{
-		URL:                   grafanaConfig.URL,
+		URL:                   externalURL,
 		ServiceDashboardPath:  serviceDashboardPath,
 		WorkloadDashboardPath: workloadDashboardPath,
 		VarNamespace:          grafanaConfig.VarNamespace,
@@ -157,10 +144,7 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 }
 
 func findDashboard(url, searchPattern string, credentials string) ([]byte, int, error) {
-	if !strings.HasSuffix(url, "/") {
-		url = url + "/"
-	}
-	req, err := http.NewRequest(http.MethodGet, url+"api/search?query="+searchPattern, nil)
+	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
 	if err != nil {
 		return nil, 0, err
 	}

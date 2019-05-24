@@ -140,6 +140,7 @@ spec:
 # **Grafana-specific settings:
 # api_key: API key to access Grafana. API key only requires viewer permissions.
 # display_link: When true, a link to Grafana will be displayed for more dashboards.
+# in_cluster: Set true to indicate that Grafana service is accessible in the Kubernetes cluster.
 # password: Password to be used when making requests to Grafana. User only requires viewer permissions.
 # service: The Kubernetes service name for Grafana. Kiali uses this to connect within the cluster to Grafana.
 #          If "service" and "service_namespace" are empty then "url" is used for communication.
@@ -156,6 +157,7 @@ spec:
 #    grafana:
 #      api_key: ""
 #      display_link: true
+#      in_cluster: true
 #      password: ""
 #      service: "grafana"
 #      service_dashboard_pattern: "Istio%20Service%20Dashboard"

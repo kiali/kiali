@@ -9,6 +9,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 var dashboard = []map[string]interface{}{
@@ -25,7 +26,7 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.DisplayLink = false
 	config.Set(conf)
-	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo(func(_, _, _ string) (*core_v1.ServiceSpec, error) {
 		return &core_v1.ServiceSpec{
 			ClusterIP: "fromservice",
 			Ports: []core_v1.ServicePort{
@@ -36,42 +37,50 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 	assert.Nil(t, info)
 }
 
-func TestGetGrafanaInfoFromConfig(t *testing.T) {
+func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
+	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InCluster = false
 	config.Set(conf)
-	info, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+	info, code, err := getGrafanaInfo(func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		assert.Fail(t, "Not in cluster: should not try to get service.")
 		return &core_v1.ServiceSpec{
-			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(dashboard, 200))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://fromconfig:3001", info.URL)
+	assert.Equal(t, "http://grafana-external:3001", info.URL)
 	assert.Equal(t, "the_path", info.WorkloadDashboardPath)
 }
 
-func TestGetGrafanaInfoNoExternalIP(t *testing.T) {
+func TestGetGrafanaInfoInCluster(t *testing.T) {
+	kubernetes.KialiToken = "anything"
 	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InCluster = true
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+	var serviceLookup bool
+	info, code, err := getGrafanaInfo(func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+		serviceLookup = true
 		return &core_v1.ServiceSpec{
-			ExternalIPs: []string{},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(dashboard, 200))
-	assert.NotNil(t, err)
-	assert.Equal(t, http.StatusServiceUnavailable, code)
+	assert.Nil(t, err)
+	assert.True(t, serviceLookup)
+	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, "http://grafana-external:3001", info.URL)
+	assert.Equal(t, "the_path", info.WorkloadDashboardPath)
 }
 
 func TestGetGrafanaInfoGetError(t *testing.T) {
+	kubernetes.KialiToken = "anything"
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
+	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo(func(_, _, _ string) (*core_v1.ServiceSpec, error) {
 		return &core_v1.ServiceSpec{
-			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier(anError, 401))
@@ -80,16 +89,17 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 }
 
 func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
+	kubernetes.KialiToken = "anything"
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.URL = "http://fromconfig:3001"
+	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	config.Set(conf)
-	_, code, err := getGrafanaInfo("", func(_, _, _ string) (*core_v1.ServiceSpec, error) {
+	_, code, err := getGrafanaInfo(func(_, _, _ string) (*core_v1.ServiceSpec, error) {
 		return &core_v1.ServiceSpec{
-			ExternalIPs: []string{"fromservice"},
 			Ports: []core_v1.ServicePort{
 				core_v1.ServicePort{Port: 3000}}}, nil
 	}, buildDashboardSupplier("unexpected response", 200))
 	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "json: cannot unmarshal")
 	assert.Equal(t, 500, code)
 }
 

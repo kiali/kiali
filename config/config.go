@@ -42,6 +42,7 @@ const (
 	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
 
 	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaInCluster                = "GRAFANA_IN_CLUSTER"
 	EnvGrafanaURL                      = "GRAFANA_URL"
 	EnvGrafanaServiceNamespace         = "GRAFANA_SERVICE_NAMESPACE"
 	EnvGrafanaService                  = "GRAFANA_SERVICE"
@@ -128,6 +129,7 @@ type PrometheusConfig struct {
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
 	DisplayLink              bool   `yaml:"display_link"`
+	InCluster                bool   `yaml:"in_cluster"`
 	URL                      string `yaml:"url"`
 	ServiceNamespace         string `yaml:"service_namespace"`
 	Service                  string `yaml:"service"`
@@ -273,6 +275,7 @@ func NewConfig() (c *Config) {
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
+	c.ExternalServices.Grafana.InCluster = getDefaultBool(EnvGrafanaInCluster, true)
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
 	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, IstioDefaultNamespace))
 	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
