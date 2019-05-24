@@ -125,10 +125,18 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
     this.cy = cytoscape(opts);
 
-    // the context menus need a little bit of time for the DOM to settle down before they are added
-    setTimeout(() => {
-      this.buildContextMenus();
-    }, 50);
+    this.cy.on('cxttapstart taphold', 'node[!isGroup]', (event: any) => {
+      event.preventDefault();
+      if (event.target) {
+        const tipNode = this.makeTippyForNode(event.target).instances[0];
+        // hide the tip after 6 seconds otherwise we can get a bunch of persistent tips
+        setTimeout(() => {
+          tipNode.hide();
+        }, 6000);
+        tipNode.show();
+        this.cy.on('destroy', () => tipNode.hide());
+      }
+    });
   }
 
   destroy() {
@@ -138,61 +146,39 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     }
   }
 
-  // Build right-click menus for the graph
-  private buildContextMenus() {
-    const makeTippyForNode: any = (node: any) => {
-      return tippy(node.popperRef(), {
-        content: (() => {
-          // Remember we on Tippy.js which is html over the cytoscape canvas -- not React JSX
-          // @todo: Refactor this to ReactDOM.render() to use JSX
-          const tippyDiv = document.createElement('div');
-          tippyDiv.setAttribute('class', 'kiali-graph-context-menu-container');
-          const divTitle = document.createElement('div');
-          divTitle.setAttribute('class', 'kiali-graph-context-menu-title');
-          const nodeData = node.data();
-          const version = nodeData.version ? `${nodeData.version}` : '';
-          divTitle.innerHTML = `<strong>${nodeData.app}</strong>:${version}`;
+  private makeTippyForNode = (node: any) => {
+    return tippy(node.popperRef(), {
+      content: (() => {
+        // Remember we on Tippy.js which is html over the cytoscape canvas -- not React JSX
+        // @todo: Refactor this to ReactDOM.render() to use JSX
+        const tippyDiv = document.createElement('div');
+        tippyDiv.setAttribute('class', 'kiali-graph-context-menu-container');
+        const divTitle = document.createElement('div');
+        divTitle.setAttribute('class', 'kiali-graph-context-menu-title');
+        const nodeData = node.data();
+        const version = nodeData.version ? `${nodeData.version}` : '';
+        divTitle.innerHTML = `<strong>${nodeData.app}</strong>:${version}`;
 
-          const detailsPageUrl = CytoscapeReactWrapper.makeDetailsPageUrl(node);
-          const divDetailsItem = document.createElement('div');
-          divDetailsItem.setAttribute('class', 'kiali-graph-context-menu-item');
-          divDetailsItem.innerHTML = `<a class='kiali-graph-context-menu-item-link' href="${detailsPageUrl}" >Show Details</a>`;
-          divDetailsItem.onclick = CytoscapeReactWrapper.redirectContextLink;
+        const detailsPageUrl = CytoscapeReactWrapper.makeDetailsPageUrl(node);
+        const divDetailsItem = document.createElement('div');
+        divDetailsItem.setAttribute('class', 'kiali-graph-context-menu-item');
+        divDetailsItem.innerHTML = `<a class='kiali-graph-context-menu-item-link' href="${detailsPageUrl}" >Show Details</a>`;
+        divDetailsItem.onclick = CytoscapeReactWrapper.redirectContextLink;
 
-          tippyDiv.append(divTitle);
-          tippyDiv.append(divDetailsItem);
+        tippyDiv.append(divTitle);
+        tippyDiv.append(divDetailsItem);
 
-          return tippyDiv;
-        })(),
-        trigger: 'manual',
-        arrow: true,
-        placement: 'bottom',
-        hideOnClick: true,
-        multiple: false,
-        sticky: false,
-        interactive: true,
-        theme: 'light-border',
-        size: 'large'
-      });
-    };
-
-    // add the 'tap' events to trigger tippy context menus for each node
-    this.cy.nodes().each(appNode => {
-      // ignore events if its is coming from a group node
-      if (!appNode.data().isGroup) {
-        appNode.on('cxttapstart taphold', (event: any) => {
-          event.preventDefault();
-          if (event.target) {
-            const tipNode = makeTippyForNode(appNode).instances[0];
-            // hide the tip after 6 seconds otherwise we can get a bunch of persistent tips
-            setTimeout(() => {
-              tipNode.hide();
-            }, 6000);
-            tipNode.show();
-            this.cy.on('destroy', () => tipNode.hide());
-          }
-        });
-      }
+        return tippyDiv;
+      })(),
+      trigger: 'manual',
+      arrow: true,
+      placement: 'bottom',
+      hideOnClick: true,
+      multiple: false,
+      sticky: false,
+      interactive: true,
+      theme: 'light-border',
+      size: 'large'
     });
 
     /**
@@ -236,5 +222,5 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     //     }
     //   });
     // });
-  }
+  };
 }
