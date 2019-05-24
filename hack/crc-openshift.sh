@@ -65,15 +65,15 @@ get_installer() {
   debug "Installer command to be used: ${INSTALLER}"
 }
 
-# Change to the directory where this script is and set our env
+# Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.85.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="0.86.0"
 
 # The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="v4.1.0.rc0"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.0-rc.5"
 
 # The default version of the istiooc command to be downloaded
 DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.10.0"
@@ -419,7 +419,7 @@ CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
 
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
+CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
 CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
 
 # If Kiali is to be installed, set up some things that may be needed
@@ -571,39 +571,6 @@ export KUBECONFIG="${CRC_KUBECONFIG}"
 
 if [ "$_CMD" = "start" ]; then
 
-  # TODO: is this required with CRC?
-  # The OpenShift docs say to define docker with an insecure registry setting. This checks such a setting is enabled.
-  pgrep -a dockerd | grep '[-]-insecure-registry' > /dev/null 2>&1
-  if [ "$?" != "0" ]; then
-    grep 'OPTIONS=.*--insecure-registry' /etc/sysconfig/docker > /dev/null 2>&1
-    if [ "$?" != "0" ]; then
-      grep 'insecure-registries' /etc/docker/daemon.json > /dev/null 2>&1
-      if [ "$?" != "0" ]; then
-        echo 'WARNING: You must run Docker with the --insecure-registry argument with an appropriate value (usually "--insecure-registry 172.30.0.0/16"). See the OpenShift Origin documentation for more details: https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#linux'
-      else
-        debug "/etc/docker/daemon.json has the insecure-registry setting. This is good."
-      fi
-    else
-      debug "/etc/sysconfig/docker has defined the insecure-registry setting. This is good."
-    fi
-  else
-    debug "Docker daemon is running with --insecure-registry setting. This is good."
-  fi
-
-  echo "THE BELOW IS NEEDED UNTIL THIS IS FIXED: https://github.com/code-ready/crc/issues/119"
-  if ! grep -q "dns=dnsmasq" /etc/NetworkManager/conf.d/crc-libvirt-dnsmasq.conf ; then
-    cat <<EOM > /tmp/fix.conf
-[main]
-dns=dnsmasq
-EOM
-    sudo cp /tmp/fix.conf /etc/NetworkManager/conf.d/crc-libvirt-dnsmasq.conf
-    sudo systemctl restart NetworkManager
-    echo "Network Manager was restarted - if you were on a VPN, you need to reconnect to it."
-  else
-    echo "NetworkManager appears to be configured correctly - nothing needs to be done."
-  fi
-  echo "THE ABOVE IS NEEDED UNTIL THIS IS FIXED: https://github.com/code-ready/crc/issues/119"
-
   echo "Setting up the requirements for the OpenShift cluster..."
   debug "${CRC_COMMAND} setup"
   ${CRC_COMMAND} setup
@@ -614,8 +581,9 @@ EOM
   fi
 
   echo "Starting the OpenShift cluster..."
-  debug "${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH}"
-  ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH}
+  # if you change the command line here, also change it below during the restart
+  debug "${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}"
+  ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
 
   if [ "$?" != "0" ]; then
     echo "ERROR: failed to start the VM."
@@ -659,9 +627,9 @@ EOM
     ${CRC_COMMAND} stop
     _NEED_VM_START="true"
 
+    get_installer
     if ! which virt-resize > /dev/null 2>&1 ; then
       echo "To set the virtual disk size, you need 'virt-resize' installed from the 'libguestfs-tools' package."
-      get_installer
       eval ${INSTALLER} install libguestfs-tools
     fi
 
@@ -689,14 +657,14 @@ EOM
 
   if [ "${_NEED_VM_START}" == "true" ]; then
     echo "Restarting the VM to pick up the new configuration."
-    ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH}
+    ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
     if [ "$?" != "0" ]; then
       echo "ERROR: failed to restart the VM."
       exit 1
     fi
-    echo -n "Waiting for OpenShift console at https://console-openshift-console.apps.tt.testing ..."
+    echo -n "Waiting for OpenShift console at https://console-openshift-console.apps-crc.testing ..."
     sleep 5
-    while ! curl --head -s -k https://console-openshift-console.apps.tt.testing | head -n 1 | grep -q "200[[:space:]]*OK"
+    while ! curl --head -s -k https://console-openshift-console.apps-crc.testing | head -n 1 | grep -q "200[[:space:]]*OK"
     do
       sleep 5
       echo -n "."
@@ -743,7 +711,7 @@ EOM
   select yn in "Yes" "No"; do
     case $yn in
       Yes )
-        echo Will assign the cluster-admin role to the admin user.
+        echo Will assign the cluster-admin role to the kiali user.
         ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin kiali
         _CREATE_INSTALLATION_RESOURCE="true"
         break;;
@@ -867,8 +835,8 @@ elif [ "$_CMD" = "status" ];then
 
 elif [ "$_CMD" = "ssh" ];then
 
-  echo "Will SSH into the CRC VM...use password 'coreos'"
-  ssh core@192.168.130.11
+  echo "Logging into the CRC VM..."
+  ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@192.168.130.11
 
 else
   echo "ERROR: Required command must be either: start, stop, delete, status."
