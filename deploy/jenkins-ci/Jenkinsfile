@@ -160,6 +160,16 @@ node('kiali-build') {
         }
       }
 
+      stage('Create release cut in front-end repo') {
+        if ( buildUi ) {
+          withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
+            sshagent(['kiali-bot-gh-ssh']) {
+              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
+            }
+          }
+        }
+      }
+
       stage('Release Kiali to Container Repositories') {
         withCredentials([usernamePassword(credentialsId: 'kiali-docker', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER'), usernamePassword(credentialsId: 'kiali-quay', passwordVariable: 'QUAY_PASSWORD', usernameVariable: 'QUAY_USER')]) {
           sh "make -f ${backendMakefile} -C ${backendDir} backend-push-docker"
@@ -168,13 +178,10 @@ node('kiali-build') {
         }
       }
 
-      stage('Create tags and push to Git') {
+      stage('Create release cut in back-end repo') {
         withCredentials([string(credentialsId: 'kiali-bot-gh-token', variable: 'GH_TOKEN')]) {
           sshagent(['kiali-bot-gh-ssh']) {
             sh "make -f ${backendMakefile} -C ${backendDir} backend-push-version-tag backend-prepare-next-version"
-            if ( buildUi ) {
-              sh "make -f ${uiMakefile} -C ${uiDir} ui-push-version-tag ui-prepare-next-version"
-            }
           }
         }
       }
