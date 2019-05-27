@@ -101,11 +101,13 @@ func main() {
 
 	// check if Jaeger is available
 	// we need first discover Jaeger
-	status.DiscoverJaeger()
-	_, err := business.GetServices()
-	if err != nil {
-		business.JaegerAvailable = false
-		log.Errorf("Jaeger is not available : %s", err)
+	if config.Get().ExternalServices.Tracing.Enabled {
+		status.DiscoverJaeger()
+		_, err := business.GetServices()
+		if err != nil {
+			business.JaegerAvailable = false
+			log.Errorf("Jaeger is not available : %s", err)
+		}
 	}
 
 	// Start listening to requests
