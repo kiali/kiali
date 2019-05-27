@@ -155,7 +155,7 @@ spec:
 #    ---
 #    grafana:
 #      api_key: ""
-#      display_link: "true"
+#      display_link: true
 #      password: ""
 #      service: "grafana"
 #      service_dashboard_pattern: "Istio%20Service%20Dashboard"
@@ -198,7 +198,7 @@ spec:
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 #    ---
 #    tracing:
-#      enabled: "true"
+#      enabled: true
 #      namespace: ""
 #      service : ""
 #      url: ""
