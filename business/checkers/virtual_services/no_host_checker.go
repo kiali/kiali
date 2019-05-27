@@ -89,11 +89,14 @@ func (n NoHostChecker) checkDestination(sHost, protocol string) bool {
 			}
 		}
 	}
-	if protocols, found := n.ServiceEntryHosts[sHost]; found {
-		for _, prot := range protocols {
-			if prot == strings.ToLower(protocol) {
-				return true
-			}
+	// Check ServiceEntries
+	for k := range n.ServiceEntryHosts {
+		hostKey := k
+		if i := strings.Index(k, "*"); i > -1 {
+			hostKey = k[i+1:]
+		}
+		if strings.HasSuffix(sHost, hostKey) {
+			return true
 		}
 	}
 	return false

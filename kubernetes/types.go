@@ -777,35 +777,39 @@ type Host struct {
 	CompleteInput bool
 }
 
-// Parse takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
+// ParseHost takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
 func ParseHost(hostName, namespace, cluster string) Host {
+	if cluster == "" {
+		cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
+	}
+
 	domainParts := strings.Split(hostName, ".")
 	host := Host{
 		Service: domainParts[0],
 	}
 	if len(domainParts) > 1 {
-		host.Namespace = domainParts[1]
-
 		if len(domainParts) > 2 {
-			host.Cluster = strings.Join(domainParts[2:], ".")
-			host.CompleteInput = true
+			parsedClusterName := strings.Join(domainParts[2:], ".")
+			if parsedClusterName == cluster {
+				// FQDN input
+				host.Cluster = cluster
+				host.CompleteInput = true
+			}
+		}
+
+		if host.CompleteInput {
+			host.Namespace = domainParts[1]
+		} else {
+			// ServiceEntry or broken hostname
+			host.Service = hostName
 		}
 	} else {
+		// Simple format
+		host.Namespace = namespace
+		host.Cluster = cluster
 		host.CompleteInput = true
 	}
 
-	// Fill in missing details, we take precedence from the full hostname and not from DestinationRule details
-	if host.Cluster == "" {
-		if cluster != "" {
-			host.Cluster = cluster
-		} else {
-			host.Cluster = config.Get().ExternalServices.Istio.IstioIdentityDomain
-		}
-	}
-
-	if host.Namespace == "" {
-		host.Namespace = namespace
-	}
 	return host
 }
 

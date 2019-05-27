@@ -216,3 +216,23 @@ func TestSNIProxyExample(t *testing.T) {
 	assert.True(valid)
 	assert.Empty(validations)
 }
+
+func TestWildcardServiceEntry(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	dr := data.CreateEmptyDestinationRule("test", "disable-mtls-for-sni-proxy", "sni-proxy.local")
+	se := data.AddPortDefinitionToServiceEntry(data.CreateEmptyPortDefinition(8443, "tcp", "TCP"),
+		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"*.local"}))
+
+	validations, valid := NoDestinationChecker{
+		Namespace:       "test",
+		ServiceEntries:  kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{se}),
+		DestinationRule: dr,
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}

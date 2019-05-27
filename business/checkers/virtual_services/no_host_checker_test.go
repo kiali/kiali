@@ -106,3 +106,35 @@ func TestValidServiceEntryHost(t *testing.T) {
 	assert.True(valid)
 	assert.Empty(validations)
 }
+
+func TestValidWildcardServiceEntryHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	virtualService := data.AddRoutesToVirtualService("http", data.CreateRoute("www.google.com", "v1", -1),
+		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
+
+	validations, valid := NoHostChecker{
+		Namespace:      "google",
+		ServiceNames:   []string{"duckduckgo"},
+		VirtualService: virtualService,
+	}.Check()
+
+	assert.False(valid)
+	assert.NotEmpty(validations)
+
+	// Add ServiceEntry for validity
+	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
+
+	validations, valid = NoHostChecker{
+		Namespace:         "google",
+		ServiceNames:      []string{"duckduckgo"},
+		VirtualService:    virtualService,
+		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]kubernetes.IstioObject{serviceEntry}),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
