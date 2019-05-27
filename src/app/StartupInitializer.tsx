@@ -12,7 +12,12 @@ interface InitializerComponentProps {
   onInitializationFinished: () => void;
 }
 
-class InitializerComponent extends React.Component<InitializerComponentProps, { errorMsg?: string }> {
+interface InitializerComponentState {
+  errorMsg?: string;
+  errorDetails?: string;
+}
+
+class InitializerComponent extends React.Component<InitializerComponentProps, InitializerComponentState> {
   constructor(props: InitializerComponentProps) {
     super(props);
     this.state = {};
@@ -23,7 +28,7 @@ class InitializerComponent extends React.Component<InitializerComponentProps, { 
   }
 
   render() {
-    return <InitializingScreen errorMsg={this.state.errorMsg} />;
+    return <InitializingScreen errorMsg={this.state.errorMsg} errorDetails={this.state.errorDetails} />;
   }
 
   private fetchAuthenticationConfig = async () => {
@@ -44,7 +49,18 @@ class InitializerComponent extends React.Component<InitializerComponentProps, { 
 
       this.props.onInitializationFinished();
     } catch (err) {
-      this.setState({ errorMsg: API.getErrorMsg('Initialization failed', err) });
+      let errDetails: string | undefined;
+      if (err.request) {
+        const response = (err.request as XMLHttpRequest).responseText;
+        if (response.trim().length > 0) {
+          errDetails = response;
+        }
+      }
+
+      this.setState({
+        errorMsg: API.getErrorMsg('Initialization failed', err),
+        errorDetails: errDetails
+      });
     }
   };
 }
