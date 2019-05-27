@@ -116,6 +116,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "More than one Gateway for the same host port combination",
 		Severity: WarningSeverity,
 	},
+	"gateways.selector": {
+		Message:  "No matching workload found for gateway selector in this namespace",
+		Severity: WarningSeverity,
+	},
 	"port.name.mismatch": {
 		Message:  "Port name must follow <protocol>[-suffix] form",
 		Severity: ErrorSeverity,
