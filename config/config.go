@@ -54,6 +54,7 @@ const (
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
 
+	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
 	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
 
@@ -143,10 +144,12 @@ type GrafanaConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	// EnableJaeger is false by default, in the discover feature will be true if the user set the configuration or Kiali found the service.
-	EnableJaeger bool   `yaml:"-"`
-	Namespace    string `yaml:"namespace"`
-	Service      string `yaml:"service"`
-	URL          string `yaml:"url"`
+	EnableJaeger bool `yaml:"-"`
+	// Enable autodiscover and Jaeger in Kiali
+	Enabled   bool   `yaml:"enabled"`
+	Namespace string `yaml:"namespace"`
+	Service   string `yaml:"service"`
+	URL       string `yaml:"url"`
 	// Path store the value of QUERY_BASE_PATH
 	Path string `yaml:"-"`
 }
@@ -286,8 +289,10 @@ func NewConfig() (c *Config) {
 	}
 
 	// Tracing Configuration
+	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
 	c.ExternalServices.Tracing.EnableJaeger = false
 	c.ExternalServices.Tracing.Path = ""
+	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, IstioDefaultNamespace))
 
 	// Istio Configuration

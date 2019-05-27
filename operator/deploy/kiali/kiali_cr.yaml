@@ -155,7 +155,7 @@ spec:
 #    ---
 #    grafana:
 #      api_key: ""
-#      display_link: "true"
+#      display_link: true
 #      password: ""
 #      service: "grafana"
 #      service_dashboard_pattern: "Istio%20Service%20Dashboard"
@@ -191,12 +191,14 @@ spec:
 #      url: ""
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger
+# enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 #    ---
 #    tracing:
+#      enabled: true
 #      namespace: ""
 #      service : ""
 #      url: ""
