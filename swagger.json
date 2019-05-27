@@ -4583,6 +4583,13 @@
           "type": "string",
           "x-go-name": "ResourceVersion"
         },
+        "selectors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Selectors"
+        },
         "type": {
           "type": "string",
           "x-go-name": "Type"
