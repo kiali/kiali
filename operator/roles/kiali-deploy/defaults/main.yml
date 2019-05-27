@@ -58,6 +58,7 @@ kiali_defaults:
       custom_metrics_url: ""
       url: ""
     tracing:
+      enabled: true
       namespace: ""
       service: ""
       url: ""

@@ -37,8 +37,18 @@ func getVersions() {
 		istioVersion,
 		prometheusVersion,
 		kubernetesVersion,
-		jaegerVersion,
-		grafanaVersion,
+	}
+
+	if config.Get().ExternalServices.Grafana.DisplayLink {
+		components = append(components, grafanaVersion)
+	} else {
+		log.Debugf("Grafana is disabled in Kiali by configuration")
+	}
+
+	if config.Get().ExternalServices.Tracing.Enabled {
+		components = append(components, jaegerVersion)
+	} else {
+		log.Debugf("Jaeger is disabled in Kiali by configuration")
 	}
 
 	for _, comp := range components {
