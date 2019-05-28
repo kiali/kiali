@@ -25,6 +25,10 @@ import history from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { mergeJsonPatch, getIstioObject } from '../../utils/IstioConfigUtils';
+import { style } from 'typestyle';
+
+const rightToolbarStyle = style({ float: 'right', marginTop: '8px' });
+const navStyle = style({ paddingTop: '8px' });
 
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
@@ -274,7 +278,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const istioObject = getIstioObject(this.state.istioObjectDetails);
 
     return (
-      <span style={{ float: 'right' }}>
+      <span className={rightToolbarStyle}>
         <IstioActionDropdown
           objectKind={istioObject ? istioObject.kind : undefined}
           objectName={this.props.match.params.object}
@@ -327,7 +331,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         onSelect={this.tabSelectHandler('list')}
       >
         <div>
-          <Nav bsClass="nav nav-tabs nav-tabs-pf">
+          <Nav bsClass={`nav nav-tabs nav-tabs-pf ${navStyle}`}>
             {this.hasOverview() ? (
               <NavItem eventKey="overview">
                 <div>Overview</div>
