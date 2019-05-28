@@ -197,6 +197,33 @@
         }
       }
     },
+    "/mesh/tls": {
+      "get": {
+        "description": "Get TLS status for the whole mesh",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "tls"
+        ],
+        "operationId": "meshTls",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/meshTlsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalError"
+          }
+        }
+      }
+    },
     "/namespaces": {
       "get": {
         "description": "Endpoint to get the list of the available namespaces",
@@ -5778,6 +5805,12 @@
       "description": "Return all the descriptor data related to Grafana",
       "schema": {
         "$ref": "#/definitions/JaegerInfo"
+      }
+    },
+    "meshTlsResponse": {
+      "description": "Return the mTLS status of the whole Mesh",
+      "schema": {
+        "$ref": "#/definitions/MTLSStatus"
       }
     },
     "metricsResponse": {

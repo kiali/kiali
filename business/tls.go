@@ -20,24 +20,27 @@ const (
 	MTLSDisabled         = "MTLS_DISABLED"
 )
 
-func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (string, error) {
+func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus, error) {
 	mpp, mpErr := in.hasMeshPolicyEnabled(namespaces)
 	if mpErr != nil {
-		return "", mpErr
+		return models.MTLSStatus{}, mpErr
 	}
 
 	drp, drErr := in.hasDestinationRuleEnabled(namespaces)
 	if drErr != nil {
-		return "", drErr
+		return models.MTLSStatus{}, drErr
 	}
 
+	finalStatus := MTLSNotEnabled
 	if drp && mpp {
-		return MTLSEnabled, nil
+		finalStatus = MTLSEnabled
 	} else if drp || mpp {
-		return MTLSPartiallyEnabled, nil
+		finalStatus = MTLSPartiallyEnabled
 	}
 
-	return MTLSNotEnabled, nil
+	return models.MTLSStatus{
+		Status: finalStatus,
+	}, nil
 }
 
 func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
