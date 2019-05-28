@@ -10,11 +10,49 @@ import {
   LoginPageHeader,
   Spinner
 } from 'patternfly-react';
+import { style } from 'typestyle';
 import { isKioskMode } from '../utils/SearchParamUtils';
+
+type initializingScreenProps = {
+  errorMsg?: string;
+  errorDetails?: string;
+};
 
 const kialiTitle = require('../assets/img/logo-login.svg');
 
-const InitializingScreen: React.FC<{ errorMsg?: string }> = (props: { errorMsg?: string }) => {
+const defaultErrorStyle = style({
+  $nest: {
+    '& p:last-of-type': {
+      textAlign: 'right'
+    },
+    '& textarea, & hr': {
+      display: 'none'
+    }
+  }
+});
+
+const expandedErrorStyle = style({
+  $nest: {
+    '& p:last-of-type': {
+      display: 'none'
+    },
+    '& textarea': {
+      width: '100%',
+      whiteSpace: 'pre'
+    }
+  }
+});
+
+const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
+  const errorDiv = React.createRef<HTMLDivElement>();
+
+  const onClickHandler = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (errorDiv.current) {
+      errorDiv.current.setAttribute('class', expandedErrorStyle);
+    }
+  };
+
   if (document.documentElement) {
     document.documentElement.className = isKioskMode() ? 'kiosk' : '';
   }
@@ -27,8 +65,23 @@ const InitializingScreen: React.FC<{ errorMsg?: string }> = (props: { errorMsg?:
           <LoginCard>
             <LoginCardHeader>
               {props.errorMsg ? (
-                <div>
-                  <Icon type="pf" name="error-circle-o" /> {props.errorMsg}
+                <div ref={errorDiv} className={defaultErrorStyle}>
+                  <p>
+                    <Icon type="pf" name="error-circle-o" /> {props.errorMsg}
+                  </p>
+                  {props.errorDetails ? (
+                    <>
+                      <p>
+                        <a href="#" onClick={onClickHandler}>
+                          Show details
+                        </a>
+                      </p>
+                      <hr />
+                      <textarea readOnly={true} rows={10}>
+                        {props.errorDetails}
+                      </textarea>
+                    </>
+                  ) : null}
                 </div>
               ) : (
                 <>
