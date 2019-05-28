@@ -13,8 +13,8 @@
 # everything under a main "kiali_vars" dictionary.
 
 kiali_vars:
-  installation_tag: "{{ kiali_defaults.installation_tag }}"
-  istio_namespace: "{{ kiali_defaults.istio_namespace }}"
+  installation_tag: "{{ installation_tag | default(kiali_defaults.installation_tag) }}"
+  istio_namespace: "{{ istio_namespace | default(kiali_defaults.istio_namespace) }}"
 
   api: |
     {%- if api is defined and api is iterable -%}
