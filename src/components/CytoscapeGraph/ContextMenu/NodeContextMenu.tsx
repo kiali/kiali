@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { ContextMenuNodeProps } from '../CytoscapeContextMenu';
+import { NodeContextMenuProps } from '../CytoscapeContextMenu';
 import history from '../../../app/History';
 
-export class ContextMenuNodeComponent extends React.PureComponent<ContextMenuNodeProps> {
+export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps> {
   // @todo: We need take care of this at global app level
-  private static makeDetailsPageUrl(props: ContextMenuNodeProps) {
+  private static makeDetailsPageUrl(props: NodeContextMenuProps) {
     const namespace = props.namespace;
     const nodeType = props.nodeType;
     const workload = props.workload;
@@ -23,7 +23,7 @@ export class ContextMenuNodeComponent extends React.PureComponent<ContextMenuNod
 
   render() {
     const version = this.props.version ? `${this.props.version}` : '';
-    const detailsPageUrl = ContextMenuNodeComponent.makeDetailsPageUrl(this.props);
+    const detailsPageUrl = NodeContextMenu.makeDetailsPageUrl(this.props);
     return (
       <div className="kiali-graph-context-menu-container">
         <div className="kiali-graph-context-menu-title">

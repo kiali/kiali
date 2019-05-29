@@ -4,9 +4,9 @@ import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
 
 type Props = {
-  groupContextMenuContent?: ContextMenuNodeComponent;
-  nodeContextMenuContent?: ContextMenuNodeComponent;
-  edgeContextMenuContent?: ContextMenuEdgeComponent;
+  groupContextMenuContent?: NodeContextMenuType;
+  nodeContextMenuContent?: NodeContextMenuType;
+  edgeContextMenuContent?: EdgeContextMenuType;
 };
 
 type ContextMenuContainer = HTMLDivElement & {
@@ -20,11 +20,11 @@ type ContextMenuProps = {
   contextMenu: TippyInstance;
 };
 
-export type ContextMenuNodeProps = DecoratedGraphNodeData & ContextMenuProps;
-export type ContextMenuEdgeProps = DecoratedGraphEdgeData & ContextMenuProps;
+export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps;
+export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 
-export type ContextMenuNodeComponent = React.ComponentType<ContextMenuNodeProps>;
-export type ContextMenuEdgeComponent = React.ComponentType<ContextMenuEdgeProps>;
+export type NodeContextMenuType = React.ComponentType<NodeContextMenuProps>;
+export type EdgeContextMenuType = React.ComponentType<EdgeContextMenuProps>;
 
 // Keep the browser right-click menu from popping up since have our own context menu
 window.oncontextmenu = (event: MouseEvent) => {
@@ -40,7 +40,7 @@ window.oncontextmenu = (event: MouseEvent) => {
   return !isChildrenOfTippy(event.target as HTMLElement);
 };
 
-export class CytoscapeContextMenu extends React.PureComponent<Props> {
+export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   private readonly contextMenuRef: React.RefObject<ContextMenuContainer>;
 
   constructor(props: Props) {
@@ -58,20 +58,20 @@ export class CytoscapeContextMenu extends React.PureComponent<Props> {
           currentContextMenu.hide(0); // hide it in 0ms
         }
 
-        let contextMenuContent: ContextMenuEdgeComponent | ContextMenuNodeComponent | undefined;
+        let contextMenuComponentType: EdgeContextMenuType | NodeContextMenuType | undefined;
 
         if (event.target === cy) {
-          contextMenuContent = undefined;
+          contextMenuComponentType = undefined;
         } else if (event.target.isNode() && event.target.isParent()) {
-          contextMenuContent = this.props.groupContextMenuContent;
+          contextMenuComponentType = this.props.groupContextMenuContent;
         } else if (event.target.isNode()) {
-          contextMenuContent = this.props.nodeContextMenuContent;
+          contextMenuComponentType = this.props.nodeContextMenuContent;
         } else if (event.target.isEdge()) {
-          contextMenuContent = this.props.edgeContextMenuContent;
+          contextMenuComponentType = this.props.edgeContextMenuContent;
         }
 
-        if (contextMenuContent) {
-          this.makeContextMenu(contextMenuContent, event.target);
+        if (contextMenuComponentType) {
+          this.makeContextMenu(contextMenuComponentType, event.target);
         }
       }
       return false;
@@ -101,7 +101,7 @@ export class CytoscapeContextMenu extends React.PureComponent<Props> {
     return -30;
   }
 
-  private makeContextMenu(ContextMenuComponentClass: ContextMenuEdgeComponent | ContextMenuNodeComponent, target: any) {
+  private makeContextMenu(ContextMenuComponentClass: EdgeContextMenuType | NodeContextMenuType, target: any) {
     const content = this.contextMenuRef.current;
     const tippyInstance = tippy(target.popperRef(), {
       content: content as HTMLDivElement,
