@@ -32,7 +32,7 @@ var (
 func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int, err error) {
 	errorTraces = 0
 	err = nil
-	if !JaegerAvailable {
+	if !JaegerAvailable || !config.Get().ExternalServices.Tracing.Enabled {
 		return -1, errors.New("jaeger is not available")
 	}
 	if config.Get().ExternalServices.Tracing.EnableJaeger {
