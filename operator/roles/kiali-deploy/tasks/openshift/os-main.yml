@@ -27,6 +27,7 @@
     loop_var: role_namespace
   when:
   - is_openshift == True
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Process Kiali OAuth client on OpenShift
   include: openshift/os-oauth.yml

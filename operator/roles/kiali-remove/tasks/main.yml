@@ -42,7 +42,47 @@
     msg: "{{ msg.split('\n') }}"
   tags: test
 
-- name: "Delete Kiali resources"
+# When the Operator installed Kiali, the configmap has accessible_namespaces set.
+# There are no regexes in the configmap; they are all full namespace names.
+# NOTE: there is a special value of accessible_namespaces of two asterisks ("**")
+# which indicates Kiali is given access to all namespaces via a single cluster role
+# not individual roles in each accessible namespace.
+
+- name: Find current configmap, if it exists
+  ignore_errors: yes
+  set_fact:
+    current_configmap: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='v1', kind='ConfigMap') }}"
+- name: Find currently accessible namespaces
+  ignore_errors: yes
+  set_fact:
+    current_accessible_namespaces: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.accessible_namespaces') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
+- name: Delete all additional Kiali roles in current accessible namespaces
+  ignore_errors: yes
+  include_tasks: remove-roles.yml
+  when:
+  - is_openshift == True or is_k8s == True
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+  loop: "{{ current_accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+
+- name: Delete Kiali cluster roles
+  ignore_errors: yes
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-clusterroles.yml
+  when:
+  - is_openshift == True or is_k8s == True
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
+
+- name: Delete Kiali resources
   ignore_errors: yes
   k8s:
     state: absent
@@ -67,9 +107,8 @@
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ReplicaSet', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Pod', resource_name='kiali', api_version='v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Service', resource_name='kiali', api_version='v1') }}"
-  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='CustomResourceDefinition', resource_name='monitoringdashboards.monitoring.kiali.io', api_version='apiextensions.k8s.io/v1beta1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ServiceAccount', resource_name='kiali-service-account', api_version='v1') }}"
-  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='RoleBinding', resource_name='kiali', api_version='v1beta1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='RoleBinding', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Role', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Role', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
   - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ConfigMap', resource_name='kiali', api_version='v1') }}"
@@ -77,16 +116,7 @@
   loop_control:
     loop_var: k8s_item
 
-- name: "Delete all additional Kiali roles in all accessible namespaces"
-  ignore_errors: yes
-  include_tasks: remove-roles.yml
-  when:
-  - is_openshift == True or is_k8s == True
-  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
-  loop_control:
-    loop_var: role_namespace
-
-- name: "Delete OpenShift-specific Kiali resources"
+- name: Delete OpenShift-specific Kiali resources
   ignore_errors: yes
   k8s:
     state: absent
@@ -112,5 +142,6 @@
     loop_var: os_item
 
 - name: Kiali operator has completed all processing for removal.
+  ignore_errors: yes
   debug:
     msg: "KIALI REMOVAL IS DONE."

@@ -1,5 +1,5 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: {{ role_kind }}
 metadata:
   name: kiali
   namespace: {{ role_namespace }}

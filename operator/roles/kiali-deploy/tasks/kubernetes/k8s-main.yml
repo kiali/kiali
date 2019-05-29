@@ -26,4 +26,4 @@
     loop_var: role_namespace
   when:
   - is_k8s == True
-
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'

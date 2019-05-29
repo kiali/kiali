@@ -1,4 +1,4 @@
-- name: "Delete unused Kiali roles from previously accessible namespaces"
+- name: "Delete unused Kiali cluster roles"
   ignore_errors: yes
   k8s:
     state: absent
@@ -19,8 +19,8 @@
   - k8s_item.metadata is defined
   - k8s_item.metadata.name is defined
   with_items:
-  - "{{ query('k8s', namespace=role_namespace, kind='RoleBinding', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
-  - "{{ query('k8s', namespace=role_namespace, kind='Role', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
-  - "{{ query('k8s', namespace=role_namespace, kind='Role', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=role_namespace, kind='ClusterRoleBinding', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=role_namespace, kind='ClusterRole', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=role_namespace, kind='ClusterRole', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
   loop_control:
     loop_var: k8s_item

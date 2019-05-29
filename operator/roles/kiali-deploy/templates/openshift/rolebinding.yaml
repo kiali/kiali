@@ -1,5 +1,5 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: {{ role_binding_kind }}
 metadata:
   name: kiali
   namespace: {{ role_namespace }}
@@ -8,7 +8,7 @@ metadata:
     version: {{ kiali_vars.deployment.version_label }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: {{ role_kind }}
   name: {{ 'kiali-viewer' if kiali_vars.deployment.view_only_mode == True else 'kiali' }}
 subjects:
 - kind: ServiceAccount

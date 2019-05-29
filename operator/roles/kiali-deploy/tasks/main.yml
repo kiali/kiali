@@ -167,31 +167,50 @@
     msg: "IMAGE_NAME={{ kiali_vars.deployment.image_name }}; IMAGE VERSION={{ kiali_vars.deployment.image_version }}; VERSION LABEL={{ kiali_vars.deployment.version_label }}"
 
 # Determine the accessible namespaces. The user may have specified names using regex expressions.
-# We need to get a list of all namespaces and match them to the regex expressions
+# We need to get a list of all namespaces and match them to the regex expressions.
 # Note that we replace kiali_vars.deployment.accessible_namespaces with the full list of actual namespace names
 # with regex expressions removed because when the CR changes, we need to know what namespaces were granted roles in
 # case we need to revoke those roles (to do this, we need to know the exact names of the namespaces).
 # This must be done before the next step which is figuring out what namespaces are no longer accessible and revoking their roles.
+# NOTE: there is a special value of accessible_namespaces - two asterisks ("**") means Kiali is to be given access to all
+# namespaces via a single cluster role (as opposed to individual roles in each accessible namespace).
+
+- name: Determine the Role and RoleBinding kinds that the operator will create and that the role templates will use
+  set_fact:
+    role_kind: "{{ 'ClusterRole' if '**' in kiali_vars.deployment.accessible_namespaces else 'Role' }}"
+    role_binding_kind: "{{ 'ClusterRoleBinding' if '**' in kiali_vars.deployment.accessible_namespaces else 'RoleBinding' }}"
 
 - name: Find all namespaces (this is limited to what the operator has permission to see)
   set_fact:
     all_namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace') | default({}) | json_query('[].metadata.name') }}"
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Determine all accessible namespaces, expanding regex expressions to matched namespaces
   set_fact:
     all_accessible_namespaces: "{{ (all_accessible_namespaces | default([])) + [ item.1 | regex_search(item.0) ] }}"
   loop: "{{ kiali_vars.deployment.accessible_namespaces | product(all_namespaces) | list }}"
   when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
   - item.1 | regex_search(item.0)
 
 - fail:
     msg: "Kiali has not been granted access to any namespaces. Check the deployment.accessible_namespaces setting."
   when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
   - all_accessible_namespaces is not defined or all_accessible_namespaces | length < 1
 
 - fail:
     msg: "Kiali has not been granted access to its own namespace of [{{ kiali_vars.deployment.namespace }}]. This is explicitly required. Check the deployment.accessible_namespaces setting."
-  when: kiali_vars.deployment.namespace not in all_accessible_namespaces
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.deployment.namespace not in all_accessible_namespaces
+
+- name: If accessible namespaces list has the special all-namespaces indicator, remove all other namespaces from the list
+  set_fact:
+    all_accessible_namespaces: ["**"]
+  when:
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
 
 - name: Set deployment.accessible_namespaces to a list of full namespace names
   set_fact:
@@ -221,14 +240,23 @@
     no_longer_accessible_namespaces: "{{ current_accessible_namespaces | difference(kiali_vars.deployment.accessible_namespaces) }}"
   when:
   - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
 
-- name: Remove all roles from namespaces that Kiali no longer has access to
+- name: Delete all additional Kiali roles from namespaces that Kiali no longer has access to
   include_tasks: remove-roles.yml
   loop: "{{ no_longer_accessible_namespaces }}"
   loop_control:
     loop_var: role_namespace
   when:
   - no_longer_accessible_namespaces is defined
+
+- name: Delete Kiali cluster roles if no longer given special access to all namespaces
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-clusterroles.yml
+  when:
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
 
 # Now deploy all resources for the specific cluster environment
 
