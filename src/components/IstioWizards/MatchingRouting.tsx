@@ -224,6 +224,17 @@ class MatchingRouting extends React.Component<Props, State> {
     return matchAll;
   };
 
+  componentDidMount() {
+    if (this.props.initRules.length > 0) {
+      this.setState(
+        {
+          rules: this.props.initRules
+        },
+        () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
+      );
+    }
+  }
+
   render() {
     return (
       <>

@@ -23,9 +23,12 @@ import { KialiAppState } from '../../store/Store';
 import PfTitle from '../../components/Pf/PfTitle';
 import { DurationInSeconds } from '../../types/Common';
 import { durationSelector } from '../../store/Selectors';
+import { PromisesRegistry } from '../../utils/CancelablePromises';
+import Namespace from '../../types/Namespace';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
+  gateways: string[];
   trafficData: GraphDefinition | null;
   validations: Validations;
   threeScaleInfo: ThreeScaleInfo;
@@ -73,10 +76,13 @@ const emptyService = {
 };
 
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
+  private promises = new PromisesRegistry();
+
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
       serviceDetailsInfo: emptyService,
+      gateways: [],
       trafficData: null,
       validations: {},
       threeScaleInfo: {
@@ -88,6 +94,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         }
       }
     };
+  }
+
+  componentWillUnmount() {
+    this.promises.cancelAll();
   }
 
   servicePageURL(parsedSearch?: ParsedSearch) {
@@ -166,6 +176,33 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 
   fetchBackend = () => {
+    this.promises.cancelAll();
+    this.promises
+      .register('namespaces', API.getNamespaces())
+      .then(namespacesResponse => {
+        const namespaces: Namespace[] = namespacesResponse.data;
+        this.promises
+          .registerAll('gateways', namespaces.map(ns => API.getIstioConfig(ns.name, ['gateways'], false)))
+          .then(responses => {
+            let gatewayList: string[] = [];
+            responses.forEach(response => {
+              const ns = response.data.namespace;
+              response.data.gateways.forEach(gw => {
+                gatewayList = gatewayList.concat(ns.name + '/' + gw.metadata.name);
+              });
+            });
+            this.setState({
+              gateways: gatewayList
+            });
+          })
+          .catch(gwError => {
+            MessageCenter.add(API.getErrorMsg('Could not fetch Namespaces list', gwError));
+          });
+      })
+      .catch(error => {
+        MessageCenter.add(API.getErrorMsg('Could not fetch Namespaces list', error));
+      });
+
     const promiseDetails = API.getServiceDetail(
       this.props.match.params.namespace,
       this.props.match.params.service,
@@ -316,6 +353,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   namespace={this.props.match.params.namespace}
                   service={this.props.match.params.service}
                   serviceDetails={this.state.serviceDetailsInfo}
+                  gateways={this.state.gateways}
                   validations={this.state.validations}
                   onRefresh={this.doRefresh}
                   activeTab={this.activeTab}

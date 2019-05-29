@@ -27,6 +27,7 @@ type Props = {
   workloads: WorkloadOverview[];
   virtualServices: VirtualServices;
   destinationRules: DestinationRules;
+  gateways: string[];
   tlsStatus?: TLSStatus;
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
@@ -328,6 +329,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
           })}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
+          gateways={this.props.gateways}
           threeScaleServiceRule={this.props.threeScaleServiceRule}
           tlsStatus={this.props.tlsStatus}
           onClose={this.onClose}

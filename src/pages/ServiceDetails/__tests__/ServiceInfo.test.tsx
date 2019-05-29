@@ -16,6 +16,7 @@ describe('#ServiceInfo render correctly with data', () => {
           namespace="istio-system"
           service="reviews"
           serviceDetails={data}
+          gateways={[]}
           validations={data.validations}
           onRefresh={jest.fn()}
           onSelectTab={jest.fn()}

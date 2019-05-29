@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Wizard } from 'patternfly-react';
+import { Button, ExpandCollapse, Wizard } from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -11,11 +11,14 @@ import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 import { Rule } from './MatchingRouting/Rules';
 import {
   buildIstioConfig,
+  getInitGateway,
+  getInitHosts,
   getInitLoadBalancer,
   getInitRules,
   getInitSuspendedRoutes,
   getInitTlsMode,
   getInitWeights,
+  hasGateway,
   WIZARD_MATCHING_ROUTING,
   WIZARD_SUSPEND_TRAFFIC,
   WIZARD_THREESCALE_INTEGRATION,
@@ -29,6 +32,16 @@ import { Response } from '../../services/Api';
 import { MessageType } from '../../types/MessageCenter';
 import ThreeScaleIntegration from './ThreeScaleIntegration';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
+import { style } from 'typestyle';
+import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
+
+const expandStyle = style({
+  $nest: {
+    ['.btn']: {
+      fontSize: '14px'
+    }
+  }
+});
 
 class IstioWizard extends React.Component<WizardProps, WizardState> {
   constructor(props: WizardProps) {
@@ -101,7 +114,11 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       case WIZARD_WEIGHTED_ROUTING:
       case WIZARD_MATCHING_ROUTING:
       case WIZARD_SUSPEND_TRAFFIC:
-        const [dr, vs] = buildIstioConfig(this.props, this.state);
+        const [dr, vs, gw] = buildIstioConfig(this.props, this.state);
+        // Gateway is only created when user has explicit selected this option
+        if (gw) {
+          promises.push(API.createIstioConfigDetail(this.props.namespace, 'gateways', JSON.stringify(gw)));
+        }
         if (this.props.update) {
           promises.push(
             API.updateIstioConfigDetail(this.props.namespace, 'destinationrules', dr.metadata.name, JSON.stringify(dr))
@@ -109,6 +126,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
           promises.push(
             API.updateIstioConfigDetail(this.props.namespace, 'virtualservices', vs.metadata.name, JSON.stringify(vs))
           );
+          // Note that Gateways are not updated from the Wizard, only the VS hosts/gateways sections are updated
         } else {
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'destinationrules', JSON.stringify(dr)));
           promises.push(API.createIstioConfigDetail(this.props.namespace, 'virtualservices', JSON.stringify(vs)));
@@ -174,6 +192,13 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     });
   };
 
+  onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
+    this.setState({
+      valid: valid,
+      gateway: gateway
+    });
+  };
+
   onWeightsChange = (valid: boolean, workloads: WorkloadWeight[]) => {
     this.setState({
       valid: valid,
@@ -203,6 +228,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
   };
 
   render() {
+    const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     return (
       <Wizard show={this.state.showWizard} onHide={this.onClose}>
         <Wizard.Header
@@ -254,14 +280,29 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
                 {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
                   this.props.type === WIZARD_MATCHING_ROUTING ||
                   this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
-                  <TrafficPolicyContainer
-                    mtlsMode={this.state.mtlsMode}
-                    loadBalancer={this.state.loadBalancer}
-                    onTlsChange={this.onTLS}
-                    onLoadbalancerChange={this.onLoadBalancer}
+                  <ExpandCollapse
+                    className={expandStyle}
+                    textCollapsed="Show Advanced Options"
+                    textExpanded="Hide Advanced Options"
                     expanded={false}
-                    nsWideStatus={this.props.tlsStatus}
-                  />
+                  >
+                    <TrafficPolicyContainer
+                      mtlsMode={this.state.mtlsMode}
+                      loadBalancer={this.state.loadBalancer}
+                      onTlsChange={this.onTLS}
+                      onLoadbalancerChange={this.onLoadBalancer}
+                      nsWideStatus={this.props.tlsStatus}
+                    />
+                    <GatewaySelector
+                      serviceName={this.props.serviceName}
+                      hasGateway={hasGateway(this.props.virtualServices)}
+                      vsHosts={getInitHosts(this.props.virtualServices)}
+                      gateway={gatewaySelected}
+                      isMesh={isMesh}
+                      gateways={this.props.gateways}
+                      onGatewayChange={this.onGateway}
+                    />
+                  </ExpandCollapse>
                 )}
               </Wizard.Contents>
             </Wizard.Main>

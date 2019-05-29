@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Col, ControlLabel, DropdownButton, ExpandCollapse, Icon, MenuItem, Row } from 'patternfly-react';
-import { style } from 'typestyle';
+import { Col, ControlLabel, DropdownButton, Form, FormGroup, Icon, MenuItem } from 'patternfly-react';
 import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 import { KialiAppState } from '../../store/Store';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
@@ -23,31 +22,11 @@ type Props = ReduxProps & {
   loadBalancer: string;
   onTlsChange: (mtlsMode: string) => void;
   onLoadbalancerChange: (loadbalancer: string) => void;
-  expanded: boolean;
   nsWideStatus?: TLSStatus;
 };
 
-const tlsStyle = style({
-  marginTop: 20,
-  marginLeft: 20,
-  marginRight: 20
-});
-
-const lbStyle = style({
-  marginLeft: 40,
-  marginRight: 20
-});
-
 const tlsIconType = 'pf';
 const tlsIconName = 'locked';
-
-const expandStyle = style({
-  $nest: {
-    ['.btn']: {
-      fontSize: '14px'
-    }
-  }
-});
 
 class TrafficPolicy extends React.Component<Props> {
   constructor(props: Props) {
@@ -75,17 +54,12 @@ class TrafficPolicy extends React.Component<Props> {
       </MenuItem>
     ));
     return (
-      <ExpandCollapse
-        className={expandStyle}
-        textCollapsed="Show Advanced Options"
-        textExpanded="Hide Advanced Options"
-        expanded={this.props.expanded}
-      >
-        <Row>
-          <Col sm={12}>
-            <ControlLabel className={tlsStyle}>
-              <Icon type={tlsIconType} name={tlsIconName} /> TLS
-            </ControlLabel>
+      <Form horizontal={true}>
+        <FormGroup controlId="tls" disabled={false}>
+          <Col componentClass={ControlLabel} sm={3}>
+            <Icon type={tlsIconType} name={tlsIconName} /> TLS
+          </Col>
+          <Col sm={9}>
             <DropdownButton
               bsStyle="default"
               title={this.props.mtlsMode}
@@ -94,7 +68,13 @@ class TrafficPolicy extends React.Component<Props> {
             >
               {tlsMenuItems}
             </DropdownButton>
-            <ControlLabel className={lbStyle}>LoadBalancer</ControlLabel>
+          </Col>
+        </FormGroup>
+        <FormGroup controlId="loadBalancer" disabled={false}>
+          <Col componentClass={ControlLabel} sm={3}>
+            LoadBalancer
+          </Col>
+          <Col sm={9}>
             <DropdownButton
               bsStyle="default"
               title={this.props.loadBalancer}
@@ -104,8 +84,8 @@ class TrafficPolicy extends React.Component<Props> {
               {lbMenuItems}
             </DropdownButton>
           </Col>
-        </Row>
-      </ExpandCollapse>
+        </FormGroup>
+      </Form>
     );
   }
 }

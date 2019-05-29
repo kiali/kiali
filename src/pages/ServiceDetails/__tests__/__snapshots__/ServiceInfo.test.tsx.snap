@@ -14,6 +14,7 @@ ShallowWrapper {
         ],
       }
     }
+    gateways={Array []}
     namespace="istio-system"
     onRefresh={[MockFunction]}
     onSelectTab={
@@ -308,6 +309,7 @@ ShallowWrapper {
                       },
                     }
                   }
+                  gateways={Array []}
                   namespace="istio-system"
                   onChange={[MockFunction]}
                   serviceName="reviews"
@@ -710,6 +712,7 @@ ShallowWrapper {
                         },
                       }
                     }
+                    gateways={Array []}
                     namespace="istio-system"
                     onChange={[MockFunction]}
                     serviceName="reviews"
@@ -1106,6 +1109,7 @@ ShallowWrapper {
                         },
                       }
                     }
+                    gateways={Array []}
                     namespace="istio-system"
                     onChange={[MockFunction]}
                     serviceName="reviews"
@@ -1241,6 +1245,7 @@ ShallowWrapper {
                         },
                       }
                     }
+                    gateways={Array []}
                     namespace="istio-system"
                     onChange={[MockFunction]}
                     serviceName="reviews"
@@ -1371,6 +1376,7 @@ ShallowWrapper {
                           },
                         }
                       }
+                      gateways={Array []}
                       namespace="istio-system"
                       onChange={[MockFunction]}
                       serviceName="reviews"
@@ -1522,6 +1528,7 @@ ShallowWrapper {
                           "update": false,
                         },
                       },
+                      "gateways": Array [],
                       "namespace": "istio-system",
                       "onChange": [MockFunction],
                       "serviceName": "reviews",
@@ -3104,6 +3111,7 @@ ShallowWrapper {
                         },
                       }
                     }
+                    gateways={Array []}
                     namespace="istio-system"
                     onChange={[MockFunction]}
                     serviceName="reviews"
@@ -3506,6 +3514,7 @@ ShallowWrapper {
                           },
                         }
                       }
+                      gateways={Array []}
                       namespace="istio-system"
                       onChange={[MockFunction]}
                       serviceName="reviews"
@@ -3902,6 +3911,7 @@ ShallowWrapper {
                           },
                         }
                       }
+                      gateways={Array []}
                       namespace="istio-system"
                       onChange={[MockFunction]}
                       serviceName="reviews"
@@ -4037,6 +4047,7 @@ ShallowWrapper {
                           },
                         }
                       }
+                      gateways={Array []}
                       namespace="istio-system"
                       onChange={[MockFunction]}
                       serviceName="reviews"
@@ -4167,6 +4178,7 @@ ShallowWrapper {
                             },
                           }
                         }
+                        gateways={Array []}
                         namespace="istio-system"
                         onChange={[MockFunction]}
                         serviceName="reviews"
@@ -4318,6 +4330,7 @@ ShallowWrapper {
                             "update": false,
                           },
                         },
+                        "gateways": Array [],
                         "namespace": "istio-system",
                         "onChange": [MockFunction],
                         "serviceName": "reviews",

@@ -27,6 +27,7 @@ import { DurationDropdownContainer } from '../../components/DurationDropdown/Dur
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
+  gateways: string[];
   validations: Validations;
   onRefresh: () => void;
   onSelectTab: (tabName: string, postHandler?: (tabName: string) => void) => void;
@@ -146,6 +147,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   workloads={workloads}
                   virtualServices={virtualServices}
                   destinationRules={destinationRules}
+                  gateways={this.props.gateways}
                   tlsStatus={this.props.serviceDetails.namespaceMTLS}
                   onChange={this.props.onRefresh}
                   threeScaleInfo={this.props.threeScaleInfo}

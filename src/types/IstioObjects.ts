@@ -331,7 +331,7 @@ export interface TLSRoute {
 
 export interface VirtualServiceSpec {
   hosts?: string[];
-  gateways?: string[];
+  gateways?: string[] | null;
   http?: HTTPRoute[];
   tcp?: TCPRoute[];
   tls?: TLSRoute[];
@@ -366,7 +366,7 @@ export interface Gateway extends IstioObject {
 export interface Server {
   port: ServerPort;
   hosts: string[];
-  tls: TLSOptions;
+  tls?: TLSOptions;
 }
 
 export interface ServerPort {
