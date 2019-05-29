@@ -198,8 +198,8 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
     const childrenList = subsets.map(subset => (
       <li key={this.generateKey() + '_k' + subset.name} style={{ marginBottom: '13px' }}>
         <Row>
-          <Col xs={3}>
-            <span style={{ paddingRight: '10px', paddingTop: '3px' }}>{safeRender(subset.name)}</span>{' '}
+          <Col xs={3} style={{ marginTop: '3px' }}>
+            <span>{safeRender(subset.name)}</span>{' '}
           </Col>
           <Col xs={4}>
             <Labels labels={subset.labels} />
@@ -210,7 +210,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
         </Row>
       </li>
     ));
-    return <ul style={{ listStyleType: 'none', paddingLeft: '0px' }}>{childrenList}</ul>;
+    return <ul style={{ listStyleType: 'none', paddingLeft: '0px', marginTop: '11.5px' }}>{childrenList}</ul>;
   }
 
   renderTable() {
