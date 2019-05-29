@@ -9,11 +9,11 @@ type Props = {
   edgeContextMenuContent?: EdgeContextMenuType;
 };
 
-type ContextMenuContainer = HTMLDivElement & {
-  _contextMenu: any;
-};
-
 type TippyInstance = Instance;
+
+type ContextMenuContainer = HTMLDivElement & {
+  _contextMenu: TippyInstance;
+};
 
 type ContextMenuProps = {
   element: any;
@@ -26,20 +26,6 @@ export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type NodeContextMenuType = React.ComponentType<NodeContextMenuProps>;
 export type EdgeContextMenuType = React.ComponentType<EdgeContextMenuProps>;
 
-// Keep the browser right-click menu from popping up since have our own context menu
-window.oncontextmenu = (event: MouseEvent) => {
-  const isChildrenOfTippy = (target: HTMLElement | null) => {
-    if (target === null || target === document.body) {
-      return false;
-    } else if (target.className.startsWith('tippy')) {
-      return true;
-    }
-    return isChildrenOfTippy(target.parentElement);
-  };
-  // Ironically, the tippy-arrow and sometimes the tippy-tooltip itself (or their contents) are the one that triggers the context menu.
-  return !isChildrenOfTippy(event.target as HTMLElement);
-};
-
 export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   private readonly contextMenuRef: React.RefObject<ContextMenuContainer>;
 
@@ -47,6 +33,40 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     super(props);
     this.contextMenuRef = React.createRef<ContextMenuContainer>();
   }
+
+  componentDidMount() {
+    document.addEventListener('mouseup', this.handleDocumentMouseUp);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mouseup', this.handleDocumentMouseUp);
+  }
+
+  handleDocumentMouseUp = (event: MouseEvent) => {
+    if (event.button === 2) {
+      // Ignore mouseup of right button
+      return;
+    }
+    const currentContextMenu = this.getCurrentContextMenu();
+    if (currentContextMenu) {
+      // Allow interaction in our popper component (Selecting and copying) without it disappearing
+      if (event.target && currentContextMenu.popper.contains(event.target as Node)) {
+        return;
+      }
+      currentContextMenu.hide();
+    }
+  };
+
+  handleContextMenu = (event: any) => {
+    // Disable the context menu in popper
+    const currentContextMenu = this.getCurrentContextMenu();
+    if (currentContextMenu) {
+      if (event.target && currentContextMenu.popper.contains(event.target as Node)) {
+        event.preventDefault();
+      }
+    }
+    return true;
+  };
 
   // Connects cy to this component
   connectCy(cy: any) {
@@ -101,14 +121,24 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     return -30;
   }
 
+  private addContextMenuEventListener() {
+    document.addEventListener('contextmenu', this.handleContextMenu);
+  }
+
+  private removeContextMenuEventListener() {
+    document.removeEventListener('contextmenu', this.handleContextMenu);
+  }
+
   private makeContextMenu(ContextMenuComponentClass: EdgeContextMenuType | NodeContextMenuType, target: any) {
+    // Prevent the tippy content from picking up the right-click when we are moving it over to the edge/node
+    this.addContextMenuEventListener();
     const content = this.contextMenuRef.current;
     const tippyInstance = tippy(target.popperRef(), {
       content: content as HTMLDivElement,
       trigger: 'manual',
       arrow: true,
       placement: 'bottom',
-      hideOnClick: true,
+      hideOnClick: false,
       multiple: false,
       sticky: true,
       interactive: true,
@@ -123,6 +153,11 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       () => {
         this.setCurrentContextMenu(tippyInstance);
         tippyInstance.show();
+        // Schedule the removal of the contextmenu listener after finishing with the show procedure, so we can
+        // interact with the popper content e.g. select and copy (with right click) values from it.
+        setTimeout(() => {
+          this.removeContextMenuEventListener();
+        }, 0);
       }
     );
   }
