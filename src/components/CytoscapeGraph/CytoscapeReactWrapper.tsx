@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { GraphStyles } from './graphs/GraphStyles';
-import history from '../../app/History';
 
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
@@ -10,7 +9,6 @@ import dagre from 'cytoscape-dagre';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import GroupCompoundLayout from './Layout/GroupCompoundLayout';
 import popper from 'cytoscape-popper';
-import tippy from 'tippy.js';
 
 cytoscape.use(canvas);
 cytoscape.use(cycola);
@@ -25,12 +23,6 @@ type CytoscapeReactWrapperState = {};
 
 const styleContainer: React.CSSProperties = {
   height: '100%'
-};
-
-// Keep the browser right-click menu from popping up since have our own context menu
-window.oncontextmenu = () => {
-  // turn off browser right-click menus on Graph page only
-  return !window.location.pathname.includes('graph');
 };
 
 /**
@@ -51,36 +43,6 @@ window.oncontextmenu = () => {
 export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapperProps, CytoscapeReactWrapperState> {
   cy: any;
   divParentRef: any;
-
-  // @todo: We need take care of this at global app level
-  private static makeDetailsPageUrl(element: any) {
-    const data = element.data();
-    const namespace = data.namespace;
-    const nodeType = data.nodeType;
-    const workload = data.workload;
-    let app = data.app;
-    let urlNodeType = app;
-    if (nodeType === 'app') {
-      urlNodeType = 'applications';
-    } else if (nodeType === 'service') {
-      urlNodeType = 'services';
-    } else if (workload) {
-      urlNodeType = 'workloads';
-      app = workload;
-    }
-    return `/namespaces/${namespace}/${urlNodeType}/${app}`;
-  }
-
-  private static redirectContextLink(e: MouseEvent) {
-    e.preventDefault();
-    if (e.target) {
-      const anchor = e.target as HTMLAnchorElement;
-      const href = anchor.getAttribute('href');
-      if (href) {
-        history.push(href);
-      }
-    }
-  }
 
   constructor(props: CytoscapeReactWrapperProps) {
     super(props);
@@ -124,19 +86,6 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     };
 
     this.cy = cytoscape(opts);
-
-    this.cy.on('cxttapstart taphold', 'node[!isGroup]', (event: any) => {
-      event.preventDefault();
-      if (event.target) {
-        const tipNode = this.makeTippyForNode(event.target).instances[0];
-        // hide the tip after 6 seconds otherwise we can get a bunch of persistent tips
-        setTimeout(() => {
-          tipNode.hide();
-        }, 6000);
-        tipNode.show();
-        this.cy.on('destroy', () => tipNode.hide());
-      }
-    });
   }
 
   destroy() {
@@ -145,82 +94,4 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
       this.cy = null;
     }
   }
-
-  private makeTippyForNode = (node: any) => {
-    return tippy(node.popperRef(), {
-      content: (() => {
-        // Remember we on Tippy.js which is html over the cytoscape canvas -- not React JSX
-        // @todo: Refactor this to ReactDOM.render() to use JSX
-        const tippyDiv = document.createElement('div');
-        tippyDiv.setAttribute('class', 'kiali-graph-context-menu-container');
-        const divTitle = document.createElement('div');
-        divTitle.setAttribute('class', 'kiali-graph-context-menu-title');
-        const nodeData = node.data();
-        const version = nodeData.version ? `${nodeData.version}` : '';
-        divTitle.innerHTML = `<strong>${nodeData.app}</strong>:${version}`;
-
-        const detailsPageUrl = CytoscapeReactWrapper.makeDetailsPageUrl(node);
-        const divDetailsItem = document.createElement('div');
-        divDetailsItem.setAttribute('class', 'kiali-graph-context-menu-item');
-        divDetailsItem.innerHTML = `<a class='kiali-graph-context-menu-item-link' href="${detailsPageUrl}" >Show Details</a>`;
-        divDetailsItem.onclick = CytoscapeReactWrapper.redirectContextLink;
-
-        tippyDiv.append(divTitle);
-        tippyDiv.append(divDetailsItem);
-
-        return tippyDiv;
-      })(),
-      trigger: 'manual',
-      arrow: true,
-      placement: 'bottom',
-      hideOnClick: true,
-      multiple: false,
-      sticky: false,
-      interactive: true,
-      theme: 'light-border',
-      size: 'large'
-    });
-
-    /**
-     * Uncomment for Edge Context Menus; currently we don't have any use for edge menus
-     */
-    // const makeTippyForEdge: any = (node: any) => {
-    //   return tippy(node.popperRef(), {
-    //     content: (() => {
-    //       const tippyDiv = document.createElement('div');
-    //       tippyDiv.align = 'left';
-    //       const divTitle = document.createElement('div');
-    //       divTitle.setAttribute('align', 'center');
-    //       divTitle.innerHTML = `<strong>Edge Properties</strong>`;
-    //       const divProtocol = document.createElement('div');
-    //       const nodeData = node.data();
-    //       divProtocol.innerHTML = `<strong>Protocol:</strong> ${nodeData.protocol}`;
-    //       tippyDiv.append(divTitle);
-    //       tippyDiv.append(divProtocol);
-    //       return tippyDiv;
-    //     })(),
-    //     trigger: 'manual',
-    //     arrow: true,
-    //     followCursor: true,
-    //     placement: 'bottom',
-    //     distance: -45, // shouldn't have to do this but you do or else the tip is a couple cm below the edge
-    //     hideOnClick: true,
-    //     multiple: false,
-    //     sticky: false,
-    //     interactive: false,
-    //     theme: 'light-border',
-    //     size: 'large'
-    //   });
-    // };
-    //
-    // // add the 'tap' events to trigger tippy context menus for each edge
-    // this.cy.edges().each(edgeNode => {
-    //   edgeNode.on('cxttapstart taphold', (event: any) => {
-    //     if (event.target) {
-    //       const tipNode = makeTippyForEdge(edgeNode).instances[0];
-    //       tipNode.show();
-    //     }
-    //   });
-    // });
-  };
 }

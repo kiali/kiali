@@ -47,6 +47,7 @@ import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 import FocusAnimation from './FocusAnimation';
+import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -79,6 +80,9 @@ type CytoscapeGraphProps = ReduxProps & {
   containerClassName?: string;
   refresh: () => void;
   focusSelector?: string;
+  contextMenuNodeComponent?: NodeContextMenuType;
+  contextMenuGroupComponent?: NodeContextMenuType;
+  contextMenuEdgeComponent?: EdgeContextMenuType;
 };
 
 type CytoscapeGraphState = {};
@@ -109,6 +113,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private focusAnimation?: FocusAnimation;
   private focusFinished: boolean;
   private cytoscapeReactWrapperRef: any;
+  private contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
   private namespaceChanged: boolean;
   private nodeChanged: boolean;
   private resetSelection: boolean;
@@ -125,6 +130,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       zoom: undefined
     };
     this.cytoscapeReactWrapperRef = React.createRef();
+    this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
   }
 
   shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
@@ -213,6 +219,12 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           isLoading={this.props.isLoading}
           isError={this.props.isError}
         >
+          <CytoscapeContextMenuWrapper
+            ref={this.contextMenuRef}
+            edgeContextMenuContent={this.props.contextMenuEdgeComponent}
+            nodeContextMenuContent={this.props.contextMenuNodeComponent}
+            groupContextMenuContent={this.props.contextMenuGroupComponent}
+          />
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
         </EmptyGraphLayoutContainer>
       </div>
@@ -263,6 +275,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     this.cy = cy;
+
+    this.contextMenuRef!.current!.connectCy(this.cy);
 
     this.graphHighlighter = new GraphHighlighter(cy);
     this.trafficRenderer = new TrafficRender(cy, cy.edges());

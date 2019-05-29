@@ -39,6 +39,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import GraphDataThunkActions from '../../actions/GraphDataThunkActions';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
+import { NodeContextMenu } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -344,6 +345,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 ref={refInstance => this.setCytoscapeGraph(refInstance)}
                 isMTLSEnabled={this.props.mtlsEnabled}
                 focusSelector={focusSelector}
+                contextMenuNodeComponent={NodeContextMenu}
               />
               {this.props.graphData.nodes && Object.keys(this.props.graphData.nodes).length > 0 && !this.props.isError && (
                 <div className={cytoscapeToolbarWrapperDivStyle}>
