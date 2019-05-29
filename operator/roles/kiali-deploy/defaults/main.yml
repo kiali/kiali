@@ -40,6 +40,7 @@ kiali_defaults:
     grafana:
       api_key: ""
       display_link: true
+      in_cluster: true
       password: ""
       service: "grafana"
       service_dashboard_pattern: "Istio%20Service%20Dashboard"

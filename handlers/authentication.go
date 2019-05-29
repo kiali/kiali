@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
 
@@ -294,14 +294,11 @@ func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
 
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
-	saToken, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	saToken, err := kubernetes.GetKialiToken()
 	if err != nil {
 		return AuthenticationHandler{}, err
-	} else {
-		return AuthenticationHandler{
-			saToken: string(saToken),
-		}, nil
 	}
+	return AuthenticationHandler{saToken: saToken}, nil
 }
 
 func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {

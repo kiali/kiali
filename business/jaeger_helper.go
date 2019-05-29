@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/kiali/kiali/log"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 type Trace struct {

@@ -2,8 +2,8 @@ package status
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -12,18 +12,14 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// The Kiali ServiceAccount token.
-var saToken string
+var grafanaDiscoveredURL string
 
 var clientFactory kubernetes.ClientFactory
 
 func getClient() (kubernetes.IstioClientInterface, error) {
-	if saToken == "" {
-		token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-		if err != nil {
-			return nil, err
-		}
-		saToken = string(token)
+	saToken, err := kubernetes.GetKialiToken()
+	if err != nil {
+		return nil, err
 	}
 
 	if clientFactory == nil {
@@ -106,25 +102,24 @@ func checkTracingService() (url string, err error) {
 	if conf.ExternalServices.Tracing.Service != "" {
 		// We need discover the URL
 		service = conf.ExternalServices.Tracing.Service
-		url, err = discoverUrlService(ns, service)
+		url, err = discoverServiceURL(ns, service)
 	} else {
 		// User didn't set the service
 		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
 		// look in Tracing Default Service
-		url, err = discoverUrlService(ns, service)
+		url, err = discoverServiceURL(ns, service)
 		if err != nil {
 			// Look in jaeger Query Default Service
 			service := jaeger
-			url, err = discoverUrlService(ns, service)
+			url, err = discoverServiceURL(ns, service)
 			if err == nil {
-				log.Debugf("Kiali found Jaeger in %s", url)
+				log.Infof("Jaeger URL found: %s", url)
 			} else {
-				log.Debugf("Kiali didn't found Tracing/Jaerger")
+				log.Infof("Could not find Tracing/Jaeger")
 			}
 		} else {
-			log.Debugf("Kiali found Tracing in %s", url)
+			log.Infof("Tracing URL found: %s", url)
 		}
-
 	}
 
 	// The user set the service or We found the service in tracing or jaeger-query
@@ -168,28 +163,31 @@ func DiscoverJaeger() (url string, err error) {
 	return checkTracingService()
 }
 
-func DiscoverGrafana() (url string, err error) {
-	conf := config.Get()
-	// If display link is disable in Grafana configuration return empty string and avoid discover
-	if !conf.ExternalServices.Grafana.DisplayLink {
+// DiscoverGrafana will return the Grafana URL if it has been configured,
+// or will try to retrieve it if an OpenShift Route is defined.
+func DiscoverGrafana() (string, error) {
+	grafanaConf := config.Get().ExternalServices.Grafana
+	// If display link is disable in Grafana configuration return empty string and avoid discovery
+	if !grafanaConf.DisplayLink {
 		return "", nil
 	}
-	if conf.ExternalServices.Grafana.URL != "" {
-		return conf.ExternalServices.Grafana.URL, nil
+	if grafanaConf.URL != "" || !grafanaConf.InCluster {
+		return strings.TrimSuffix(grafanaConf.URL, "/"), nil
 	}
-	log.Debugf("Kiali is looking for Grafana service ...")
-	url, err = discoverUrlService(config.Get().ExternalServices.Grafana.ServiceNamespace, config.Get().ExternalServices.Grafana.Service)
+	if grafanaDiscoveredURL != "" {
+		return grafanaDiscoveredURL, nil
+	}
+	url, err := discoverServiceURL(grafanaConf.ServiceNamespace, grafanaConf.Service)
 	if err != nil {
-		log.Debugf("Kiali didn't found Grafana in service %s error: %s", config.Get().ExternalServices.Grafana.Service, err)
+		log.Infof("Could not find Grafana URL: %v", err)
 	} else {
-		log.Debugf("Kiali found Grafana in %s", url)
+		log.Infof("Grafana URL found: %s", url)
 	}
-	conf.ExternalServices.Grafana.URL = url
-	config.Set(conf)
-	return url, err
+	grafanaDiscoveredURL = strings.TrimSuffix(url, "/")
+	return grafanaDiscoveredURL, err
 }
 
-func discoverUrlService(ns string, service string) (url string, err error) {
+func discoverServiceURL(ns string, service string) (string, error) {
 	client, err := getClient()
 
 	if err != nil {
@@ -203,7 +201,6 @@ func discoverUrlService(ns string, service string) (url string, err error) {
 	host := route.Spec.Host
 	if route.Spec.TLS != nil {
 		return "https://" + host, nil
-	} else {
-		return "http://" + host, nil
 	}
+	return "http://" + host, nil
 }
