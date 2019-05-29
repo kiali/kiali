@@ -188,7 +188,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     if (iconName !== 'ok') {
       return (
         <OverlayTrigger
-          placement={'right'}
+          placement={'left'}
           overlay={this.infotipContent(checks)}
           trigger={['hover', 'focus']}
           rootClose={false}
