@@ -191,7 +191,7 @@ type p8sResponseVersion struct {
 func jaegerVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = "Jaeger"
-	product.Url, _ = DiscoverJaeger()
+	product.Url = DiscoverJaeger()
 
 	return &product, nil
 }
@@ -199,7 +199,7 @@ func jaegerVersion() (*ExternalServiceInfo, error) {
 func grafanaVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = "Grafana"
-	product.Url, _ = DiscoverGrafana()
+	product.Url = DiscoverGrafana()
 
 	return &product, nil
 }

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"bytes"
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -139,11 +140,11 @@ func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*apps_v1
 	return in.k8s.AppsV1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
 }
 
-// GetRoute returns the external URL endpoint of a specific service.
+// GetRoute returns the external URL endpoint of a specific route name.
 // It returns an error on any problem.
-func (in *IstioClient) GetRoute(namespace, service string) (*osroutes_v1.Route, error) {
+func (in *IstioClient) GetRoute(namespace, name string) (*osroutes_v1.Route, error) {
 	result := &osroutes_v1.Route{}
-	err := in.k8s.RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(service).Do().Into(result)
+	err := in.k8s.RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(name).Do().Into(result)
 	if err != nil {
 		return nil, err
 	}

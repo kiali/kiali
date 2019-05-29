@@ -41,7 +41,7 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 		return nil, http.StatusNoContent, nil
 	}
 
-	externalURL, _ := status.DiscoverGrafana()
+	externalURL := status.DiscoverGrafana()
 	if externalURL == "" {
 		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
 	}

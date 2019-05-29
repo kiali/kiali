@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kiali/kiali/appstate"
+
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -12,7 +14,8 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-var grafanaDiscoveredURL string
+// Route names to lookup for discovery
+var tracingLookupRoutes = [...]string{"tracing", "jaeger-query"}
 
 var clientFactory kubernetes.ClientFactory
 
@@ -88,76 +91,65 @@ func getPathURL(endpoint string) (path string) {
 	return u.Path
 }
 
-func checkTracingService() (url string, err error) {
-	conf := config.Get()
-	tracing := config.TracingDefaultService
-	jaeger := config.JaegerQueryDefaultService
-	ns := config.IstioDefaultNamespace
-	service := tracing
+func checkTracingService() (url string) {
+	tracingConfig := config.Get().ExternalServices.Tracing
+	ns := config.IstioDefaultNamespace // TODO: don't use default!
+	service := tracingConfig.Service
 
-	if conf.ExternalServices.Tracing.Namespace != "" {
-		ns = conf.ExternalServices.Tracing.Namespace
+	if tracingConfig.Namespace != "" {
+		ns = tracingConfig.Namespace
 	}
 
-	if conf.ExternalServices.Tracing.Service != "" {
-		// We need discover the URL
-		service = conf.ExternalServices.Tracing.Service
-		url, err = discoverServiceURL(ns, service)
+	if service != "" {
+		// Try to discover the URL
+		url = discoverServiceURL(ns, service)
 	} else {
-		// User didn't set the service
-		log.Debugf("Kiali is looking for Tracing/Jaeger service ...")
-		// look in Tracing Default Service
-		url, err = discoverServiceURL(ns, service)
-		if err != nil {
-			// Look in jaeger Query Default Service
-			service := jaeger
-			url, err = discoverServiceURL(ns, service)
-			if err == nil {
-				log.Infof("Jaeger URL found: %s", url)
-			} else {
-				log.Infof("Could not find Tracing/Jaeger")
+		// Check usual route names for tracing
+		for _, name := range tracingLookupRoutes {
+			service = name
+			url = discoverServiceURL(ns, name)
+			if url != "" {
+				break
 			}
-		} else {
-			log.Infof("Tracing URL found: %s", url)
 		}
 	}
 
-	// The user set the service or We found the service in tracing or jaeger-query
-	if err == nil {
+	// The user has set the route or we found one in tracing or jaeger-query
+	if url != "" {
 		// Calculate if Path
 		path, err := checkIfQueryBasePath(ns, service)
 		if err != nil {
 			log.Debugf("Error checking the query base path")
 		}
 		// The user didn't set the URL, so we need to set
-		if conf.ExternalServices.Tracing.URL == "" {
-			conf.ExternalServices.Tracing.URL = url + path // Overwrite URL if the user didn't set
+		if tracingConfig.URL == "" {
+			tracingConfig.URL = url + path // Overwrite URL if the user didn't set
 		}
 
 		// We store the path
-		conf.ExternalServices.Tracing.Path = path
-		// Tracing is ENABLED
-		conf.ExternalServices.Tracing.EnableJaeger = true
+		tracingConfig.Path = path
 		// Set the service
-		conf.ExternalServices.Tracing.Service = service
+		tracingConfig.Service = service
+		appstate.JaegerEnabled = true
 	}
 
-	// Save configuration
-	config.Set(conf)
+	// Save config
+	appstate.JaegerConfig = tracingConfig
 
-	return conf.ExternalServices.Tracing.URL, err
-
+	return tracingConfig.URL
 }
 
-func DiscoverJaeger() (url string, err error) {
-	conf := config.Get()
-
-	if conf.ExternalServices.Tracing.URL != "" && conf.ExternalServices.Tracing.Service != "" {
-		// User assume his configuration
-		conf.ExternalServices.Tracing.EnableJaeger = true
-		conf.ExternalServices.Tracing.Path = getPathURL(conf.ExternalServices.Tracing.URL)
-		config.Set(conf)
-		return conf.ExternalServices.Tracing.URL, nil
+func DiscoverJaeger() string {
+	if appstate.JaegerEnabled {
+		return appstate.JaegerConfig.URL
+	}
+	tracingConfig := config.Get().ExternalServices.Tracing
+	if tracingConfig.URL != "" && tracingConfig.Service != "" {
+		// User assumes configuration
+		appstate.JaegerEnabled = true
+		tracingConfig.Path = getPathURL(tracingConfig.URL)
+		appstate.JaegerConfig = tracingConfig
+		return tracingConfig.URL
 	}
 
 	return checkTracingService()
@@ -165,42 +157,44 @@ func DiscoverJaeger() (url string, err error) {
 
 // DiscoverGrafana will return the Grafana URL if it has been configured,
 // or will try to retrieve it if an OpenShift Route is defined.
-func DiscoverGrafana() (string, error) {
+func DiscoverGrafana() string {
 	grafanaConf := config.Get().ExternalServices.Grafana
 	// If display link is disable in Grafana configuration return empty string and avoid discovery
 	if !grafanaConf.DisplayLink {
-		return "", nil
+		return ""
 	}
 	if grafanaConf.URL != "" || !grafanaConf.InCluster {
-		return strings.TrimSuffix(grafanaConf.URL, "/"), nil
+		return strings.TrimSuffix(grafanaConf.URL, "/")
 	}
-	if grafanaDiscoveredURL != "" {
-		return grafanaDiscoveredURL, nil
+	if appstate.GrafanaDiscoveredURL != "" {
+		return appstate.GrafanaDiscoveredURL
 	}
-	url, err := discoverServiceURL(grafanaConf.ServiceNamespace, grafanaConf.Service)
-	if err != nil {
-		log.Infof("Could not find Grafana URL: %v", err)
-	} else {
-		log.Infof("Grafana URL found: %s", url)
-	}
-	grafanaDiscoveredURL = strings.TrimSuffix(url, "/")
-	return grafanaDiscoveredURL, err
+	url := discoverServiceURL(grafanaConf.ServiceNamespace, grafanaConf.Service)
+	appstate.GrafanaDiscoveredURL = strings.TrimSuffix(url, "/")
+	return appstate.GrafanaDiscoveredURL
 }
 
-func discoverServiceURL(ns string, service string) (string, error) {
+func discoverServiceURL(ns, service string) (url string) {
+	log.Debugf("URL discovery for service '%s', namespace '%s'...", service, ns)
 	client, err := getClient()
 
 	if err != nil {
-		return "", err
+		log.Debugf("Discovery failed: %v", err)
+		return
 	}
+	// Assuming service name == route name
 	route, err := client.GetRoute(ns, service)
 	if err != nil {
-		return "", err
+		log.Debugf("Discovery failed: %v", err)
+		return
 	}
 
 	host := route.Spec.Host
 	if route.Spec.TLS != nil {
-		return "https://" + host, nil
+		url = "https://" + host
+	} else {
+		url = "http://" + host
 	}
-	return "http://" + host, nil
+	log.Infof("URL discovered for %s: %s", service, url)
+	return
 }
