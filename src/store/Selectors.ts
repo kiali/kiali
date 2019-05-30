@@ -4,10 +4,12 @@ import { KialiAppState } from './Store';
 import { isMTLSEnabled } from '../types/TLSStatus';
 // These memoized selectors are from Redux Reselect package
 
-const createIdentitySelector = selector =>
+type Selector<T> = (state: KialiAppState) => T;
+
+const createIdentitySelector = <T extends unknown>(selector: Selector<T>): Selector<T> =>
   createSelector(
     selector,
-    x => x
+    (x: T): T => x
   );
 
 // select the proper field from Redux State
