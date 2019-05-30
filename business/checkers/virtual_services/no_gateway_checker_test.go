@@ -28,6 +28,26 @@ func TestMissingGateway(t *testing.T) {
 	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
 }
 
+func TestValidAndMissingGateway(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var empty struct{}
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"correctgw", "my-gateway", "mesh"}, data.CreateVirtualService())
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   map[string]struct{}{"correctgw": empty},
+	}
+
+	validations, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(validations)
+	assert.Equal(models.ErrorSeverity, validations[0].Severity)
+	assert.Equal(models.CheckMessage("virtualservices.nogateway"), validations[0].Message)
+}
+
 func TestFoundGateway(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
