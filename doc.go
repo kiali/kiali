@@ -564,6 +564,13 @@ type AuthenticationInfoResponse struct {
 	AuthorizationEndpoint string
 }
 
+// Return the mTLS status of the whole Mesh
+// swagger:response meshTlsResponse
+type MeshTlsResponse struct {
+	// in:body
+	Body models.MTLSStatus
+}
+
 // Return the mTLS status of a specific Namespace
 // swagger:response namespaceTlsResponse
 type NamespaceTlsResponse struct {

@@ -210,7 +210,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MTLSEnabled, status)
+	assert.Equal(MTLSEnabled, status.Status)
 }
 
 func TestMeshStatusPartiallyEnabled(t *testing.T) {
@@ -227,7 +227,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MTLSPartiallyEnabled, status)
+	assert.Equal(MTLSPartiallyEnabled, status.Status)
 }
 
 func TestMeshStatusNotEnabled(t *testing.T) {
@@ -244,7 +244,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
 
 	assert.NoError(err)
-	assert.Equal(MTLSNotEnabled, status)
+	assert.Equal(MTLSNotEnabled, status.Status)
 }
 
 func TestNamespaceHasMTLSEnabled(t *testing.T) {

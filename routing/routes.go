@@ -28,7 +28,7 @@ func NewRoutes() (r *Routes) {
 	r.Routes = []Route{
 		// swagger:route GET / Root
 		// ---
-		// Endpoint to get the status of Kiali
+		// Endpoint to get the health of Kiali
 		//
 		//     Produces:
 		//     - application/json
@@ -773,6 +773,27 @@ func NewRoutes() (r *Routes) {
 			"GET",
 			"/api/namespaces/{namespace}/health",
 			handlers.NamespaceHealth,
+			true,
+		},
+		// swagger:route GET /mesh/tls tls meshTls
+		// ---
+		// Get TLS status for the whole mesh
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: meshTlsResponse
+		//      400: badRequestError
+		//      500: internalError
+		//
+		{
+			"NamespaceTls",
+			"GET",
+			"/api/mesh/tls",
+			handlers.MeshTls,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/tls tls namespaceTls
