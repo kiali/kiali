@@ -12,9 +12,7 @@ import (
 
 	kube "k8s.io/client-go/kubernetes"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-
 	"github.com/kiali/kiali/log"
 )
 
@@ -159,14 +157,25 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	return user, nil
 }
 
+func getKialiNamespace() (string, error) {
+	namespace, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		return "", err
+	}
+	return string(namespace), nil
+}
+
 func getKialiRoutePath() (*string, error) {
 	var route *OAuthRoute
 	var protocol string
 
-	namespace := config.Get().IstioNamespace
+	namespace, err := getKialiNamespace()
+	if err != nil {
+		log.Error(err)
+		return nil, fmt.Errorf("cannot read Kiali's ServiceAccount: %v", err)
+	}
 
 	conf, err := kubernetes.ConfigClient()
-
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not connect to Openshift: %v", err)
