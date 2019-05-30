@@ -47,6 +47,7 @@ type Service struct {
 	ResourceVersion string            `json:"resourceVersion"`
 	Namespace       Namespace         `json:"namespace"`
 	Labels          map[string]string `json:"labels"`
+	Selectors       map[string]string `json:"selectors"`
 	Type            string            `json:"type"`
 	Ip              string            `json:"ip"`
 	Ports           Ports             `json:"ports"`
@@ -70,6 +71,7 @@ func (s *Service) Parse(service *core_v1.Service) {
 		s.Name = service.Name
 		s.Namespace = Namespace{Name: service.Namespace}
 		s.Labels = service.Labels
+		s.Selectors = service.Spec.Selector
 		s.Type = string(service.Spec.Type)
 		s.Ip = service.Spec.ClusterIP
 		s.ExternalName = service.Spec.ExternalName
