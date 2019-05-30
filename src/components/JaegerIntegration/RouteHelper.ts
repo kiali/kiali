@@ -94,8 +94,12 @@ export const getFormFromUnixTimeStamp = (value: number, extra?: number) => {
 export class JaegerURLSearch {
   url: string;
 
-  constructor(url: string) {
-    this.url = `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${jaegerQuery().embed.version}`;
+  constructor(url: string, embed: boolean = true) {
+    if (embed) {
+      this.url = `${url}${jaegerQuery().path}?${jaegerQuery().embed.uiEmbed}=${jaegerQuery().embed.version}`;
+    } else {
+      this.url = `${url}${jaegerQuery().path}/search?`;
+    }
   }
 
   addQueryParam(param: URLParam, value: string | number) {

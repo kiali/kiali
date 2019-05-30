@@ -7,6 +7,8 @@ type Props = {
   groupContextMenuContent?: NodeContextMenuType;
   nodeContextMenuContent?: NodeContextMenuType;
   edgeContextMenuContent?: EdgeContextMenuType;
+  jaegerIntegration: boolean;
+  jaegerURL: string;
 };
 
 type TippyInstance = Instance;
@@ -18,6 +20,8 @@ type ContextMenuContainer = HTMLDivElement & {
 type ContextMenuProps = {
   element: any;
   contextMenu: TippyInstance;
+  jaegerIntegration: boolean;
+  jaegerURL: string;
 };
 
 export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps;
@@ -148,7 +152,13 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     }).instances[0];
 
     ReactDOM.render(
-      <ContextMenuComponentClass element={target} contextMenu={tippyInstance} {...target.data()} />,
+      <ContextMenuComponentClass
+        element={target}
+        contextMenu={tippyInstance}
+        {...target.data()}
+        jaegerIntegration={this.props.jaegerIntegration}
+        jaegerURL={this.props.jaegerURL}
+      />,
       content,
       () => {
         this.setCurrentContextMenu(tippyInstance);

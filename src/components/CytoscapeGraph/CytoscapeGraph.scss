@@ -6,12 +6,17 @@
 }
 
 .kiali-graph-context-menu-title {
-  text-align: center;
-  font-size: 12px;
+  text-align: left;
+  font-size: 16px;
+  border-bottom: 1px solid black;
+}
+
+.kiali-graph-context-menu {
+  margin: 5px 0 0 0;
 }
 
 .kiali-graph-context-menu-item {
-  text-align: center;
+  text-align: left;
   font-size: 12px;
   text-decoration: none;
   color: #363636;

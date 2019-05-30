@@ -54,6 +54,8 @@ describe('CytoscapeGraph component test', () => {
         showVirtualServices={true}
         isLoading={false}
         isError={false}
+        jaegerIntegration={true}
+        jaegerURL={''}
         graphType={GraphType.VERSIONED_APP}
       />
     );

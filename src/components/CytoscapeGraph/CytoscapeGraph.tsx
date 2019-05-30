@@ -66,6 +66,8 @@ type ReduxProps = {
   showTrafficAnimation: boolean;
   showUnusedNodes: boolean;
   showVirtualServices: boolean;
+  jaegerIntegration: boolean;
+  jaegerURL: string;
   onReady: (cytoscapeRef: any) => void;
   setActiveNamespaces: (namespace: Namespace[]) => void;
   setNode: (node?: NodeParamsType) => void;
@@ -224,6 +226,8 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
             edgeContextMenuContent={this.props.contextMenuEdgeComponent}
             nodeContextMenuContent={this.props.contextMenuNodeComponent}
             groupContextMenuContent={this.props.contextMenuGroupComponent}
+            jaegerIntegration={this.props.jaegerIntegration}
+            jaegerURL={this.props.jaegerURL}
           />
           <CytoscapeReactWrapper ref={e => this.setCytoscapeReactWrapperRef(e)} />
         </EmptyGraphLayoutContainer>
@@ -771,7 +775,9 @@ const mapStateToProps = (state: KialiAppState) => ({
   showServiceNodes: state.graph.filterState.showServiceNodes,
   showTrafficAnimation: state.graph.filterState.showTrafficAnimation,
   showUnusedNodes: state.graph.filterState.showUnusedNodes,
-  showVirtualServices: state.graph.filterState.showVirtualServices
+  showVirtualServices: state.graph.filterState.showVirtualServices,
+  jaegerIntegration: state.jaegerState.enableIntegration,
+  jaegerURL: state.jaegerState.jaegerURL
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({

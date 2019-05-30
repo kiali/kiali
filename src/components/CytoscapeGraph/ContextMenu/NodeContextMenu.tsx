@@ -1,49 +1,109 @@
 import * as React from 'react';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
+import { JaegerSearchOptions, JaegerURLSearch } from '../../JaegerIntegration/RouteHelper';
 import history from '../../../app/History';
+import { Paths } from '../../../config';
 
-export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps> {
-  // @todo: We need take care of this at global app level
-  private static makeDetailsPageUrl(props: NodeContextMenuProps) {
-    const namespace = props.namespace;
-    const nodeType = props.nodeType;
-    const workload = props.workload;
-    let app = props.app;
-    let urlNodeType = app;
-    if (nodeType === 'app') {
-      urlNodeType = 'applications';
-    } else if (nodeType === 'service') {
-      urlNodeType = 'services';
-    } else if (workload) {
-      urlNodeType = 'workloads';
-      app = workload;
+type NodeContextMenuState = {
+  nodeType: string;
+  app: string | undefined;
+};
+
+export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, NodeContextMenuState> {
+  constructor(props: NodeContextMenuProps) {
+    super(props);
+    let app: string | undefined = '';
+    let nodeType = '';
+    switch (this.props.nodeType) {
+      case 'app':
+        nodeType = Paths.APPLICATIONS;
+        app = this.props.app;
+        break;
+      case 'service':
+        nodeType = Paths.SERVICES;
+        app = this.props.service;
+        break;
+      case 'workload':
+        app = this.props.workload;
+        nodeType = Paths.WORKLOADS;
+        break;
+      default:
     }
-    return `/namespaces/${namespace}/${urlNodeType}/${app}`;
+    this.state = { nodeType, app };
+  }
+  // @todo: We need take care of this at global app level
+  makeDetailsPageUrl() {
+    return `/namespaces/${this.props.namespace}/${this.state.nodeType}/${this.state.app}`;
+  }
+
+  getJaegerURL() {
+    let tracesUrl = `/jaeger?namespaces=${this.props.namespace}&service=${this.state.app}.${this.props.namespace}`;
+    if (!this.props.jaegerIntegration) {
+      const url = new JaegerURLSearch(this.props.jaegerURL, false);
+      const options: JaegerSearchOptions = {
+        serviceSelected: `${this.state.app}.${this.props.namespace}`,
+        limit: 20,
+        start: '',
+        end: '',
+        minDuration: '',
+        maxDuration: '',
+        lookback: '3600',
+        tags: ''
+      };
+
+      tracesUrl = url.createRoute(options);
+    }
+    return tracesUrl;
+  }
+
+  createMenuItem(href: string, title: string, target: string = '_self') {
+    return (
+      <div className="kiali-graph-context-menu-item">
+        <a
+          onClick={this.redirectContextLink}
+          className="kiali-graph-context-menu-item-link"
+          target={target}
+          href={href}
+        >
+          {title}
+        </a>
+      </div>
+    );
   }
 
   render() {
-    const version = this.props.version ? `${this.props.version}` : '';
-    const detailsPageUrl = NodeContextMenu.makeDetailsPageUrl(this.props);
+    const version = this.props.version !== '' ? `:${this.props.version}` : '';
+    const detailsPageUrl = this.makeDetailsPageUrl();
+    const { nodeType, app } = this.state;
     return (
       <div className="kiali-graph-context-menu-container">
         <div className="kiali-graph-context-menu-title">
-          <strong>{this.props.app}</strong>:{version}
+          <strong>{app}</strong>
+          {version}
         </div>
-        <div className="kiali-graph-context-menu-item">
-          <a onClick={this.redirectContextLink} className="kiali-graph-context-menu-item-link" href={detailsPageUrl}>
-            Show Details
-          </a>
-        </div>
+        {this.createMenuItem(detailsPageUrl, 'Show Details')}
+        {this.createMenuItem(`${detailsPageUrl}?tab=traffic`, 'Show Traffic')}
+        {nodeType === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
+        {this.createMenuItem(
+          `${detailsPageUrl}?tab=${nodeType === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
+          'Show Inbound Metrics'
+        )}
+        {nodeType !== Paths.SERVICES &&
+          this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
+        {nodeType === Paths.SERVICES &&
+          this.props.jaegerURL !== '' &&
+          this.createMenuItem(this.getJaegerURL(), 'Show Traces', this.props.jaegerIntegration ? '_self' : '_blank')}
       </div>
     );
   }
 
   private redirectContextLink = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
     if (e.target) {
       const anchor = e.target as HTMLAnchorElement;
       const href = anchor.getAttribute('href');
-      if (href) {
+      const newTab = anchor.getAttribute('target') === '_blank';
+      if (href && !newTab) {
+        e.preventDefault();
         this.props.contextMenu.hide(0);
         history.push(href);
       }

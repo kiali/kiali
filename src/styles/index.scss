@@ -50,3 +50,7 @@ body {
 
 @import '_overrides';
 @import '_layout';
+
+// Component
+
+@import '../components/CytoscapeGraph/CytoscapeGraph.css';
