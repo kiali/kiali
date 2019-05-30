@@ -18,6 +18,7 @@ import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_GRAFANA_STATE } from '../reducers/GrafanaState';
 import { INITIAL_JAEGER_STATE } from '../reducers/JaegerState';
+import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 
 declare const window;
 
@@ -71,7 +72,8 @@ const initialStore: KialiAppState = {
   graph: INITIAL_GRAPH_STATE,
   userSettings: INITIAL_USER_SETTINGS_STATE,
   grafanaInfo: INITIAL_GRAFANA_STATE,
-  jaegerState: INITIAL_JAEGER_STATE
+  jaegerState: INITIAL_JAEGER_STATE,
+  meshTLSStatus: INITIAL_MESH_TLS_STATE
 };
 
 // pass an optional param to rehydrate state on app start

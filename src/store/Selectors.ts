@@ -67,10 +67,10 @@ export const showUnusedNodesSelector = createIdentitySelector(showUnusedNodes);
 
 export const graphDataSelector = GraphData.graphDataSelector;
 
-const meshwideMTLSStatus = (state: KialiAppState) => state.statusState.status['Istio mTLS'];
+const meshwideMTLSStatus = (state: KialiAppState) => state.meshTLSStatus.status;
 
 export const meshWideMTLSStatusSelector = createIdentitySelector(meshwideMTLSStatus);
 
-const meshwideMTLSEnabled = (state: KialiAppState) => isMTLSEnabled(state.statusState.status['Istio mTLS']);
+const meshwideMTLSEnabled = (state: KialiAppState) => isMTLSEnabled(state.meshTLSStatus.status);
 
 export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);

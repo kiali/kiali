@@ -11,6 +11,7 @@ import UserSettingsState from './UserSettingsState';
 import GrafanaState from './GrafanaState';
 import JaegerState from './JaegerState';
 import { KialiAppAction } from '../actions/KialiAppAction';
+import MeshTlsState from './MeshTlsState';
 
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: loginState,
@@ -21,7 +22,8 @@ const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   namespaces: namespaceState,
   statusState: HelpDropdownState,
   userSettings: UserSettingsState,
-  jaegerState: JaegerState
+  jaegerState: JaegerState,
+  meshTLSStatus: MeshTlsState
 });
 
 export default rootReducer;

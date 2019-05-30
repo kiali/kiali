@@ -14,11 +14,14 @@ import InitializingScreen from './InitializingScreen';
 import { isKioskMode } from '../utils/SearchParamUtils';
 import * as MessageCenter from '../utils/MessageCenter';
 import { setServerConfig } from '../config/ServerConfig';
+import { TLSStatus } from '../types/TLSStatus';
+import { MeshTlsActions } from '../actions/MeshTlsActions';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
   setGrafanaInfo: (grafanaInfo: GrafanaInfo) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
+  setMeshTlsStatus: (meshStatus: TLSStatus) => void;
 }
 
 type AuthenticationControllerProps = AuthenticationControllerReduxProps & {
@@ -92,8 +95,18 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         .catch(error => {
           MessageCenter.add(API.getErrorMsg('Error fetching Grafana Info.', error), 'default', MessageType.WARNING);
         });
+      const getMeshTlsPromise = API.getMeshTls()
+        .then(response => this.props.setMeshTlsStatus(response.data))
+        .catch(error => {
+          MessageCenter.add(API.getErrorMsg('Error fetching TLS Info.', error), 'default', MessageType.WARNING);
+        });
 
-      const configs = await Promise.all([API.getServerConfig(), getStatusPromise, getGrafanaInfoPromise]);
+      const configs = await Promise.all([
+        API.getServerConfig(),
+        getStatusPromise,
+        getGrafanaInfoPromise,
+        getMeshTlsPromise
+      ]);
       setServerConfig(configs[0].data);
 
       this.setState({ stage: 'logged-in' });
@@ -137,7 +150,8 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setGrafanaInfo: bindActionCreators(GrafanaActions.setinfo, dispatch),
-    setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus)
+    setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
+    setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
   };
 };
 

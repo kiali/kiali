@@ -107,6 +107,10 @@ export const getNamespaceMetrics = (namespace: string, params: MetricsOptions) =
   return newRequest<Readonly<Metrics>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), params, {});
 };
 
+export const getMeshTls = () => {
+  return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), {}, {});
+};
+
 export const getNamespaceTls = (namespace: string) => {
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.namespaceTls(namespace), {}, {});
 };

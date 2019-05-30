@@ -3,6 +3,7 @@ import Namespace from '../types/Namespace';
 import { DurationInSeconds, PollIntervalInMs, TimeInSeconds, UserName, RawDate } from '../types/Common';
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
+import { TLSStatus } from '../types/TLSStatus';
 
 // Store is the Redux Data store
 
@@ -125,6 +126,7 @@ export interface KialiAppState {
   globalState: GlobalState;
   grafanaInfo: GrafanaInfo | null;
   statusState: StatusState;
+  meshTLSStatus: TLSStatus;
   /** Page Settings */
   authentication: LoginState;
   messageCenter: MessageCenterState;
