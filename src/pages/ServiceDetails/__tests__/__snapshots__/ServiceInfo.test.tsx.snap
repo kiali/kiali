@@ -434,6 +434,7 @@ ShallowWrapper {
                   ]
                 }
                 resourceVersion="2652"
+                selectors={undefined}
                 threeScaleServiceRule={undefined}
                 type="ClusterIP"
                 validations={Object {}}
@@ -837,6 +838,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  selectors={undefined}
                   threeScaleServiceRule={undefined}
                   type="ClusterIP"
                   validations={Object {}}
@@ -1658,6 +1660,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  selectors={undefined}
                   threeScaleServiceRule={undefined}
                   type="ClusterIP"
                   validations={Object {}}
@@ -1726,6 +1729,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  selectors={undefined}
                   threeScaleServiceRule={undefined}
                   type="ClusterIP"
                   validations={Object {}}
@@ -1788,6 +1792,7 @@ ShallowWrapper {
                     },
                   ],
                   "resourceVersion": "2652",
+                  "selectors": undefined,
                   "threeScaleServiceRule": undefined,
                   "type": "ClusterIP",
                   "validations": Object {},
@@ -3236,6 +3241,7 @@ ShallowWrapper {
                     ]
                   }
                   resourceVersion="2652"
+                  selectors={undefined}
                   threeScaleServiceRule={undefined}
                   type="ClusterIP"
                   validations={Object {}}
@@ -3639,6 +3645,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    selectors={undefined}
                     threeScaleServiceRule={undefined}
                     type="ClusterIP"
                     validations={Object {}}
@@ -4460,6 +4467,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    selectors={undefined}
                     threeScaleServiceRule={undefined}
                     type="ClusterIP"
                     validations={Object {}}
@@ -4528,6 +4536,7 @@ ShallowWrapper {
                       ]
                     }
                     resourceVersion="2652"
+                    selectors={undefined}
                     threeScaleServiceRule={undefined}
                     type="ClusterIP"
                     validations={Object {}}
@@ -4590,6 +4599,7 @@ ShallowWrapper {
                       },
                     ],
                     "resourceVersion": "2652",
+                    "selectors": undefined,
                     "threeScaleServiceRule": undefined,
                     "type": "ClusterIP",
                     "validations": Object {},

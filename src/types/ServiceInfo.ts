@@ -41,7 +41,6 @@ export const hasIstioSidecar = (pods?: Pod[]) => {
 };
 
 export interface Service {
-  labels?: { [key: string]: string };
   type: string;
   name: string;
   createdAt: string;
@@ -49,6 +48,8 @@ export interface Service {
   ip: string;
   ports?: Port[];
   externalName: string;
+  labels?: { [key: string]: string };
+  selectors?: { [key: string]: string };
 }
 
 export interface ServiceDetailsInfo {

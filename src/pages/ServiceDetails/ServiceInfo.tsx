@@ -165,6 +165,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 resourceVersion={this.props.serviceDetails.service.resourceVersion}
                 istioEnabled={this.props.serviceDetails.istioSidecar}
                 labels={this.props.serviceDetails.service.labels}
+                selectors={this.props.serviceDetails.service.selectors}
                 ports={this.props.serviceDetails.service.ports}
                 type={this.props.serviceDetails.service.type}
                 ip={this.props.serviceDetails.service.ip}
