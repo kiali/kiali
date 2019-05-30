@@ -25,7 +25,7 @@ def test_workload_list_endpoint(kiali_client):
           assert workload.get('versionLabel') == True
       assert workload.get('appLabel') == True
 
-def __test_diversity_in_workload_list_endpoint(kiali_client):
+def test_diversity_in_workload_list_endpoint(kiali_client):
   bookinfo_namespace = conftest.get_bookinfo_namespace()
 
   try:
