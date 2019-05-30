@@ -42,7 +42,7 @@ def test_service_detail_endpoint(kiali_client):
     assert 'destinationRules' in service_details
     assert 'health' in service_details
 
-def __test_service_detail_with_virtual_service(kiali_client):
+def test_service_detail_with_virtual_service(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
@@ -51,7 +51,7 @@ def __test_service_detail_with_virtual_service(kiali_client):
 
       with timeout(seconds=30, error_message='Timed out waiting for virtual service creation'):
         while True:
-          service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
+          service_details = kiali_client.request(method_name='serviceDetails', path={'namespace': bookinfo_namespace, 'service': SERVICE_TO_VALIDATE}).json()
           if service_details != None and service_details.get('virtualServices') != None and len(service_details.get('virtualServices').get('items')) > 0:
             break
 
@@ -64,14 +64,18 @@ def __test_service_detail_with_virtual_service(kiali_client):
 
       permissions = virtual_service_descriptor.get('permissions')
       assert permissions != None
-      assert permissions.get('update') == False
+      assert permissions.get('update') == True
       assert permissions.get('delete') == True
+      assert permissions.get('create') == True
 
       virtual_service = virtual_service_descriptor.get('items')[0]
-      assert virtual_service != None  ### STUB   <----- Returns no 'items'
-      assert virtual_service.get('name') == 'reviews'
+      assert virtual_service != None
 
-      https = virtual_service.get('http')
+      virtual_service_meta = virtual_service.get('metadata')
+      assert virtual_service_meta.get('name') == 'reviews'
+
+      virtual_service_spec = virtual_service.get('spec')
+      https = virtual_service_spec.get('http')
       assert https != None
       assert len (https) == 1
 
@@ -101,7 +105,7 @@ def __test_service_detail_with_virtual_service(kiali_client):
 
           time.sleep(1)
 
-def __test_service_detail_with_destination_rule(kiali_client):
+def test_service_detail_with_destination_rule(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
@@ -123,15 +127,20 @@ def __test_service_detail_with_destination_rule(kiali_client):
 
       permissions = destination_rule_descriptor.get('permissions')
       assert permissions != None
-      assert permissions.get('update') == False
+      assert permissions.get('update') == True
       assert permissions.get('delete') == True
+      assert permissions.get('create') == True
 
       destination_rule = destination_rule_descriptor.get('items')[0]
       assert destination_rule != None
-      assert destination_rule.get('name') == 'reviews'
-      assert 'trafficPolicy' in destination_rule
 
-      subsets = destination_rule.get('subsets')
+      destination_rule_meta = destination_rule.get('metadata')
+      assert destination_rule_meta.get('name') == 'reviews'
+
+      destination_rule_spec = destination_rule.get('spec')
+      assert 'trafficPolicy' in destination_rule_spec
+
+      subsets = destination_rule_spec.get('subsets')
       assert subsets != None
       assert len (subsets) == 3
 
@@ -172,7 +181,7 @@ def test_service_metrics_endpoint(kiali_client):
     assert 'request_size' in histograms
     assert 'response_size' in histograms
 
-def __test_service_health_endpoint(kiali_client):
+def test_service_health_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     service_health = kiali_client.request(method_name='serviceHealth', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
