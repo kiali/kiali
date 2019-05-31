@@ -8,7 +8,6 @@
   - clusterrole
   - clusterrole-viewer
   - clusterrolebinding
-  - crds
   - deployment
   - service
   - ingress

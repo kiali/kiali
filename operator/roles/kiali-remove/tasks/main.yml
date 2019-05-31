@@ -60,18 +60,18 @@
   - k8s_item.kind is defined
   - k8s_item.metadata is defined
   - k8s_item.metadata.name is defined
-  loop:
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='Ingress', resource_name='kiali', api_version='extensions/v1beta1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='Deployment', resource_name='kiali', api_version='apps/v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ReplicaSet', resource_name='kiali', api_version='v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='Pod', resource_name='kiali', api_version='v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='Service', resource_name='kiali', api_version='v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='CustomResourceDefinition', resource_name='monitoringdashboards.monitoring.kiali.io', api_version='apiextensions.k8s.io/v1beta1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ServiceAccount', resource_name='kiali-service-account', api_version='v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRoleBinding', resource_name='kiali', api_version='v1beta1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='ConfigMap', resource_name='kiali', api_version='v1') }}"
+  with_items:
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Ingress', resource_name='kiali', api_version='extensions/v1beta1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Deployment', resource_name='kiali', api_version='apps/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ReplicaSet', resource_name='kiali', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Pod', resource_name='kiali', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Service', resource_name='kiali', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ServiceAccount', resource_name='kiali-service-account', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRoleBinding', resource_name='kiali', api_version='v1beta1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ClusterRole', resource_name='kiali-viewer', api_version='rbac.authorization.k8s.io/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='ConfigMap', resource_name='kiali', api_version='v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='MonitoringDashboard', api_version='monitoring.kiali.io/v1alpha1') }}"
   loop_control:
     loop_var: k8s_item
 
@@ -94,9 +94,9 @@
   - os_item.kind is defined
   - os_item.metadata is defined
   - os_item.metadata.name is defined
-  loop:
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='OAuthClient', resource_name='kiali', api_version='oauth.openshift.io/v1') }}"
-  - "{{ lookup('k8s', namespace=kiali_vars.deployment.namespace, kind='Route', resource_name='kiali', api_version='route.openshift.io/v1') }}"
+  with_items:
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='OAuthClient', resource_name='kiali', api_version='oauth.openshift.io/v1') }}"
+  - "{{ query('k8s', namespace=kiali_vars.deployment.namespace, kind='Route', resource_name='kiali', api_version='route.openshift.io/v1') }}"
   loop_control:
     loop_var: os_item
 

@@ -170,6 +170,30 @@
   when:
   - is_k8s == True
 
+# The next couple tasks wait for the Monitoring Dashboard CRD to be established, and
+# then adds the monitoring dashboard resources. If there are any errors here, they
+# are ignored - since the monitoring dashboards are optional, we allow the install to
+# continue even though it means the monitoring dashboards feature will be disabled.
+
+- name: Wait for Monitoring Dashboards CRD to be ready
+  k8s_facts:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: monitoringdashboards.monitoring.kiali.io
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+  register: monitoringdashboards_crd
+  until:
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
+  retries: 6
+  delay: 5
+  ignore_errors: yes
+
+- name: Warn if Monitoring Dashboards CRD is not available
+  debug:
+    msg: "It does not appear you have the Monitoring Dashboard CRD created. Monitoring Dashboards will not be created."
+  when:
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join != 'True'
+
 - name: Create the Monitoring Dashboards
   k8s:
     state: "present"
@@ -178,6 +202,8 @@
   with_fileglob:
   - "templates/dashboards/*.yaml"
   ignore_errors: yes
+  when:
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
 
 - name: Force the Kiali pod to restart if necessary
   k8s:
