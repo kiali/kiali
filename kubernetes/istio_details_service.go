@@ -201,6 +201,48 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	return virtualServices, nil
 }
 
+// GetSidecars return all Sidecars for a given namespace.
+// It returns an error on any problem
+func (in *IstioClient) GetSidecars(namespace string) ([]IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(sidecars).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	sidecarList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a Sidecar list", namespace)
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[sidecars],
+		APIVersion: ApiNetworkingVersion,
+	}
+	sidecars := make([]IstioObject, 0)
+	for _, sidecar := range sidecarList.GetItems() {
+		sc := sidecar.DeepCopyIstioObject()
+		sc.SetTypeMeta(typeMeta)
+		sidecars = append(sidecars, sc)
+	}
+	return sidecars, nil
+}
+
+func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject, error) {
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(sidecars).SubResource(sidecar).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[sidecars],
+		APIVersion: ApiNetworkingVersion,
+	}
+	sidecarObject, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s/%s doesn't return a Sidecar object", namespace, sidecar)
+	}
+	sc := sidecarObject.DeepCopyIstioObject()
+	sc.SetTypeMeta(typeMeta)
+	return sc, nil
+}
+
 func (in *IstioClient) GetVirtualService(namespace string, virtualservice string) (IstioObject, error) {
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).SubResource(virtualservice).Do().Get()
 	if err != nil {

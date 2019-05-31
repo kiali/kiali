@@ -25,6 +25,7 @@ type IstioConfigList struct {
 	RbacConfigs         RbacConfigs         `json:"rbacConfigs"`
 	ServiceRoles        ServiceRoles        `json:"serviceRoles"`
 	ServiceRoleBindings ServiceRoleBindings `json:"serviceRoleBindings"`
+	Sidecars            Sidecars            `json:"sidecars"`
 	IstioValidations    IstioValidations    `json:"validations"`
 }
 
@@ -46,6 +47,7 @@ type IstioConfigDetails struct {
 	RbacConfig         *RbacConfig         `json:"rbacConfig"`
 	ServiceRole        *ServiceRole        `json:"serviceRole"`
 	ServiceRoleBinding *ServiceRoleBinding `json:"serviceRoleBinding"`
+	Sidecar            *Sidecar            `json:"sidecar"`
 	Permissions        ResourcePermissions `json:"permissions"`
 	IstioValidation    *IstioValidation    `json:"validation"`
 }

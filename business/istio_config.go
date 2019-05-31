@@ -37,6 +37,7 @@ type IstioConfigCriteria struct {
 	IncludeRbacConfigs         bool
 	IncludeServiceRoles        bool
 	IncludeServiceRoleBindings bool
+	IncludeSidecars            bool
 }
 
 const (
@@ -55,6 +56,7 @@ const (
 	RbacConfigs         = "rbacconfigs"
 	ServiceRoles        = "serviceroles"
 	ServiceRoleBindings = "servicerolebindings"
+	Sidecars            = "sidecars"
 )
 
 var resourceTypesToAPI = map[string]string{
@@ -62,6 +64,7 @@ var resourceTypesToAPI = map[string]string{
 	VirtualServices:     kubernetes.NetworkingGroupVersion.Group,
 	ServiceEntries:      kubernetes.NetworkingGroupVersion.Group,
 	Gateways:            kubernetes.NetworkingGroupVersion.Group,
+	Sidecars:            kubernetes.NetworkingGroupVersion.Group,
 	Adapters:            kubernetes.ConfigGroupVersion.Group,
 	Templates:           kubernetes.ConfigGroupVersion.Group,
 	Rules:               kubernetes.ConfigGroupVersion.Group,
@@ -107,13 +110,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		MeshPolicies:        models.MeshPolicies{},
 		ClusterRbacConfigs:  models.ClusterRbacConfigs{},
 		RbacConfigs:         models.RbacConfigs{},
+		Sidecars:            models.Sidecars{},
 		ServiceRoles:        models.ServiceRoles{},
 		ServiceRoleBindings: models.ServiceRoleBindings{},
 	}
 	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp, crc, rc, sr, srb []kubernetes.IstioObject
 	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr, crcErr, rcErr, srErr, srbErr error
 	var wg sync.WaitGroup
-	wg.Add(15)
+	wg.Add(16)
 
 	go func() {
 		defer wg.Done()
@@ -236,6 +240,15 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func() {
 		defer wg.Done()
+		if criteria.IncludeSidecars {
+			if rc, rcErr = in.k8s.GetSidecars(criteria.Namespace); rcErr == nil {
+				(&istioConfigList.Sidecars).Parse(rc)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
 		if criteria.IncludeServiceRoles {
 			if sr, srErr = in.k8s.GetServiceRoles(criteria.Namespace); srErr == nil {
 				(&istioConfigList.ServiceRoles).Parse(sr)
@@ -278,7 +291,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, qs, qb, r, a, t, pc, mp, crc, rc, sr, srb kubernetes.IstioObject
+	var gw, vs, dr, se, sc, qs, qb, r, a, t, pc, mp, crc, rc, sr, srb kubernetes.IstioObject
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -312,6 +325,11 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 		if se, err = in.k8s.GetServiceEntry(namespace, object); err == nil {
 			istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 			istioConfigDetail.ServiceEntry.Parse(se)
+		}
+	case Sidecars:
+		if sc, err = in.k8s.GetSidecar(namespace, object); err == nil {
+			istioConfigDetail.Sidecar = &models.Sidecar{}
+			istioConfigDetail.Sidecar.Parse(sc)
 		}
 	case Rules:
 		if r, err = in.k8s.GetIstioRule(namespace, object); err == nil {
