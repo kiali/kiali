@@ -12,6 +12,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { KialiAppAction } from '../../../actions/KialiAppAction';
 import LoginThunkActions from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
+import * as API from '../../../services/Api';
 
 type UserProps = {
   session: LoginSession;
@@ -80,6 +81,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
   handleLogout = e => {
     e.preventDefault();
     if (authenticationConfig.logoutEndpoint) {
+      API.logout();
       (document.getElementById('openshiftlogout') as HTMLFormElement).submit();
     } else {
       this.props.logout();
