@@ -15,7 +15,7 @@ type MetricsChartBaseProps = {
 };
 
 const expandBlockStyle = style({
-  marginBottom: '-1.5em',
+  marginBottom: '-1.0em',
   zIndex: 1,
   position: 'relative',
   textAlign: 'right'
