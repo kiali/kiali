@@ -3,11 +3,38 @@ import { NodeContextMenuProps } from '../CytoscapeContextMenu';
 import { JaegerSearchOptions, JaegerURLSearch } from '../../JaegerIntegration/RouteHelper';
 import history from '../../../app/History';
 import { Paths } from '../../../config';
+import { style } from 'typestyle';
 
 type NodeContextMenuState = {
   nodeType: string;
   app: string | undefined;
 };
+
+const graphContextMenuContainerStyle = style({
+  textAlign: 'left'
+});
+
+const graphContextMenuTitleStyle = style({
+  textAlign: 'left',
+  fontSize: '16px',
+  borderBottom: '1px solid black'
+});
+
+const graphContextMenuItemStyle = style({
+  textAlign: 'left',
+  fontSize: '12px',
+  textDecoration: 'none',
+  $nest: {
+    '&:hover': {
+      backgroundColor: '#def3ff',
+      color: '#4d5258'
+    }
+  }
+});
+
+const graphContextMenuItemLinkStyle = style({
+  color: '#363636'
+});
 
 export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, NodeContextMenuState> {
   constructor(props: NodeContextMenuProps) {
@@ -58,13 +85,8 @@ export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, N
 
   createMenuItem(href: string, title: string, target: string = '_self') {
     return (
-      <div className="kiali-graph-context-menu-item">
-        <a
-          onClick={this.redirectContextLink}
-          className="kiali-graph-context-menu-item-link"
-          target={target}
-          href={href}
-        >
+      <div className={graphContextMenuItemStyle}>
+        <a onClick={this.redirectContextLink} className={graphContextMenuItemLinkStyle} target={target} href={href}>
           {title}
         </a>
       </div>
@@ -76,8 +98,8 @@ export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, N
     const detailsPageUrl = this.makeDetailsPageUrl();
     const { nodeType, app } = this.state;
     return (
-      <div className="kiali-graph-context-menu-container">
-        <div className="kiali-graph-context-menu-title">
+      <div className={graphContextMenuContainerStyle}>
+        <div className={graphContextMenuTitleStyle}>
           <strong>{app}</strong>
           {version}
         </div>
