@@ -2,13 +2,13 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
+import { Provider } from 'react-redux';
+import { store } from '../../store/ConfigStore';
 
 type Props = {
   groupContextMenuContent?: NodeContextMenuType;
   nodeContextMenuContent?: NodeContextMenuType;
   edgeContextMenuContent?: EdgeContextMenuType;
-  jaegerIntegration: boolean;
-  jaegerURL: string;
 };
 
 type TippyInstance = Instance;
@@ -20,8 +20,6 @@ type ContextMenuContainer = HTMLDivElement & {
 type ContextMenuProps = {
   element: any;
   contextMenu: TippyInstance;
-  jaegerIntegration: boolean;
-  jaegerURL: string;
 };
 
 export type NodeContextMenuProps = DecoratedGraphNodeData & ContextMenuProps;
@@ -152,13 +150,9 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     }).instances[0];
 
     ReactDOM.render(
-      <ContextMenuComponentClass
-        element={target}
-        contextMenu={tippyInstance}
-        {...target.data()}
-        jaegerIntegration={this.props.jaegerIntegration}
-        jaegerURL={this.props.jaegerURL}
-      />,
+      <Provider store={store}>
+        <ContextMenuComponentClass element={target} contextMenu={tippyInstance} {...target.data()} />
+      </Provider>,
       content,
       () => {
         this.setCurrentContextMenu(tippyInstance);

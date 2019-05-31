@@ -4,10 +4,12 @@ import { JaegerSearchOptions, JaegerURLSearch } from '../../JaegerIntegration/Ro
 import history from '../../../app/History';
 import { Paths } from '../../../config';
 import { style } from 'typestyle';
+import { KialiAppState } from '../../../store/Store';
+import { connect } from 'react-redux';
 
-type NodeContextMenuState = {
-  nodeType: string;
-  app: string | undefined;
+type ReduxProps = {
+  jaegerIntegration: boolean;
+  jaegerURL: string;
 };
 
 const graphContextMenuContainerStyle = style({
@@ -36,39 +38,48 @@ const graphContextMenuItemLinkStyle = style({
   color: '#363636'
 });
 
-export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, NodeContextMenuState> {
-  constructor(props: NodeContextMenuProps) {
-    super(props);
-    let app: string | undefined = '';
-    let nodeType = '';
-    switch (this.props.nodeType) {
+type Props = NodeContextMenuProps & ReduxProps;
+
+export class NodeContextMenu extends React.PureComponent<Props> {
+  private static derivedValuesFromProps(props: Props) {
+    let name: string | undefined = '';
+    let type = '';
+    switch (props.nodeType) {
       case 'app':
-        nodeType = Paths.APPLICATIONS;
-        app = this.props.app;
+        // Prefer workload type for nodes backed by a workload
+        if (props.workload && props.parent) {
+          name = props.workload;
+          type = Paths.WORKLOADS;
+        } else {
+          type = Paths.APPLICATIONS;
+          name = props.app;
+        }
         break;
       case 'service':
-        nodeType = Paths.SERVICES;
-        app = this.props.service;
+        type = Paths.SERVICES;
+        name = props.service;
         break;
       case 'workload':
-        app = this.props.workload;
-        nodeType = Paths.WORKLOADS;
+        name = props.workload;
+        type = Paths.WORKLOADS;
         break;
       default:
     }
-    this.state = { nodeType, app };
-  }
-  // @todo: We need take care of this at global app level
-  makeDetailsPageUrl() {
-    return `/namespaces/${this.props.namespace}/${this.state.nodeType}/${this.state.app}`;
+
+    return { type, name };
   }
 
-  getJaegerURL() {
-    let tracesUrl = `/jaeger?namespaces=${this.props.namespace}&service=${this.state.app}.${this.props.namespace}`;
+  // @todo: We need take care of this at global app level
+  makeDetailsPageUrl(type: string, name?: string) {
+    return `/namespaces/${this.props.namespace}/${type}/${name}`;
+  }
+
+  getJaegerURL(name?: string) {
+    let tracesUrl = `/jaeger?namespaces=${this.props.namespace}&service=${name}.${this.props.namespace}`;
     if (!this.props.jaegerIntegration) {
       const url = new JaegerURLSearch(this.props.jaegerURL, false);
       const options: JaegerSearchOptions = {
-        serviceSelected: `${this.state.app}.${this.props.namespace}`,
+        serviceSelected: `${name}.${this.props.namespace}`,
         limit: 20,
         start: '',
         end: '',
@@ -94,27 +105,35 @@ export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, N
   }
 
   render() {
-    const version = this.props.version !== '' ? `:${this.props.version}` : '';
-    const detailsPageUrl = this.makeDetailsPageUrl();
-    const { nodeType, app } = this.state;
+    // Disable context menu if we are dealing with a unknown or an inaccessible node
+    if (this.props.nodeType === 'unknown' || this.props.isInaccessible) {
+      this.props.contextMenu.disable();
+      return null;
+    }
+
+    const { type, name } = NodeContextMenu.derivedValuesFromProps(this.props);
+    const detailsPageUrl = this.makeDetailsPageUrl(type, name);
+
     return (
       <div className={graphContextMenuContainerStyle}>
         <div className={graphContextMenuTitleStyle}>
-          <strong>{app}</strong>
-          {version}
+          <strong>{name}</strong>
         </div>
         {this.createMenuItem(detailsPageUrl, 'Show Details')}
         {this.createMenuItem(`${detailsPageUrl}?tab=traffic`, 'Show Traffic')}
-        {nodeType === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
+        {type === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
         {this.createMenuItem(
-          `${detailsPageUrl}?tab=${nodeType === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
+          `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
           'Show Inbound Metrics'
         )}
-        {nodeType !== Paths.SERVICES &&
-          this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
-        {nodeType === Paths.SERVICES &&
+        {type !== Paths.SERVICES && this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
+        {type === Paths.SERVICES &&
           this.props.jaegerURL !== '' &&
-          this.createMenuItem(this.getJaegerURL(), 'Show Traces', this.props.jaegerIntegration ? '_self' : '_blank')}
+          this.createMenuItem(
+            this.getJaegerURL(name),
+            'Show Traces',
+            this.props.jaegerIntegration ? '_self' : '_blank'
+          )}
       </div>
     );
   }
@@ -132,3 +151,10 @@ export class NodeContextMenu extends React.PureComponent<NodeContextMenuProps, N
     }
   };
 }
+
+const mapStateToProps = (state: KialiAppState) => ({
+  jaegerIntegration: state.jaegerState.enableIntegration,
+  jaegerURL: state.jaegerState.jaegerURL
+});
+
+export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);
