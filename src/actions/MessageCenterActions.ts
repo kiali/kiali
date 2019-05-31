@@ -4,7 +4,7 @@ import { MessageType } from '../types/MessageCenter';
 const DEFAULT_GROUP_ID = 'default';
 const DEFAULT_MESSAGE_TYPE = MessageType.ERROR;
 
-const enum MessageCenterActionKeys {
+enum MessageCenterActionKeys {
   ADD_MESSAGE = 'ADD_MESSAGE',
   REMOVE_MESSAGE = 'REMOVE_MESSAGE',
   MARK_MESSAGE_AS_READ = 'MARK_MESSAGE_AS_READ',
