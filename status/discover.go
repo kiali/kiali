@@ -93,21 +93,16 @@ func getPathURL(endpoint string) (path string) {
 
 func checkTracingService() (url string) {
 	tracingConfig := config.Get().ExternalServices.Tracing
-	ns := config.IstioDefaultNamespace // TODO: don't use default!
 	service := tracingConfig.Service
-
-	if tracingConfig.Namespace != "" {
-		ns = tracingConfig.Namespace
-	}
 
 	if service != "" {
 		// Try to discover the URL
-		url = discoverServiceURL(ns, service)
+		url = discoverServiceURL(tracingConfig.Namespace, service)
 	} else {
 		// Check usual route names for tracing
 		for _, name := range tracingLookupRoutes {
 			service = name
-			url = discoverServiceURL(ns, name)
+			url = discoverServiceURL(tracingConfig.Namespace, name)
 			if url != "" {
 				break
 			}
@@ -117,7 +112,7 @@ func checkTracingService() (url string) {
 	// The user has set the route or we found one in tracing or jaeger-query
 	if url != "" {
 		// Calculate if Path
-		path, err := checkIfQueryBasePath(ns, service)
+		path, err := checkIfQueryBasePath(tracingConfig.Namespace, service)
 		if err != nil {
 			log.Debugf("Error checking the query base path")
 		}
