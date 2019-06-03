@@ -115,7 +115,7 @@ spec:
 # Determines which priority levels of log messages Kiali will output.
 # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
 #    ---
-#    verbose_mode: "4"
+#    verbose_mode: "3"
 #
 # Kiali resources will be assigned a "version" label when they are deployed.
 # This determines what value those "version" labels will have.
