@@ -28,8 +28,6 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/kiali/kiali/appstate"
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
@@ -104,11 +102,6 @@ func main() {
 	// we need first discover Jaeger
 	if config.Get().ExternalServices.Tracing.Enabled {
 		status.DiscoverJaeger()
-		_, err := business.GetJaegerServices()
-		if err != nil {
-			appstate.JaegerAvailable = false
-			log.Errorf("Jaeger is not available : %s", err)
-		}
 	}
 
 	// Start listening to requests
