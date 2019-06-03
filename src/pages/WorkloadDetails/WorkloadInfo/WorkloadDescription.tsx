@@ -41,11 +41,13 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
         <div className="card-pf-body">
           <Row>
             <Col xs={12} sm={8} md={6} lg={6}>
-              <div className="progress-description">
-                <strong>{isTemplateLabels ? 'Template Labels' : 'Labels'}</strong>
-              </div>
-              <div className="label-collection">
-                <Labels labels={workload.labels} />
+              <div id="labels">
+                <div className="progress-description">
+                  <strong>{isTemplateLabels ? 'Template Labels' : 'Labels'}</strong>
+                </div>
+                <div className="label-collection">
+                  <Labels labels={workload.labels} />
+                </div>
               </div>
               <div>
                 <strong>Type</strong> {workload.type ? workload.type : ''}
