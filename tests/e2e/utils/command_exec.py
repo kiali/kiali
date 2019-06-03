@@ -8,14 +8,14 @@ KIALI_ACCOUNT_NAME = 'kiali-service-account'
 class command_exec():
 
   def oc_apply(yaml_file, namespace):
-      add_command_text = "oc apply -n " + namespace + " -f " + yaml_file
-      add_command_result = os.popen(add_command_text).read()
-      return add_command_result.__contains__("created") or add_command_result.__contains__("configured")
+    add_command_text = "oc apply -n " + namespace + " -f " + yaml_file
+    stdout, stderr = Popen(add_command_text, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+    return "created" in stdout.decode() or "configure" in stdout.decode()
 
   def oc_delete(yaml_file, namespace):
-      delete_command_text = "oc delete -n " + namespace + " -f " + yaml_file 
-      delete_command_result = os.popen(delete_command_text).read()
-      return delete_command_result.__contains__("deleted")
+    delete_command_text = "oc delete -n " + namespace + " -f " + yaml_file
+    stdout, stderr = Popen(delete_command_text, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+    return "deleted" in stdout.decode()
 
   def oc_remove_cluster_role_rom_user_kiali(self):
       cmd = 'oc adm policy remove-cluster-role-from-user kiali system:serviceaccount:istio-system:{}'.format(KIALI_ACCOUNT_NAME)
