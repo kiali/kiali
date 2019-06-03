@@ -41,6 +41,7 @@ kiali_defaults:
       api_key: ""
       display_link: true
       in_cluster: true
+      insecure_skip_verify: false
       namespace: ""
       password: ""
       service: "grafana"
@@ -52,6 +53,7 @@ kiali_defaults:
       url_service_version: ""
     prometheus:
       custom_metrics_url: ""
+      insecure_skip_verify: false
       url: ""
     tracing:
       enabled: true

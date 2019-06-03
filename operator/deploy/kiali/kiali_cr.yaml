@@ -141,6 +141,7 @@ spec:
 # api_key: API key to access Grafana, for token-based authentication. API key only requires viewer permissions.
 # display_link: When true, a link to Grafana will be displayed for more dashboards.
 # in_cluster: Set true to indicate that the Grafana service is accessible in the Kubernetes cluster.
+# insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Grafana over https.
 # namespace: The Kubernetes namespace that holds the Grafana service. Only used when in_cluster is true. If empty, assumes the same value as deployment.namespace.
 # password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
 # service: The Kubernetes service name for Grafana. Only used when in_cluster is true.
@@ -152,6 +153,7 @@ spec:
 #      api_key: ""
 #      display_link: true
 #      in_cluster: true
+#      insecure_skip_verify: false
 #      namespace: ""
 #      password: ""
 #      service: "grafana"
@@ -174,11 +176,13 @@ spec:
 # custom_metrics_url: The URL used to query the Prometheus Server for building the runtime metrics dashboards.
 #                     This URL must be accessible from the Kiali pod.
 #                     If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
+# insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Prometheus over https.
 # url: The URL used to query the Prometheus Server. This URL must be accessible from the Kiali pod.
 #      If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
 #    ---
 #    prometheus:
 #      custom_metrics_url: ""
+#      insecure_skip_verify: false
 #      url: ""
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger
