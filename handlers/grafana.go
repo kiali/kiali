@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -19,7 +20,7 @@ import (
 )
 
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
-type dashboardSupplier func(string, string, string) ([]byte, int, error)
+type dashboardSupplier func(string, string, string, bool) ([]byte, int, error)
 
 const (
 	workloadDashboardPattern = "Istio%20Workload%20Dashboard"
@@ -89,11 +90,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -107,8 +108,8 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url string, searchPattern string, credentials string, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern, credentials)
+func getDashboardPath(url, searchPattern, credentials string, insecureSkipVerify bool, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern, credentials, insecureSkipVerify)
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +146,7 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern string, credentials string) ([]byte, int, error) {
+func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bool) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
 	if err != nil {
 		return nil, 0, err
@@ -153,7 +154,15 @@ func findDashboard(url, searchPattern string, credentials string) ([]byte, int, 
 	if credentials != "" {
 		req.Header.Add("Authorization", credentials)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	transport := http.Transport{}
+	if insecureSkipVerify {
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+	client := http.Client{Transport: &transport}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
