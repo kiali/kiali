@@ -29,7 +29,7 @@ type JaegerServices struct {
 func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int, err error) {
 	errorTraces = 0
 	err = nil
-	if !appstate.JaegerAvailable || !config.Get().ExternalServices.Tracing.Enabled {
+	if !config.Get().ExternalServices.Tracing.Enabled {
 		return -1, errors.New("jaeger is not available")
 	}
 	if appstate.JaegerEnabled {
