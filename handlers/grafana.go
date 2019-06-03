@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	core_v1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -160,7 +161,7 @@ func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bo
 			InsecureSkipVerify: true,
 		}
 	}
-	client := http.Client{Transport: &transport}
+	client := http.Client{Transport: &transport, Timeout: time.Second * 30}
 
 	resp, err := client.Do(req)
 	if err != nil {
