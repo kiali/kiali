@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/kiali/kiali/appstate"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
@@ -25,18 +26,14 @@ type JaegerServices struct {
 	Services []string `json:"data"`
 }
 
-var (
-	JaegerAvailable = true
-)
-
 func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int, err error) {
 	errorTraces = 0
 	err = nil
-	if !JaegerAvailable || !config.Get().ExternalServices.Tracing.Enabled {
+	if !appstate.JaegerAvailable || !config.Get().ExternalServices.Tracing.Enabled {
 		return -1, errors.New("jaeger is not available")
 	}
-	if config.Get().ExternalServices.Tracing.EnableJaeger {
-		u, errParse := url.Parse(fmt.Sprintf("http://%s%s/api/traces", config.Get().ExternalServices.Tracing.Service, config.Get().ExternalServices.Tracing.Path))
+	if appstate.JaegerEnabled {
+		u, errParse := url.Parse(fmt.Sprintf("http://%s%s/api/traces", appstate.JaegerConfig.Service, appstate.JaegerConfig.Path))
 		if errParse != nil {
 			log.Errorf("Error parse Jaeger URL fetching Error Traces: %s", err)
 			return -1, errParse
@@ -78,10 +75,10 @@ func getErrorTracesFromJaeger(namespace string, service string) (errorTraces int
 	return errorTraces, err
 }
 
-func GetServices() (services JaegerServices, err error) {
+func GetJaegerServices() (services JaegerServices, err error) {
 	services = JaegerServices{Services: []string{}}
 	err = nil
-	u, err := url.Parse(fmt.Sprintf("http://%s%s/api/services", config.Get().ExternalServices.Tracing.Service, config.Get().ExternalServices.Tracing.Path))
+	u, err := url.Parse(fmt.Sprintf("http://%s%s/api/services", appstate.JaegerConfig.Service, appstate.JaegerConfig.Path))
 	if err != nil {
 		log.Errorf("Error parse Jaeger URL fetching Services: %s", err)
 		return services, err

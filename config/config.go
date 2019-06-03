@@ -145,8 +145,6 @@ type GrafanaConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	// EnableJaeger is false by default, in the discover feature will be true if the user set the configuration or Kiali found the service.
-	EnableJaeger bool `yaml:"-"`
 	// Enable autodiscover and Jaeger in Kiali
 	Enabled   bool   `yaml:"enabled"`
 	Namespace string `yaml:"namespace"`
@@ -233,12 +231,6 @@ type Config struct {
 // Istio System namespace by default
 const IstioDefaultNamespace = "istio-system"
 
-// Tracing Service by default
-const TracingDefaultService = "tracing"
-
-// Jaeger Query Service by default
-const JaegerQueryDefaultService = "jaeger-query"
-
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
@@ -293,7 +285,6 @@ func NewConfig() (c *Config) {
 
 	// Tracing Configuration
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
-	c.ExternalServices.Tracing.EnableJaeger = false
 	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, IstioDefaultNamespace))
@@ -343,6 +334,8 @@ func Get() (conf *Config) {
 }
 
 // Set the global Config
+// This function should not be called outside of main or tests.
+// If possible keep config unmutated and use globals and/or appstate package for mutable states to avoid concurrent writes risk.
 func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()

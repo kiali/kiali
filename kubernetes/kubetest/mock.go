@@ -116,8 +116,8 @@ func (o *K8SClientMock) GetDeploymentsByLabel(namespace string, labelSelector st
 	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetRoute(namespace, service string) (*osroutes_v1.Route, error) {
-	args := o.Called(namespace, service)
+func (o *K8SClientMock) GetRoute(namespace, name string) (*osroutes_v1.Route, error) {
+	args := o.Called(namespace, name)
 	return args.Get(0).(*osroutes_v1.Route), args.Error(1)
 }
 
