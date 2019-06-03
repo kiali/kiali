@@ -52,7 +52,7 @@ rules:
   resources:
   - customresourcedefinitions
   verbs:
-  - '*'
+  - get
 - apiGroups: ["extensions"]
   resources:
   - ingresses
