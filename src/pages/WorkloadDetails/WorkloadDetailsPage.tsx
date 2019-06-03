@@ -200,13 +200,13 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     return (
       <>
         <BreadcrumbView location={this.props.location} />
+        <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
         <TabContainer
           id="basic-tabs"
           activeKey={this.activeTab('tab', 'info')}
           onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
         >
-          <>
-            <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
+          <div>
             <Nav bsClass="nav nav-tabs nav-tabs-pf">
               <NavItem eventKey="info">Overview</NavItem>
               <NavItem eventKey="traffic">Traffic</NavItem>
@@ -291,7 +291,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
                   });
                 })}
             </TabContent>
-          </>
+          </div>
         </TabContainer>
       </>
     );

@@ -62,18 +62,22 @@ ShallowWrapper {
             xs={12}
           >
             <div
-              className="progress-description"
+              id="labels"
             >
-              <strong>
-                Template Labels
-              </strong>
-            </div>
-            <div
-              className="label-collection"
-            >
-              <Labels
-                labels={Object {}}
-              />
+              <div
+                className="progress-description"
+              >
+                <strong>
+                  Template Labels
+                </strong>
+              </div>
+              <div
+                className="label-collection"
+              >
+                <Labels
+                  labels={Object {}}
+                />
+              </div>
             </div>
             <div>
               <strong>
@@ -166,18 +170,22 @@ ShallowWrapper {
             xs={12}
           >
             <div
-              className="progress-description"
+              id="labels"
             >
-              <strong>
-                Template Labels
-              </strong>
-            </div>
-            <div
-              className="label-collection"
-            >
-              <Labels
-                labels={Object {}}
-              />
+              <div
+                className="progress-description"
+              >
+                <strong>
+                  Template Labels
+                </strong>
+              </div>
+              <div
+                className="label-collection"
+              >
+                <Labels
+                  labels={Object {}}
+                />
+              </div>
             </div>
             <div>
               <strong>
@@ -267,18 +275,22 @@ ShallowWrapper {
               xs={12}
             >
               <div
-                className="progress-description"
+                id="labels"
               >
-                <strong>
-                  Template Labels
-                </strong>
-              </div>
-              <div
-                className="label-collection"
-              >
-                <Labels
-                  labels={Object {}}
-                />
+                <div
+                  className="progress-description"
+                >
+                  <strong>
+                    Template Labels
+                  </strong>
+                </div>
+                <div
+                  className="label-collection"
+                >
+                  <Labels
+                    labels={Object {}}
+                  />
+                </div>
               </div>
               <div>
                 <strong>
@@ -361,18 +373,22 @@ ShallowWrapper {
               "bsClass": "col",
               "children": Array [
                 <div
-                  className="progress-description"
+                  id="labels"
                 >
-                  <strong>
-                    Template Labels
-                  </strong>
-                </div>,
-                <div
-                  className="label-collection"
-                >
-                  <Labels
-                    labels={Object {}}
-                  />
+                  <div
+                    className="progress-description"
+                  >
+                    <strong>
+                      Template Labels
+                    </strong>
+                  </div>
+                  <div
+                    className="label-collection"
+                  >
+                    <Labels
+                      labels={Object {}}
+                    />
+                  </div>
                 </div>,
                 <div>
                   <strong>
@@ -425,47 +441,75 @@ ShallowWrapper {
                 "key": undefined,
                 "nodeType": "host",
                 "props": Object {
-                  "children": <strong>
-                    Template Labels
-                  </strong>,
-                  "className": "progress-description",
+                  "children": Array [
+                    <div
+                      className="progress-description"
+                    >
+                      <strong>
+                        Template Labels
+                      </strong>
+                    </div>,
+                    <div
+                      className="label-collection"
+                    >
+                      <Labels
+                        labels={Object {}}
+                      />
+                    </div>,
+                  ],
+                  "id": "labels",
                 },
                 "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": "Template Labels",
+                "rendered": Array [
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": <strong>
+                        Template Labels
+                      </strong>,
+                      "className": "progress-description",
+                    },
+                    "ref": null,
+                    "rendered": Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": "Template Labels",
+                      },
+                      "ref": null,
+                      "rendered": "Template Labels",
+                      "type": "strong",
+                    },
+                    "type": "div",
                   },
-                  "ref": null,
-                  "rendered": "Template Labels",
-                  "type": "strong",
-                },
-                "type": "div",
-              },
-              Object {
-                "instance": null,
-                "key": undefined,
-                "nodeType": "host",
-                "props": Object {
-                  "children": <Labels
-                    labels={Object {}}
-                  />,
-                  "className": "label-collection",
-                },
-                "ref": null,
-                "rendered": Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "class",
-                  "props": Object {
-                    "labels": Object {},
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "host",
+                    "props": Object {
+                      "children": <Labels
+                        labels={Object {}}
+                      />,
+                      "className": "label-collection",
+                    },
+                    "ref": null,
+                    "rendered": Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "labels": Object {},
+                      },
+                      "ref": null,
+                      "rendered": null,
+                      "type": [Function],
+                    },
+                    "type": "div",
                   },
-                  "ref": null,
-                  "rendered": null,
-                  "type": [Function],
-                },
+                ],
                 "type": "div",
               },
               Object {
@@ -762,18 +806,22 @@ ShallowWrapper {
               xs={12}
             >
               <div
-                className="progress-description"
+                id="labels"
               >
-                <strong>
-                  Template Labels
-                </strong>
-              </div>
-              <div
-                className="label-collection"
-              >
-                <Labels
-                  labels={Object {}}
-                />
+                <div
+                  className="progress-description"
+                >
+                  <strong>
+                    Template Labels
+                  </strong>
+                </div>
+                <div
+                  className="label-collection"
+                >
+                  <Labels
+                    labels={Object {}}
+                  />
+                </div>
               </div>
               <div>
                 <strong>
@@ -866,18 +914,22 @@ ShallowWrapper {
               xs={12}
             >
               <div
-                className="progress-description"
+                id="labels"
               >
-                <strong>
-                  Template Labels
-                </strong>
-              </div>
-              <div
-                className="label-collection"
-              >
-                <Labels
-                  labels={Object {}}
-                />
+                <div
+                  className="progress-description"
+                >
+                  <strong>
+                    Template Labels
+                  </strong>
+                </div>
+                <div
+                  className="label-collection"
+                >
+                  <Labels
+                    labels={Object {}}
+                  />
+                </div>
               </div>
               <div>
                 <strong>
@@ -967,18 +1019,22 @@ ShallowWrapper {
                 xs={12}
               >
                 <div
-                  className="progress-description"
+                  id="labels"
                 >
-                  <strong>
-                    Template Labels
-                  </strong>
-                </div>
-                <div
-                  className="label-collection"
-                >
-                  <Labels
-                    labels={Object {}}
-                  />
+                  <div
+                    className="progress-description"
+                  >
+                    <strong>
+                      Template Labels
+                    </strong>
+                  </div>
+                  <div
+                    className="label-collection"
+                  >
+                    <Labels
+                      labels={Object {}}
+                    />
+                  </div>
                 </div>
                 <div>
                   <strong>
@@ -1061,18 +1117,22 @@ ShallowWrapper {
                 "bsClass": "col",
                 "children": Array [
                   <div
-                    className="progress-description"
+                    id="labels"
                   >
-                    <strong>
-                      Template Labels
-                    </strong>
-                  </div>,
-                  <div
-                    className="label-collection"
-                  >
-                    <Labels
-                      labels={Object {}}
-                    />
+                    <div
+                      className="progress-description"
+                    >
+                      <strong>
+                        Template Labels
+                      </strong>
+                    </div>
+                    <div
+                      className="label-collection"
+                    >
+                      <Labels
+                        labels={Object {}}
+                      />
+                    </div>
                   </div>,
                   <div>
                     <strong>
@@ -1125,47 +1185,75 @@ ShallowWrapper {
                   "key": undefined,
                   "nodeType": "host",
                   "props": Object {
-                    "children": <strong>
-                      Template Labels
-                    </strong>,
-                    "className": "progress-description",
+                    "children": Array [
+                      <div
+                        className="progress-description"
+                      >
+                        <strong>
+                          Template Labels
+                        </strong>
+                      </div>,
+                      <div
+                        className="label-collection"
+                      >
+                        <Labels
+                          labels={Object {}}
+                        />
+                      </div>,
+                    ],
+                    "id": "labels",
                   },
                   "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "host",
-                    "props": Object {
-                      "children": "Template Labels",
+                  "rendered": Array [
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": <strong>
+                          Template Labels
+                        </strong>,
+                        "className": "progress-description",
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "host",
+                        "props": Object {
+                          "children": "Template Labels",
+                        },
+                        "ref": null,
+                        "rendered": "Template Labels",
+                        "type": "strong",
+                      },
+                      "type": "div",
                     },
-                    "ref": null,
-                    "rendered": "Template Labels",
-                    "type": "strong",
-                  },
-                  "type": "div",
-                },
-                Object {
-                  "instance": null,
-                  "key": undefined,
-                  "nodeType": "host",
-                  "props": Object {
-                    "children": <Labels
-                      labels={Object {}}
-                    />,
-                    "className": "label-collection",
-                  },
-                  "ref": null,
-                  "rendered": Object {
-                    "instance": null,
-                    "key": undefined,
-                    "nodeType": "class",
-                    "props": Object {
-                      "labels": Object {},
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "host",
+                      "props": Object {
+                        "children": <Labels
+                          labels={Object {}}
+                        />,
+                        "className": "label-collection",
+                      },
+                      "ref": null,
+                      "rendered": Object {
+                        "instance": null,
+                        "key": undefined,
+                        "nodeType": "class",
+                        "props": Object {
+                          "labels": Object {},
+                        },
+                        "ref": null,
+                        "rendered": null,
+                        "type": [Function],
+                      },
+                      "type": "div",
                     },
-                    "ref": null,
-                    "rendered": null,
-                    "type": [Function],
-                  },
+                  ],
                   "type": "div",
                 },
                 Object {
