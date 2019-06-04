@@ -22,7 +22,7 @@ type Props = {
 };
 
 type State = {
-  intervalId: NodeJS.Timeout;
+  intervalId?: NodeJS.Timeout;
   refreshInterval: PollIntervalInMs;
 };
 
@@ -48,7 +48,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 
 class MeshMTLSStatus extends React.Component<Props, State> {
   componentDidMount() {
-    const intervalId = setInterval(this.fetchStatus, this.props.refreshInterval);
+    const intervalId = this.setIntervalId(this.props.refreshInterval);
     this.setState({
       intervalId: intervalId,
       refreshInterval: this.props.refreshInterval
@@ -56,14 +56,14 @@ class MeshMTLSStatus extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
-    clearInterval(this.state.intervalId);
+    this.clearIntervalId();
   }
 
   componentDidUpdate() {
     if (this.props.refreshInterval !== this.state.refreshInterval) {
-      clearInterval(this.state.intervalId);
+      this.clearIntervalId();
 
-      const intervalId = setInterval(this.fetchStatus, this.props.refreshInterval);
+      const intervalId = this.setIntervalId(this.props.refreshInterval);
       this.setState({
         intervalId: intervalId,
         refreshInterval: this.props.refreshInterval
@@ -96,6 +96,16 @@ class MeshMTLSStatus extends React.Component<Props, State> {
       </div>
     );
   }
+
+  private setIntervalId = (refreshInterval: PollIntervalInMs): NodeJS.Timeout | undefined => {
+    return refreshInterval ? setInterval(this.fetchStatus, refreshInterval) : undefined;
+  };
+
+  private clearIntervalId = () => {
+    if (this.state.intervalId) {
+      clearInterval(this.state.intervalId);
+    }
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
