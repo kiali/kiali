@@ -178,12 +178,13 @@ def __test_service_health_endpoint(kiali_client):
     service_health = kiali_client.request(method_name='serviceHealth', path={'namespace': bookinfo_namespace, 'service':SERVICE_TO_VALIDATE}).json()
     assert service_health != None
 
-    envoy = service_health.get('envoy')
-    assert envoy != None
-    assert 'inbound' in envoy
-    assert 'outbound' in envoy
-
     assert 'requests' in service_health
+
+    reqs = service_health.get('requests')
+    assert reqs != None
+    assert 'errorRatio' in reqs
+    assert 'inboundErrorRatio' in reqs
+    assert 'outboundErrorRatio' in reqs
 
 def test_service_validations_endpoint(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
