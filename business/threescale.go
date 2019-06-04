@@ -339,7 +339,8 @@ func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (model
 
 func generateMatch(threeScaleServiceRule models.ThreeScaleServiceRule) string {
 	// Match granularity is set at service level so no need to use versions labels
-	match := "destination.service.namespace == \"" + threeScaleServiceRule.ServiceNamespace + "\" && "
+	match := "context.reporter.kind == \"inbound\" && "
+	match += "destination.service.namespace == \"" + threeScaleServiceRule.ServiceNamespace + "\" && "
 	match += "destination.service.name == \"" + threeScaleServiceRule.ServiceName + "\""
 	return match
 }
