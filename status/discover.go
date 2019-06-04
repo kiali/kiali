@@ -164,7 +164,7 @@ func DiscoverGrafana() string {
 	if appstate.GrafanaDiscoveredURL != "" {
 		return appstate.GrafanaDiscoveredURL
 	}
-	url := discoverServiceURL(grafanaConf.ServiceNamespace, grafanaConf.Service)
+	url := discoverServiceURL(grafanaConf.Namespace, grafanaConf.Service)
 	appstate.GrafanaDiscoveredURL = strings.TrimSuffix(url, "/")
 	return appstate.GrafanaDiscoveredURL
 }

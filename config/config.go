@@ -44,7 +44,7 @@ const (
 	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
 	EnvGrafanaInCluster                = "GRAFANA_IN_CLUSTER"
 	EnvGrafanaURL                      = "GRAFANA_URL"
-	EnvGrafanaServiceNamespace         = "GRAFANA_SERVICE_NAMESPACE"
+	EnvGrafanaNamespace                = "GRAFANA_NAMESPACE"
 	EnvGrafanaService                  = "GRAFANA_SERVICE"
 	EnvGrafanaWorkloadDashboardPattern = "GRAFANA_WORKLOAD_DASHBOARD_PATTERN"
 	EnvGrafanaServiceDashboardPattern  = "GRAFANA_SERVICE_DASHBOARD_PATTERN"
@@ -128,19 +128,14 @@ type PrometheusConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink              bool   `yaml:"display_link"`
-	InCluster                bool   `yaml:"in_cluster"`
-	URL                      string `yaml:"url"`
-	ServiceNamespace         string `yaml:"service_namespace"`
-	Service                  string `yaml:"service"`
-	WorkloadDashboardPattern string `yaml:"workload_dashboard_pattern"`
-	ServiceDashboardPattern  string `yaml:"service_dashboard_pattern"`
-	VarNamespace             string `yaml:"var_namespace"`
-	VarService               string `yaml:"var_service"`
-	VarWorkload              string `yaml:"var_workload"`
-	APIKey                   string `yaml:"api_key"`
-	Username                 string `yaml:"username"`
-	Password                 string `yaml:"password"`
+	DisplayLink bool   `yaml:"display_link"`
+	InCluster   bool   `yaml:"in_cluster"`
+	URL         string `yaml:"url"`
+	Namespace   string `yaml:"namespace"`
+	Service     string `yaml:"service"`
+	APIKey      string `yaml:"api_key"`
+	Username    string `yaml:"username"`
+	Password    string `yaml:"password"`
 }
 
 // TracingConfig describes configuration used for tracing links
@@ -266,13 +261,8 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
 	c.ExternalServices.Grafana.InCluster = getDefaultBool(EnvGrafanaInCluster, true)
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.ExternalServices.Grafana.ServiceNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaServiceNamespace, c.IstioNamespace))
+	c.ExternalServices.Grafana.Namespace = strings.TrimSpace(getDefaultString(EnvGrafanaNamespace, c.IstioNamespace))
 	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
-	c.ExternalServices.Grafana.WorkloadDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaWorkloadDashboardPattern, "Istio%20Workload%20Dashboard"))
-	c.ExternalServices.Grafana.ServiceDashboardPattern = strings.TrimSpace(getDefaultString(EnvGrafanaServiceDashboardPattern, "Istio%20Service%20Dashboard"))
-	c.ExternalServices.Grafana.VarNamespace = strings.TrimSpace(getDefaultString(EnvGrafanaVarNamespace, "var-namespace"))
-	c.ExternalServices.Grafana.VarService = strings.TrimSpace(getDefaultString(EnvGrafanaVarService, "var-service"))
-	c.ExternalServices.Grafana.VarWorkload = strings.TrimSpace(getDefaultString(EnvGrafanaVarWorkload, "var-workload"))
 	c.ExternalServices.Grafana.APIKey = strings.TrimSpace(getDefaultString(EnvGrafanaAPIKey, ""))
 	c.ExternalServices.Grafana.Username = strings.TrimSpace(getDefaultString(EnvGrafanaUsername, ""))
 	c.ExternalServices.Grafana.Password = strings.TrimSpace(getDefaultString(EnvGrafanaPassword, ""))
