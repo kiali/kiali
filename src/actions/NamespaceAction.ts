@@ -1,28 +1,18 @@
 import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
 import Namespace from '../types/Namespace';
-
-enum NamespaceActionKeys {
-  NAMESPACE_REQUEST_STARTED = 'NAMESPACE_REQUEST_STARTED',
-  NAMESPACE_SUCCESS = 'NAMESPACE_SUCCESS',
-  NAMESPACE_FAILED = 'NAMESPACE_FAILED',
-  TOGGLE_ACTIVE_NAMESPACE = 'TOGGLE_ACTIVE_NAMESPACE',
-  SET_ACTIVE_NAMESPACES = 'SET_ACTIVE_NAMESPACES',
-  SET_FILTER = 'SET_FILTER'
-}
+import { ActionKeys } from './ActionKeys';
 
 export const NamespaceActions = {
-  toggleActiveNamespace: createStandardAction(NamespaceActionKeys.TOGGLE_ACTIVE_NAMESPACE)<Namespace>(),
-  setActiveNamespaces: createStandardAction(NamespaceActionKeys.SET_ACTIVE_NAMESPACES)<Namespace[]>(),
-  setFilter: createStandardAction(NamespaceActionKeys.SET_FILTER)<string>(),
-  requestStarted: createAction(NamespaceActionKeys.NAMESPACE_REQUEST_STARTED),
-  requestFailed: createAction(NamespaceActionKeys.NAMESPACE_FAILED),
-  receiveList: createAction(
-    NamespaceActionKeys.NAMESPACE_SUCCESS,
-    resolve => (newList: Namespace[], receivedAt: Date) =>
-      resolve({
-        list: newList,
-        receivedAt: receivedAt
-      })
+  toggleActiveNamespace: createStandardAction(ActionKeys.TOGGLE_ACTIVE_NAMESPACE)<Namespace>(),
+  setActiveNamespaces: createStandardAction(ActionKeys.SET_ACTIVE_NAMESPACES)<Namespace[]>(),
+  setFilter: createStandardAction(ActionKeys.NAMESPACE_SET_FILTER)<string>(),
+  requestStarted: createAction(ActionKeys.NAMESPACE_REQUEST_STARTED),
+  requestFailed: createAction(ActionKeys.NAMESPACE_FAILED),
+  receiveList: createAction(ActionKeys.NAMESPACE_SUCCESS, resolve => (newList: Namespace[], receivedAt: Date) =>
+    resolve({
+      list: newList,
+      receivedAt: receivedAt
+    })
   )
 };
 

@@ -1,12 +1,9 @@
 import { ActionType, createStandardAction } from 'typesafe-actions';
 import { GrafanaInfo } from '../store/Store';
-
-enum GrafanaActionKeys {
-  SET_INFO = 'SET_INFO'
-}
+import { ActionKeys } from './ActionKeys';
 
 export const GrafanaActions = {
-  setinfo: createStandardAction(GrafanaActionKeys.SET_INFO)<GrafanaInfo | null>()
+  setinfo: createStandardAction(ActionKeys.GRAFANA_SET_INFO)<GrafanaInfo | null>()
 };
 
 export type GrafanaAction = ActionType<typeof GrafanaActions>;

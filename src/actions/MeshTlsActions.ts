@@ -1,12 +1,9 @@
 import { ActionType, createStandardAction } from 'typesafe-actions';
 import { TLSStatus } from '../types/TLSStatus';
-
-enum MeshTlsActionKeys {
-  SET_INFO = 'SET_INFO'
-}
+import { ActionKeys } from './ActionKeys';
 
 export const MeshTlsActions = {
-  setinfo: createStandardAction(MeshTlsActionKeys.SET_INFO)<TLSStatus>()
+  setinfo: createStandardAction(ActionKeys.MTLS_SET_INFO)<TLSStatus>()
 };
 
 export type MeshTlsAction = ActionType<typeof MeshTlsActions>;
