@@ -5,7 +5,8 @@ import tests.conftest as conftest
 
 @pytest.fixture(scope="session", autouse=True)
 def before_all_tests(kiali_client):
-    global swagger_method_list, tested_method_list
+    global swagger_method_list, tested_method_list, control_plane_namespace
+    control_plane_namespace = conftest.get_control_plane_namespace()
     swagger = kiali_client.swagger_parser.swagger
     swagger_method_list= []
     tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'Authenticate',
@@ -76,18 +77,21 @@ def test_authentication_info(kiali_client):
     evaluate_response(kiali_client, method_name='AuthenticationInfo')
 
 def test_openshift_checkToken(kiali_client):
-    evaluate_response(kiali_client, method_name='OpenshiftCheckToken')
+    if conftest.get_kiali_auth_method() == "oauth":
+        pytest.skip()
+    else:
+        evaluate_response(kiali_client, method_name='OpenshiftCheckToken')
 
 def test_namespace_tls(kiali_client):
-    evaluate_response(kiali_client, method_name='namespaceTls', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='namespaceTls', path={'namespace': control_plane_namespace})
 
 def test_pod_details(kiali_client):
-    pod_id = get_pod_id(kiali_client, namespace='istio-system', pod_name='kiali')
-    evaluate_response(kiali_client, method_name='podDetails', path={'namespace': 'istio-system', 'pod': pod_id})
+    pod_id = get_pod_id(kiali_client, namespace=control_plane_namespace, pod_name='kiali')
+    evaluate_response(kiali_client, method_name='podDetails', path={'namespace': control_plane_namespace, 'pod': pod_id})
 
 def test_pod_logs(kiali_client):
-    pod_id = get_pod_id(kiali_client, namespace='istio-system', pod_name='kiali')
-    evaluate_response(kiali_client, method_name='podLogs', path={'namespace': 'istio-system', 'pod': pod_id})
+    pod_id = get_pod_id(kiali_client, namespace=control_plane_namespace, pod_name='kiali')
+    evaluate_response(kiali_client, method_name='podLogs', path={'namespace': control_plane_namespace, 'pod': pod_id})
 
 def test_grafana_info(kiali_client):
     evaluate_response(kiali_client, method_name='grafanaInfo')
@@ -99,62 +103,65 @@ def test_get_config(kiali_client):
     evaluate_response(kiali_client, method_name='getConfig')
 
 def test_get_token(kiali_client):
-    evaluate_response(kiali_client, method_name='Authenticate')
+    if conftest.get_kiali_auth_method() == "oauth":
+        pytest.skip()
+    else:
+        evaluate_response(kiali_client, method_name='Authenticate')
 
 
 def test_namespace_list(kiali_client):
     evaluate_response(kiali_client, method_name='namespaceList')
 
 def test_namespace_metrics(kiali_client):
-    evaluate_response(kiali_client, method_name='namespaceMetrics', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='namespaceMetrics', path={'namespace': control_plane_namespace})
 
 
 def test_namespace_health(kiali_client):
-    evaluate_response(kiali_client, method_name='namespaceHealth', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='namespaceHealth', path={'namespace': control_plane_namespace})
 
 
 def test_istio_config_list(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigList', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='istioConfigList', path={'namespace': control_plane_namespace})
 
 
 def test_istio_config_details(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': 'istio-system', 'object_type': 'rules', 'object': 'promtcp'})
+    evaluate_response(kiali_client, method_name='istioConfigDetails', path={'namespace': control_plane_namespace, 'object_type': 'rules', 'object': 'promtcp'})
 
 def test_istio_config_details_subtype(kiali_client):
-    evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': 'istio-system', 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
+    evaluate_response(kiali_client, method_name='istioConfigDetailsSubtype', path={'namespace': control_plane_namespace, 'object_type': 'templates', 'object_subtype': 'metrics', 'object': 'tcpbytereceived'} )
 
 def test_service_list(kiali_client):
-    evaluate_response(kiali_client, method_name='serviceList', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='serviceList', path={'namespace': control_plane_namespace})
 
 
 def test_service_details(kiali_client):
     evaluate_response(kiali_client, method_name='serviceDetails',
-                                           path={'namespace': 'istio-system', 'service': 'kiali'})
+                                           path={'namespace': control_plane_namespace, 'service': 'kiali'})
 
 def test_service_metrics(kiali_client):
     evaluate_response(kiali_client, method_name='serviceMetrics',
-                                        path={'namespace': 'istio-system', 'service': 'kiali'})
+                                        path={'namespace': control_plane_namespace, 'service': 'kiali'})
 
 def test_service_health(kiali_client):
-    evaluate_response(kiali_client, method_name='serviceHealth', path={'namespace': 'istio-system', 'service': 'kiali'})
+    evaluate_response(kiali_client, method_name='serviceHealth', path={'namespace': control_plane_namespace, 'service': 'kiali'})
 
 
 def test_app_list(kiali_client):
-    evaluate_response(kiali_client, method_name='appList', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='appList', path={'namespace': control_plane_namespace})
 
 def test_app_metrics(kiali_client):
-    evaluate_response(kiali_client,method_name='appMetrics', path={'namespace': 'istio-system', 'app': 'kiali'})
+    evaluate_response(kiali_client,method_name='appMetrics', path={'namespace': control_plane_namespace, 'app': 'kiali'})
 
 
 def test_app_details(kiali_client):
-    evaluate_response(kiali_client, method_name='appDetails', path={'namespace': 'istio-system', 'app': 'kiali'})
+    evaluate_response(kiali_client, method_name='appDetails', path={'namespace': control_plane_namespace, 'app': 'kiali'})
 
 def test_app_health(kiali_client):
-    evaluate_response(kiali_client, method_name='appHealth', path={'namespace': 'istio-system', 'app': 'kiali'})
+    evaluate_response(kiali_client, method_name='appHealth', path={'namespace': control_plane_namespace, 'app': 'kiali'})
 
 
 def test_workload_list(kiali_client):
-    evaluate_response(kiali_client, method_name='workloadList', path={'namespace': 'istio-system'})
+    evaluate_response(kiali_client, method_name='workloadList', path={'namespace': control_plane_namespace})
 
 
 def test_workload_details(kiali_client):
@@ -243,11 +250,11 @@ def test_negative_400(kiali_client):
 
 
 def test_negative_404(kiali_client):
-    INVALID_PARAMS_SERVICEDETAILS = {'namespace': 'istio-system', 'service': 'invalid'}
+    INVALID_PARAMS_SERVICEDETAILS = {'namespace': control_plane_namespace, 'service': 'invalid'}
     INVALID_PARAMS_WORKLOADDETAILS = {'namespace': 'invalid', 'workload': 'details-v1'}
     INVALID_PARAMS_APPDETAILS = {'namespace': 'invalid', 'app': 'ratings'}
     INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'rules', 'object': 'promtcp'}
-    INVALID_PARAMS_SERVICEHEALTH = {'namespace': 'istio-system', 'service': 'invalid'}
+    INVALID_PARAMS_SERVICEHEALTH = {'namespace': control_plane_namespace, 'service': 'invalid'}
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'bookinfo', 'workload': 'invalid'}
 
     evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)

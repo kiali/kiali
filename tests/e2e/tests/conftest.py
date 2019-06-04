@@ -30,7 +30,7 @@ def get_bookinfo_namespace():
 def __get_kiali_client__(config):
     if(config.get('kiali_scheme') == 'https'):
        return KialiClient(hostname=config.get('kiali_hostname'), auth_type=config.get(
-        'kiali_auth_method'),
+        'kiali_auth_method'), token=config.get('kiali_token'),
                        username=config.get('kiali_username'), password=config.get('kiali_password'), verify=config.get(
             'kiali_verify_ssl_certificate'), swagger_address=config.get('kiali_swagger_address'), custom_base_path=config.get('kiali_custom_base_context'))
     else:
@@ -80,6 +80,12 @@ def get_kiali_clusterrole_file(file_type):
 
 def get_kiali_swagger_address():
     return __get_environment_config__(ENV_FILE).get('kiali_swagger_address')
+
+def get_kiali_auth_method():
+    return __get_environment_config__(ENV_FILE).get('kiali_auth_method')
+
+def get_control_plane_namespace():
+    return __get_environment_config__(ENV_FILE).get('control_plane_namespace')
 
 def get_kiali_hostname():
     return __get_environment_config__(ENV_FILE).get('kiali_hostname')
