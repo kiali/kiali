@@ -261,10 +261,12 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
     ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n ${NAMESPACE}
     ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n ${NAMESPACE}
     ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-security-post-install-account -n ${NAMESPACE}
     if [ "${DASHBOARDS_ENABLED}" == "true" -o "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
       ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n ${NAMESPACE}
       ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n ${NAMESPACE}
     fi
+    ${CLIENT_EXE} adm policy add-scc-to-user privileged -z default -n ${NAMESPACE}
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
@@ -343,7 +345,7 @@ else
   ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} apply -f -
   _crd_count="0"
   echo -n "Waiting for the CRDs to be created"
-  while [ "$_crd_count" -lt "53" ]; do
+  while [ "$_crd_count" -lt "20" ]; do
     sleep 1
     echo -n "."
     _crd_count=$(${CLIENT_EXE} get crds | grep 'istio.io\|certmanager.k8s.io' | wc -l)
