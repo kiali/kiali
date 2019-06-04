@@ -427,6 +427,9 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case ServiceEntries:
 		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
+	case Sidecars:
+		istioConfigDetail.Sidecar = &models.Sidecar{}
+		err = json.Unmarshal(body, istioConfigDetail.Sidecar)
 	case Rules:
 		istioConfigDetail.Rule = &models.IstioRule{}
 		err = json.Unmarshal(body, istioConfigDetail.Rule)
@@ -523,6 +526,9 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case ServiceEntries:
 		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 		istioConfigDetail.ServiceEntry.Parse(result)
+	case Sidecars:
+		istioConfigDetail.Sidecar = &models.Sidecar{}
+		istioConfigDetail.Sidecar.Parse(result)
 	case Rules:
 		istioRule := models.CastIstioRule(result)
 		istioConfigDetail.Rule = &istioRule
