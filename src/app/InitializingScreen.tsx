@@ -27,6 +27,9 @@ const defaultErrorStyle = style({
     },
     '& textarea, & hr': {
       display: 'none'
+    },
+    '& p:first-of-type': {
+      textAlign: 'left'
     }
   }
 });

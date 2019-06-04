@@ -12,6 +12,7 @@ ShallowWrapper {
         ],
       }
     }
+    isPostLoginPerforming={false}
     status={2}
   />,
   Symbol(enzyme.__renderer__): Object {

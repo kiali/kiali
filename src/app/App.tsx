@@ -115,7 +115,9 @@ class App extends React.Component<{}, AppState> {
         <PersistGate loading={<InitializingScreen />} persistor={persistor}>
           {this.state.isInitialized ? (
             <AuthenticationControllerContainer
-              publicAreaComponent={<LoginPageContainer />}
+              publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
+                <LoginPageContainer isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
+              )}
               protectedAreaComponent={this.protectedArea}
             />
           ) : (

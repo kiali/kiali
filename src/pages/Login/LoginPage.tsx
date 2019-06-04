@@ -2,12 +2,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
+  BackgroundImageSrc,
   Button,
-  LoginPage as LoginNext,
-  LoginForm,
   ListItem,
   LoginFooterItem,
-  BackgroundImageSrc
+  LoginForm,
+  LoginPage as LoginNext
 } from '@patternfly/react-core';
 import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
@@ -37,6 +37,8 @@ type LoginProps = {
   error?: any;
   authenticate: (username: string, password: string) => void;
   checkCredentials: () => void;
+  isPostLoginPerforming: boolean;
+  postLoginErrorMsg?: string;
 };
 
 type LoginState = {
@@ -160,6 +162,9 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (!authenticationConfig.secretMissing && this.props.status === LoginStatus.error) {
       messages.push(this.props.message);
     }
+    if (this.props.postLoginErrorMsg) {
+      messages.push(this.renderMessage(this.props.postLoginErrorMsg));
+    }
     return messages;
   };
 
@@ -182,9 +187,14 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     };
 
     const messages = this.getHelperMessage();
+    const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
 
+    // Unfortunately, typescripg typings are wrong in the PatternFly
+    // library. So, this casts LoginForm as "any" so that it is
+    // possible to use the "isLoginButtonDisabled" property.
+    const Form = LoginForm as any;
     const loginForm = (
-      <LoginForm
+      <Form
         usernameLabel="Username"
         showHelperText={this.state.showHelperText || this.props.message !== '' || messages.length > 0}
         helperText={<>{messages}</>}
@@ -198,6 +208,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
         rememberMeAriaLabel="Remember me Checkbox"
         onLoginButtonClick={(e: any) => this.handleSubmit(e)}
         style={{ marginTop: '10px' }}
+        loginButtonLabel={isLoggingIn ? 'Logging in...' : undefined}
+        isLoginButtonDisabled={isLoggingIn || this.props.postLoginErrorMsg}
       />
     );
 
