@@ -21,10 +21,7 @@ const GrafanaState = (
       return Object.assign({}, INITIAL_GRAFANA_STATE, {
         url: action.payload.url,
         serviceDashboardPath: action.payload.serviceDashboardPath,
-        workloadDashboardPath: action.payload.workloadDashboardPath,
-        varNamespace: action.payload.varNamespace,
-        varService: action.payload.varService,
-        varWorkload: action.payload.varWorkload
+        workloadDashboardPath: action.payload.workloadDashboardPath
       });
     default:
       return state;

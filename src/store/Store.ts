@@ -109,9 +109,6 @@ export interface GrafanaInfo {
   url: string;
   serviceDashboardPath: string;
   workloadDashboardPath: string;
-  varNamespace: string;
-  varService: string;
-  varWorkload: string;
 }
 
 export interface JaegerState {
