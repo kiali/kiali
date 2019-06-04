@@ -154,10 +154,10 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 			"template": "threescale-authorization",
 			"params": map[string]interface{}{
 				"subject": map[string]interface{}{
-					"user": "request.query_params[\"user_key\"] | request.headers[\"User-Key\"] | \"\"",
+					"user": "request.query_params[\"user_key\"] | request.headers[\"user-key\"] | \"\"",
 					"properties": map[string]interface{}{
-						"app_id":  "request.query_params[\"app_id\"] | request.headers[\"App-Id\"] | \"\"",
-						"app_key": "request.query_params[\"app_key\"] | request.headers[\"App-Key\"] | \"\"",
+						"app_id":  "request.query_params[\"app_id\"] | request.headers[\"app-id\"] | \"\"",
+						"app_key": "request.query_params[\"app_key\"] | request.headers[\"app-key\"] | \"\"",
 					},
 				},
 				"action": map[string]interface{}{
@@ -339,7 +339,8 @@ func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (model
 
 func generateMatch(threeScaleServiceRule models.ThreeScaleServiceRule) string {
 	// Match granularity is set at service level so no need to use versions labels
-	match := "destination.service.namespace == \"" + threeScaleServiceRule.ServiceNamespace + "\" && "
+	match := "context.reporter.kind == \"inbound\" && "
+	match += "destination.service.namespace == \"" + threeScaleServiceRule.ServiceNamespace + "\" && "
 	match += "destination.service.name == \"" + threeScaleServiceRule.ServiceName + "\""
 	return match
 }
