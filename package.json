@@ -128,7 +128,9 @@
     "redux-mock-store": "1.5.3",
     "snyk": "^1.161.1",
     "source-map-explorer": "1.8.0",
+    "tslint": "5.17.0",
     "tslint-no-circular-imports": "0.6.2",
+    "tslint-react": "4.0.0",
     "typescript": "3.5"
   },
   "resolutions": {
