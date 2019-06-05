@@ -97,7 +97,6 @@ type InitialValues = {
   zoom?: number;
 };
 
-// @todo: Move this class to 'containers' folder -- but it effects many other things
 // exporting this class for testing
 export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, CytoscapeGraphState> {
   static contextTypes = {
@@ -518,10 +517,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     if (targetType !== 'node' && targetType !== 'group') {
       return;
     }
+
+    const targetOrGroupChildren = targetType === 'group' ? target.descendants() : target;
+
     if (target.data(CyNode.isInaccessible)) {
       return;
     }
-    if (target.data(CyNode.hasMissingSC)) {
+
+    if (targetOrGroupChildren.every(t => t.data(CyNode.hasMissingSC))) {
       MessageCenterUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
         undefined,
@@ -529,7 +532,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       );
       return;
     }
-    if (target.data(CyNode.isUnused)) {
+    if (targetOrGroupChildren.every(t => t.data(CyNode.isUnused))) {
       MessageCenterUtils.add(
         `An unused node has no node-specific traffic and can not provide a node detail graph.`,
         undefined,
