@@ -12,7 +12,7 @@ import {
 } from 'patternfly-react';
 
 import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
-import * as moment from 'moment';
+import moment from 'moment';
 
 const typeForPfIcon = (type: MessageType) => {
   switch (type) {
