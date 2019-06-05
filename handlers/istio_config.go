@@ -106,6 +106,7 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	criteria.IncludeRbacConfigs = defaultInclude
 	criteria.IncludeServiceRoles = defaultInclude
 	criteria.IncludeServiceRoleBindings = defaultInclude
+	criteria.IncludeSidecars = defaultInclude
 
 	if defaultInclude {
 		return criteria
@@ -156,6 +157,9 @@ func parseCriteria(namespace string, objects string) business.IstioConfigCriteri
 	}
 	if checkType(types, business.ServiceRoleBindings) {
 		criteria.IncludeServiceRoleBindings = true
+	}
+	if checkType(types, business.Sidecars) {
+		criteria.IncludeSidecars = true
 	}
 	return criteria
 }

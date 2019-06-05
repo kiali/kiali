@@ -3643,6 +3643,9 @@
         "serviceRoleBinding": {
           "$ref": "#/definitions/ServiceRoleBinding"
         },
+        "sidecar": {
+          "$ref": "#/definitions/Sidecar"
+        },
         "template": {
           "$ref": "#/definitions/istioTemplate"
         },
@@ -3704,6 +3707,9 @@
         },
         "serviceRoles": {
           "$ref": "#/definitions/ServiceRoles"
+        },
+        "sidecars": {
+          "$ref": "#/definitions/Sidecars"
         },
         "templates": {
           "$ref": "#/definitions/istioTemplates"
@@ -4862,6 +4868,50 @@
     },
     "SeverityLevel": {
       "type": "string",
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Sidecar": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "type": "object",
+          "properties": {
+            "egress": {
+              "type": "object",
+              "x-go-name": "Egress"
+            },
+            "ingress": {
+              "type": "object",
+              "x-go-name": "Ingress"
+            },
+            "workloadSelector": {
+              "type": "object",
+              "x-go-name": "WorkloadSelector"
+            }
+          },
+          "x-go-name": "Spec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "Sidecars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Sidecar"
+      },
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "Status": {

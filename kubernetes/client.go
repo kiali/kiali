@@ -72,6 +72,8 @@ type IstioClientInterface interface {
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
+	GetSidecar(namespace string, sidecar string) (IstioObject, error)
+	GetSidecars(namespace string) ([]IstioObject, error)
 	GetSelfSubjectAccessReview(namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetService(namespace string, serviceName string) (*core_v1.Service, error)
 	GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)

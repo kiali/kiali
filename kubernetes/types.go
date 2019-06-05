@@ -24,6 +24,10 @@ const (
 	gatewayType     = "Gateway"
 	gatewayTypeList = "GatewayList"
 
+	sidecars        = "sidecars"
+	sidecarType     = "Sidecar"
+	sidecarTypeList = "SidecarList"
+
 	serviceentries       = "serviceentries"
 	serviceentryType     = "ServiceEntry"
 	serviceentryTypeList = "ServiceEntryList"
@@ -266,6 +270,10 @@ var (
 		{
 			objectKind:     serviceentryType,
 			collectionKind: serviceentryTypeList,
+		},
+		{
+			objectKind:     sidecarType,
+			collectionKind: sidecarTypeList,
 		},
 	}
 
@@ -528,6 +536,7 @@ var (
 		virtualServices:  virtualServiceType,
 		destinationRules: destinationRuleType,
 		serviceentries:   serviceentryType,
+		sidecars:         sidecarType,
 
 		// Main Config files
 		rules:             ruleType,
