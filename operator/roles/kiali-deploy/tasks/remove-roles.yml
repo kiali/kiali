@@ -1,4 +1,4 @@
-- name: "Delete unused Kiali roles from previously accessible namespaces"
+- name: Delete unused Kiali roles from previously accessible namespaces
   ignore_errors: yes
   k8s:
     state: absent

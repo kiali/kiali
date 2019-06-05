@@ -72,6 +72,30 @@
   loop_control:
     loop_var: role_namespace
 
+- name: Find currently configured label selector
+  ignore_errors: yes
+  set_fact:
+    current_label_selector: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('api.namespaces.label_selector') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
+- name: Remove Kiali label from namespaces found in current accessible namespaces
+  ignore_errors: yes
+  include_tasks: remove-namespace-label.yml
+  vars:
+    # everything to the left of the = is the name of the label we want to remove
+    the_namespace_label_name: "{{ current_label_selector | regex_replace('^(.*)=.*$', '\\1') }}"
+  when:
+  - is_openshift == True or is_k8s == True
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+  - current_label_selector is defined
+  loop: "{{ current_accessible_namespaces }}"
+  loop_control:
+    loop_var: the_namespace
+
 - name: Delete Kiali cluster roles
   ignore_errors: yes
   vars:

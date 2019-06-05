@@ -1,4 +1,4 @@
-- name: "Create Kiali objects on OpenShift"
+- name: Create Kiali objects on OpenShift
   include_tasks: process-resource.yml
   vars:
     process_resource_cluster: "openshift"
@@ -18,7 +18,7 @@
   when:
   - is_openshift == True
 
-- name: "Create additional Kiali roles on OpenShift"
+- name: Create additional Kiali roles on OpenShift
   include_tasks: process-additional-roles.yml
   vars:
     process_resource_cluster: "openshift"

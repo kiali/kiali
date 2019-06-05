@@ -44,6 +44,13 @@ spec:
 # 'label_selector' is optional and takes a string value of a Kubernetes label selector
 # (e.g. "myLabel=myValue") which is used when fetching the list of available namespaces.
 # This does not affect explicit namespace access.
+# Note that if you do not set this but deployment.accessible_namespaces does not have the
+# special "all namespaces" value of "**" then this label_selector will be set
+# to a default value of "kiali.io/member-of=<deployment.namespace>" where
+# <deployment.namespace> is the namespace where Kiali is to be installed.
+# If deployment.accessible_namespaces does not have the special value of "**"
+# then the Kiali operator will add a new label to all accessible namespaces - that new
+# label will be this label_selector.
 #
 #    ---
 #    namespaces:

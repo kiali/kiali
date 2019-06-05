@@ -102,7 +102,7 @@ secret-delete:
 	${OC} delete --ignore-not-found=true secret --selector="app=kiali" -n "${NAMESPACE}"
 
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
-ifeq ($(AUTH_STRATEGY), "login")
+ifeq ($(AUTH_STRATEGY),login)
 kiali-create: secret-create
 else
 kiali-create:

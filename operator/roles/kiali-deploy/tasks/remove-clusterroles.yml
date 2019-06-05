@@ -1,4 +1,4 @@
-- name: "Delete unused Kiali cluster roles"
+- name: Delete unused Kiali cluster roles
   ignore_errors: yes
   k8s:
     state: absent

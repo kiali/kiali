@@ -188,7 +188,7 @@
 
 - name: Determine all accessible namespaces, expanding regex expressions to matched namespaces
   set_fact:
-    all_accessible_namespaces: "{{ (all_accessible_namespaces | default([])) + [ item.1 | regex_search(item.0) ] }}"
+    all_accessible_namespaces: "{{ ((all_accessible_namespaces | default([])) + [ item.1 | regex_search(item.0) ]) | unique }}"
   loop: "{{ kiali_vars.deployment.accessible_namespaces | product(all_namespaces) | list }}"
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
@@ -220,6 +220,21 @@
   debug:
     msg: "{{ kiali_vars.deployment.accessible_namespaces }}"
 
+- name: When accessible namespaces are specified, ensure label selector is set
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'api': {'namespaces': {'label_selector': ('kiali.io/member-of=' + kiali_vars.deployment.namespace)}}}, recursive=True) }}"
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.api.namespaces.label_selector is not defined
+
+- name: Make sure label selector is in the valid format name=value
+  fail:
+    msg: "The api.namespaces.label_selector is not valid [{{ kiali_vars.api.namespaces.label_selector }}] - it must be in the form of 'name=value' following Kubernetes syntax rules for label names and values."
+  when:
+  - kiali_vars.api.namespaces.label_selector is defined
+  # this regex is not 100% accurate, but we want to at least catch obvious errors
+  - kiali_vars.api.namespaces.label_selector is not regex('^[a-zA-Z0-9/_.-]+=[a-zA-Z0-9_.-]+$')
+
 # The following few tasks read the current Kiali configmap (if one exists) in order to figure out what
 # namespaces are no longer accessible. Those namespaces will have their Kiali roles removed.
 
@@ -234,6 +249,22 @@
   - current_configmap is defined
   - current_configmap.data is defined
   - current_configmap.data['config.yaml'] is defined
+
+- name: Find currently configured label selector
+  set_fact:
+    current_label_selector: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('api.namespaces.label_selector') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
+- name: Do not allow user to change label selector
+  fail:
+    msg: "The api.namespaces.label_selector cannot be changed to a different value. It was [{{ current_label_selector }}] but is now configured to be [{{ kiali_vars.api.namespaces.label_selector }}]. In order to install Kiali with a different label selector than what was used before, please uninstall Kiali first."
+  when:
+  - current_label_selector is defined
+  - kiali_vars.api.namespaces.label_selector is defined
+  - current_label_selector != kiali_vars.api.namespaces.label_selector
 
 - name: Determine the namespaces that were previously accessible but are now inaccessible
   set_fact:
@@ -257,6 +288,29 @@
   when:
   - current_accessible_namespaces is defined
   - '"**" in current_accessible_namespaces'
+
+- name: Remove Kiali label from namespaces that Kiali no longer has access to
+  include_tasks: remove-namespace-label.yml
+  vars:
+    the_namespace_label_name: "{{ current_label_selector | regex_replace('^(.*)=.*$', '\\1') }}"
+  loop: "{{ no_longer_accessible_namespaces }}"
+  loop_control:
+    loop_var: the_namespace
+  when:
+  - no_longer_accessible_namespaces is defined
+  - current_label_selector is defined
+
+- name: Create namespace labels on all accessible namespaces
+  include_tasks: create-namespace-label.yml
+  vars:
+    # everything to the left of the = is the label name; to the right is the label value
+    the_namespace_label_name: "{{ kiali_vars.api.namespaces.label_selector | regex_replace('^(.*)=.*$', '\\1') }}"
+    the_namespace_label_value: "{{ kiali_vars.api.namespaces.label_selector | regex_replace('^.*=(.*)$', '\\1') }}"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: the_namespace
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 # Now deploy all resources for the specific cluster environment
 

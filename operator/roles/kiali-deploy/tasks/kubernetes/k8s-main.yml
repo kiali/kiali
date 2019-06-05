@@ -1,4 +1,4 @@
-- name: "Create Kiali objects on Kubernetes"
+- name: Create Kiali objects on Kubernetes
   include_tasks: process-resource.yml
   vars:
     process_resource_cluster: "kubernetes"
@@ -17,8 +17,8 @@
   when:
   - is_k8s == True
 
-- name: "Create additional Kiali roles on Kubernetes"
-  include_tasks: process-additonal-roles.yml
+- name: Create additional Kiali roles on Kubernetes
+  include_tasks: process-additional-roles.yml
   vars:
     process_resource_cluster: "kubernetes"
   loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
