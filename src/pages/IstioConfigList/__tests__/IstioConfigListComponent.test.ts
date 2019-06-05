@@ -20,6 +20,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     meshPolicies: [],
     clusterRbacConfigs: [],
     rbacConfigs: [],
+    sidecars: [],
     serviceRoles: [],
     serviceRoleBindings: [],
     validations: {},

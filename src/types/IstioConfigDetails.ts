@@ -16,7 +16,8 @@ import {
   RbacConfig,
   ServiceRole,
   ServiceRoleBinding,
-  ClusterRbacConfig
+  ClusterRbacConfig,
+  Sidecar
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -32,6 +33,7 @@ export interface IstioConfigDetails {
   virtualService: VirtualService;
   destinationRule: DestinationRule;
   serviceEntry: ServiceEntry;
+  sidecar: Sidecar;
   rule: IstioRule;
   adapter: IstioAdapter;
   template: IstioTemplate;

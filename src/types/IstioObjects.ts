@@ -363,6 +363,43 @@ export interface GatewaySpec {
 export interface Gateway extends IstioObject {
   spec: GatewaySpec;
 }
+
+// Sidecar resource https://preliminary.istio.io/docs/reference/config/networking/v1alpha3/sidecar
+
+export enum CaptureMode {
+  DEFAULT = 'DEFAULT',
+  IPTABLES = 'IPTABLES',
+  NONE = 'NONE'
+}
+
+export interface IstioEgressListener {
+  port?: Port;
+  bind?: string;
+  captureMode?: CaptureMode;
+  hosts: string[];
+}
+
+export interface IstioIngressListener {
+  port: Port;
+  bind?: string;
+  captureMode?: CaptureMode;
+  defaultEndpoint: string;
+}
+
+export interface WorkloadSelector {
+  labels: { [key: string]: string };
+}
+
+export interface SidecarSpec {
+  workloadSelector?: WorkloadSelector;
+  ingress?: IstioIngressListener;
+  egress?: IstioEgressListener;
+}
+
+export interface Sidecar extends IstioObject {
+  spec: SidecarSpec;
+}
+
 export interface Server {
   port: ServerPort;
   hosts: string[];

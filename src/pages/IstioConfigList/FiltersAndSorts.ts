@@ -142,6 +142,10 @@ export namespace IstioConfigListFilters {
         title: 'RbacConfig'
       },
       {
+        id: 'Sidecar',
+        title: 'Sidecar'
+      },
+      {
         id: 'ServiceRole',
         title: 'ServiceRole'
       },
