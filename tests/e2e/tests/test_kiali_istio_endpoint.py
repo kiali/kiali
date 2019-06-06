@@ -3,7 +3,7 @@ import tests.conftest as conftest
 
 OBJECT_TYPE = 'virtualservices'
 OBJECT_TYPE_SINGLE = 'virtualservice'
-OBJECT = 'bookinfo-vs'
+OBJECT = conftest.get_bookinfo_namespace() + "-vs"
 
 def test_istio_config_list(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
