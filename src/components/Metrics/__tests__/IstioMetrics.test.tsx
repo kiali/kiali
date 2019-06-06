@@ -129,10 +129,7 @@ describe('Metrics for a service', () => {
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
+                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
                 }}
               />
             )}
@@ -168,10 +165,7 @@ describe('Metrics for a service', () => {
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
+                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
                 }}
               />
             )}
@@ -214,10 +208,7 @@ describe('Metrics for a service', () => {
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
+                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
                 }}
               />
             )}
@@ -252,10 +243,7 @@ describe('Inbound Metrics for a workload', () => {
               grafanaInfo={{
                 url: 'http://172.30.139.113:3000',
                 serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                varService: 'var-service',
-                varNamespace: 'var-namespace',
-                varWorkload: 'var-workload'
+                workloadDashboardPath: '/dashboard/db/istio-dashboard'
               }}
             />
           )}
@@ -290,10 +278,7 @@ describe('Inbound Metrics for a workload', () => {
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
+                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
                 }}
               />
             )}
@@ -336,10 +321,7 @@ describe('Inbound Metrics for a workload', () => {
                 grafanaInfo={{
                   url: 'http://172.30.139.113:3000',
                   serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard',
-                  varService: 'var-service',
-                  varNamespace: 'var-namespace',
-                  varWorkload: 'var-workload'
+                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
                 }}
               />
             )}
