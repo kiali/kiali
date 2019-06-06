@@ -9,10 +9,8 @@ import (
 	"time"
 
 	core_v1 "k8s.io/api/core/v1"
-	k8serr "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -30,7 +28,8 @@ const (
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	info, code, err := getGrafanaInfo(getService, findDashboard)
+	token := getTokenStringFromRequest(r)
+	info, code, err := getGrafanaInfo(token, getService, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -40,7 +39,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.DisplayLink {
@@ -61,30 +60,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	apiURL := externalURL
 
 	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
-	if grafanaConfig.InCluster {
-		saToken, err := kubernetes.GetKialiToken()
-		if err != nil {
-			return nil, http.StatusInternalServerError, err
-		}
-		spec, err := serviceSupplier(saToken, grafanaConfig.Namespace, grafanaConfig.Service)
-		if err != nil {
-			if k8serr.IsNotFound(err) {
-				return nil, http.StatusServiceUnavailable, err
-			}
-			return nil, http.StatusInternalServerError, err
-		}
-		if spec != nil && len(spec.Ports) == 0 {
-			return nil, http.StatusServiceUnavailable, errors.New("no port found for Grafana service, cannot access in-cluster service")
-		}
-		if spec != nil && len(spec.Ports) > 1 {
-			log.Warning("Several ports found for Grafana service, picking the first one")
-		}
-		if spec != nil {
-			apiURL = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.Namespace, spec.Ports[0].Port)
-		}
+	if grafanaConfig.InClusterURL != "" {
+		apiURL = grafanaConfig.InClusterURL
 	}
 
-	credentials, err := buildAuthHeader(grafanaConfig)
+	credentials, err := buildAuthHeader(token, grafanaConfig)
 	if err != nil {
 		log.Warning("Failed to build auth header token: " + err.Error())
 	}
@@ -150,9 +130,11 @@ func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bo
 	return util.HttpGet(url+"/api/search?query="+searchPattern, credentials, insecureSkipVerify, time.Second*30)
 }
 
-func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
+func buildAuthHeader(token string, grafanaConfig config.GrafanaConfig) (string, error) {
 	var credHeader string
-	if grafanaConfig.APIKey != "" {
+	if token != "" && grafanaConfig.UseOauthToken {
+		credHeader = "Bearer " + token
+	} else if grafanaConfig.APIKey != "" {
 		credHeader = "Bearer " + grafanaConfig.APIKey
 	} else if grafanaConfig.Username != "" {
 		if grafanaConfig.Password == "" {

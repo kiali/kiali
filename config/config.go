@@ -45,20 +45,14 @@ const (
 	EnvPrometheusAuth               = "PROMETHEUS_AUTH"
 	EnvPrometheusCAFile             = "PROMETHEUS_CA_FILE"
 
-	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
-	EnvGrafanaInCluster                = "GRAFANA_IN_CLUSTER"
-	EnvGrafanaURL                      = "GRAFANA_URL"
-	EnvGrafanaNamespace                = "GRAFANA_NAMESPACE"
-	EnvGrafanaService                  = "GRAFANA_SERVICE"
-	EnvGrafanaWorkloadDashboardPattern = "GRAFANA_WORKLOAD_DASHBOARD_PATTERN"
-	EnvGrafanaServiceDashboardPattern  = "GRAFANA_SERVICE_DASHBOARD_PATTERN"
-	EnvGrafanaVarNamespace             = "GRAFANA_VAR_NAMESPACE"
-	EnvGrafanaVarService               = "GRAFANA_VAR_SERVICE"
-	EnvGrafanaVarWorkload              = "GRAFANA_VAR_WORKLOAD"
-	EnvGrafanaAPIKey                   = "GRAFANA_API_KEY"
-	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
-	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
-	EnvGrafanaInsecureSkipVerify       = "GRAFANA_INSECURE_SKIP_VERIFY"
+	EnvGrafanaDisplayLink        = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaInClusterURL       = "GRAFANA_IN_CLUSTER_URL"
+	EnvGrafanaURL                = "GRAFANA_URL"
+	EnvGrafanaUseOauthToken      = "GRAFANA_USE_OAUTH_TOKEN"
+	EnvGrafanaAPIKey             = "GRAFANA_API_KEY"
+	EnvGrafanaUsername           = "GRAFANA_USERNAME"
+	EnvGrafanaPassword           = "GRAFANA_PASSWORD"
+	EnvGrafanaInsecureSkipVerify = "GRAFANA_INSECURE_SKIP_VERIFY"
 
 	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
@@ -140,10 +134,9 @@ type PrometheusConfig struct {
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
 	DisplayLink        bool   `yaml:"display_link"`
-	InCluster          bool   `yaml:"in_cluster"`
+	InClusterURL       string `yaml:"in_cluster_url"`
 	URL                string `yaml:"url"`
-	Namespace          string `yaml:"namespace"`
-	Service            string `yaml:"service"`
+	UseOauthToken      bool   `yaml:"use_oauth_token"`
 	APIKey             string `yaml:"api_key"`
 	Username           string `yaml:"username"`
 	Password           string `yaml:"password"`
@@ -283,10 +276,9 @@ func NewConfig() (c *Config) {
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
-	c.ExternalServices.Grafana.InCluster = getDefaultBool(EnvGrafanaInCluster, true)
+	c.ExternalServices.Grafana.InClusterURL = strings.TrimSpace(getDefaultString(EnvGrafanaInClusterURL, ""))
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.ExternalServices.Grafana.Namespace = strings.TrimSpace(getDefaultString(EnvGrafanaNamespace, c.IstioNamespace))
-	c.ExternalServices.Grafana.Service = strings.TrimSpace(getDefaultString(EnvGrafanaService, "grafana"))
+	c.ExternalServices.Grafana.UseOauthToken = getDefaultBool(EnvGrafanaUseOauthToken, false)
 	c.ExternalServices.Grafana.APIKey = strings.TrimSpace(getDefaultString(EnvGrafanaAPIKey, ""))
 	c.ExternalServices.Grafana.Username = strings.TrimSpace(getDefaultString(EnvGrafanaUsername, ""))
 	c.ExternalServices.Grafana.Password = strings.TrimSpace(getDefaultString(EnvGrafanaPassword, ""))

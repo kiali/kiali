@@ -41,12 +41,11 @@ kiali_defaults:
     grafana:
       api_key: ""
       display_link: true
-      in_cluster: true
+      in_cluster_url: "http://grafana.istio-system:3000"
       insecure_skip_verify: false
-      namespace: ""
       password: ""
-      service: "grafana"
       url: ""
+      use_oauth_token: false
       username: ""
     istio:
       istio_identity_domain: "svc.cluster.local"
