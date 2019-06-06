@@ -40,7 +40,7 @@ func getClient() (kubernetes.IstioClientInterface, error) {
 
 	// If the client is not openshift return and avoid discover
 	if !client.IsOpenShift() {
-		return nil, errors.New("Client is not Openshift")
+		return nil, errors.New("client is not Openshift")
 	}
 
 	return client, nil

@@ -132,15 +132,15 @@ type PrometheusConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink bool   `yaml:"display_link"`
-	InCluster   bool   `yaml:"in_cluster"`
-	URL         string `yaml:"url"`
-	Namespace   string `yaml:"namespace"`
-	Service     string `yaml:"service"`
-	APIKey      string `yaml:"api_key"`
-	Username    string `yaml:"username"`
-	Password    string `yaml:"password"`
-	InsecureSkipVerify       bool   `yaml:"insecure_skip_verify,omitempty"`
+	DisplayLink        bool   `yaml:"display_link"`
+	InCluster          bool   `yaml:"in_cluster"`
+	URL                string `yaml:"url"`
+	Namespace          string `yaml:"namespace"`
+	Service            string `yaml:"service"`
+	APIKey             string `yaml:"api_key"`
+	Username           string `yaml:"username"`
+	Password           string `yaml:"password"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links

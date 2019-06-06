@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -18,6 +16,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/util"
 )
 
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
@@ -50,13 +49,13 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 
 	externalURL := status.DiscoverGrafana()
 	if externalURL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
+		return nil, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
 	}
 
 	// Check if URL is valid
 	_, err := validateURL(externalURL)
 	if err != nil {
-		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL: " + err.Error())
+		return nil, http.StatusServiceUnavailable, errors.New("wrong format for Grafana URL: " + err.Error())
 	}
 
 	apiURL := externalURL
@@ -148,28 +147,7 @@ func getDashboardPath(url, searchPattern, credentials string, insecureSkipVerify
 }
 
 func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bool) ([]byte, int, error) {
-	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	if credentials != "" {
-		req.Header.Add("Authorization", credentials)
-	}
-	transport := http.Transport{}
-	if insecureSkipVerify {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
-	client := http.Client{Transport: &transport, Timeout: time.Second * 30}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return body, resp.StatusCode, err
+	return util.HttpGet(url+"/api/search?query="+searchPattern, credentials, insecureSkipVerify, time.Second*30)
 }
 
 func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
