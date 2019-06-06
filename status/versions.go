@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-version"
 	kversion "k8s.io/apimachinery/pkg/version"
@@ -15,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 type externalService func() (*ExternalServiceInfo, error)
@@ -207,11 +209,10 @@ func grafanaVersion() (*ExternalServiceInfo, error) {
 func prometheusVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
-	prometheusUrl := config.Get().ExternalServices.Prometheus.URL
-	resp, err := http.Get(prometheusUrl + "/version")
+	cfg := config.Get().ExternalServices.Prometheus
+	body, _, err := util.HttpGet(cfg.URL+"/version", "", cfg.InsecureSkipVerify, 10*time.Second)
 	if err == nil {
-		defer resp.Body.Close()
-		err = json.NewDecoder(resp.Body).Decode(&prometheusV)
+		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {
 			product.Name = "Prometheus"
 			product.Version = prometheusV.Version

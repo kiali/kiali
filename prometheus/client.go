@@ -2,8 +2,9 @@ package prometheus
 
 import (
 	"context"
-	"errors"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -40,10 +41,16 @@ type Client struct {
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
-	if config.Get() == nil {
-		return nil, errors.New("config.Get() must be not null")
+	cfg := config.Get().ExternalServices.Prometheus
+	clientConfig := api.Config{Address: cfg.URL}
+	if cfg.InsecureSkipVerify {
+		transportConfig := api.DefaultRoundTripper.(*http.Transport)
+		transportConfig.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		clientConfig.RoundTripper = transportConfig
 	}
-	p8s, err := api.NewClient(api.Config{Address: config.Get().ExternalServices.Prometheus.URL})
+	p8s, err := api.NewClient(clientConfig)
 	if err != nil {
 		return nil, err
 	}

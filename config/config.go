@@ -24,13 +24,11 @@ const (
 	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
 	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
 
-	EnvPrometheusServiceURL       = "PROMETHEUS_SERVICE_URL"
-	EnvPrometheusCustomMetricsURL = "PROMETHEUS_CUSTOM_METRICS_URL"
-	EnvInCluster                  = "IN_CLUSTER"
-	EnvIstioIdentityDomain        = "ISTIO_IDENTITY_DOMAIN"
-	EnvIstioSidecarAnnotation     = "ISTIO_SIDECAR_ANNOTATION"
-	EnvIstioUrlServiceVersion     = "ISTIO_URL_SERVICE_VERSION"
-	EnvApiNamespacesExclude       = "API_NAMESPACES_EXCLUDE"
+	EnvInCluster              = "IN_CLUSTER"
+	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
+	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
+	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
+	EnvApiNamespacesExclude   = "API_NAMESPACES_EXCLUDE"
 
 	EnvServerAddress                    = "SERVER_ADDRESS"
 	EnvServerPort                       = "SERVER_PORT"
@@ -40,6 +38,10 @@ const (
 	EnvServerAuditLog                   = "SERVER_AUDIT_LOG"
 	EnvServerMetricsPort                = "SERVER_METRICS_PORT"
 	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
+
+	EnvPrometheusServiceURL         = "PROMETHEUS_SERVICE_URL"
+	EnvPrometheusCustomMetricsURL   = "PROMETHEUS_CUSTOM_METRICS_URL"
+	EnvPrometheusInsecureSkipVerify = "PROMETHEUS_INSECURE_SKIP_VERIFY"
 
 	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
 	EnvGrafanaInCluster                = "GRAFANA_IN_CLUSTER"
@@ -54,6 +56,7 @@ const (
 	EnvGrafanaAPIKey                   = "GRAFANA_API_KEY"
 	EnvGrafanaUsername                 = "GRAFANA_USERNAME"
 	EnvGrafanaPassword                 = "GRAFANA_PASSWORD"
+	EnvGrafanaInsecureSkipVerify       = "GRAFANA_INSECURE_SKIP_VERIFY"
 
 	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
@@ -122,20 +125,22 @@ type Server struct {
 
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	URL              string `yaml:"url,omitempty"`
-	CustomMetricsURL string `yaml:"custom_metrics_url,omitempty"`
+	URL                string `yaml:"url,omitempty"`
+	CustomMetricsURL   string `yaml:"custom_metrics_url,omitempty"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink bool   `yaml:"display_link"`
-	InCluster   bool   `yaml:"in_cluster"`
-	URL         string `yaml:"url"`
-	Namespace   string `yaml:"namespace"`
-	Service     string `yaml:"service"`
-	APIKey      string `yaml:"api_key"`
-	Username    string `yaml:"username"`
-	Password    string `yaml:"password"`
+	DisplayLink        bool   `yaml:"display_link"`
+	InCluster          bool   `yaml:"in_cluster"`
+	URL                string `yaml:"url"`
+	Namespace          string `yaml:"namespace"`
+	Service            string `yaml:"service"`
+	APIKey             string `yaml:"api_key"`
+	Username           string `yaml:"username"`
+	Password           string `yaml:"password"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links
@@ -256,6 +261,7 @@ func NewConfig() (c *Config) {
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
+	c.ExternalServices.Prometheus.InsecureSkipVerify = getDefaultBool(EnvPrometheusInsecureSkipVerify, false)
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
@@ -269,6 +275,7 @@ func NewConfig() (c *Config) {
 	if c.ExternalServices.Grafana.Username != "" && c.ExternalServices.Grafana.Password == "" {
 		log.Error("Grafana username (\"GRAFANA_USERNAME\") requires that Grafana password (\"GRAFANA_PASSWORD\") is set.")
 	}
+	c.ExternalServices.Grafana.InsecureSkipVerify = getDefaultBool(EnvGrafanaInsecureSkipVerify, false)
 
 	// Tracing Configuration
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)

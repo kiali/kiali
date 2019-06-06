@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 
 	core_v1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -16,10 +16,11 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
+	"github.com/kiali/kiali/util"
 )
 
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
-type dashboardSupplier func(string, string, string) ([]byte, int, error)
+type dashboardSupplier func(string, string, string, bool) ([]byte, int, error)
 
 const (
 	workloadDashboardPattern = "Istio%20Workload%20Dashboard"
@@ -48,13 +49,13 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 
 	externalURL := status.DiscoverGrafana()
 	if externalURL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("Grafana URL is not set in Kiali configuration")
+		return nil, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
 	}
 
 	// Check if URL is valid
 	_, err := validateURL(externalURL)
 	if err != nil {
-		return nil, http.StatusServiceUnavailable, errors.New("Wrong format for Grafana URL: " + err.Error())
+		return nil, http.StatusServiceUnavailable, errors.New("wrong format for Grafana URL: " + err.Error())
 	}
 
 	apiURL := externalURL
@@ -89,11 +90,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -107,8 +108,8 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url string, searchPattern string, credentials string, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern, credentials)
+func getDashboardPath(url, searchPattern, credentials string, insecureSkipVerify bool, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern, credentials, insecureSkipVerify)
 	if err != nil {
 		return "", err
 	}
@@ -145,21 +146,8 @@ func getDashboardPath(url string, searchPattern string, credentials string, dash
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern string, credentials string) ([]byte, int, error) {
-	req, err := http.NewRequest(http.MethodGet, url+"/api/search?query="+searchPattern, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	if credentials != "" {
-		req.Header.Add("Authorization", credentials)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return body, resp.StatusCode, err
+func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bool) ([]byte, int, error) {
+	return util.HttpGet(url+"/api/search?query="+searchPattern, credentials, insecureSkipVerify, time.Second*30)
 }
 
 func buildAuthHeader(grafanaConfig config.GrafanaConfig) (string, error) {
