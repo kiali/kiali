@@ -105,10 +105,11 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
   componentDidUpdate(prevProps: WorkloadPodLogsProps, prevState: WorkloadPodLogsState) {
     const prevContainer = prevState.containerInfo ? prevState.containerInfo.container : undefined;
     const newContainer = this.state.containerInfo ? this.state.containerInfo.container : undefined;
+    const updateContainerInfo = this.state.containerInfo && this.state.containerInfo !== prevState.containerInfo;
     const updateContainer = newContainer && newContainer !== prevContainer;
     const updateDuration = this.state.duration && prevState.duration !== this.state.duration;
     const updateTailLines = this.state.tailLines && prevState.tailLines !== this.state.tailLines;
-    if (updateContainer || updateDuration || updateTailLines) {
+    if (updateContainerInfo || updateContainer || updateDuration || updateTailLines) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchLogs(this.props.namespace, pod.name, newContainer!, this.state.tailLines, this.state.duration);
     }
