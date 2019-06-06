@@ -138,36 +138,25 @@ spec:
 #  external_services:
 #
 # **Grafana-specific settings:
-# api_key: API key to access Grafana. API key only requires viewer permissions.
+# api_key: API key to access Grafana, for token-based authentication. API key only requires viewer permissions.
 # display_link: When true, a link to Grafana will be displayed for more dashboards.
-# in_cluster: Set true to indicate that Grafana service is accessible in the Kubernetes cluster.
-# password: Password to be used when making requests to Grafana. User only requires viewer permissions.
-# service: The Kubernetes service name for Grafana. Kiali uses this to connect within the cluster to Grafana.
-#          If "service" and "service_namespace" are empty then "url" is used for communication.
-# service_dashboard_pattern: Search pattern for Grafana Service dashboard.
-# service_namespace: The Kubernetes namespace that holds the Grafana service (if empty, assumes the same value as deployment.namespace)
+# in_cluster: Set true to indicate that the Grafana service is accessible in the Kubernetes cluster.
+# namespace: The Kubernetes namespace that holds the Grafana service. Only used when in_cluster is true. If empty, assumes the same value as deployment.namespace.
+# password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
+# service: The Kubernetes service name for Grafana. Only used when in_cluster is true.
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
-# username: Username to be used when making requests to Grafana. User only requires viewer permissions.
-# var_namespace: The name of the Grafana variable that controls namespaces in dashboards.
-# var_service: The name of the Grafana variable that controls services in dashboards.
-# var_workload: The name of the Grafana variable that controls workloads in dashboards.
-# workload_dashboard_pattern: Search pattern for Grafana Workload dashboard.
+# username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
 #    ---
 #    grafana:
 #      api_key: ""
 #      display_link: true
 #      in_cluster: true
+#      namespace: ""
 #      password: ""
 #      service: "grafana"
-#      service_dashboard_pattern: "Istio%20Service%20Dashboard"
-#      service_namespace: ""
 #      url: ""
 #      username: ""
-#      var_namespace: "var-namespace"
-#      var_service: "var-service"
-#      var_workload: "var-workload"
-#      workload_dashboard_pattern: "Istio%20Workload%20Dashboard"
 #
 # **Istio-specific settings:
 # istio_identity_domain: The annotation used by Istio to identify domains.

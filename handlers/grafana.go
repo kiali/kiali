@@ -21,6 +21,11 @@ import (
 type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
 type dashboardSupplier func(string, string, string) ([]byte, int, error)
 
+const (
+	workloadDashboardPattern = "Istio%20Workload%20Dashboard"
+	serviceDashboardPattern  = "Istio%20Service%20Dashboard"
+)
+
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +65,7 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-		spec, err := serviceSupplier(saToken, grafanaConfig.ServiceNamespace, grafanaConfig.Service)
+		spec, err := serviceSupplier(saToken, grafanaConfig.Namespace, grafanaConfig.Service)
 		if err != nil {
 			if k8serr.IsNotFound(err) {
 				return nil, http.StatusServiceUnavailable, err
@@ -74,7 +79,7 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 			log.Warning("Several ports found for Grafana service, picking the first one")
 		}
 		if spec != nil {
-			apiURL = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.ServiceNamespace, spec.Ports[0].Port)
+			apiURL = fmt.Sprintf("http://%s.%s:%d", grafanaConfig.Service, grafanaConfig.Namespace, spec.Ports[0].Port)
 		}
 	}
 
@@ -84,11 +89,11 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(apiURL, grafanaConfig.ServiceDashboardPattern, credentials, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(apiURL, grafanaConfig.WorkloadDashboardPattern, credentials, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -97,9 +102,6 @@ func getGrafanaInfo(serviceSupplier serviceSupplier, dashboardSupplier dashboard
 		URL:                   externalURL,
 		ServiceDashboardPath:  serviceDashboardPath,
 		WorkloadDashboardPath: workloadDashboardPath,
-		VarNamespace:          grafanaConfig.VarNamespace,
-		VarService:            grafanaConfig.VarService,
-		VarWorkload:           grafanaConfig.VarWorkload,
 	}
 
 	return &grafanaInfo, http.StatusOK, nil
