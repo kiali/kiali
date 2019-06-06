@@ -62,7 +62,7 @@
   "dependencies": {
     "@patternfly/patternfly": "2.4.1",
     "@patternfly/react-core": "3.2.6",
-    "axios": "0.18.0",
+    "axios": "0.18.1",
     "csstips": "0.3.0",
     "csx": "9.0.0",
     "cytoscape": "3.6.1",
