@@ -9,7 +9,7 @@ export const INITIAL_JAEGER_STATE: JaegerState = {
   enableIntegration: false
 };
 
-const JaegerState = (state: JaegerState = INITIAL_JAEGER_STATE, action: KialiAppAction): JaegerState => {
+const JaegerStateGenerator = (state: JaegerState = INITIAL_JAEGER_STATE, action: KialiAppAction): JaegerState => {
   switch (action.type) {
     case getType(JaegerActions.setEnableIntegration):
       return updateState(state, {
@@ -24,4 +24,4 @@ const JaegerState = (state: JaegerState = INITIAL_JAEGER_STATE, action: KialiApp
   }
 };
 
-export default JaegerState;
+export default JaegerStateGenerator;

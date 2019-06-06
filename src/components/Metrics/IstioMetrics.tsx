@@ -29,7 +29,7 @@ type ObjectId = {
   object: string;
 };
 
-type IstioMetricsProps = ObjectId &
+export type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
     isPageVisible?: boolean;
     grafanaInfo?: GrafanaInfo;
@@ -236,8 +236,6 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     );
   }
 }
-
-export { IstioMetricsProps };
 
 const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,

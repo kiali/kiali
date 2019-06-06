@@ -1,8 +1,6 @@
-interface Namespace {
+export default interface Namespace {
   name: string;
 }
-
-export default Namespace;
 
 export const namespaceFromString = (namespace: string) => ({ name: namespace });
 
