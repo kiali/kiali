@@ -4,7 +4,7 @@ import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import Timer = NodeJS.Timer;
-import { KialiAppState, LoginSession } from 'src/store/Store';
+import { KialiAppState, LoginSession } from '../../../store/Store';
 import authenticationConfig from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
 import moment from 'moment';

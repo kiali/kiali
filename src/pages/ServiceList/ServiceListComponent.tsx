@@ -25,7 +25,7 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
-import { Validations, ObjectValidation } from 'src/types/IstioObjects';
+import { Validations, ObjectValidation } from '../../types/IstioObjects';
 import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
