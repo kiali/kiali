@@ -147,7 +147,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -nj|--no-jaeger)
-	REMOVE_JAEGER=true
+	TRACING_ENABLED=false
 	shift
 	;;
     -h|--help)
@@ -530,7 +530,7 @@ if [ "$_CMD" = "up" ]; then
         # https://maistra.io/docs/getting_started/install/
         echo "Creating a CR under istio-system namespace"
         debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f ${MAISTRA_INSTALL_YAML}"
-        ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f ${MAISTRA_INSTALL_YAML}
+        cat ${MAISTRA_INSTALL_YAML} | TRACING_ENABLED=${TRACING_ENABLED:-true} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
       else
         echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
         echo "permissions, you will need to run the following command:"
@@ -562,8 +562,15 @@ if [ "$_CMD" = "up" ]; then
   # If Istio is enabled, it should be installing now - if we need to, wait for it to finish
   if [ "${ISTIO_ENABLED}" == "true" ] ; then
     if [ "${KIALI_ENABLED}" == "true" -o "${WAIT_FOR_ISTIO}" == "true" ]; then
-      echo "Wait for Istio to fully start (this is going to take a while)..."
-      expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry jaeger-collector jaeger-query prometheus)
+      echo -n "Wait for Istio to fully start (this is going to take a while)..."
+
+      ## Check if jaeger is part of the expected apps
+      if [ "${TRACING_ENABLED}" == "false" ]; then
+        expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus)
+      else
+        expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry jaeger-collector jaeger-query prometheus)
+      fi
+
       for expected in ${expected_apps[@]}
       do
         echo "Waiting for $expected"
@@ -572,6 +579,7 @@ if [ "$_CMD" = "up" ]; then
              sleep 5
              echo -n '.'
         done
+        echo "done."
       done
 
       echo -n "Waiting for Istio Deployments to be created..."
@@ -643,13 +651,6 @@ if [ "$_CMD" = "up" ]; then
     echo "Installing a sample application for knative..."
     ${MAISTRA_ISTIO_OC_COMMAND} delete -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml || true
     ${MAISTRA_ISTIO_OC_COMMAND} apply -n knative-examples -f ${SCRIPT_ROOT}/knative/service.yaml
-  fi
-
-  if [ "${REMOVE_JAEGER}" == "true" ]; then
-      echo "Removing Jaeger from cluster..."
-      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=jaeger -n istio-system
-      echo "Removing Elasticsearch from cluster..."
-      ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
   fi
 
 elif [ "$_CMD" = "down" ];then
