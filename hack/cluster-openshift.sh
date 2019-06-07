@@ -382,6 +382,7 @@ debug "ENVIRONMENT:
   CLUSTER_OPTIONS=$CLUSTER_OPTIONS
   OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=$OPENSHIFT_ISTIO_MASTER_PUBLIC_URL
   OPENSHIFT_ISTIO_VERSION=$OPENSHIFT_ISTIO_VERSION
+  TRACING_ENABLED=$TRACING_ENABLED
   "
 
 # Fail fast if we don't even have the correct location where the oc client should be
@@ -529,12 +530,10 @@ if [ "$_CMD" = "up" ]; then
         # Note, Maistra requires to install the CR in the target namespace not in the operator one
         # https://maistra.io/docs/getting_started/install/
         echo "Creating a CR under istio-system namespace"
-        debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f ${MAISTRA_INSTALL_YAML}"
         cat ${MAISTRA_INSTALL_YAML} | TRACING_ENABLED=${TRACING_ENABLED:-true} envsubst | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
       else
         echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
-        echo "permissions, you will need to run the following command:"
-        echo "  ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
+        echo "permissions, you will need to install Istio manually."
       fi
     else
       echo "You asked that Istio not be enabled - will not create the Installation Custom Resource."
@@ -562,18 +561,18 @@ if [ "$_CMD" = "up" ]; then
   # If Istio is enabled, it should be installing now - if we need to, wait for it to finish
   if [ "${ISTIO_ENABLED}" == "true" ] ; then
     if [ "${KIALI_ENABLED}" == "true" -o "${WAIT_FOR_ISTIO}" == "true" ]; then
-      echo -n "Wait for Istio to fully start (this is going to take a while)..."
+      echo "Wait for Istio to fully start (this is going to take a while)..."
 
       ## Check if jaeger is part of the expected apps
       if [ "${TRACING_ENABLED}" == "false" ]; then
-        expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus)
+        expected_apps=(istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus grafana)
       else
-        expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry jaeger-collector jaeger-query prometheus)
+        expected_apps=(istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus grafana jaeger-collector jaeger-query)
       fi
 
       for expected in ${expected_apps[@]}
       do
-        echo "Waiting for $expected"
+        echo -n "Waiting for $expected ..."
         while ! checkApp $expected
         do
              sleep 5
@@ -582,7 +581,7 @@ if [ "$_CMD" = "up" ]; then
         echo "done."
       done
 
-      echo -n "Waiting for Istio Deployments to be created..."
+      echo "Waiting for Istio Deployments to be created..."
       for app in $(${MAISTRA_ISTIO_OC_COMMAND} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
       do
          echo -n "Waiting for ${app} to be ready..."
