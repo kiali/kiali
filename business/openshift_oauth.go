@@ -57,6 +57,8 @@ type OAuthRouteTLSSpec struct {
 
 const serverPrefix = "https://kubernetes.default.svc/"
 
+var kialiNamespace string
+
 func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error) {
 	redirectURL, err := getKialiRoutePath()
 
@@ -78,13 +80,18 @@ func (in *OpenshiftOAuthService) Metadata() (metadata *OAuthMetadata, err error)
 
 	metadata = &OAuthMetadata{}
 
+	namespace, err := getKialiNamespace()
+	if err != nil {
+		return nil, err
+	}
+
 	if version.Major == "1" && (strings.HasPrefix(version.Minor, "11") || strings.HasPrefix(version.Minor, "10")) {
-		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali", url.QueryEscape(*redirectURL), "token")
+		metadata.AuthorizationEndpoint = fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=%s", server.AuthorizationEndpoint, "kiali-"+namespace, url.QueryEscape(*redirectURL), "token")
 	} else {
 		// The logout endpoint on the OpenShift OAuth Server
 		metadata.LogoutEndpoint = fmt.Sprintf("%s/logout", server.Issuer)
 		// The redirect path when logging out of the OpenShift OAuth Server. Note: this has to be a relative link to the OAuth server
-		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", "kiali", url.QueryEscape(*redirectURL), "token")
+		metadata.LogoutRedirect = fmt.Sprintf("/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=%s", "kiali-"+namespace, url.QueryEscape(*redirectURL), "token")
 		// The fully qualified endpoint to use logging into the OpenShift OAuth server.
 		metadata.AuthorizationEndpoint = fmt.Sprintf("%s%s", server.Issuer, metadata.LogoutRedirect)
 	}
@@ -158,11 +165,14 @@ func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 }
 
 func getKialiNamespace() (string, error) {
-	namespace, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-	if err != nil {
-		return "", err
+	if kialiNamespace == "" {
+		namespace, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		if err != nil {
+			return "", err
+		}
+		kialiNamespace = string(namespace)
 	}
-	return string(namespace), nil
+	return kialiNamespace, nil
 }
 
 func getKialiRoutePath() (*string, error) {
