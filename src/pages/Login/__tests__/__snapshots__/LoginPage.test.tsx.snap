@@ -28,16 +28,9 @@ ShallowWrapper {
     "key": undefined,
     "nodeType": "function",
     "props": Object {
-      "backgroundImgAlt": "Images",
-      "backgroundImgSrc": Object {
-        "filter": "background-filter.svg#image_overlay",
-        "lg": "pfbg_1200.jpg",
-        "sm": "pfbg_768.jpg",
-        "sm2x": "pfbg_768@2x.jpg",
-        "xs": "pfbg_576.jpg",
-        "xs2x": "pfbg_576@2x.jpg",
-      },
-      "brandImgAlt": "pf-logo",
+      "backgroundImgAlt": "",
+      "backgroundImgSrc": "",
+      "brandImgAlt": "Kiali logo",
       "brandImgSrc": "logo-alt.svg",
       "children": <LoginForm
         className=""
@@ -132,16 +125,9 @@ ShallowWrapper {
       "key": undefined,
       "nodeType": "function",
       "props": Object {
-        "backgroundImgAlt": "Images",
-        "backgroundImgSrc": Object {
-          "filter": "background-filter.svg#image_overlay",
-          "lg": "pfbg_1200.jpg",
-          "sm": "pfbg_768.jpg",
-          "sm2x": "pfbg_768@2x.jpg",
-          "xs": "pfbg_576.jpg",
-          "xs2x": "pfbg_576@2x.jpg",
-        },
-        "brandImgAlt": "pf-logo",
+        "backgroundImgAlt": "",
+        "backgroundImgSrc": "",
+        "brandImgAlt": "Kiali logo",
         "brandImgSrc": "logo-alt.svg",
         "children": <LoginForm
           className=""

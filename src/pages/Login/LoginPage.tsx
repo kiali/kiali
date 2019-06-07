@@ -1,34 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-  BackgroundImageSrc,
-  Button,
-  ListItem,
-  LoginFooterItem,
-  LoginForm,
-  LoginPage as LoginNext
-} from '@patternfly/react-core';
+import { Button, ListItem, LoginFooterItem, LoginForm, LoginPage as LoginNext } from '@patternfly/react-core';
 import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogo } from '../../config';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import LoginThunkActions from '../../actions/LoginThunkActions';
-
-/**
- *
- * Background Images
- *
- * Fix for Firefox browser
- */
-
-const bgFilter = require('../../img/background-filter.svg');
-const pfBg576 = require('../../img/pfbg_576.jpg');
-const pfBg576R2x = require('../../img/pfbg_576@2x.jpg');
-const pfBg768 = require('../../img/pfbg_768.jpg');
-const pfBg768R2x = require('../../img/pfbg_768@2x.jpg');
-const pfBg1200 = require('../../img/pfbg_1200.jpg');
 
 type LoginProps = {
   status: LoginStatus;
@@ -173,18 +152,6 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (authenticationConfig.strategy === AuthStrategy.openshift) {
       loginLabel = 'Log In With OpenShift';
     }
-    /**
-     * Note: When using background-filter.svg, you must also include #image_overlay as the fragment identifier
-     */
-
-    const backgroundLoginImg = {
-      [BackgroundImageSrc.lg]: pfBg1200,
-      [BackgroundImageSrc.sm]: pfBg768,
-      [BackgroundImageSrc.sm2x]: pfBg768R2x,
-      [BackgroundImageSrc.xs]: pfBg576,
-      [BackgroundImageSrc.xs2x]: pfBg576R2x,
-      [BackgroundImageSrc.filter]: `${bgFilter}#image_overlay`
-    };
 
     const messages = this.getHelperMessage();
     const isLoggingIn = this.props.isPostLoginPerforming || this.props.status === LoginStatus.logging;
@@ -227,9 +194,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
       <LoginNext
         footerListVariants="inline"
         brandImgSrc={kialiLogo}
-        brandImgAlt="pf-logo"
-        backgroundImgSrc={backgroundLoginImg}
-        backgroundImgAlt="Images"
+        brandImgAlt="Kiali logo"
         footerListItems={listItem}
         textContent="Service Mesh Observability."
         loginTitle="Log in Kiali"

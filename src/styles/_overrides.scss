@@ -63,8 +63,8 @@ $grid-float-breakpoint: $screen-sm-min !default;
 
 .pf-c-page__sidebar {
   --pf-c-page__sidebar--BackgroundColor: #{$color-pf-black-900};
-  --pf-c-page__sidebar--PaddingBottom: 0;
-  --pf-c-page__sidebar--PaddingTop: 0;
+  --pf-c-page__sidebar-body--PaddingBottom: 0;
+  --pf-c-page__sidebar-body--PaddingTop: 0;
   --pf-c-page__sidebar--md--Width: 210px; // TODO: Remove. Test enlarged message center when removing.
   min-height: 100vh;
   position: relative; // fix z-index bug in Edge
@@ -211,6 +211,26 @@ $grid-float-breakpoint: $screen-sm-min !default;
     color: var(--pf-c-nav__list-link--Color);
     display: none;
   }
+}
+
+.pf-c-page__header {
+  background-image: none;
+  background-color: unset;
+}
+
+.pf-c-background-image::before {
+  filter: unset;
+}
+
+.pf-c-login,
+.login-pf {
+  background-image: none;
+  background-color: #030303;
+}
+
+.pf-c-about-modal-box__hero {
+  background-image: none !important;
+  background-color: transparent;
 }
 
 /**

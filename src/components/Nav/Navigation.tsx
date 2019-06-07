@@ -13,9 +13,6 @@ import { KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import UserSettingsThunkActions from '../../actions/UserSettingsThunkActions';
 
-export const istioConfigTitle = 'Istio Config';
-export const servicesTitle = 'Services';
-
 type PropsType = RouteComponentProps & {
   navCollapsed: boolean;
   setNavCollapsed: (collapse: boolean) => void;
