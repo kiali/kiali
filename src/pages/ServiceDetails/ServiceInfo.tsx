@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import {
-  Button,
   Col,
   Icon,
   Nav,
@@ -19,11 +18,12 @@ import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '..
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
-import { Validations, ObjectValidation } from '../../types/IstioObjects';
+import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -136,9 +136,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
                 <DurationDropdownContainer id="service-info-duration-dropdown" />{' '}
-                <Button onClick={this.props.onRefresh}>
-                  <Icon name="refresh" />
-                </Button>
+                <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
                 &nbsp;
                 <IstioWizardDropdown
                   namespace={this.props.namespace}

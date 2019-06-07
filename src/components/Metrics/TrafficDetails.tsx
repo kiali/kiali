@@ -1,10 +1,11 @@
-import { Button, Col, Icon, Row } from 'patternfly-react';
+import { Col, Row } from 'patternfly-react';
 import * as React from 'react';
 import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
 import { DurationInSeconds } from '../../types/Common';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
+import RefreshButtonContainer from '../Refresh/RefreshButton';
 
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
@@ -82,9 +83,7 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           <div>
             <div style={{ float: 'right', paddingRight: '2em' }}>
               <MetricsDurationContainer onChanged={this.props.onDurationChanged} />{' '}
-              <Button onClick={this.props.onRefresh}>
-                <Icon name="refresh" />
-              </Button>
+              <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
             </div>
             <strong>Inbound</strong>
           </div>

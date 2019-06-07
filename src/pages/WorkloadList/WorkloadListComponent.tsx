@@ -5,7 +5,7 @@ import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import { WorkloadListFilters } from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
+import { ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import ItemDescription from './ItemDescription';
@@ -18,6 +18,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type WorkloadListComponentState = ListComponent.State<WorkloadListItem>;
 
@@ -201,9 +202,7 @@ class WorkloadListComponent extends ListComponent.Component<
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="workload-list-duration-dropdown" />
-            <Button onClick={this.updateListItems}>
-              <Icon name="refresh" />
-            </Button>
+            <RefreshButtonContainer handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
         <ListView>{workloadList}</ListView>

@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Row, Col, Button, Icon } from 'patternfly-react';
+import { Col, Row } from 'patternfly-react';
 import AppDescription from './AppInfo/AppDescription';
 import { AppHealth } from '../../types/Health';
 import { App } from '../../types/App';
 import './AppInfo.css';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type AppInfoProps = {
   app: App;
@@ -33,9 +34,7 @@ class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
                 <DurationDropdownContainer id="app-info-duration-dropdown" />{' '}
-                <Button onClick={this.props.onRefresh}>
-                  <Icon name="refresh" />
-                </Button>
+                <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
               </span>
             </Col>
           </Row>

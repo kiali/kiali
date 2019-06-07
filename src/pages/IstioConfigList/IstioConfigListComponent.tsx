@@ -1,15 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import {
-  Button,
-  Icon,
-  ListView,
-  ListViewIcon,
-  ListViewItem,
-  Paginator,
-  Sort,
-  ToolbarRightContent
-} from 'patternfly-react';
+import { ListView, ListViewIcon, ListViewItem, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
 import * as API from '../../services/Api';
@@ -34,6 +25,7 @@ import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyle
 import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 interface IstioConfigListComponentState extends ListComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends ListComponent.Props<IstioConfigItem> {
@@ -346,9 +338,7 @@ class IstioConfigListComponent extends ListComponent.Component<
             />
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <Button onClick={this.updateListItems}>
-              <Icon name="refresh" />
-            </Button>
+            <RefreshButtonContainer handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
         <ListView>{istioList}</ListView>

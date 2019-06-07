@@ -8,9 +8,9 @@ import { bindActionCreators } from 'redux';
 
 import { KialiAppState } from '../../store/Store';
 import {
-  graphTypeSelector,
-  edgeLabelModeSelector,
   activeNamespacesSelector,
+  edgeLabelModeSelector,
+  graphTypeSelector,
   showUnusedNodesSelector
 } from '../../store/Selectors';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
@@ -23,7 +23,7 @@ import GraphRefreshContainer from './GraphRefresh';
 import GraphSettingsContainer from './GraphSettings';
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import Namespace, { namespacesToString, namespacesFromString } from '../../types/Namespace';
+import Namespace, { namespacesFromString, namespacesToString } from '../../types/Namespace';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';

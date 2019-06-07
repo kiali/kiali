@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { Validations } from '../../types/IstioObjects';
-import { Button, Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
@@ -9,6 +9,7 @@ import { severityToIconName, validationToSeverity } from '../../types/ServiceInf
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -86,9 +87,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
             <Col xs={12} sm={12} md={12} lg={12}>
               <span style={{ float: 'right' }}>
                 <DurationDropdownContainer id="workload-info-duration-dropdown" />{' '}
-                <Button onClick={this.props.onRefresh} style={{ float: 'right' }}>
-                  <Icon name="refresh" />
-                </Button>
+                <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
               </span>
             </Col>
           </Row>

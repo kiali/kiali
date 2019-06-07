@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Icon, Toolbar } from 'patternfly-react';
+import { Toolbar } from 'patternfly-react';
 import { style } from 'typestyle';
 import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
@@ -8,6 +8,7 @@ import { ToolbarDropdown } from '../../../components/ToolbarDropdown/ToolbarDrop
 import { DurationInSeconds } from '../../../types/Common';
 import MetricsDurationContainer from '../../../components/MetricsOptions/MetricsDuration';
 import MetricsDuration from '../../../components/MetricsOptions/MetricsDuration';
+import RefreshButtonContainer from '../../../components/Refresh/RefreshButton';
 
 export interface WorkloadPodLogsProps {
   namespace: string;
@@ -152,9 +153,11 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                 {'   '}
                 <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
                 {'  '}
-                <Button id={'wpl_refresh'} disabled={!this.state.podLogs} onClick={() => this.handleRefresh()}>
-                  <Icon name="refresh" />
-                </Button>
+                <RefreshButtonContainer
+                  id={'wpl_refresh'}
+                  disabled={!this.state.podLogs}
+                  handleRefresh={this.handleRefresh}
+                />
               </Toolbar.RightContent>
             </Toolbar>
             <textarea

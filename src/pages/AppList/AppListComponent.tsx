@@ -6,7 +6,7 @@ import { AppListItem } from '../../types/AppList';
 import { AppListFilters } from './FiltersAndSorts';
 import { AppListClass } from './AppListClass';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { Button, Icon, ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
+import { ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
@@ -18,6 +18,7 @@ import { activeNamespacesSelector, durationSelector } from '../../store/Selector
 import { arrayEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type AppListComponentState = ListComponent.State<AppListItem>;
 
@@ -179,9 +180,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="app-list-dropdown" />
-            <Button onClick={this.updateListItems}>
-              <Icon name="refresh" />
-            </Button>
+            <RefreshButtonContainer id="overview-refresh" handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
         <ListView>{appItemsList}</ListView>

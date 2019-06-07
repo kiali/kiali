@@ -17,14 +17,14 @@ import { ObjectValidation } from '../../types/IstioObjects';
 import { AceValidations, jsYaml, parseKialiValidations, parseYamlValidations } from '../../types/AceValidations';
 import IstioActionDropdown from '../../components/IstioActions/IstioActionsDropdown';
 import './IstioConfigDetailsPage.css';
-import IstioActionButtons from '../../components/IstioActions/IstioActionsButtons';
+import { default as IstioActionButtonsContainer } from '../../components/IstioActions/IstioActionsButtons';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import VirtualServiceDetail from './IstioObjectDetails/VirtualServiceDetail';
 import DestinationRuleDetail from './IstioObjectDetails/DestinationRuleDetail';
 import history from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
-import { mergeJsonPatch, getIstioObject } from '../../utils/IstioConfigUtils';
+import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
 import { style } from 'typestyle';
 
 const rightToolbarStyle = style({ float: 'right', marginTop: '8px' });
@@ -262,7 +262,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     // User won't save if file has yaml errors
     const yamlErrors = this.state.yamlValidations && this.state.yamlValidations.markers.length > 0 ? true : false;
     return (
-      <IstioActionButtons
+      <IstioActionButtonsContainer
         objectName={this.props.match.params.object}
         readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !yamlErrors}

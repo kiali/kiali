@@ -1,8 +1,24 @@
 import UserSettingsState from '../UserSettingsState';
-import { GlobalActions } from '../../actions/GlobalActions';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
+import { GlobalActions } from '../../actions/GlobalActions';
 
 describe('UserSettingsState reducer', () => {
+  const RealDate = Date.now;
+  const currentDate = Date.now();
+
+  const mockDate = date => {
+    global.Date.now = jest.fn(() => date) as any;
+    return date;
+  };
+
+  beforeEach(() => {
+    mockDate(currentDate);
+  });
+
+  afterEach(() => {
+    global.Date.now = RealDate;
+  });
+
   it('should return the initial state', () => {
     expect(UserSettingsState(undefined, GlobalActions.unknown())).toEqual({
       interface: { navCollapse: false },

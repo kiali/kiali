@@ -1,15 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import {
-  Button,
-  Icon,
-  ListView,
-  ListViewIcon,
-  ListViewItem,
-  Paginator,
-  Sort,
-  ToolbarRightContent
-} from 'patternfly-react';
+import { ListView, ListViewIcon, ListViewItem, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { PfColors } from '../../components/Pf/PfColors';
@@ -25,12 +16,13 @@ import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import { ListComponent } from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
-import { Validations, ObjectValidation } from '../../types/IstioObjects';
 import { arrayEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { ObjectValidation, Validations } from '../../types/IstioObjects';
 
 type ServiceListComponentState = ListComponent.State<ServiceListItem>;
 
@@ -236,9 +228,7 @@ class ServiceListComponent extends ListComponent.Component<
           </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="service-list-duration-dropdown" />
-            <Button onClick={this.updateListItems}>
-              <Icon name="refresh" />
-            </Button>
+            <RefreshButtonContainer handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
         <ListView>{serviceList}</ListView>
