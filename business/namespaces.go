@@ -51,12 +51,34 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 			namespaces = models.CastProjectCollection(projects)
 		}
 	} else {
-		nss, err := in.k8s.GetNamespaces(labelSelector)
-		if err != nil {
-			return nil, err
+		// if the accessible namespaces define a distinct list of namespaces, use only those.
+		// If accessible namespaces include the special "**" (meaning all namespaces) ask k8s for them.
+		// Note that "**" requires cluster role permission to list all namespaces.
+		accessibleNamespaces := config.Get().Deployment.AccessibleNamespaces
+		queryAllNamespaces := false
+		for _, ans := range accessibleNamespaces {
+			if ans == "**" {
+				queryAllNamespaces = true
+				break
+			}
 		}
-
-		namespaces = models.CastNamespaceCollection(nss)
+		if queryAllNamespaces {
+			nss, err := in.k8s.GetNamespaces(labelSelector)
+			if err != nil {
+				return nil, err
+			}
+			namespaces = models.CastNamespaceCollection(nss)
+		} else {
+			k8sNamespaces := make([]core_v1.Namespace, len(accessibleNamespaces))
+			for i, ans := range accessibleNamespaces {
+				k8sNs, err := in.k8s.GetNamespace(ans)
+				if err != nil {
+					return nil, err
+				}
+				k8sNamespaces[i] = *k8sNs
+			}
+			namespaces = models.CastNamespaceCollection(k8sNamespaces)
+		}
 	}
 
 	result := namespaces

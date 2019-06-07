@@ -213,6 +213,11 @@ type AuthConfig struct {
 	Strategy string `yaml:"strategy,omitempty"`
 }
 
+// DeploymentConfig provides details on how Kiali was deployed.
+type DeploymentConfig struct {
+	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+}
+
 // Config defines full YAML configuration.
 type Config struct {
 	Identity         security.Identity `yaml:",omitempty"`
@@ -226,6 +231,7 @@ type Config struct {
 	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
 	API              ApiConfig         `yaml:"api,omitempty"`
 	Auth             AuthConfig        `yaml:"auth,omitempty"`
+	Deployment       DeploymentConfig  `yaml:"deployment,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -315,6 +321,8 @@ func NewConfig() (c *Config) {
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
 	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, AuthStrategyLogin)
+
+	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
 
 	return
 }
