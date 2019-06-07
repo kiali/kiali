@@ -46,10 +46,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the istiooc command to be downloaded
-DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.10.0"
+DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.11.0"
 
 # The default installation custom resource used to define what to install
-DEFAULT_MAISTRA_INSTALL_YAML="https://raw.githubusercontent.com/Maistra/openshift-ansible/maistra-0.10/istio/istio-installation-minimal.yaml"
+DEFAULT_MAISTRA_INSTALL_YAML="${SCRIPT_ROOT}/maistra_v1_servicemeshcontrolplane_cr_basic.yaml"
 
 # set the default openshift address here so that it can be used for the usage text
 #
@@ -523,8 +523,14 @@ if [ "$_CMD" = "up" ]; then
     if [ "${ISTIO_ENABLED}" == "true" ] ; then
       if [ "${_CREATE_INSTALLATION_RESOURCE}" == "true" ] ; then
         echo "Installing Istio via Installation Custom Resource"
-        debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}"
-        ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-operator -f ${MAISTRA_INSTALL_YAML}
+        echo "Creating a istio-system namespace"
+        debug "${MAISTRA_ISTIO_OC_COMMAND} new-project istio-system"
+        ${MAISTRA_ISTIO_OC_COMMAND} new-project istio-system
+        # Note, Maistra requires to install the CR in the target namespace not in the operator one
+        # https://maistra.io/docs/getting_started/install/
+        echo "Creating a CR under istio-system namespace"
+        debug "${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f ${MAISTRA_INSTALL_YAML}"
+        ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f ${MAISTRA_INSTALL_YAML}
       else
         echo "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
         echo "permissions, you will need to run the following command:"
@@ -541,19 +547,34 @@ if [ "$_CMD" = "up" ]; then
     fi
   fi
 
+  checkApp () {
+    local expected="$1"
+    apps=$(${MAISTRA_ISTIO_OC_COMMAND} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+    for app in ${apps[@]}
+    do
+	  if [[ "$expected" == "$app" ]]; then
+	    return 0
+	  fi
+    done
+    return 1
+  }
+
   # If Istio is enabled, it should be installing now - if we need to, wait for it to finish
   if [ "${ISTIO_ENABLED}" == "true" ] ; then
     if [ "${KIALI_ENABLED}" == "true" -o "${WAIT_FOR_ISTIO}" == "true" ]; then
       echo "Wait for Istio to fully start (this is going to take a while)..."
+      expected_apps=(grafana istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry jaeger-collector jaeger-query prometheus)
+      for expected in ${expected_apps[@]}
+      do
+        echo "Waiting for $expected"
+        while ! checkApp $expected
+        do
+             sleep 5
+             echo -n '.'
+        done
+      done
 
       echo -n "Waiting for Istio Deployments to be created..."
-      while [ "$(${MAISTRA_ISTIO_OC_COMMAND} get pods -l job-name=openshift-ansible-istio-installer-job -n istio-system -o jsonpath='{.items..status.conditions[0].reason}' 2> /dev/null)" != "PodCompleted" ]
-      do
-         sleep 5
-         echo -n '.'
-      done
-      echo "done."
-
       for app in $(${MAISTRA_ISTIO_OC_COMMAND} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
       do
          echo -n "Waiting for ${app} to be ready..."
