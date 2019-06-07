@@ -10,6 +10,7 @@
 #   docker - shows what is needed to put images in minikube's docker daemon
 #   (at this point, you can install Kiali into your Kubernetes environment)
 #   dashboard - shows the Kubernetes GUI console
+#   port-forward - forward a local port to the Kiali server
 #   ingress - shows the Ingress URL which can get you to the Kiali GUI
 #   bookinfo - installs bookinfo demo into your cluster
 #   down - shuts down the Kubernetes cluster, you can start it up again
@@ -83,6 +84,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="dashboard"
       shift
       ;;
+    port-forward)
+      _CMD="port-forward"
+      shift
+      ;;
     ingress)
       _CMD="ingress"
       shift
@@ -117,18 +122,19 @@ Valid options:
       Enable logging of debug messages from this script.
 
 The command must be either:
-  up:        starts the minikube cluster
-  down:      stops the minikube cluster
-  status:    gets the status of the minikube cluster
-  delete:    completely removes the minikube cluster VM destroying all state
-  docker:    information on the minikube docker environment
-  dashboard: enables access to the Kubernetes GUI within minikube
-  ingress:   enables access to the Kubernetes ingress URL within minikube
-  istio:     installs Istio into the minikube cluster
-  bookinfo:  installs Istio's bookinfo demo (make sure Istio is installed first)
+  up:           starts the minikube cluster
+  down:         stops the minikube cluster
+  status:       gets the status of the minikube cluster
+  delete:       completely removes the minikube cluster VM destroying all state
+  docker:       information on the minikube docker environment
+  dashboard:    enables access to the Kubernetes GUI within minikube
+  port-forward: forward a local port to the Kiali server
+  ingress:      enables access to the Kubernetes ingress URL within minikube
+  istio:        installs Istio into the minikube cluster
+  bookinfo:     installs Istio's bookinfo demo (make sure Istio is installed first)
   gwurl [<portName>|'all']:
-             displays the Ingress Gateway URL. If a port name is given, the gateway port is also shown.
-             If the port name is "all" then all the URLs for all known ports are shown.
+                displays the Ingress Gateway URL. If a port name is given, the gateway port is also shown.
+                If the port name is "all" then all the URLs for all known ports are shown.
 HELPMSG
       exit 1
       ;;
@@ -172,6 +178,12 @@ elif [ "$_CMD" = "dashboard" ]; then
   ensure_minikube_is_running
   echo 'Accessing the Kubernetes console GUI. This runs in foreground, press Control-C to kill it.'
   minikube dashboard
+
+elif [ "$_CMD" = "port-forward" ]; then
+  ensure_minikube_is_running
+  echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
+  echo 'To access Kiali, point your browser to http://localhost:20001/kiali/console'
+  kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then
   ensure_minikube_is_running
