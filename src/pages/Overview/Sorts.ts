@@ -4,15 +4,8 @@ import NamespaceInfo from './NamespaceInfo';
 export namespace Sorts {
   export const sortFields: SortField<NamespaceInfo>[] = [
     {
-      id: 'namespace',
-      title: 'Name',
-      isNumeric: false,
-      param: 'ns',
-      compare: (a: NamespaceInfo, b: NamespaceInfo) => a.name.localeCompare(b.name)
-    },
-    {
       id: 'health',
-      title: 'Status',
+      title: 'Health',
       isNumeric: false,
       param: 'h',
       compare: (a: NamespaceInfo, b: NamespaceInfo) => {
@@ -25,6 +18,10 @@ export namespace Sorts {
           if (diff !== 0) {
             return diff;
           }
+          diff = b.status.inSuccess.length - a.status.inSuccess.length;
+          if (diff !== 0) {
+            return diff;
+          }
         } else if (a.status) {
           return -1;
         } else if (b.status) {
@@ -33,6 +30,13 @@ export namespace Sorts {
         // default comparison fallback
         return a.name.localeCompare(b.name);
       }
+    },
+    {
+      id: 'namespace',
+      title: 'Name',
+      isNumeric: false,
+      param: 'ns',
+      compare: (a: NamespaceInfo, b: NamespaceInfo) => a.name.localeCompare(b.name)
     },
     {
       id: 'mtls',
