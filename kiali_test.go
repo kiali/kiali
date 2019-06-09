@@ -16,17 +16,19 @@ func TestValidateWebRoot(t *testing.T) {
 	validWebRoots := []string{
 		"/",
 		"/kiali",
+		"/kiali/",
+		"./kiali",
 		"/abc/clustername/api/v1/namespaces/istio-system/services/kiali:80/proxy/kiali",
 		"/a/0/-/./_/~/!/$/&/'/(/)/*/+/,/;/=/:/@/%aa",
 		"/kiali0-._~!$&'()*+,;=:@%aa",
 	}
 	invalidWebRoots := []string{
-		"/kiali/",
-		"kiali/",
+		"/../",
+		"/../bar",
 		"/^kiali",
 		"/foo/../bar",
 		"/../bar",
-		"../bar",
+		"/../bar/..",
 	}
 
 	for _, webroot := range validWebRoots {
