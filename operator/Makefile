@@ -10,7 +10,7 @@ OPERATOR_INSTALL_KIALI ?= false
 AUTH_STRATEGY ?= openshift
 CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
-IMAGE_VERSION ?= dev
+KIALI_IMAGE_VERSION ?= dev
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= NodePort
@@ -76,10 +76,11 @@ operator-create: operator-delete .ensure-operator-ns-does-not-exist
 OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION}" \
 OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE}" \
 OPERATOR_INSTALL_KIALI="${OPERATOR_INSTALL_KIALI}" \
+ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
 CREDENTIALS_USERNAME="${CREDENTIALS_USERNAME}" \
 CREDENTIALS_PASSPHRASE="${CREDENTIALS_PASSPHRASE}" \
-IMAGE_VERSION="${IMAGE_VERSION}" \
+KIALI_IMAGE_VERSION="${KIALI_IMAGE_VERSION}" \
 NAMESPACE="${NAMESPACE}" \
 deploy/deploy-kiali-operator.sh
 
@@ -101,7 +102,7 @@ secret-delete:
 	${OC} delete --ignore-not-found=true secret --selector="app=kiali" -n "${NAMESPACE}"
 
 ## kiali-create: Create a Kiali CR to the cluster, informing the Kiali operator to install Kiali.
-ifeq ($(AUTH_STRATEGY), "login")
+ifeq ($(AUTH_STRATEGY),login)
 kiali-create: secret-create
 else
 kiali-create:
@@ -109,7 +110,7 @@ endif
 	@echo Deploy Kiali using the settings found in deploy/kiali/kiali_cr_dev.yaml
 	cat deploy/kiali/kiali_cr_dev.yaml | \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
-IMAGE_VERSION=${IMAGE_VERSION} \
+KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 SERVICE_TYPE="${SERVICE_TYPE}" \

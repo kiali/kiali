@@ -71,6 +71,19 @@
 # -----------
 # Environment variables that affect Kiali:
 #
+# ACCESSIBLE_NAMESPACES
+#   These are the namespaces that Kiali will be granted access to. These should be the namespaces
+#   that make up the service mesh - it will be those namespaces Kiali will observe and manage.
+#   The format of the value of this environment variable is a space-separated list (no commas).
+#   The namespaces can be regular expressions or explicit namespace names.
+#   NOTE! If this is the special value of "**" (two asterisks), that will denote you want Kiali to be
+#   given access to all namespaces as a cluster admin. When given this value, the operator will
+#   be given permission to create cluster roles and cluster role bindings so it can in turn
+#   assign Kiali a cluster role and cluster role binding to access all namespaces. Therefore,
+#   be very careful when setting this value to "**" because of the superpowers this will grant
+#   to the Kiali operator.
+#   Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
+#
 # AUTH_STRATEGY
 #    Determines what authentication strategy to use.
 #    Choose "login" to use a username and password.
@@ -159,6 +172,10 @@ _CMD=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -an|--accessible-namespaces)
+      ACCESSIBLE_NAMESPACES="$2"
+      shift;shift
+      ;;
     -as|--auth-strategy)
       AUTH_STRATEGY="$2"
       shift;shift
@@ -275,6 +292,17 @@ Valid options for the operator installation:
       Default: "false"
 
 Valid options for Kiali installation (if Kiali is to be installed):
+  -an|--accessible-namespaces
+      The namespaces that Kiali will be given permission to observe and manage.
+      The format of the value of this option is a space-separated list (no commas).
+      The namespaces can be regular expressions or explicit namespace names.
+      NOTE! If this is the special value of "**" (two asterisks), that will denote you want
+      Kiali to be given access to all namespaces via a single cluster role. When given this
+      value, the operator will be given permission to create cluster roles and cluster
+      role bindings so it can in turn assign Kiali a cluster role to access all namespaces.
+      Therefore, be very careful when setting this value to "**" because of the
+      superpowers this will grant to the Kiali operator.
+      Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
   -as|--auth-strategy
       Determines what authentication strategy to use.
       Valid values are "login", "anonymous", and "openshift"
@@ -390,6 +418,8 @@ export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
 export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
 export OPERATOR_SKIP_WAIT="${OPERATOR_SKIP_WAIT:-false}"
 export OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL:-$OPERATOR_IMAGE_VERSION}"
+export OPERATOR_ROLE_CLUSTERROLEBINDINGS="# The operator does not have permission to manage cluster role bindings"
+export OPERATOR_ROLE_CLUSTERROLES="# The operator does not have permission to manage cluster roles"
 
 # Make sure we have access to all required tools
 
@@ -428,6 +458,14 @@ else
   fi
 fi
 
+# If Kiali is to be given access to all namespaces, give the operator the ability to create cluster roles/bindings.
+if [ "${ACCESSIBLE_NAMESPACES}" == "**" ]; then
+  echo "IMPORTANT! The Kiali operator will be given permission to create cluster roles and"
+  echo "cluster role bindings in order to grant Kiali access to all namespaces in the cluster."
+  OPERATOR_ROLE_CLUSTERROLEBINDINGS="- clusterrolebindings"
+  OPERATOR_ROLE_CLUSTERROLES="- clusterroles"
+fi
+
 echo "=== OPERATOR SETTINGS ==="
 echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
 echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
@@ -436,6 +474,8 @@ echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
 echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
 echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
+echo OPERATOR_ROLE_CLUSTERROLES=$OPERATOR_ROLE_CLUSTERROLES
+echo OPERATOR_ROLE_CLUSTERROLEBINDINGS=$OPERATOR_ROLE_CLUSTERROLEBINDINGS
 echo "=== OPERATOR SETTINGS ==="
 
 # If Kiali is already installed, and the user doesn't want it uninstalled, we need to abort
@@ -599,6 +639,7 @@ else
 fi
 
 echo "=== KIALI SETTINGS ==="
+echo ACCESSIBLE_NAMESPACES=$ACCESSIBLE_NAMESPACES
 echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo CREDENTIALS_CREATE_SECRET=$CREDENTIALS_CREATE_SECRET
 echo GRAFANA_URL=$GRAFANA_URL
@@ -671,6 +712,32 @@ build_spec_value() {
   fi
 }
 
+build_spec_list_value() {
+  local var_name=${1}
+  local var_value=${!2-_undefined_}
+  local var_show_empty=${3:-false}
+  if [ "${var_value}" == "_undefined_" -a "${var_show_empty}" == "false" ]; then
+    return
+  else
+    if [ "${var_value}" == "" -o "${var_value}" == "_undefined_" ]; then
+      echo "$var_name: []"
+    else
+      local nl=$'\n'
+      local var_name_value="${var_name}:"
+
+      # turn off pathname expansion (set -f) because the namespace regexs may have patterns like ** and *
+      set -f
+      for item in $var_value
+      do
+        var_name_value="${var_name_value}${nl}    - \"${item}\""
+      done
+      set +f
+
+      echo "$var_name_value"
+    fi
+  fi
+}
+
 cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
@@ -681,6 +748,7 @@ spec:
   auth:
     $(build_spec_value strategy AUTH_STRATEGY)
   deployment:
+    $(build_spec_list_value accessible_namespaces ACCESSIBLE_NAMESPACES)
     $(build_spec_value image_name KIALI_IMAGE_NAME)
     $(build_spec_value image_pull_policy KIALI_IMAGE_PULL_POLICY)
     $(build_spec_value image_version KIALI_IMAGE_VERSION)

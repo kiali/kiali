@@ -1,13 +1,14 @@
-- name: "Create Kiali objects on Kubernetes"
+- name: Create Kiali objects on Kubernetes
   include_tasks: process-resource.yml
   vars:
     process_resource_cluster: "kubernetes"
-  with_items:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
   - serviceaccount
   - configmap
-  - clusterrole
-  - clusterrole-viewer
-  - clusterrolebinding
+  - role
+  - role-viewer
+  - rolebinding
   - deployment
   - service
   - ingress
@@ -15,3 +16,14 @@
     loop_var: process_resource_item
   when:
   - is_k8s == True
+
+- name: Create additional Kiali roles on Kubernetes
+  include_tasks: process-additional-roles.yml
+  vars:
+    process_resource_cluster: "kubernetes"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - is_k8s == True
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'

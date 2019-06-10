@@ -6,7 +6,7 @@ spec:
   auth:
     strategy: $AUTH_STRATEGY
   deployment:
-    image_version: $IMAGE_VERSION
+    image_version: $KIALI_IMAGE_VERSION
     namespace: $NAMESPACE
     service_type: $SERVICE_TYPE
     verbose_mode: $VERBOSE_MODE

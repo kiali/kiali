@@ -2,6 +2,8 @@ apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
   name: kiali
+annotations:
+  ansible.operator-sdk/reconcile-period: "0s"
 spec:
 
 ###################################################################
@@ -42,6 +44,13 @@ spec:
 # 'label_selector' is optional and takes a string value of a Kubernetes label selector
 # (e.g. "myLabel=myValue") which is used when fetching the list of available namespaces.
 # This does not affect explicit namespace access.
+# Note that if you do not set this but deployment.accessible_namespaces does not have the
+# special "all namespaces" value of "**" then this label_selector will be set
+# to a default value of "kiali.io/member-of=<deployment.namespace>" where
+# <deployment.namespace> is the namespace where Kiali is to be installed.
+# If deployment.accessible_namespaces does not have the special value of "**"
+# then the Kiali operator will add a new label to all accessible namespaces - that new
+# label will be this label_selector.
 #
 #    ---
 #    namespaces:
@@ -70,6 +79,16 @@ spec:
 ##########
 #  ---
 #  deployment:
+#
+# A list of namespaces Kiali is to be given access to.
+# These namespaces have service mesh components that are to be observed by Kiali.
+# You can provide names using regex expressions matched against all namespaces the operator can see.
+# The default makes all namespaces accessible except for some internal namespaces that typically should be ignored.
+# NOTE! If this has an entry with the special value of "**" (two asterisks), that will denote you want
+# Kiali to be given access to all namespaces via a single cluster role (if using this special value of "**",
+# you are required to have already granted the operator permissions to create cluster roles and cluster role bindings).
+#    ---
+#    accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
 #
 # Additional custom yaml to add to the service definition. This is used mainly to customize the service type.
 # For example, if the deployment.service_type is set to "LoadBalancer" and you want to set the loadBalancerIP,
@@ -184,6 +203,7 @@ spec:
 #      custom_metrics_url: ""
 #      insecure_skip_verify: false
 #      url: ""
+#
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.

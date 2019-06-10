@@ -47,7 +47,7 @@
 
 # Now that we have the kiali_route_url we can process the oauth.yaml
 
-- name: "Process OpenShift OAuth client"
+- name: Process OpenShift OAuth client
   k8s:
     definition: "{{ lookup('template', 'templates/openshift/oauth.yaml') }}"
   when:

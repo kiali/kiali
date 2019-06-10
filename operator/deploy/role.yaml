@@ -17,13 +17,32 @@ rules:
   - serviceaccounts
   - services
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups: [""]
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - patch
 - apiGroups: ["apps"]
   resources:
   - deployments
   - replicasets
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["monitoring.coreos.com"]
   resources:
   - servicemonitors
@@ -41,13 +60,27 @@ rules:
   resources:
   - '*'
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources:
-  - clusterrolebindings
-  - clusterroles
+  ${OPERATOR_ROLE_CLUSTERROLEBINDINGS}
+  ${OPERATOR_ROLE_CLUSTERROLES}
+  - rolebindings
+  - roles
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["apiextensions.k8s.io"]
   resources:
   - customresourcedefinitions
@@ -57,22 +90,46 @@ rules:
   resources:
   - ingresses
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["route.openshift.io"]
   resources:
   - routes
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["oauth.openshift.io"]
   resources:
   - oauthclients
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups: ["monitoring.kiali.io"]
   resources:
   - monitoringdashboards
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 # The permissions below are for Kiali itself; operator needs these so it can escalate when creating Kiali's roles
 - apiGroups: [""]
   resources:

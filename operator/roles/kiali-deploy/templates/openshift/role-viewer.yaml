@@ -1,8 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: {{ role_kind }}
 metadata:
-  name: kiali
-  namespace: {{ kiali_vars.deployment.namespace }}
+  name: kiali-viewer
+  namespace: {{ role_namespace }}
   labels:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
@@ -86,11 +86,8 @@ rules:
   - tracespans
   - zipkins
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - watch
 - apiGroups: ["networking.istio.io"]
   resources:
@@ -99,22 +96,16 @@ rules:
   - serviceentries
   - virtualservices
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - watch
 - apiGroups: ["authentication.istio.io"]
   resources:
   - meshpolicies
   - policies
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - watch
 - apiGroups: ["rbac.istio.io"]
   resources:
@@ -123,12 +114,26 @@ rules:
   - servicerolebindings
   - serviceroles
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - watch
+- apiGroups: ["apps.openshift.io"]
+  resources:
+  - deploymentconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["project.openshift.io"]
+  resources:
+  - projects
+  verbs:
+  - get
+- apiGroups: ["route.openshift.io"]
+  resources:
+  - routes
+  verbs:
+  - get
 - apiGroups: ["monitoring.kiali.io"]
   resources:
   - monitoringdashboards

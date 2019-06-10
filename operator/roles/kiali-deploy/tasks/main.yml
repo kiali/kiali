@@ -166,6 +166,154 @@
 - debug:
     msg: "IMAGE_NAME={{ kiali_vars.deployment.image_name }}; IMAGE VERSION={{ kiali_vars.deployment.image_version }}; VERSION LABEL={{ kiali_vars.deployment.version_label }}"
 
+# Determine the accessible namespaces. The user may have specified names using regex expressions.
+# We need to get a list of all namespaces and match them to the regex expressions.
+# Note that we replace kiali_vars.deployment.accessible_namespaces with the full list of actual namespace names
+# with regex expressions removed because when the CR changes, we need to know what namespaces were granted roles in
+# case we need to revoke those roles (to do this, we need to know the exact names of the namespaces).
+# This must be done before the next step which is figuring out what namespaces are no longer accessible and revoking their roles.
+# NOTE: there is a special value of accessible_namespaces - two asterisks ("**") means Kiali is to be given access to all
+# namespaces via a single cluster role (as opposed to individual roles in each accessible namespace).
+
+- name: Determine the Role and RoleBinding kinds that the operator will create and that the role templates will use
+  set_fact:
+    role_kind: "{{ 'ClusterRole' if '**' in kiali_vars.deployment.accessible_namespaces else 'Role' }}"
+    role_binding_kind: "{{ 'ClusterRoleBinding' if '**' in kiali_vars.deployment.accessible_namespaces else 'RoleBinding' }}"
+
+- name: Find all namespaces (this is limited to what the operator has permission to see)
+  set_fact:
+    all_namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace') | default({}) | json_query('[].metadata.name') }}"
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Determine all accessible namespaces, expanding regex expressions to matched namespaces
+  set_fact:
+    all_accessible_namespaces: "{{ ((all_accessible_namespaces | default([])) + [ item.1 | regex_search(item.0) ]) | unique }}"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces | product(all_namespaces) | list }}"
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - item.1 | regex_search(item.0)
+
+- fail:
+    msg: "Kiali has not been granted access to any namespaces. Check the deployment.accessible_namespaces setting."
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - all_accessible_namespaces is not defined or all_accessible_namespaces | length < 1
+
+- fail:
+    msg: "Kiali has not been granted access to its own namespace of [{{ kiali_vars.deployment.namespace }}]. This is explicitly required. Check the deployment.accessible_namespaces setting."
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.deployment.namespace not in all_accessible_namespaces
+
+- name: If accessible namespaces list has the special all-namespaces indicator, remove all other namespaces from the list
+  set_fact:
+    all_accessible_namespaces: ["**"]
+  when:
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
+
+- name: Set deployment.accessible_namespaces to a list of full namespace names
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'accessible_namespaces': all_accessible_namespaces}}, recursive=True) }}"
+
+- name: Listing of all accessible namespaces (includes regex matches)
+  debug:
+    msg: "{{ kiali_vars.deployment.accessible_namespaces }}"
+
+- name: When accessible namespaces are specified, ensure label selector is set
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'api': {'namespaces': {'label_selector': ('kiali.io/member-of=' + kiali_vars.deployment.namespace)}}}, recursive=True) }}"
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.api.namespaces.label_selector is not defined
+
+- name: Make sure label selector is in the valid format name=value
+  fail:
+    msg: "The api.namespaces.label_selector is not valid [{{ kiali_vars.api.namespaces.label_selector }}] - it must be in the form of 'name=value' following Kubernetes syntax rules for label names and values."
+  when:
+  - kiali_vars.api.namespaces.label_selector is defined
+  # this regex is not 100% accurate, but we want to at least catch obvious errors
+  - kiali_vars.api.namespaces.label_selector is not regex('^[a-zA-Z0-9/_.-]+=[a-zA-Z0-9_.-]+$')
+
+# The following few tasks read the current Kiali configmap (if one exists) in order to figure out what
+# namespaces are no longer accessible. Those namespaces will have their Kiali roles removed.
+
+- name: Find current configmap, if it exists
+  set_fact:
+    current_configmap: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='v1', kind='ConfigMap') }}"
+
+- name: Find currently accessible namespaces
+  set_fact:
+    current_accessible_namespaces: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.accessible_namespaces') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
+- name: Find currently configured label selector
+  set_fact:
+    current_label_selector: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('api.namespaces.label_selector') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
+- name: Do not allow user to change label selector
+  fail:
+    msg: "The api.namespaces.label_selector cannot be changed to a different value. It was [{{ current_label_selector }}] but is now configured to be [{{ kiali_vars.api.namespaces.label_selector }}]. In order to install Kiali with a different label selector than what was used before, please uninstall Kiali first."
+  when:
+  - current_label_selector is defined
+  - kiali_vars.api.namespaces.label_selector is defined
+  - current_label_selector != kiali_vars.api.namespaces.label_selector
+
+- name: Determine the namespaces that were previously accessible but are now inaccessible
+  set_fact:
+    no_longer_accessible_namespaces: "{{ current_accessible_namespaces | difference(kiali_vars.deployment.accessible_namespaces) }}"
+  when:
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+
+- name: Delete all additional Kiali roles from namespaces that Kiali no longer has access to
+  include_tasks: remove-roles.yml
+  loop: "{{ no_longer_accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - no_longer_accessible_namespaces is defined
+
+- name: Delete Kiali cluster roles if no longer given special access to all namespaces
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-clusterroles.yml
+  when:
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
+
+- name: Remove Kiali label from namespaces that Kiali no longer has access to
+  include_tasks: remove-namespace-label.yml
+  vars:
+    the_namespace_label_name: "{{ current_label_selector | regex_replace('^(.*)=.*$', '\\1') }}"
+  loop: "{{ no_longer_accessible_namespaces }}"
+  loop_control:
+    loop_var: the_namespace
+  when:
+  - no_longer_accessible_namespaces is defined
+  - current_label_selector is defined
+
+- name: Create namespace labels on all accessible namespaces
+  include_tasks: create-namespace-label.yml
+  vars:
+    # everything to the left of the = is the label name; to the right is the label value
+    the_namespace_label_name: "{{ kiali_vars.api.namespaces.label_selector | regex_replace('^(.*)=.*$', '\\1') }}"
+    the_namespace_label_value: "{{ kiali_vars.api.namespaces.label_selector | regex_replace('^.*=(.*)$', '\\1') }}"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: the_namespace
+  when:
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+# Now deploy all resources for the specific cluster environment
+
 - name: Execute for OpenShift environment
   include: openshift/os-main.yml
   when:

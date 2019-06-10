@@ -1,14 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: {{ role_binding_kind }}
 metadata:
   name: kiali
-  namespace: {{ kiali_vars.deployment.namespace }}
+  namespace: {{ role_namespace }}
   labels:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: {{ role_kind }}
   name: {{ 'kiali-viewer' if kiali_vars.deployment.view_only_mode == True else 'kiali' }}
 subjects:
 - kind: ServiceAccount

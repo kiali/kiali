@@ -1,13 +1,14 @@
-- name: "Create Kiali objects on OpenShift"
+- name: Create Kiali objects on OpenShift
   include_tasks: process-resource.yml
   vars:
     process_resource_cluster: "openshift"
-  with_items:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  loop:
   - serviceaccount
   - configmap
-  - clusterrole
-  - clusterrole-viewer
-  - clusterrolebinding
+  - role
+  - role-viewer
+  - rolebinding
   - deployment
   - service
   - ingress
@@ -16,6 +17,17 @@
     loop_var: process_resource_item
   when:
   - is_openshift == True
+
+- name: Create additional Kiali roles on OpenShift
+  include_tasks: process-additional-roles.yml
+  vars:
+    process_resource_cluster: "openshift"
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - is_openshift == True
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Process Kiali OAuth client on OpenShift
   include: openshift/os-oauth.yml
