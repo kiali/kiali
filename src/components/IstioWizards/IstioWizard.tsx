@@ -2,10 +2,14 @@ import * as React from 'react';
 import { Button, ExpandCollapse, Wizard } from 'patternfly-react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
+import { Response } from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import MatchingRouting from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
-import TrafficPolicyContainer from '../../components/IstioWizards/TrafficPolicy';
+import TrafficPolicyContainer, {
+  ConsistentHashType,
+  TrafficPolicyState
+} from '../../components/IstioWizards/TrafficPolicy';
 import { DISABLE, ROUND_ROBIN } from './TrafficPolicy';
 import SuspendTraffic, { SuspendedRoute } from './SuspendTraffic';
 import { Rule } from './MatchingRouting/Rules';
@@ -28,12 +32,12 @@ import {
   WizardProps,
   WizardState
 } from './IstioWizardActions';
-import { Response } from '../../services/Api';
 import { MessageType } from '../../types/MessageCenter';
 import ThreeScaleIntegration from './ThreeScaleIntegration';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { style } from 'typestyle';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
+import VirtualServiceHosts from './VirtualServiceHosts';
 
 const expandStyle = style({
   $nest: {
@@ -51,40 +55,86 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       workloads: [],
       rules: [],
       suspendedRoutes: [],
-      valid: true,
-      mtlsMode: DISABLE,
-      tlsModified: false,
-      loadBalancer: ROUND_ROBIN,
-      lbModified: false
+      valid: {
+        mainWizard: true,
+        vsHosts: true,
+        tls: true,
+        lb: true,
+        gateway: true
+      },
+      advancedOptionsValid: true,
+      vsHosts: [props.serviceName],
+      trafficPolicy: {
+        tlsModified: false,
+        mtlsMode: DISABLE,
+        addLoadBalancer: false,
+        simpleLB: false,
+        consistentHashType: ConsistentHashType.HTTP_HEADER_NAME,
+        loadBalancer: {
+          simple: ROUND_ROBIN
+        }
+      }
     };
   }
 
   componentDidUpdate(prevProps: WizardProps) {
     if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
-      let isValid: boolean;
+      let isMainWizardValid: boolean;
       switch (this.props.type) {
         // By default the rule of Weighted routing should be valid
         case WIZARD_WEIGHTED_ROUTING:
-          isValid = true;
+          isMainWizardValid = true;
           break;
         // By default no rules is a no valid scenario
         case WIZARD_MATCHING_ROUTING:
-          isValid = false;
+          isMainWizardValid = false;
           break;
         case WIZARD_SUSPEND_TRAFFIC:
         default:
-          isValid = true;
+          isMainWizardValid = true;
           break;
       }
+      const initVsHosts = getInitHosts(this.props.virtualServices);
       const initMtlsMode = getInitTlsMode(prevProps.destinationRules);
       const initLoadBalancer = getInitLoadBalancer(prevProps.destinationRules);
+      let initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
+      if (initLoadBalancer && initLoadBalancer.consistentHash) {
+        if (initLoadBalancer.consistentHash.httpHeaderName) {
+          initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
+        } else if (initLoadBalancer.consistentHash.httpCookie) {
+          initConsistentHashType = ConsistentHashType.HTTP_COOKIE;
+        } else if (initLoadBalancer.consistentHash.useSourceIp) {
+          initConsistentHashType = ConsistentHashType.USE_SOURCE_IP;
+        }
+      }
+      const trafficPolicy: TrafficPolicyState = {
+        tlsModified: initMtlsMode !== '',
+        mtlsMode: initMtlsMode !== '' ? initMtlsMode : DISABLE,
+        addLoadBalancer: initLoadBalancer !== undefined,
+        simpleLB: initLoadBalancer !== undefined && initLoadBalancer.simple !== undefined,
+        consistentHashType: initConsistentHashType,
+        loadBalancer: initLoadBalancer
+          ? initLoadBalancer
+          : {
+              simple: ROUND_ROBIN
+            }
+      };
       this.setState({
         showWizard: this.props.show,
         workloads: [],
         rules: [],
-        valid: isValid,
-        mtlsMode: initMtlsMode !== '' ? initMtlsMode : DISABLE,
-        loadBalancer: initLoadBalancer !== '' ? initLoadBalancer : ROUND_ROBIN
+        valid: {
+          mainWizard: isMainWizardValid,
+          vsHosts: true,
+          tls: true,
+          lb: true,
+          gateway: true
+        },
+        vsHosts:
+          initVsHosts.length > 1 || (initVsHosts.length === 1 && initVsHosts[0].length > 0)
+            ? initVsHosts
+            : [this.props.serviceName],
+        trafficPolicy: trafficPolicy
       });
     }
   }
@@ -152,8 +202,11 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       default:
     }
     // Disable button before promise is completed. Then Wizard is closed.
-    this.setState({
-      valid: false
+    this.setState(prevState => {
+      prevState.valid.mainWizard = false;
+      return {
+        valid: prevState.valid
+      };
     });
     Promise.all(promises)
       .then(results => {
@@ -178,59 +231,94 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
       });
   };
 
-  onTLS = (mTLS: string) => {
-    this.setState({
-      mtlsMode: mTLS,
-      tlsModified: true
+  onVsHosts = (valid: boolean, vsHosts: string[]) => {
+    this.setState(prevState => {
+      prevState.valid.vsHosts = valid;
+      return {
+        valid: prevState.valid,
+        vsHosts: vsHosts
+      };
     });
   };
 
-  onLoadBalancer = (simple: string) => {
-    this.setState({
-      loadBalancer: simple,
-      lbModified: true
+  onTrafficPolicy = (valid: boolean, trafficPolicy: TrafficPolicyState) => {
+    this.setState(prevState => {
+      // At the moment this callback only updates the valid of the loadbalancer
+      // tls is always true, but I maintain it on the structure for consistency
+      prevState.valid.lb = valid;
+      return {
+        valid: prevState.valid,
+        trafficPolicy: trafficPolicy
+      };
     });
   };
 
   onGateway = (valid: boolean, gateway: GatewaySelectorState) => {
-    this.setState({
-      valid: valid,
-      gateway: gateway
+    this.setState(prevState => {
+      prevState.valid.gateway = valid;
+      return {
+        valid: prevState.valid,
+        gateway: gateway
+      };
     });
   };
 
   onWeightsChange = (valid: boolean, workloads: WorkloadWeight[]) => {
-    this.setState({
-      valid: valid,
-      workloads: workloads
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        workloads: workloads
+      };
     });
   };
 
   onRulesChange = (valid: boolean, rules: Rule[]) => {
-    this.setState({
-      valid: valid,
-      rules: rules
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        rules: rules
+      };
     });
   };
 
   onSuspendedChange = (valid: boolean, suspendedRoutes: SuspendedRoute[]) => {
-    this.setState({
-      valid: valid,
-      suspendedRoutes: suspendedRoutes
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        suspendedRoutes: suspendedRoutes
+      };
     });
   };
 
   onThreeScaleChange = (valid: boolean, threeScaleServiceRule: ThreeScaleServiceRule) => {
-    this.setState({
-      valid: valid,
-      threeScaleServiceRule: threeScaleServiceRule
+    this.setState(prevState => {
+      prevState.valid.mainWizard = valid;
+      return {
+        valid: prevState.valid,
+        threeScaleServiceRule: threeScaleServiceRule
+      };
     });
+  };
+
+  isValid = (state: WizardState): boolean => {
+    return state.valid.mainWizard && state.valid.vsHosts && state.valid.tls && state.valid.lb && state.valid.gateway;
   };
 
   render() {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     return (
-      <Wizard show={this.state.showWizard} onHide={this.onClose}>
+      <Wizard
+        show={this.state.showWizard}
+        onHide={this.onClose}
+        onKeyPress={e => {
+          if (e.key === 'Enter' && this.isValid(this.state)) {
+            this.onCreateUpdate();
+          }
+        }}
+      >
         <Wizard.Header
           onClose={this.onClose}
           title={this.props.update ? WIZARD_UPDATE_TITLES[this.props.type] : WIZARD_TITLES[this.props.type]}
@@ -286,17 +374,17 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
                     textExpanded="Hide Advanced Options"
                     expanded={false}
                   >
+                    <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
                     <TrafficPolicyContainer
-                      mtlsMode={this.state.mtlsMode}
-                      loadBalancer={this.state.loadBalancer}
-                      onTlsChange={this.onTLS}
-                      onLoadbalancerChange={this.onLoadBalancer}
+                      mtlsMode={this.state.trafficPolicy.mtlsMode}
+                      hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
+                      loadBalancer={this.state.trafficPolicy.loadBalancer}
                       nsWideStatus={this.props.tlsStatus}
+                      onTrafficPolicyChange={this.onTrafficPolicy}
                     />
                     <GatewaySelector
                       serviceName={this.props.serviceName}
                       hasGateway={hasGateway(this.props.virtualServices)}
-                      vsHosts={getInitHosts(this.props.virtualServices)}
                       gateway={gatewaySelected}
                       isMesh={isMesh}
                       gateways={this.props.gateways}
@@ -312,7 +400,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
           <Button bsStyle="default" className="btn-cancel" onClick={this.onClose}>
             Cancel
           </Button>
-          <Button disabled={!this.state.valid} bsStyle="primary" onClick={this.onCreateUpdate}>
+          <Button disabled={!this.isValid(this.state)} bsStyle="primary" onClick={this.onCreateUpdate}>
             {this.props.update ? 'Update' : 'Create'}
           </Button>
         </Wizard.Footer>

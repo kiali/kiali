@@ -206,14 +206,22 @@ export interface CorsPolicy {
 
 // Destination Rule
 
+export interface HTTPCookie {
+  name: string;
+  path?: string;
+  ttl: string;
+}
+
 export interface ConsistentHashLB {
-  httpHeader: string;
-  minimumRingSize: number;
+  httpHeaderName?: string | null;
+  httpCookie?: HTTPCookie | null;
+  useSourceIp?: boolean | null;
+  minimumRingSize?: number;
 }
 
 export interface LoadBalancerSettings {
-  simple?: string;
-  consistentHash?: ConsistentHashLB;
+  simple?: string | null;
+  consistentHash?: ConsistentHashLB | null;
 }
 
 export interface ConnectionPoolSettingsTCPSettings {
@@ -254,10 +262,10 @@ export interface TLSSettings {
 }
 
 export interface TrafficPolicy {
-  loadBalancer?: LoadBalancerSettings;
+  loadBalancer?: LoadBalancerSettings | null;
   connectionPool?: ConnectionPoolSettings;
   outlierDetection?: OutlierDetection;
-  tls?: TLSSettings;
+  tls?: TLSSettings | null;
 }
 
 export interface Subset {
@@ -268,7 +276,7 @@ export interface Subset {
 
 export interface DestinationRuleSpec {
   host?: string;
-  trafficPolicy?: TrafficPolicy;
+  trafficPolicy?: TrafficPolicy | null;
   subsets?: Subset[];
 }
 

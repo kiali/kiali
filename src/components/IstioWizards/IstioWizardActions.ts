@@ -10,6 +10,7 @@ import {
   Gateway,
   HTTPMatchRequest,
   HTTPRoute,
+  LoadBalancerSettings,
   StringMatch,
   VirtualService,
   VirtualServices
@@ -17,6 +18,7 @@ import {
 import { serverConfig } from '../../config';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { GatewaySelectorState } from './GatewaySelector';
+import { ConsistentHashType, TrafficPolicyState } from './TrafficPolicy';
 
 export const WIZARD_WEIGHTED_ROUTING = 'weighted_routing';
 export const WIZARD_MATCHING_ROUTING = 'matching_routing';
@@ -54,16 +56,23 @@ export type WizardProps = {
   onClose: (changed: boolean) => void;
 };
 
+export type WizardValid = {
+  mainWizard: boolean;
+  vsHosts: boolean;
+  tls: boolean;
+  lb: boolean;
+  gateway: boolean;
+};
+
 export type WizardState = {
   showWizard: boolean;
   workloads: WorkloadWeight[];
   rules: Rule[];
   suspendedRoutes: SuspendedRoute[];
-  valid: boolean;
-  mtlsMode: string;
-  tlsModified: boolean;
-  loadBalancer: string;
-  lbModified: boolean;
+  valid: WizardValid;
+  advancedOptionsValid: boolean;
+  vsHosts: string[];
+  trafficPolicy: TrafficPolicyState;
   gateway?: GatewaySelectorState;
   threeScaleServiceRule?: ThreeScaleServiceRule;
 };
@@ -245,12 +254,10 @@ export const buildIstioConfig = (
         }
       : undefined;
 
-  const vsHosts = wState.gateway ? wState.gateway.vsHosts.split(',') : [wProps.serviceName];
   switch (wProps.type) {
     case WIZARD_WEIGHTED_ROUTING: {
       // VirtualService from the weights
       wizardVS.spec = {
-        hosts: vsHosts,
         http: [
           {
             route: wState.workloads.map(workload => {
@@ -270,7 +277,6 @@ export const buildIstioConfig = (
     case WIZARD_MATCHING_ROUTING: {
       // VirtualService from the routes
       wizardVS.spec = {
-        hosts: vsHosts,
         http: wState.rules.map(rule => {
           const httpRoute: HTTPRoute = {};
           httpRoute.route = [];
@@ -348,7 +354,6 @@ export const buildIstioConfig = (
         };
       }
       wizardVS.spec = {
-        hosts: vsHosts,
         http: [httpRoute]
       };
       break;
@@ -357,22 +362,55 @@ export const buildIstioConfig = (
       console.log('Unrecognized type');
   }
 
-  if (wState.tlsModified || wState.lbModified) {
-    wizardDR.spec.trafficPolicy = {};
-    if (wState.tlsModified) {
-      wizardDR.spec.trafficPolicy.tls = {
-        mode: wState.mtlsMode
-      };
-    }
-    if (wState.lbModified) {
-      wizardDR.spec.trafficPolicy.loadBalancer = {
-        simple: wState.loadBalancer
-      };
-    }
-  }
+  wizardVS.spec.hosts =
+    wState.vsHosts.length > 1 || (wState.vsHosts.length === 1 && wState.vsHosts[0].length > 0)
+      ? wState.vsHosts
+      : [wProps.serviceName];
 
-  if (wState.gateway && wState.gateway.vsHosts) {
-    wizardVS.spec.hosts = wState.gateway.vsHosts.split(',');
+  if (wState.trafficPolicy.tlsModified || wState.trafficPolicy.addLoadBalancer) {
+    wizardDR.spec.trafficPolicy = {};
+    if (wState.trafficPolicy.tlsModified) {
+      wizardDR.spec.trafficPolicy.tls = {
+        mode: wState.trafficPolicy.mtlsMode
+      };
+    }
+    if (wState.trafficPolicy.addLoadBalancer) {
+      if (wState.trafficPolicy.simpleLB) {
+        // Remember to put a null fields that need to be deleted on a JSON merge patch
+        wizardDR.spec.trafficPolicy.loadBalancer = {
+          simple: wState.trafficPolicy.loadBalancer.simple,
+          consistentHash: null
+        };
+      } else {
+        wizardDR.spec.trafficPolicy.loadBalancer = {
+          simple: null,
+          consistentHash: {}
+        };
+        wizardDR.spec.trafficPolicy.loadBalancer.consistentHash = {
+          httpHeaderName: null,
+          httpCookie: null,
+          useSourceIp: null
+        };
+        if (wState.trafficPolicy.loadBalancer.consistentHash) {
+          const consistentHash = wState.trafficPolicy.loadBalancer.consistentHash;
+          switch (wState.trafficPolicy.consistentHashType) {
+            case ConsistentHashType.HTTP_HEADER_NAME:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpHeaderName = consistentHash.httpHeaderName;
+              break;
+            case ConsistentHashType.HTTP_COOKIE:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.httpCookie = consistentHash.httpCookie;
+              break;
+            case ConsistentHashType.USE_SOURCE_IP:
+              wizardDR.spec.trafficPolicy.loadBalancer.consistentHash.useSourceIp = true;
+              break;
+            default:
+            /// No default action
+          }
+        }
+      }
+    }
+  } else {
+    wizardDR.spec.trafficPolicy = null;
   }
 
   if (wState.gateway && wState.gateway.addGateway) {
@@ -383,7 +421,6 @@ export const buildIstioConfig = (
   } else {
     wizardVS.spec.gateways = null;
   }
-
   return [wizardDR, wizardVS, wizardGW];
 };
 
@@ -471,15 +508,15 @@ export const getInitTlsMode = (destinationRules: DestinationRules): string => {
   return '';
 };
 
-export const getInitLoadBalancer = (destinationRules: DestinationRules): string => {
+export const getInitLoadBalancer = (destinationRules: DestinationRules): LoadBalancerSettings | undefined => {
   if (
     destinationRules.items.length === 1 &&
     destinationRules.items[0].spec.trafficPolicy &&
     destinationRules.items[0].spec.trafficPolicy.loadBalancer
   ) {
-    return destinationRules.items[0].spec.trafficPolicy.loadBalancer.simple || '';
+    return destinationRules.items[0].spec.trafficPolicy.loadBalancer;
   }
-  return '';
+  return undefined;
 };
 
 export const hasGateway = (virtualServices: VirtualServices): boolean => {
