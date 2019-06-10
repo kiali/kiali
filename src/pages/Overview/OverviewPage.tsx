@@ -1,5 +1,16 @@
 import * as React from 'react';
-import { Breadcrumb, Card, CardBody, CardGrid, CardTitle, Col, Row } from 'patternfly-react';
+import {
+  Breadcrumb,
+  Card,
+  CardBody,
+  CardGrid,
+  CardTitle,
+  Col,
+  EmptyState,
+  EmptyStateInfo,
+  EmptyStateTitle,
+  Row
+} from 'patternfly-react';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
@@ -36,6 +47,13 @@ import { Sorts } from './Sorts';
 import { Filters } from './Filters';
 
 const cardGridStyle = style({ width: '100%' });
+
+const emptyStateStyle = style({
+  height: '98%',
+  marginRight: 5,
+  marginBottom: 10,
+  marginTop: 10
+});
 
 type State = {
   namespaces: NamespaceInfo[];
@@ -283,28 +301,37 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           displayMode={this.state.displayMode}
           setDisplayMode={this.setDisplayMode}
         />
-        <div className="cards-pf">
-          <CardGrid matchHeight={true} className={cardGridStyle}>
-            <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
-              {filteredNamespaces.map(ns => {
-                return (
-                  <Col xs={xs} sm={sm} md={md} key={ns.name}>
-                    <Card matchHeight={true} accented={true} aggregated={true}>
-                      <CardTitle>
-                        {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                        {ns.name}
-                      </CardTitle>
-                      <CardBody>
-                        {this.renderStatuses(ns)}
-                        <OverviewCardLinks name={ns.name} />
-                      </CardBody>
-                    </Card>
-                  </Col>
-                );
-              })}
-            </Row>
-          </CardGrid>
-        </div>
+        {filteredNamespaces.length > 0 ? (
+          <div className="cards-pf">
+            <CardGrid matchHeight={true} className={cardGridStyle}>
+              <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
+                {filteredNamespaces.map(ns => {
+                  return (
+                    <Col xs={xs} sm={sm} md={md} key={ns.name}>
+                      <Card matchHeight={true} accented={true} aggregated={true}>
+                        <CardTitle>
+                          {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
+                          {ns.name}
+                        </CardTitle>
+                        <CardBody>
+                          {this.renderStatuses(ns)}
+                          <OverviewCardLinks name={ns.name} />
+                        </CardBody>
+                      </Card>
+                    </Col>
+                  );
+                })}
+              </Row>
+            </CardGrid>
+          </div>
+        ) : (
+          <EmptyState className={emptyStateStyle}>
+            <EmptyStateTitle>No unfiltered namespaces</EmptyStateTitle>
+            <EmptyStateInfo>
+              Either all namespaces are being filtered or the user account has no accessible namespaces.
+            </EmptyStateInfo>
+          </EmptyState>
+        )}
       </>
     );
   }
