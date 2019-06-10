@@ -3,6 +3,9 @@ import { Redirect, Route } from 'react-router-dom';
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import { pathRoutes, defaultRoute, secondaryMastheadRoutes } from '../../routes';
 import { Path } from '../../types/Routes';
+import { style } from 'typestyle';
+
+const containerStyle = style({ marginLeft: 0, marginRight: 0 });
 
 class RenderPage extends React.Component<{ needScroll: boolean }> {
   constructor(props: { needScroll: boolean }) {
@@ -25,7 +28,7 @@ class RenderPage extends React.Component<{ needScroll: boolean }> {
 
   render() {
     const component = (
-      <div className="container-fluid">
+      <div className={`container-fluid ${containerStyle}`}>
         <SwitchErrorBoundary
           fallBackComponent={() => <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>}
         >

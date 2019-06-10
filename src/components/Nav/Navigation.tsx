@@ -6,6 +6,7 @@ import { RouteComponentProps } from 'react-router';
 import Masthead from './Masthead/Masthead';
 import Menu from './Menu';
 import { Page, PageHeader, PageSection, Brand } from '@patternfly/react-core';
+import { style } from 'typestyle';
 
 import MessageCenterContainer from '../../components/MessageCenter/MessageCenter';
 import { kialiLogo, serverConfig } from '../../config';
@@ -25,6 +26,11 @@ type NavigationState = {
   isNavOpenDesktop: boolean;
   isNavOpenMobile: boolean;
 };
+
+const flexBoxColumnStyle = style({
+  display: 'flex',
+  flexDirection: 'column'
+});
 
 class Navigation extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
@@ -106,7 +112,7 @@ class Navigation extends React.Component<PropsType, NavigationState> {
     return (
       <Page header={Header} sidebar={Sidebar} onPageResize={this.onPageResize}>
         <MessageCenterContainer drawerTitle="Message Center" />
-        <PageSection variant={'light'}>
+        <PageSection className={flexBoxColumnStyle} variant={'light'}>
           <RenderPage needScroll={this.isContentScrollable()} />
         </PageSection>
       </Page>
