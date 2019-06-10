@@ -565,9 +565,9 @@ if [ "$_CMD" = "up" ]; then
 
       ## Check if jaeger is part of the expected apps
       if [ "${TRACING_ENABLED}" == "false" ]; then
-        expected_apps=(istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus grafana)
+        expected_apps=(istio-citadel prometheus istio-galley istio-policy istio-telemetry istio-pilot istio-egressgateway istio-ingressgateway istio-sidecar-injector grafana)
       else
-        expected_apps=(istio-citadel istio-egressgateway istio-galley istio-ingressgateway istio-pilot istio-policy istio-sidecar-injector istio-telemetry prometheus grafana jaeger-collector jaeger-query)
+        expected_apps=(istio-citadel prometheus jaeger-query jaeger-collector istio-galley istio-policy istio-telemetry istio-pilot istio-egressgateway istio-ingressgateway istio-sidecar-injector grafana)
       fi
 
       for expected in ${expected_apps[@]}
