@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -521,6 +523,9 @@ func TestAppGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_app_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -556,6 +561,9 @@ func TestVersionedAppGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_versioned_app_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -591,6 +599,9 @@ func TestServiceGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_service_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -626,6 +637,9 @@ func TestWorkloadGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_workload_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -880,6 +894,9 @@ func TestAppNodeGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_app_node_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -1134,6 +1151,9 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_versioned_app_node_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -1388,6 +1408,9 @@ func TestWorkloadNodeGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_workload_node_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -1467,6 +1490,9 @@ func TestServiceNodeGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_service_node_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
@@ -1605,6 +1631,9 @@ func TestComplexGraph(t *testing.T) {
 	}
 	actual, _ := ioutil.ReadAll(resp.Body)
 	expected, _ := ioutil.ReadFile("testdata/test_complex_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.Equal(t, expected, actual) {
