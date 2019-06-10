@@ -47,7 +47,7 @@ ShallowWrapper {
           <EmptyStateInfo
             className=""
           >
-            Either all namespaces are being filtered or the user account has no accessible namespaces.
+            Either all namespaces are being filtered or the user has no permission to access namespaces.
           </EmptyStateInfo>
         </EmptyState>,
       ],
@@ -110,7 +110,7 @@ ShallowWrapper {
             <EmptyStateInfo
               className=""
             >
-              Either all namespaces are being filtered or the user account has no accessible namespaces.
+              Either all namespaces are being filtered or the user has no permission to access namespaces.
             </EmptyStateInfo>,
           ],
           "className": "f1txr8of",
@@ -134,11 +134,11 @@ ShallowWrapper {
             "key": undefined,
             "nodeType": "function",
             "props": Object {
-              "children": "Either all namespaces are being filtered or the user account has no accessible namespaces.",
+              "children": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
               "className": "",
             },
             "ref": null,
-            "rendered": "Either all namespaces are being filtered or the user account has no accessible namespaces.",
+            "rendered": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
             "type": [Function],
           },
         ],
@@ -181,7 +181,7 @@ ShallowWrapper {
             <EmptyStateInfo
               className=""
             >
-              Either all namespaces are being filtered or the user account has no accessible namespaces.
+              Either all namespaces are being filtered or the user has no permission to access namespaces.
             </EmptyStateInfo>
           </EmptyState>,
         ],
@@ -244,7 +244,7 @@ ShallowWrapper {
               <EmptyStateInfo
                 className=""
               >
-                Either all namespaces are being filtered or the user account has no accessible namespaces.
+                Either all namespaces are being filtered or the user has no permission to access namespaces.
               </EmptyStateInfo>,
             ],
             "className": "f1txr8of",
@@ -268,11 +268,11 @@ ShallowWrapper {
               "key": undefined,
               "nodeType": "function",
               "props": Object {
-                "children": "Either all namespaces are being filtered or the user account has no accessible namespaces.",
+                "children": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
                 "className": "",
               },
               "ref": null,
-              "rendered": "Either all namespaces are being filtered or the user account has no accessible namespaces.",
+              "rendered": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
               "type": [Function],
             },
           ],
