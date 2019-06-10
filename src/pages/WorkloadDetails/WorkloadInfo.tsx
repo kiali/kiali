@@ -32,6 +32,9 @@ const tabName = 'list';
 const tabIconStyle = style({
   fontSize: '0.9em'
 });
+const floatRightStyle = style({
+  float: 'right'
+});
 
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   constructor(props: WorkloadInfoProps) {
@@ -85,7 +88,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
         <div className="container-fluid container-cards-pf">
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <span style={{ float: 'right' }}>
+              <span className={floatRightStyle}>
                 <DurationDropdownContainer id="workload-info-duration-dropdown" />{' '}
                 <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
               </span>
