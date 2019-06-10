@@ -5,6 +5,7 @@ import { FormSelect, FormSelectOption, FormSelectOptionGroup } from '@patternfly
 import * as Api from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceOverview } from '../../types/ServiceList';
+import { style } from 'typestyle';
 
 interface ServiceDropdownProps {
   disabled?: boolean;
@@ -27,6 +28,8 @@ interface ServiceGroup {
 interface ServiceDropdownState {
   servicesGroups: ServiceGroup[];
 }
+
+const serviceDropdown = style({ marginLeft: '-100px' });
 
 export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, ServiceDropdownState> {
   constructor(props: ServiceDropdownProps) {
@@ -91,6 +94,7 @@ export class ServiceDropdown extends React.PureComponent<ServiceDropdownProps, S
         onFocus={() => this.handleFocus}
         onChange={this.props.setService}
         aria-label="FormSelect Input"
+        className={serviceDropdown}
       >
         <FormSelectOption
           isDisabled={false}

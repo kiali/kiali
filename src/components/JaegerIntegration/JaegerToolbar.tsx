@@ -15,7 +15,9 @@ import {
 import { HistoryManager, URLParam } from '../../app/History';
 import { style } from 'typestyle';
 
-const separator = style({ borderBottom: '1px solid #d1d1d1;', marginBottom: '10px' });
+const lookbackForm = style({ marginLeft: '-80px;' });
+const separator = style({ borderBottom: '1px solid #d1d1d1;', marginBottom: '10px', marginTop: '20px' });
+const durationInput = style({ marginLeft: '-75px;' });
 
 interface JaegerToolbarProps {
   disableSelectorNs?: boolean;
@@ -100,15 +102,15 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
   render() {
     const { disableSelectorNs } = this.props;
     const { dateTimes, lookback } = this.state;
-
     const tz = lookback === '0' ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
+    const helperCustomDates = <div style={{ marginLeft: '-90px' }}>Times are expressed in {tz}</div>;
 
     return (
-      <>
+      <div id={'jaeger_toolbar'}>
         <Grid>
           {!disableSelectorNs && (
             <>
-              <GridItem span={4}>
+              <GridItem span={2}>
                 <Form isHorizontal={true}>
                   <FormGroup label={'Service'} isRequired={true} fieldId={'service_jaeger_form'}>
                     <ServiceDropdown
@@ -118,11 +120,10 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
                   </FormGroup>
                 </Form>
               </GridItem>
-              <GridItem span={1} />
             </>
           )}
-          <GridItem span={4}>
-            <Form isHorizontal={true}>
+          <GridItem span={2}>
+            <Form isHorizontal={true} className={disableSelectorNs ? '' : lookbackForm}>
               <FormGroup label={'Lookback'} isRequired={true} fieldId={'lookback_jaeger_form'}>
                 <LookBack
                   lookback={this.state.lookback !== 'custom' ? Number(this.state.lookback) : 0}
@@ -133,8 +134,8 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               </FormGroup>
             </Form>
           </GridItem>
-          <GridItem span={1} />
-          <GridItem span={disableSelectorNs ? 7 : 2}>
+          <GridItem span={disableSelectorNs ? 9 : 7} />
+          <GridItem span={1}>
             <RightToolbar disabled={this.state.serviceSelected === ''} onSubmit={this.onRequestTraces} />
           </GridItem>
           {tz && (
@@ -144,12 +145,8 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               </GridItem>
               <GridItem span={4}>
                 <Form isHorizontal={true}>
-                  <FormGroup
-                    label={'Start Time'}
-                    fieldId={'dateTimeStartJaegerTraces'}
-                    helperText={<>Times are expressed in {tz}</>}
-                  >
-                    <InputGroup>
+                  <FormGroup label={'Start Time'} fieldId={'dateTimeStartJaegerTraces'} helperText={helperCustomDates}>
+                    <InputGroup style={{ marginLeft: '-90px' }}>
                       <TextInput
                         value={dateTimes.start.date}
                         type="date"
@@ -166,15 +163,10 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
                   </FormGroup>
                 </Form>
               </GridItem>
-              <GridItem span={1} />
-              <GridItem span={4}>
+              <GridItem span={4} style={{ marginLeft: '-40px' }}>
                 <Form isHorizontal={true}>
-                  <FormGroup
-                    label={'End Time'}
-                    fieldId={'dateTimeEndJaegerTraces'}
-                    helperText={<>Times are expressed in {tz}</>}
-                  >
-                    <InputGroup>
+                  <FormGroup label={'End Time'} fieldId={'dateTimeEndJaegerTraces'} helperText={helperCustomDates}>
+                    <InputGroup style={{ marginLeft: '-90px' }}>
                       <TextInput
                         value={dateTimes.end.date}
                         type="date"
@@ -201,8 +193,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
             <GridItem span={7}>
               <TagsControl tags={this.state.tags} onChange={value => this.setState({ tags: value })} />
             </GridItem>
-            <GridItem span={1} />
-            <GridItem span={3}>
+            <GridItem span={3} style={{ marginLeft: '-60px' }}>
               <Form isHorizontal={true}>
                 <FormGroup label="Limit Results" isRequired={true} fieldId="horizontal-form-name">
                   <TextInput
@@ -210,6 +201,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
                     type="number"
                     onChange={value => this.setState({ limit: Number(value) })}
                     aria-label="tagsJaegerTraces"
+                    style={{ marginLeft: '-60px' }}
                   />
                 </FormGroup>
               </Form>
@@ -230,12 +222,12 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
                     type="text"
                     onChange={value => this.setState({ minDuration: value })}
                     aria-label="minDurationSpanJaegerTraces"
+                    className={durationInput}
                   />
                 </FormGroup>
               </Form>
             </GridItem>
-            <GridItem span={1} />
-            <GridItem span={2}>
+            <GridItem span={2} style={{ marginLeft: '-60px' }}>
               <Form isHorizontal={true}>
                 <FormGroup label="Max Duration" fieldId="form-maxDurationSpanJaegerTraces" helperText="e.g. 1.1s">
                   <TextInput
@@ -243,6 +235,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
                     type="text"
                     onChange={value => this.setState({ maxDuration: value })}
                     aria-label="maxDurationSpanJaegerTraces"
+                    className={durationInput}
                   />
                 </FormGroup>
               </Form>
@@ -250,7 +243,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
             <GridItem span={1} />
           </Grid>
         </ExpandCollapse>
-      </>
+      </div>
     );
   }
 }

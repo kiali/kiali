@@ -23,7 +23,7 @@ ShallowWrapper {
     "props": Object {
       "children": <FormGroup
         className=""
-        fieldId="horizontal-form-name"
+        fieldId="jaeger-tags"
         helperText={
           <UNDEFINED>
             <Popover
@@ -55,7 +55,7 @@ ShallowWrapper {
                   </code>
                 </UNDEFINED>
               }
-              className={null}
+              className="f6vm0mb"
               closeBtnAriaLabel="Close"
               enableFlip={true}
               footerContent={null}
@@ -98,13 +98,13 @@ ShallowWrapper {
         }
         helperTextInvalid={undefined}
         isInline={false}
-        isRequired={true}
+        isRequired={false}
         isValid={true}
         label="Tags"
       >
         <TextInput
           aria-label="tagsJaegerTraces"
-          className=""
+          className="f6vm0mb"
           isDisabled={false}
           isReadOnly={false}
           isRequired={false}
@@ -125,7 +125,7 @@ ShallowWrapper {
       "props": Object {
         "children": <TextInput
           aria-label="tagsJaegerTraces"
-          className=""
+          className="f6vm0mb"
           isDisabled={false}
           isReadOnly={false}
           isRequired={false}
@@ -135,7 +135,7 @@ ShallowWrapper {
           value=""
         />,
         "className": "",
-        "fieldId": "horizontal-form-name",
+        "fieldId": "jaeger-tags",
         "helperText": <UNDEFINED>
           <Popover
             appendTo={[Function]}
@@ -166,7 +166,7 @@ ShallowWrapper {
                 </code>
               </UNDEFINED>
             }
-            className={null}
+            className="f6vm0mb"
             closeBtnAriaLabel="Close"
             enableFlip={true}
             footerContent={null}
@@ -208,7 +208,7 @@ ShallowWrapper {
         </UNDEFINED>,
         "helperTextInvalid": undefined,
         "isInline": false,
-        "isRequired": true,
+        "isRequired": false,
         "isValid": true,
         "label": "Tags",
       },
@@ -219,7 +219,7 @@ ShallowWrapper {
         "nodeType": "class",
         "props": Object {
           "aria-label": "tagsJaegerTraces",
-          "className": "",
+          "className": "f6vm0mb",
           "isDisabled": false,
           "isReadOnly": false,
           "isRequired": false,
@@ -244,7 +244,7 @@ ShallowWrapper {
       "props": Object {
         "children": <FormGroup
           className=""
-          fieldId="horizontal-form-name"
+          fieldId="jaeger-tags"
           helperText={
             <UNDEFINED>
               <Popover
@@ -276,7 +276,7 @@ ShallowWrapper {
                     </code>
                   </UNDEFINED>
                 }
-                className={null}
+                className="f6vm0mb"
                 closeBtnAriaLabel="Close"
                 enableFlip={true}
                 footerContent={null}
@@ -319,13 +319,13 @@ ShallowWrapper {
           }
           helperTextInvalid={undefined}
           isInline={false}
-          isRequired={true}
+          isRequired={false}
           isValid={true}
           label="Tags"
         >
           <TextInput
             aria-label="tagsJaegerTraces"
-            className=""
+            className="f6vm0mb"
             isDisabled={false}
             isReadOnly={false}
             isRequired={false}
@@ -346,7 +346,7 @@ ShallowWrapper {
         "props": Object {
           "children": <TextInput
             aria-label="tagsJaegerTraces"
-            className=""
+            className="f6vm0mb"
             isDisabled={false}
             isReadOnly={false}
             isRequired={false}
@@ -356,7 +356,7 @@ ShallowWrapper {
             value=""
           />,
           "className": "",
-          "fieldId": "horizontal-form-name",
+          "fieldId": "jaeger-tags",
           "helperText": <UNDEFINED>
             <Popover
               appendTo={[Function]}
@@ -387,7 +387,7 @@ ShallowWrapper {
                   </code>
                 </UNDEFINED>
               }
-              className={null}
+              className="f6vm0mb"
               closeBtnAriaLabel="Close"
               enableFlip={true}
               footerContent={null}
@@ -429,7 +429,7 @@ ShallowWrapper {
           </UNDEFINED>,
           "helperTextInvalid": undefined,
           "isInline": false,
-          "isRequired": true,
+          "isRequired": false,
           "isValid": true,
           "label": "Tags",
         },
@@ -440,7 +440,7 @@ ShallowWrapper {
           "nodeType": "class",
           "props": Object {
             "aria-label": "tagsJaegerTraces",
-            "className": "",
+            "className": "f6vm0mb",
             "isDisabled": false,
             "isReadOnly": false,
             "isRequired": false,

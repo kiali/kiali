@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { Button, Form, FormGroup, Popover, TextInput } from '@patternfly/react-core';
 import { InfoAltIcon } from '@patternfly/react-icons';
+import { style } from 'typestyle';
 
 interface TagsControlProps {
   disable?: boolean;
   tags?: string;
   onChange: (value: string) => void;
 }
+
+const tagsInput = style({ marginLeft: '-100px' });
 
 export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
   constructor(props: TagsControlProps) {
@@ -18,6 +21,7 @@ export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
       <>
         <Popover
           position="right"
+          className={tagsInput}
           bodyContent={
             <>
               Values should be in the{' '}
@@ -48,8 +52,14 @@ export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
     const { tags } = this.props;
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="Tags" isRequired={true} fieldId="horizontal-form-name" helperText={this.tagsHelp()}>
-          <TextInput value={tags} type="text" onChange={this.props.onChange} aria-label="tagsJaegerTraces" />
+        <FormGroup label="Tags" fieldId="jaeger-tags" helperText={this.tagsHelp()}>
+          <TextInput
+            value={tags}
+            type="text"
+            onChange={this.props.onChange}
+            aria-label="tagsJaegerTraces"
+            className={tagsInput}
+          />
         </FormGroup>
       </Form>
     );

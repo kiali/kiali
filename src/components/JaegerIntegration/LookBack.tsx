@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { config, serverConfig } from '../../config';
+import { style } from 'typestyle';
 
 interface LookBackProps {
   disabled?: boolean;
   lookback?: number;
   setLookback: (value: string, event: any) => void;
 }
+
+const lookbackDropdown = style({ marginLeft: '-80px' });
 
 export class LookBack extends React.PureComponent<LookBackProps> {
   lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
@@ -33,6 +36,7 @@ export class LookBack extends React.PureComponent<LookBackProps> {
           value={lookback !== undefined ? lookback : this.lookbackDefault}
           onChange={setLookback}
           aria-label="FormSelect lookback"
+          className={lookbackDropdown}
         >
           {options.map((option, index) => (
             <FormSelectOption isDisabled={option.disabled} key={index} value={option.value} label={option.label} />
