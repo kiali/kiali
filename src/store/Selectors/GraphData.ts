@@ -65,6 +65,30 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       workload: undefined
     }
   };
+  // It's not easy to get find/hide to work exactly as users users may expect.  Because edges represent
+  // traffic for only one protocol it is best to use 0 defaults for that one protocol, and leave the others
+  // as NaN. In that way numerical expressions affect only edges for a desired protocol.  Because nodes
+  // can involve traffic from multiple protocols, it seems (for now) best to only set the values explicitly
+  // supplied in the JSON.
+  const edgeProtocolDefaults = {
+    grpc: {
+      grpc: 0,
+      grpcErr: 0,
+      grpcPercentErr: 0,
+      grpcPercentReq: 0
+    },
+    http: {
+      http: 0,
+      http3xx: 0,
+      http4xx: 0,
+      http5xx: 0,
+      httpPercentErr: 0,
+      httpPercentReq: 0
+    },
+    tcp: {
+      tcp: 0
+    }
+  };
   const decoratedGraph: DecoratedGraphElements = {};
   if (graphData) {
     if (graphData.nodes) {
@@ -95,6 +119,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           decoratedEdge.data = {
             protocol: traffic.protocol,
             responses: traffic.responses,
+            ...edgeProtocolDefaults[traffic.protocol],
             ...traffic.rates,
             ...edgeData
           };
