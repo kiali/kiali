@@ -330,6 +330,7 @@ export class GraphStyles {
           shape: (ele: any) => {
             return getNodeShape(ele);
           },
+          'text-events': 'yes',
           'text-outline-color': NodeTextOutlineColor,
           'text-outline-width': NodeTextOutlineWidth,
           'text-halign': 'center',
@@ -409,6 +410,7 @@ export class GraphStyles {
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
           },
+          'text-events': 'yes',
           'text-outline-color': EdgeTextOutlineColor,
           'text-outline-width': EdgeTextOutlineWidth,
           'text-wrap': 'wrap',
