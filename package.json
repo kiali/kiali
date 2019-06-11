@@ -132,6 +132,7 @@
   },
   "resolutions": {
     "@types/react": "16.7.13",
+    "handlebars": "4.0.14",
     "js-yaml": "3.13.1"
   },
   "engines": {
