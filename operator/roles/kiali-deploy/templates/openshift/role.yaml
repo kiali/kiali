@@ -98,6 +98,7 @@ rules:
   - gateways
   - serviceentries
   - virtualservices
+  - sidecars
   verbs:
   - create
   - delete

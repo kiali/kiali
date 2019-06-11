@@ -95,6 +95,7 @@ rules:
   - gateways
   - serviceentries
   - virtualservices
+  - sidecars
   verbs:
   - get
   - list
