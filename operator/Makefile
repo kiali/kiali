@@ -2,6 +2,7 @@
 OPERATOR_IMAGE_NAME ?= quay.io/kiali/kiali-operator
 OPERATOR_IMAGE_VERSION ?= dev
 OPERATOR_NAMESPACE ?= kiali-operator
+OPERATOR_WATCH_NAMESPACE ?= kiali-operator
 
 # When deploying the Kiali operator via operator-create target, this indicates if it should install Kiali also.
 OPERATOR_INSTALL_KIALI ?= false
@@ -75,6 +76,7 @@ operator-create: operator-delete .ensure-operator-ns-does-not-exist
 	OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME}" \
 OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION}" \
 OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE}" \
+OPERATOR_WATCH_NAMESPACE="${OPERATOR_WATCH_NAMESPACE}" \
 OPERATOR_INSTALL_KIALI="${OPERATOR_INSTALL_KIALI}" \
 ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
@@ -114,17 +116,17 @@ KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
-envsubst | ${OC} apply -n "${OPERATOR_NAMESPACE}" -f -
+envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
 kiali-delete: secret-delete
 	@echo Remove Kiali
-	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_NAMESPACE}"
+	${OC} delete --ignore-not-found=true kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}"
 
 ## purge-kiali: Purges all Kiali resources directly without going through the operator or ansible.
 purge-kiali:
 	@echo Purge Kiali resources
-	${OC} patch kiali kiali -n "${OPERATOR_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
+	${OC} patch kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
 	${OC} delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
 	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
 

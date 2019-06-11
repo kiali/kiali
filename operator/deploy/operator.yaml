@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -39,9 +40,7 @@ spec:
           name: runner
         env:
         - name: WATCH_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+          value: ${OPERATOR_WATCH_NAMESPACE}
         - name: POD_NAME
           valueFrom:
             fieldRef:
