@@ -221,6 +221,7 @@ rules:
   - destinationrules
   - gateways
   - serviceentries
+  - sidecars
   - virtualservices
   verbs:
   - create
