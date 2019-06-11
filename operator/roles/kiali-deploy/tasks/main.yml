@@ -46,12 +46,6 @@
   when:
   - kiali_vars.istio_namespace == ""
 
-- name: Set default Grafana namespace
-  set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'external_services': {'grafana': {'namespace': kiali_vars.istio_namespace}}}, recursive=True) }}"
-  when:
-  - kiali_vars.external_services.grafana.namespace == ""
-
 - name: Set default Tracing service namespace
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'namespace': kiali_vars.istio_namespace}}}, recursive=True) }}"

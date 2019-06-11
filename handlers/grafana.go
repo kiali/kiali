@@ -1,24 +1,20 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
-	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/httputil"
 )
 
-type serviceSupplier func(string, string, string) (*core_v1.ServiceSpec, error)
-type dashboardSupplier func(string, string, string, bool) ([]byte, int, error)
+type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
 
 const (
 	workloadDashboardPattern = "Istio%20Workload%20Dashboard"
@@ -28,8 +24,13 @@ const (
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
-	token := getTokenStringFromRequest(r)
-	info, code, err := getGrafanaInfo(token, getService, findDashboard)
+	requestToken, err := getToken(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Token initialization error: "+err.Error())
+		return
+	}
+
+	info, code, err := getGrafanaInfo(requestToken, findDashboard)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, code, err.Error())
@@ -39,7 +40,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // getGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
+func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
 	if !grafanaConfig.DisplayLink {
@@ -64,17 +65,18 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 		apiURL = grafanaConfig.InClusterURL
 	}
 
-	credentials, err := buildAuthHeader(token, grafanaConfig)
-	if err != nil {
-		log.Warning("Failed to build auth header token: " + err.Error())
+	// Be sure to copy config.Auth and not modify the existing
+	auth := grafanaConfig.Auth
+	if auth.UseKialiToken {
+		auth.Token = requestToken
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
+	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, &auth, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, credentials, grafanaConfig.InsecureSkipVerify, dashboardSupplier)
+	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, &auth, dashboardSupplier)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -88,8 +90,8 @@ func getGrafanaInfo(token string, serviceSupplier serviceSupplier, dashboardSupp
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url, searchPattern, credentials string, insecureSkipVerify bool, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern, credentials, insecureSkipVerify)
+func getDashboardPath(url, searchPattern string, auth *config.Auth, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(url, searchPattern, auth)
 	if err != nil {
 		return "", err
 	}
@@ -126,22 +128,6 @@ func getDashboardPath(url, searchPattern, credentials string, insecureSkipVerify
 	return dashPath.(string), nil
 }
 
-func findDashboard(url, searchPattern, credentials string, insecureSkipVerify bool) ([]byte, int, error) {
-	return util.HttpGet(url+"/api/search?query="+searchPattern, credentials, insecureSkipVerify, time.Second*30)
-}
-
-func buildAuthHeader(token string, grafanaConfig config.GrafanaConfig) (string, error) {
-	var credHeader string
-	if token != "" && grafanaConfig.UseOauthToken {
-		credHeader = "Bearer " + token
-	} else if grafanaConfig.APIKey != "" {
-		credHeader = "Bearer " + grafanaConfig.APIKey
-	} else if grafanaConfig.Username != "" {
-		if grafanaConfig.Password == "" {
-			return "", fmt.Errorf("grafana username set but no Grafana password provided")
-		}
-		basicAuth := base64.StdEncoding.EncodeToString([]byte(grafanaConfig.Username + ":" + grafanaConfig.Password))
-		credHeader = "Basic " + basicAuth
-	}
-	return credHeader, nil
+func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
+	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*30)
 }

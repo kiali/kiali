@@ -16,7 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/util/httputil"
 )
 
 type externalService func() (*ExternalServiceInfo, error)
@@ -210,7 +210,19 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	prometheusV := new(p8sResponseVersion)
 	cfg := config.Get().ExternalServices.Prometheus
-	body, _, err := util.HttpGet(cfg.URL+"/version", "", cfg.InsecureSkipVerify, 10*time.Second)
+
+	// Be sure to copy config.Auth and not modify the existing
+	auth := cfg.Auth
+	if auth.UseKialiToken {
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+			return nil, err
+		}
+		auth.Token = token
+	}
+
+	body, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second)
 	if err == nil {
 		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {

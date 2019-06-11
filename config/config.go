@@ -39,20 +39,20 @@ const (
 	EnvServerMetricsPort                = "SERVER_METRICS_PORT"
 	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
 
-	EnvPrometheusServiceURL         = "PROMETHEUS_SERVICE_URL"
-	EnvPrometheusCustomMetricsURL   = "PROMETHEUS_CUSTOM_METRICS_URL"
-	EnvPrometheusInsecureSkipVerify = "PROMETHEUS_INSECURE_SKIP_VERIFY"
-	EnvPrometheusAuth               = "PROMETHEUS_AUTH"
-	EnvPrometheusCAFile             = "PROMETHEUS_CA_FILE"
+	EnvAuthSuffixType               = "_AUTH_TYPE"
+	EnvAuthSuffixUsername           = "_USERNAME"
+	EnvAuthSuffixPassword           = "_PASSWORD"
+	EnvAuthSuffixToken              = "_TOKEN"
+	EnvAuthSuffixUseKialiToken      = "_USE_KIALI_TOKEN"
+	EnvAuthSuffixCAFile             = "_CA_FILE"
+	EnvAuthSuffixInsecureSkipVerify = "_INSECURE_SKIP_VERIFY"
 
-	EnvGrafanaDisplayLink        = "GRAFANA_DISPLAY_LINK"
-	EnvGrafanaInClusterURL       = "GRAFANA_IN_CLUSTER_URL"
-	EnvGrafanaURL                = "GRAFANA_URL"
-	EnvGrafanaUseOauthToken      = "GRAFANA_USE_OAUTH_TOKEN"
-	EnvGrafanaAPIKey             = "GRAFANA_API_KEY"
-	EnvGrafanaUsername           = "GRAFANA_USERNAME"
-	EnvGrafanaPassword           = "GRAFANA_PASSWORD"
-	EnvGrafanaInsecureSkipVerify = "GRAFANA_INSECURE_SKIP_VERIFY"
+	EnvPrometheusServiceURL       = "PROMETHEUS_SERVICE_URL"
+	EnvPrometheusCustomMetricsURL = "PROMETHEUS_CUSTOM_METRICS_URL"
+
+	EnvGrafanaDisplayLink  = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaInClusterURL = "GRAFANA_IN_CLUSTER_URL"
+	EnvGrafanaURL          = "GRAFANA_URL"
 
 	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
@@ -95,8 +95,10 @@ const (
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
 
-	PrometheusAuthStrategyBearer = "bearer"
-	PrometheusAuthStrategyNone   = "none"
+	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
+	AuthTypeBasic  = "basic"
+	AuthTypeBearer = "bearer"
+	AuthTypeNone   = "none"
 )
 
 // the paths we expect the login secret to be located
@@ -122,25 +124,30 @@ type Server struct {
 	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
 }
 
+// Auth provides authentication data for external services
+type Auth struct {
+	Type               string `yaml:"type"`
+	Username           string `yaml:"username"`
+	Password           string `yaml:"password"`
+	Token              string `yaml:"token"`
+	UseKialiToken      bool   `yaml:"use_kiali_token"`
+	CAFile             string `yaml:"ca_file"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
+}
+
 // PrometheusConfig describes configuration of the Prometheus component
 type PrometheusConfig struct {
-	URL                string `yaml:"url,omitempty"`
-	CustomMetricsURL   string `yaml:"custom_metrics_url,omitempty"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
-	Auth               string `yaml:"auth,omitempty"`
-	CAFile             string `yaml:"ca_file,omitempty"`
+	URL              string `yaml:"url,omitempty"`
+	CustomMetricsURL string `yaml:"custom_metrics_url,omitempty"`
+	Auth             Auth   `yaml:"auth,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink        bool   `yaml:"display_link"`
-	InClusterURL       string `yaml:"in_cluster_url"`
-	URL                string `yaml:"url"`
-	UseOauthToken      bool   `yaml:"use_oauth_token"`
-	APIKey             string `yaml:"api_key"`
-	Username           string `yaml:"username"`
-	Password           string `yaml:"password"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
+	DisplayLink  bool   `yaml:"display_link"`
+	InClusterURL string `yaml:"in_cluster_url"`
+	URL          string `yaml:"url"`
+	Auth         Auth   `yaml:"auth"`
 }
 
 // TracingConfig describes configuration used for tracing links
@@ -267,25 +274,13 @@ func NewConfig() (c *Config) {
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
-	c.ExternalServices.Prometheus.InsecureSkipVerify = getDefaultBool(EnvPrometheusInsecureSkipVerify, false)
-	c.ExternalServices.Prometheus.Auth = strings.TrimSpace(getDefaultString(EnvPrometheusAuth, PrometheusAuthStrategyNone))
-	c.ExternalServices.Prometheus.CAFile = strings.TrimSpace(getDefaultString(EnvPrometheusCAFile, ""))
-	if c.ExternalServices.Prometheus.Auth != PrometheusAuthStrategyNone && c.ExternalServices.Prometheus.Auth != PrometheusAuthStrategyBearer {
-		log.Errorf("Unknown Prometheus Auth strategy. Valid options are %v or %v", PrometheusAuthStrategyNone, PrometheusAuthStrategyBearer)
-	}
+	c.ExternalServices.Prometheus.Auth = getAuthFromEnv("PROMETHEUS")
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
 	c.ExternalServices.Grafana.InClusterURL = strings.TrimSpace(getDefaultString(EnvGrafanaInClusterURL, ""))
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
-	c.ExternalServices.Grafana.UseOauthToken = getDefaultBool(EnvGrafanaUseOauthToken, false)
-	c.ExternalServices.Grafana.APIKey = strings.TrimSpace(getDefaultString(EnvGrafanaAPIKey, ""))
-	c.ExternalServices.Grafana.Username = strings.TrimSpace(getDefaultString(EnvGrafanaUsername, ""))
-	c.ExternalServices.Grafana.Password = strings.TrimSpace(getDefaultString(EnvGrafanaPassword, ""))
-	if c.ExternalServices.Grafana.Username != "" && c.ExternalServices.Grafana.Password == "" {
-		log.Error("Grafana username (\"GRAFANA_USERNAME\") requires that Grafana password (\"GRAFANA_PASSWORD\") is set.")
-	}
-	c.ExternalServices.Grafana.InsecureSkipVerify = getDefaultBool(EnvGrafanaInsecureSkipVerify, false)
+	c.ExternalServices.Prometheus.Auth = getAuthFromEnv("GRAFANA")
 
 	// Tracing Configuration
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
@@ -487,4 +482,23 @@ func SaveToFile(filename string, conf *Config) (err error) {
 	log.Debugf("Writing YAML config to [%s]", filename)
 	err = ioutil.WriteFile(filename, []byte(fileContent), 0640)
 	return
+}
+
+func getAuthFromEnv(prefix string) Auth {
+	auth := Auth{}
+	auth.Type = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixType, AuthTypeNone))
+	switch auth.Type {
+	case AuthTypeBasic:
+		auth.Username = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixUsername, ""))
+		auth.Password = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixPassword, ""))
+	case AuthTypeBearer:
+		auth.Token = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixToken, ""))
+		auth.UseKialiToken = getDefaultBool(prefix+EnvAuthSuffixUseKialiToken, false)
+	case AuthTypeNone:
+	default:
+		log.Errorf("Unknown authentication strategy for %s: '%s'. Valid options are %s, %s or %s", prefix, auth.Type, AuthTypeNone, AuthTypeBasic, AuthTypeBearer)
+	}
+	auth.InsecureSkipVerify = getDefaultBool(prefix+EnvAuthSuffixInsecureSkipVerify, false)
+	auth.CAFile = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixCAFile, ""))
+	return auth
 }
