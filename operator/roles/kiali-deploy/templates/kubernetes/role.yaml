@@ -97,8 +97,8 @@ rules:
   - destinationrules
   - gateways
   - serviceentries
-  - virtualservices
   - sidecars
+  - virtualservices
   verbs:
   - create
   - delete

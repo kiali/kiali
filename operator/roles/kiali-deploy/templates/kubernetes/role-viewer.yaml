@@ -94,8 +94,8 @@ rules:
   - destinationrules
   - gateways
   - serviceentries
-  - virtualservices
   - sidecars
+  - virtualservices
   verbs:
   - get
   - list
