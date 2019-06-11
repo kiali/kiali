@@ -328,7 +328,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           <EmptyState className={emptyStateStyle}>
             <EmptyStateTitle>No unfiltered namespaces</EmptyStateTitle>
             <EmptyStateInfo>
-              Either all namespaces are being filtered or the user account has no accessible namespaces.
+              Either all namespaces are being filtered or the user has no permission to access namespaces.
             </EmptyStateInfo>
           </EmptyState>
         )}
