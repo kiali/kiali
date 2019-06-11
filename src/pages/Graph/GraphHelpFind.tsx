@@ -209,17 +209,16 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     });
     const prefaceStyle = style({
       width: '100%',
-      height: '105px',
+      height: '75px',
       padding: '10px',
-      resize: 'vertical',
+      resize: 'none',
       color: '#fff',
       backgroundColor: '#003145'
     });
     const preface =
       'You can use the Find and Hide fields to highlight or hide edges and nodes from the graph. Each field ' +
       'accepts text expressions using the language described below. Hide takes precedence when using Find and ' +
-      'Hide together. To get started click the "Examples" tab. Click "Usage Notes" for restrictions and tips. ' +
-      'The other tabs provide details about the full set of node and edge operands, as well as operators.';
+      'Hide together. Hide maintains the layout, it does not reposition the remaining graph elements.';
 
     return (
       <Draggable handle="#helpheader" bounds="#root">
@@ -294,6 +293,14 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                             id: 't90',
                             t:
                               'Abbrevations: circuitbreaker|cb, responsetime|rt, serviceentry->se, sidecar|sc, virtualservice|vs'
+                          },
+                          {
+                            id: 't100',
+                            t: 'Hiding nodes will automatically hide connected edges.'
+                          },
+                          {
+                            id: 't110',
+                            t: 'Hiding edges will automatically hide nodes left with no visible edges.'
                           }
                         ]}
                       />

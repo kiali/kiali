@@ -261,7 +261,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     if (selector) {
       // select the new hide-hits
       this.hiddenElements = cy.$(selector);
+      // add the edges connected to hidden nodes
       this.hiddenElements = this.hiddenElements.add(this.hiddenElements.connectedEdges());
+      // add nodes with only hidden edges (keep unused nodes as that is an explicit option)
+      const visibleElements = this.hiddenElements.absoluteComplement();
+      const nodesWithVisibleEdges = visibleElements.edges().connectedNodes();
+      const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isUnused}]`).subtract(nodesWithVisibleEdges);
+      this.hiddenElements = this.hiddenElements.add(nodesWithOnlyHiddenEdges);
       // remove any appbox hits, we only hide empty appboxes
       this.hiddenElements = this.hiddenElements.subtract(this.hiddenElements.filter('$node[isGroup]'));
       // set the remaining hide-hits hidden
