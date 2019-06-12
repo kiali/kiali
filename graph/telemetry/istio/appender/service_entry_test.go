@@ -17,25 +17,42 @@ import (
 func setupServiceEntries() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
-	externalServiceEntry := kubernetes.GenericIstioObject{
+	externalEntry := kubernetes.GenericIstioObject{
 		Spec: map[string]interface{}{
 			"hosts":    []interface{}{"ExternalServiceEntry"},
 			"location": "MESH_EXTERNAL",
 		},
 	}
-	internalServiceEntry := kubernetes.GenericIstioObject{
+	externalWildcardEntry := kubernetes.GenericIstioObject{
+		Spec: map[string]interface{}{
+			"hosts":    []interface{}{"*.external.com"},
+			"location": "MESH_EXTERNAL",
+		},
+	}
+	internalEntry := kubernetes.GenericIstioObject{
 		Spec: map[string]interface{}{
 			"hosts":    []interface{}{"InternalServiceEntry"},
 			"location": "MESH_INTERNAL",
 		},
 	}
-	defaultServiceEntry := kubernetes.GenericIstioObject{
+	internalPrefixEntry := kubernetes.GenericIstioObject{
+		Spec: map[string]interface{}{
+			"hosts":    []interface{}{"InternalPrefixServiceEntry.namespace.svc.cluster.local"},
+			"location": "MESH_INTERNAL",
+		},
+	}
+	defaultEntry := kubernetes.GenericIstioObject{
 		Spec: map[string]interface{}{
 			"hosts": []interface{}{"DefaultServiceEntry"},
 		},
 	}
 
-	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{&externalServiceEntry, &internalServiceEntry, &defaultServiceEntry}, nil)
+	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
+		&externalEntry,
+		&externalWildcardEntry,
+		&internalEntry,
+		&internalPrefixEntry,
+		&defaultEntry}, nil)
 	config.Set(config.NewConfig())
 
 	businessLayer := business.NewWithBackends(k8s, nil)
@@ -48,28 +65,40 @@ func TestServiceEntry(t *testing.T) {
 	businessLayer := setupServiceEntries()
 	trafficMap := serviceEntriesTrafficMap()
 
-	assert.Equal(6, len(trafficMap))
-	notServiceEntryId, _ := graph.Id("testNamespace", "NotServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
-	notServiceEntryNode, found := trafficMap[notServiceEntryId]
+	assert.Equal(8, len(trafficMap))
+	notServiceEntryID, _ := graph.Id("testNamespace", "NotServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notServiceEntryNode, found := trafficMap[notServiceEntryID]
 	assert.Equal(true, found)
 	assert.Equal(1, len(notServiceEntryNode.Edges))
 	assert.Equal(nil, notServiceEntryNode.Metadata[graph.IsServiceEntry])
 
-	extServiceEntryId, _ := graph.Id("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
-	extServiceEntryNode, found2 := trafficMap[extServiceEntryId]
+	extServiceEntryID, _ := graph.Id("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	extServiceEntryNode, found2 := trafficMap[extServiceEntryID]
 	assert.Equal(true, found2)
 	assert.Equal(0, len(extServiceEntryNode.Edges))
 	assert.Equal(nil, extServiceEntryNode.Metadata[graph.IsServiceEntry])
 
-	intServiceEntryId, _ := graph.Id("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
-	intServiceEntryNode, found3 := trafficMap[intServiceEntryId]
+	extWildcardServiceEntryID, _ := graph.Id("testNamespace", "foo.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	extWildcardServiceEntryNode, found3 := trafficMap[extWildcardServiceEntryID]
 	assert.Equal(true, found3)
-	assert.Equal(0, len(intServiceEntryNode.Edges))
-	assert.Equal(nil, extServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal(0, len(extWildcardServiceEntryNode.Edges))
+	assert.Equal(nil, extWildcardServiceEntryNode.Metadata[graph.IsServiceEntry])
 
-	defaultServiceEntryId, _ := graph.Id("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
-	defaultServiceEntryNode, found4 := trafficMap[defaultServiceEntryId]
+	intServiceEntryID, _ := graph.Id("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	intServiceEntryNode, found4 := trafficMap[intServiceEntryID]
 	assert.Equal(true, found4)
+	assert.Equal(0, len(intServiceEntryNode.Edges))
+	assert.Equal(nil, intServiceEntryNode.Metadata[graph.IsServiceEntry])
+
+	intPrefixServiceEntryID, _ := graph.Id("testNamespace", "InternalPrefixServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	intPrefixServiceEntryNode, found5 := trafficMap[intPrefixServiceEntryID]
+	assert.Equal(true, found5)
+	assert.Equal(0, len(intPrefixServiceEntryNode.Edges))
+	assert.Equal(nil, intPrefixServiceEntryNode.Metadata[graph.IsServiceEntry])
+
+	defaultServiceEntryID, _ := graph.Id("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	defaultServiceEntryNode, found6 := trafficMap[defaultServiceEntryID]
+	assert.Equal(true, found6)
 	assert.Equal(0, len(defaultServiceEntryNode.Edges))
 	assert.Equal(nil, defaultServiceEntryNode.Metadata[graph.IsServiceEntry])
 
@@ -84,7 +113,9 @@ func TestServiceEntry(t *testing.T) {
 
 	assert.Equal(nil, notServiceEntryNode.Metadata[graph.IsServiceEntry])
 	assert.Equal("MESH_EXTERNAL", extServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_EXTERNAL", extWildcardServiceEntryNode.Metadata[graph.IsServiceEntry])
 	assert.Equal("MESH_INTERNAL", intServiceEntryNode.Metadata[graph.IsServiceEntry])
+	assert.Equal("MESH_INTERNAL", intPrefixServiceEntryNode.Metadata[graph.IsServiceEntry])
 	assert.Equal("MESH_EXTERNAL", defaultServiceEntryNode.Metadata[graph.IsServiceEntry])
 }
 
@@ -99,9 +130,13 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 
 	n3 := graph.NewNode("testNamespace", "ExternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
-	n4 := graph.NewNode("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n4 := graph.NewNode("testNamespace", "foo.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
-	n5 := graph.NewNode("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	n5 := graph.NewNode("testNamespace", "InternalServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+
+	n6 := graph.NewNode("testNamespace", "InternalPrefixServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+
+	n7 := graph.NewNode("testNamespace", "DefaultServiceEntry", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 
 	trafficMap[n0.ID] = &n0
 	trafficMap[n1.ID] = &n1
@@ -109,12 +144,16 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	trafficMap[n3.ID] = &n3
 	trafficMap[n4.ID] = &n4
 	trafficMap[n5.ID] = &n5
+	trafficMap[n6.ID] = &n6
+	trafficMap[n7.ID] = &n7
 
 	n0.AddEdge(&n1)
 	n1.AddEdge(&n2)
 	n2.AddEdge(&n3)
 	n2.AddEdge(&n4)
 	n2.AddEdge(&n5)
+	n2.AddEdge(&n6)
+	n2.AddEdge(&n7)
 
 	return trafficMap
 }

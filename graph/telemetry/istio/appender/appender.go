@@ -110,21 +110,24 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 }
 
 const (
-	serviceEntriesKey = "serviceEntries" // global vendor info
-	workloadListKey   = "workloadList"   // namespace vendor info
+	serviceEntryHostsKey = "serviceEntryHosts" // global vendor info
+	workloadListKey      = "workloadList"      // namespace vendor info
 )
 
-type serviceEntries map[string]string
-
-func newServiceEntries() serviceEntries {
-	return make(map[string]string)
+type serviceEntryHost struct {
+	location string
+	host     string
 }
 
-func getServiceEntries(gi *graph.AppenderGlobalInfo) (serviceEntries, bool) {
-	if se, ok := gi.Vendor[serviceEntriesKey]; ok {
-		return se.(serviceEntries), true
+func newServiceEntryHosts() []serviceEntryHost {
+	return []serviceEntryHost{}
+}
+
+func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) ([]serviceEntryHost, bool) {
+	if seHosts, ok := gi.Vendor[serviceEntryHostsKey]; ok {
+		return seHosts.([]serviceEntryHost), true
 	}
-	return newServiceEntries(), false
+	return newServiceEntryHosts(), false
 }
 
 func getWorkloadList(ni *graph.AppenderNamespaceInfo) *models.WorkloadList {
