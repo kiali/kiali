@@ -62,9 +62,9 @@ kiali_defaults:
       service: ""
       url: ""
 
-  identity:
-    cert_file: ""
-    private_key_file: ""
+  identity: {}
+    #cert_file:
+    #private_key_file:
 
   istio_labels:
     app_label_name: "app"
