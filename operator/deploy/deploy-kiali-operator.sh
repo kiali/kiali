@@ -462,7 +462,7 @@ else
   exit 1
 fi
 
-# If asking for the last release (which is the default), then pick up the latest release.
+# If asking for the last release of operator (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${OPERATOR_IMAGE_VERSION}" == "lastrelease" ]; then
   get_downloader
@@ -486,6 +486,29 @@ else
     echo "Will use the latest Kiali operator image from master branch"
     OPERATOR_VERSION_LABEL="master"
     OPERATOR_IMAGE_PULL_POLICY="Always"
+  fi
+fi
+
+# If asking for the last release of Kiali (which is the default), then pick up the latest release.
+# Note that you could ask for "latest" - that would pick up the current image built from master.
+if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
+  get_downloader
+  github_api_url="https://api.github.com/repos/kiali/kiali/releases/latest"
+  kiali_version_we_want=$(${downloader} ${github_api_url} 2> /dev/null |\
+    grep  "tag_name" | \
+    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  if [ -z "${kiali_version_we_want}" ]; then
+    echo "ERROR: Failed to determine the version of the last Kiali release."
+    echo "Make sure this URL is accessible and returning valid results:"
+    echo ${github_api_url}
+    exit 1
+  fi
+  echo "Will use the last Kiali operator release: ${kiali_version_we_want}"
+  KIALI_IMAGE_VERSION=${kiali_version_we_want}
+else
+  if [ "${KIALI_IMAGE_VERSION}" == "latest" ]; then
+    echo "Will use the latest Kiali image from master branch"
+    KIALI_IMAGE_PULL_POLICY="Always"
   fi
 fi
 
