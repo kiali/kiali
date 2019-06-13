@@ -21,7 +21,32 @@
 # following environment variables.
 #
 # -----------
-# Environment variables that affect the Kiali operator:
+# Environment variables that affect the overall behavior of this script:
+#
+# UNINSTALL_EXISTING_KIALI
+#    If true, this script first will attempt to uninstall any currently existing Kiali resources.
+#    Note that if Kiali is already installed and you opt not to uninstall it, this script
+#    will abort and the operator will not be installed.
+#    This will only remove resources from Kiali itself, not a previously installed
+#    Kiali Operator. If you have a previously installed Kiali that was installed by
+#    a Kiali Operator, you can use that operator to uninstall that Kiali by deleting the Kiali CR.
+#    If UNINSTALL_EXISTING_OPERATOR is true, this value is ignored since Kiali will be uninstalled
+#    when the operator is uninstalled.
+#    If UNINSTALL_MODE is true, this value is ignored.
+#    Default: "false"
+#
+# UNINSTALL_EXISTING_OPERATOR
+#    If true, this script will attempt to uninstall any currently existing operator resources.
+#    If the operator is already installed and you opt not to uninstall it, this script will abort.
+#    Uninstalling the operator will also uninstall any existing Kiali installation as well.
+#    If UNINSTALL_MODE is true, this value is ignored.
+#    Default: "false"
+#
+# UNINSTALL_MODE
+#    When set to true, this script will uninstall the operator and Kiali, and it will not install anything.
+#    Default: "false"
+#
+# Environment variables that affect the Kiali operator installation:
 #
 # OPERATOR_IMAGE_NAME
 #    Determines which image of the operator to download and install.
@@ -56,12 +81,6 @@
 #    it successfully installed, set this to "true".
 #    Default: "false"
 #
-# OPERATOR_UNINSTALL
-#    If true this script will attempt to uninstall any currently existing operator resources.
-#    If the operator is already installed and you opt not to uninstall it, this script will abort.
-#    Uninstalling the operator will also uninstall any existing Kiali installation as well.
-#    Default: false
-#
 # OPERATOR_VERSION_LABEL
 #    Kiali operator resources will be assigned a "version" label when they are deployed.
 #    To control what version label to use for Kiali resources, see VERSION_LABEL.
@@ -75,7 +94,7 @@
 #    Default: See above for how the default value is determined
 #
 # -----------
-# Environment variables that affect Kiali:
+# Environment variables that affect Kiali installation:
 #
 # ACCESSIBLE_NAMESPACES
 #   These are the namespaces that Kiali will be granted access to. These should be the namespaces
@@ -100,7 +119,8 @@
 #
 # CREDENTIALS_CREATE_SECRET
 #    When "true" a secret will be created with the credentials provided to this script.
-#    Only used when AUTH_STRATEGY is "login".
+#    Secrets are only created when AUTH_STRATEGY is "login".
+#    If Kiali is to be uninstalled and this value is "true", then any Kiali secret found will be deleted.
 #    Default: "true"
 #
 # CREDENTIALS_USERNAME
@@ -161,15 +181,6 @@
 #    this SECRET_NAME setting is still needed - it is the name of the secret that
 #    already (or will) contain the credentials (i.e. the secret you must create manually).
 #    Default: kiali
-#
-# UNINSTALL_EXISTING_KIALI
-#    If true this script first will attempt to uninstall any currently existing Kiali resources.
-#    Note that if Kiali is already installed and you opt not to uninstall it, this script
-#    will abort and the operator will not be installed.
-#    This will only remove resources from Kiali itself, not a previously installed
-#    Kiali Operator. If you have a previously installed Kiali that was installed by
-#    a Kiali Operator, use that operator to uninstall that Kiali (i.e. remove the Kiali CR).
-#    Default: false
 #
 ##############################################################################
 
@@ -250,10 +261,6 @@ while [[ $# -gt 0 ]]; do
       OPERATOR_SKIP_WAIT="$2"
       shift;shift
       ;;
-    -ou|--operator-uninstall)
-      OPERATOR_UNINSTALL="$2"
-      shift;shift
-      ;;
     -ovl|--operator-version-label)
       OPERATOR_VERSION_LABEL="$2"
       shift;shift
@@ -266,10 +273,36 @@ while [[ $# -gt 0 ]]; do
       UNINSTALL_EXISTING_KIALI="$2"
       shift;shift
       ;;
+    -ueo|--uninstall-existing-operator)
+      UNINSTALL_EXISTING_OPERATOR="$2"
+      shift;shift
+      ;;
+    -um|--uninstall-mode)
+      UNINSTALL_MODE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 
 $0 [option...]
+
+Valid options for overall script behavior:
+  -uek|--uninstall-existing-kiali
+      If true, this script will attempt to uninstall any currently existing Kiali resources.
+      Note that if Kiali is already installed and you opt not to uninstall it, this script
+      will abort and the operator will not be installed.
+      If -ueo=true, this option is ignored since Kiali will be uninstalled along with the operator.
+      If -um=true, this option is ignored.
+      Default: "false"
+  -ueo|--uninstall-existing-operator
+      If true, this script will attempt to uninstall any currently existing operator resources.
+      If the operator is already installed and you opt not to uninstall it, this script will abort.
+      Uninstalling the operator will uninstall any existing Kiali installation as well.
+      If -um=true, this option is ignored.
+      Default: "false"
+  -um|--uninstall-mode
+      When set to true, this script will uninstall the operator and Kiali, and it will not install anything.
+      Default: "false"
 
 Valid options for the operator installation:
   -oin|--operator-image-name
@@ -291,20 +324,10 @@ Valid options for the operator installation:
   -osw|--operator-skip-wait
       Indicates if this script should not wait for the Kiali operator to be fully started.
       Default: "false"
-  -ou|--operator-uninstall
-      If true this script will attempt to uninstall any currently existing operator resources.
-      If the operator is already installed and you opt not to uninstall it, this script will abort.
-      Uninstalling the operator will uninstall any existing Kiali installation as well.
-      Default: false
   -ovl|--operator-version-label
       A Kubernetes label named "version" will be set on the Kiali operator resources.
       The value of this label is determined by this setting.
       Default: Determined by the operator image version being installed
-  -uek|--uninstall-existing-kiali
-      If true, this script will attempt to uninstall any currently existing Kiali resources.
-      Note that if Kiali is already installed and you opt not to uninstall it, this script
-      will abort and the operator will not be installed.
-      Default: "false"
 
 Valid options for Kiali installation (if Kiali is to be installed):
   -an|--accessible-namespaces
@@ -369,6 +392,12 @@ HELPMSG
       ;;
   esac
 done
+
+# Some environment variables we need set to their defaults if not set already
+CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
+NAMESPACE="${NAMESPACE:-istio-system}"
+OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
+SECRET_NAME="${SECRET_NAME:-kiali}"
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
 # After return, $downloader will be a command to stream a URL's content to stdout.
@@ -439,6 +468,20 @@ else
     echo "ERROR: You do not have 'oc' or 'kubectl' in your PATH. Please install it and retry."
     exit 1
   fi
+fi
+
+echo "=== UNINSTALL SETTINGS ==="
+echo UNINSTALL_EXISTING_KIALI=$UNINSTALL_EXISTING_KIALI
+echo UNINSTALL_EXISTING_OPERATOR=$UNINSTALL_EXISTING_OPERATOR
+echo UNINSTALL_MODE=$UNINSTALL_MODE
+echo "=== UNINSTALL SETTINGS ==="
+
+if [ "${UNINSTALL_MODE}" == "true" ]; then
+  echo "Uninstalling Kiali and the Kiali operator..."
+  delete_operator_resources
+  delete_kiali_resources
+  echo "Kiali and the Kiali operator have been uninstalled. Nothing will be installed. Exiting."
+  exit 0
 fi
 
 # Export all possible variables for envsubst to be able to process
@@ -527,7 +570,6 @@ echo OPERATOR_IMAGE_VERSION=$OPERATOR_IMAGE_VERSION
 echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
 echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
-echo OPERATOR_UNINSTALL=$OPERATOR_UNINSTALL
 echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_ROLE_CLUSTERROLES=$OPERATOR_ROLE_CLUSTERROLES
 echo OPERATOR_ROLE_CLUSTERROLEBINDINGS=$OPERATOR_ROLE_CLUSTERROLEBINDINGS
@@ -535,17 +577,17 @@ echo "=== OPERATOR SETTINGS ==="
 
 # Give the user an opportunity to tell us if they want to uninstall the operator if they did not set the envar yet.
 # The default to the prompt is "yes" because the user will normally want to uninstall an already existing Operator.
-# Note: to allow for non-interactive installations, the user can set OPERATOR_UNINSTALL=true to ensure
+# Note: to allow for non-interactive installations, the user can set UNINSTALL_EXISTING_OPERATOR=true to ensure
 # the operator will always be removed if it exists. If the user does not want the operator removed if it exists, that setting
 # can be set to false which will cause this script to abort if the operator exists.
-if [ "${OPERATOR_UNINSTALL}" != "true" ]; then
+if [ "${UNINSTALL_EXISTING_OPERATOR}" != "true" ]; then
   if ${CLIENT_EXE} get deployment kiali-operator -n "${OPERATOR_NAMESPACE}" > /dev/null 2>&1 ; then
-    if [ -z "${OPERATOR_UNINSTALL}" ]; then
+    if [ -z "${UNINSTALL_EXISTING_OPERATOR}" ]; then
       read -p 'It appears the operator has already been installed. Do you want to uninstall it? This will uninstall Kiali, too. [Y/n]: ' _yn
       case "${_yn}" in
         [yY][eE][sS]|[yY]|"")
           echo "The existing operator will be uninstalled, along with any existing Kiali installation."
-          OPERATOR_UNINSTALL="true"
+          UNINSTALL_EXISTING_OPERATOR="true"
           ;;
         *)
           echo "The existing operator will NOT be uninstalled. Aborting the operator installation."
@@ -557,12 +599,12 @@ if [ "${OPERATOR_UNINSTALL}" != "true" ]; then
       exit 1
     fi
   else
-    OPERATOR_UNINSTALL="false"
+    UNINSTALL_EXISTING_OPERATOR="false"
   fi
 fi
 
 # Uninstall any operator that already exists if we were asked to do so
-if [ "${OPERATOR_UNINSTALL}" == "true" ]; then
+if [ "${UNINSTALL_EXISTING_OPERATOR}" == "true" ]; then
   # This cleans up the CRDs as well as any deployed operator resources
   delete_operator_resources
 
@@ -572,7 +614,6 @@ if [ "${OPERATOR_UNINSTALL}" == "true" ]; then
 fi
 
 # If Kiali is already installed, and the user doesn't want it uninstalled, we need to abort
-NAMESPACE="${NAMESPACE:-istio-system}"
 
 # Give the user an opportunity to tell us if they want to uninstall if they did not set the envar yet.
 # The default to the prompt is "yes" because the user will normally want to uninstall an already existing Kiali.
@@ -680,17 +721,13 @@ if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
   echo "Do not forget to create a secret if you wish to use an auth strategy of 'login' (This is"
   echo "the default setting when installing in Kubernetes but not OpenShift)."
   echo "An example would be:"
-  echo "  ${CLIENT_EXE} create secret generic ${SECRET_NAME:-kiali} -n ${NAMESPACE:-istio-system} --from-literal 'username=admin' --from-literal 'passphrase=admin'"
+  echo "  ${CLIENT_EXE} create secret generic ${SECRET_NAME} -n ${NAMESPACE} --from-literal 'username=admin' --from-literal 'passphrase=admin'"
   echo "=========================================="
   echo "Done."
   exit 0
 else
   echo "Kiali will now be installed."
 fi
-
-# Some settings specific to Kiali secrets that need to be set even if no secret is ultimately to be created
-SECRET_NAME="${SECRET_NAME:-kiali}"
-CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
 
 # Check the login strategy. If using "openshift" there is no other checks to perform,
 # but if we are using "login" then we need to make sure there is a username and password set
@@ -743,7 +780,6 @@ echo ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 echo JAEGER_URL=$JAEGER_URL
 echo NAMESPACE=$NAMESPACE
 echo SECRET_NAME=$SECRET_NAME
-echo UNINSTALL_EXISTING_KIALI=$UNINSTALL_EXISTING_KIALI
 echo _SECRET_EXISTS=$_SECRET_EXISTS
 echo "=== KIALI SETTINGS ==="
 
