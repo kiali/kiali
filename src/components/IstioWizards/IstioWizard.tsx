@@ -95,8 +95,8 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
           break;
       }
       const initVsHosts = getInitHosts(this.props.virtualServices);
-      const initMtlsMode = getInitTlsMode(prevProps.destinationRules);
-      const initLoadBalancer = getInitLoadBalancer(prevProps.destinationRules);
+      const initMtlsMode = getInitTlsMode(this.props.destinationRules);
+      const initLoadBalancer = getInitLoadBalancer(this.props.destinationRules);
       let initConsistentHashType = ConsistentHashType.HTTP_HEADER_NAME;
       if (initLoadBalancer && initLoadBalancer.consistentHash) {
         if (initLoadBalancer.consistentHash.httpHeaderName) {

@@ -150,6 +150,7 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
               bsSize="normal"
               title="normal"
               id="gateway-form"
+              animate={false}
               onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
               defaultValue={this.props.hasGateway}
             />

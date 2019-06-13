@@ -368,7 +368,10 @@ export const buildIstioConfig = (
       : [wProps.serviceName];
 
   if (wState.trafficPolicy.tlsModified || wState.trafficPolicy.addLoadBalancer) {
-    wizardDR.spec.trafficPolicy = {};
+    wizardDR.spec.trafficPolicy = {
+      tls: null,
+      loadBalancer: null
+    };
     if (wState.trafficPolicy.tlsModified) {
       wizardDR.spec.trafficPolicy.tls = {
         mode: wState.trafficPolicy.mtlsMode

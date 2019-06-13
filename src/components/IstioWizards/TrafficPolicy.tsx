@@ -109,6 +109,15 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
         },
         () => this.props.onTrafficPolicyChange(true, this.state)
       );
+    } else if (this.props.mtlsMode !== '' && this.props.mtlsMode !== DISABLE) {
+      // Don't forget to update the mtlsMode
+      this.setState(
+        {
+          tlsModified: true,
+          mtlsMode: this.props.mtlsMode
+        },
+        () => this.props.onTrafficPolicyChange(true, this.state)
+      );
     }
   }
 
@@ -169,7 +178,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
         this.setState(
           {
             tlsModified: true,
-            mtlsMode: ISTIO_MUTUAL
+            mtlsMode: value
           },
           () => this.props.onTrafficPolicyChange(true, this.state)
         );
@@ -335,6 +344,7 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
               bsSize="normal"
               title="normal"
               id="loadbalanacer-form"
+              animate={false}
               onChange={() => this.onFormChange(TrafficPolicyForm.LB_SWITCH, '')}
               defaultValue={this.state.addLoadBalancer}
             />
