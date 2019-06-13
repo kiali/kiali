@@ -10,9 +10,21 @@ import (
 
 const ServiceEntryAppenderName = "serviceEntry"
 
-// ServiceEntryAppender is responsible for identifying service nodes that are
-// Istio Service Entries.
+// ServiceEntryAppender is responsible for identifying service nodes that are Istio Service Entries.
 // Name: serviceEntry
+// Doc Links
+// - https://istio.io/docs/reference/config/networking/v1alpha3/service-entry/#ServiceEntry
+// - https://istio.io/docs/examples/advanced-gateways/wildcard-egress-hosts/
+//
+// A note about wildcard hosts. External service entries allow for prefix wildcarding such that
+// many different service requests may be handled by the same service entry definition.  For example,
+// host = *.wikipedia.com would match requests for en.wikipedia.com and de.wikipedia.com. The Istio
+// telemetry will produce separate service nodes for each distinct address. Nothing in the
+// graph code, including this appender, will aggregate the service nodes into one service entry node,
+// although each will be flagged as a serviceEntry due to the wildcard matching. On the plus side,
+// users can track request traffic to each distinct url. On the negative side, many distinct urls
+// will generate many distinct serviceEntry nodes in the graph.  Unless we get negative community
+// feedback on the current behavior we will stick with the current, simpler, approach.
 type ServiceEntryAppender struct {
 	AccessibleNamespaces map[string]time.Time
 }
@@ -95,19 +107,9 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 			}
 		}
 		// handle wildcard
-		if serviceEntryHost.location == "MESH_EXTERNAL" {
-			hostTokens := strings.Split(serviceEntryHost.host, ".")
-			serviceNameTokens := strings.Split(serviceName, ".")
-			match := len(hostTokens) == len(serviceNameTokens)
-			if match {
-				for i, t := range hostTokens {
-					if t != "*" && t != serviceNameTokens[i] {
-						match = false
-						break
-					}
-				}
-			}
-			if match {
+		if serviceEntryHost.location == "MESH_EXTERNAL" && strings.HasPrefix(serviceEntryHost.host, "*.") {
+			domain := strings.TrimPrefix(serviceEntryHost.host, "*.")
+			if strings.HasSuffix(serviceName, domain) {
 				return serviceEntryHost.location, true
 			}
 		}
