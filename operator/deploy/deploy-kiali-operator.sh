@@ -416,7 +416,7 @@ delete_operator_resources() {
   ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
 
   # now purge all operator resources
-  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 
   # clean up the operator namespace entirely
   ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
