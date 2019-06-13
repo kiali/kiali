@@ -138,6 +138,13 @@
 #    If empty, Kiali will attempt to auto-detect it.
 #    Default: ""
 #
+# KIALI_CR
+#    A local file containing a customized Kiali CR that you want to install once the operator
+#    is deployed. This will override most all other settings because you are declaring
+#    to this script that you want to control the Kiali configuration through this file
+#    and not through the command line options or environment variables.
+#    Default: ""
+#
 # KIALI_IMAGE_NAME
 #    Determines which image of Kiali to download and install.
 #    Default: "kiali/kiali"
@@ -211,6 +218,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -gu|--grafana-url)
       GRAFANA_URL="$2"
+      shift;shift
+      ;;
+    -kcr|--kiali-cr)
+      KIALI_CR="$2"
       shift;shift
       ;;
     -kin|--kiali-image-name)
@@ -357,6 +368,12 @@ Valid options for Kiali installation (if Kiali is to be installed):
       The Grafana URL that Kiali will use when integrating with Grafana.
       This URL must be accessible to clients external to the cluster.
       If not set, Kiali will attempt to auto-detect it.
+  -kcr|--kiali-cr
+      A local file containing a customized Kiali CR that you want to install once the operator
+      is deployed. This will override most all other settings because you are declaring
+      to this script that you want to control the Kiali configuration through this file
+      and not through the command line options or environment variables.
+      Default: ""
   -kin|--kiali-image-name
       Determines which image of Kiali to download and install.
       Default: "kiali/kiali"
@@ -555,6 +572,80 @@ else
   fi
 fi
 
+# Courtesy of https://github.com/jasperes/bash-yaml
+parse_yaml() {
+    local yaml_file=$1
+    local prefix=$2
+    local s
+    local w
+    local fs
+
+    s='[[:space:]]*'
+    w='[a-zA-Z0-9_.-]*'
+    fs="$(echo @|tr @ '\034')"
+
+    (
+        sed -e '/- [^\“]'"[^\']"'.*: /s|\([ ]*\)- \([[:space:]]*\)|\1-\'$'\n''  \1\2|g' |
+
+        sed -ne '/^--/s|--||g; s|\"|\\\"|g; s/[[:space:]]*$//g;' \
+            -e "/#.*[\"\']/!s| #.*||g; /^#/s|#.*||g;" \
+            -e "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+            -e "s|^\($s\)\($w\)${s}[:-]$s\(.*\)$s\$|\1$fs\2$fs\3|p" |
+
+        awk -F"$fs" '{
+            indent = length($1)/2;
+            if (length($2) == 0) { conj[indent]="+";} else {conj[indent]="";}
+            vname[indent] = $2;
+            for (i in vname) {if (i > indent) {delete vname[i]}}
+                if (length($3) > 0) {
+                    vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+                    printf("%s%s%s%s=(\"%s\")\n", "'"$prefix"'",vn, $2, conj[indent-1],$3);
+                }
+            }' |
+
+        sed -e 's/_=/+=/g' |
+
+        awk 'BEGIN {
+                FS="=";
+                OFS="="
+            }
+            /(-|\.).*=/ {
+                gsub("-|\\.", "_", $1)
+            }
+            { print }'
+    ) < "$yaml_file"
+}
+
+# If the user provided a customized CR, make sure it exists and parse the yaml to determine some settings.
+if [ "${KIALI_CR}" != "" ]; then
+  if [ ! -f "${KIALI_CR}" ]; then
+    echo "The given Kiali CR file does not exist [${KIALI_CR}]. Aborting."
+    exit 1
+  fi
+
+  # parse the auth strategy value which may be wrapped with double-quotes, single-quotes, or not wrapped at all
+  AUTH_STRATEGY=$(parse_yaml "${KIALI_CR}" | grep -E 'auth[_]+strategy' | sed -e 's/^.*strategy=("\(.*\)")/\1/' | tr -d "\\\'\"")
+  if [ "${AUTH_STRATEGY}" == "" ]; then
+    # If auth strategy isn't in the yaml, then we need to fallback to the known default the operator will use
+    # which is based on cluster type. If the client is "oc" (anything ending with "oc" such as "istiooc" for example)
+    # then assume the cluster is OpenShift and the default auth strategy is "openshift"; otherwise assume the
+    # cluster is Kubernetes which means the default auth strategy is "login".
+    if [[ "$CLIENT_EXE" = *"oc" ]]; then
+      AUTH_STRATEGY="openshift"
+    else
+      AUTH_STRATEGY="login"
+    fi
+  fi
+
+  # Depending how the accessible_namespace list is indented, the parser might be producing different lines.
+  # To detect the "**" value regardless how the indentation is done, just look for ** after deployment_ (since we
+  # know "**" isn't a valid value for anything other than accessible_namespace its fine to test it like this)
+  parse_yaml "${KIALI_CR}" | grep -E 'deployment.*=.*\*\*' 2>&1 > /dev/null
+  if [ "$?" == "0" ]; then
+    ACCESSIBLE_NAMESPACES="**"
+  fi
+fi
+
 # If Kiali is to be given access to all namespaces, give the operator the ability to create cluster roles/bindings.
 if [ "${ACCESSIBLE_NAMESPACES}" == "**" ]; then
   echo "IMPORTANT! The Kiali operator will be given permission to create cluster roles and"
@@ -738,7 +829,7 @@ fi
 
 # Verify the AUTH_STRATEGY is a proper known value
 if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; then
-  echo "ERROR: unknown AUTH_STRATEGY must be either 'login', 'openshift' or 'anonymous'"
+  echo "ERROR: unknown AUTH_STRATEGY [$AUTH_STRATEGY] must be either 'login', 'openshift' or 'anonymous'"
   exit 1
 fi
 
@@ -773,6 +864,7 @@ echo ACCESSIBLE_NAMESPACES=$ACCESSIBLE_NAMESPACES
 echo AUTH_STRATEGY=$AUTH_STRATEGY
 echo CREDENTIALS_CREATE_SECRET=$CREDENTIALS_CREATE_SECRET
 echo GRAFANA_URL=$GRAFANA_URL
+echo KIALI_CR=$KIALI_CR
 echo KIALI_IMAGE_NAME=$KIALI_IMAGE_NAME
 echo KIALI_IMAGE_PULL_POLICY=$KIALI_IMAGE_PULL_POLICY
 echo KIALI_IMAGE_VERSION=$KIALI_IMAGE_VERSION
@@ -867,7 +959,16 @@ build_spec_list_value() {
   fi
 }
 
-cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
+if [ "${KIALI_CR}" != "" ]; then
+  ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f "${KIALI_CR}"
+  if [ "$?" != "0" ]; then
+    echo "ERROR: Failed to deploy Kiali from custom Kiali CR [${KIALI_CR}]. Aborting."
+    exit 1
+  else
+    echo "Deployed Kiali via custom Kiali CR [${KIALI_CR}]"
+  fi
+else
+  cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
@@ -890,9 +991,10 @@ spec:
       $(build_spec_value url JAEGER_URL true)
 EOF
 
-if [ "$?" != "0" ]; then
-  echo "ERROR: Failed to deploy Kiali. Aborting."
-  exit 1
+  if [ "$?" != "0" ]; then
+    echo "ERROR: Failed to deploy Kiali. Aborting."
+    exit 1
+  fi
 fi
 
 echo "Done."
