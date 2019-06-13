@@ -395,7 +395,7 @@ get_downloader() {
 delete_kiali_resources() {
   echo "Deleting resources for any existing Kiali installation"
 
-  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
+  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses --selector="app=kiali" -n "${NAMESPACE}"
 
   # Note we do not delete any existing secrets unless this script was told the user wants his own secret
   if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
@@ -403,7 +403,7 @@ delete_kiali_resources() {
   fi
 
   # purge OpenShift specific resources
-  ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}"
+  ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io,routes --selector="app=kiali" -n "${NAMESPACE}"
 }
 
 delete_operator_resources() {
