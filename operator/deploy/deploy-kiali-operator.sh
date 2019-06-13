@@ -56,6 +56,12 @@
 #    it successfully installed, set this to "true".
 #    Default: "false"
 #
+# OPERATOR_UNINSTALL
+#    If true this script will attempt to uninstall any currently existing operator resources.
+#    If the operator is already installed and you opt not to uninstall it, this script will abort.
+#    Uninstalling the operator will also uninstall any existing Kiali installation as well.
+#    Default: false
+#
 # OPERATOR_VERSION_LABEL
 #    Kiali operator resources will be assigned a "version" label when they are deployed.
 #    To control what version label to use for Kiali resources, see VERSION_LABEL.
@@ -244,6 +250,10 @@ while [[ $# -gt 0 ]]; do
       OPERATOR_SKIP_WAIT="$2"
       shift;shift
       ;;
+    -ou|--operator-uninstall)
+      OPERATOR_UNINSTALL="$2"
+      shift;shift
+      ;;
     -ovl|--operator-version-label)
       OPERATOR_VERSION_LABEL="$2"
       shift;shift
@@ -281,6 +291,11 @@ Valid options for the operator installation:
   -osw|--operator-skip-wait
       Indicates if this script should not wait for the Kiali operator to be fully started.
       Default: "false"
+  -ou|--operator-uninstall
+      If true this script will attempt to uninstall any currently existing operator resources.
+      If the operator is already installed and you opt not to uninstall it, this script will abort.
+      Uninstalling the operator will uninstall any existing Kiali installation as well.
+      Default: false
   -ovl|--operator-version-label
       A Kubernetes label named "version" will be set on the Kiali operator resources.
       The value of this label is determined by this setting.
@@ -391,6 +406,22 @@ delete_kiali_resources() {
   ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}"
 }
 
+delete_operator_resources() {
+  echo "Deleting resources for any existing Kiali operator installation"
+
+  # delete CRDs with app=kiali (e.g. monitoring dashboard CRD)
+  ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali"
+
+  # delete the operator CRD which should trigger an uninstall of any existing Kiali
+  ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
+
+  # now purge all operator resources
+  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings,customresourcedefinitions --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+
+  # clean up the operator namespace entirely
+  ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
+}
+
 # Determine what cluster client tool we are using.
 # While we have this knowledge here, determine some information about auth_strategy we might need later.
 CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
@@ -471,12 +502,51 @@ echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
 echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
 echo OPERATOR_IMAGE_VERSION=$OPERATOR_IMAGE_VERSION
 echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
-echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
-echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
+echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
+echo OPERATOR_UNINSTALL=$OPERATOR_UNINSTALL
+echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
 echo OPERATOR_ROLE_CLUSTERROLES=$OPERATOR_ROLE_CLUSTERROLES
 echo OPERATOR_ROLE_CLUSTERROLEBINDINGS=$OPERATOR_ROLE_CLUSTERROLEBINDINGS
 echo "=== OPERATOR SETTINGS ==="
+
+# Give the user an opportunity to tell us if they want to uninstall the operator if they did not set the envar yet.
+# The default to the prompt is "yes" because the user will normally want to uninstall an already existing Operator.
+# Note: to allow for non-interactive installations, the user can set OPERATOR_UNINSTALL=true to ensure
+# the operator will always be removed if it exists. If the user does not want the operator removed if it exists, that setting
+# can be set to false which will cause this script to abort if the operator exists.
+if [ "${OPERATOR_UNINSTALL}" != "true" ]; then
+  if ${CLIENT_EXE} get deployment kiali-operator -n "${OPERATOR_NAMESPACE}" > /dev/null 2>&1 ; then
+    if [ -z "${OPERATOR_UNINSTALL}" ]; then
+      read -p 'It appears the operator has already been installed. Do you want to uninstall it? This will uninstall Kiali, too. [Y/n]: ' _yn
+      case "${_yn}" in
+        [yY][eE][sS]|[yY]|"")
+          echo "The existing operator will be uninstalled, along with any existing Kiali installation."
+          OPERATOR_UNINSTALL="true"
+          ;;
+        *)
+          echo "The existing operator will NOT be uninstalled. Aborting the operator installation."
+          exit 1
+          ;;
+      esac
+    else
+      echo "It appears the operator has already been installed. It will NOT be uninstalled. Aborting the operator installation."
+      exit 1
+    fi
+  else
+    OPERATOR_UNINSTALL="false"
+  fi
+fi
+
+# Uninstall any operator that already exists if we were asked to do so
+if [ "${OPERATOR_UNINSTALL}" == "true" ]; then
+  # This cleans up the CRDs as well as any deployed operator resources
+  delete_operator_resources
+
+  # Since the operator CRD has now been removed, the side-effect is any Kiali CR that exists is also removed.
+  # This in turn uninstalls Kiali. But let's clean up any remnants of an old Kiali that might still be around.
+  UNINSTALL_EXISTING_KIALI="true"
+fi
 
 # If Kiali is already installed, and the user doesn't want it uninstalled, we need to abort
 NAMESPACE="${NAMESPACE:-istio-system}"
