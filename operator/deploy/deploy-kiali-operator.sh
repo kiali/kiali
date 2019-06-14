@@ -93,6 +93,10 @@
 #    to the value of OPERATOR_IMAGE_VERSION env var value.
 #    Default: See above for how the default value is determined
 #
+# OPERATOR_WATCH_NAMESPACE
+#    The namespace in which the operator looks for the Kiali CR.
+#    Default: The configured OPERATOR_NAMESPACE
+#
 # -----------
 # Environment variables that affect Kiali installation:
 #
@@ -276,6 +280,10 @@ while [[ $# -gt 0 ]]; do
       OPERATOR_VERSION_LABEL="$2"
       shift;shift
       ;;
+    -own|--operator-watch-namespace)
+      OPERATOR_WATCH_NAMESPACE="$2"
+      shift;shift
+      ;;
     -sn|--secret-name)
       SECRET_NAME="$2"
       shift;shift
@@ -339,6 +347,9 @@ Valid options for the operator installation:
       A Kubernetes label named "version" will be set on the Kiali operator resources.
       The value of this label is determined by this setting.
       Default: Determined by the operator image version being installed
+  -own|--operator-watch-namespace
+      The namespace in which the operator looks for the Kiali CR.
+      Default: The configured operator namespace (-on)
 
 Valid options for Kiali installation (if Kiali is to be installed):
   -an|--accessible-namespaces
@@ -410,11 +421,41 @@ HELPMSG
   esac
 done
 
+# Determine what cluster client tool we are using.
+# While we have this knowledge here, determine some information about auth_strategy we might need later.
+CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
+if [ "$?" == "0" ]; then
+  echo "Using 'oc' located here: ${CLIENT_EXE}"
+  _AUTH_STRATEGY_DEFAULT="openshift"
+  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+else
+  CLIENT_EXE=$(which kubectl 2>/dev/null)
+  if [ "$?" == "0" ]; then
+    echo "Using 'kubectl' is here: ${CLIENT_EXE}"
+    _AUTH_STRATEGY_DEFAULT="login"
+    _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+  else
+    echo "ERROR: You do not have 'oc' or 'kubectl' in your PATH. Please install it and retry."
+    exit 1
+  fi
+fi
+
 # Some environment variables we need set to their defaults if not set already
 CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
 NAMESPACE="${NAMESPACE:-istio-system}"
-OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
 SECRET_NAME="${SECRET_NAME:-kiali}"
+
+# Export all possible variables for envsubst to be able to process operator resources
+export OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-quay.io/kiali/kiali-operator}"
+export OPERATOR_IMAGE_PULL_POLICY="${OPERATOR_IMAGE_PULL_POLICY:-IfNotPresent}"
+export OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION:-lastrelease}"
+export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
+export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
+export OPERATOR_SKIP_WAIT="${OPERATOR_SKIP_WAIT:-false}"
+export OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL:-$OPERATOR_IMAGE_VERSION}"
+export OPERATOR_WATCH_NAMESPACE="${OPERATOR_WATCH_NAMESPACE:-$OPERATOR_NAMESPACE}"
+export OPERATOR_ROLE_CLUSTERROLEBINDINGS="# The operator does not have permission to manage cluster role bindings"
+export OPERATOR_ROLE_CLUSTERROLES="# The operator does not have permission to manage cluster roles"
 
 # Determine what tool to use to download files. This supports environments that have either wget or curl.
 # After return, $downloader will be a command to stream a URL's content to stdout.
@@ -464,28 +505,15 @@ delete_operator_resources() {
   # now purge all operator resources
   ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
 
-  # clean up the operator namespace entirely
-  ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
-}
-
-# Determine what cluster client tool we are using.
-# While we have this knowledge here, determine some information about auth_strategy we might need later.
-CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
-if [ "$?" == "0" ]; then
-  echo "Using 'oc' located here: ${CLIENT_EXE}"
-  _AUTH_STRATEGY_DEFAULT="openshift"
-  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
-else
-  CLIENT_EXE=$(which kubectl 2>/dev/null)
-  if [ "$?" == "0" ]; then
-    echo "Using 'kubectl' is here: ${CLIENT_EXE}"
-    _AUTH_STRATEGY_DEFAULT="login"
-    _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+  # Clean up the operator namespace entirely but only if there are no pods running in it.
+  # This avoids removing a namespace in use for other things.
+  local _pod_count=$(${CLIENT_EXE} get pods --no-headers -n ${OPERATOR_NAMESPACE} 2>/dev/null | wc -l)
+  if [ "${_pod_count}" -eq "0" ]; then
+    ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
   else
-    echo "ERROR: You do not have 'oc' or 'kubectl' in your PATH. Please install it and retry."
-    exit 1
+    echo "There appears to be pods running in the operator namespace [${OPERATOR_NAMESPACE}]; namespace will not be deleted."
   fi
-fi
+}
 
 echo "=== UNINSTALL SETTINGS ==="
 echo UNINSTALL_EXISTING_KIALI=$UNINSTALL_EXISTING_KIALI
@@ -500,17 +528,6 @@ if [ "${UNINSTALL_MODE}" == "true" ]; then
   echo "Kiali and the Kiali operator have been uninstalled. Nothing will be installed. Exiting."
   exit 0
 fi
-
-# Export all possible variables for envsubst to be able to process
-export OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-quay.io/kiali/kiali-operator}"
-export OPERATOR_IMAGE_PULL_POLICY="${OPERATOR_IMAGE_PULL_POLICY:-IfNotPresent}"
-export OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION:-lastrelease}"
-export OPERATOR_INSTALL_KIALI=${OPERATOR_INSTALL_KIALI:-true}
-export OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-kiali-operator}"
-export OPERATOR_SKIP_WAIT="${OPERATOR_SKIP_WAIT:-false}"
-export OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL:-$OPERATOR_IMAGE_VERSION}"
-export OPERATOR_ROLE_CLUSTERROLEBINDINGS="# The operator does not have permission to manage cluster role bindings"
-export OPERATOR_ROLE_CLUSTERROLES="# The operator does not have permission to manage cluster roles"
 
 # Make sure we have access to all required tools
 
@@ -654,6 +671,11 @@ if [ "${ACCESSIBLE_NAMESPACES}" == "**" ]; then
   OPERATOR_ROLE_CLUSTERROLES="- clusterroles"
 fi
 
+# The YAML really needs an empty string denoted with two double-quote characters.
+if [ "${OPERATOR_WATCH_NAMESPACE}" == "**" ]; then
+  OPERATOR_WATCH_NAMESPACE='""'
+fi
+
 echo "=== OPERATOR SETTINGS ==="
 echo OPERATOR_IMAGE_NAME=$OPERATOR_IMAGE_NAME
 echo OPERATOR_IMAGE_PULL_POLICY=$OPERATOR_IMAGE_PULL_POLICY
@@ -662,6 +684,7 @@ echo OPERATOR_INSTALL_KIALI=$OPERATOR_INSTALL_KIALI
 echo OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE
 echo OPERATOR_SKIP_WAIT=$OPERATOR_SKIP_WAIT
 echo OPERATOR_VERSION_LABEL=$OPERATOR_VERSION_LABEL
+echo OPERATOR_WATCH_NAMESPACE=$OPERATOR_WATCH_NAMESPACE
 echo OPERATOR_ROLE_CLUSTERROLES=$OPERATOR_ROLE_CLUSTERROLES
 echo OPERATOR_ROLE_CLUSTERROLEBINDINGS=$OPERATOR_ROLE_CLUSTERROLEBINDINGS
 echo "=== OPERATOR SETTINGS ==="
@@ -703,8 +726,6 @@ if [ "${UNINSTALL_EXISTING_OPERATOR}" == "true" ]; then
   # This in turn uninstalls Kiali. But let's clean up any remnants of an old Kiali that might still be around.
   UNINSTALL_EXISTING_KIALI="true"
 fi
-
-# If Kiali is already installed, and the user doesn't want it uninstalled, we need to abort
 
 # Give the user an opportunity to tell us if they want to uninstall if they did not set the envar yet.
 # The default to the prompt is "yes" because the user will normally want to uninstall an already existing Kiali.
@@ -797,27 +818,46 @@ fi
 
 # Now deploy Kiali if we were asked to do so.
 
-if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
-  _BRANCH="${OPERATOR_VERSION_LABEL}"
-  if [ "${_BRANCH}" == "dev" ]; then
-    _BRANCH="master"
+print_skip_kiali_create_msg() {
+  local _branch="$1"
+  local _ns="${OPERATOR_WATCH_NAMESPACE}"
+  if [ "${_ns}" == '""' ]; then
+    _ns="<any namespace you choose>"
   fi
   echo "=========================================="
   echo "Skipping the automatic Kiali installation."
-  echo "To install Kiali, create a Kiali custom resource in the namespace [${OPERATOR_NAMESPACE}]."
+  echo "To install Kiali, create a Kiali custom resource in the namespace [$_ns]."
   echo "An example Kiali CR with all settings documented can be found here:"
-  echo "  https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "  https://raw.githubusercontent.com/kiali/kiali/${_branch}/operator/deploy/kiali/kiali_cr.yaml"
   echo "To install Kiali with all default settings, you can run:"
-  echo "  ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "  ${CLIENT_EXE} apply -n ${_ns} -f https://raw.githubusercontent.com/kiali/kiali/${_branch}/operator/deploy/kiali/kiali_cr.yaml"
   echo "Do not forget to create a secret if you wish to use an auth strategy of 'login' (This is"
   echo "the default setting when installing in Kubernetes but not OpenShift)."
   echo "An example would be:"
   echo "  ${CLIENT_EXE} create secret generic ${SECRET_NAME} -n ${NAMESPACE} --from-literal 'username=admin' --from-literal 'passphrase=admin'"
   echo "=========================================="
+}
+
+if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
+  if [ "${OPERATOR_VERSION_LABEL}" == "dev" ]; then
+    print_skip_kiali_create_msg "master"
+  else
+    print_skip_kiali_create_msg "${OPERATOR_VERSION_LABEL}"
+  fi
   echo "Done."
   exit 0
 else
-  echo "Kiali will now be installed."
+  if [ "${OPERATOR_WATCH_NAMESPACE}" == '""' ]; then
+    if [ "${OPERATOR_VERSION_LABEL}" == "dev" ]; then
+      print_skip_kiali_create_msg "master"
+    else
+      print_skip_kiali_create_msg "${OPERATOR_VERSION_LABEL}"
+    fi
+    echo "Done."
+    exit 0
+  else
+    echo "Kiali will now be installed."
+  fi
 fi
 
 # Check the login strategy. If using "openshift" there is no other checks to perform,
@@ -917,7 +957,7 @@ fi
 
 # Now deploy Kiali
 
-echo "Deploying Kiali CR to namespace [${OPERATOR_NAMESPACE}]"
+echo "Deploying Kiali CR to namespace [${OPERATOR_WATCH_NAMESPACE}]"
 
 build_spec_value() {
   local var_name=${1}
@@ -968,7 +1008,7 @@ if [ "${KIALI_CR}" != "" ]; then
     echo "Deployed Kiali via custom Kiali CR [${KIALI_CR}]"
   fi
 else
-  cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f -
+  cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_WATCH_NAMESPACE} -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
