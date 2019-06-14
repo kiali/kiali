@@ -132,6 +132,15 @@
   - kiali_vars.auth.strategy != 'login'
   - kiali_vars.auth.strategy != 'anonymous'
 
+# Fail if ingress is disabled but auth_strategy is openshift. This is because the openshift auth strategy
+# requires OAuth Client which requires a Route. So ingress must be enabled if strategy is openshift.
+- name: Ensure Ingress is Enabled if Auth Strategy is openshift
+  fail:
+    msg: "The auth.strategy is 'openshift' which requires a Route, but deployment.ingress_enabled is false. Aborting."
+  when:
+  - kiali_vars.auth.strategy == "openshift"
+  - kiali_vars.deployment.ingress_enabled == False
+
 # WHEN ANSIBLE OPERATOR CONTAINS ANSIBLE 2.8,
 # WE CAN REPLACE THIS SHELL TASK BELOW WITH AN ANSIBLE TASK THAT LOOKS LIKE THIS:
 #- name: Determine image version when last release is to be installed
