@@ -120,6 +120,11 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
 		if n.NodeType == graph.NodeTypeService && n.App == "" {
+			// A service node that is a service entry will not have a service definition
+			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
+				continue
+			}
+
 			service, err := globalInfo.Business.Svc.GetServiceDefinition(n.Namespace, n.Service)
 			if err != nil {
 				log.Debugf("Error fetching service definition, may not apply app label correctly for namespace=%s svc=%s: %s", n.Namespace, n.Service, err.Error())
