@@ -249,6 +249,7 @@ spec:
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+# query_base_path: The value stored in QUERY_BASE_PATH in tracing service
 #    ---
 #    tracing:
 #      auth:
@@ -263,6 +264,7 @@ spec:
 #      namespace: ""
 #      service : ""
 #      url: ""
+#      query_base_path: ""
 
 ##########
 #  ---
