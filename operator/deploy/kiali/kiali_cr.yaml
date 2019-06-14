@@ -246,10 +246,10 @@ spec:
 #   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
-# query_base_path: The value stored in QUERY_BASE_PATH in tracing service
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
+#      If tracing service is deployed in a QUERY_BASE_PATH set this in the url like https://<hostname>/<QUERY_BASE_PATH> . EX: https://tracing-service:8080/jaeger
 #    ---
 #    tracing:
 #      auth:
@@ -262,7 +262,6 @@ spec:
 #        username: ""
 #      enabled: true
 #      namespace: ""
-#      query_base_path: ""
 #      service : ""
 #      url: ""
 
