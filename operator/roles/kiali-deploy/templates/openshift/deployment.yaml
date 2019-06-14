@@ -46,14 +46,14 @@ spec:
           httpGet:
             path: {{ kiali_vars.server.web_root | regex_replace('\\/$', '') }}/healthz
             port: api-port
-            scheme: HTTPS
+            scheme:  {{ 'HTTP' if kiali_vars.identity.cert_file == "" else 'HTTPS' }}
           initialDelaySeconds: 5
           periodSeconds: 30
         livenessProbe:
           httpGet:
             path: {{ kiali_vars.server.web_root | regex_replace('\\/$', '') }}/healthz
             port: api-port
-            scheme: HTTPS
+            scheme:  {{ 'HTTP' if kiali_vars.identity.cert_file == "" else 'HTTPS' }}
           initialDelaySeconds: 5
           periodSeconds: 30
         env:
