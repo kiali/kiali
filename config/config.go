@@ -55,6 +55,7 @@ const (
 	EnvGrafanaURL          = "GRAFANA_URL"
 
 	EnvTracingEnabled          = "TRACING_ENABLED"
+	EnvTracingQueryBasePath    = "TRACING_QUERY_BASE_PATH"
 	EnvTracingURL              = "TRACING_URL"
 	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
 
@@ -158,7 +159,7 @@ type TracingConfig struct {
 	Service   string `yaml:"service"`
 	URL       string `yaml:"url"`
 	// Path store the value of QUERY_BASE_PATH
-	Path string `yaml:"-"`
+	Path string `yaml:"query_base_path"`
 }
 
 // IstioConfig describes configuration used for istio links
@@ -284,7 +285,7 @@ func NewConfig() (c *Config) {
 
 	// Tracing Configuration
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
-	c.ExternalServices.Tracing.Path = ""
+	c.ExternalServices.Tracing.Path = strings.TrimSpace(getDefaultString(EnvTracingQueryBasePath, ""))
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, c.IstioNamespace))
 
