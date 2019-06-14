@@ -158,14 +158,23 @@ func DiscoverGrafana() string {
 	if !grafanaConf.DisplayLink {
 		return ""
 	}
-	if grafanaConf.URL != "" || !grafanaConf.InCluster {
+	if grafanaConf.URL != "" || grafanaConf.InClusterURL == "" {
 		return strings.TrimSuffix(grafanaConf.URL, "/")
 	}
 	if appstate.GrafanaDiscoveredURL != "" {
 		return appstate.GrafanaDiscoveredURL
 	}
-	url := discoverServiceURL(grafanaConf.Namespace, grafanaConf.Service)
-	appstate.GrafanaDiscoveredURL = strings.TrimSuffix(url, "/")
+	// Try to get service and namespace from in-cluster URL, to discover route
+	if grafanaConf.InClusterURL != "" {
+		parsedURL, err := url.Parse(grafanaConf.InClusterURL)
+		if err == nil {
+			parts := strings.Split(parsedURL.Hostname(), ".")
+			if len(parts) >= 2 {
+				routeURL := discoverServiceURL(parts[1], parts[0])
+				appstate.GrafanaDiscoveredURL = strings.TrimSuffix(routeURL, "/")
+			}
+		}
+	}
 	return appstate.GrafanaDiscoveredURL
 }
 

@@ -39,25 +39,32 @@ kiali_defaults:
 
   external_services:
     grafana:
-      api_key: ""
+      auth:
+        ca_file: ""
+        insecure_skip_verify: false
+        password: ""
+        token: ""
+        type: "none"
+        use_kiali_token: false
+        username: ""
       display_link: true
-      in_cluster: true
-      insecure_skip_verify: false
-      namespace: ""
-      password: ""
-      service: "grafana"
+      in_cluster_url: "http://grafana.istio-system:3000"
       url: ""
-      username: ""
     istio:
       istio_identity_domain: "svc.cluster.local"
       istio_sidecar_annotation: "sidecar.istio.io/status"
       url_service_version: ""
     prometheus:
+      auth:
+        ca_file: ""
+        insecure_skip_verify: false
+        password: ""
+        token: ""
+        type: "none"
+        use_kiali_token: false
+        username: ""
       custom_metrics_url: ""
-      insecure_skip_verify: false
       url: ""
-      auth: "none"
-      ca_file: ""
     tracing:
       enabled: true
       namespace: ""

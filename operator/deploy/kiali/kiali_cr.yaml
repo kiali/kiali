@@ -157,27 +157,35 @@ spec:
 #  external_services:
 #
 # **Grafana-specific settings:
-# api_key: API key to access Grafana, for token-based authentication. API key only requires viewer permissions.
+# auth: authentication settings to connect to Grafana:
+#   ca_file: The certificate authority file to use when accessing Grafana using https. An empty string means no extra
+#       certificate authority file is used. Default is an empty string.
+#   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Grafana over https.
+#   password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
+#   token: Token / API key to access Grafana, for token-based authentication. It only requires viewer permissions.
+#   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
+#       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
+#       Default is "none"
+#   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
+#       and auth.token config is ignored then.
+#   username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
 # display_link: When true, a link to Grafana will be displayed for more dashboards.
-# in_cluster: Set true to indicate that the Grafana service is accessible in the Kubernetes cluster.
-# insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Grafana over https.
-# namespace: The Kubernetes namespace that holds the Grafana service. Only used when in_cluster is true. If empty, assumes the same value as deployment.namespace.
-# password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
-# service: The Kubernetes service name for Grafana. Only used when in_cluster is true.
+# in_cluster_url: Set URL for in-cluster access. Example: "http://grafana.istio-system:3000".
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
-# username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
 #    ---
 #    grafana:
-#      api_key: ""
+#      auth:
+#        ca_file: ""
+#        insecure_skip_verify: false
+#        password: ""
+#        token: ""
+#        type: "none"
+#        use_kiali_token: false
+#        username: ""
 #      display_link: true
-#      in_cluster: true
-#      insecure_skip_verify: false
-#      namespace: ""
-#      password: ""
-#      service: "grafana"
+#      in_cluster_url: "http://grafana.istio-system:3000"
 #      url: ""
-#      username: ""
 #
 # **Istio-specific settings:
 # istio_identity_domain: The annotation used by Istio to identify domains.
@@ -192,23 +200,35 @@ spec:
 #
 #
 # **Prometheus-specific settings:
+# auth: authentication settings to connect to Prometheus:
+#   ca_file: The certificate authority file to use when accessing Prometheus using https. An empty string means no extra
+#       certificate authority file is used. Default is an empty string.
+#   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Prometheus over https.
+#   password: Password to be used when making requests to Prometheus, for basic authentication.
+#   token: Token / API key to access Prometheus, for token-based authentication.
+#   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
+#       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
+#       Default is "none"
+#   use_kiali_token: When true and if auth.type is "bearer", Kiali Service Account token will be used for the API calls to Prometheus,
+#       and auth.token config is ignored then.
+#   username: Username to be used when making requests to Prometheus, for basic authentication.
 # custom_metrics_url: The URL used to query the Prometheus Server for building the runtime metrics dashboards.
 #                     This URL must be accessible from the Kiali pod.
 #                     If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
-# insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Prometheus over https.
 # url: The URL used to query the Prometheus Server. This URL must be accessible from the Kiali pod.
 #      If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
-# auth: The authentication to use when contacting the Prometheus server from the Kiali backend. Use "bearer" to send the
-#       Kiali service account token to the Prometheus server. Use "none" to not use any authentication. Default is "none"
-# ca_file: The certificate authority file to use when accessing Prometheus using https. An empty string means no extra
-#          certificate authority file is used. Default is an empty string.
 #    ---
 #    prometheus:
+#      auth:
+#        ca_file: ""
+#        insecure_skip_verify: false
+#        password: ""
+#        token: ""
+#        type: "none"
+#        use_kiali_token: false
+#        username: ""
 #      custom_metrics_url: ""
-#      insecure_skip_verify: false
 #      url: ""
-#      auth: "none"
-#      ca_file: ""
 #
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger
