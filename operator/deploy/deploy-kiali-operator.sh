@@ -819,6 +819,7 @@ fi
 # Now deploy Kiali if we were asked to do so.
 
 print_skip_kiali_create_msg() {
+  local _branch="$1"
   local _ns="${OPERATOR_WATCH_NAMESPACE}"
   if [ "${_ns}" == '""' ]; then
     _ns="<any namespace you choose>"
@@ -827,9 +828,9 @@ print_skip_kiali_create_msg() {
   echo "Skipping the automatic Kiali installation."
   echo "To install Kiali, create a Kiali custom resource in the namespace [$_ns]."
   echo "An example Kiali CR with all settings documented can be found here:"
-  echo "  https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "  https://raw.githubusercontent.com/kiali/kiali/${_branch}/operator/deploy/kiali/kiali_cr.yaml"
   echo "To install Kiali with all default settings, you can run:"
-  echo "  ${CLIENT_EXE} apply -n ${_ns} -f https://raw.githubusercontent.com/kiali/kiali/${_BRANCH}/operator/deploy/kiali/kiali_cr.yaml"
+  echo "  ${CLIENT_EXE} apply -n ${_ns} -f https://raw.githubusercontent.com/kiali/kiali/${_branch}/operator/deploy/kiali/kiali_cr.yaml"
   echo "Do not forget to create a secret if you wish to use an auth strategy of 'login' (This is"
   echo "the default setting when installing in Kubernetes but not OpenShift)."
   echo "An example would be:"
@@ -838,16 +839,20 @@ print_skip_kiali_create_msg() {
 }
 
 if [ "${OPERATOR_INSTALL_KIALI}" != "true" ]; then
-  _BRANCH="${OPERATOR_VERSION_LABEL}"
-  if [ "${_BRANCH}" == "dev" ]; then
-    _BRANCH="master"
+  if [ "${OPERATOR_VERSION_LABEL}" == "dev" ]; then
+    print_skip_kiali_create_msg "master"
+  else
+    print_skip_kiali_create_msg "${OPERATOR_VERSION_LABEL}"
   fi
-  print_skip_kiali_create_msg
   echo "Done."
   exit 0
 else
   if [ "${OPERATOR_WATCH_NAMESPACE}" == '""' ]; then
-    print_skip_kiali_create_msg
+    if [ "${OPERATOR_VERSION_LABEL}" == "dev" ]; then
+      print_skip_kiali_create_msg "master"
+    else
+      print_skip_kiali_create_msg "${OPERATOR_VERSION_LABEL}"
+    fi
     echo "Done."
     exit 0
   else
