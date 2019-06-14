@@ -56,6 +56,8 @@ kiali_defaults:
       custom_metrics_url: ""
       insecure_skip_verify: false
       url: ""
+      auth: "none"
+      ca_file: ""
     tracing:
       enabled: true
       namespace: ""

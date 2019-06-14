@@ -42,6 +42,8 @@ const (
 	EnvPrometheusServiceURL         = "PROMETHEUS_SERVICE_URL"
 	EnvPrometheusCustomMetricsURL   = "PROMETHEUS_CUSTOM_METRICS_URL"
 	EnvPrometheusInsecureSkipVerify = "PROMETHEUS_INSECURE_SKIP_VERIFY"
+	EnvPrometheusAuth               = "PROMETHEUS_AUTH"
+	EnvPrometheusCAFile             = "PROMETHEUS_CA_FILE"
 
 	EnvGrafanaDisplayLink              = "GRAFANA_DISPLAY_LINK"
 	EnvGrafanaInCluster                = "GRAFANA_IN_CLUSTER"
@@ -98,6 +100,9 @@ const (
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
+
+	PrometheusAuthStrategyBearer = "bearer"
+	PrometheusAuthStrategyNone   = "none"
 )
 
 // the paths we expect the login secret to be located
@@ -128,6 +133,8 @@ type PrometheusConfig struct {
 	URL                string `yaml:"url,omitempty"`
 	CustomMetricsURL   string `yaml:"custom_metrics_url,omitempty"`
 	InsecureSkipVerify bool   `yaml:"insecure_skip_verify,omitempty"`
+	Auth               string `yaml:"auth,omitempty"`
+	CAFile             string `yaml:"ca_file,omitempty"`
 }
 
 // GrafanaConfig describes configuration used for Grafana links
@@ -268,6 +275,11 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 	c.ExternalServices.Prometheus.InsecureSkipVerify = getDefaultBool(EnvPrometheusInsecureSkipVerify, false)
+	c.ExternalServices.Prometheus.Auth = strings.TrimSpace(getDefaultString(EnvPrometheusAuth, PrometheusAuthStrategyNone))
+	c.ExternalServices.Prometheus.CAFile = strings.TrimSpace(getDefaultString(EnvPrometheusCAFile, ""))
+	if c.ExternalServices.Prometheus.Auth != PrometheusAuthStrategyNone && c.ExternalServices.Prometheus.Auth != PrometheusAuthStrategyBearer {
+		log.Errorf("Unknown Prometheus Auth strategy. Valid options are %v or %v", PrometheusAuthStrategyNone, PrometheusAuthStrategyBearer)
+	}
 
 	// Grafana Configuration
 	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)

@@ -198,11 +198,17 @@ spec:
 # insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Prometheus over https.
 # url: The URL used to query the Prometheus Server. This URL must be accessible from the Kiali pod.
 #      If empty, assumes it is in the istio namespace at the URL "http://prometheus.<istio_namespace>:9090"
+# auth: The authentication to use when contacting the Prometheus server from the Kiali backend. Use "bearer" to send the
+#       Kiali service account token to the Prometheus server. Use "none" to not use any authentication. Default is "none"
+# ca_file: The certificate authority file to use when accessing Prometheus using https. An empty string means no extra
+#          certificate authority file is used. Default is an empty string.
 #    ---
 #    prometheus:
 #      custom_metrics_url: ""
 #      insecure_skip_verify: false
 #      url: ""
+#      auth: "none"
+#      ca_file: ""
 #
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger

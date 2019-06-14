@@ -3,7 +3,9 @@ package prometheus
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -12,6 +14,8 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 // ClientInterface for mocks (only mocked function are necessary here)
@@ -38,18 +42,65 @@ type Client struct {
 	api prom_v1.API
 }
 
+type tokenRoundTripper struct {
+	bearerToken string
+	originalRT  http.RoundTripper
+}
+
+func (tokenRT *tokenRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "Bearer "+tokenRT.bearerToken)
+	return tokenRT.originalRT.RoundTrip(req)
+}
+
+func newTokenRoundTripper(token string, rt http.RoundTripper) http.RoundTripper {
+	return &tokenRoundTripper{token, rt}
+}
+
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
 func NewClient() (*Client, error) {
 	cfg := config.Get().ExternalServices.Prometheus
 	clientConfig := api.Config{Address: cfg.URL}
+
+	transportConfig := api.DefaultRoundTripper.(*http.Transport)
+
 	if cfg.InsecureSkipVerify {
-		transportConfig := api.DefaultRoundTripper.(*http.Transport)
 		transportConfig.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
+	}
+
+	if cfg.CAFile != "" {
+		certPool := x509.NewCertPool()
+		cert, err := ioutil.ReadFile(cfg.CAFile)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Prometheus root CA certificates: %s", err)
+		}
+
+		certPool.AppendCertsFromPEM(cert)
+
+		transportConfig.TLSClientConfig = &tls.Config{
+			RootCAs: certPool,
+		}
+	}
+
+	// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
+	// service account token and not the user's token. This is because Kiali does filtering based
+	// on the user's token and prevents people who shouldn't have access to particular metrics.
+	if cfg.Auth == "bearer" {
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+			return nil, err
+		}
+
+		roundTripper := newTokenRoundTripper(token, transportConfig)
+		clientConfig.RoundTripper = roundTripper
+	} else {
 		clientConfig.RoundTripper = transportConfig
 	}
+
 	p8s, err := api.NewClient(clientConfig)
 	if err != nil {
 		return nil, err
