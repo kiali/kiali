@@ -431,7 +431,7 @@ if [ "$?" == "0" ]; then
 else
   CLIENT_EXE=$(which kubectl 2>/dev/null)
   if [ "$?" == "0" ]; then
-    echo "Using 'kubectl' is here: ${CLIENT_EXE}"
+    echo "Using 'kubectl' located here: ${CLIENT_EXE}"
     _AUTH_STRATEGY_DEFAULT="login"
     _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
   else
@@ -444,6 +444,12 @@ fi
 CREDENTIALS_CREATE_SECRET=${CREDENTIALS_CREATE_SECRET:-true}
 NAMESPACE="${NAMESPACE:-istio-system}"
 SECRET_NAME="${SECRET_NAME:-kiali}"
+
+# The YAML really needs an empty string denoted with two double-quote characters.
+# We just support "**" because its easier to specify on the command line.
+if [ "${OPERATOR_WATCH_NAMESPACE}" == "**" ]; then
+  OPERATOR_WATCH_NAMESPACE='""'
+fi
 
 # Export all possible variables for envsubst to be able to process operator resources
 export OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME:-quay.io/kiali/kiali-operator}"
@@ -479,6 +485,17 @@ get_downloader() {
   fi
 }
 
+delete_kiali_cr() {
+  local _name="$1"
+  local _ns="$2"
+  echo "Deleting Kiali CR [${_name}] in namespace [${_ns}]"
+
+  # Clear finalizer list to avoid k8s possibly hanging (there was a bug in older versions of k8s where this happens).
+  # We know we are going to delete all Kiali resources later, so this is OK.
+  ${CLIENT_EXE} patch kiali ${_name} -n "${_ns}" -p '{"metadata":{"finalizers": []}}' --type=merge
+  ${CLIENT_EXE} delete kiali ${_name} -n "${_ns}"
+}
+
 delete_kiali_resources() {
   echo "Deleting resources for any existing Kiali installation"
 
@@ -498,6 +515,17 @@ delete_operator_resources() {
 
   # delete CRDs with app=kiali (e.g. monitoring dashboard CRD)
   ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali"
+
+  # explicitly delete the Kiali CRs
+  local ns_arg="-n ${OPERATOR_WATCH_NAMESPACE}"
+  if [ "${OPERATOR_WATCH_NAMESPACE}" == '""' ]; then
+    ns_arg="--all-namespaces"
+  fi
+  local all_crs=($(${CLIENT_EXE} get kiali ${ns_arg} -o custom-columns=N:.metadata.name,NS:.metadata.namespace --no-headers))
+  while [ "${#all_crs[@]}" -gt 0 ]; do
+    delete_kiali_cr "${all_crs[0]}" "${all_crs[1]}"
+    all_crs=(${all_crs[@]:2})
+  done
 
   # delete the operator CRD which should trigger an uninstall of any existing Kiali
   ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
@@ -669,11 +697,6 @@ if [ "${ACCESSIBLE_NAMESPACES}" == "**" ]; then
   echo "cluster role bindings in order to grant Kiali access to all namespaces in the cluster."
   OPERATOR_ROLE_CLUSTERROLEBINDINGS="- clusterrolebindings"
   OPERATOR_ROLE_CLUSTERROLES="- clusterroles"
-fi
-
-# The YAML really needs an empty string denoted with two double-quote characters.
-if [ "${OPERATOR_WATCH_NAMESPACE}" == "**" ]; then
-  OPERATOR_WATCH_NAMESPACE='""'
 fi
 
 echo "=== OPERATOR SETTINGS ==="
