@@ -48,7 +48,7 @@ kiali_defaults:
         use_kiali_token: false
         username: ""
       display_link: true
-      in_cluster_url: "http://grafana.istio-system:3000"
+      in_cluster_url: ""
       url: ""
     istio:
       istio_identity_domain: "svc.cluster.local"
