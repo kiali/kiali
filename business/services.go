@@ -103,7 +103,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
-func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
+func (in *SvcService) GetService(namespace, service, interval string, queryTime time.Time, requestToken string) (*models.ServiceDetails, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetService")
 	defer promtimer.ObserveNow(&err)
@@ -121,7 +121,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	wg := sync.WaitGroup{}
 	wg.Add(7)
-	errChan := make(chan error, 6)
+	errChan := make(chan error, 7)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
@@ -200,7 +200,10 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		// Maybe a future jaeger business layer
 		defer wg.Done()
-		eTraces, err = getErrorTracesFromJaeger(namespace, service)
+		eTraces, err = getErrorTracesFromJaeger(namespace, service, requestToken)
+		if err != nil {
+			errChan <- err
+		}
 	}()
 
 	wg.Wait()

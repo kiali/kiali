@@ -66,6 +66,14 @@ kiali_defaults:
       custom_metrics_url: ""
       url: ""
     tracing:
+      auth:
+        ca_file: ""
+        insecure_skip_verify: false
+        password: ""
+        token: ""
+        type: "none"
+        use_kiali_token: false
+        username: ""
       enabled: true
       namespace: ""
       service: ""

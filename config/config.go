@@ -157,6 +157,7 @@ type TracingConfig struct {
 	Namespace string `yaml:"namespace"`
 	Service   string `yaml:"service"`
 	URL       string `yaml:"url"`
+	Auth      Auth   `yaml:"auth"`
 	// Path store the value of QUERY_BASE_PATH
 	Path string `yaml:"-"`
 }
@@ -287,6 +288,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, c.IstioNamespace))
+	c.ExternalServices.Tracing.Auth = getAuthFromEnv("TRACING")
 
 	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))

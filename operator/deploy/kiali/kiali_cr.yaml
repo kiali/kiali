@@ -232,6 +232,18 @@ spec:
 #
 # **Tracing-specific settings:
 #  - Right now we only support Jaeger
+# auth: authentication settings to connect to Jaeger:
+#   ca_file: The certificate authority file to use when accessing Jaeger using https. An empty string means no extra
+#       certificate authority file is used. Default is an empty string.
+#   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Jaeger over https.
+#   password: Password to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
+#   token: Token / API key to access Jaeger, for token-based authentication. It only requires viewer permissions.
+#   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
+#       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
+#       Default is "none"
+#   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
+#       and auth.token config is ignored then.
+#   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
@@ -239,6 +251,14 @@ spec:
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
 #    ---
 #    tracing:
+#      auth:
+#        ca_file: ""
+#        insecure_skip_verify: false
+#        password: ""
+#        token: ""
+#        type: "none"
+#        use_kiali_token: false
+#        username: ""
 #      enabled: true
 #      namespace: ""
 #      service : ""
