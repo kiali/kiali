@@ -112,18 +112,17 @@ func checkTracingService() (url string) {
 	// The user has set the route or we found one in tracing or jaeger-query
 	if url != "" {
 		// Calculate if Path
-		if tracingConfig.Path != "" {
-			path, err := checkIfQueryBasePath(tracingConfig.Namespace, service)
-			if err != nil {
-				log.Debugf("Error checking the query base path")
-			}
-			// We store the path
-			tracingConfig.Path = path
+		path, err := checkIfQueryBasePath(tracingConfig.Namespace, service)
+		if err != nil {
+			log.Debugf("Error checking the query base path")
 		}
 		// The user didn't set the URL, so we need to set
 		if tracingConfig.URL == "" {
-			tracingConfig.URL = url + tracingConfig.Path // Overwrite URL if the user didn't set
+			tracingConfig.URL = url + path // Overwrite URL if the user didn't set
 		}
+
+		// We store the path
+		tracingConfig.Path = path
 
 		// Set the service
 		tracingConfig.Service = service
@@ -144,9 +143,9 @@ func DiscoverJaeger() string {
 	if tracingConfig.URL != "" && tracingConfig.Service != "" {
 		// User assumes configuration
 		appstate.JaegerEnabled = true
-		if tracingConfig.Path != "" {
-			tracingConfig.Path = getPathURL(tracingConfig.URL)
-		}
+
+		tracingConfig.Path = getPathURL(tracingConfig.URL)
+
 		appstate.JaegerConfig = tracingConfig
 		return tracingConfig.URL
 	}
