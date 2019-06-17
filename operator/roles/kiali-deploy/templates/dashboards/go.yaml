@@ -8,27 +8,53 @@ spec:
   discoverOn: "go_info"
   items:
   - chart:
-      name: "Threads"
+      name: "CPU ratio"
       spans: 6
-      metricName: "go_threads"
+      metricName: "process_cpu_seconds_total"
+      dataType: "rate"
+      aggregations:
+      - label: "pod_name"
+        displayName: "Pod"
+  - chart:
+      name: "RSS Memory"
+      unit: "bytes"
+      spans: 6
+      metricName: "process_resident_memory_bytes"
       dataType: "raw"
+      aggregations:
+      - label: "pod_name"
+        displayName: "Pod"
   - chart:
       name: "Goroutines"
       spans: 6
       metricName: "go_goroutines"
       dataType: "raw"
+      aggregations:
+      - label: "pod_name"
+        displayName: "Pod"
   - chart:
-      name: "GC duration"
-      unit: "seconds"
+      name: "Heap allocation rate"
+      unit: "bytes/s"
       spans: 6
-      metricName: "go_gc_duration_seconds"
+      metricName: "go_memstats_alloc_bytes_total"
       dataType: "rate"
       aggregations:
-      - label: "quantile"
-        displayName: "Quantile"
+      - label: "pod_name"
+        displayName: "Pod"
   - chart:
-      name: "Heap allocated"
+      name: "GC rate"
+      spans: 6
+      metricName: "go_gc_duration_seconds_count"
+      dataType: "rate"
+      aggregations:
+      - label: "pod_name"
+        displayName: "Pod"
+  - chart:
+      name: "Next GC"
       unit: "bytes"
       spans: 6
-      metricName: "go_memstats_heap_alloc_bytes"
+      metricName: "go_memstats_next_gc_bytes"
       dataType: "raw"
+      aggregations:
+      - label: "pod_name"
+        displayName: "Pod"
