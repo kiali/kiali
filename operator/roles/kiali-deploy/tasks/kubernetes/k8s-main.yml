@@ -29,6 +29,17 @@
   - is_k8s == True
   - kiali_vars.deployment.ingress_enabled == True
 
+- name: Delete Ingress on Kubernetes if disabled
+  k8s:
+    state: absent
+    api_version: "extensions/v1beta1"
+    kind: "Ingress"
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+    name: "kiali"
+  when:
+  - is_k8s == True
+  - kiali_vars.deployment.ingress_enabled == False
+
 - name: Create additional Kiali roles on Kubernetes
   include_tasks: process-additional-roles.yml
   vars:
