@@ -1,8 +1,8 @@
 import * as React from 'react';
 import ServiceListContainer from '../../pages/ServiceList/ServiceListComponent';
 import { Breadcrumb } from 'patternfly-react';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import { ServiceListFilters } from './FiltersAndSorts';
+import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
+import * as ServiceListFilters from './FiltersAndSorts';
 
 const ServiceListPage: React.SFC<{}> = () => {
   return (

@@ -1,6 +1,6 @@
 import { ServiceHealth, RequestHealth, WithServiceHealth } from '../../../types/Health';
 import { ServiceListItem } from '../../../types/ServiceList';
-import { ServiceListFilters } from '../FiltersAndSorts';
+import * as ServiceListFilters from '../FiltersAndSorts';
 
 const makeService = (name: string, errRatio: number): WithServiceHealth<ServiceListItem> => {
   const reqErrs: RequestHealth = { errorRatio: errRatio, inboundErrorRatio: errRatio, outboundErrorRatio: -1 };

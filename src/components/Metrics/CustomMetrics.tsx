@@ -12,7 +12,7 @@ import { CustomMetricsOptions, Aggregator } from '../../types/MetricsOptions';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
-import MetricsHelper from './Helper';
+import * as MetricsHelper from './Helper';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';

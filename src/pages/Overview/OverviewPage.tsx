@@ -16,7 +16,7 @@ import { AxiosError } from 'axios';
 import _ from 'lodash';
 
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
 import * as API from '../../services/Api';
 import {
   DEGRADED,
@@ -43,8 +43,8 @@ import { connect } from 'react-redux';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
 import { nsWideMTLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
-import { Sorts } from './Sorts';
-import { Filters } from './Filters';
+import * as Sorts from './Sorts';
+import * as Filters from './Filters';
 
 const cardGridStyle = style({ width: '100%' });
 

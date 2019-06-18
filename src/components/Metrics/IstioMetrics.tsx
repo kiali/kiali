@@ -12,7 +12,7 @@ import { Direction, MetricsOptions, Reporter } from '../../types/MetricsOptions'
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import { Dashboard } from './Dashboard';
-import MetricsHelper from './Helper';
+import * as MetricsHelper from './Helper';
 import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';

@@ -1,5 +1,5 @@
 import history from '../../../app/History';
-import { ListPagesHelper } from '../ListPagesHelper';
+import * as ListPagesHelper from '../ListPagesHelper';
 import { FilterType } from '../../../types/Filters';
 
 const managedFilterTypes = [

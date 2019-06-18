@@ -46,14 +46,14 @@ export enum ParamAction {
   SET
 }
 
-export namespace HistoryManager {
-  export const setParam = (name: URLParam, value: string) => {
+export class HistoryManager {
+  static setParam = (name: URLParam, value: string) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
     history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
-  export const getParam = (name: URLParam, urlParams?: URLSearchParams): string | undefined => {
+  static getParam = (name: URLParam, urlParams?: URLSearchParams): string | undefined => {
     if (!urlParams) {
       urlParams = new URLSearchParams(history.location.search);
     }
@@ -61,17 +61,17 @@ export namespace HistoryManager {
     return p !== null ? p : undefined;
   };
 
-  export const getNumericParam = (name: URLParam, urlParams?: URLSearchParams): number | undefined => {
-    const p = getParam(name, urlParams);
+  static getNumericParam = (name: URLParam, urlParams?: URLSearchParams): number | undefined => {
+    const p = HistoryManager.getParam(name, urlParams);
     return p !== undefined ? Number(p) : undefined;
   };
 
-  export const getBooleanParam = (name: URLParam, urlParams?: URLSearchParams): boolean | undefined => {
-    const p = getParam(name, urlParams);
+  static getBooleanParam = (name: URLParam, urlParams?: URLSearchParams): boolean | undefined => {
+    const p = HistoryManager.getParam(name, urlParams);
     return p !== undefined ? p === 'true' : undefined;
   };
 
-  export const deleteParam = (name: URLParam, historyReplace?: boolean) => {
+  static deleteParam = (name: URLParam, historyReplace?: boolean) => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete(name);
     if (historyReplace) {
@@ -81,7 +81,7 @@ export namespace HistoryManager {
     }
   };
 
-  export const setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean) => {
+  static setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean) => {
     const urlParams = new URLSearchParams(history.location.search);
 
     if (params.length > 0 && paramAction === ParamAction.APPEND) {
@@ -105,8 +105,8 @@ export namespace HistoryManager {
     }
   };
 
-  export const getDuration = (urlParams?: URLSearchParams): number | undefined => {
-    const duration = getParam(URLParam.DURATION, urlParams);
+  static getDuration = (urlParams?: URLSearchParams): number | undefined => {
+    const duration = HistoryManager.getParam(URLParam.DURATION, urlParams);
     if (duration) {
       return toValidDuration(Number(duration));
     }

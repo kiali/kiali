@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
-import { ListPagesHelper } from '../ListPage/ListPagesHelper';
+import * as ListPagesHelper from '../ListPage/ListPagesHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 export interface StatefulFiltersProps {
@@ -16,19 +16,19 @@ export interface StatefulFiltersState {
   currentValue: string;
 }
 
-export namespace FilterSelected {
-  let selectedFilters: ActiveFilter[] | undefined = undefined;
+export class FilterSelected {
+  static selectedFilters: ActiveFilter[] | undefined = undefined;
 
-  export const setSelected = (activeFilters: ActiveFilter[]) => {
-    selectedFilters = activeFilters;
+  static setSelected = (activeFilters: ActiveFilter[]) => {
+    FilterSelected.selectedFilters = activeFilters;
   };
 
-  export const getSelected = (): ActiveFilter[] => {
-    return selectedFilters || [];
+  static getSelected = (): ActiveFilter[] => {
+    return FilterSelected.selectedFilters || [];
   };
 
-  export const isInitialized = () => {
-    return selectedFilters !== undefined;
+  static isInitialized = () => {
+    return FilterSelected.selectedFilters !== undefined;
   };
 }
 

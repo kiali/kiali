@@ -7,7 +7,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
+import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
@@ -17,8 +17,8 @@ import { SortField } from '../../types/SortFilters';
 
 import NamespaceInfo from './NamespaceInfo';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
-import { Sorts } from './Sorts';
-import { Filters } from './Filters';
+import * as Sorts from './Sorts';
+import * as Filters from './Filters';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 
 type ReduxProps = {

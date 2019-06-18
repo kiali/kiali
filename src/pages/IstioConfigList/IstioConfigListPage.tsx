@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
-import { ListPagesHelper } from '../../components/ListPage/ListPagesHelper';
-import { IstioConfigListFilters } from './FiltersAndSorts';
+import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
+import * as IstioConfigListFilters from './FiltersAndSorts';
 import IstioConfigListContainer from './IstioConfigListComponent';
 
 const IstioConfigListPage: React.SFC<{}> = () => {
