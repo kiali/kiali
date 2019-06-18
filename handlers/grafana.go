@@ -22,7 +22,7 @@ const (
 )
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
-// then (if not) by inspecting the Kubernetes Grafana service in namespace istio-system
+// then (if not) by inspecting the Kubernetes Grafana service in Istio installation namespace
 func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 	requestToken, err := getToken(r)
 	if err != nil {
