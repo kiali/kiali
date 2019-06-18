@@ -3,7 +3,7 @@ import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
-import Timer = NodeJS.Timer;
+import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import authenticationConfig from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
