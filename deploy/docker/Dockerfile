@@ -1,4 +1,4 @@
-FROM centos:centos7
+FROM registry.access.redhat.com/ubi7
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
