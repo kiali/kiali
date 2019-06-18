@@ -1,0 +1,32 @@
+
+- name: Prepare
+  hosts: localhost
+  connection: local
+  tasks:
+
+  - name: Ensure kiali-operator namespace is present
+    k8s:
+      api_version: v1
+      kind: Namespace
+      name: '{{ kiali_operator_namespace }}'
+
+
+  - name: Create Custom Resource Definition
+    k8s:
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crd.yaml'])) }}"
+
+  - name: Create RBAC resources
+    k8s:
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
+      namespace: '{{ kiali_operator_namespace }}'
+    with_items:
+      - role.yaml
+      - role_binding.yaml
+      - service_account.yaml
+      - operator.yaml
+
+
+  - name: Create Kiali CR
+    k8s:
+      namespace: '{{ kiali_operator_namespace }}'
+      definition: "{{ lookup('file', '/'.join([deploy_dir, kiali_cr])) }}"

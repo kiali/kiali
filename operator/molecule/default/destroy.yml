@@ -1,0 +1,38 @@
+
+- name: Destroy
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: Remove Kiali CR
+    k8s:
+      state: absent
+      namespace: '{{ kiali_operator_namespace }}'
+      definition: "{{ lookup('file', '/'.join([deploy_dir, kiali_cr])) }}"
+
+  - name: Pause
+    pause:
+      minutes: 2
+
+  - name: Remove Custom Resource Definition
+    k8s:
+      state: absent
+      definition: "{{ lookup('file', '/'.join([deploy_dir, 'crd.yaml'])) }}"
+
+  - name: Remove RBAC resources
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
+      namespace: '{{ kiali_operator_namespace }}'
+    with_items:
+      - role.yaml
+      - role_binding.yaml
+      - service_account.yaml
+      - operator.yaml
+
+
+  - name: Remove kiali-operator namespace is present
+    k8s:
+      api_version: v1
+      state: absent
+      kind: Namespace
+      name: '{{ kiali_operator_namespace }}'
