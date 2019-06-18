@@ -116,6 +116,11 @@ spec:
 #    ---
 #    image_version: "lastrelease"
 #
+# Determines if the Kiali endpoint should be exposed externally.
+# If true, an Ingress will be created if on Kubernetes or a Route if on OpenShift.
+#    ---
+#    ingress_enabled: true
+#
 # The namespace into which Kiali is to be installed.
 #    ---
 #    namespace: "istio-system"

@@ -30,6 +30,7 @@ kiali_defaults:
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_version: "lastrelease"
+    ingress_enabled: true
     namespace: "istio-system"
     secret_name: "kiali"
     service_type: "NodePort"
