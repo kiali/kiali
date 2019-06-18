@@ -1,7 +1,7 @@
 import { ActiveFilter, FilterType, FILTER_ACTION_APPEND } from '../../types/Filters';
 import { getRequestErrorsStatus, WithServiceHealth } from '../../types/Health';
 import { ServiceListItem } from '../../types/ServiceList';
-import { SortField } from '../../types/SortFilters';
+import { GenericSortField, HealthSortField } from '../../types/SortFilters';
 import {
   istioSidecarFilter,
   healthFilter,
@@ -10,13 +10,13 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 
-export const sortFields: SortField<ServiceListItem>[] = [
+export const sortFields: GenericSortField<ServiceListItem>[] = [
   {
     id: 'namespace',
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a, b) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -29,14 +29,14 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Service Name',
     isNumeric: false,
     param: 'sn',
-    compare: (a: ServiceListItem, b: ServiceListItem) => a.name.localeCompare(b.name)
+    compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
     id: 'istiosidecar',
     title: 'Istio Sidecar',
     isNumeric: false,
     param: 'is',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a, b) => {
       if (a.istioSidecar && !b.istioSidecar) {
         return -1;
       } else if (!a.istioSidecar && b.istioSidecar) {
@@ -64,7 +64,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
 
       return statusForB.priority - statusForA.priority;
     }
-  }
+  } as HealthSortField<ServiceListItem>
 ];
 
 const serviceNameFilter: FilterType = {
@@ -125,7 +125,7 @@ export const filterBy = (
 // Exported for test
 export const sortServices = (
   services: ServiceListItem[],
-  sortField: SortField<ServiceListItem>,
+  sortField: GenericSortField<ServiceListItem>,
   isAscending: boolean
 ): Promise<ServiceListItem[]> => {
   if (sortField.title === 'Health') {

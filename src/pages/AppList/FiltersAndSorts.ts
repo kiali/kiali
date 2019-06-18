@@ -1,6 +1,6 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 import { AppListItem } from '../../types/AppList';
-import { SortField } from '../../types/SortFilters';
+import { GenericSortField, HealthSortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WithAppHealth } from '../../types/Health';
 import {
   istioSidecarFilter,
@@ -10,13 +10,13 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 
-export const sortFields: SortField<AppListItem>[] = [
+export const sortFields: GenericSortField<AppListItem>[] = [
   {
     id: 'namespace',
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: AppListItem, b: AppListItem) => {
+    compare: (a, b) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -29,14 +29,14 @@ export const sortFields: SortField<AppListItem>[] = [
     title: 'App Name',
     isNumeric: false,
     param: 'wn',
-    compare: (a: AppListItem, b: AppListItem) => a.name.localeCompare(b.name)
+    compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
     id: 'istiosidecar',
     title: 'IstioSidecar',
     isNumeric: false,
     param: 'is',
-    compare: (a: AppListItem, b: AppListItem) => {
+    compare: (a, b) => {
       if (a.istioSidecar && !b.istioSidecar) {
         return -1;
       } else if (!a.istioSidecar && b.istioSidecar) {
@@ -64,7 +64,7 @@ export const sortFields: SortField<AppListItem>[] = [
 
       return statusForB.priority - statusForA.priority;
     }
-  }
+  } as HealthSortField<AppListItem>
 ];
 
 const appNameFilter: FilterType = {
@@ -125,7 +125,7 @@ export const filterBy = (appsList: AppListItem[], filters: ActiveFilter[]): Prom
 
 export const sortAppsItems = (
   unsorted: AppListItem[],
-  sortField: SortField<AppListItem>,
+  sortField: GenericSortField<AppListItem>,
   isAscending: boolean
 ): Promise<AppListItem[]> => {
   if (sortField.title === 'Health') {

@@ -1,6 +1,6 @@
 import { ActiveFilter, FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
-import { SortField } from '../../types/SortFilters';
+import { GenericSortField, HealthSortField } from '../../types/SortFilters';
 import { getRequestErrorsStatus, WithWorkloadHealth } from '../../types/Health';
 import {
   presenceValues,
@@ -11,13 +11,13 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 
-export const sortFields: SortField<WorkloadListItem>[] = [
+export const sortFields: GenericSortField<WorkloadListItem>[] = [
   {
     id: 'namespace',
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a, b) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.workload.name.localeCompare(b.workload.name);
@@ -30,21 +30,21 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Workload Name',
     isNumeric: false,
     param: 'wn',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.workload.name.localeCompare(b.workload.name)
+    compare: (a, b) => a.workload.name.localeCompare(b.workload.name)
   },
   {
     id: 'workloadtype',
     title: 'Workload Type',
     isNumeric: false,
     param: 'wt',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.workload.type.localeCompare(b.workload.type)
+    compare: (a, b) => a.workload.type.localeCompare(b.workload.type)
   },
   {
     id: 'istiosidecar',
     title: 'IstioSidecar',
     isNumeric: false,
     param: 'is',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a, b) => {
       if (a.workload.istioSidecar && !b.workload.istioSidecar) {
         return -1;
       } else if (!a.workload.istioSidecar && b.workload.istioSidecar) {
@@ -59,7 +59,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'App Label',
     isNumeric: false,
     param: 'al',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a, b) => {
       if (a.workload.appLabel && !b.workload.appLabel) {
         return -1;
       } else if (!a.workload.appLabel && b.workload.appLabel) {
@@ -74,7 +74,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Version Label',
     isNumeric: false,
     param: 'vl',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a, b) => {
       if (a.workload.versionLabel && !b.workload.versionLabel) {
         return -1;
       } else if (!a.workload.versionLabel && b.workload.versionLabel) {
@@ -102,7 +102,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
 
       return statusForB.priority - statusForA.priority;
     }
-  }
+  } as HealthSortField<WorkloadListItem>
 ];
 
 const workloadNameFilter: FilterType = {
@@ -258,7 +258,7 @@ export const filterBy = (
 
 export const sortWorkloadsItems = (
   unsorted: WorkloadListItem[],
-  sortField: SortField<WorkloadListItem>,
+  sortField: GenericSortField<WorkloadListItem>,
   isAscending: boolean
 ): Promise<WorkloadListItem[]> => {
   if (sortField.title === 'Health') {
