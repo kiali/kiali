@@ -26,14 +26,14 @@ spec:
         - /usr/local/bin/ao-logs
         - /tmp/ansible-operator/runner
         - stdout
-        image: {{ kiali_operator_image }}
+        image: {{ kiali.operator_image }}
         imagePullPolicy: Always
         volumeMounts:
         - mountPath: /tmp/ansible-operator/runner
           name: runner
           readOnly: true
       - name: operator
-        image: {{ kiali_operator_image }}
+        image: {{ kiali.operator_image }}
         imagePullPolicy: Always
         volumeMounts:
         - mountPath: /tmp/ansible-operator/runner
