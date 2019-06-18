@@ -1,9 +1,11 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { Router } from 'react-router';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
+import history from '../../app/History';
 
 type Props = {
   groupContextMenuContent?: NodeContextMenuType;
@@ -151,7 +153,9 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
 
     ReactDOM.render(
       <Provider store={store}>
-        <ContextMenuComponentClass element={target} contextMenu={tippyInstance} {...target.data()} />
+        <Router history={history}>
+          <ContextMenuComponentClass element={target} contextMenu={tippyInstance} {...target.data()} />
+        </Router>
       </Provider>,
       content,
       () => {

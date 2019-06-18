@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { NodeContextMenuProps } from '../CytoscapeContextMenu';
 import { JaegerSearchOptions, JaegerURLSearch } from '../../JaegerIntegration/RouteHelper';
-import history from '../../../app/History';
 import { Paths } from '../../../config';
 import { style } from 'typestyle';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 
 type ReduxProps = {
   jaegerIntegration: boolean;
@@ -94,12 +94,17 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     return tracesUrl;
   }
 
-  createMenuItem(href: string, title: string, target: string = '_self') {
+  createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
+    const commonLinkProps = {
+      className: graphContextMenuItemLinkStyle,
+      children: title,
+      onClick: this.onClick,
+      target
+    };
+
     return (
       <div className={graphContextMenuItemStyle}>
-        <a onClick={this.redirectContextLink} className={graphContextMenuItemLinkStyle} target={target} href={href}>
-          {title}
-        </a>
+        {external ? <a href={href} {...commonLinkProps} /> : <Link to={href} {...commonLinkProps} />}
       </div>
     );
   }
@@ -132,23 +137,15 @@ export class NodeContextMenu extends React.PureComponent<Props> {
           this.createMenuItem(
             this.getJaegerURL(name),
             'Show Traces',
-            this.props.jaegerIntegration ? '_self' : '_blank'
+            this.props.jaegerIntegration ? '_self' : '_blank',
+            !this.props.jaegerIntegration
           )}
       </div>
     );
   }
 
-  private redirectContextLink = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (e.target) {
-      const anchor = e.target as HTMLAnchorElement;
-      const href = anchor.getAttribute('href');
-      const newTab = anchor.getAttribute('target') === '_blank';
-      if (href && !newTab) {
-        e.preventDefault();
-        this.props.contextMenu.hide(0);
-        history.push(href);
-      }
-    }
+  private onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    this.props.contextMenu.hide(0);
   };
 }
 
