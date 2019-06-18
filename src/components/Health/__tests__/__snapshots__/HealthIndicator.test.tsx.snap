@@ -6,10 +6,6 @@ ShallowWrapper {
   Symbol(enzyme.__unrendered__): <HealthIndicator
     health={
       AppHealth {
-        "ctx": Object {
-          "hasSidecar": true,
-          "rateInterval": 600,
-        },
         "items": Array [
           Object {
             "children": Array [
@@ -75,20 +71,6 @@ ShallowWrapper {
           "inboundErrorRatio": -1,
           "outboundErrorRatio": -1,
         },
-        "workloadStatuses": Array [
-          Object {
-            "availableReplicas": 1,
-            "currentReplicas": 1,
-            "desiredReplicas": 1,
-            "name": "A",
-          },
-          Object {
-            "availableReplicas": 2,
-            "currentReplicas": 2,
-            "desiredReplicas": 2,
-            "name": "B",
-          },
-        ],
       }
     }
     id="svc"
@@ -128,10 +110,6 @@ ShallowWrapper {
         <HealthDetails
           health={
             AppHealth {
-              "ctx": Object {
-                "hasSidecar": true,
-                "rateInterval": 600,
-              },
               "items": Array [
                 Object {
                   "children": Array [
@@ -197,20 +175,6 @@ ShallowWrapper {
                 "inboundErrorRatio": -1,
                 "outboundErrorRatio": -1,
               },
-              "workloadStatuses": Array [
-                Object {
-                  "availableReplicas": 1,
-                  "currentReplicas": 1,
-                  "desiredReplicas": 1,
-                  "name": "A",
-                },
-                Object {
-                  "availableReplicas": 2,
-                  "currentReplicas": 2,
-                  "desiredReplicas": 2,
-                  "name": "B",
-                },
-              ],
             }
           }
         />
@@ -269,10 +233,6 @@ ShallowWrapper {
           <HealthDetails
             health={
               AppHealth {
-                "ctx": Object {
-                  "hasSidecar": true,
-                  "rateInterval": 600,
-                },
                 "items": Array [
                   Object {
                     "children": Array [
@@ -338,20 +298,6 @@ ShallowWrapper {
                   "inboundErrorRatio": -1,
                   "outboundErrorRatio": -1,
                 },
-                "workloadStatuses": Array [
-                  Object {
-                    "availableReplicas": 1,
-                    "currentReplicas": 1,
-                    "desiredReplicas": 1,
-                    "name": "A",
-                  },
-                  Object {
-                    "availableReplicas": 2,
-                    "currentReplicas": 2,
-                    "desiredReplicas": 2,
-                    "name": "B",
-                  },
-                ],
               }
             }
           />

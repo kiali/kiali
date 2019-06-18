@@ -1,15 +1,15 @@
+import { ServiceHealth, RequestHealth, WithServiceHealth } from '../../../types/Health';
 import { ServiceListItem } from '../../../types/ServiceList';
-import { ServiceHealth, RequestHealth } from '../../../types/Health';
 import { ServiceListFilters } from '../FiltersAndSorts';
 
-const makeService = (name: string, errRatio: number): ServiceListItem & { health: ServiceHealth } => {
+const makeService = (name: string, errRatio: number): WithServiceHealth<ServiceListItem> => {
   const reqErrs: RequestHealth = { errorRatio: errRatio, inboundErrorRatio: errRatio, outboundErrorRatio: -1 };
+  const health = new ServiceHealth(reqErrs, { rateInterval: 60, hasSidecar: true });
+
   return {
     name: name,
-    health: new ServiceHealth(reqErrs, { rateInterval: 60, hasSidecar: true })
-  } as ServiceListItem & {
-    health: ServiceHealth;
-  };
+    health: health
+  } as any;
 };
 
 describe('SortField#compare', () => {
