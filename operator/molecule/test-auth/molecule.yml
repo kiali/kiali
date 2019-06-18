@@ -1,0 +1,28 @@
+---
+dependency:
+  name: galaxy
+platforms:
+- name: test-auth
+  groups:
+  - k8s
+provisioner:
+  name: ansible
+  options:
+    vvv: True
+  playbooks:
+    destroy: ../default/destroy.yml
+    prepare: ../default/prepare.yml
+  inventory:
+    group_vars:
+      all:
+        kiali_operator_namespace: kiali-operator
+        istio_control_plane_namespace: istio-system
+        kiali_operator_image: quay.io/kiali/kiali-operator:latest
+        deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/deploy"
+        kiali_cr: 'kiali_minimum_cr.yaml'
+scenario:
+  name: test-auth
+  test_sequence:
+    - prepare
+    - converge
+    - destroy

@@ -1,0 +1,19 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, kiali_cr])) | from_yaml }}"
+  tasks:
+
+  - name: Get the newly created Custom Resource
+    debug:
+      msg: "{{ lookup('k8s', group='kiali.io/v1alpha1', api_version='v1alpha1', kind='Kiali', namespace=kiali_operator_namespace, resource_name=custom_resource.metadata.name) }}"
+
+  - name: Get Kiali Operator Pod
+    k8s_facts:
+      api_version: v1
+      kind: Pod
+      namespace: '{{ kiali_operator_namespace }}'
+      label_selectors:
+      - app = kiali-operator      
+    register: operator
