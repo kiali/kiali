@@ -6,10 +6,10 @@
   - name: Remove Kiali CR
     k8s:
       state: absent
-      namespace: '{{ kiali_operator_namespace }}'
-      definition: "{{ lookup('file', '/'.join([deploy_dir, kiali_cr])) }}"
+      namespace: '{{ kiali.operator_namespace }}'
+      definition: "{{ lookup('template', '/'.join([deploy_dir, kiali_cr])) }}"
 
-  - name: Pause
+  - name: Pause in order not to Generate a Hanging Namespace
     pause:
       minutes: 2
 
@@ -22,7 +22,7 @@
     k8s:
       state: absent
       definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
-      namespace: '{{ kiali_operator_namespace }}'
+      namespace: '{{ kiali.operator_namespace }}'
     with_items:
       - role.yaml
       - role_binding.yaml
@@ -35,4 +35,4 @@
       api_version: v1
       state: absent
       kind: Namespace
-      name: '{{ kiali_operator_namespace }}'
+      name: '{{ kiali.operator_namespace }}'

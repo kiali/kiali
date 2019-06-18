@@ -2,18 +2,40 @@
   hosts: localhost
   connection: local
   vars:
-    custom_resource: "{{ lookup('file', '/'.join([deploy_dir, kiali_cr])) | from_yaml }}"
+    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, kiali_cr])) | from_yaml }}"
   tasks:
 
-  - name: Get the newly created Custom Resource
+  - name: Check for Kiali CR
     debug:
-      msg: "{{ lookup('k8s', group='kiali.io/v1alpha1', api_version='v1alpha1', kind='Kiali', namespace=kiali_operator_namespace, resource_name=custom_resource.metadata.name) }}"
+      msg: "{{ lookup('k8s', group='kiali.io/v1alpha1', api_version='v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
 
   - name: Get Kiali Operator Pod
     k8s_facts:
       api_version: v1
       kind: Pod
-      namespace: '{{ kiali_operator_namespace }}'
+      namespace: '{{ kiali.operator_namespace }}'
       label_selectors:
       - app = kiali-operator      
     register: operator
+
+  # TODO Wait for Kiali Pod
+  - pause:
+      minutes: 2
+
+  - name: Get Kiali Configmap
+    set_fact:
+       kiali_configmap: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace="istio-system", resource_name="kiali") }}'
+
+
+  - name: Format Configmap
+    set_fact:
+      kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+ 
+
+  - name: Assert Kiali Configmap has Openshift
+    assert:
+      that:
+       - kiali_configmap.auth.strategy == kiali.auth_strategy
+       - kiali_configmap.api.namespaces.label_selector == kiali.label_selector
+       - kiali_configmap.istio_namespace == "istio-system"
+
