@@ -1,21 +1,19 @@
 package status
 
 import (
-	"errors"
 	"net/url"
 	"strings"
 
-	"github.com/kiali/kiali/appstate"
-
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/appstate"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
 
 // Route names to lookup for discovery
-var tracingLookupRoutes = [...]string{"jaeger-query", "tracing"}
+var tracingLookupRoutes = [...]string{"istio-tracing", "tracing", "jaeger-query"}
 
 var clientFactory kubernetes.ClientFactory
 
@@ -38,21 +36,17 @@ func getClient() (kubernetes.IstioClientInterface, error) {
 		return nil, err
 	}
 
-	// If the client is not openshift return and avoid discover
-	if !client.IsOpenShift() {
-		return nil, errors.New("client is not Openshift")
-	}
-
 	return client, nil
 }
 
 func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 	path = ""
 	client, err := getClient()
-
+	// Return if there is a problem with the client
 	if err != nil {
 		return path, err
 	}
+	// Get the service
 	svc, err := client.GetService(ns, service)
 	if err != nil {
 		return path, err
@@ -66,7 +60,7 @@ func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 
 	switch len(deployments) {
 	case 0:
-		log.Debugf("Kiali didn't found a deployment for service %s", service)
+		log.Debugf("[TRACING] Kiali didn't found a deployment for service %s", service)
 	case 1:
 		if len(deployments[0].Spec.Template.Spec.Containers) > 0 {
 			for _, v := range deployments[0].Spec.Template.Spec.Containers[0].Env {
@@ -77,7 +71,7 @@ func checkIfQueryBasePath(ns string, service string) (path string, err error) {
 			}
 		}
 	default:
-		log.Debugf("Kiali found 2 or + deployments for service %s", service)
+		log.Debugf("[TRACING] Kiali found 2 or + deployments for service %s", service)
 	}
 
 	return path, nil
@@ -91,66 +85,89 @@ func getPathURL(endpoint string) (path string) {
 	return u.Path
 }
 
-func checkTracingService() (url string) {
+func discoverTracingService() (service string) {
+	client, err := getClient()
+	//  Return if there is a problem with the client
+	if err != nil {
+		log.Debugf("[TRACING] Service discovery failed: %v", err)
+		return
+	}
+	// Check for each service in list
+	for _, name := range tracingLookupRoutes {
+		service = name
+		// Try to discover the service
+		serv, err := client.GetService(config.Get().IstioNamespace, service)
+		// If there is no error and the service is not nil that means that we found tracing
+		if serv != nil && err == nil {
+			log.Debugf("[TRACING] Service in: %s", service)
+			break
+		} else {
+			// No service found set to empty for the last iteration
+			service = ""
+		}
+	}
+	return
+}
+
+func discoverTracingPath() (path string) {
 	tracingConfig := config.Get().ExternalServices.Tracing
-	service := tracingConfig.Service
-
-	if service != "" {
-		// Try to discover the URL
-		url = discoverServiceURL(tracingConfig.Namespace, service)
-	} else {
-		// Check usual route names for tracing
-		for _, name := range tracingLookupRoutes {
-			service = name
-			url = discoverServiceURL(tracingConfig.Namespace, name)
-			if url != "" {
-				break
-			}
-		}
+	// We had the service so we can check the Path
+	path, err := checkIfQueryBasePath(tracingConfig.Namespace, tracingConfig.Service)
+	if err != nil {
+		log.Debugf("[TRACING] Error checking the query base path")
 	}
+	return
+}
 
-	// The user has set the route or we found one in tracing or jaeger-query
-	if url != "" {
-		// Calculate if Path
-		path, err := checkIfQueryBasePath(tracingConfig.Namespace, service)
-		if err != nil {
-			log.Debugf("Error checking the query base path")
-		}
-		// The user didn't set the URL, so we need to set
-		if tracingConfig.URL == "" {
-			tracingConfig.URL = url + path // Overwrite URL if the user didn't set
-		}
-
-		// We store the path
-		tracingConfig.Path = path
-
-		// Set the service
-		tracingConfig.Service = service
-		appstate.JaegerEnabled = true
+func discoverURLTracingService() (url string) {
+	// Try to discover the URL . Openshift Client
+	url, err := discoverServiceURL(appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Service)
+	if err != nil {
+		log.Debugf("[TRACING] URL discovery failed: %v", err)
+		return
 	}
-
-	// Save config
-	appstate.JaegerConfig = tracingConfig
-
-	return tracingConfig.URL
+	// Trim the string to format correctly the url with the path
+	url = strings.TrimSuffix(url, "/") + "/" + appstate.JaegerConfig.Path
+	appstate.JaegerEnabled = true
+	return
 }
 
 func DiscoverJaeger() string {
+	// Kiali has all the configuration
 	if appstate.JaegerEnabled {
 		return appstate.JaegerConfig.URL
 	}
+
+	// Get the configuration
 	tracingConfig := config.Get().ExternalServices.Tracing
-	if tracingConfig.URL != "" && tracingConfig.Service != "" {
-		// User assumes configuration
-		appstate.JaegerEnabled = true
 
-		tracingConfig.Path = getPathURL(tracingConfig.URL)
-
-		appstate.JaegerConfig = tracingConfig
-		return tracingConfig.URL
+	// There is not a service in the configuration we need discover the service
+	if tracingConfig.Service == "" {
+		tracingConfig.Service = discoverTracingService()
 	}
 
-	return checkTracingService()
+	//There is an endpoint in the configuration discovery QUERY_BASE_PATH by endpoint defined
+	if tracingConfig.URL != "" {
+		// User assumes configuration
+		appstate.JaegerEnabled = true
+		// Get Path from the URL (User could set the QUERY_BASE_PATH in the URL)
+		tracingConfig.Path = getPathURL(tracingConfig.URL)
+	}
+
+	// Discover QUERY_BASE_PATH by deployment
+	if tracingConfig.Service != "" && tracingConfig.Path == "" {
+		tracingConfig.Path = discoverTracingPath()
+	}
+
+	//There is not an endpoint, go discover for Openshift
+	if tracingConfig.Service != "" && tracingConfig.URL == "" {
+		tracingConfig.URL = discoverURLTracingService()
+	}
+
+	// Save configuration in our appstate
+	appstate.JaegerConfig = tracingConfig
+
+	return appstate.JaegerConfig.URL
 }
 
 // DiscoverGrafana will return the Grafana URL if it has been configured,
@@ -173,7 +190,10 @@ func DiscoverGrafana() string {
 		if err == nil {
 			parts := strings.Split(parsedURL.Hostname(), ".")
 			if len(parts) >= 2 {
-				routeURL := discoverServiceURL(parts[1], parts[0])
+				routeURL, err := discoverServiceURL(parts[1], parts[0])
+				if err != nil {
+					log.Debugf("[GRAFANA] URL discovery failed: %v", err)
+				}
 				appstate.GrafanaDiscoveredURL = strings.TrimSuffix(routeURL, "/")
 			}
 		}
@@ -181,18 +201,26 @@ func DiscoverGrafana() string {
 	return appstate.GrafanaDiscoveredURL
 }
 
-func discoverServiceURL(ns, service string) (url string) {
-	log.Debugf("URL discovery for service '%s', namespace '%s'...", service, ns)
+func discoverServiceURL(ns, service string) (url string, err error) {
+	log.Debugf("[%s] URL discovery for service '%s', namespace '%s'...", strings.ToUpper(service), service, ns)
+	url = ""
 	client, err := getClient()
 
+	// If the client is not openshift return and avoid discover
 	if err != nil {
-		log.Debugf("Discovery failed: %v", err)
+		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
 		return
 	}
+
+	if !client.IsOpenShift() {
+		log.Debugf("[%s] Client is not Openshift, discovery url is only supported in Openshift", strings.ToUpper(service))
+		return
+	}
+
 	// Assuming service name == route name
 	route, err := client.GetRoute(ns, service)
 	if err != nil {
-		log.Debugf("Discovery failed: %v", err)
+		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
 		return
 	}
 
@@ -202,6 +230,6 @@ func discoverServiceURL(ns, service string) (url string) {
 	} else {
 		url = "http://" + host
 	}
-	log.Infof("URL discovered for %s: %s", service, url)
+	log.Infof("[%s] URL discovered for %s: %s", strings.ToUpper(service), service, url)
 	return
 }
