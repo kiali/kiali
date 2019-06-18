@@ -111,10 +111,17 @@ export class OverviewToolbar extends React.Component<Props, State> {
     this.setState({ isSortAscending: newDir });
   };
 
-  updateOverviewType = (otype: OverviewType) => {
-    HistoryManager.setParam(URLParam.OVERVIEW_TYPE, otype);
-    this.setState({ overviewType: otype });
-    this.props.onRefresh();
+  updateOverviewType = (otype: String) => {
+    const isOverviewType = (val: String): val is OverviewType =>
+      val === 'app' || val === 'workload' || val === 'service';
+
+    if (isOverviewType(otype)) {
+      HistoryManager.setParam(URLParam.OVERVIEW_TYPE, otype);
+      this.setState({ overviewType: otype });
+      this.props.onRefresh();
+    } else {
+      throw new Error('Overview type is not valid.');
+    }
   };
 
   render() {
