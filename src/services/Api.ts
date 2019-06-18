@@ -288,7 +288,7 @@ export const getNamespaceAppHealth = (namespace: string, durationSec: number): P
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
+  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
     const ret: NamespaceAppHealth = {};
     Object.keys(response.data).forEach(k => {
       ret[k] = AppHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
@@ -304,13 +304,15 @@ export const getNamespaceServiceHealth = (namespace: string, durationSec: number
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    const ret: NamespaceServiceHealth = {};
-    Object.keys(response.data).forEach(k => {
-      ret[k] = ServiceHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
-    });
-    return ret;
-  });
+  return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+    response => {
+      const ret: NamespaceServiceHealth = {};
+      Object.keys(response.data).forEach(k => {
+        ret[k] = ServiceHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
+      });
+      return ret;
+    }
+  );
 };
 
 export const getNamespaceWorkloadHealth = (
@@ -323,13 +325,15 @@ export const getNamespaceWorkloadHealth = (
   if (durationSec) {
     params.rateInterval = String(durationSec) + 's';
   }
-  return newRequest(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    const ret: NamespaceWorkloadHealth = {};
-    Object.keys(response.data).forEach(k => {
-      ret[k] = WorkloadHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
-    });
-    return ret;
-  });
+  return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+    response => {
+      const ret: NamespaceWorkloadHealth = {};
+      Object.keys(response.data).forEach(k => {
+        ret[k] = WorkloadHealth.fromJson(response.data[k], { rateInterval: durationSec, hasSidecar: true });
+      });
+      return ret;
+    }
+  );
 };
 
 export const getGrafanaInfo = () => {
