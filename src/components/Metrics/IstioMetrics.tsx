@@ -231,7 +231,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
-  grafanaInfo: state.grafanaInfo
+  grafanaInfo: state.grafanaInfo || undefined
 });
 
 const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps>(

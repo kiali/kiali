@@ -25,7 +25,7 @@ export interface NamespaceState {
   readonly items?: Namespace[];
   readonly isFetching: boolean;
   readonly lastUpdated?: Date;
-  readonly filter?: string;
+  readonly filter: string;
 }
 
 // Various pages are described here with their various sections

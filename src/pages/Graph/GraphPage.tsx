@@ -62,7 +62,6 @@ type ReduxProps = {
   isError: boolean;
   isLoading: boolean;
   isPageVisible: boolean;
-  isReady: boolean;
   layout: Layout;
   node?: NodeParamsType;
   pollInterval: PollIntervalInMs;
@@ -84,16 +83,12 @@ type ReduxProps = {
     node?: NodeParamsType
   ) => any;
   graphChanged: () => void;
-  setlayout: (layout: Layout) => void;
   setNode: (node?: NodeParamsType) => void;
   toggleLegend: () => void;
   setLastRefreshAt: (lastRefreshAt: TimeInMilliseconds) => void;
 };
 
-export type GraphPageProps = RouteComponentProps<GraphURLPathProps> &
-  ReduxProps & {
-    isReady: boolean;
-  };
+export type GraphPageProps = RouteComponentProps<Partial<GraphURLPathProps>> & ReduxProps;
 
 type GraphPageState = {
   showHelp: boolean;
@@ -153,7 +148,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private readonly errorBoundaryRef: any;
   private cytoscapeGraphRef: any;
 
-  static getNodeParamsFromProps(props: RouteComponentProps<GraphURLPathProps>): NodeParamsType | undefined {
+  static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
     const app = props.match.params.app;
     const appOk = app && app !== 'unknown' && app !== 'undefined';
     const namespace = props.match.params.namespace;
@@ -176,12 +171,12 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
       version = '';
     }
     const node: NodeParamsType = {
-      app: app,
-      namespace: { name: namespace },
+      app: app!,
+      namespace: { name: namespace! },
       nodeType: nodeType,
-      service: service,
+      service: service!,
       version: version,
-      workload: workload
+      workload: workload!
     };
     return node;
   }

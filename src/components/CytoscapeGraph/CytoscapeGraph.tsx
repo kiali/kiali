@@ -107,15 +107,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   static tapTarget: any;
   static tapTimeout: any;
 
-  private graphHighlighter: GraphHighlighter;
-  private trafficRenderer: TrafficRender;
+  private graphHighlighter?: GraphHighlighter;
+  private trafficRenderer?: TrafficRender;
   private focusAnimation?: FocusAnimation;
   private focusFinished: boolean;
   private cytoscapeReactWrapperRef: any;
   private contextMenuRef: React.RefObject<CytoscapeContextMenuWrapper>;
   private namespaceChanged: boolean;
   private nodeChanged: boolean;
-  private resetSelection: boolean;
+  private resetSelection: boolean = false;
   private initialValues: InitialValues;
   private cy: any;
 
@@ -354,7 +354,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     });
 
     cy.on('destroy', (evt: any) => {
-      this.trafficRenderer.stop();
+      this.trafficRenderer!.stop();
       this.cy = undefined;
       this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
     });
@@ -413,7 +413,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
 
-    this.trafficRenderer.stop();
+    this.trafficRenderer!.stop();
 
     const isTheGraphSelected = cy.$(':selected').length === 0;
     if (this.resetSelection) {
@@ -478,9 +478,9 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     // Update TrafficRenderer
-    this.trafficRenderer.setEdges(cy.edges());
+    this.trafficRenderer!.setEdges(cy.edges());
     if (this.props.showTrafficAnimation) {
-      this.trafficRenderer.start();
+      this.trafficRenderer!.start();
     }
   }
 
@@ -508,7 +508,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       summaryTarget: target
     };
     this.props.updateSummary(event);
-    this.graphHighlighter.onClick(event);
+    this.graphHighlighter!.onClick(event);
   };
 
   private handleDoubleTap = (event: CytoscapeClickEvent) => {
@@ -600,15 +600,15 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
   private handleTap = (event: CytoscapeClickEvent) => {
     this.props.updateSummary(event);
-    this.graphHighlighter.onClick(event);
+    this.graphHighlighter!.onClick(event);
   };
 
   private handleMouseIn = (event: CytoscapeMouseInEvent) => {
-    this.graphHighlighter.onMouseIn(event);
+    this.graphHighlighter!.onMouseIn(event);
   };
 
   private handleMouseOut = (event: CytoscapeMouseOutEvent) => {
-    this.graphHighlighter.onMouseOut(event);
+    this.graphHighlighter!.onMouseOut(event);
   };
 
   private namespaceNeedsRelayout(prevElements: any, nextElements: any) {

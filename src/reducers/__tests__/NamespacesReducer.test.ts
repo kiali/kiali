@@ -112,13 +112,15 @@ describe('Namespaces reducer', () => {
     const currentState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: true,
-      items: []
+      items: [],
+      filter: ''
     };
     const requestStartedAction = NamespaceActions.requestFailed();
     const expectedState = {
       activeNamespaces: [{ name: 'my-namespace' }],
       isFetching: false,
-      items: []
+      items: [],
+      filter: ''
     };
     expect(namespaceState(currentState, requestStartedAction)).toEqual(expectedState);
   });

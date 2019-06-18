@@ -7,6 +7,7 @@ export default class DestinationRuleValidator {
 
   constructor(destinationRule: DestinationRule) {
     this.destinationRule = destinationRule;
+    this.unformattedField = 'none';
   }
 
   isValid() {

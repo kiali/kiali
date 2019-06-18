@@ -15,7 +15,7 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 
 type UserProps = {
-  session: LoginSession;
+  session?: LoginSession;
   logout: () => void;
   extendSession: (session: LoginSession) => void;
 };
@@ -63,7 +63,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
   }
 
   timeLeft = (): number => {
-    const expiresOn = moment(this.props.session.expiresOn);
+    const expiresOn = moment(this.props.session!.expiresOn);
 
     if (expiresOn <= moment()) {
       this.props.logout();

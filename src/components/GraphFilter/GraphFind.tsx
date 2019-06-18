@@ -15,7 +15,7 @@ import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData } from '../../types/Graph';
 
 type ReduxProps = {
-  cyData: CyData;
+  cyData: CyData | null;
   findValue: string;
   hideValue: string;
   showFindHelp: boolean;

@@ -115,9 +115,9 @@ type TrafficPoint = {
 class TrafficPointGenerator {
   private timer?: number;
   private timerForNextPoint?: number;
-  private speed: number;
-  private errorRate: number;
-  private type: TrafficEdgeType;
+  private speed: number = 0;
+  private errorRate: number = 0;
+  private type: TrafficEdgeType = TrafficEdgeType.NONE;
 
   /**
    * Process a render step for the generator, decrements the timerForNextPoint and
@@ -192,7 +192,7 @@ class TrafficEdge {
   private points: Array<TrafficPoint> = [];
   private generator: TrafficPointGenerator;
   private edge: any;
-  private type: TrafficEdgeType;
+  private type: TrafficEdgeType = TrafficEdgeType.NONE;
 
   constructor() {
     this.generator = new TrafficPointGenerator();
