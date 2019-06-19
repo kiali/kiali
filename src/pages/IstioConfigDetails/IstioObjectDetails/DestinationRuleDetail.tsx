@@ -101,9 +101,9 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
     return subsets.map((subset, vsIdx) => ({
       id: vsIdx,
       name: subset.name,
-      labelSubset: Object.keys(subset.labels).map((key, _) => (
-        <Label key={key} name={key} value={subset.labels[key]} />
-      )),
+      labelSubset: subset.labels
+        ? Object.keys(subset.labels).map((key, _) => <Label key={key} name={key} value={subset.labels[key]} />)
+        : [],
       trafficPolicy: <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
     }));
   }
