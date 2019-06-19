@@ -20,6 +20,9 @@ provisioner:
           control_plane_namespace: istio-system
         kiali:
           cr_path: 'kiali-cr.yaml'
+          accessible_namespaces: 
+          - "default"
+          - "istio-system"
           operator_namespace: kiali-operator
           operator_image: quay.io/kiali/kiali-operator:latest
           auth_strategy: openshift

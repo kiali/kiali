@@ -4,10 +4,10 @@
     - kiali_configmap.auth.strategy == kiali.auth_strategy
 
 
-- name: Assert Kiali Configmap has the correct Label Selector
-  assert:
-    that:
-    - kiali_configmap.api.namespaces.label_selector ==  kiali.label_selector
+# - name: Assert Kiali Configmap has the correct Label Selector
+#   assert:
+#     that:
+#     - kiali_configmap.api.namespaces.label_selector ==  kiali.label_selector
 
 
 - name: Assert Kiali Configmap has the correct Image Version
@@ -56,3 +56,9 @@
     that:
     - kiali_configmap.external_services.istio.url_service_version == "http://istio-pilot.{{ istio.control_plane_namespace }}:8080/version"
 
+
+
+# - name: Assert Kiali Configmap has the correct Accessible Namespace List
+#   assert:
+#     that:
+#     - kiali_configmap.deployment.accessible_namespaces == kiali.accessible_namespaces

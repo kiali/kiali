@@ -3,11 +3,12 @@ kind: Kiali
 metadata:
   name: kiali
 spec:
+  istio_namespace: {{ istio.control_plane_namespace }}
   auth:
     strategy: {{ kiali.auth_strategy }}
-    istio_namespace: {{ istio.control_plane_namespace }}
-    image_name: {{ kiali.image_name }}
   deployment:
+    image_name: {{ kiali.image_name }}
     image_pull_policy: {{ kiali.image_pull_policy }}
     image_version: {{ kiali.image_version }}
+    accessible_namespaces: {{ kiali.accessible_namespaces }}
 

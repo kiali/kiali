@@ -20,13 +20,15 @@ provisioner:
           control_plane_namespace: istio-system
         kiali:
           cr_path: 'kiali-cr.yaml'
+          accessible_namespaces: 
+          - "**"
           operator_namespace: kiali-operator
           operator_image: quay.io/kiali/kiali-operator:latest
-          auth_strategy: login
+          auth_strategy: openshift
           image_name: quay.io/kiali/kiali
-          label_selector: kiali.io/member-of={{ istio.control_plane_namespace }}
+          label_selector: ""
           image_version: v0.21.0
-          image_pull_policy: Always
+          image_pull_policy: IfNotPresent
 scenario:
   name: default
   test_sequence:
