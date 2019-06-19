@@ -9,16 +9,16 @@
       namespace: '{{ kiali.operator_namespace }}'
       definition: "{{ lookup('template', '/'.join([deploy_dir, kiali_cr])) }}"
 
-  - name: Pause in order not to Generate a Hanging Namespace
+  - name: Pause in order not to create a namespace stuck problem
     pause:
       minutes: 2
 
-  - name: Remove Custom Resource Definition
+  - name: Removing Custom Resource Definition
     k8s:
       state: absent
       definition: "{{ lookup('file', '/'.join([deploy_dir, 'crd.yaml'])) }}"
 
-  - name: Remove RBAC resources
+  - name: Removing RBAC resources
     k8s:
       state: absent
       definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
@@ -30,7 +30,7 @@
       - operator.yaml
 
 
-  - name: Remove kiali-operator namespace is present
+  - name: Removing kiali-operator namespace 
     k8s:
       api_version: v1
       state: absent

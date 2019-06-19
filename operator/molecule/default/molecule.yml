@@ -2,32 +2,38 @@
 dependency:
   name: galaxy
 platforms:
-- name: test-auth
+- name: default
   groups:
   - k8s
 provisioner:
   name: ansible
   options:
     vvv: True
+  config_options:
+    defaults:
+      callback_whitelist: junit
+      # stdout_callback: junit
   playbooks:
     destroy: ../default/destroy.yml
     prepare: ../default/prepare.yml
   inventory:
     group_vars:
       all:
+        istio:
+          control_plane_namespace: istio-system
         kiali:
           operator_namespace: kiali-operator
           operator_image: quay.io/kiali/kiali-operator:latest
           auth_strategy: openshift
-          label_selector: kiali.io/member-of=istio-system
-        istio_control_plane_namespace: istio-system
+          image_name: quay.io/kiali/kiali
+          version: v0.21.0
+          image_pull_policy: Always
         deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/deploy"
         kiali_cr: 'kiali-cr.yaml'
 verifier:
   name: testinfra
-  directory: test-auth/tests/
 scenario:
-  name: test-auth
+  name: default
   test_sequence:
     - prepare
     - converge

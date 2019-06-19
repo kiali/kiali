@@ -4,7 +4,7 @@
   connection: local
   tasks:
 
-  - name: Ensure kiali-operator namespace is present
+  - name: Create Kiali Operator Namespace
     k8s:
       api_version: v1
       kind: Namespace
@@ -30,3 +30,16 @@
     k8s:
       namespace: '{{ kiali.operator_namespace }}'
       definition: "{{ lookup('template', '/'.join([deploy_dir, kiali_cr])) }}"
+
+  
+  - name: Asserting that Kiali is Deployed
+    k8s_facts:
+      api_version: v1
+      kind: Deployment
+      namespace: '{{ istio.control_plane_namespace }}'
+      label_selectors:
+      - app = kiali      
+    register: kiali_pod
+    # until: (kiali_pod.status.ready_replicas is defined and kiali_pod.status.ready_replicas == 1)
+    # retries: 100
+    # delay: 10
