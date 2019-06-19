@@ -61,4 +61,8 @@
     register: kiali_deployment
     until: kiali_deployment.resources |length == 1 and kiali_deployment.resources[0].status.availableReplicas is defined and kiali_deployment.resources[0].status.availableReplicas == 1
     retries: 100
+<<<<<<< HEAD
     delay: 20
+=======
+    delay: 20
+>>>>>>> Adding a README and multi-tenancy test case

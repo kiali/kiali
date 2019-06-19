@@ -2,6 +2,9 @@
 - name: Destroy
   hosts: localhost
   connection: local
+  vars:
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/deploy"
+    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, kiali.cr_path])) | from_yaml }}"
   tasks:
   - name: Remove Kiali CR
     k8s:
