@@ -5,10 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	core_v1 "k8s.io/api/core/v1"
-
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -17,28 +14,6 @@ import (
 type promClientSupplier func() (*prometheus.Client, error)
 
 var defaultPromClientSupplier = prometheus.NewClient
-
-var clientFactory kubernetes.ClientFactory
-
-func getService(token string, namespace string, service string) (*core_v1.ServiceSpec, error) {
-	if clientFactory == nil {
-		userClientFactory, err := kubernetes.GetClientFactory()
-		if err != nil {
-			return nil, err
-		}
-		clientFactory = userClientFactory
-	}
-
-	client, err := clientFactory.GetClient(token)
-	if err != nil {
-		return nil, err
-	}
-	svc, err := client.GetService(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-	return &svc.Spec, nil
-}
 
 func validateURL(serviceURL string) (*url.URL, error) {
 	return url.ParseRequestURI(serviceURL)

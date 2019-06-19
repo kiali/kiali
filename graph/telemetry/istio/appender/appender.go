@@ -170,7 +170,7 @@ func getAppWorkloads(app, version string, ni *graph.AppenderNamespaceInfo) []mod
 }
 
 func IncludeIstio(o graph.TelemetryOptions) bool {
-	includeIstio := defaultIncludeIstio
+	var includeIstio bool
 	includeIstioString := o.Params.Get("includeIstio")
 	if includeIstioString == "" {
 		includeIstio = defaultIncludeIstio

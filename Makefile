@@ -276,18 +276,14 @@ openshift-reload-image: .ensure-oc-exists
 ## k8s-reload-image: Refreshing image in Kubernetes namespace.
 k8s-reload-image: openshift-reload-image
 
-## gometalinter-install: Installs gometalinter
-gometalinter-install:
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install
-	curl -L https://github.com/dominikh/go-tools/releases/download/2019.1.1/staticcheck_linux_amd64 -o $$GOPATH/bin/staticcheck
-	chmod +x $$GOPATH/bin/staticcheck
+## lint-install: Installs golangci-lint
+lint-install:
+	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $$(go env GOPATH)/bin v1.17.1
 
-## lint: Runs gometalinter
+## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=500s --vendor $$(glide nv | grep -v '^\.$$')
-	gometalinter --disable-all --enable=vet --enable=staticcheck --tests --deadline=500s --vendor kiali.go
+	golangci-lint run --skip-files "doc\.go" --tests -D errcheck
 
 ## lint-all: Runs gometalinter with items from good to have list but does not run during travis
 lint-all:
