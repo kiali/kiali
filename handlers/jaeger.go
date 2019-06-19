@@ -68,8 +68,6 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 }
 
 func canAccessURL(url string, auth *config.Auth) (bool, int, error) {
-	timeout := time.Duration(1000 * time.Millisecond)
-	_, code, _ := httputil.HttpGet(url, auth, timeout)
-
-	return code == 200, code, nil
+	_, code, err := httputil.HttpGet(url, auth, 1000*time.Millisecond)
+	return code == 200, code, err
 }
