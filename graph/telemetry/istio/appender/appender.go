@@ -114,9 +114,14 @@ const (
 	workloadListKey      = "workloadList"      // namespace vendor info
 )
 
-type serviceEntryHost struct {
+type serviceEntry struct {
 	location string
-	host     string
+	name     string // serviceEntry name
+}
+
+type serviceEntryHost struct {
+	host string
+	serviceEntry
 }
 
 func newServiceEntryHosts() []serviceEntryHost {
