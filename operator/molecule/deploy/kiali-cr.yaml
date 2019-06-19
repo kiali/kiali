@@ -5,3 +5,6 @@ metadata:
 spec:
   auth:
     strategy: {{ kiali.auth_strategy }}
+    istio_namespace: {{ istio.control_plane_namespace }}
+    image_name: {{ kiali.image_name }}
+    image_pull_policy: {{ kiali.image_pull_policy }}
