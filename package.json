@@ -56,8 +56,7 @@
     "snyk": "snyk test",
     "analyze": "source-map-explorer build/static/js/main.*",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
-    "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "@patternfly/patternfly": "2.4.1",
