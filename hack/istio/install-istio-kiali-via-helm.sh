@@ -352,5 +352,10 @@ else
   done
   echo "done"
   ${CLIENT_EXE} apply -f /tmp/istio.yaml
-fi
 
+  if [ "${KIALI_ENABLED}" == "true" ]; then
+    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["apps.openshift.io"], "resources":["deploymentconfigs"],"verbs": ["get", "list", "watch"]}}]' --type json
+    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["project.openshift.io"], "resources":["projects"],"verbs": ["get"]}}]' --type json
+    ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["route.openshift.io"], "resources":["routes"],"verbs": ["get"]}}]' --type json
+  fi
+fi
