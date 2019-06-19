@@ -139,6 +139,7 @@ var TCP Protocol = Protocol{
 // Protocols defines the supported protocols to be handled by the vendor code.
 var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
+// AddToMetadata takes a single traffic value and adds it appropriately as source, dest and edge traffic
 func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	if val <= 0.0 {
 		return
@@ -204,6 +205,7 @@ func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, e
 	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, val)
 }
 
+// AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffoc value
 func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	if val, valOk := edgeMetadata[grpc]; valOk {
 		addToMetadataValue(sourceMetadata, grpcOut, val.(float64))
@@ -216,6 +218,18 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	}
 }
 
+// AggregateNodeMetadata adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
+func AggregateNodeMetadata(nodeMetadata, aggregateNodeMetadata Metadata) {
+	for _, protocol := range Protocols {
+		for _, rate := range protocol.NodeRates {
+			if val, ok := nodeMetadata[rate.Name]; ok {
+				addToMetadataValue(aggregateNodeMetadata, rate.Name, val.(float64))
+			}
+		}
+	}
+}
+
+// AddServiceGraphTraffic is for aggregating edge traffic when reducing to service graph from workload graph
 func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
 	protocol, ok := toEdge.Metadata["protocol"]
 	if !ok {

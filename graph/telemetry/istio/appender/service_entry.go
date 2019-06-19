@@ -79,19 +79,19 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 	// Replace "se" nodes with an aggregated serviceEntry node
 	for se, serviceNodes := range seMap {
 		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
+		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
 		for _, doomedServiceNode := range serviceNodes {
 			// redirect edges leading to the doomed service node to the new aggregate
 			for _, n := range trafficMap {
 				for _, edge := range n.Edges {
 					if edge.Dest.ID == doomedServiceNode.ID {
 						edge.Dest = &serviceEntryNode
-						// TODO aggregate traffic
+						graph.AggregateNodeMetadata(doomedServiceNode.Metadata, serviceEntryNode.Metadata)
 					}
 				}
 			}
 		}
 	}
-
 }
 
 // getServiceEntry queries the cluster API to resolve service entries across all accessible namespaces
