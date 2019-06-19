@@ -181,6 +181,7 @@
 # with regex expressions removed because when the CR changes, we need to know what namespaces were granted roles in
 # case we need to revoke those roles (to do this, we need to know the exact names of the namespaces).
 # This must be done before the next step which is figuring out what namespaces are no longer accessible and revoking their roles.
+# If the user did not specify Kiali's own namespace in accessible_namespaces, it will be added to the list automatically.
 # NOTE: there is a special value of accessible_namespaces - two asterisks ("**") means Kiali is to be given access to all
 # namespaces via a single cluster role (as opposed to individual roles in each accessible namespace).
 
@@ -197,17 +198,18 @@
 
 - name: Determine all accessible namespaces, expanding regex expressions to matched namespaces
   set_fact:
-    all_accessible_namespaces: "{{ ((all_accessible_namespaces | default([])) + [ item.1 | regex_search(item.0) ]) | unique }}"
+    all_accessible_namespaces: "{{ ((all_accessible_namespaces | default([ kiali_vars.deployment.namespace ])) + [ item.1 | regex_search(item.0) ]) | unique }}"
   loop: "{{ kiali_vars.deployment.accessible_namespaces | product(all_namespaces) | list }}"
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
   - item.1 | regex_search(item.0)
 
-- fail:
-    msg: "Kiali has not been granted access to any namespaces. Check the deployment.accessible_namespaces setting."
+- name: If Kiali has not been granted access to any namespaces, just use the deployment namespace
+  set_fact:
+    all_accessible_namespaces: "{{ [ kiali_vars.deployment.namespace ]}}"
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
-  - all_accessible_namespaces is not defined or all_accessible_namespaces | length < 1
+  - all_accessible_namespaces is not defined or all_accessible_namespaces | length == 0
 
 - fail:
     msg: "Kiali has not been granted access to its own namespace of [{{ kiali_vars.deployment.namespace }}]. This is explicitly required. Check the deployment.accessible_namespaces setting."
