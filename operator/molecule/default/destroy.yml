@@ -2,12 +2,15 @@
 - name: Destroy
   hosts: localhost
   connection: local
+  vars:
+    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/deploy"
+    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, kiali.cr_path])) | from_yaml }}"
   tasks:
   - name: Remove Kiali CR
     k8s:
       state: absent
       namespace: '{{ kiali.operator_namespace }}'
-      definition: "{{ lookup('template', '/'.join([deploy_dir, kiali_cr])) }}"
+      definition: "{{ lookup('template', '/'.join([deploy_dir, kiali.cr_path])) }}"
 
   - name: Pause in order not to create a namespace stuck problem
     pause:
@@ -18,15 +21,36 @@
       state: absent
       definition: "{{ lookup('file', '/'.join([deploy_dir, 'crd.yaml'])) }}"
 
-  - name: Removing RBAC resources
+  - name: Removing Role
     k8s:
       state: absent
       definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
       namespace: '{{ kiali.operator_namespace }}'
     with_items:
       - role.yaml
+
+  - name: Removing Role Binding
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
+      namespace: '{{ kiali.operator_namespace }}'
+    with_items:
       - role_binding.yaml
+
+  - name: Removing Service Account
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
+      namespace: '{{ kiali.operator_namespace }}'
+    with_items:
       - service_account.yaml
+
+  - name: Removing Operator Deployment
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))  }}"
+      namespace: '{{ kiali.operator_namespace }}'
+    with_items:
       - operator.yaml
 
 

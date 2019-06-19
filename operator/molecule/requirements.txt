@@ -1,0 +1,4 @@
+# Project requirements
+# 'pip install -r requirements.txt'
+molecule
+junit-xml
