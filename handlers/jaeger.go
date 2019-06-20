@@ -54,10 +54,8 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		auth.Token = requestToken
 	}
 
-	if ha, code, err := canAccessURL(apiURL, &auth); !ha {
-		return nil, code, errors.New("can't reach Jaeger query service")
-	} else if err != nil {
-		return nil, http.StatusInternalServerError, err
+	if ha, err := canAccessURL(apiURL, &auth); !ha {
+		return nil, http.StatusServiceUnavailable, err
 	}
 
 	info := &models.JaegerInfo{
@@ -67,7 +65,7 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 	return info, http.StatusOK, nil
 }
 
-func canAccessURL(url string, auth *config.Auth) (bool, int, error) {
+func canAccessURL(url string, auth *config.Auth) (bool, error) {
 	_, code, err := httputil.HttpGet(url, auth, 1000*time.Millisecond)
-	return code == 200, code, err
+	return code == 200, err
 }
