@@ -4691,6 +4691,10 @@
               "type": "object",
               "x-go-name": "Endpoints"
             },
+            "exportTo": {
+              "type": "object",
+              "x-go-name": "ExportTo"
+            },
             "hosts": {
               "type": "object",
               "x-go-name": "Hosts"
@@ -4706,6 +4710,10 @@
             "resolution": {
               "type": "object",
               "x-go-name": "Resolution"
+            },
+            "subjectAltNames": {
+              "type": "object",
+              "x-go-name": "SubjectAltNames"
             }
           },
           "x-go-name": "Spec"
@@ -5699,6 +5707,10 @@
         "spec": {
           "type": "object",
           "properties": {
+            "exportTo": {
+              "type": "object",
+              "x-go-name": "ExportTo"
+            },
             "gateways": {
               "type": "object",
               "x-go-name": "Gateways"
