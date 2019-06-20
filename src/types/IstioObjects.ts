@@ -343,6 +343,7 @@ export interface VirtualServiceSpec {
   http?: HTTPRoute[];
   tcp?: TCPRoute[];
   tls?: TLSRoute[];
+  exportTo?: string[] | null;
 }
 
 export interface VirtualService extends IstioObject {
@@ -436,6 +437,8 @@ export interface ServiceEntrySpec {
   location?: string;
   resolution?: string;
   endpoints?: Endpoint[];
+  exportTo?: string[];
+  subjectAltNames?: string[];
 }
 
 export interface ServiceEntry extends IstioObject {
