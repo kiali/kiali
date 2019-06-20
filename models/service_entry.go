@@ -11,13 +11,13 @@ type ServiceEntry struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
-		Hosts      		interface{} `json:"hosts"`
-		Addresses  		interface{} `json:"addresses"`
-		Ports      		interface{} `json:"ports"`
-		Location   		interface{} `json:"location"`
-		Resolution 		interface{} `json:"resolution"`
-		Endpoints  		interface{} `json:"endpoints"`
-		ExportTo   		interface{} `json:"exportTo"`
+		Hosts           interface{} `json:"hosts"`
+		Addresses       interface{} `json:"addresses"`
+		Ports           interface{} `json:"ports"`
+		Location        interface{} `json:"location"`
+		Resolution      interface{} `json:"resolution"`
+		Endpoints       interface{} `json:"endpoints"`
+		ExportTo        interface{} `json:"exportTo"`
 		SubjectAltNames interface{} `json:"subjectAltNames"`
 	} `json:"spec"`
 }
