@@ -102,7 +102,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 		go func(istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
 			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, service)
-			if errValidations != nil && err == nil {
+			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
 				*istioConfigValidations = istioConfigValidationResults

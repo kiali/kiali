@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-- 1.9.4
+- 1.12.1
 
 notifications:
   irc:
@@ -29,9 +29,9 @@ env:
 # decided to no longer commit vendor dependencies into the source tree.
 # See: https://github.com/golang/dep/blob/master/docs/FAQ.md#should-i-commit-my-vendor-directory
 install:
- - make dep-install
  - make swagger-install
- - make gometalinter-install
+ - make lint-install
+#- make dep-install
 #- make dep-update
 
 script:

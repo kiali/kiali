@@ -51,7 +51,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 			defer wg.Done()
 			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
 			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, "")
-			if errValidations != nil && err == nil {
+			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
 				if len(parsedTypes) > 0 {
@@ -197,7 +197,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		go func(istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
 			istioConfigValidationResults, errValidations := business.Validations.GetIstioObjectValidations(namespace, objectType, object)
-			if errValidations != nil && err == nil {
+			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {
 				*istioConfigValidations = istioConfigValidationResults

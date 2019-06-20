@@ -78,16 +78,6 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (m MultiMatchChecker) matchingServiceEntry(host string) bool {
-	for k := range m.ServiceEntries {
-		if k == host {
-			return true
-		}
-	}
-
-	return false
-}
-
 func isNonLocalmTLSForServiceEnabled(dr kubernetes.IstioObject, service string) bool {
 	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
 }
