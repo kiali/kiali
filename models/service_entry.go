@@ -11,12 +11,14 @@ type ServiceEntry struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
-		Hosts      interface{} `json:"hosts"`
-		Addresses  interface{} `json:"addresses"`
-		Ports      interface{} `json:"ports"`
-		Location   interface{} `json:"location"`
-		Resolution interface{} `json:"resolution"`
-		Endpoints  interface{} `json:"endpoints"`
+		Hosts           interface{} `json:"hosts"`
+		Addresses       interface{} `json:"addresses"`
+		Ports           interface{} `json:"ports"`
+		Location        interface{} `json:"location"`
+		Resolution      interface{} `json:"resolution"`
+		Endpoints       interface{} `json:"endpoints"`
+		ExportTo        interface{} `json:"exportTo"`
+		SubjectAltNames interface{} `json:"subjectAltNames"`
 	} `json:"spec"`
 }
 
@@ -37,4 +39,6 @@ func (se *ServiceEntry) Parse(serviceEntry kubernetes.IstioObject) {
 	se.Spec.Location = serviceEntry.GetSpec()["location"]
 	se.Spec.Resolution = serviceEntry.GetSpec()["resolution"]
 	se.Spec.Endpoints = serviceEntry.GetSpec()["endpoints"]
+	se.Spec.ExportTo = serviceEntry.GetSpec()["exportTo"]
+	se.Spec.SubjectAltNames = serviceEntry.GetSpec()["subjectAltNames"]
 }

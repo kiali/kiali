@@ -32,6 +32,7 @@ type VirtualService struct {
 		Http     interface{} `json:"http"`
 		Tcp      interface{} `json:"tcp"`
 		Tls      interface{} `json:"tls"`
+		ExportTo interface{} `json:"exportTo"`
 	} `json:"spec"`
 }
 
@@ -52,6 +53,7 @@ func (vService *VirtualService) Parse(virtualService kubernetes.IstioObject) {
 	vService.Spec.Http = virtualService.GetSpec()["http"]
 	vService.Spec.Tcp = virtualService.GetSpec()["tcp"]
 	vService.Spec.Tls = virtualService.GetSpec()["tls"]
+	vService.Spec.ExportTo = virtualService.GetSpec()["exportTo"]
 }
 
 // IsValidHost returns true if VirtualService hosts applies to the service
