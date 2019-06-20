@@ -106,12 +106,20 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       const getGrafanaInfoPromise = API.getGrafanaInfo()
         .then(response => this.props.setGrafanaInfo(response.data))
         .catch(error => {
-          MessageCenter.add(API.getErrorMsg('Error fetching Grafana Info.', error), 'default', MessageType.WARNING);
+          MessageCenter.add(
+            API.getErrorMsg('Could not fetch Grafana info. Turning off links to Grafana.', error),
+            'default',
+            MessageType.INFO
+          );
         });
       const getJaegerInfoPromise = API.getJaegerInfo()
         .then(response => this.setJaegerInfo(response.data))
         .catch(error => {
-          MessageCenter.add(API.getErrorMsg('Error fetching Jaeger Info.', error), 'default', MessageType.WARNING);
+          MessageCenter.add(
+            API.getErrorMsg('Could not fetch Jaeger info. Turning off Jaeger integration.', error),
+            'default',
+            MessageType.INFO
+          );
         });
       const getMeshTlsPromise = API.getMeshTls()
         .then(response => this.props.setMeshTlsStatus(response.data))
