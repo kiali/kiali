@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 import ServiceInfoDescription from '../ServiceInfoDescription';
 
 const labels = { app: 'reviews' };
@@ -48,6 +49,6 @@ describe('#ServiceInfoDescription render correctly with data', () => {
       />
     );
     expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });
