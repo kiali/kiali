@@ -6,7 +6,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
@@ -50,7 +49,6 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	log.Warningf("NamespaceInfo=%+v", *namespaceInfo)
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
@@ -80,7 +78,6 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se" nodes with an aggregated serviceEntry node
 	for se, serviceNodes := range seMap {
-		log.Warningf("Aggregating into %+v", *se)
 		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
@@ -99,18 +96,17 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 					}
 				}
 			}
-			log.Warningf("Deleting %+v", *doomedServiceNode)
 			delete(trafficMap, doomedServiceNode.ID)
 		}
-		log.Warningf("Adding %+v", serviceEntryNode)
 		trafficMap[serviceEntryNode.ID] = &serviceEntryNode
 	}
 }
 
 // getServiceEntry queries the cluster API to resolve service entries across all accessible namespaces
 // in the cluster.
-// TODO: We may need to do more work here. serviceEntries can now be exported to specific namespaces.  The
-// default is all namespaces (*) but a single namespace (.) is also supported.
+// TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace but exported to
+// all namespaces (exportTo: *). It's possible that would allow traffic to flow from an accessible workload
+// through a serviceEntry whose definition we can't fetch.
 func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, found := getServiceEntryHosts(globalInfo)
 	if !found {
