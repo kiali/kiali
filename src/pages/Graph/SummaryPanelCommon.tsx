@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon } from 'patternfly-react';
 import { NodeType, SummaryPanelPropType, Protocol } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
-import { MetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
+import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
@@ -101,7 +101,7 @@ export const getNodeMetrics = (
   byLabels?: Array<string>
 ): Promise<Response<M.Metrics>> => {
   const data = nodeData(node);
-  const options: MetricsOptions = {
+  const options: IstioMetricsOptions = {
     queryTime: props.queryTime,
     duration: props.duration,
     step: props.step,

@@ -2,9 +2,10 @@ import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 import isEqual from 'lodash/fp/isEqual';
+import { LabelDisplayName } from 'k-charted-react';
 
 import history, { URLParam } from '../../app/History';
-import { LabelDisplayName, AllLabelsValues } from '../../types/Metrics';
+import { AllLabelsValues } from '../../types/Metrics';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
 const allQuantiles: Quantiles[] = ['0.5', '0.95', '0.99', '0.999'];

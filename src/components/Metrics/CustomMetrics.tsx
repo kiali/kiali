@@ -2,24 +2,25 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import { PF3Dashboard, DashboardModel, LabelDisplayName, DashboardQuery, Aggregator } from 'k-charted-react';
 
+import { serverConfig } from '../../config/ServerConfig';
+import history from '../../app/History';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
-import * as M from '../../types/Metrics';
-import { CustomMetricsOptions, Aggregator } from '../../types/MetricsOptions';
 import * as MessageCenter from '../../utils/MessageCenter';
 
-import { Dashboard } from './Dashboard';
 import * as MetricsHelper from './Helper';
 import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { AllLabelsValues } from '../../types/Metrics';
 
 type MetricsState = {
-  dashboard?: M.MonitoringDashboard;
-  labelValues: M.AllLabelsValues;
+  dashboard?: DashboardModel;
+  labelValues: AllLabelsValues;
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -35,7 +36,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     isPageVisible: true
   };
 
-  options: CustomMetricsOptions;
+  options: DashboardQuery;
 
   constructor(props: CustomMetricsProps) {
     super(props);
@@ -46,9 +47,13 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     };
   }
 
-  initOptions(): CustomMetricsOptions {
-    const options: CustomMetricsOptions = {
-      version: this.props.version
+  initOptions(): DashboardQuery {
+    let filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
+    if (this.props.version) {
+      filters += `,${serverConfig.istioLabels.versionLabelName}:${this.props.version}`;
+    }
+    const options: DashboardQuery = {
+      labelsFilters: filters
     };
     MetricsHelper.initMetricsSettings(options);
     MetricsHelper.initDuration(options);
@@ -60,7 +65,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   }
 
   fetchMetrics = () => {
-    API.getCustomDashboard(this.props.namespace, this.props.app, this.props.template, this.options)
+    API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
       .then(response => {
         const labelValues = MetricsHelper.extractLabelValues(response.data, this.state.labelValues);
         this.setState({
@@ -79,7 +84,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (label: M.LabelDisplayName, value: string, checked: boolean) => {
+  onLabelsFiltersChanged = (label: LabelDisplayName, value: string, checked: boolean) => {
     const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
     this.setState({ labelValues: newValues });
   };
@@ -102,6 +107,9 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
       return this.renderOptionsBar();
     }
 
+    const urlParams = new URLSearchParams(history.location.search);
+    const expandedChart = urlParams.get('expand') || undefined;
+
     const convertedLabels = MetricsHelper.convertAsPromLabels(
       this.state.dashboard.aggregations,
       this.state.labelValues
@@ -109,7 +117,12 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     return (
       <div>
         {this.renderOptionsBar()}
-        <Dashboard dashboard={this.state.dashboard} labelValues={convertedLabels} />
+        <PF3Dashboard
+          dashboard={this.state.dashboard}
+          labelValues={convertedLabels}
+          expandedChart={expandedChart}
+          expandHandler={this.expandHandler}
+        />
       </div>
     );
   }
@@ -143,6 +156,15 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
       </Toolbar>
     );
   }
+
+  private expandHandler = (expandedChart?: string) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.delete('expand');
+    if (expandedChart) {
+      urlParams.set('expand', expandedChart);
+    }
+    history.push(history.location.pathname + '?' + urlParams.toString());
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

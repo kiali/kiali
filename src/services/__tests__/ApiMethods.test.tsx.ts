@@ -1,6 +1,6 @@
 import * as API from '../Api';
 import { AxiosError } from 'axios';
-import { MetricsOptions } from '../../types/MetricsOptions';
+import { IstioMetricsOptions } from '../../types/MetricsOptions';
 
 describe('#GetErrorMessage', () => {
   const errormsg = 'Error sample';
@@ -78,7 +78,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getNamespaceMetrics', () => {
-    const result = API.getNamespaceMetrics('istio-system', {} as MetricsOptions);
+    const result = API.getNamespaceMetrics('istio-system', {} as IstioMetricsOptions);
     evaluatePromise(result);
   });
 
@@ -88,7 +88,7 @@ describe('#Test Methods return a Promise', () => {
   });
 
   it('#getAppMetrics', () => {
-    const result = API.getAppMetrics('istio-system', 'book-info', {} as MetricsOptions);
+    const result = API.getAppMetrics('istio-system', 'book-info', {} as IstioMetricsOptions);
     evaluatePromise(result);
   });
 

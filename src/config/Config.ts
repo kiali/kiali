@@ -66,8 +66,8 @@ const conf = {
       appHealth: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/health`,
       appMetrics: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/metrics`,
       appDashboard: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/dashboard`,
-      customDashboard: (namespace: string, app: string, template: string) =>
-        `api/namespaces/${namespace}/apps/${app}/customdashboard/${template}`,
+      customDashboard: (namespace: string, template: string) =>
+        `api/namespaces/${namespace}/customdashboard/${template}`,
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,

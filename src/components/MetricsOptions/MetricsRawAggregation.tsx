@@ -1,8 +1,8 @@
 import * as React from 'react';
+import { Aggregator } from 'k-charted-react';
 
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
-import { Aggregator } from '../../types/MetricsOptions';
 
 interface Props {
   onChanged: (aggregator: Aggregator) => void;

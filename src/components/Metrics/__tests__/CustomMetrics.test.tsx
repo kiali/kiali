@@ -2,10 +2,10 @@ import * as React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
+import { DashboardModel } from 'k-charted-react';
 
 import CustomMetrics from '../CustomMetrics';
 import * as API from '../../../services/Api';
-import { MonitoringDashboard } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
 
 (window as any).SVGPathElement = a => a;
@@ -28,7 +28,7 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
   });
 };
 
-const mockCustomDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
+const mockCustomDashboard = (dashboard: DashboardModel): Promise<void> => {
   return mockAPIToPromise('getCustomDashboard', dashboard);
 };
 

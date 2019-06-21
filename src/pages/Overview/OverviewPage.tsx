@@ -35,7 +35,7 @@ import NamespaceInfo, { NamespaceStatus } from './NamespaceInfo';
 import OverviewCardContent from './OverviewCardContent';
 import NamespaceMTLSStatusContainer from '../../components/MTls/NamespaceMTLSStatus';
 import OverviewCardContentExpanded from './OverviewCardContentExpanded';
-import { MetricsOptions } from '../../types/MetricsOptions';
+import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import OverviewCardLinks from './OverviewCardLinks';
 import { KialiAppState } from '../../store/Store';
@@ -215,7 +215,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
 
   fetchMetricsChunk(chunk: NamespaceInfo[], duration: number) {
     const rateParams = computePrometheusRateParams(duration, 10);
-    const optionsIn: MetricsOptions = {
+    const optionsIn: IstioMetricsOptions = {
       filters: ['request_count'],
       duration: duration,
       step: rateParams.step,

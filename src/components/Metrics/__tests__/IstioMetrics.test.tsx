@@ -2,11 +2,12 @@ import * as React from 'react';
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
+import { DashboardModel, ChartModel } from 'k-charted-react';
 
 import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
-import { MetricsObjectTypes, MonitoringDashboard, Chart } from '../../../types/Metrics';
 import { store } from '../../../store/ConfigStore';
+import { MetricsObjectTypes } from '../../../types/Metrics';
 
 (window as any).SVGPathElement = a => a;
 let mounted: ReactWrapper<any, any> | null;
@@ -28,11 +29,11 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
   });
 };
 
-const mockServiceDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
+const mockServiceDashboard = (dashboard: DashboardModel): Promise<void> => {
   return mockAPIToPromise('getServiceDashboard', dashboard);
 };
 
-const mockWorkloadDashboard = (dashboard: MonitoringDashboard): Promise<void> => {
+const mockWorkloadDashboard = (dashboard: DashboardModel): Promise<void> => {
   return mockAPIToPromise('getWorkloadDashboard', dashboard);
 };
 
@@ -40,65 +41,55 @@ const mockGrafanaInfo = (info: any): Promise<any> => {
   return mockAPIToPromise('getGrafanaInfo', info);
 };
 
-const createMetricChart = (name: string): Chart => {
+const createMetricChart = (name: string): ChartModel => {
   return {
     name: name,
     unit: 'B',
     spans: 12,
-    metric: {
-      matrix: [
-        {
-          metric: { __name__: name },
-          values: [[1111, 5], [2222, 10]],
-          name: ''
-        }
-      ]
-    }
+    metric: [
+      {
+        labelSet: { __name__: name },
+        values: [[1111, 5], [2222, 10]],
+        name: ''
+      }
+    ]
   };
 };
 
-const createHistogramChart = (name: string): Chart => {
+const createHistogramChart = (name: string): ChartModel => {
   return {
     name: name,
     unit: 'B',
     spans: 12,
     histogram: {
-      average: {
-        matrix: [
-          {
-            metric: { __name__: name },
-            values: [[1111, 10], [2222, 11]],
-            name: name
-          }
-        ]
-      },
-      median: {
-        matrix: [
-          {
-            metric: { __name__: name },
-            values: [[1111, 20], [2222, 21]],
-            name: name
-          }
-        ]
-      },
-      percentile95: {
-        matrix: [
-          {
-            metric: { __name__: name },
-            values: [[1111, 30], [2222, 31]],
-            name: name
-          }
-        ]
-      },
-      percentile99: {
-        matrix: [
-          {
-            metric: { __name__: name },
-            values: [[1111, 40], [2222, 41]],
-            name: name
-          }
-        ]
-      }
+      average: [
+        {
+          labelSet: { __name__: name },
+          values: [[1111, 10], [2222, 11]],
+          name: name
+        }
+      ],
+      median: [
+        {
+          labelSet: { __name__: name },
+          values: [[1111, 20], [2222, 21]],
+          name: name
+        }
+      ],
+      percentile95: [
+        {
+          labelSet: { __name__: name },
+          values: [[1111, 30], [2222, 31]],
+          name: name
+        }
+      ],
+      percentile99: [
+        {
+          labelSet: { __name__: name },
+          values: [[1111, 40], [2222, 41]],
+          name: name
+        }
+      ]
     }
   };
 };

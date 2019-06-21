@@ -2,26 +2,25 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import { PF3Dashboard, DashboardModel, SingleLabelValues, LabelDisplayName } from 'k-charted-react';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { GrafanaInfo, KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
-import * as M from '../../types/Metrics';
-import { Direction, MetricsOptions, Reporter } from '../../types/MetricsOptions';
+import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOptions';
 import * as MessageCenter from '../../utils/MessageCenter';
 
-import { Dashboard } from './Dashboard';
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import history, { URLParam } from '../../app/History';
-import { AllLabelsValues, SingleLabelValues } from '../../types/Metrics';
+import { AllLabelsValues, MetricsObjectTypes } from '../../types/Metrics';
 
 type MetricsState = {
-  dashboard?: M.MonitoringDashboard;
-  labelValues: M.AllLabelsValues;
+  dashboard?: DashboardModel;
+  labelValues: AllLabelsValues;
 };
 
 type ObjectId = {
@@ -29,11 +28,11 @@ type ObjectId = {
   object: string;
 };
 
-export type IstioMetricsProps = ObjectId &
+type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
     isPageVisible?: boolean;
     grafanaInfo?: GrafanaInfo;
-    objectType: M.MetricsObjectTypes;
+    objectType: MetricsObjectTypes;
     direction: Direction;
   };
 
@@ -42,7 +41,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     isPageVisible: true
   };
 
-  options: MetricsOptions;
+  options: IstioMetricsOptions;
   grafanaLink: string | undefined;
 
   constructor(props: IstioMetricsProps) {
@@ -55,8 +54,8 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     };
   }
 
-  initOptions(): MetricsOptions {
-    const options: MetricsOptions = {
+  initOptions(): IstioMetricsOptions {
+    const options: IstioMetricsOptions = {
       reporter: MetricsReporter.initialReporter(this.props.direction),
       direction: this.props.direction
     };
@@ -117,15 +116,15 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   }
 
   fetchMetrics = () => {
-    let promise: Promise<API.Response<M.MonitoringDashboard>>;
+    let promise: Promise<API.Response<DashboardModel>>;
     switch (this.props.objectType) {
-      case M.MetricsObjectTypes.WORKLOAD:
+      case MetricsObjectTypes.WORKLOAD:
         promise = API.getWorkloadDashboard(this.props.namespace, this.props.object, this.options);
         break;
-      case M.MetricsObjectTypes.APP:
+      case MetricsObjectTypes.APP:
         promise = API.getAppDashboard(this.props.namespace, this.props.object, this.options);
         break;
-      case M.MetricsObjectTypes.SERVICE:
+      case MetricsObjectTypes.SERVICE:
       default:
         promise = API.getServiceDashboard(this.props.namespace, this.props.object, this.options);
         break;
@@ -148,9 +147,9 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   getGrafanaLink(): string | undefined {
     if (this.props.grafanaInfo) {
       switch (this.props.objectType) {
-        case M.MetricsObjectTypes.SERVICE:
+        case MetricsObjectTypes.SERVICE:
           return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.serviceDashboardPath}?var-service=${this.props.object}.${this.props.namespace}.svc.cluster.local`;
-        case M.MetricsObjectTypes.WORKLOAD:
+        case MetricsObjectTypes.WORKLOAD:
           return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?var-namespace=${this.props.namespace}&var-workload=${this.props.object}`;
         default:
           return undefined;
@@ -164,7 +163,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (label: M.LabelDisplayName, value: string, checked: boolean) => {
+  onLabelsFiltersChanged = (label: LabelDisplayName, value: string, checked: boolean) => {
     const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
     this.setState({ labelValues: newValues });
   };
@@ -187,6 +186,9 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
       return this.renderOptionsBar();
     }
 
+    const urlParams = new URLSearchParams(history.location.search);
+    const expandedChart = urlParams.get('expand') || undefined;
+
     const convertedLabels = MetricsHelper.convertAsPromLabels(
       this.state.dashboard.aggregations,
       this.state.labelValues
@@ -194,7 +196,12 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     return (
       <div>
         {this.renderOptionsBar()}
-        <Dashboard dashboard={this.state.dashboard} labelValues={convertedLabels} />
+        <PF3Dashboard
+          dashboard={this.state.dashboard}
+          labelValues={convertedLabels}
+          expandedChart={expandedChart}
+          expandHandler={this.expandHandler}
+        />
       </div>
     );
   }
@@ -227,6 +234,15 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
       </Toolbar>
     );
   }
+
+  private expandHandler = (expandedChart?: string) => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.delete('expand');
+    if (expandedChart) {
+      urlParams.set('expand', expandedChart);
+    }
+    history.push(history.location.pathname + '?' + urlParams.toString());
+  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

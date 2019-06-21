@@ -9,7 +9,7 @@ import { Icon } from 'patternfly-react';
 import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
-import { MetricsOptions } from '../../types/MetricsOptions';
+import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Paths } from '../../config';
 
@@ -132,7 +132,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
   }
 
   private updateRpsChart = (props: SummaryPanelPropType) => {
-    const options: MetricsOptions = {
+    const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
       queryTime: props.queryTime,
       duration: props.duration,
@@ -143,7 +143,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     };
     const promiseHTTP = API.getNamespaceMetrics(props.namespaces[0].name, options);
     // TCP metrics are only available for reporter="source"
-    const optionsTCP: MetricsOptions = {
+    const optionsTCP: IstioMetricsOptions = {
       filters: ['tcp_sent', 'tcp_received'],
       queryTime: props.queryTime,
       duration: props.duration,
