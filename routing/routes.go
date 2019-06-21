@@ -649,10 +649,9 @@ func NewRoutes() (r *Routes) {
 			handlers.WorkloadDashboard,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} customDashboard
+		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard
 		// ---
-		// Endpoint to fetch custom dashboard to be displayed, based on the provided template.
-		// Label filters, such as app or version, can be provided as query parameters.
+		// Endpoint to fetch a custom dashboard
 		//
 		//     Produces:
 		//     - application/json

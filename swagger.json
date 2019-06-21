@@ -662,16 +662,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -686,16 +689,20 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -734,8 +741,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
@@ -847,16 +855,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -871,24 +882,31 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -927,8 +945,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
@@ -957,7 +976,7 @@
     },
     "/namespaces/{namespace}/customdashboard/{dashboard}": {
       "get": {
-        "description": "Label filters, such as app or version, can be provided as query parameters.",
+        "description": "Endpoint to fetch a custom dashboard",
         "produces": [
           "application/json"
         ],
@@ -965,7 +984,9 @@
           "http",
           "https"
         ],
-        "summary": "Endpoint to fetch custom dashboard to be displayed, based on the provided template.",
+        "tags": [
+          "dashboards"
+        ],
         "operationId": "customDashboard",
         "parameters": [
           {
@@ -986,23 +1007,34 @@
           },
           {
             "type": "string",
-            "default": "true",
+            "x-go-name": "Name",
+            "description": "In custom dashboards, additional labels that are made available for grouping in the UI, regardless which aggregations are defined in the MonitoringDashboard CR",
+            "name": "additionalLabels",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
@@ -1010,7 +1042,17 @@
           },
           {
             "type": "string",
-            "default": "[]",
+            "x-go-name": "Name",
+            "description": "In custom dashboards, labels filters to use when fetching metrics, formatted as key:value pairs. Ex: \"app:foo,version:bar\".",
+            "name": "labelsFilters",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -1033,18 +1075,12 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "Filters metrics by the specified version.",
-            "name": "version",
             "in": "query"
           }
         ],
@@ -1866,16 +1902,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -1890,16 +1929,20 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -1938,8 +1981,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
@@ -2144,16 +2188,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2168,24 +2215,31 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2224,8 +2278,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
@@ -2400,16 +2455,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2424,16 +2482,20 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2472,8 +2534,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
@@ -2686,16 +2749,19 @@
             "required": true
           },
           {
-            "type": "string",
-            "default": "true",
+            "type": "boolean",
+            "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2710,24 +2776,31 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "1800",
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
             "x-go-name": "Name",
             "description": "Duration of the query period, in seconds.",
             "name": "duration",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "[]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2766,8 +2839,9 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "default": "15",
+            "type": "integer",
+            "format": "int64",
+            "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
