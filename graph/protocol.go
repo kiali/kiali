@@ -220,9 +220,11 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 
 // AggregateNodeMetadata adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
 func AggregateNodeMetadata(nodeMetadata, aggregateNodeMetadata Metadata) {
+	log.Warning("In AggregateNodemetadata...")
 	for _, protocol := range Protocols {
 		for _, rate := range protocol.NodeRates {
 			if val, ok := nodeMetadata[rate.Name]; ok {
+				log.Warningf("protocol=%s: rate=%s: add %v.2", protocol.Name, rate.Name, val)
 				addToMetadataValue(aggregateNodeMetadata, rate.Name, val.(float64))
 			}
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
@@ -49,6 +50,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
+	log.Warningf("NamespaceInfo=%+v", *namespaceInfo)
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
@@ -78,6 +80,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 
 	// Replace "se" nodes with an aggregated serviceEntry node
 	for se, serviceNodes := range seMap {
+		log.Warningf("Aggregating into %+v", *se)
 		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
 		for _, doomedServiceNode := range serviceNodes {
@@ -90,7 +93,11 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 					}
 				}
 			}
+			log.Warningf("Deleting %+v", *doomedServiceNode)
+			delete(trafficMap, doomedServiceNode.ID)
 		}
+		log.Warningf("Adding %+v", serviceEntryNode)
+		trafficMap[serviceEntryNode.ID] = &serviceEntryNode
 	}
 }
 

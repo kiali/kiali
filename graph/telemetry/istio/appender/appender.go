@@ -53,6 +53,7 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if _, ok := requestedAppenders[ServiceEntryAppenderName]; ok || o.Appenders.All {
 		a := ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
+			GraphType:            o.GraphType,
 		}
 		appenders = append(appenders, a)
 	}
