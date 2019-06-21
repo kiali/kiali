@@ -3,7 +3,7 @@ package business
 import (
 	dlg "github.com/kiali/k-charted/business"
 	dlgconfig "github.com/kiali/k-charted/config"
-	"github.com/kiali/k-charted/model"
+	kmodel "github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -35,13 +35,13 @@ func DashboardsConfig() dlgconfig.Config {
 }
 
 type istioChart struct {
-	model.Chart
+	kmodel.Chart
 	refName string
 }
 
 var istioCharts = []istioChart{
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "Request volume",
 			Unit:  "ops",
 			Spans: 6,
@@ -49,7 +49,7 @@ var istioCharts = []istioChart{
 		refName: "request_count",
 	},
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "Request duration",
 			Unit:  "seconds",
 			Spans: 6,
@@ -57,7 +57,7 @@ var istioCharts = []istioChart{
 		refName: "request_duration",
 	},
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "Request size",
 			Unit:  "bytes",
 			Spans: 6,
@@ -65,7 +65,7 @@ var istioCharts = []istioChart{
 		refName: "request_size",
 	},
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "Response size",
 			Unit:  "bytes",
 			Spans: 6,
@@ -73,7 +73,7 @@ var istioCharts = []istioChart{
 		refName: "response_size",
 	},
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "TCP received",
 			Unit:  "bitrate",
 			Spans: 6,
@@ -81,7 +81,7 @@ var istioCharts = []istioChart{
 		refName: "tcp_received",
 	},
 	{
-		Chart: model.Chart{
+		Chart: kmodel.Chart{
 			Name:  "TCP sent",
 			Unit:  "bitrate",
 			Spans: 6,
@@ -91,8 +91,8 @@ var istioCharts = []istioChart{
 }
 
 // GetIstioDashboard returns Istio dashboard (currently hard-coded) filled-in with metrics
-func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQuery) (*model.MonitoringDashboard, error) {
-	var dashboard model.MonitoringDashboard
+func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQuery) (*kmodel.MonitoringDashboard, error) {
+	var dashboard kmodel.MonitoringDashboard
 	// Copy dashboard
 	if params.Direction == "inbound" {
 		dashboard = models.PrepareIstioDashboard("Inbound", "destination", "source")
@@ -117,13 +117,13 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 }
 
 // GetCustomDashboardRefs finds all dashboard IDs and Titles associated to this app and add them to the model
-func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []model.Runtime {
+func (in *DashboardsService) GetCustomDashboardRefs(namespace, app, version string, pods []*models.Pod) []kmodel.Runtime {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "DashboardsService", "GetCustomDashboardRefs")
 	defer promtimer.ObserveNow(&err)
 
 	// A better way to do?
-	var podsCast []model.Pod
+	var podsCast []kmodel.Pod
 	for _, p := range pods {
 		podsCast = append(podsCast, p)
 	}

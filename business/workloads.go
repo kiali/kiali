@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kiali/k-charted/model"
+	kmodel "github.com/kiali/k-charted/model"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -64,7 +64,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		return nil, err
 	}
 
-	var runtimes []model.Runtime
+	var runtimes []kmodel.Runtime
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {

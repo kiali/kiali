@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/kiali/k-charted/model"
+	kmodel "github.com/kiali/k-charted/model"
 )
 
 type AppList struct {
@@ -60,5 +60,5 @@ type App struct {
 	ServiceNames []string `json:"serviceNames"`
 
 	// Runtimes and associated dashboards
-	Runtimes []model.Runtime `json:"runtimes"`
+	Runtimes []kmodel.Runtime `json:"runtimes"`
 }
