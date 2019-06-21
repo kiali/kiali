@@ -127,14 +127,12 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 					if entry.Spec.Location == "MESH_INTERNAL" {
 						location = "MESH_INTERNAL"
 					}
+					se := serviceEntry{
+						location: location,
+						name:     entry.Metadata.Name,
+					}
 					for _, host := range entry.Spec.Hosts.([]interface{}) {
-						serviceEntryHosts = append(serviceEntryHosts, serviceEntryHost{
-							host: host.(string),
-							serviceEntry: serviceEntry{
-								location: location,
-								name:     entry.Metadata.Name,
-							},
-						})
+						serviceEntryHosts.addHost(host.(string), &se)
 					}
 				}
 			}
@@ -142,17 +140,17 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 		globalInfo.Vendor[serviceEntryHostsKey] = serviceEntryHosts
 	}
 
-	for _, serviceEntryHost := range serviceEntryHosts {
+	for host, se := range serviceEntryHosts {
 		// handle exact match
 		// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
 		// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
-		if serviceEntryHost.host == serviceName {
-			return &serviceEntryHost.serviceEntry, true
+		if host == serviceName {
+			return se, true
 		}
 		// handle serviceName prefix (e.g. host = serviceName.namespace.svc.cluster.local)
-		if serviceEntryHost.location == "MESH_INTERNAL" {
-			if strings.Split(serviceEntryHost.host, ".")[0] == serviceName {
-				return &serviceEntryHost.serviceEntry, true
+		if se.location == "MESH_INTERNAL" {
+			if strings.Split(host, ".")[0] == serviceName {
+				return se, true
 			}
 		}
 	}
