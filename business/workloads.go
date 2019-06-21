@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	kmodel "github.com/kiali/k-charted/model"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -63,7 +64,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		return nil, err
 	}
 
-	var runtimes []models.Runtime
+	var runtimes []kmodel.Runtime
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -71,7 +72,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		conf := config.Get()
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		dash := NewDashboardsService(nil, in.prom)
+		dash := NewDashboardsService(in.prom)
 		runtimes = dash.GetCustomDashboardRefs(namespace, app, version, workload.Pods)
 	}()
 

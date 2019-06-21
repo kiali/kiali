@@ -21,7 +21,11 @@ import (
 )
 
 func TestReadProcStat(t *testing.T) {
-	stats, err := xfs.ReadProcStat("../fixtures/proc")
+	xfs, err := xfs.NewFS("../fixtures/proc", "../fixtures/sys")
+	if err != nil {
+		t.Fatalf("failed to access xfs fs: %v", err)
+	}
+	stats, err := xfs.ProcStat()
 	if err != nil {
 		t.Fatalf("failed to parse XFS stats: %v", err)
 	}
@@ -34,7 +38,11 @@ func TestReadProcStat(t *testing.T) {
 }
 
 func TestReadSysStats(t *testing.T) {
-	stats, err := xfs.ReadSysStats("../fixtures/sys")
+	xfs, err := xfs.NewFS("../fixtures/proc", "../fixtures/sys")
+	if err != nil {
+		t.Fatalf("failed to access xfs fs: %v", err)
+	}
+	stats, err := xfs.SysStats()
 	if err != nil {
 		t.Fatalf("failed to parse XFS stats: %v", err)
 	}

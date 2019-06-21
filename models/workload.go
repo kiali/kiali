@@ -1,6 +1,7 @@
 package models
 
 import (
+	kmodel "github.com/kiali/k-charted/model"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -95,7 +96,7 @@ type Workload struct {
 	Services Services `json:"services"`
 
 	// Runtimes and associated dashboards
-	Runtimes []Runtime `json:"runtimes"`
+	Runtimes []kmodel.Runtime `json:"runtimes"`
 }
 
 type Workloads []*Workload

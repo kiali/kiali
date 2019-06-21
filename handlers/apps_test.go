@@ -174,7 +174,6 @@ func setupAppListEndpoint() (*httptest.Server, *kubetest.K8SClientMock, *prometh
 	config.Set(config.NewConfig())
 	k8s := kubetest.NewK8SClientMock()
 	prom := new(prometheustest.PromClientMock)
-	prom.MockEmptyMetricsDiscovery()
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, prom)

@@ -85,7 +85,7 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 	}
-	dash := NewDashboardsService(nil, in.prom)
+	dash := NewDashboardsService(in.prom)
 	(*appInstance).Runtimes = dash.GetCustomDashboardRefs(namespace, appName, "", pods)
 
 	return *appInstance, nil

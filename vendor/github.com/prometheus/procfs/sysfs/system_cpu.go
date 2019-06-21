@@ -46,21 +46,11 @@ type SystemCPUCpufreqStats struct {
 
 // TODO: Add thermal_throttle support.
 
-// NewSystemCpufreq returns CPU frequency metrics for all CPUs.
-func NewSystemCpufreq() ([]SystemCPUCpufreqStats, error) {
-	fs, err := NewFS(DefaultMountPoint)
-	if err != nil {
-		return []SystemCPUCpufreqStats{}, err
-	}
-
-	return fs.NewSystemCpufreq()
-}
-
-// NewSystemCpufreq returns CPU frequency metrics for all CPUs.
-func (fs FS) NewSystemCpufreq() ([]SystemCPUCpufreqStats, error) {
+// SystemCpufreq returns CPU frequency metrics for all CPUs.
+func (fs FS) SystemCpufreq() ([]SystemCPUCpufreqStats, error) {
 	var g errgroup.Group
 
-	cpus, err := filepath.Glob(fs.Path("devices/system/cpu/cpu[0-9]*"))
+	cpus, err := filepath.Glob(fs.sys.Path("devices/system/cpu/cpu[0-9]*"))
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +60,10 @@ func (fs FS) NewSystemCpufreq() ([]SystemCPUCpufreqStats, error) {
 		cpuName := strings.TrimPrefix(filepath.Base(cpu), "cpu")
 
 		cpuCpufreqPath := filepath.Join(cpu, "cpufreq")
-		if _, err := os.Stat(cpuCpufreqPath); os.IsNotExist(err) {
+		_, err = os.Stat(cpuCpufreqPath)
+		if os.IsNotExist(err) {
 			continue
-		}
-		if err != nil {
+		} else if err != nil {
 			return nil, err
 		}
 

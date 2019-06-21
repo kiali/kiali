@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/kiali/k-charted/model"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/models"
@@ -13,7 +14,7 @@ import (
 // - keep this alphabetized
 /////////////////////
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard customDashboard
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -105,12 +106,12 @@ type SinceTimeParam struct {
 }
 
 // swagger:parameters customDashboard
-type TemplateParam struct {
-	// The dashboard template name.
+type DashboardParam struct {
+	// The dashboard resource name.
 	//
 	// in: path
 	// required: true
-	Name string `json:"template"`
+	Name string `json:"dashboard"`
 }
 
 // swagger:parameters workloadDetails workloadValidations workloadMetrics graphWorkload workloadDashboard
@@ -211,6 +212,15 @@ type QueryTimeParam struct {
 // - keep this alphabetized
 /////////////////////
 
+// swagger:parameters customDashboard
+type AdditionalLabelsParam struct {
+	// In custom dashboards, additional labels that are made available for grouping in the UI, regardless which aggregations are defined in the MonitoringDashboard CR
+	//
+	// in: query
+	// required: false
+	Name string `json:"additionalLabels"`
+}
+
 // swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
 type AvgParam struct {
 	// Flag for fetching histogram average. Default is true.
@@ -218,7 +228,7 @@ type AvgParam struct {
 	// in: query
 	// required: false
 	// default: true
-	Name string `json:"avg"`
+	Name bool `json:"avg"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
@@ -228,7 +238,7 @@ type ByLabelsParam struct {
 	// in: query
 	// required: false
 	// default: []
-	Name string `json:"byLabels[]"`
+	Name []string `json:"byLabels[]"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
@@ -248,7 +258,7 @@ type DurationParam struct {
 	// in: query
 	// required: false
 	// default: 1800
-	Name string `json:"duration"`
+	Name int `json:"duration"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics
@@ -258,7 +268,17 @@ type FiltersParam struct {
 	// in: query
 	// required: false
 	// default: []
-	Name string `json:"filters[]"`
+	Name []string `json:"filters[]"`
+}
+
+// swagger:parameters customDashboard
+type LabelsFiltersParam struct {
+	// In custom dashboards, labels filters to use when fetching metrics, formatted as key:value pairs. Ex: "app:foo,version:bar".
+	//
+	// in: query
+	// required: false
+	//
+	Name string `json:"labelsFilters"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
@@ -268,7 +288,7 @@ type QuantilesParam struct {
 	// in: query
 	// required: false
 	// default: []
-	Name string `json:"quantiles[]"`
+	Name []string `json:"quantiles[]"`
 }
 
 // swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
@@ -318,10 +338,10 @@ type StepParam struct {
 	// in: query
 	// required: false
 	// default: 15
-	Name string `json:"step"`
+	Name int `json:"step"`
 }
 
-// swagger:parameters serviceMetrics appMetrics workloadMetrics customDashboard
+// swagger:parameters serviceMetrics appMetrics workloadMetrics
 type VersionParam struct {
 	// Filters metrics by the specified version.
 	//
@@ -519,7 +539,7 @@ type MetricsResponse struct {
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// in:body
-	Body models.MonitoringDashboard
+	Body model.MonitoringDashboard
 }
 
 // IstioConfig details of an specific Istio Object

@@ -424,7 +424,14 @@ func TestParseStats(t *testing.T) {
 			stats, err = xfs.ParseStats(strings.NewReader(tt.s))
 		}
 		if tt.fs {
-			stats, err = xfs.ReadProcStat("../fixtures/proc")
+			xfs, err := xfs.NewFS("../fixtures/proc", "../fixtures/sys")
+			if err != nil {
+				t.Fatalf("failed to access xfs fs: %v", err)
+			}
+			stats, err = xfs.ProcStat()
+			if err != nil {
+				t.Fatalf("failed to gather xfs stats: %v", err)
+			}
 		}
 
 		if tt.invalid && err == nil {

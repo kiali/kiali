@@ -27,4 +27,13 @@ func TestNewFS(t *testing.T) {
 	if _, err := NewFS("procfs.go"); err == nil {
 		t.Error("want NewFS to fail if mount point is not a directory")
 	}
+	getProcFixtures(t)
+}
+
+func getProcFixtures(t *testing.T) FS {
+	fs, err := NewFS(procTestFixtures)
+	if err != nil {
+		t.Fatalf("Creating pseudo fs from getProcFixtures failed at fixtures/proc with error: %s", err)
+	}
+	return fs
 }

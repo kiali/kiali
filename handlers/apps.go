@@ -4,11 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	khttp "github.com/kiali/k-charted/http"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -90,43 +89,8 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 
 // CustomDashboard is the API handler to fetch runtime metrics to be displayed, related to a single app
 func CustomDashboard(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	app := vars["app"]
-	template := vars["template"]
-
-	prom, namespaceInfo := initClientsForMetrics(w, r, defaultPromClientSupplier, namespace)
-	if prom == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-
-	monitoringClient, err := kubernetes.NewKialiMonitoringClient()
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusServiceUnavailable, "Kiali monitoring client error: "+err.Error())
-		return
-	}
-
-	svc := business.NewDashboardsService(monitoringClient, prom)
-
-	params := prometheus.CustomMetricsQuery{Namespace: namespace, App: app}
-	err = extractCustomMetricsQueryParams(r, &params, namespaceInfo)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	dashboard, err := svc.GetDashboard(params, template)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			RespondWithError(w, http.StatusNotFound, err.Error())
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, dashboard)
+	cfg := business.DashboardsConfig()
+	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg)
 }
 
 // AppDashboard is the API handler to fetch Istio dashboard, related to a single app
@@ -148,7 +112,7 @@ func AppDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc := business.NewDashboardsService(nil, prom)
+	svc := business.NewDashboardsService(prom)
 	dashboard, err := svc.GetIstioDashboard(params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

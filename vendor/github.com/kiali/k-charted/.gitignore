@@ -1,0 +1,15 @@
+# The compliled binary
+k-charted
+
+# Files specific to our build process
+_output
+
+# Swap files
+.*.sw*
+
+# Eclipse
+.project
+.settings/
+
+# IntelliJ
+.idea/

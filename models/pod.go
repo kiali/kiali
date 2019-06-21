@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"strings"
 
 	core_v1 "k8s.io/api/core/v1"
 
@@ -24,7 +23,7 @@ type Pod struct {
 	Status              string            `json:"status"`
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
-	RuntimesAnnotation  []string          `json:"runtimesAnnotation"`
+	Annotations         map[string]string `json:"annotations"`
 }
 
 // Reference holds some information on the pod creator
@@ -58,10 +57,11 @@ type sideCarStatus struct {
 	InitContainers []string `json:"initContainers"`
 }
 
-// ParsePod extracts desired information from k8s Pod info
+// Parse extracts desired information from k8s Pod info
 func (pod *Pod) Parse(p *core_v1.Pod) {
 	pod.Name = p.Name
 	pod.Labels = p.Labels
+	pod.Annotations = p.Annotations
 	pod.CreatedAt = formatTime(p.CreationTimestamp.Time)
 	for _, ref := range p.OwnerReferences {
 		pod.CreatedBy = append(pod.CreatedBy, Reference{
@@ -102,14 +102,6 @@ func (pod *Pod) Parse(p *core_v1.Pod) {
 		}
 		pod.Containers = append(pod.Containers, &container)
 	}
-	// Check for custom dashboards annotation
-	if rawRuntimes, ok := p.Annotations["kiali.io/runtimes"]; ok {
-		runtimes := strings.Split(rawRuntimes, ",")
-		pod.RuntimesAnnotation = []string{}
-		for _, runtime := range runtimes {
-			pod.RuntimesAnnotation = append(pod.RuntimesAnnotation, strings.TrimSpace(runtime))
-		}
-	}
 	pod.Status = string(p.Status.Phase)
 	_, pod.AppLabel = p.Labels[conf.IstioLabels.AppLabelName]
 	_, pod.VersionLabel = p.Labels[conf.IstioLabels.VersionLabelName]
@@ -139,4 +131,9 @@ func (pods Pods) HasIstioSidecar() bool {
 // HasIstioSidecar returns true if the pod has an Isio proxy sidecar
 func (pod Pod) HasIstioSidecar() bool {
 	return len(pod.IstioContainers) > 0
+}
+
+// GetAnnotations is needed by k-charted
+func (pod *Pod) GetAnnotations() map[string]string {
+	return pod.Annotations
 }
