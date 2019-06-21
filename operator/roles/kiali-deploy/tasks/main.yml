@@ -248,6 +248,7 @@
 
 # The following few tasks read the current Kiali configmap (if one exists) in order to figure out what
 # namespaces are no longer accessible. Those namespaces will have their Kiali roles removed.
+# They will also have the Kiali labels removed.
 
 - name: Find current configmap, if it exists
   set_fact:
@@ -269,10 +270,16 @@
   - current_configmap.data is defined
   - current_configmap.data['config.yaml'] is defined
 
+# Because we need to remove the labels that were created before, we must not allow the user to change
+# the label_selector. So if the current accessible_namespaces is not ** but the label_select is being changed,
+# we need to abort since we won't know what the old labels were. If current accessible_namespaces is ** then
+# we know we didn't create labels before so we can allow label_selector to change.
 - name: Do not allow user to change label selector
   fail:
     msg: "The api.namespaces.label_selector cannot be changed to a different value. It was [{{ current_label_selector }}] but is now configured to be [{{ kiali_vars.api.namespaces.label_selector }}]. In order to install Kiali with a different label selector than what was used before, please uninstall Kiali first."
   when:
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
   - current_label_selector is defined
   - kiali_vars.api.namespaces.label_selector is defined
   - current_label_selector != kiali_vars.api.namespaces.label_selector
