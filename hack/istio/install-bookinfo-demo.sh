@@ -173,7 +173,7 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE expose svc productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc istio-ingressgateway -n istio-system
+  $CLIENT_EXE expose svc istio-ingressgateway --port http2 -n istio-system
 fi
 
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
