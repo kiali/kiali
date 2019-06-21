@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -120,18 +121,22 @@ type serviceEntry struct {
 	name     string // serviceEntry name
 }
 
-type serviceEntryHost struct {
-	host string
-	serviceEntry
+type serviceEntryHosts map[string]*serviceEntry
+
+func newServiceEntryHosts() serviceEntryHosts {
+	return make(map[string]*serviceEntry)
 }
 
-func newServiceEntryHosts() []serviceEntryHost {
-	return []serviceEntryHost{}
+func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
+	if existingSe, ok := seh[host]; ok {
+		log.Warningf("Same host [%s] found in ServiceEntry [%s] and [%s]", host, existingSe.name, se.name)
+	}
+	seh[host] = se
 }
 
-func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) ([]serviceEntryHost, bool) {
+func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
 	if seHosts, ok := gi.Vendor[serviceEntryHostsKey]; ok {
-		return seHosts.([]serviceEntryHost), true
+		return seHosts.(serviceEntryHosts), true
 	}
 	return newServiceEntryHosts(), false
 }
