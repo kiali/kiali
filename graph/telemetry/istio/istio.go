@@ -526,11 +526,11 @@ func addToDestServices(md graph.Metadata, namespace, service string) {
 	}
 	destServices, ok := md[graph.DestServices]
 	if !ok {
-		destServices = make(map[string]graph.Service)
+		destServices = graph.NewDestServicesMetadata()
 		md[graph.DestServices] = destServices
 	}
 	destService := graph.Service{Namespace: namespace, Name: service}
-	destServices.(map[string]graph.Service)[destService.Key()] = destService
+	destServices.(graph.DestServicesMetadata)[destService.Key()] = destService
 }
 
 func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o graph.TelemetryOptions) {

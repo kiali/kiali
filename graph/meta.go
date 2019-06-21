@@ -28,3 +28,11 @@ const (
 	ProtocolKey     MetadataKey = "protocol"
 	ResponseTime    MetadataKey = "responseTime"
 )
+
+// DestServicesMetadata key=Service.Key()
+type DestServicesMetadata map[string]Service
+
+// NewDestServicesMetadata returns an empty DestServicesMetadata map
+func NewDestServicesMetadata() DestServicesMetadata {
+	return make(map[string]Service)
+}

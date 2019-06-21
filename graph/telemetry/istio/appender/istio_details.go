@@ -65,7 +65,7 @@ NODES:
 			}
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
-				for _, ds := range destServices.(map[string]graph.Service) {
+				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, "") {
 							n.Metadata[graph.HasCB] = true
@@ -76,7 +76,7 @@ NODES:
 			}
 		case versionOk:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
-				for _, ds := range destServices.(map[string]graph.Service) {
+				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range istioCfg.DestinationRules.Items {
 						if destinationRule.HasCircuitBreaker(ds.Namespace, ds.Name, n.Version) {
 							n.Metadata[graph.HasCB] = true

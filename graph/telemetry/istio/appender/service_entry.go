@@ -83,13 +83,19 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		log.Warningf("Aggregating into %+v", *se)
 		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
+		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
 		for _, doomedServiceNode := range serviceNodes {
+			// aggregate traffic
+			graph.AggregateNodeMetadata(doomedServiceNode.Metadata, serviceEntryNode.Metadata)
+			// aggregate dest-services to capture all of the distinct requested services
+			for k, v := range doomedServiceNode.Metadata[graph.DestServices].(graph.DestServicesMetadata) {
+				serviceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)[k] = v
+			}
 			// redirect edges leading to the doomed service node to the new aggregate
 			for _, n := range trafficMap {
 				for _, edge := range n.Edges {
 					if edge.Dest.ID == doomedServiceNode.ID {
 						edge.Dest = &serviceEntryNode
-						graph.AggregateNodeMetadata(doomedServiceNode.Metadata, serviceEntryNode.Metadata)
 					}
 				}
 			}
