@@ -15,13 +15,13 @@ VERSION_TAG ?= $(shell sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 # with the version string to publish. Once the main Makefile is updated, all other parts
 # of this ci-Makefile should use BACKEND_VERSION since, then, it will contain the right
 # version string and the value of BACKEND_VERSION_TO_RELEASE will be invalid.
-ifeq ($(findstring $(RELEASE_TYPE),major patch),$(RELEASE_TYPE))
-  # For major and patch, bump the version that is present in Makefile. This will be the
+ifeq ($(RELEASE_TYPE),patch)
+  # For patch, bump the version that is present in Makefile. This will be the
   # version string to use for the release.
   BACKEND_VERSION_TO_RELEASE ?= v$(shell semver bump $(RELEASE_TYPE) $(BACKEND_VERSION))
 endif
-ifeq ($(RELEASE_TYPE),minor)
-  # For minor, remove the -SNAPSHOT suffix from the Makefile
+ifeq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
+  # For major and minor, remove the -SNAPSHOT suffix from the Makefile
   BACKEND_VERSION_TO_RELEASE ?= v$(shell semver bump release $(BACKEND_VERSION))
 endif
 
@@ -204,8 +204,8 @@ else
 endif
 
 backend-prepare-master-next-version:
-	# Only major and minor releases require to prepare the master branch for the next release
-ifeq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
+	# Only minor releases require to prepare the master branch for the next release
+ifeq ($(RELEASE_TYPE),minor)
 	sed -i "s/^CONSOLE_VERSION ?=.*/CONSOLE_VERSION ?= latest/" Makefile
 	sed -i -r "s/^VERSION \?= (.*)/VERSION \?= v$(BACKEND_BUMPED_VERSION)-SNAPSHOT/" Makefile
 	git add Makefile
