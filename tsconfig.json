@@ -16,6 +16,7 @@
     "noImplicitThis": true,
     "noImplicitAny": false,
     "strictNullChecks": true,
+    "noUnusedLocals": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "tsBuildInfoFile": ".tsbuildinfo"

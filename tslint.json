@@ -32,6 +32,7 @@
     "no-switch-case-fall-through": true,
     "no-trailing-whitespace": false,
     "no-unused-expression": true,
+    "no-unused-variable": false,
     "no-use-before-declare": true,
     "no-var-keyword": true,
     "one-line": [true, "check-catch", "check-else", "check-open-brace", "check-whitespace"],

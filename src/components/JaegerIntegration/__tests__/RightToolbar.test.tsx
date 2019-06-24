@@ -3,11 +3,8 @@ import { shallow } from 'enzyme';
 import RightToolbar from '../RightToolbar';
 
 describe('RightToolbar', () => {
-  let wrapper, onGraphClick, onSummaryClick, onMinimapClick, onSubmit;
+  let wrapper, onSubmit;
   beforeEach(() => {
-    onGraphClick = jest.fn();
-    onMinimapClick = jest.fn();
-    onSummaryClick = jest.fn();
     onSubmit = jest.fn();
     const props = {
       disabled: false,
