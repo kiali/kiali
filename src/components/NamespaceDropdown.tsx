@@ -3,15 +3,19 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _ from 'lodash';
 import { style } from 'typestyle';
-import { Button, Icon, OverlayTrigger, Popover, FormControl, InputGroup } from 'patternfly-react';
+import { Button, FormControl, Icon, InputGroup, OverlayTrigger, Popover } from 'patternfly-react';
 import { KialiAppState } from '../store/Store';
-import { activeNamespacesSelector, namespaceItemsSelector, namespaceFilterSelector } from '../store/Selectors';
+import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespaceActions } from '../actions/NamespaceAction';
 import NamespaceThunkActions from '../actions/NamespaceThunkActions';
 import Namespace from '../types/Namespace';
 import { PfColors } from './Pf/PfColors';
 import { HistoryManager, URLParam } from '../app/History';
+import {
+  BoundingClientAwareComponent,
+  PropertyType
+} from './BoundingClientAwareComponent/BoundingClientAwareComponent';
 
 const namespaceButtonColors = {
   backgroundColor: PfColors.White,
@@ -39,20 +43,29 @@ const namespaceValueStyle = style({
   fontWeight: 400
 });
 
-interface NamespaceListType {
-  disabled: boolean;
-  filter: string;
+const popoverMarginBottom = 20;
+
+const namespaceContainerStyle = style({
+  overflow: 'overlay'
+});
+
+interface ReduxProps {
   activeNamespaces: Namespace[];
+  filter: string;
   items: Namespace[];
-  toggleNamespace: (namespace: Namespace) => void;
-  setNamespaces: (namespaces: Namespace[]) => void;
-  setFilter: (filter: string) => void;
   refresh: () => void;
+  toggleNamespace: (namespace: Namespace) => void;
+  setFilter: (filter: string) => void;
+  setNamespaces: (namespaces: Namespace[]) => void;
+}
+
+interface NamespaceDropdownProps extends ReduxProps {
+  disabled: boolean;
   clearAll: () => void;
 }
 
-export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}> {
-  constructor(props: NamespaceListType) {
+export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProps> {
+  constructor(props: NamespaceDropdownProps) {
     super(props);
   }
 
@@ -61,7 +74,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
     this.syncNamespacesURLParam();
   }
 
-  componentDidUpdate(prevProps: NamespaceListType) {
+  componentDidUpdate(prevProps: NamespaceDropdownProps) {
     if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
       if (this.props.activeNamespaces.length === 0) {
         HistoryManager.deleteParam(URLParam.NAMESPACES);
@@ -164,7 +177,12 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceListType, {}
               Clear all
             </Button>
           </div>
-          <div>{namespaces}</div>
+          <BoundingClientAwareComponent
+            className={namespaceContainerStyle}
+            maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: popoverMarginBottom }}
+          >
+            {namespaces}
+          </BoundingClientAwareComponent>
         </>
       );
     }
