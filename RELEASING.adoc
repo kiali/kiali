@@ -12,16 +12,13 @@ and trigger the release by yourself.
 If you don't have access to Jenkins, or want to test the release locally,
 <<run-locally,you can run it on your machine>>.
 
-Currently, the Pipeline supports only _minor_, _snapshot (end-of-week)_
+Currently, the Pipeline supports _major_, _minor_, _snapshot (end-of-week)_
 and patch releases. _Minor_ and _snapshot_ releases will release the
 back-end and the front-end together. _Patch_ releases have the
 option to omit releasing the UI and, instead, use the latest UI in
 the final package.
 
-Support for _major_ releases through Jenkins is available, but
-has not been tested yet.
-
-Edge-snapshots (or snapshots after merged PRs) are handled by Travis.
+Edge-snapshots (or snapshots after merged PRs) are also handled in the Pipeline.
 
 == Finished product
 
@@ -97,7 +94,7 @@ Those PRs cover both the ansible-installer and the helm installer updates.
 
 === Send out notifications
 
-Finally, we just need to send the nofications to create awareness of the new
+Finally, we just need to send the notifications to create awareness of the new
 release.
 
 Post an email about the release on our
@@ -128,6 +125,8 @@ The Pipeline performs the following actions to do the release:
 ** If a _minor_ release was done, _master_ branches are prepared for the
     next version and a version branches named of the form _vX.Y_ are created
 ** If a _patch_ release was done, _vX.Y_ branches are prepared for the next version
+** If a _major_ release was done, versions in _vX.Y_ branches are promoted
+    (-snapshot suffix is removed)
 
 == [[run-locally]]Running the release process locally
 
@@ -196,8 +195,6 @@ the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" an
 *Note*: The process will adjust the version string as needed, according to
 the type of release. Please, don't try to adjust the version string (i.e.
 don't change the version in the `Makefile`).
-
-*Note*: The release process has not been tested for `RELEASE_TYPE=major` yet.
 
 === Available options
 

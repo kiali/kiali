@@ -5,7 +5,7 @@
 FROM centos:7
 
 RUN yum group install -y 'Development Tools'
-RUN curl -sL https://rpm.nodesource.com/setup_11.x | bash -
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
 RUN curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | tee /etc/yum.repos.d/yarn.repo 
 RUN yum install -y npm yarn
 RUN curl -s https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz -o go.tar.gz && \
