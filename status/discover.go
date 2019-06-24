@@ -15,7 +15,7 @@ import (
 )
 
 // Route names to lookup for discovery
-var tracingLookupRoutes = [...]string{"tracing", "jaeger-query"}
+var tracingLookupRoutes = [...]string{"jaeger-query", "tracing"}
 
 var clientFactory kubernetes.ClientFactory
 
