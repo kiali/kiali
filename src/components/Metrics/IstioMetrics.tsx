@@ -148,9 +148,13 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     if (this.props.grafanaInfo) {
       switch (this.props.objectType) {
         case MetricsObjectTypes.SERVICE:
-          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.serviceDashboardPath}?var-service=${this.props.object}.${this.props.namespace}.svc.cluster.local`;
+          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.serviceDashboardPath}?var-service=${
+            this.props.object
+          }.${this.props.namespace}.svc.cluster.local`;
         case MetricsObjectTypes.WORKLOAD:
-          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?var-namespace=${this.props.namespace}&var-workload=${this.props.object}`;
+          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?var-namespace=${
+            this.props.namespace
+          }&var-workload=${this.props.object}`;
         default:
           return undefined;
       }

@@ -12,7 +12,7 @@ import {
   SMALL_SIZE,
   MEDIUM_SIZE
 } from '../../../components/ConfigValidation/ConfigIndicator';
-import { Popover, OverlayTrigger, Icon } from 'patternfly-react';
+import { Popover, OverlayTrigger, Icon, Tooltip } from 'patternfly-react';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
@@ -173,11 +173,20 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                 <Row key={'endpoint_' + i}>
                   <Col xs={12} sm={12} md={12} lg={12}>
                     <ul className={listStyle}>
-                      {(endpoint.addresses || []).map((address, u) => (
-                        <li key={'endpoint_' + i + '_address_' + u}>
-                          <strong>{address.ip} </strong>: {address.name}
-                        </li>
-                      ))}
+                      {(endpoint.addresses || []).map((address, u) => {
+                        const id = 'endpoint_' + i + '_address_' + u;
+                        return (
+                          <li key={id}>
+                            <OverlayTrigger
+                              overlay={<Tooltip id={id + '_tooltip'}>{address.name}</Tooltip>}
+                              trigger={['hover', 'focus']}
+                              rootClose={false}
+                            >
+                              <strong>{address.ip} </strong>
+                            </OverlayTrigger>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </Col>
                 </Row>
