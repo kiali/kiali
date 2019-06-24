@@ -12,7 +12,7 @@ UI_MAIN_BRANCH ?= master
 KIALI_BOT_USER ?= kiali-bot
 UI_FORK_URI ?= $(shell git config --get remote.origin.url)
 
-UI_VERSION ?= $(shell jq -r '.version' package.json)
+UI_VERSION = $(shell jq -r '.version' package.json)
 UI_VERSION_BRANCH ?= $(shell jq -r '.version' package.json | sed 's/\.[[:digit:]]\+$$//')
 
 # BUILD_TAG is an environment variable from Jenkins
@@ -20,10 +20,10 @@ BUILD_TAG ?= prepare-next-version
 BUMP_BRANCH_ID ?= $(BUILD_TAG)
 NPM_DRY_RUN ?= n
 
-# Only for "minors" the version currently stored in package.json
+# For minors and majors, the version currently stored in package.json
 # is the version to publish. All other kind of releases require
 # to modify the version string before building and publishing.
-ifneq ($(RELEASE_TYPE),minor)
+ifneq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
   UPDATE_VERSION_BEFORE_BUILD = y
 endif
 
@@ -37,20 +37,19 @@ ifneq ($(RELEASE_TYPE),edge)
   PUSH_TO_NPM = y
 endif
 
-# For "major" and "minor" releases, the "master" branch must be
-# updated to be prepared for the next major/minor release.
-# WARN: process for "major" releases is not tested yet
-ifeq ($(findstring $(RELEASE_TYPE),major minor),$(RELEASE_TYPE))
+# For "minor" releases, the "master" branch must be
+# updated to be prepared for the next minor release.
+ifeq ($(RELEASE_TYPE),minor)
   UPDATE_VERSION_POST_BUILD = y
 endif
 
-# For "major" and "minor" releases, a vX.Y branch must be
+# For "minor" releases, a vX.Y branch must be
 # created, in prevention of a possible patch release. For
 # "patch" releases, the (assumed) already existent version
 # branch should be updated in preparation/prevention for
 # the next patch release. Other release types should not
 # create/update the version branch.
-ifneq ($(findstring $(RELEASE_TYPE),major minor patch),$(RELEASE_TYPE))
+ifneq ($(findstring $(RELEASE_TYPE),minor patch),$(RELEASE_TYPE))
   OMIT_VERSION_BRANCH ?= y
 endif
 
