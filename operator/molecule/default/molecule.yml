@@ -16,19 +16,25 @@ provisioner:
   inventory:
     group_vars:
       all:
+        kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+        cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
         istio:
           control_plane_namespace: istio-system
         kiali:
-          cr_path: 'kiali-cr.yaml'
           accessible_namespaces: 
           - "**"
           operator_namespace: kiali-operator
-          operator_image: quay.io/kiali/kiali-operator:latest
+          operator_image_name: quay.io/kiali/kiali-operator
+          operator_version: latest
+          operator_watch_namespace: ""
+          operator_clusterrolebindings: "- clusterrolebindings"
+          operator_clusterroles: "- clusterroles"
           auth_strategy: openshift
           image_name: quay.io/kiali/kiali
           label_selector: ""
-          image_version: v0.21.0
-          image_pull_policy: IfNotPresent
+          image_version: latest
+          # Because when the version is set to Latest, it needs to be Always
+          image_pull_policy: Always
 scenario:
   name: default
   test_sequence:

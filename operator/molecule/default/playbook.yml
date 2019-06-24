@@ -2,8 +2,7 @@
   hosts: localhost
   connection: local
   vars:
-    deploy_dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/deploy"
-    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, kiali.cr_path])) | from_yaml }}"
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
   tasks:
 
   - name: Get Kiali CR is present
@@ -38,7 +37,7 @@
     set_fact:
       kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
  
-  - import_tasks: 'asserts/configmap_asserts.yml'
-  - import_tasks: 'asserts/pod_asserts.yml'
+  - import_tasks: '../asserts/configmap_asserts.yml'
+  - import_tasks: '../asserts/pod_asserts.yml'
 
  
