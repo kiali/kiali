@@ -29,6 +29,7 @@ KIALI_CREATE_SECRET="false"
 DASHBOARDS_ENABLED="false"
 USE_DEMO_VALUES="false"
 USE_DEMO_AUTH_VALUES="false"
+ISTIO_EGRESSGATEWAY_ENABLED="true"
 #HELM_REPO_TO_ADD="https://gcsweb.istio.io/gcs/istio-prerelease/daily-build/release-1.1-latest-daily/charts/"
 
 # process command line args
@@ -63,6 +64,15 @@ while [[ $# -gt 0 ]]; do
       ;;
     -id|--istio-dir)
       ISTIO_DIR="$2"
+      shift;shift
+      ;;
+    -iee|--istio-egressgateway-enabled)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        ISTIO_EGRESSGATEWAY_ENABLED="$2"
+      else
+        echo "ERROR: The --istio-egressgateway-enabled flag must be 'true' or 'false'"
+        exit 1
+      fi
       shift;shift
       ;;
     -ke|--kiali-enabled)
@@ -140,6 +150,9 @@ Valid command line arguments:
        Default: ${HELM_REPO_TO_ADD}
   -id|--istio-dir <dir>:
        Where Istio has already been downloaded. If not found, this script aborts.
+  -iee|--istio-egressgateway-enabled (true|false)
+       When set to true, istio-egressgateway will be installed.
+       Default: true
   -ke|--kiali-enabled (true|false):
        When set to true, Kiali will be installed.
        Ignored if --use-demo or --use-demo-auth is true.
@@ -317,7 +330,7 @@ else
   if [ "${KIALI_TAG}" != "" ]; then
     _KIALI_TAG_ARG="--set kiali.tag=${KIALI_TAG}"
   fi
-  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS} --set global.controlPlaneSecurityEnabled=${MTLS}"
+  _HELM_VALUES="--set kiali.enabled=${KIALI_ENABLED} ${_KIALI_TAG_ARG} --set tracing.enabled=${DASHBOARDS_ENABLED} --set grafana.enabled=${DASHBOARDS_ENABLED} --set global.mtls.enabled=${MTLS} --set global.controlPlaneSecurityEnabled=${MTLS} --set gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}"
 fi
 
 # Create the install yaml via the helm template command
