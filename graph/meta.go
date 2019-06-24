@@ -36,3 +36,9 @@ type DestServicesMetadata map[string]Service
 func NewDestServicesMetadata() DestServicesMetadata {
 	return make(map[string]Service)
 }
+
+// Add adds or replaces a destService
+func (dsm DestServicesMetadata) Add(key string, service Service) DestServicesMetadata {
+	dsm[key] = service
+	return dsm
+}
