@@ -40,7 +40,7 @@ func (in *DashboardsService) tracef(format string, args ...interface{}) {
 func (in *DashboardsService) prom() (prometheus.ClientInterface, error) {
 	// Lazy init
 	if in.promClient == nil {
-		client, err := prometheus.NewClient(in.config.PrometheusURL)
+		client, err := prometheus.NewClient(in.config.Prometheus)
 		if err != nil {
 			return nil, fmt.Errorf("cannot initialize Prometheus Client: %v", err)
 		}

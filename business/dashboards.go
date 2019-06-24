@@ -3,6 +3,7 @@ package business
 import (
 	dlg "github.com/kiali/k-charted/business"
 	dlgconfig "github.com/kiali/k-charted/config"
+	"github.com/kiali/k-charted/config/promconfig"
 	kmodel "github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/config"
@@ -28,9 +29,19 @@ func DashboardsConfig() dlgconfig.Config {
 	cfg := config.Get()
 	return dlgconfig.Config{
 		GlobalNamespace: cfg.IstioNamespace,
-		PrometheusURL:   cfg.ExternalServices.Prometheus.CustomMetricsURL,
-		Errorf:          log.Errorf,
-		Tracef:          log.Tracef,
+		Prometheus: promconfig.PrometheusConfig{
+			URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
+			Auth: promconfig.Auth{
+				Type:               cfg.ExternalServices.Prometheus.Auth.Type,
+				Username:           cfg.ExternalServices.Prometheus.Auth.Username,
+				Password:           cfg.ExternalServices.Prometheus.Auth.Password,
+				Token:              cfg.ExternalServices.Prometheus.Auth.Token,
+				InsecureSkipVerify: cfg.ExternalServices.Prometheus.Auth.InsecureSkipVerify,
+				CAFile:             cfg.ExternalServices.Prometheus.Auth.CAFile,
+			},
+		},
+		Errorf: log.Errorf,
+		Tracef: log.Tracef,
 	}
 }
 

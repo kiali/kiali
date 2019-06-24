@@ -1,5 +1,5 @@
-hash: a287a2dc9bc87d9c056d3006b69a248f2c59ad2952d6af31a9e3522c472578e3
-updated: 2019-06-28T10:58:53.326551118+02:00
+hash: 0bde97198660bd4e14e25938459fd3811ebd1cf9934baf0132bbe9b7bec6fdc8
+updated: 2019-06-28T13:00:51.763939379+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4b2b341e8d7715fae06375aa633dbb6e91b3fb46
@@ -53,10 +53,11 @@ imports:
 - name: github.com/json-iterator/go
   version: f2b4162afba35581b6d4a50d3b8f34e33c144682
 - name: github.com/kiali/k-charted
-  version: 0f63d3fa1f95c574ab2c5afa8771145ae1a51945
+  version: 378e9360b5d146e419ce8b6203b35b0fa1fcfb07
   subpackages:
   - business
   - config
+  - config/promconfig
   - http
   - kubernetes
   - kubernetes/v1alpha1
