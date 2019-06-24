@@ -74,7 +74,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
 
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = 'warning';
-      keys.map(key => {
+      keys.forEach(key => {
         const validations = this.props.validations![type][key];
         if (validationToSeverity(validations) === 'error') {
           severity = 'error';

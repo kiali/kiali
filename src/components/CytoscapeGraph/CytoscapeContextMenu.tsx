@@ -151,22 +151,22 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       distance: this.tippyDistance(target)
     }).instances[0];
 
-    ReactDOM.render(
+    const result = (
       <Provider store={store}>
         <Router history={history}>
           <ContextMenuComponentClass element={target} contextMenu={tippyInstance} {...target.data()} />
         </Router>
-      </Provider>,
-      content,
-      () => {
-        this.setCurrentContextMenu(tippyInstance);
-        tippyInstance.show();
-        // Schedule the removal of the contextmenu listener after finishing with the show procedure, so we can
-        // interact with the popper content e.g. select and copy (with right click) values from it.
-        setTimeout(() => {
-          this.removeContextMenuEventListener();
-        }, 0);
-      }
+      </Provider>
     );
+
+    ReactDOM.render(result, content, () => {
+      this.setCurrentContextMenu(tippyInstance);
+      tippyInstance.show();
+      // Schedule the removal of the contextmenu listener after finishing with the show procedure, so we can
+      // interact with the popper content e.g. select and copy (with right click) values from it.
+      setTimeout(() => {
+        this.removeContextMenuEventListener();
+      }, 0);
+    });
   }
 }

@@ -107,7 +107,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           name: node.workload || 'unknown',
           isInaccessible: node.isInaccessible || false
         };
-        break;
       case NodeType.APP:
         return {
           id: `${prefix}-${node.id}`,
@@ -117,7 +116,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           version: node.version || '',
           isInaccessible: node.isInaccessible || false
         };
-        break;
       case NodeType.SERVICE:
         return {
           id: `${prefix}-${node.id}`,
@@ -127,7 +125,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false
         };
-        break;
       default:
         return {
           id: `${prefix}-${node.id}`,
@@ -135,7 +132,6 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           namespace: node.namespace,
           name: 'unknown'
         };
-        break;
     }
   };
 

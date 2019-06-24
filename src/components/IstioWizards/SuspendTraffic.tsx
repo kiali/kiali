@@ -36,14 +36,14 @@ const listHeaderStyle = style({
   color: '#72767b',
   borderTop: '0px !important',
   $nest: {
-    ['.list-view-pf-main-info']: {
+    '.list-view-pf-main-info': {
       padding: 5
     },
-    ['.list-group-item-heading']: {
+    '.list-group-item-heading': {
       fontWeight: 300,
       textAlign: 'center'
     },
-    ['.list-group-item-text']: {
+    '.list-group-item-text': {
       textAlign: 'center'
     }
   }

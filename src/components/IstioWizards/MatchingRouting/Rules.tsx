@@ -28,11 +28,11 @@ const matchValueStyle = style({
 
 const ruleItemStyle = style({
   $nest: {
-    ['.list-group-item-heading']: {
+    '.list-group-item-heading': {
       flexBasis: 'calc(50% - 20px)',
       width: 'calc(50% - 20px)'
     },
-    ['.list-view-pf-actions']: {
+    '.list-view-pf-actions': {
       zIndex: 10
     }
   }

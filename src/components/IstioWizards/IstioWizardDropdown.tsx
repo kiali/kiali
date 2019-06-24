@@ -48,7 +48,7 @@ const DELETE_THREESCALE_INTEGRATION = 'delete_threescale_integration';
 
 const msgDialogStyle = style({
   $nest: {
-    ['.modal-content']: {
+    '.modal-content': {
       fontSize: '14px'
     }
   }

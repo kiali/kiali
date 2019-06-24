@@ -52,7 +52,7 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
     }
     const byLabels = urlParams.getAll(URLParam.BY_LABELS);
     if (byLabels.length !== 0) {
-      byLabels.map((val, idx) => {
+      byLabels.forEach((val, idx) => {
         byLabels[idx] = val.split('=', 1)[0];
       });
       settings.activeLabels = byLabels as LabelDisplayName[];

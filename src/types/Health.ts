@@ -168,24 +168,22 @@ export class ServiceHealth extends Health {
 
   private static computeItems(requests: RequestHealth, ctx: HealthContext): HealthItem[] {
     const items: HealthItem[] = [];
-    {
-      if (ctx.hasSidecar) {
-        // Request errors
-        const reqErrorsRatio = getRequestErrorsStatus(requests.errorRatio);
-        const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
-        const item: HealthItem = {
-          title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
-          status: reqErrorsRatio.status,
-          text: reqErrorsText
-        };
-        items.push(item);
-      } else {
-        items.push({
-          title: 'Error Rate',
-          status: NA,
-          text: 'No Istio sidecar'
-        });
-      }
+    if (ctx.hasSidecar) {
+      // Request errors
+      const reqErrorsRatio = getRequestErrorsStatus(requests.errorRatio);
+      const reqErrorsText = reqErrorsRatio.status === NA ? 'No requests' : reqErrorsRatio.value.toFixed(2) + '%';
+      const item: HealthItem = {
+        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
+        status: reqErrorsRatio.status,
+        text: reqErrorsText
+      };
+      items.push(item);
+    } else {
+      items.push({
+        title: 'Error Rate',
+        status: NA,
+        text: 'No Istio sidecar'
+      });
     }
     return items;
   }
@@ -229,19 +227,17 @@ export class AppHealth extends Health {
       }
       items.push(item);
     }
-    {
-      // Request errors
-      if (ctx.hasSidecar) {
-        const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
-        const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
-        const both = mergeStatus(reqIn.status, reqOut.status);
-        const item: HealthItem = {
-          title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
-          status: both,
-          children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
-        };
-        items.push(item);
-      }
+    // Request errors
+    if (ctx.hasSidecar) {
+      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
+      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const both = mergeStatus(reqIn.status, reqOut.status);
+      const item: HealthItem = {
+        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
+        status: both,
+        children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
+      };
+      items.push(item);
     }
     return items;
   }
@@ -297,19 +293,17 @@ export class WorkloadHealth extends Health {
       }
       items.push(item);
     }
-    {
-      // Request errors
-      if (ctx.hasSidecar) {
-        const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
-        const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
-        const both = mergeStatus(reqIn.status, reqOut.status);
-        const item: HealthItem = {
-          title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
-          status: both,
-          children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
-        };
-        items.push(item);
-      }
+    // Request errors
+    if (ctx.hasSidecar) {
+      const reqIn = getRequestErrorsStatus(requests.inboundErrorRatio);
+      const reqOut = getRequestErrorsStatus(requests.outboundErrorRatio);
+      const both = mergeStatus(reqIn.status, reqOut.status);
+      const item: HealthItem = {
+        title: 'Error Rate over ' + getName(ctx.rateInterval).toLowerCase(),
+        status: both,
+        children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
+      };
+      items.push(item);
     }
     return items;
   }

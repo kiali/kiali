@@ -110,7 +110,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
     const getValidationIcon = (keys: string[], type: string) => {
       let severity = 'warning';
-      keys.map(key => {
+      keys.forEach(key => {
         const validationsForIcon = (this.props.validations || {})![type][key];
         if (validationToSeverity(validationsForIcon) === 'error') {
           severity = 'error';

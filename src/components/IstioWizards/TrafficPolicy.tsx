@@ -161,12 +161,10 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
         return state.loadBalancer.consistentHash && state.loadBalancer.consistentHash.httpHeaderName
           ? state.loadBalancer.consistentHash.httpHeaderName.length > 0
           : false;
-        break;
       case ConsistentHashType.HTTP_COOKIE:
         return state.loadBalancer.consistentHash && state.loadBalancer.consistentHash.httpCookie
           ? this.isValidCookie(state.loadBalancer.consistentHash.httpCookie)
           : false;
-        break;
       default:
         return true;
     }

@@ -100,14 +100,14 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
         if (decoratedNode.data.traffic) {
           const traffic = decoratedNode.data.traffic;
           decoratedNode.data.traffic = undefined;
-          traffic.map(protocol => {
+          traffic.forEach(protocol => {
             decoratedNode.data = { ...protocol.rates, ...decoratedNode.data };
           });
         }
         // prettier-ignore
-        decoratedNode.data = <DecoratedGraphNodeData> { ...elementsDefaults.nodes, ...decoratedNode.data };
+        decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data } as DecoratedGraphNodeData;
         // prettier-ignore
-        return <DecoratedGraphNodeWrapper> decoratedNode;
+        return decoratedNode as DecoratedGraphNodeWrapper;
       });
     }
     if (graphData.edges) {
@@ -125,9 +125,9 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           };
         }
         // prettier-ignore
-        decoratedEdge.data = <DecoratedGraphEdgeData> { ...elementsDefaults.edges, ...decoratedEdge.data };
+        decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedGraphEdgeData;
         // prettier-ignore
-        return <DecoratedGraphEdgeWrapper> decoratedEdge;
+        return decoratedEdge as DecoratedGraphEdgeWrapper;
       });
     }
   }

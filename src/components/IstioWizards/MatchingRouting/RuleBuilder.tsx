@@ -36,7 +36,7 @@ const routeStyle = style({
   marginTop: 15,
   // Yes, you are right, this is a CSS trick to adjust style on combined components
   $nest: {
-    ['.rbt-token .rbt-token-remove-button']: {
+    '.rbt-token .rbt-token-remove-button': {
       right: 5
     }
   }

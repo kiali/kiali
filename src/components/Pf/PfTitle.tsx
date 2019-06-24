@@ -33,7 +33,7 @@ interface PfTitleState {
 class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
   constructor(props: PfTitleProps) {
     super(props);
-    const namespaceRegex = /namespaces\/([a-z0-9\-]+)\/([a-z0-9\-]+)\/([a-z0-9\-]+)(\/([a-z0-9\-]+))?(\/([a-z0-9\-]+))?/;
+    const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-]+))?(\/([a-z0-9-]+))?/;
     let type,
       ns,
       graphType,

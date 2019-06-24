@@ -129,8 +129,8 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
     if (authenticationConfig.secretMissing) {
       messages.push(
         this.renderMessage(
-          'The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator \
-      creates a valid secret. Please refer to the Kiali documentation for more details.',
+          `The Kiali secret is missing. Users are prohibited from accessing Kiali until an administrator
+          creates a valid secret. Please refer to the Kiali documentation for more details.`,
           'danger'
         )
       );

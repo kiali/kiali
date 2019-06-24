@@ -21,7 +21,6 @@ import {
   ClusterRbacConfig
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
-import _ from 'lodash';
 
 export interface IstioConfigItem {
   namespace: string;

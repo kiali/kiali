@@ -42,7 +42,7 @@ type State = {
 const expandStyle = style({
   marginTop: 20,
   $nest: {
-    ['.btn']: {
+    '.btn': {
       fontSize: '14px'
     }
   }

@@ -15,7 +15,7 @@ type State = {
 
 const msgDialogStyle = style({
   $nest: {
-    ['.modal-content']: {
+    '.modal-content': {
       fontSize: '14px'
     }
   }

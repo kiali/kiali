@@ -41,7 +41,7 @@ import VirtualServiceHosts from './VirtualServiceHosts';
 
 const expandStyle = style({
   $nest: {
-    ['.btn']: {
+    '.btn': {
       fontSize: '14px'
     }
   }

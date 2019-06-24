@@ -50,7 +50,7 @@ export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter
 export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter[]): boolean => {
   // This can probably be improved and/or simplified?
   const fromFilters: Map<string, string[]> = new Map<string, string[]>();
-  filters.map(activeFilter => {
+  filters.forEach(activeFilter => {
     const existingValue = fromFilters.get(activeFilter.category) || [];
     fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
   });
