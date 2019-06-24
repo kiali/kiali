@@ -50,7 +50,7 @@ class WorkloadListComponent extends ListComponent.Component<
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: WorkloadListComponentProps, prevState: WorkloadListComponentState, snapshot: any) {
+  componentDidUpdate(prevProps: WorkloadListComponentProps, _prevState: WorkloadListComponentState, _snapshot: any) {
     if (!this.paramsAreSynced(prevProps)) {
       this.setState({
         pagination: this.props.pagination,

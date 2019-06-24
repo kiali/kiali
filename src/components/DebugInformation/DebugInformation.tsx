@@ -64,7 +64,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     this.setState({ show: false });
   };
 
-  copyCallback = (text: string, result: boolean) => {
+  copyCallback = (_text: string, result: boolean) => {
     this.textareaRef.current.select();
     this.setState({ copyStatus: result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED });
   };
@@ -73,7 +73,7 @@ export class DebugInformation extends React.PureComponent<DebugInformationProps,
     this.setState({ copyStatus: CopyStatus.NOT_COPIED });
   };
 
-  componentDidUpdate(prevProps: DebugInformationProps, prevState: DebugInformationState) {
+  componentDidUpdate(prevProps: DebugInformationProps, _prevState: DebugInformationState) {
     if (this.props.appState !== prevProps.appState && this.state.copyStatus === CopyStatus.COPIED) {
       this.setState({ copyStatus: CopyStatus.OLD_COPY });
     }

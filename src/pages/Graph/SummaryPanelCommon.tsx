@@ -54,7 +54,7 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
     stateSetter({ health: undefined, healthLoading: true });
     healthPromise
       .then(h => stateSetter({ health: h, healthLoading: false }))
-      .catch(err => stateSetter({ health: healthNotAvailable(), healthLoading: false }));
+      .catch(_err => stateSetter({ health: healthNotAvailable(), healthLoading: false }));
   } else {
     stateSetter({ health: undefined, healthLoading: false });
   }

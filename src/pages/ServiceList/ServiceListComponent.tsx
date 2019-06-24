@@ -55,7 +55,7 @@ class ServiceListComponent extends ListComponent.Component<
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: ServiceListComponentProps, prevState: ServiceListComponentState, snapshot: any) {
+  componentDidUpdate(prevProps: ServiceListComponentProps, _prevState: ServiceListComponentState, _snapshot: any) {
     if (!this.paramsAreSynced(prevProps)) {
       this.setState({
         pagination: this.props.pagination,

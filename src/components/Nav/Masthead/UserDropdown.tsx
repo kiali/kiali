@@ -99,7 +99,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
     });
   };
 
-  onDropdownSelect = event => {
+  onDropdownSelect = _event => {
     this.setState({
       isDropdownOpen: !this.state.isDropdownOpen
     });

@@ -7,7 +7,7 @@ const testHandler = () => {
   console.log('handled');
 };
 
-const testSetter = val => {
+const testSetter = _val => {
   console.log('set');
 };
 

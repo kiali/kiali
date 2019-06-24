@@ -46,7 +46,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     this.updateListItems();
   }
 
-  componentDidUpdate(prevProps: AppListComponentProps, prevState: AppListComponentState, snapshot: any) {
+  componentDidUpdate(prevProps: AppListComponentProps, _prevState: AppListComponentState, _snapshot: any) {
     if (!this.paramsAreSynced(prevProps)) {
       this.setState({
         pagination: this.props.pagination,

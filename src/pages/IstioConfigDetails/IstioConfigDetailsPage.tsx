@@ -147,7 +147,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           this.props.match.params.object
         );
     deletePromise
-      .then(r => this.backToList())
+      .then(_r => this.backToList())
       .catch(error => {
         MessageCenter.add(API.getErrorMsg('Could not delete IstioConfig details.', error));
       });
@@ -171,7 +171,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             jsonPatch
           );
       updatePromise
-        .then(r => {
+        .then(_r => {
           const targetMessage =
             this.props.match.params.namespace +
             ' / ' +

@@ -33,7 +33,8 @@ export default class DestinationRuleValidator {
     }
 
     let valid = this.destinationRule.spec.subsets instanceof Array;
-    valid = valid && this.destinationRule.spec.subsets.every((subset, i, ary) => new SubsetValidator(subset).isValid());
+    valid =
+      valid && this.destinationRule.spec.subsets.every((subset, _i, _ary) => new SubsetValidator(subset).isValid());
 
     if (!valid) {
       this.unformattedField = 'Subsets';

@@ -126,7 +126,7 @@ export default class GroupCompoundLayout {
 
       // We expect a discrete layout here
       const compoundLayout = targetElements.layout(compoundLayoutOptions);
-      compoundLayout.on('layoutstart layoutready layoutstop', evt => {
+      compoundLayout.on('layoutstart layoutready layoutstop', _evt => {
         // Avoid to propagate any local layout events up to cy, this would yield a global operation when not all nodes are ready.
         return false;
       });
@@ -205,7 +205,7 @@ export default class GroupCompoundLayout {
     });
 
     // (2) Add a one-time callback to be fired when the layout stops
-    layout.one('layoutstop', event => {
+    layout.one('layoutstop', _event => {
       // This part of the code needs to be executed inside a batch to work, else the relative position is not correctly
       // updated
       this.cy.startBatch();

@@ -145,7 +145,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     this.doRefresh();
   }
 
-  componentDidUpdate(prevProps: ServiceDetailsProps, prevState: ServiceDetailsState) {
+  componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service ||
@@ -279,7 +279,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
-    details.destinationRules.items.forEach((destinationRule, index, ary) => {
+    details.destinationRules.items.forEach((destinationRule, _index, _ary) => {
       const dr = new DestinationRuleValidator(destinationRule);
       const formatValidation = dr.formatValidation();
 

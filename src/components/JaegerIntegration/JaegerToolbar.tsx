@@ -127,7 +127,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               <FormGroup label={'Lookback'} isRequired={true} fieldId={'lookback_jaeger_form'}>
                 <LookBack
                   lookback={this.state.lookback !== 'custom' ? Number(this.state.lookback) : 0}
-                  setLookback={(value, event) => {
+                  setLookback={(value, _event) => {
                     this.setState({ lookback: value });
                   }}
                 />

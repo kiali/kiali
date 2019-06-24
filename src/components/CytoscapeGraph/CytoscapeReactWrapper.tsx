@@ -57,7 +57,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
   // This is VERY important - this must always return false to ensure the div is never destroyed.
   // If the div is destroyed, the cached cy becomes useless.
-  shouldComponentUpdate(nextProps: any, nextState: any) {
+  shouldComponentUpdate(_nextProps: any, _nextState: any) {
     return false;
   }
 

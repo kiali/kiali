@@ -64,7 +64,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
 
   componentDidUpdate(
     prevProps: Readonly<AuthenticationControllerProps>,
-    prevState: Readonly<AuthenticationControllerState>
+    _prevState: Readonly<AuthenticationControllerState>
   ): void {
     if (!prevProps.authenticated && this.props.authenticated) {
       this.setState({ stage: LoginStage.POST_LOGIN });

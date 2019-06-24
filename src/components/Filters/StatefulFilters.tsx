@@ -88,7 +88,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.promises.registerAll('filterType', filterTypePromises).then(types => this.setState({ filterTypes: types }));
   }
 
-  componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState, snapshot: any) {
+  componentDidUpdate(_prevProps: StatefulFiltersProps, _prevState: StatefulFiltersState, _snapshot: any) {
     if (!ListPagesHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
       ListPagesHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }

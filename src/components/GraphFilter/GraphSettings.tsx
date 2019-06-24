@@ -53,7 +53,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     }
   }
 
-  componentDidUpdate(prevProps: GraphSettingsProps) {
+  componentDidUpdate(_prevProps: GraphSettingsProps) {
     // ensure redux state and URL are aligned
     HistoryManager.setParam(URLParam.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
   }

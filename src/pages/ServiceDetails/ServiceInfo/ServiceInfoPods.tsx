@@ -12,7 +12,7 @@ interface ServiceInfoPodsState {
   groups: PodsGroup[];
 }
 class ServiceInfoPods extends React.Component<Props, ServiceInfoPodsState> {
-  static getDerivedStateFromProps(props: Props, currentState: ServiceInfoPodsState) {
+  static getDerivedStateFromProps(props: Props, _currentState: ServiceInfoPodsState) {
     return { groups: ServiceInfoPods.updateGroups(props) };
   }
 

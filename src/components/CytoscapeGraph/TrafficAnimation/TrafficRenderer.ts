@@ -62,7 +62,7 @@ enum TrafficEdgeType {
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForRpsError: (edge: any) => TrafficPointRenderer = (edge: any) => {
+const getTrafficPointRendererForRpsError: (edge: any) => TrafficPointRenderer = (_edge: any) => {
   return new TrafficPointConcentricDiamondRenderer(
     new Diamond(2.5, PfColors.White, PfColors.Red100, 1.0),
     new Diamond(1, PfColors.Red100, PfColors.Red100, 1.0)
@@ -83,7 +83,7 @@ const getTrafficPointRendererForRpsSuccess: (edge: any) => TrafficPointRenderer 
  * @param edge
  * @returns {TrafficPointCircleRenderer}
  */
-const getTrafficPointRendererForTcp: (edge: any) => TrafficPointRenderer = (edge: any) => {
+const getTrafficPointRendererForTcp: (edge: any) => TrafficPointRenderer = (_edge: any) => {
   return new TrafficPointCircleRenderer(0.8, PfColors.Black100, PfColors.Black500, 1);
 };
 

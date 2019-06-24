@@ -74,7 +74,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     return content;
   }
 
-  renderServiceItem(namespace: string, appName: string, serviceName: string) {
+  renderServiceItem(namespace: string, _appName: string, serviceName: string) {
     const iconName = 'service';
     const iconType = 'pf';
     const heading = (

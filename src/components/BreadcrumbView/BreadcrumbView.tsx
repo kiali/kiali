@@ -62,8 +62,8 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
 
   componentDidUpdate(
     prevProps: Readonly<BreadCumbViewProps>,
-    prevState: Readonly<BreadCumbViewState>,
-    snapshot?: any
+    _prevState: Readonly<BreadCumbViewState>,
+    _snapshot?: any
   ): void {
     if (prevProps.location !== this.props.location) {
       this.setState(this.updateItem());

@@ -148,7 +148,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
     // For slow scenarios, dialog is hidden and Delete All action blocked until promises have finished
     this.hideConfirmDelete();
     Promise.all(deletePromises)
-      .then(results => {
+      .then(_results => {
         this.setState({
           isDeleting: false
         });

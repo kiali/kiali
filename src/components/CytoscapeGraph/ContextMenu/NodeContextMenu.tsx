@@ -144,7 +144,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
     );
   }
 
-  private onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  private onClick = (_e: React.MouseEvent<HTMLAnchorElement>) => {
     this.props.contextMenu.hide(0);
   };
 }

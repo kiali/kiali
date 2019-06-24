@@ -132,7 +132,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.contextMenuRef = React.createRef<CytoscapeContextMenuWrapper>();
   }
 
-  shouldComponentUpdate(nextProps: CytoscapeGraphProps, nextState: CytoscapeGraphState) {
+  shouldComponentUpdate(nextProps: CytoscapeGraphProps, _nextState: CytoscapeGraphState) {
     this.nodeChanged = this.nodeChanged || this.props.node !== nextProps.node;
     let result =
       this.props.edgeLabelMode !== nextProps.edgeLabelMode ||
@@ -160,7 +160,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.cyInitialization(this.getCy());
   }
 
-  componentDidUpdate(prevProps: CytoscapeGraphProps, prevState: CytoscapeGraphState) {
+  componentDidUpdate(prevProps: CytoscapeGraphProps, _prevState: CytoscapeGraphState) {
     const cy = this.getCy();
     if (!cy) {
       return;
@@ -343,7 +343,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
     });
 
-    cy.on('layoutstop', (evt: any) => {
+    cy.on('layoutstop', (_evt: any) => {
       // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
       this.safeFit(cy);
     });
@@ -353,7 +353,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       this.processGraphUpdate(cy, true);
     });
 
-    cy.on('destroy', (evt: any) => {
+    cy.on('destroy', (_evt: any) => {
       this.trafficRenderer!.stop();
       this.cy = undefined;
       this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });

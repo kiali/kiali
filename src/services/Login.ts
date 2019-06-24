@@ -30,7 +30,7 @@ interface DispatchRequest<T> {
 type NullDispatch = DispatchRequest<any>;
 
 class AnonymousLogin implements LoginStrategy {
-  public async prepare(info: AuthConfig) {
+  public async prepare(_info: AuthConfig) {
     return AuthResult.CONTINUE;
   }
 
@@ -53,7 +53,7 @@ interface WebLoginData {
 }
 
 class WebLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(info: AuthConfig) {
+  public async prepare(_info: AuthConfig) {
     return AuthResult.CONTINUE;
   }
 

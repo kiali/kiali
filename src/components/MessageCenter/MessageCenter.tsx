@@ -81,7 +81,7 @@ const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, 
     onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
     onClearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
     onNotificationClick: message => dispatch(MessageCenterActions.markAsRead(message.id)),
-    onDismissNotification: (message, group, userDismissed) => {
+    onDismissNotification: (message, _group, userDismissed) => {
       if (userDismissed) {
         dispatch(MessageCenterActions.markAsRead(message.id));
       } else {

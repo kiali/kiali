@@ -226,7 +226,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     return this.props.data.summaryTarget
       .children(`node[${CyNode.version}]`)
       .toArray()
-      .map((c, i) => (
+      .map((c, _i) => (
         <Label
           key={c.data(CyNode.version)}
           name={serverConfig.istioLabels.versionLabelName}

@@ -55,8 +55,8 @@ class IstioConfigListComponent extends ListComponent.Component<
 
   componentDidUpdate(
     prevProps: IstioConfigListComponentProps,
-    prevState: IstioConfigListComponentState,
-    snapshot: any
+    _prevState: IstioConfigListComponentState,
+    _snapshot: any
   ) {
     if (!this.paramsAreSynced(prevProps)) {
       this.setState({

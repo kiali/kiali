@@ -530,7 +530,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     }
   };
 
-  private getNumericSelector(field: string, op: string, val: any, expression: string): string | undefined {
+  private getNumericSelector(field: string, op: string, val: any, _expression: string): string | undefined {
     switch (op) {
       case '>':
       case '<':

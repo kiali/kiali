@@ -10,6 +10,6 @@ export const getGraphElements = (params: any) => {
   }
 };
 
-export const getServiceDetail = (namespace: string, service: string): Promise<ServiceDetailsInfo> => {
+export const getServiceDetail = (_namespace: string, _service: string): Promise<ServiceDetailsInfo> => {
   return Promise.resolve(ServiceData.SERVICE_DETAILS);
 };
