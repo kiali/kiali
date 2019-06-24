@@ -85,8 +85,10 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 			// aggregate traffic
 			graph.AggregateNodeMetadata(doomedServiceNode.Metadata, serviceEntryNode.Metadata)
 			// aggregate dest-services to capture all of the distinct requested services
-			for k, v := range doomedServiceNode.Metadata[graph.DestServices].(graph.DestServicesMetadata) {
-				serviceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)[k] = v
+			if destServices, ok := doomedServiceNode.Metadata[graph.DestServices]; ok {
+				for k, v := range destServices.(graph.DestServicesMetadata) {
+					serviceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)[k] = v
+				}
 			}
 			// redirect edges leading to the doomed service node to the new aggregate
 			for _, n := range trafficMap {
