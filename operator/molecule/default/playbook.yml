@@ -1,0 +1,43 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+
+  - name: Get Kiali CR is present
+    set_fact:
+      kiali_cr: "{{ lookup('k8s', group='kiali.io/v1alpha1', api_version='v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
+
+  - name: Get Kiali Operator Pod
+    k8s_facts:
+      api_version: v1
+      kind: Pod
+      namespace: '{{ kiali.operator_namespace }}'
+      label_selectors:
+      - app = kiali-operator      
+    register: kiali_operator_pod
+
+  - name: Get Kiali Pod
+    k8s_facts:
+      api_version: v1
+      kind: Pod
+      namespace: '{{ istio.control_plane_namespace }}'
+      label_selectors:
+      - app = kiali      
+    register: kiali_pod
+
+
+  - name: Get Kiali Configmap
+    set_fact:
+       kiali_configmap: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=istio.control_plane_namespace, resource_name="kiali") }}'
+
+
+  - name: Format Configmap
+    set_fact:
+      kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+ 
+  - import_tasks: '../asserts/configmap_asserts.yml'
+  - import_tasks: '../asserts/pod_asserts.yml'
+
+ 
