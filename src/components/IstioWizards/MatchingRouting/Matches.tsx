@@ -14,10 +14,6 @@ const labelContainerStyle = style({
 const labelMatchStyle = style({});
 
 class Matches extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
       <span key={match + '-' + index}>

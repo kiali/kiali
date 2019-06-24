@@ -28,10 +28,6 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     return <Table.Cell className={className}>{value}</Table.Cell>;
   };
 
-  constructor(props: GraphHelpFindProps) {
-    super(props);
-  }
-
   edgeColumns = () => {
     return {
       columns: [

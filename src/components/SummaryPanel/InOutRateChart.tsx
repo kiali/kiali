@@ -26,10 +26,6 @@ export class InOutRateChartGrpc extends React.Component<InOutRateChartGrpcPropTy
     width: SUMMARY_PANEL_CHART_WIDTH
   };
 
-  constructor(props: InOutRateChartGrpcPropType) {
-    super(props);
-  }
-
   render() {
     return (
       <StackedBarChart
@@ -114,10 +110,6 @@ export class InOutRateChartHttp extends React.Component<InOutRateChartHttpPropTy
     showLegend: true,
     width: SUMMARY_PANEL_CHART_WIDTH
   };
-
-  constructor(props: InOutRateChartHttpPropType) {
-    super(props);
-  }
 
   render() {
     return (

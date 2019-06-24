@@ -8,10 +8,6 @@ interface ServiceTracesProps {
 }
 
 class ServiceTraces extends React.Component<ServiceTracesProps> {
-  constructor(props: ServiceTracesProps) {
-    super(props);
-  }
-
   render() {
     const serviceSelected = `${this.props.service}.${this.props.namespace}`;
     const tags = this.props.errorTags ? 'error=true' : '';

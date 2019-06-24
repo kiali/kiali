@@ -26,10 +26,6 @@ type Props = {
 };
 
 class OverviewCardContentExpanded extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     return (
       <>

@@ -91,10 +91,6 @@ const renderSparkline = (series: [string | number][], colors: PfColors[], yTickF
 };
 
 export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
-  constructor(props: RpsChartTypeProp) {
-    super(props);
-  }
-
   render() {
     return (
       <>

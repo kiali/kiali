@@ -51,10 +51,6 @@ const labelListStyle = style({
 const ExternalNameType = 'ExternalName';
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
-  constructor(props: ServiceInfoDescriptionProps) {
-    super(props);
-  }
-
   getValidations(): ObjectValidation {
     return this.props.validations ? this.props.validations : ({} as ObjectValidation);
   }

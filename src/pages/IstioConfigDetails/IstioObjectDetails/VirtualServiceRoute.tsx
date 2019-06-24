@@ -44,10 +44,6 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     );
   };
 
-  constructor(props: VirtualServiceRouteProps) {
-    super(props);
-  }
-
   columns() {
     return {
       columns: [

@@ -65,10 +65,6 @@ interface NamespaceDropdownProps extends ReduxProps {
 }
 
 export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProps> {
-  constructor(props: NamespaceDropdownProps) {
-    super(props);
-  }
-
   componentDidMount() {
     this.props.refresh();
     this.syncNamespacesURLParam();

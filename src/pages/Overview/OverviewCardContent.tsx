@@ -15,10 +15,6 @@ type Props = {
 };
 
 class OverviewCardContent extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     const targetPage = switchType(this.props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.props.name;

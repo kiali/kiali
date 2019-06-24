@@ -14,10 +14,6 @@ type SessionTimeoutProps = {
 };
 
 export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
-  constructor(props: SessionTimeoutProps) {
-    super(props);
-  }
-
   render() {
     return (
       <Modal

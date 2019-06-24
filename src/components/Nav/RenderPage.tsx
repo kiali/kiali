@@ -8,10 +8,6 @@ import { style } from 'typestyle';
 const containerStyle = style({ marginLeft: 0, marginRight: 0 });
 
 class RenderPage extends React.Component<{ needScroll: boolean }> {
-  constructor(props: { needScroll: boolean }) {
-    super(props);
-  }
-
   renderPaths(paths: Path[]) {
     return paths.map((item, index) => {
       return <Route key={index} path={item.path} component={item.component} />;

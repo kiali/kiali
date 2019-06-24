@@ -21,10 +21,6 @@ interface VirtualServiceProps {
 }
 
 class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
-  constructor(props: VirtualServiceProps) {
-    super(props);
-  }
-
   validation(_virtualService: VirtualService): ObjectValidation | undefined {
     return this.props.validation;
   }

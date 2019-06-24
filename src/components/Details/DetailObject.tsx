@@ -18,10 +18,6 @@ interface Validation {
 }
 
 class DetailObject extends React.Component<DetailObjectProps> {
-  constructor(props: DetailObjectProps) {
-    super(props);
-  }
-
   // Pseudo unique ID generator used for keys
   // The recursive nature of buildList() requires uniques list keys.
   // Modified from https://gist.github.com/gordonbrander/2230317

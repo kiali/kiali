@@ -53,10 +53,6 @@ const createStyle = style({
 });
 
 class RuleBuilder extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     return (
       <ListView className={'match-routing-wizard'}>

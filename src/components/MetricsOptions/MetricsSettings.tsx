@@ -60,10 +60,6 @@ export class MetricsSettingsDropdown extends React.Component<Props> {
     return settings;
   };
 
-  constructor(props: Props) {
-    super(props);
-  }
-
   componentDidUpdate() {
     if (this.shouldReportOptions) {
       this.shouldReportOptions = false;

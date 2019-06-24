@@ -21,10 +21,6 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     return <Table.Cell className={className}>{value}</Table.Cell>;
   };
 
-  constructor(props: ServiceInfoVirtualServicesProps) {
-    super(props);
-  }
-
   columns() {
     return {
       columns: [

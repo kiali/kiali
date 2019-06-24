@@ -42,10 +42,6 @@ const matchStyle = style({
 });
 
 class MatchBuilder extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     const matchItems: any[] = matchOptions.map((mode, index) => (
       <MenuItem key={mode + '-' + index} eventKey={mode} active={mode === this.props.category}>

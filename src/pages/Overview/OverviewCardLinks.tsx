@@ -14,10 +14,6 @@ const iconStyle = style({
 });
 
 class OverviewCardLinks extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     return (
       <div style={{ marginTop: '10px' }}>

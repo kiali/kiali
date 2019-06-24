@@ -15,10 +15,6 @@ interface DestinationRuleProps {
 }
 
 class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
-  constructor(props: DestinationRuleProps) {
-    super(props);
-  }
-
   validation(_destinationRule: DestinationRule): ObjectValidation | undefined {
     return this.props.validation;
   }

@@ -16,10 +16,6 @@ type Props = {
 };
 
 class OverviewStatus extends React.Component<Props, {}> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   setFilters = () => {
     const filters: (ActiveFilter & { id: string })[] = [
       {

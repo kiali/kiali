@@ -22,10 +22,6 @@ export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
     width: SUMMARY_PANEL_CHART_WIDTH
   };
 
-  constructor(props: RateChartGrpcPropType) {
-    super(props);
-  }
-
   render() {
     return (
       <StackedBarChart
@@ -99,10 +95,6 @@ export class RateChartHttp extends React.Component<RateChartHttpPropType> {
     showLegend: true,
     width: SUMMARY_PANEL_CHART_WIDTH
   };
-
-  constructor(props: RateChartHttpPropType) {
-    super(props);
-  }
 
   render() {
     return (

@@ -15,10 +15,6 @@ interface ServiceInfoDestinationRulesProps {
 }
 
 class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestinationRulesProps> {
-  constructor(props: ServiceInfoDestinationRulesProps) {
-    super(props);
-  }
-
   headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
   cellFormat = (value, { column }) => {
     const props = column.cell.props;

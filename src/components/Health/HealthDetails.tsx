@@ -7,10 +7,6 @@ interface Props {
 }
 
 export class HealthDetails extends React.PureComponent<Props, {}> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   renderStatus(status: H.Status) {
     if (status.icon) {
       return <Icon type="pf" name={status.icon} />;

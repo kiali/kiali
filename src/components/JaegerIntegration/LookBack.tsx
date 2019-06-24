@@ -15,10 +15,6 @@ export class LookBack extends React.PureComponent<LookBackProps> {
   lookBackOptions = { ...serverConfig.durations, ...{ 0: 'Custom Time Range' } };
   lookbackDefault = config.toolbar.defaultDuration;
 
-  constructor(props: LookBackProps) {
-    super(props);
-  }
-
   componentDidMount() {
     this.props.setLookback(String(this.props.lookback), null);
   }

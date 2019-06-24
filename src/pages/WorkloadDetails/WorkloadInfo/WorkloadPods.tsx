@@ -12,10 +12,6 @@ type WorkloadPodsProps = {
 };
 
 class WorkloadPods extends React.Component<WorkloadPodsProps> {
-  constructor(props: WorkloadPodsProps) {
-    super(props);
-  }
-
   headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
   cellFormat = value => {
     return <Table.Cell>{value}</Table.Cell>;

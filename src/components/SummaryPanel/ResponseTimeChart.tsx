@@ -13,10 +13,6 @@ type ResponseTimeChartTypeProp = {
 };
 
 export default class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
-  constructor(props: ResponseTimeChartTypeProp) {
-    super(props);
-  }
-
   thereIsTrafficData = () => {
     return this.props.rtAvg && this.props.rtAvg.length > 1 && this.props.rtAvg[0].length > 1;
   };

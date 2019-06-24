@@ -6,10 +6,6 @@ type Props = {
 };
 
 class VirtualServiceHosts extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   render() {
     const vsHosts = this.props.vsHosts.length > 0 ? this.props.vsHosts.join(',') : '';
     return (

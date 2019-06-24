@@ -12,10 +12,6 @@ interface TagsControlProps {
 const tagsInput = style({ marginLeft: '-100px' });
 
 export class TagsControl extends React.PureComponent<TagsControlProps, {}> {
-  constructor(props: TagsControlProps) {
-    super(props);
-  }
-
   tagsHelp = () => {
     return (
       <>

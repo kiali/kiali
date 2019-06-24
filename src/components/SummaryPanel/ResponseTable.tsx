@@ -37,10 +37,6 @@ const Flags: object = {
 };
 
 export class ResponseTable extends React.PureComponent<ResponseTableProps> {
-  constructor(props: ResponseTableProps) {
-    super(props);
-  }
-
   render() {
     return (
       <>
