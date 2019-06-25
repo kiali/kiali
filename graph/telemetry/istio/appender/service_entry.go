@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,18 +13,20 @@ const ServiceEntryAppenderName = "serviceEntry"
 
 // ServiceEntryAppender is responsible for identifying service nodes that are defined in Istio as
 // a serviceEntry. A single serviceEntry can define multiple hosts and as such multiple service nodes may
-// map to different hosts of a single serviceEntry. We'll call these "se" service nodes.  The appender
+// map to different hosts of a single serviceEntry. We'll call these "se-service" nodes.  The appender
 // handles this in the following way:
-//   For Each "se" service node
+//   For Each "se-service" node
 //      if necessary, create an aggregate serviceEntry node ("se-aggregate")
 //        -- an "se-aggregate" is a service node with isServiceEntry set in the metadata
 //        -- an "se-aggregate" is namespace-specific. This can lead to mutiple serviceEntry nodes
 //           in a multi-namespace graph. This makes some sense because serviceEntries are "exported"
 //           to individual namespaces.
-//      aggregate the "se" service node into the "se-aggregate" service node
-//        -- incoming links
+//      aggregate the "se-service" node into the "se-aggregate" node
+//        -- incoming edges
+//        -- outgoing edges (unusual but can have outgoing edge to egress gateway)
 //        -- per-host traffic (in the metadata)
-//      remove the "se" service node
+//      remove the "se-service" node from the trafficMap
+//      add any new "se-aggregate" node to the trafficMap
 //
 // Doc Links
 // - https://istio.io/docs/reference/config/networking/v1alpha3/service-entry/#ServiceEntry
@@ -32,7 +35,8 @@ const ServiceEntryAppenderName = "serviceEntry"
 // A note about wildcard hosts. External service entries allow for prefix wildcarding such that
 // many different service requests may be handled by the same service entry definition.  For example,
 // host = *.wikipedia.com would match requests for en.wikipedia.com and de.wikipedia.com. The Istio
-// telemetry produces only one service node with the wilcard host as the destination_service_name.
+// telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
+//
 type ServiceEntryAppender struct {
 	AccessibleNamespaces map[string]time.Time
 	GraphType            string // This appender does not operate on service graphs because it adds workload nodes.
@@ -53,6 +57,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 }
 
 func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	// a map of "se-service" nodes to the "se-aggregate" information
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
 	for _, n := range trafficMap {
@@ -60,13 +65,15 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
-		// only a terminal node can be a service entry (no outgoing edges because the service is performed outside the mesh)
-		if len(n.Edges) > 0 {
+		// a serviceEntry has at most one outgoing edge, to an egress gateway. (note: it may be that it
+		// can only lead to "istio-egressgateway" but at the time of writing we're not sure, and so don't
+		// want to hardcode that assumption.)
+		if len(n.Edges) > 1 {
 			continue
 		}
 
-		// A service node with no outgoing edges represents a serviceEntry when the service name matches
-		// serviceEntry host. Map these "se" nodes to the serviceEntries that represent them.
+		// A service node represents a serviceEntry when the service name matches serviceEntry host. Map
+		// these "se-service" nodes to the serviceEntries that represent them.
 		if se, ok := a.getServiceEntry(n.Service, globalInfo); ok {
 			if nodes, ok := seMap[se]; ok {
 				seMap[se] = append(nodes, n)
@@ -76,29 +83,45 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		}
 	}
 
-	// Replace "se" nodes with an aggregated serviceEntry node
-	for se, serviceNodes := range seMap {
+	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
+	for se, seServiceNodes := range seMap {
 		serviceEntryNode := graph.NewNode(namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		serviceEntryNode.Metadata[graph.IsServiceEntry] = se.location
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
-		for _, doomedServiceNode := range serviceNodes {
-			// aggregate traffic
-			graph.AggregateNodeMetadata(doomedServiceNode.Metadata, serviceEntryNode.Metadata)
-			// aggregate dest-services to capture all of the distinct requested services
-			if destServices, ok := doomedServiceNode.Metadata[graph.DestServices]; ok {
+		for _, doomedSeServiceNode := range seServiceNodes {
+			// aggregate node traffic
+			fmt.Printf("DoomedMD: %+v\n", doomedSeServiceNode.Metadata)
+			graph.AggregateNodeTraffic(doomedSeServiceNode, &serviceEntryNode)
+			fmt.Printf("AggregateMD: %+v\n", serviceEntryNode.Metadata)
+			// aggregate node dest-services to capture all of the distinct requested services
+			if destServices, ok := doomedSeServiceNode.Metadata[graph.DestServices]; ok {
 				for k, v := range destServices.(graph.DestServicesMetadata) {
 					serviceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)[k] = v
 				}
 			}
-			// redirect edges leading to the doomed service node to the new aggregate
+			// redirect edges leading to the doomed se-service node to the new aggregate
 			for _, n := range trafficMap {
 				for _, edge := range n.Edges {
-					if edge.Dest.ID == doomedServiceNode.ID {
+					if edge.Dest.ID == doomedSeServiceNode.ID {
 						edge.Dest = &serviceEntryNode
 					}
 				}
 			}
-			delete(trafficMap, doomedServiceNode.ID)
+			// redirect/aggregate edges leading from the doomed se-service node [to an egress gateway]
+			for _, doomedEdge := range doomedSeServiceNode.Edges {
+				var aggregateEdge *graph.Edge
+				for _, e := range serviceEntryNode.Edges {
+					if doomedEdge.Dest.ID == e.Dest.ID {
+						aggregateEdge = e
+						break
+					}
+				}
+				if nil == aggregateEdge {
+					aggregateEdge = serviceEntryNode.AddEdge(doomedEdge.Dest)
+				}
+				graph.AggregateEdgeTraffic(doomedEdge, aggregateEdge)
+			}
+			delete(trafficMap, doomedSeServiceNode.ID)
 		}
 		trafficMap[serviceEntryNode.ID] = &serviceEntryNode
 	}

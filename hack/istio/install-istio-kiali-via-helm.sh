@@ -331,7 +331,7 @@ if [ ! -f "/tmp/istio.yaml" ]; then
     ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
   fi
   echo Building Helm yaml for Istio...
-  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace ${NAMESPACE} > /tmp/istio.yaml
+  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace ${NAMESPACE} --set gateways.istio-egressgateway.enabled=true > /tmp/istio.yaml
 fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then

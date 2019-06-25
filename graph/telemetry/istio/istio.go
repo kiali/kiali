@@ -228,7 +228,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 }
 
 func addServiceGraphTraffic(toEdge, fromEdge *graph.Edge) {
-	graph.AddServiceGraphTraffic(toEdge, fromEdge)
+	graph.AggregateEdgeTraffic(fromEdge, toEdge)
 
 	// handle any appender-based edge data (nothing currently)
 	// note: We used to average response times of the aggregated edges but realized that

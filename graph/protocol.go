@@ -205,7 +205,7 @@ func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, e
 	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, val)
 }
 
-// AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffoc value
+// AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffic value
 func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	if val, valOk := edgeMetadata[grpc]; valOk {
 		addToMetadataValue(sourceMetadata, grpcOut, val.(float64))
@@ -219,60 +219,61 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 }
 
 // AggregateNodeMetadata adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
-func AggregateNodeMetadata(nodeMetadata, aggregateNodeMetadata Metadata) {
+func AggregateNodeTraffic(node, aggregateNode *Node) {
 	for _, protocol := range Protocols {
 		for _, rate := range protocol.NodeRates {
-			if val, ok := nodeMetadata[rate.Name]; ok {
-				addToMetadataValue(aggregateNodeMetadata, rate.Name, val.(float64))
+			if val, ok := node.Metadata[rate.Name]; ok {
+				addToMetadataValue(aggregateNode.Metadata, rate.Name, val.(float64))
 			}
 		}
 	}
 }
 
-// AddServiceGraphTraffic is for aggregating edge traffic when reducing to service graph from workload graph
-func AddServiceGraphTraffic(toEdge, fromEdge *Edge) {
-	protocol, ok := toEdge.Metadata["protocol"]
+// AggregateEdgeTraffic is for aggregating edge traffic when reducing multiple edges into one edge (e.g.
+// when generating service graph from workload graph, or aggregating serviceEntry nodes).
+func AggregateEdgeTraffic(edge, aggregateEdge *Edge) {
+	protocol, ok := edge.Metadata["protocol"]
 	if !ok {
 		return
 	}
 
 	switch protocol {
 	case grpc:
-		if val, ok := fromEdge.Metadata[grpc]; ok {
-			addToMetadataValue(toEdge.Metadata, grpc, val.(float64))
+		if val, ok := edge.Metadata[grpc]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, grpc, val.(float64))
 		}
-		if val, ok := fromEdge.Metadata[grpcErr]; ok {
-			addToMetadataValue(toEdge.Metadata, grpcErr, val.(float64))
+		if val, ok := edge.Metadata[grpcErr]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, grpcErr, val.(float64))
 		}
-		if responses, ok := fromEdge.Metadata[grpcResponses]; ok {
-			addToResponses(toEdge.Metadata, grpcResponses, responses.(Responses))
+		if responses, ok := edge.Metadata[grpcResponses]; ok {
+			addToResponses(aggregateEdge.Metadata, grpcResponses, responses.(Responses))
 		}
 	case http:
-		if val, ok := fromEdge.Metadata[http]; ok {
-			addToMetadataValue(toEdge.Metadata, http, val.(float64))
+		if val, ok := edge.Metadata[http]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, http, val.(float64))
 		}
-		if val, ok := fromEdge.Metadata[http3xx]; ok {
-			addToMetadataValue(toEdge.Metadata, http3xx, val.(float64))
+		if val, ok := edge.Metadata[http3xx]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, http3xx, val.(float64))
 		}
-		if val, ok := fromEdge.Metadata[http4xx]; ok {
-			addToMetadataValue(toEdge.Metadata, http4xx, val.(float64))
+		if val, ok := edge.Metadata[http4xx]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, http4xx, val.(float64))
 		}
-		if val, ok := fromEdge.Metadata[http5xx]; ok {
-			addToMetadataValue(toEdge.Metadata, http5xx, val.(float64))
+		if val, ok := edge.Metadata[http5xx]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, http5xx, val.(float64))
 		}
-		if responses, ok := fromEdge.Metadata[httpResponses]; ok {
-			addToResponses(toEdge.Metadata, httpResponses, responses.(Responses))
+		if responses, ok := edge.Metadata[httpResponses]; ok {
+			addToResponses(aggregateEdge.Metadata, httpResponses, responses.(Responses))
 		}
 	case tcp:
-		if val, ok := fromEdge.Metadata[tcp]; ok {
-			addToMetadataValue(toEdge.Metadata, grpc, val.(float64))
+		if val, ok := edge.Metadata[tcp]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, tcp, val.(float64))
 		}
-		if responses, ok := fromEdge.Metadata[tcpResponses]; ok {
-			addToResponses(toEdge.Metadata, tcpResponses, responses.(Responses))
+		if responses, ok := edge.Metadata[tcpResponses]; ok {
+			addToResponses(aggregateEdge.Metadata, tcpResponses, responses.(Responses))
 		}
 
 	default:
-		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, toEdge))
+		Error(fmt.Sprintf("Unexpected edge protocol [%v] for edge [%+v]", protocol, aggregateEdge))
 	}
 
 	// handle any appender-based edge data (nothing currently)
