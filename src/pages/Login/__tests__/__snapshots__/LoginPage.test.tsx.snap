@@ -8,7 +8,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
   brandImgSrc="logo-alt.svg"
   className=""
   footerListItems={
-    <UNDEFINED>
+    <React.Fragment>
       <ListItem>
         <LoginFooterItem
           className=""
@@ -27,7 +27,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
           Contribute
         </LoginFooterItem>
       </ListItem>
-    </UNDEFINED>
+    </React.Fragment>
   }
   footerListVariants="inline"
   forgotCredentials={null}
@@ -38,7 +38,7 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
 >
   <LoginForm
     className=""
-    helperText={<UNDEFINED />}
+    helperText={<React.Fragment />}
     isLoginButtonDisabled={false}
     isRememberMeChecked={false}
     isValidPassword={true}
