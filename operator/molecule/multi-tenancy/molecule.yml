@@ -13,7 +13,6 @@ provisioner:
   playbooks:
     destroy: ../default/destroy.yml
     prepare: ../default/prepare.yml
-    converge: ../default/playbook.yml
   inventory:
     group_vars:
       all:
