@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # Details about the Kiali operator image.
 OPERATOR_IMAGE_NAME ?= quay.io/kiali/kiali-operator
 OPERATOR_IMAGE_VERSION ?= dev
