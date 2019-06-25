@@ -87,6 +87,14 @@ get_status() {
   echo "johndoe password: johndoe"
   echo "NOTE: for some reason, to oc login as the 'kiali' or 'johndoe' user, you need to unset KUBECONFIG."
   echo "====================================================================="
+  echo "To push images to the image repo you need to log in."
+  echo "You can use docker or podman, and you can use kubeadmin or kiali user."
+  echo "  oc login -u kubeadmin -p" $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})
+  echo '  docker login -u kubeadmin -p $(oc whoami -t) default-route-openshift-image-registry.apps-crc.testing'
+  echo "or"
+  echo "  oc login -u kiali -p kiali"
+  echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t) default-route-openshift-image-registry.apps-crc.testing'
+  echo "====================================================================="
 
   echo "CRC does not yet have a status command. This hack script will be updated once this github issue is implemented: https://github.com/code-ready/crc/issues/68"
 }
