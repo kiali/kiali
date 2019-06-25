@@ -13,12 +13,12 @@ import {
 import { style } from 'typestyle';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
+import kialiTitle from '../assets/img/logo-login.svg';
+
 type initializingScreenProps = {
   errorMsg?: string;
   errorDetails?: string;
 };
-
-const kialiTitle = require('../assets/img/logo-login.svg');
 
 const defaultErrorStyle = style({
   $nest: {

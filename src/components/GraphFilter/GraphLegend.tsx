@@ -6,8 +6,8 @@ import { Button, Icon } from 'patternfly-react';
 // The content of the graph legend is taken from the image in src/assets/img/graph-legend.svg
 // The size of content's dialog is the same as the image (it is fetched dynamically on this code)
 // Any image format that can be displayed by a browser could be used.
-const graphLegendImage = require('../../assets/img/graph-legend.svg');
-const graphmTLSEnabledLegendImage = require('../../assets/img/graph-mtls-legend.svg');
+import graphLegendImage from '../../assets/img/graph-legend.svg';
+import graphmTLSEnabledLegendImage from '../../assets/img/graph-mtls-legend.svg';
 
 export interface GraphLegendProps {
   closeLegend: () => void;
