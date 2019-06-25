@@ -13,7 +13,7 @@ import (
 )
 
 // Route names to lookup for discovery
-var tracingLookupRoutes = [...]string{"istio-tracing", "tracing", "jaeger-query"}
+var tracingLookupRoutes = [...]string{"jaeger-query", "istio-tracing", "tracing"}
 
 var clientFactory kubernetes.ClientFactory
 
@@ -121,11 +121,12 @@ func discoverTracingPath() (path string) {
 
 func discoverURLTracingService() (url string) {
 	// Try to discover the URL . Openshift Client
-	url, err := discoverServiceURL(appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Service)
-	if err != nil {
-		log.Debugf("[TRACING] URL discovery failed: %v", err)
+	url, _ = discoverServiceURL(appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Service)
+
+	if url == "" {
 		return
 	}
+
 	// Trim the string to format correctly the url with the path
 	url = strings.TrimSuffix(url, "/") + "/" + appstate.JaegerConfig.Path
 	appstate.JaegerEnabled = true
@@ -144,6 +145,7 @@ func DiscoverJaeger() string {
 	// There is not a service in the configuration we need discover the service
 	if tracingConfig.Service == "" {
 		tracingConfig.Service = discoverTracingService()
+		appstate.JaegerConfig = tracingConfig
 	}
 
 	//There is an endpoint in the configuration discovery QUERY_BASE_PATH by endpoint defined
@@ -152,20 +154,20 @@ func DiscoverJaeger() string {
 		appstate.JaegerEnabled = true
 		// Get Path from the URL (User could set the QUERY_BASE_PATH in the URL)
 		tracingConfig.Path = getPathURL(tracingConfig.URL)
+		appstate.JaegerConfig = tracingConfig
 	}
 
 	// Discover QUERY_BASE_PATH by deployment
 	if tracingConfig.Service != "" && tracingConfig.Path == "" {
 		tracingConfig.Path = discoverTracingPath()
+		appstate.JaegerConfig = tracingConfig
 	}
 
 	//There is not an endpoint, go discover for Openshift
 	if tracingConfig.Service != "" && tracingConfig.URL == "" {
 		tracingConfig.URL = discoverURLTracingService()
+		appstate.JaegerConfig = tracingConfig
 	}
-
-	// Save configuration in our appstate
-	appstate.JaegerConfig = tracingConfig
 
 	return appstate.JaegerConfig.URL
 }
