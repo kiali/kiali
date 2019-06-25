@@ -2,6 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import WorkloadDescription from '../WorkloadDescription';
 import { Workload } from '../../../../types/Workload';
+import { shallowToJson } from 'enzyme-to-json';
 
 const workload: Workload = {
   name: 'myworkload',
@@ -33,6 +34,6 @@ describe('WorkloadDescription', () => {
     const wrapper = shallow(
       <WorkloadDescription workload={workload} namespace={'my-namespace'} istioEnabled={false} />
     );
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

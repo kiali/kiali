@@ -3,6 +3,7 @@ import { mount, shallow, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
 import { DashboardModel, ChartModel } from 'k-charted-react';
+import { shallowToJson } from 'enzyme-to-json';
 
 import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
@@ -128,7 +129,7 @@ describe('Metrics for a service', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('mounts and loads empty metrics', done => {
@@ -241,7 +242,7 @@ describe('Inbound Metrics for a workload', () => {
         />
       </Provider>
     );
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('mounts and loads empty metrics', done => {

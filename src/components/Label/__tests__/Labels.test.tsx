@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import Labels from '../Labels';
+import { shallowToJson } from 'enzyme-to-json';
 
 const mockBadge = (labels: { [key: string]: string }) => {
   const component = <Labels labels={labels} />;
@@ -16,8 +17,8 @@ describe('#Labels render correctly with data', () => {
       team: 'A'
     });
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('should render badges without More labels link', () => {
@@ -26,7 +27,7 @@ describe('#Labels render correctly with data', () => {
       version: 'v1'
     });
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import MTLSIcon, { MTLSIconTypes } from '../MTLSIcon';
+import { shallowToJson } from 'enzyme-to-json';
 
 const mockIcon = (icon: string) => {
   const component = (
@@ -13,8 +14,8 @@ describe('when Icon is LOCK_FULL', () => {
   it('MTLSIcon renders properly', () => {
     const wrapper = mockIcon(MTLSIconTypes.LOCK_FULL);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     expect(wrapper.name()).toEqual('OverlayTrigger');
     expect(wrapper.props().placement).toEqual('left');

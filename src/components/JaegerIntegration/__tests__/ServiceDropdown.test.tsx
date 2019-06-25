@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { ServiceDropdown } from '../ServiceDropdown';
+import { shallowToJson } from 'enzyme-to-json';
 
 describe('NamespaceDropdown', () => {
   let wrapper, setService;
@@ -10,7 +11,7 @@ describe('NamespaceDropdown', () => {
   });
 
   it('renders ServiceDropdown correctly without custom', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

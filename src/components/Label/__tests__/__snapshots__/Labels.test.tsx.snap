@@ -1,313 +1,79 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <Labels
-    labels={
-      Object {
-        "app": "bookinfo",
-        "env": "prod",
-        "team": "A",
-        "version": "v1",
-      }
-    }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": "label_0",
-    "nodeType": "host",
-    "props": Object {
-      "children": <Label
-        name="app"
-        value="bookinfo"
-      />,
-      "className": "",
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": "label_0",
-      "nodeType": "function",
-      "props": Object {
-        "name": "app",
-        "value": "bookinfo",
-      },
-      "ref": null,
-      "rendered": null,
-      "type": [Function],
-    },
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": "label_0",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="app"
-          value="bookinfo"
-        />,
-        "className": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_0",
-        "nodeType": "function",
-        "props": Object {
-          "name": "app",
-          "value": "bookinfo",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    Object {
-      "instance": null,
-      "key": "label_1",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="version"
-          value="v1"
-        />,
-        "className": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_1",
-        "nodeType": "function",
-        "props": Object {
-          "name": "version",
-          "value": "v1",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    Object {
-      "instance": null,
-      "key": "label_2",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="env"
-          value="prod"
-        />,
-        "className": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_2",
-        "nodeType": "function",
-        "props": Object {
-          "name": "env",
-          "value": "prod",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    Object {
-      "instance": null,
-      "key": "label_3",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="team"
-          value="A"
-        />,
-        "className": "hide",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_3",
-        "nodeType": "function",
-        "props": Object {
-          "name": "team",
-          "value": "A",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          " ",
-          "More labels...",
-        ],
-        "className": "fqiflux",
-        "onClick": [Function],
-      },
-      "ref": null,
-      "rendered": Array [
-        " ",
-        "More labels...",
-      ],
-      "type": "a",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+Array [
+  <div
+    className=""
+    key="label_0"
+  >
+    <Label
+      key="label_0"
+      name="app"
+      value="bookinfo"
+    />
+  </div>,
+  <div
+    className=""
+    key="label_1"
+  >
+    <Label
+      key="label_1"
+      name="version"
+      value="v1"
+    />
+  </div>,
+  <div
+    className=""
+    key="label_2"
+  >
+    <Label
+      key="label_2"
+      name="env"
+      value="prod"
+    />
+  </div>,
+  <div
+    className="hide"
+    key="label_3"
+  >
+    <Label
+      key="label_3"
+      name="team"
+      value="A"
+    />
+  </div>,
+  <a
+    className="fqiflux"
+    onClick={[Function]}
+  >
+     
+    More labels...
+  </a>,
+]
 `;
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <Labels
-    labels={
-      Object {
-        "app": "bookinfo",
-        "version": "v1",
-      }
-    }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": "label_0",
-    "nodeType": "host",
-    "props": Object {
-      "children": <Label
-        name="app"
-        value="bookinfo"
-      />,
-      "className": "",
-    },
-    "ref": null,
-    "rendered": Object {
-      "instance": null,
-      "key": "label_0",
-      "nodeType": "function",
-      "props": Object {
-        "name": "app",
-        "value": "bookinfo",
-      },
-      "ref": null,
-      "rendered": null,
-      "type": [Function],
-    },
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": "label_0",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="app"
-          value="bookinfo"
-        />,
-        "className": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_0",
-        "nodeType": "function",
-        "props": Object {
-          "name": "app",
-          "value": "bookinfo",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    Object {
-      "instance": null,
-      "key": "label_1",
-      "nodeType": "host",
-      "props": Object {
-        "children": <Label
-          name="version"
-          value="v1"
-        />,
-        "className": "",
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": "label_1",
-        "nodeType": "function",
-        "props": Object {
-          "name": "version",
-          "value": "v1",
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      "type": "div",
-    },
-    null,
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+Array [
+  <div
+    className=""
+    key="label_0"
+  >
+    <Label
+      key="label_0"
+      name="app"
+      value="bookinfo"
+    />
+  </div>,
+  <div
+    className=""
+    key="label_1"
+  >
+    <Label
+      key="label_1"
+      name="version"
+      value="v1"
+    />
+  </div>,
+  "",
+]
 `;

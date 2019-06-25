@@ -2,6 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfoPods from '../ServiceInfoPods';
 import { Pod } from '../../../../types/IstioObjects';
+import { shallowToJson } from 'enzyme-to-json';
 
 const pods: Pod[] = [
   {
@@ -40,7 +41,7 @@ Date.prototype.toLocaleString = jest.fn(Date.prototype.toISOString);
 describe('#ServiceInfoPods render correctly with data', () => {
   it('should render service pods', () => {
     const wrapper = shallow(<ServiceInfoPods pods={pods} />);
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

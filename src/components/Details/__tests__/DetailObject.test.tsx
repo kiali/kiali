@@ -4,6 +4,7 @@ import { Icon } from 'patternfly-react';
 import { default as DetailObject } from '../DetailObject';
 import { PfColors } from '../../Pf/PfColors';
 import { DestinationWeight } from '../../../types/IstioObjects';
+import { shallowToJson } from 'enzyme-to-json';
 
 describe('DetailObject test', () => {
   const detail: DestinationWeight = {
@@ -29,8 +30,8 @@ describe('DetailObject test', () => {
 
     const wrapper = shallow(<DetailObject name={name} detail={detail} />);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     expect(wrapper.html()).toContain('<span class="text-capitalize">[host]</span>');
     expect(wrapper.html()).toContain('<span class="text-capitalize">[subset]</span>');
@@ -46,8 +47,8 @@ describe('DetailObject test', () => {
 
     const wrapper = shallow(<DetailObject name={name} detail={detail} exclude={['port']} />);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     expect(wrapper.html()).toContain('<span class="text-capitalize">[host]</span>');
     expect(wrapper.html()).toContain('<span class="text-capitalize">[subset]</span>');
@@ -69,8 +70,8 @@ describe('DetailObject test', () => {
 
     const wrapper = shallow(<DetailObject name={name} detail={detail} validation={validation} />);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     const iconWrapper = wrapper.find(Icon);
     expect(iconWrapper.prop('type')).toEqual('pf');
@@ -89,8 +90,8 @@ describe('DetailObject test', () => {
 
     const wrapper = shallow(<DetailObject name={name} detail={detail} validation={validation} />);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     const iconWrapper = wrapper.find(Icon);
     expect(iconWrapper.length).toEqual(0);

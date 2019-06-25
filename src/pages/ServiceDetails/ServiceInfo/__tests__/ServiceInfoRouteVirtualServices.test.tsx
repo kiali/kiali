@@ -2,6 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 import ServiceInfoVirtualServices from '../ServiceInfoVirtualServices';
 import { VirtualService } from '../../../../types/IstioObjects';
+import { shallowToJson } from 'enzyme-to-json';
 
 const virtualServices: VirtualService[] = [
   {
@@ -61,7 +62,7 @@ const virtualServices: VirtualService[] = [
 describe('#ServiceInfoVirtualServices render correctly with data', () => {
   it('should render service virtual services', () => {
     const wrapper = shallow(<ServiceInfoVirtualServices virtualServices={virtualServices} validations={{}} />);
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

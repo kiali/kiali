@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 
 import * as ActualAPI from '../../../services/Api';
 import ServiceInfo from '../ServiceInfo';
@@ -31,8 +32,8 @@ describe('#ServiceInfo render correctly with data', () => {
           }}
         />
       );
-      expect(wrapper).toBeDefined();
-      expect(wrapper).toMatchSnapshot();
+      expect(shallowToJson(wrapper)).toBeDefined();
+      expect(shallowToJson(wrapper)).toMatchSnapshot();
       expect(wrapper.find('ServiceInfoDescription').length === 1).toBeTruthy();
       expect(wrapper.find('InfoRoutes').length === 1).toBeFalsy();
       expect(wrapper.find('ServiceInfoVirtualServices').length === 1).toBeTruthy();

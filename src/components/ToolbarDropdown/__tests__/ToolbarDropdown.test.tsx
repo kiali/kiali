@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { mount, shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 
 import ToolbarDropdown from '../ToolbarDropdown';
 import { config } from '../../../config';
@@ -35,7 +36,7 @@ describe('ToolbarDropdown', () => {
           options={dropdownType.options}
         />
       );
-      expect(wrapper).toMatchSnapshot();
+      expect(shallowToJson(wrapper)).toMatchSnapshot();
     });
   });
 
@@ -52,7 +53,7 @@ describe('ToolbarDropdown', () => {
           options={dropdownType.options}
         />
       );
-      expect(wrapper).toMatchSnapshot();
+      expect(shallowToJson(wrapper)).toMatchSnapshot();
     });
   });
 

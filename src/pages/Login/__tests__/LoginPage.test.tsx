@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 import { LoginPage } from '../LoginPage';
 import { LoginStatus } from '../../../store/Store';
 
@@ -16,8 +17,8 @@ const password = 'admin';
 
 describe('#LoginPage render correctly', () => {
   it('should render LoginPage', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('should have a handles methods defined', () => {

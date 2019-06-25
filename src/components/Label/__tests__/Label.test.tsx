@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import Label from '../Label';
+import { shallowToJson } from 'enzyme-to-json';
 
 const mockBadge = (name = 'my_key', value = 'my_value') => {
   const component = <Label value={value} name={name} />;
@@ -13,8 +14,8 @@ describe('#Badge render correctly with data', () => {
     const value = 'bookinfo';
     const wrapper = mockBadge(key, value);
 
-    expect(wrapper).toBeDefined();
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toBeDefined();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     expect(wrapper.name()).toEqual('span');
     expect(wrapper.props().className).toEqual('label-pair');

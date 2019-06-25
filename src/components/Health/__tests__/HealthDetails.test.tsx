@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 
 import { HealthDetails } from '../HealthDetails';
 import { ServiceHealth } from '../../../types/Health';
@@ -12,7 +13,7 @@ describe('HealthDetails', () => {
     );
 
     const wrapper = shallow(<HealthDetails health={health} />);
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('renders deployments failure', () => {
@@ -22,6 +23,6 @@ describe('HealthDetails', () => {
     );
 
     const wrapper = shallow(<HealthDetails health={health} />);
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 });

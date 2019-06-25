@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
+import { shallowToJson } from 'enzyme-to-json';
 
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import { OverviewPage } from '../OverviewPage';
@@ -66,7 +67,7 @@ describe('Overview page', () => {
 
   it('renders initial layout', () => {
     const wrapper = shallow(<OverviewPage meshStatus={MTLSStatuses.NOT_ENABLED} />);
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('renders all without filters', done => {

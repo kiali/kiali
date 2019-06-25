@@ -1,303 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Overview page renders initial layout 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <OverviewPage
-    meshStatus="MTLS_NOT_ENABLED"
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <Breadcrumb
-          title={true}
-        >
-          <BreadcrumbItem
-            active={true}
-          >
-            Namespaces
-          </BreadcrumbItem>
-        </Breadcrumb>,
-        <Connect(OverviewToolbar)
-          displayMode={1}
-          onError={[Function]}
-          onRefresh={[Function]}
-          setDisplayMode={[Function]}
-          sort={[Function]}
-        />,
-        <EmptyState
-          className="f1txr8of"
-        >
-          <EmptyStateTitle
-            className=""
-          >
-            No unfiltered namespaces
-          </EmptyStateTitle>
-          <EmptyStateInfo
-            className=""
-          >
-            Either all namespaces are being filtered or the user has no permission to access namespaces.
-          </EmptyStateInfo>
-        </EmptyState>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": <BreadcrumbItem
-            active={true}
-          >
-            Namespaces
-          </BreadcrumbItem>,
-          "title": true,
-        },
-        "ref": null,
-        "rendered": Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "active": true,
-            "children": "Namespaces",
-          },
-          "ref": null,
-          "rendered": "Namespaces",
-          "type": [Function],
-        },
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "displayMode": 1,
-          "onError": [Function],
-          "onRefresh": [Function],
-          "setDisplayMode": [Function],
-          "sort": [Function],
-        },
-        "ref": null,
-        "rendered": null,
-        "type": [Function],
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <EmptyStateTitle
-              className=""
-            >
-              No unfiltered namespaces
-            </EmptyStateTitle>,
-            <EmptyStateInfo
-              className=""
-            >
-              Either all namespaces are being filtered or the user has no permission to access namespaces.
-            </EmptyStateInfo>,
-          ],
-          "className": "f1txr8of",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": "No unfiltered namespaces",
-              "className": "",
-            },
-            "ref": null,
-            "rendered": "No unfiltered namespaces",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "children": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
-              "className": "",
-            },
-            "ref": null,
-            "rendered": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <Breadcrumb
-            title={true}
-          >
-            <BreadcrumbItem
-              active={true}
-            >
-              Namespaces
-            </BreadcrumbItem>
-          </Breadcrumb>,
-          <Connect(OverviewToolbar)
-            displayMode={1}
-            onError={[Function]}
-            onRefresh={[Function]}
-            setDisplayMode={[Function]}
-            sort={[Function]}
-          />,
-          <EmptyState
-            className="f1txr8of"
-          >
-            <EmptyStateTitle
-              className=""
-            >
-              No unfiltered namespaces
-            </EmptyStateTitle>
-            <EmptyStateInfo
-              className=""
-            >
-              Either all namespaces are being filtered or the user has no permission to access namespaces.
-            </EmptyStateInfo>
-          </EmptyState>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": <BreadcrumbItem
-              active={true}
-            >
-              Namespaces
-            </BreadcrumbItem>,
-            "title": true,
-          },
-          "ref": null,
-          "rendered": Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "class",
-            "props": Object {
-              "active": true,
-              "children": "Namespaces",
-            },
-            "ref": null,
-            "rendered": "Namespaces",
-            "type": [Function],
-          },
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "class",
-          "props": Object {
-            "displayMode": 1,
-            "onError": [Function],
-            "onRefresh": [Function],
-            "setDisplayMode": [Function],
-            "sort": [Function],
-          },
-          "ref": null,
-          "rendered": null,
-          "type": [Function],
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <EmptyStateTitle
-                className=""
-              >
-                No unfiltered namespaces
-              </EmptyStateTitle>,
-              <EmptyStateInfo
-                className=""
-              >
-                Either all namespaces are being filtered or the user has no permission to access namespaces.
-              </EmptyStateInfo>,
-            ],
-            "className": "f1txr8of",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": "No unfiltered namespaces",
-                "className": "",
-              },
-              "ref": null,
-              "rendered": "No unfiltered namespaces",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "function",
-              "props": Object {
-                "children": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
-                "className": "",
-              },
-              "ref": null,
-              "rendered": "Either all namespaces are being filtered or the user has no permission to access namespaces.",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+<Fragment>
+  <Breadcrumb
+    title={true}
+  >
+    <BreadcrumbItem
+      active={true}
+    >
+      Namespaces
+    </BreadcrumbItem>
+  </Breadcrumb>
+  <Connect(OverviewToolbar)
+    displayMode={1}
+    onError={[Function]}
+    onRefresh={[Function]}
+    setDisplayMode={[Function]}
+    sort={[Function]}
+  />
+  <EmptyState
+    className="f1txr8of"
+  >
+    <EmptyStateTitle
+      className=""
+    >
+      No unfiltered namespaces
+    </EmptyStateTitle>
+    <EmptyStateInfo
+      className=""
+    >
+      Either all namespaces are being filtered or the user has no permission to access namespaces.
+    </EmptyStateInfo>
+  </EmptyState>
+</Fragment>
 `;

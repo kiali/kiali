@@ -1,3565 +1,507 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="graph_filter_interval_duration"
-    initialLabel="Last 1m"
-    initialValue={60}
-    nameDropdown="graph_filter_interval_duration"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "10800": "Last 3h",
-        "1800": "Last 30m",
-        "21600": "Last 6h",
-        "300": "Last 5m",
-        "3600": "Last 1h",
-        "60": "Last 1m",
-        "600": "Last 10m",
+        "paddingRight": "0.5em",
       }
     }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          graph_filter_interval_duration
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="graph_filter_interval_duration"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Last 1m"
-        >
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="60"
-            header={false}
-          >
-            Last 1m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="300"
-            header={false}
-          >
-            Last 5m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="600"
-            header={false}
-          >
-            Last 10m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="1800"
-            header={false}
-          >
-            Last 30m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="3600"
-            header={false}
-          >
-            Last 1h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="10800"
-            header={false}
-          >
-            Last 3h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="21600"
-            header={false}
-          >
-            Last 6h
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "graph_filter_interval_duration",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "graph_filter_interval_duration",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60"
-              header={false}
-            >
-              Last 1m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300"
-              header={false}
-            >
-              Last 5m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="600"
-              header={false}
-            >
-              Last 10m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="1800"
-              header={false}
-            >
-              Last 30m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="3600"
-              header={false}
-            >
-              Last 1h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10800"
-              header={false}
-            >
-              Last 3h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="21600"
-              header={false}
-            >
-              Last 6h
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "graph_filter_interval_duration",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Last 1m",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "60",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "60",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "300",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 5m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "300",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 5m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 10m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 10m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "1800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 30m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "1800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 30m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "3600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "3600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "10800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 3h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "10800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 3h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "21600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 6h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "21600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 6h",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            graph_filter_interval_duration
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="graph_filter_interval_duration"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Last 1m"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60"
-              header={false}
-            >
-              Last 1m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300"
-              header={false}
-            >
-              Last 5m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="600"
-              header={false}
-            >
-              Last 10m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="1800"
-              header={false}
-            >
-              Last 30m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="3600"
-              header={false}
-            >
-              Last 1h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10800"
-              header={false}
-            >
-              Last 3h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="21600"
-              header={false}
-            >
-              Last 6h
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "graph_filter_interval_duration",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "graph_filter_interval_duration",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="60"
-                header={false}
-              >
-                Last 1m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="300"
-                header={false}
-              >
-                Last 5m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="600"
-                header={false}
-              >
-                Last 10m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="1800"
-                header={false}
-              >
-                Last 30m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="3600"
-                header={false}
-              >
-                Last 1h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="10800"
-                header={false}
-              >
-                Last 3h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="21600"
-                header={false}
-              >
-                Last 6h
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "graph_filter_interval_duration",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Last 1m",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "60",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "60",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "300",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 5m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "300",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 5m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 10m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 10m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "1800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 30m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "1800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 30m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "3600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "3600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "10800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 3h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "10800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 3h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "21600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 6h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "21600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 6h",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    graph_filter_interval_duration
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="graph_filter_interval_duration"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Last 1m"
+  >
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="60"
+      header={false}
+      key="60"
+    >
+      Last 1m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="300"
+      header={false}
+      key="300"
+    >
+      Last 5m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="600"
+      header={false}
+      key="600"
+    >
+      Last 10m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="1800"
+      header={false}
+      key="1800"
+    >
+      Last 30m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="3600"
+      header={false}
+      key="3600"
+    >
+      Last 1h
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="10800"
+      header={false}
+      key="10800"
+    >
+      Last 3h
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="21600"
+      header={false}
+      key="21600"
+    >
+      Last 6h
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;
 
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="metrics_filter_poll_interval"
-    initialLabel="Every 15s"
-    initialValue={15000}
-    nameDropdown="metrics_filter_poll_interval"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "0": "Pause",
-        "10000": "Every 10s",
-        "15000": "Every 15s",
-        "30000": "Every 30s",
-        "300000": "Every 5m",
-        "60000": "Every 1m",
-        "900000": "Every 15m",
+        "paddingRight": "0.5em",
       }
     }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          metrics_filter_poll_interval
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="metrics_filter_poll_interval"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Every 15s"
-        >
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="0"
-            header={false}
-          >
-            Pause
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="10000"
-            header={false}
-          >
-            Every 10s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="15000"
-            header={false}
-          >
-            Every 15s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="30000"
-            header={false}
-          >
-            Every 30s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="60000"
-            header={false}
-          >
-            Every 1m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="300000"
-            header={false}
-          >
-            Every 5m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="900000"
-            header={false}
-          >
-            Every 15m
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "metrics_filter_poll_interval",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "metrics_filter_poll_interval",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="0"
-              header={false}
-            >
-              Pause
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10000"
-              header={false}
-            >
-              Every 10s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="15000"
-              header={false}
-            >
-              Every 15s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="30000"
-              header={false}
-            >
-              Every 30s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60000"
-              header={false}
-            >
-              Every 1m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300000"
-              header={false}
-            >
-              Every 5m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="900000"
-              header={false}
-            >
-              Every 15m
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "metrics_filter_poll_interval",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Every 15s",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "0",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Pause",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "0",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Pause",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "10000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 10s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "10000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 10s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "15000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 15s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "15000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 15s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "30000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 30s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "30000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 30s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "60000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 1m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "60000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 1m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "300000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 5m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "300000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 5m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "900000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 15m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "900000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 15m",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            metrics_filter_poll_interval
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="metrics_filter_poll_interval"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Every 15s"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="0"
-              header={false}
-            >
-              Pause
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10000"
-              header={false}
-            >
-              Every 10s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="15000"
-              header={false}
-            >
-              Every 15s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="30000"
-              header={false}
-            >
-              Every 30s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60000"
-              header={false}
-            >
-              Every 1m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300000"
-              header={false}
-            >
-              Every 5m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="900000"
-              header={false}
-            >
-              Every 15m
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "metrics_filter_poll_interval",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "metrics_filter_poll_interval",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="0"
-                header={false}
-              >
-                Pause
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="10000"
-                header={false}
-              >
-                Every 10s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="15000"
-                header={false}
-              >
-                Every 15s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="30000"
-                header={false}
-              >
-                Every 30s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="60000"
-                header={false}
-              >
-                Every 1m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="300000"
-                header={false}
-              >
-                Every 5m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="900000"
-                header={false}
-              >
-                Every 15m
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "metrics_filter_poll_interval",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Every 15s",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "0",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Pause",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "0",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Pause",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "10000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 10s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "10000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 10s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "15000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 15s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "15000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 15s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "30000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 30s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "30000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 30s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "60000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 1m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "60000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 1m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "300000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 5m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "300000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 5m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "900000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 15m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "900000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 15m",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    metrics_filter_poll_interval
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="metrics_filter_poll_interval"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Every 15s"
+  >
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="0"
+      header={false}
+      key="0"
+    >
+      Pause
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="10000"
+      header={false}
+      key="10000"
+    >
+      Every 10s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="15000"
+      header={false}
+      key="15000"
+    >
+      Every 15s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="30000"
+      header={false}
+      key="30000"
+    >
+      Every 30s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="60000"
+      header={false}
+      key="60000"
+    >
+      Every 1m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="300000"
+      header={false}
+      key="300000"
+    >
+      Every 5m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="900000"
+      header={false}
+      key="900000"
+    >
+      Every 15m
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;
 
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="graph_filter_layouts"
-    initialLabel="Cola"
-    initialValue="cola"
-    nameDropdown="graph_filter_layouts"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "cola": "Cola",
-        "cose-bilkent": "Cose",
-        "dagre": "Dagre",
+        "paddingRight": "0.5em",
       }
     }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          graph_filter_layouts
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="graph_filter_layouts"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Cola"
-        >
-          <MenuItem
-            active={true}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="cola"
-            header={false}
-          >
-            Cola
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="cose-bilkent"
-            header={false}
-          >
-            Cose
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="dagre"
-            header={false}
-          >
-            Dagre
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "graph_filter_layouts",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "graph_filter_layouts",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cola"
-              header={false}
-            >
-              Cola
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cose-bilkent"
-              header={false}
-            >
-              Cose
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="dagre"
-              header={false}
-            >
-              Dagre
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "graph_filter_layouts",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Cola",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "cola",
-            "nodeType": "class",
-            "props": Object {
-              "active": true,
-              "bsClass": "dropdown",
-              "children": "Cola",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "cola",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Cola",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "cose-bilkent",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Cose",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "cose-bilkent",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Cose",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "dagre",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Dagre",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "dagre",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Dagre",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            graph_filter_layouts
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="graph_filter_layouts"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Cola"
-          >
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cola"
-              header={false}
-            >
-              Cola
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cose-bilkent"
-              header={false}
-            >
-              Cose
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="dagre"
-              header={false}
-            >
-              Dagre
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "graph_filter_layouts",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "graph_filter_layouts",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="cola"
-                header={false}
-              >
-                Cola
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="cose-bilkent"
-                header={false}
-              >
-                Cose
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="dagre"
-                header={false}
-              >
-                Dagre
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "graph_filter_layouts",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Cola",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "cola",
-              "nodeType": "class",
-              "props": Object {
-                "active": true,
-                "bsClass": "dropdown",
-                "children": "Cola",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "cola",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Cola",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "cose-bilkent",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Cose",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "cose-bilkent",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Cose",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "dagre",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Dagre",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "dagre",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Dagre",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    graph_filter_layouts
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="graph_filter_layouts"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Cola"
+  >
+    <MenuItem
+      active={true}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="cola"
+      header={false}
+      key="cola"
+    >
+      Cola
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="cose-bilkent"
+      header={false}
+      key="cose-bilkent"
+    >
+      Cose
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="dagre"
+      header={false}
+      key="dagre"
+    >
+      Dagre
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="graph_filter_interval_duration"
-    label="Last 1m"
-    nameDropdown="graph_filter_interval_duration"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "10800": "Last 3h",
-        "1800": "Last 30m",
-        "21600": "Last 6h",
-        "300": "Last 5m",
-        "3600": "Last 1h",
-        "60": "Last 1m",
-        "600": "Last 10m",
+        "paddingRight": "0.5em",
       }
     }
-    value={60}
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          graph_filter_interval_duration
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="graph_filter_interval_duration"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Last 1m"
-        >
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="60"
-            header={false}
-          >
-            Last 1m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="300"
-            header={false}
-          >
-            Last 5m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="600"
-            header={false}
-          >
-            Last 10m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="1800"
-            header={false}
-          >
-            Last 30m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="3600"
-            header={false}
-          >
-            Last 1h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="10800"
-            header={false}
-          >
-            Last 3h
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="21600"
-            header={false}
-          >
-            Last 6h
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "graph_filter_interval_duration",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "graph_filter_interval_duration",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60"
-              header={false}
-            >
-              Last 1m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300"
-              header={false}
-            >
-              Last 5m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="600"
-              header={false}
-            >
-              Last 10m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="1800"
-              header={false}
-            >
-              Last 30m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="3600"
-              header={false}
-            >
-              Last 1h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10800"
-              header={false}
-            >
-              Last 3h
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="21600"
-              header={false}
-            >
-              Last 6h
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "graph_filter_interval_duration",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Last 1m",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "60",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "60",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "300",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 5m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "300",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 5m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 10m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 10m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "1800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 30m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "1800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 30m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "3600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 1h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "3600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 1h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "10800",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 3h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "10800",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 3h",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "21600",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Last 6h",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "21600",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Last 6h",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            graph_filter_interval_duration
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="graph_filter_interval_duration"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Last 1m"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60"
-              header={false}
-            >
-              Last 1m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300"
-              header={false}
-            >
-              Last 5m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="600"
-              header={false}
-            >
-              Last 10m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="1800"
-              header={false}
-            >
-              Last 30m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="3600"
-              header={false}
-            >
-              Last 1h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10800"
-              header={false}
-            >
-              Last 3h
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="21600"
-              header={false}
-            >
-              Last 6h
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "graph_filter_interval_duration",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "graph_filter_interval_duration",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="60"
-                header={false}
-              >
-                Last 1m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="300"
-                header={false}
-              >
-                Last 5m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="600"
-                header={false}
-              >
-                Last 10m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="1800"
-                header={false}
-              >
-                Last 30m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="3600"
-                header={false}
-              >
-                Last 1h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="10800"
-                header={false}
-              >
-                Last 3h
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="21600"
-                header={false}
-              >
-                Last 6h
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "graph_filter_interval_duration",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Last 1m",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "60",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "60",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "300",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 5m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "300",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 5m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 10m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 10m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "1800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 30m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "1800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 30m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "3600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 1h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "3600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 1h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "10800",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 3h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "10800",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 3h",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "21600",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Last 6h",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "21600",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Last 6h",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    graph_filter_interval_duration
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="graph_filter_interval_duration"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Last 1m"
+  >
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="60"
+      header={false}
+      key="60"
+    >
+      Last 1m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="300"
+      header={false}
+      key="300"
+    >
+      Last 5m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="600"
+      header={false}
+      key="600"
+    >
+      Last 10m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="1800"
+      header={false}
+      key="1800"
+    >
+      Last 30m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="3600"
+      header={false}
+      key="3600"
+    >
+      Last 1h
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="10800"
+      header={false}
+      key="10800"
+    >
+      Last 3h
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="21600"
+      header={false}
+      key="21600"
+    >
+      Last 6h
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="metrics_filter_poll_interval"
-    label="Every 15s"
-    nameDropdown="metrics_filter_poll_interval"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "0": "Pause",
-        "10000": "Every 10s",
-        "15000": "Every 15s",
-        "30000": "Every 30s",
-        "300000": "Every 5m",
-        "60000": "Every 1m",
-        "900000": "Every 15m",
+        "paddingRight": "0.5em",
       }
     }
-    value={15000}
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          metrics_filter_poll_interval
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="metrics_filter_poll_interval"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Every 15s"
-        >
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="0"
-            header={false}
-          >
-            Pause
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="10000"
-            header={false}
-          >
-            Every 10s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="15000"
-            header={false}
-          >
-            Every 15s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="30000"
-            header={false}
-          >
-            Every 30s
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="60000"
-            header={false}
-          >
-            Every 1m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="300000"
-            header={false}
-          >
-            Every 5m
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="900000"
-            header={false}
-          >
-            Every 15m
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "metrics_filter_poll_interval",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "metrics_filter_poll_interval",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="0"
-              header={false}
-            >
-              Pause
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10000"
-              header={false}
-            >
-              Every 10s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="15000"
-              header={false}
-            >
-              Every 15s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="30000"
-              header={false}
-            >
-              Every 30s
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60000"
-              header={false}
-            >
-              Every 1m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300000"
-              header={false}
-            >
-              Every 5m
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="900000"
-              header={false}
-            >
-              Every 15m
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "metrics_filter_poll_interval",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Every 15s",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "0",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Pause",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "0",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Pause",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "10000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 10s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "10000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 10s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "15000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 15s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "15000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 15s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "30000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 30s",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "30000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 30s",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "60000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 1m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "60000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 1m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "300000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 5m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "300000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 5m",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "900000",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Every 15m",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "900000",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Every 15m",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            metrics_filter_poll_interval
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="metrics_filter_poll_interval"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Every 15s"
-          >
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="0"
-              header={false}
-            >
-              Pause
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="10000"
-              header={false}
-            >
-              Every 10s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="15000"
-              header={false}
-            >
-              Every 15s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="30000"
-              header={false}
-            >
-              Every 30s
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="60000"
-              header={false}
-            >
-              Every 1m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="300000"
-              header={false}
-            >
-              Every 5m
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="900000"
-              header={false}
-            >
-              Every 15m
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "metrics_filter_poll_interval",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "metrics_filter_poll_interval",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="0"
-                header={false}
-              >
-                Pause
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="10000"
-                header={false}
-              >
-                Every 10s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="15000"
-                header={false}
-              >
-                Every 15s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="30000"
-                header={false}
-              >
-                Every 30s
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="60000"
-                header={false}
-              >
-                Every 1m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="300000"
-                header={false}
-              >
-                Every 5m
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="900000"
-                header={false}
-              >
-                Every 15m
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "metrics_filter_poll_interval",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Every 15s",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "0",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Pause",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "0",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Pause",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "10000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 10s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "10000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 10s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "15000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 15s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "15000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 15s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "30000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 30s",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "30000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 30s",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "60000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 1m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "60000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 1m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "300000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 5m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "300000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 5m",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "900000",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Every 15m",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "900000",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Every 15m",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    metrics_filter_poll_interval
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="metrics_filter_poll_interval"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Every 15s"
+  >
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="0"
+      header={false}
+      key="0"
+    >
+      Pause
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="10000"
+      header={false}
+      key="10000"
+    >
+      Every 10s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="15000"
+      header={false}
+      key="15000"
+    >
+      Every 15s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="30000"
+      header={false}
+      key="30000"
+    >
+      Every 30s
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="60000"
+      header={false}
+      key="60000"
+    >
+      Every 1m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="300000"
+      header={false}
+      key="300000"
+    >
+      Every 5m
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="900000"
+      header={false}
+      key="900000"
+    >
+      Every 15m
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <ToolbarDropdown
-    disabled={false}
-    handleSelect={[MockFunction]}
-    id="graph_filter_layouts"
-    label="Cola"
-    nameDropdown="graph_filter_layouts"
-    options={
+<Fragment>
+  <label
+    style={
       Object {
-        "cola": "Cola",
-        "cose-bilkent": "Cose",
-        "dagre": "Dagre",
+        "paddingRight": "0.5em",
       }
     }
-    value="cola"
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": undefined,
-    "nodeType": "function",
-    "props": Object {
-      "children": Array [
-        <label
-          style={
-            Object {
-              "paddingRight": "0.5em",
-            }
-          }
-        >
-          graph_filter_layouts
-        </label>,
-        <DropdownButton
-          disabled={false}
-          id="graph_filter_layouts"
-          onSelect={[Function]}
-          onToggle={[Function]}
-          title="Cola"
-        >
-          <MenuItem
-            active={true}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="cola"
-            header={false}
-          >
-            Cola
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="cose-bilkent"
-            header={false}
-          >
-            Cose
-          </MenuItem>
-          <MenuItem
-            active={false}
-            bsClass="dropdown"
-            disabled={false}
-            divider={false}
-            eventKey="dagre"
-            header={false}
-          >
-            Dagre
-          </MenuItem>
-        </DropdownButton>,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": "graph_filter_layouts",
-          "style": Object {
-            "paddingRight": "0.5em",
-          },
-        },
-        "ref": null,
-        "rendered": "graph_filter_layouts",
-        "type": "label",
-      },
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "function",
-        "props": Object {
-          "children": Array [
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cola"
-              header={false}
-            >
-              Cola
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cose-bilkent"
-              header={false}
-            >
-              Cose
-            </MenuItem>,
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="dagre"
-              header={false}
-            >
-              Dagre
-            </MenuItem>,
-          ],
-          "disabled": false,
-          "id": "graph_filter_layouts",
-          "onSelect": [Function],
-          "onToggle": [Function],
-          "title": "Cola",
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": "cola",
-            "nodeType": "class",
-            "props": Object {
-              "active": true,
-              "bsClass": "dropdown",
-              "children": "Cola",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "cola",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Cola",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "cose-bilkent",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Cose",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "cose-bilkent",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Cose",
-            "type": [Function],
-          },
-          Object {
-            "instance": null,
-            "key": "dagre",
-            "nodeType": "class",
-            "props": Object {
-              "active": false,
-              "bsClass": "dropdown",
-              "children": "Dagre",
-              "disabled": false,
-              "divider": false,
-              "eventKey": "dagre",
-              "header": false,
-            },
-            "ref": null,
-            "rendered": "Dagre",
-            "type": [Function],
-          },
-        ],
-        "type": [Function],
-      },
-    ],
-    "type": Symbol(react.fragment),
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "function",
-      "props": Object {
-        "children": Array [
-          <label
-            style={
-              Object {
-                "paddingRight": "0.5em",
-              }
-            }
-          >
-            graph_filter_layouts
-          </label>,
-          <DropdownButton
-            disabled={false}
-            id="graph_filter_layouts"
-            onSelect={[Function]}
-            onToggle={[Function]}
-            title="Cola"
-          >
-            <MenuItem
-              active={true}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cola"
-              header={false}
-            >
-              Cola
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="cose-bilkent"
-              header={false}
-            >
-              Cose
-            </MenuItem>
-            <MenuItem
-              active={false}
-              bsClass="dropdown"
-              disabled={false}
-              divider={false}
-              eventKey="dagre"
-              header={false}
-            >
-              Dagre
-            </MenuItem>
-          </DropdownButton>,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": "graph_filter_layouts",
-            "style": Object {
-              "paddingRight": "0.5em",
-            },
-          },
-          "ref": null,
-          "rendered": "graph_filter_layouts",
-          "type": "label",
-        },
-        Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "function",
-          "props": Object {
-            "children": Array [
-              <MenuItem
-                active={true}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="cola"
-                header={false}
-              >
-                Cola
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="cose-bilkent"
-                header={false}
-              >
-                Cose
-              </MenuItem>,
-              <MenuItem
-                active={false}
-                bsClass="dropdown"
-                disabled={false}
-                divider={false}
-                eventKey="dagre"
-                header={false}
-              >
-                Dagre
-              </MenuItem>,
-            ],
-            "disabled": false,
-            "id": "graph_filter_layouts",
-            "onSelect": [Function],
-            "onToggle": [Function],
-            "title": "Cola",
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": "cola",
-              "nodeType": "class",
-              "props": Object {
-                "active": true,
-                "bsClass": "dropdown",
-                "children": "Cola",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "cola",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Cola",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "cose-bilkent",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Cose",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "cose-bilkent",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Cose",
-              "type": [Function],
-            },
-            Object {
-              "instance": null,
-              "key": "dagre",
-              "nodeType": "class",
-              "props": Object {
-                "active": false,
-                "bsClass": "dropdown",
-                "children": "Dagre",
-                "disabled": false,
-                "divider": false,
-                "eventKey": "dagre",
-                "header": false,
-              },
-              "ref": null,
-              "rendered": "Dagre",
-              "type": [Function],
-            },
-          ],
-          "type": [Function],
-        },
-      ],
-      "type": Symbol(react.fragment),
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+  >
+    graph_filter_layouts
+  </label>
+  <DropdownButton
+    disabled={false}
+    id="graph_filter_layouts"
+    onSelect={[Function]}
+    onToggle={[Function]}
+    title="Cola"
+  >
+    <MenuItem
+      active={true}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="cola"
+      header={false}
+      key="cola"
+    >
+      Cola
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="cose-bilkent"
+      header={false}
+      key="cose-bilkent"
+    >
+      Cose
+    </MenuItem>
+    <MenuItem
+      active={false}
+      bsClass="dropdown"
+      disabled={false}
+      divider={false}
+      eventKey="dagre"
+      header={false}
+      key="dagre"
+    >
+      Dagre
+    </MenuItem>
+  </DropdownButton>
+</Fragment>
 `;

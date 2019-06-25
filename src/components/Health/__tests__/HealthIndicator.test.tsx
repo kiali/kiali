@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
+import { shallowToJson } from 'enzyme-to-json';
 
 import { HealthIndicator, DisplayMode } from '../HealthIndicator';
 import { AppHealth } from '../../../types/Health';
@@ -27,7 +28,7 @@ describe('HealthIndicator', () => {
 
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
-    expect(wrapper).toMatchSnapshot();
+    expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
     expect(html).toContain('pficon-ok');
 

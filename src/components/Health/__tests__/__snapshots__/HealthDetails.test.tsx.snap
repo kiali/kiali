@@ -1,381 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`HealthDetails renders deployments failure 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthDetails
-    health={
-      ServiceHealth {
-        "items": Array [
-          Object {
-            "status": Object {
-              "color": "#72767b",
-              "name": "No health information",
-              "priority": 0,
-              "text": "N/A",
-            },
-            "text": "No requests",
-            "title": "Error Rate over last 1m",
-          },
-        ],
-        "requests": Object {
-          "errorRatio": -1,
-          "inboundErrorRatio": -1,
-          "outboundErrorRatio": -1,
-        },
-      }
-    }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": "0",
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <strong>
-          <span
-            style={
-              Object {
-                "color": "#72767b",
-              }
-            }
-          >
-            N/A
-          </span>
-           Error Rate over last 1m: 
-        </strong>,
-        "No requests",
-        undefined,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <span
-              style={
-                Object {
-                  "color": "#72767b",
-                }
-              }
-            >
-              N/A
-            </span>,
-            " Error Rate over last 1m: ",
-          ],
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "host",
-            "props": Object {
-              "children": "N/A",
-              "style": Object {
-                "color": "#72767b",
-              },
-            },
-            "ref": null,
-            "rendered": "N/A",
-            "type": "span",
-          },
-          " Error Rate over last 1m: ",
-        ],
-        "type": "strong",
-      },
-      "No requests",
-      undefined,
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": "0",
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <strong>
-            <span
-              style={
-                Object {
-                  "color": "#72767b",
-                }
-              }
-            >
-              N/A
-            </span>
-             Error Rate over last 1m: 
-          </strong>,
-          "No requests",
-          undefined,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
+<div
+  key="0"
+>
+  <strong>
+    <span
+      style={
         Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <span
-                style={
-                  Object {
-                    "color": "#72767b",
-                  }
-                }
-              >
-                N/A
-              </span>,
-              " Error Rate over last 1m: ",
-            ],
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "host",
-              "props": Object {
-                "children": "N/A",
-                "style": Object {
-                  "color": "#72767b",
-                },
-              },
-              "ref": null,
-              "rendered": "N/A",
-              "type": "span",
-            },
-            " Error Rate over last 1m: ",
-          ],
-          "type": "strong",
-        },
-        "No requests",
-        undefined,
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+          "color": "#72767b",
+        }
+      }
+    >
+      N/A
+    </span>
+     Error Rate over last 1m: 
+  </strong>
+  No requests
+</div>
 `;
 
 exports[`HealthDetails renders healthy 1`] = `
-ShallowWrapper {
-  Symbol(enzyme.__root__): [Circular],
-  Symbol(enzyme.__unrendered__): <HealthDetails
-    health={
-      ServiceHealth {
-        "items": Array [
-          Object {
-            "status": Object {
-              "color": "#72767b",
-              "name": "No health information",
-              "priority": 0,
-              "text": "N/A",
-            },
-            "text": "No requests",
-            "title": "Error Rate over last 1m",
-          },
-        ],
-        "requests": Object {
-          "errorRatio": -1,
-          "inboundErrorRatio": -1,
-          "outboundErrorRatio": -1,
-        },
-      }
-    }
-  />,
-  Symbol(enzyme.__renderer__): Object {
-    "batchedUpdates": [Function],
-    "getNode": [Function],
-    "render": [Function],
-    "simulateError": [Function],
-    "simulateEvent": [Function],
-    "unmount": [Function],
-  },
-  Symbol(enzyme.__node__): Object {
-    "instance": null,
-    "key": "0",
-    "nodeType": "host",
-    "props": Object {
-      "children": Array [
-        <strong>
-          <span
-            style={
-              Object {
-                "color": "#72767b",
-              }
-            }
-          >
-            N/A
-          </span>
-           Error Rate over last 1m: 
-        </strong>,
-        "No requests",
-        undefined,
-      ],
-    },
-    "ref": null,
-    "rendered": Array [
-      Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "host",
-        "props": Object {
-          "children": Array [
-            <span
-              style={
-                Object {
-                  "color": "#72767b",
-                }
-              }
-            >
-              N/A
-            </span>,
-            " Error Rate over last 1m: ",
-          ],
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "host",
-            "props": Object {
-              "children": "N/A",
-              "style": Object {
-                "color": "#72767b",
-              },
-            },
-            "ref": null,
-            "rendered": "N/A",
-            "type": "span",
-          },
-          " Error Rate over last 1m: ",
-        ],
-        "type": "strong",
-      },
-      "No requests",
-      undefined,
-    ],
-    "type": "div",
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": "0",
-      "nodeType": "host",
-      "props": Object {
-        "children": Array [
-          <strong>
-            <span
-              style={
-                Object {
-                  "color": "#72767b",
-                }
-              }
-            >
-              N/A
-            </span>
-             Error Rate over last 1m: 
-          </strong>,
-          "No requests",
-          undefined,
-        ],
-      },
-      "ref": null,
-      "rendered": Array [
+<div
+  key="0"
+>
+  <strong>
+    <span
+      style={
         Object {
-          "instance": null,
-          "key": undefined,
-          "nodeType": "host",
-          "props": Object {
-            "children": Array [
-              <span
-                style={
-                  Object {
-                    "color": "#72767b",
-                  }
-                }
-              >
-                N/A
-              </span>,
-              " Error Rate over last 1m: ",
-            ],
-          },
-          "ref": null,
-          "rendered": Array [
-            Object {
-              "instance": null,
-              "key": undefined,
-              "nodeType": "host",
-              "props": Object {
-                "children": "N/A",
-                "style": Object {
-                  "color": "#72767b",
-                },
-              },
-              "ref": null,
-              "rendered": "N/A",
-              "type": "span",
-            },
-            " Error Rate over last 1m: ",
-          ],
-          "type": "strong",
-        },
-        "No requests",
-        undefined,
-      ],
-      "type": "div",
-    },
-  ],
-  Symbol(enzyme.__options__): Object {
-    "adapter": ReactSixteenAdapter {
-      "options": Object {
-        "enableComponentDidUpdateOnSetState": true,
-        "lifecycles": Object {
-          "componentDidUpdate": Object {
-            "onSetState": true,
-          },
-          "getDerivedStateFromProps": true,
-          "getSnapshotBeforeUpdate": true,
-          "setState": Object {
-            "skipsComponentDidUpdateOnNullish": true,
-          },
-        },
-      },
-    },
-  },
-}
+          "color": "#72767b",
+        }
+      }
+    >
+      N/A
+    </span>
+     Error Rate over last 1m: 
+  </strong>
+  No requests
+</div>
 `;
