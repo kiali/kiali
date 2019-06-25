@@ -48,13 +48,15 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   }
 
   initOptions(): DashboardQuery {
-    let filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
-    if (this.props.version) {
-      filters += `,${serverConfig.istioLabels.versionLabelName}:${this.props.version}`;
-    }
-    const options: DashboardQuery = {
-      labelsFilters: filters
-    };
+    const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
+    const options: DashboardQuery = this.props.version
+      ? {
+          labelsFilters: `${filters},${serverConfig.istioLabels.versionLabelName}:${this.props.version}`
+        }
+      : {
+          labelsFilters: filters,
+          additionalLabels: 'version:Version'
+        };
     MetricsHelper.initMetricsSettings(options);
     MetricsHelper.initDuration(options);
     return options;
