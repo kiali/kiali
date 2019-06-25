@@ -7,5 +7,8 @@
   - import_tasks: '../common/tasks.yml' 
   - import_tasks: '../asserts/configmap_asserts.yml'
   - import_tasks: '../asserts/pod_asserts.yml'
+  - import_tasks: '../asserts/multi-tenancy/label_selector_asserts.yml'
+  - import_tasks: '../asserts/multi-tenancy/role_asserts.yml'
+
 
  
