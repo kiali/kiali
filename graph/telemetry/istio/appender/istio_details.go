@@ -119,7 +119,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-		if n.NodeType == graph.NodeTypeService && n.App == "" {
+		if n.NodeType == graph.NodeTypeService && n.Namespace != graph.Unknown && n.App == "" {
 			// A service node that is a service entry will not have a service definition
 			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				continue

@@ -1,7 +1,6 @@
 package appender
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -90,9 +89,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
 		for _, doomedSeServiceNode := range seServiceNodes {
 			// aggregate node traffic
-			fmt.Printf("DoomedMD: %+v\n", doomedSeServiceNode.Metadata)
 			graph.AggregateNodeTraffic(doomedSeServiceNode, &serviceEntryNode)
-			fmt.Printf("AggregateMD: %+v\n", serviceEntryNode.Metadata)
 			// aggregate node dest-services to capture all of the distinct requested services
 			if destServices, ok := doomedSeServiceNode.Metadata[graph.DestServices]; ok {
 				for k, v := range destServices.(graph.DestServicesMetadata) {
