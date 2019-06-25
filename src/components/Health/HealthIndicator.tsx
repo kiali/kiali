@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { OverlayTrigger, Popover } from 'patternfly-react';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
+import { createIcon } from './Helper';
 
 export enum DisplayMode {
   LARGE,
@@ -43,8 +44,7 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
   }
 
   renderSmall(health: H.Health) {
-    const icon = this.renderIcon('18px', '12px');
-    return this.renderPopover(health, icon);
+    return this.renderPopover(health, createIcon(this.state.globalStatus, 'sm'));
   }
 
   renderLarge(health: H.Health) {
@@ -57,31 +57,13 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
     };
     return (
       <>
-        {this.renderIcon('35px', '24px')}
+        {createIcon(this.state.globalStatus, 'lg')}
         <span style={spanStyle}>{this.state.globalStatus.name}</span>
         <br />
         <br />
         <HealthDetails health={health} />
       </>
     );
-  }
-
-  renderIcon(iconSize: string, textSize: string) {
-    if (this.state.globalStatus.icon) {
-      return (
-        <Icon
-          type="pf"
-          name={this.state.globalStatus.icon}
-          style={{ fontSize: iconSize }}
-          className="health-icon"
-          tabIndex="0"
-        />
-      );
-    } else {
-      return (
-        <span style={{ color: this.state.globalStatus.color, fontSize: textSize }}>{this.state.globalStatus.text}</span>
-      );
-    }
   }
 
   renderPopover(health: H.Health, icon: JSX.Element) {

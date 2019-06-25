@@ -5,15 +5,11 @@ exports[`HealthDetails renders deployments failure 1`] = `
   key="0"
 >
   <strong>
-    <span
-      style={
-        Object {
-          "color": "#72767b",
-        }
-      }
-    >
-      N/A
-    </span>
+    <UnknownIcon
+      color="#72767b"
+      size="sm"
+      title={null}
+    />
      Error Rate over last 1m: 
   </strong>
   No requests
@@ -25,15 +21,11 @@ exports[`HealthDetails renders healthy 1`] = `
   key="0"
 >
   <strong>
-    <span
-      style={
-        Object {
-          "color": "#72767b",
-        }
-      }
-    >
-      N/A
-    </span>
+    <UnknownIcon
+      color="#72767b"
+      size="sm"
+      title={null}
+    />
      Error Rate over last 1m: 
   </strong>
   No requests

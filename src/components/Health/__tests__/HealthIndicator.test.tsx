@@ -30,12 +30,12 @@ describe('HealthIndicator', () => {
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
-    expect(html).toContain('pficon-ok');
+    expect(html).toContain('#3f9c35');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('pficon-ok');
+    expect(html).toContain('#3f9c35');
   });
 
   it('renders workloads degraded', () => {
@@ -51,12 +51,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('pficon-warning');
+    expect(html).toContain('#ec7a08');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('pficon-warning');
+    expect(html).toContain('#ec7a08');
     expect(html).toContain('1 / 10');
   });
 
@@ -73,12 +73,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('pficon-ok');
+    expect(html).toContain('#3f9c35');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('pficon-ok');
+    expect(html).toContain('#3f9c35');
     expect(html).toContain('0 / 0');
   });
 
@@ -95,12 +95,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('pficon-error');
+    expect(html).toContain('#cc0000');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('pficon-error');
+    expect(html).toContain('#cc0000');
   });
 
   it('renders error rate failure', () => {
@@ -113,12 +113,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('pficon-error');
+    expect(html).toContain('#cc0000');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('pficon-error');
+    expect(html).toContain('#cc0000');
     expect(html).toContain('Outbound: 20.00%');
     expect(html).toContain('Inbound: 10.00%');
   });
