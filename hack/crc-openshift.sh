@@ -856,6 +856,11 @@ EOM
       ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
   fi
 
+  # TODO we can remove this when this is fixed: https://github.com/code-ready/crc/issues/218
+  echo "Working around bug so logs are accessible. See: https://github.com/code-ready/crc/issues/218"
+  ${MAISTRA_ISTIO_OC_COMMAND} adm certificate approve $(${MAISTRA_ISTIO_OC_COMMAND} get csr | egrep ^csr | awk '{ print $1 }')
+
+  # show the status message
   get_status
 
 elif [ "$_CMD" = "stop" ];then
