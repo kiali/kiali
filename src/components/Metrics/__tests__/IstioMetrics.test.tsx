@@ -10,7 +10,6 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 
-(window as any).SVGPathElement = a => a;
 let mounted: ReactWrapper<any, any> | null;
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {
