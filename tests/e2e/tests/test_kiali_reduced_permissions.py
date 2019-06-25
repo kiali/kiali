@@ -5,7 +5,7 @@ import time
 
 PARAMS = {'graphType':'versionedApp', 'duration':'60s', 'injectServiceNodes':'false', 'edges':'trafficRatePerSecond'}
 
-def test_kiali_reduced_cluster_permissins(kiali_client):
+def _test_kiali_reduced_cluster_permissions(kiali_client):
     bookinfo_namespace = conftest.get_bookinfo_namespace()
 
     try:
