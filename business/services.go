@@ -121,7 +121,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 
 	wg := sync.WaitGroup{}
 	wg.Add(7)
-	errChan := make(chan error, 7)
+	errChan := make(chan error, 6)
 
 	labelsSelector := labels.Set(svc.Spec.Selector).String()
 	// If service doesn't have any selector, we can't know which are the pods and workloads applying.
@@ -201,9 +201,6 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		// Maybe a future jaeger business layer
 		defer wg.Done()
 		eTraces, err = getErrorTracesFromJaeger(namespace, service, requestToken)
-		if err != nil {
-			errChan <- err
-		}
 	}()
 
 	wg.Wait()
