@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -44,7 +45,7 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 
 func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 	if len(namespaces) < 1 {
-		return false, nil
+		return false, fmt.Errorf("Unable to determine mesh-wide mTLS status without access to a namespace")
 	}
 
 	// MeshPolicies are not namespaced. So any namespace user has access to
