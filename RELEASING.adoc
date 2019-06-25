@@ -81,17 +81,15 @@ the RELEASE_TYPE variable. Valid values are "major", "minor", "patch", "edge" an
 the type of release. Please, don't try to adjust the version string (i.e.
 don't change the version in `package.json`).
 
-*Note*: The release process has not been tested for `RELEASE_TYPE=major` yet.
-
 === Available options
 
 * If you want to make a "dry-run" of the release:
 ** `NPM_DRY_RUN=y make -f Makefile.jenkins release`
-* In _major_, _minor_ or _patch_ mode, the release process updates or creates
+* In _minor_ or _patch_ mode, the release process updates or creates
   a version branch in the kiali-ui repository (the branch name is like
   "vMAJOR.MINOR"). You can omit this:
 ** `OMIT_VERSION_BRANCH=y make -f Makefile.jenkins release`
-* In _major_, _minor_ or _patch_ mode, the release
+* In _minor_ or _patch_ mode, the release
   process may create a branch in your fork of the repository with
   the required changes to prepare the code for the next release. The branch is
   created if it isn't possible to push to the kiali-ui repository. By default, the
