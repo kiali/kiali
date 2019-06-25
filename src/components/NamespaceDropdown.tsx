@@ -46,7 +46,7 @@ const namespaceValueStyle = style({
 const popoverMarginBottom = 20;
 
 const namespaceContainerStyle = style({
-  overflow: 'overlay'
+  overflow: 'auto'
 });
 
 interface ReduxProps {
