@@ -22,4 +22,13 @@ describe('JaegerState reducer', () => {
     expectedState.enableIntegration = true;
     expect(JaegerState(initialState, JaegerActions.setEnableIntegration(true))).toEqual(expectedState);
   });
+
+  it('should store both url and integration', () => {
+    const url = 'https://jaeger-query-istio-system.127.0.0.1.nip.io';
+    expectedState.enableIntegration = true;
+    expectedState.jaegerURL = url;
+    expect(JaegerState(initialState, JaegerActions.setinfo({ jaegerURL: url, enableIntegration: true }))).toEqual(
+      expectedState
+    );
+  });
 });

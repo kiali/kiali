@@ -140,5 +140,5 @@ export interface KialiAppState {
   /** User Settings */
   userSettings: UserSettings;
   /** Jaeger Integration */
-  jaegerState: JaegerState;
+  jaegerState: JaegerState | null;
 }

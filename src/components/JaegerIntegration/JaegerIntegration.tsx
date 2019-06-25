@@ -46,7 +46,7 @@ export class JaegerIntegration extends React.Component<JaegerIntegrationProps, J
 
 const mapStateToProps = (state: KialiAppState) => {
   return {
-    urlJaeger: state.jaegerState.jaegerURL
+    urlJaeger: state.jaegerState ? state.jaegerState.jaegerURL : ''
   };
 };
 

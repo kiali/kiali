@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { GrafanaInfo, KialiAppState, LoginStatus } from '../store/Store';
+import { GrafanaInfo, JaegerState, KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { JaegerActions } from '../actions/JaegerActions';
@@ -16,10 +16,12 @@ import * as MessageCenter from '../utils/MessageCenter';
 import { setServerConfig } from '../config/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
+import JaegerInfo from '../types/JaegerInfo';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
   setGrafanaInfo: (grafanaInfo: GrafanaInfo) => void;
+  setJaegerInfo: (jaegerInfo: JaegerState) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
 }
@@ -104,7 +106,20 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       const getGrafanaInfoPromise = API.getGrafanaInfo()
         .then(response => this.props.setGrafanaInfo(response.data))
         .catch(error => {
-          MessageCenter.add(API.getErrorMsg('Error fetching Grafana Info.', error), 'default', MessageType.WARNING);
+          MessageCenter.add(
+            API.getErrorMsg('Could not fetch Grafana info. Turning off links to Grafana.', error),
+            'default',
+            MessageType.INFO
+          );
+        });
+      const getJaegerInfoPromise = API.getJaegerInfo()
+        .then(response => this.setJaegerInfo(response.data))
+        .catch(error => {
+          MessageCenter.add(
+            API.getErrorMsg('Could not fetch Jaeger info. Turning off Jaeger integration.', error),
+            'default',
+            MessageType.INFO
+          );
         });
       const getMeshTlsPromise = API.getMeshTls()
         .then(response => this.props.setMeshTlsStatus(response.data))
@@ -116,6 +131,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         API.getServerConfig(),
         getStatusPromise,
         getGrafanaInfoPromise,
+        getJaegerInfoPromise,
         getMeshTlsPromise
       ]);
       setServerConfig(configs[0].data);
@@ -132,22 +148,26 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       document.documentElement.className = isKioskMode() ? 'kiosk' : '';
     }
   };
+
+  private setJaegerInfo = (jaegerInfo: JaegerInfo) => {
+    let jaegerState: JaegerState = { jaegerURL: '', enableIntegration: false };
+
+    if (jaegerInfo.url) {
+      jaegerState = {
+        jaegerURL: jaegerInfo.url,
+        // If same protocol enable integration, otherwise new tab is open
+        enableIntegration: jaegerInfo.url.startsWith(window.location.protocol)
+      };
+    }
+
+    this.props.setJaegerInfo(jaegerState);
+  };
 }
 
 const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus) => {
   dispatch(
     HelpDropdownActions.statusRefresh(serverStatus.status, serverStatus.externalServices, serverStatus.warningMessages)
   );
-  // Get the jaeger URL
-  const hasJaeger = serverStatus.externalServices.filter(item => item.name === 'Jaeger');
-  if (hasJaeger.length === 1 && hasJaeger[0].url) {
-    dispatch(JaegerActions.setUrl(hasJaeger[0].url));
-    // If same protocol enable integration
-    dispatch(JaegerActions.setEnableIntegration(hasJaeger[0].url.startsWith(window.location.protocol)));
-  } else {
-    dispatch(JaegerActions.setUrl(''));
-    dispatch(JaegerActions.setEnableIntegration(false));
-  }
 
   serverStatus.warningMessages.forEach(wMsg => {
     dispatch(MessageCenterActions.addMessage(wMsg, 'systemErrors', MessageType.WARNING));
@@ -161,6 +181,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
     setGrafanaInfo: bindActionCreators(GrafanaActions.setinfo, dispatch),
+    setJaegerInfo: bindActionCreators(JaegerActions.setinfo, dispatch),
     setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
     setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)
   };

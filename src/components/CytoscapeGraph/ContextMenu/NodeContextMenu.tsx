@@ -150,8 +150,8 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  jaegerIntegration: state.jaegerState.enableIntegration,
-  jaegerURL: state.jaegerState.jaegerURL
+  jaegerIntegration: state.jaegerState ? state.jaegerState.enableIntegration : false,
+  jaegerURL: state.jaegerState ? state.jaegerState.jaegerURL : ''
 });
 
 export const NodeContextMenuContainer = connect(mapStateToProps)(NodeContextMenu);
