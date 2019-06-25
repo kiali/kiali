@@ -39,7 +39,7 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 
 	apiURL := status.DiscoverJaeger()
 	if apiURL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
+		return nil, http.StatusServiceUnavailable, errors.New("wrong config for Jaeger URL: not found in Kiali configuration")
 	}
 
 	// Check if URL is valid
