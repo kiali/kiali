@@ -54,10 +54,6 @@ const wkIconType = 'pf';
 const wkIconName = 'bundle';
 
 class Rules extends React.Component<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   matchAllIndex = (rules: Rule[]): number => {
     let matchAll: number = -1;
     for (let index = 0; index < rules.length; index++) {
