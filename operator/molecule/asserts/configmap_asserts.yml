@@ -3,13 +3,6 @@
     that:
     - kiali_configmap.auth.strategy == kiali.auth_strategy
 
-
-- name: Assert Kiali Configmap has the correct Label Selector
-  assert:
-    that:
-    - (kiali_configmap.api.namespaces.label_selector is defined) and (kiali_configmap.api.namespaces.label_selector ==  kiali.label_selector)
-  when: kiali.label_selector != ""
-
 - name: Assert Kiali Configmap has the correct Image Version
   assert:
     that:
