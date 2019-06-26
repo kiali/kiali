@@ -35,7 +35,7 @@ func TestMeshPolicyWithoutNamespaces(t *testing.T) {
 	tlsService := TLSService{k8s: k8s}
 	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{})
 
-	assert.EqualError(err, "Unable to determine mesh-wide mTLS status without access to a namespace")
+	assert.EqualError(err, "Unable to determine mesh-wide mTLS status without access to any namespace")
 	assert.Equal(false, meshPolicyEnabled)
 }
 
