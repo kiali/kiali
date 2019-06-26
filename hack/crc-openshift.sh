@@ -66,6 +66,8 @@ get_installer() {
 }
 
 get_status() {
+  get_registry_names
+  check_insecure_registry
   echo "====================================================================="
   echo "Version from: ${MAISTRA_ISTIO_OC_COMMAND}"
   ${MAISTRA_ISTIO_OC_COMMAND} version
@@ -75,7 +77,7 @@ get_status() {
   echo "====================================================================="
   echo "Console:    https://console-openshift-console.apps-crc.testing"
   echo "API URL:    https://api.crc.testing:6443/"
-  echo "Image Repo: default-route-openshift-image-registry.apps-crc.testing"
+  echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
   echo "oc:      ${CRC_OC}"
   echo "istiooc: ${MAISTRA_ISTIO_OC_COMMAND}"
   echo "====================================================================="
@@ -89,17 +91,17 @@ get_status() {
   echo "====================================================================="
   echo "To push images to the image repo you need to log in."
   echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-  echo "  oc login -u kubeadmin -p" $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})
-  echo '  docker login -u kubeadmin -p $(oc whoami -t) default-route-openshift-image-registry.apps-crc.testing'
+  echo "  oc login -u kubeadmin -p" $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) "api.crc.testing:6443"
+  echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
   echo "or"
-  echo "  oc login -u kiali -p kiali"
-  echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t) default-route-openshift-image-registry.apps-crc.testing'
+  echo "  oc login -u kiali -p kiali api.crc.testing:6443"
+  echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
   echo "====================================================================="
 
   echo "CRC does not yet have a status command. This hack script will be updated once this github issue is implemented: https://github.com/code-ready/crc/issues/68"
 }
 
-checkApp () {
+check_app() {
   local expected="$1"
   apps=$(${MAISTRA_ISTIO_OC_COMMAND} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
   for app in ${apps[@]}
@@ -109,6 +111,33 @@ checkApp () {
 	 fi
   done
   return 1
+}
+
+get_registry_names() {
+  local ext=$(${MAISTRA_ISTIO_OC_COMMAND} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
+  local int=$(${MAISTRA_ISTIO_OC_COMMAND} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  EXTERNAL_IMAGE_REGISTRY=${ext:-<unknown>}
+  INTERNAL_IMAGE_REGISTRY=${int:-<unknown>}
+}
+
+check_insecure_registry() {
+  # make sure docker insecure registry is defined
+  pgrep -a dockerd | grep "[-]-insecure-registry.*${EXTERNAL_IMAGE_REGISTRY}" > /dev/null 2>&1
+  if [ "$?" != "0" ]; then
+    grep "OPTIONS=.*--insecure-registry.*${EXTERNAL_IMAGE_REGISTRY}" /etc/sysconfig/docker > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+      grep "insecure-registries.*${EXTERNAL_IMAGE_REGISTRY}" /etc/docker/daemon.json > /dev/null 2>&1
+      if [ "$?" != "0" ]; then
+        echo "WARNING: You must tell Docker about the CRC insecure registry (e.g. --insecure-registry ${EXTERNAL_IMAGE_REGISTRY})."
+      else
+        debug "/etc/docker/daemon.json has the insecure-registry setting. This is good."
+      fi
+    else
+      debug "/etc/sysconfig/docker has defined the insecure-registry setting. This is good."
+    fi
+  else
+    debug "Docker daemon is running with --insecure-registry setting. This is good."
+  fi
 }
 
 # Change to the directory where this script is and set our environment
@@ -821,7 +850,7 @@ EOM
       for expected in ${_EXPECTED_APPS[@]}
       do
         echo -n "Waiting for $expected ..."
-        while ! checkApp $expected
+        while ! check_app $expected
         do
              sleep 5
              echo -n '.'

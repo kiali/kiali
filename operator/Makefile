@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 
 # Details about the Kiali operator image.
-OPERATOR_IMAGE_NAME ?= quay.io/kiali/kiali-operator
+OPERATOR_IMAGE_REPO ?= quay.io
+OPERATOR_IMAGE_NAME ?= ${OPERATOR_IMAGE_REPO}/kiali/kiali-operator
 OPERATOR_IMAGE_VERSION ?= dev
 OPERATOR_NAMESPACE ?= kiali-operator
 OPERATOR_WATCH_NAMESPACE ?= kiali-operator
@@ -13,7 +14,9 @@ OPERATOR_INSTALL_KIALI ?= false
 AUTH_STRATEGY ?= openshift
 CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
-KIALI_IMAGE_VERSION ?= dev
+KIALI_IMAGE_REPO ?= quay.io
+KIALI_IMAGE_NAME ?= ${KIALI_IMAGE_REPO}/kiali/kiali
+KIALI_IMAGE_VERSION ?= ${OPERATOR_IMAGE_VERSION}
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= NodePort
@@ -52,6 +55,16 @@ operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
 	"${OP_SDK}" build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
+## crc-operator-push: Push the Kiali operator container image to a CRC VM repo
+crc-operator-push:
+	# OpenShift 4 container registry stores images in the namespace as declared in the image name.
+	@echo Make sure the image namespace exists
+	@${OC} get namespace $(shell echo ${OPERATOR_IMAGE_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1 || \
+     ${OC} create namespace $(shell echo ${OPERATOR_IMAGE_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
+	@echo Push operator image to image repo
+	docker push "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
+	${OC} policy add-role-to-user system:image-puller system:serviceaccount:${OPERATOR_NAMESPACE}:kiali-operator --namespace=$(shell echo ${OPERATOR_IMAGE_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1
+
 ## operator-push: Push the Kiali operator container image to a remote repo
 operator-push:
 	@echo Push operator image to image repo
@@ -75,18 +88,19 @@ operator-push:
 # to remember to do it yourself. It will only do this if it was told to install Kiali.
 operator-create: operator-delete .ensure-operator-ns-does-not-exist
 	@echo Deploy Operator
-	OPERATOR_IMAGE_NAME="${OPERATOR_IMAGE_NAME}" \
-OPERATOR_IMAGE_VERSION="${OPERATOR_IMAGE_VERSION}" \
-OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE}" \
-OPERATOR_WATCH_NAMESPACE="${OPERATOR_WATCH_NAMESPACE}" \
-OPERATOR_INSTALL_KIALI="${OPERATOR_INSTALL_KIALI}" \
-ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
-AUTH_STRATEGY="${AUTH_STRATEGY}" \
-CREDENTIALS_USERNAME="${CREDENTIALS_USERNAME}" \
-CREDENTIALS_PASSPHRASE="${CREDENTIALS_PASSPHRASE}" \
-KIALI_IMAGE_VERSION="${KIALI_IMAGE_VERSION}" \
-NAMESPACE="${NAMESPACE}" \
-deploy/deploy-kiali-operator.sh
+	deploy/deploy-kiali-operator.sh \
+    --operator-image-name      "${OPERATOR_IMAGE_NAME}" \
+    --operator-image-version   "${OPERATOR_IMAGE_VERSION}" \
+    --operator-namespace       "${OPERATOR_NAMESPACE}" \
+    --operator-watch-namespace "${OPERATOR_WATCH_NAMESPACE}" \
+    --operator-install-kiali   "${OPERATOR_INSTALL_KIALI}" \
+    --accessible-namespaces    "${ACCESSIBLE_NAMESPACES}" \
+    --auth-strategy            "${AUTH_STRATEGY}" \
+    --credentials-username     "${CREDENTIALS_USERNAME}" \
+    --credentials-passphrase   "${CREDENTIALS_PASSPHRASE}" \
+    --kiali-image-name         "${KIALI_IMAGE_NAME}" \
+    --kiali-image-version      "${KIALI_IMAGE_VERSION}" \
+    --namespace                "${NAMESPACE}"
 
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: purge-kiali
@@ -114,6 +128,7 @@ endif
 	@echo Deploy Kiali using the settings found in deploy/kiali/kiali_cr_dev.yaml
 	cat deploy/kiali/kiali_cr_dev.yaml | \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
+KIALI_IMAGE_NAME=${KIALI_IMAGE_NAME} \
 KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \
