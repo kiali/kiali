@@ -8,10 +8,6 @@ type PfAlertsProps = {
 };
 
 export default class PfAlerts extends React.Component<PfAlertsProps> {
-  constructor(props: PfAlertsProps) {
-    super(props);
-  }
-
   render() {
     if (!this.props.isVisible || this.props.alerts.length === 0) {
       return null;
