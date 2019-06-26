@@ -4,7 +4,7 @@ import { KialiAppState } from '../../store/Store';
 import { MTLSIconTypes } from './MTLSIcon';
 import { default as MTLSStatus, emptyDescriptor, StatusDescriptor } from './MTLSStatus';
 import { style } from 'typestyle';
-import { lastRefreshAtSelector, meshWideMTLSStatusSelector } from '../../store/Selectors';
+import { lastRefreshAtSelector, meshWideMTLSStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -14,10 +14,12 @@ import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { PollIntervalInMs } from '../../types/Common';
+import Namespace from '../../types/Namespace';
 
 type ReduxProps = {
   lastRefreshAt: PollIntervalInMs;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
+  namespaces: Namespace[] | undefined;
   status: string;
 };
 
@@ -60,7 +62,21 @@ class MeshMTLSStatus extends React.Component<Props> {
         return this.props.setMeshTlsStatus(response.data);
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Error fetching status.', error), 'default', MessageType.WARNING);
+        // User without namespaces can't have access to mTLS information. Reduce severity to info.
+        const informative = this.props.namespaces && this.props.namespaces.length < 1;
+        if (informative) {
+          MessageCenter.add(
+            API.getInfoMsg('Mesh-wide mTLS status feature disabled.', error),
+            'default',
+            MessageType.INFO
+          );
+        } else {
+          MessageCenter.add(
+            API.getErrorMsg('Error fetching Mesh-wide mTLS status.', error),
+            'default',
+            MessageType.ERROR
+          );
+        }
       });
   };
 
@@ -83,7 +99,8 @@ class MeshMTLSStatus extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: meshWideMTLSStatusSelector(state),
-  lastRefreshAt: lastRefreshAtSelector(state)
+  lastRefreshAt: lastRefreshAtSelector(state),
+  namespaces: namespaceItemsSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
