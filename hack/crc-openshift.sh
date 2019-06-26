@@ -769,6 +769,9 @@ EOM
     esac
   done
 
+  # TODO: cannot delete namespaces unless we run this; needed until this is fixed https://github.com/code-ready/crc/issues/268
+  ${MAISTRA_ISTIO_OC_COMMAND} delete apiservice v1beta1.metrics.k8s.io
+
   # TODO a future version of CRC will do this for us; until then, we have to do it
   echo "Manually patching image registry operator to expose the internal container repository"
   ${MAISTRA_ISTIO_OC_COMMAND} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
