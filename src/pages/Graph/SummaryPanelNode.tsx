@@ -279,9 +279,11 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
   render() {
     const node = this.props.data.summaryTarget;
     const data: NodeData = nodeData(node);
-    const { nodeType, workload } = data;
+    const { nodeType, workload, isServiceEntry } = data;
     const servicesList = nodeType !== NodeType.SERVICE && renderDestServicesLinks(node);
+    const destsList = nodeType === NodeType.SERVICE && isServiceEntry && this.renderDestServices(node);
 
+    const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderWorkload = nodeType !== NodeType.WORKLOAD && nodeType !== NodeType.UNKNOWN && workload;
 
@@ -311,6 +313,12 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           )}
         </div>
         <div className="panel-body">
+          {shouldRenderDestsList && (
+            <div>
+              <strong>Destinations: </strong>
+              {destsList}
+            </div>
+          )}
           {shouldRenderSvcList && (
             <div>
               <strong>Services: </strong>
@@ -323,7 +331,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
               <RenderLink data={data} nodeType={NodeType.WORKLOAD} />
             </div>
           )}
-          {(shouldRenderSvcList || shouldRenderWorkload) && <hr />}
+          {(shouldRenderDestsList || shouldRenderSvcList || shouldRenderWorkload) && <hr />}
           {/* TODO: link to App or Workload Details charts when available
           {nodeType !== NodeType.UNKNOWN && (
             <p style={{ textAlign: 'right' }}>
@@ -399,6 +407,15 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         <>
           <div>
             <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the selected node is inaccessible.
+            <hr />
+          </div>
+        </>
+      );
+    } else if (data.isServiceEntry) {
+      return (
+        <>
+          <div>
+            <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the selected node is a serviceEntry.
             <hr />
           </div>
         </>
@@ -565,6 +582,29 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
         )}
       </>
     );
+  };
+
+  private renderDestServices = (node: any) => {
+    const destServices = node.data(CyNode.destServices);
+
+    const entries: any[] = [];
+    if (!destServices) {
+      return entries;
+    }
+
+    destServices.forEach(ds => {
+      const service = ds.name;
+      const key = `${ds.namespace}.svc.${service}`;
+      const displayName = service;
+      entries.push(<span key={key}>{displayName}</span>);
+      entries.push(<span key={`comma-after-${ds.name}`}>, </span>);
+    });
+
+    if (entries.length > 0) {
+      entries.pop();
+    }
+
+    return entries;
   };
 
   // We need to handle the special case of a dest service node showing client failures. These service nodes show up in

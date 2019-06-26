@@ -417,11 +417,20 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       );
     }
 
-    const data = nodeData(edge.target());
-    if (data.isInaccessible) {
+    const source = nodeData(edge.source());
+    const target = nodeData(edge.target());
+    if (target.isInaccessible) {
       return (
         <>
           <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the destination is inaccessible.
+        </>
+      );
+    }
+    if (source.isServiceEntry || target.isServiceEntry) {
+      return (
+        <>
+          <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the source or destination is a
+          serviceEntry.
         </>
       );
     }

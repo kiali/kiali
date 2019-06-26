@@ -16,7 +16,7 @@ const getTitle = (data: NodeData) => {
 };
 
 const isInaccessible = (data: NodeData): boolean => {
-  return data.isInaccessible || data.isServiceEntry !== undefined;
+  return data.isInaccessible;
 };
 
 const getLink = (data: NodeData, nodeType?: NodeType) => {
@@ -36,10 +36,12 @@ const getLink = (data: NodeData, nodeType?: NodeType) => {
       displayName = app;
       break;
     case NodeType.SERVICE:
-      if (!data.isServiceEntry) {
+      if (data.isServiceEntry) {
+        link = `/namespaces/${encodeURIComponent(namespace)}/istio/serviceentries/${encodeURIComponent(service)}`;
+      } else {
         link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
-        key = `${namespace}.svc.${service}`;
       }
+      key = `${namespace}.svc.${service}`;
       displayName = service;
       break;
     case NodeType.WORKLOAD:

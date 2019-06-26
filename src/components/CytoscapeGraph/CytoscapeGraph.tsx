@@ -520,7 +520,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
 
     const targetOrGroupChildren = targetType === 'group' ? target.descendants() : target;
 
-    if (target.data(CyNode.isInaccessible)) {
+    if (target.data(CyNode.isInaccessible) || target.data(CyNode.isServiceEntry)) {
       return;
     }
 

@@ -56,7 +56,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
         }
         break;
       case 'service':
-        type = Paths.SERVICES;
+        type = props.isServiceEntry ? Paths.SERVICEENTRIES : Paths.SERVICES;
         name = props.service;
         break;
       case 'workload':
@@ -125,21 +125,26 @@ export class NodeContextMenu extends React.PureComponent<Props> {
           <strong>{name}</strong>
         </div>
         {this.createMenuItem(detailsPageUrl, 'Show Details')}
-        {this.createMenuItem(`${detailsPageUrl}?tab=traffic`, 'Show Traffic')}
-        {type === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
-        {this.createMenuItem(
-          `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
-          'Show Inbound Metrics'
+        {type !== Paths.SERVICEENTRIES && (
+          <>
+            {this.createMenuItem(`${detailsPageUrl}?tab=traffic`, 'Show Traffic')}
+            {type === Paths.WORKLOADS && this.createMenuItem(`${detailsPageUrl}?tab=logs`, 'Show Logs')}
+            {this.createMenuItem(
+              `${detailsPageUrl}?tab=${type === Paths.SERVICES ? 'metrics' : 'in_metrics'}`,
+              'Show Inbound Metrics'
+            )}
+            {type !== Paths.SERVICES &&
+              this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
+            {type === Paths.SERVICES &&
+              this.props.jaegerURL !== '' &&
+              this.createMenuItem(
+                this.getJaegerURL(name),
+                'Show Traces',
+                this.props.jaegerIntegration ? '_self' : '_blank',
+                !this.props.jaegerIntegration
+              )}
+          </>
         )}
-        {type !== Paths.SERVICES && this.createMenuItem(`${detailsPageUrl}?tab=out_metrics`, 'Show Outbound Metrics')}
-        {type === Paths.SERVICES &&
-          this.props.jaegerURL !== '' &&
-          this.createMenuItem(
-            this.getJaegerURL(name),
-            'Show Traces',
-            this.props.jaegerIntegration ? '_self' : '_blank',
-            !this.props.jaegerIntegration
-          )}
       </div>
     );
   }
