@@ -45,7 +45,7 @@ func (in *TLSService) MeshWidemTLSStatus(namespaces []string) (models.MTLSStatus
 
 func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 	if len(namespaces) < 1 {
-		return false, fmt.Errorf("can't find MeshPolicies without a namespace")
+		return false, fmt.Errorf("Unable to determine mesh-wide mTLS status without access to any namespace")
 	}
 
 	// MeshPolicies are not namespaced. So any namespace user has access to
