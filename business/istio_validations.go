@@ -8,7 +8,6 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -319,7 +318,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		meshPolicies, err := in.k8s.GetMeshPolicies(config.Get().IstioNamespace)
+		meshPolicies, err := in.k8s.GetMeshPolicies(namespace)
 		if err != nil {
 			errChan <- err
 		} else {
