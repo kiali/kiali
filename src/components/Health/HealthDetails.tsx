@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 
+import './Health.css';
+
 interface Props {
   health: H.Health;
 }

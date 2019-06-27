@@ -18,6 +18,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                 "children": Array [
                   Object {
                     "status": Object {
+                      "class": "icon-healthy",
                       "color": "#3f9c35",
                       "icon": [Function],
                       "name": "Healthy",
@@ -27,6 +28,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   },
                   Object {
                     "status": Object {
+                      "class": "icon-healthy",
                       "color": "#3f9c35",
                       "icon": [Function],
                       "name": "Healthy",
@@ -36,6 +38,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   },
                 ],
                 "status": Object {
+                  "class": "icon-healthy",
                   "color": "#3f9c35",
                   "icon": [Function],
                   "name": "Healthy",
@@ -47,6 +50,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                 "children": Array [
                   Object {
                     "status": Object {
+                      "class": "icon-na",
                       "color": "#72767b",
                       "icon": [Function],
                       "name": "No health information",
@@ -56,6 +60,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   },
                   Object {
                     "status": Object {
+                      "class": "icon-na",
                       "color": "#72767b",
                       "icon": [Function],
                       "name": "No health information",
@@ -65,6 +70,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   },
                 ],
                 "status": Object {
+                  "class": "icon-na",
                   "color": "#72767b",
                   "icon": [Function],
                   "name": "No health information",
@@ -93,6 +99,7 @@ exports[`HealthIndicator renders healthy 1`] = `
   }
 >
   <OkIcon
+    className="icon-healthy"
     color="#3f9c35"
     size="sm"
     title={null}

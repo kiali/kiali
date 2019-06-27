@@ -1,0 +1,6 @@
+svg:not(:root).icon-failure,
+svg:not(:root).icon-degraded,
+svg:not(:root).icon-healthy,
+svg:not(:root).icon-na {
+  overflow: visible;
+}
