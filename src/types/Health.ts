@@ -33,31 +33,36 @@ export interface Status {
   color: string;
   priority: number;
   icon: IconType;
+  class: string;
 }
 
 export const FAILURE: Status = {
   name: 'Failure',
   color: PfColors.Red100,
   priority: 3,
-  icon: ErrorCircleOIcon
+  icon: ErrorCircleOIcon,
+  class: 'icon-failure'
 };
 export const DEGRADED: Status = {
   name: 'Degraded',
   color: PfColors.Orange400,
   priority: 2,
-  icon: WarningTriangleIcon
+  icon: WarningTriangleIcon,
+  class: 'icon-degraded'
 };
 export const HEALTHY: Status = {
   name: 'Healthy',
   color: PfColors.Green400,
   priority: 1,
-  icon: OkIcon
+  icon: OkIcon,
+  class: 'icon-healthy'
 };
 export const NA: Status = {
   name: 'No health information',
   color: PfColors.Gray,
   priority: 0,
-  icon: UnknownIcon
+  icon: UnknownIcon,
+  class: 'icon-na'
 };
 
 interface Thresholds {

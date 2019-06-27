@@ -4,6 +4,8 @@ import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
 
+import './Health.css';
+
 export enum DisplayMode {
   LARGE,
   SMALL

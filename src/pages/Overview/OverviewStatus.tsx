@@ -8,6 +8,8 @@ import { healthFilter } from '../../components/Filters/CommonFilters';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { createIcon } from '../../components/Health/Helper';
 
+import '../../components/Health/Health.css';
+
 type Props = {
   id: string;
   namespace: string;
@@ -51,7 +53,7 @@ class OverviewStatus extends React.Component<Props, {}> {
         <AggregateStatusNotification>
           <Link to={`/${this.props.targetPage}?namespaces=${this.props.namespace}`} onClick={() => this.setFilters()}>
             {createIcon(this.props.status)}
-            {length}
+            {' ' + length}
           </Link>
         </AggregateStatusNotification>
       </OverlayTrigger>
