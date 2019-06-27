@@ -107,9 +107,7 @@ func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.TelemetryOpt
 		case graph.NodeTypeUnknown:
 			n.Metadata[graph.IsInaccessible] = true
 		case graph.NodeTypeService:
-			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
-				n.Metadata[graph.IsInaccessible] = true
-			} else if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
+			if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
 				n.Metadata[graph.IsInaccessible] = true
 			} else {
 				if isOutside(n, o.Namespaces) {
@@ -230,7 +228,7 @@ func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
 }
 
 func addServiceGraphTraffic(toEdge, fromEdge *graph.Edge) {
-	graph.AddServiceGraphTraffic(toEdge, fromEdge)
+	graph.AggregateEdgeTraffic(fromEdge, toEdge)
 
 	// handle any appender-based edge data (nothing currently)
 	// note: We used to average response times of the aggregated edges but realized that
@@ -526,11 +524,11 @@ func addToDestServices(md graph.Metadata, namespace, service string) {
 	}
 	destServices, ok := md[graph.DestServices]
 	if !ok {
-		destServices = make(map[string]graph.Service)
+		destServices = graph.NewDestServicesMetadata()
 		md[graph.DestServices] = destServices
 	}
 	destService := graph.Service{Namespace: namespace, Name: service}
-	destServices.(map[string]graph.Service)[destService.Key()] = destService
+	destServices.(graph.DestServicesMetadata)[destService.Key()] = destService
 }
 
 func handleMisconfiguredLabels(node *graph.Node, app, version string, rate float64, o graph.TelemetryOptions) {
