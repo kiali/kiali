@@ -70,6 +70,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       virtualService =>
         validations.virtualservice &&
         validations.virtualservice[virtualService.metadata.name] &&
+        validations.virtualservice[virtualService.metadata.name].checks &&
         validations.virtualservice[virtualService.metadata.name].checks.length > 0
     );
 
@@ -78,6 +79,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
         validations.destinationrule &&
         destinationRule.metadata &&
         validations.destinationrule[destinationRule.metadata.name] &&
+        validations.destinationrule[destinationRule.metadata.name].checks &&
         validations.destinationrule[destinationRule.metadata.name].checks.length > 0
     );
 

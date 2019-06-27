@@ -65,7 +65,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
 
   getPortIssue(portId: number): string {
     let message = '';
-    if (this.props.validations) {
+    if (this.props.validations && this.props.validations.checks) {
       message = this.props.validations.checks
         .filter(c => c.path === 'spec/ports[' + portId + ']')
         .map(c => c.message)
