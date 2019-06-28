@@ -41,7 +41,7 @@ func getVersions() {
 		kubernetesVersion,
 	}
 
-	if config.Get().ExternalServices.Grafana.DisplayLink {
+	if config.Get().ExternalServices.Grafana.Enabled {
 		components = append(components, grafanaVersion)
 	} else {
 		log.Debugf("Grafana is disabled in Kiali by configuration")
