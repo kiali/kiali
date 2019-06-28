@@ -174,7 +174,7 @@ spec:
 #   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
-# display_link: When true, a link to Grafana will be displayed for more dashboards.
+# enabled: When true, Grafana support will be enabled in Kiali.
 # in_cluster_url: Set URL for in-cluster access. Example: "http://grafana.istio-system:3000".
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
@@ -188,7 +188,7 @@ spec:
 #        type: "none"
 #        use_kiali_token: false
 #        username: ""
-#      display_link: true
+#      enabled: true
 #      in_cluster_url: "http://grafana.istio-system:3000"
 #      url: ""
 #

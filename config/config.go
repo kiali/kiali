@@ -50,7 +50,7 @@ const (
 	EnvPrometheusServiceURL       = "PROMETHEUS_SERVICE_URL"
 	EnvPrometheusCustomMetricsURL = "PROMETHEUS_CUSTOM_METRICS_URL"
 
-	EnvGrafanaDisplayLink  = "GRAFANA_DISPLAY_LINK"
+	EnvGrafanaEnabled      = "GRAFANA_ENABLED"
 	EnvGrafanaInClusterURL = "GRAFANA_IN_CLUSTER_URL"
 	EnvGrafanaURL          = "GRAFANA_URL"
 
@@ -144,7 +144,8 @@ type PrometheusConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	DisplayLink  bool   `yaml:"display_link"`
+	// Enable or disable Grafana support in Kiali
+	Enabled      bool   `yaml:"enabled"`
 	InClusterURL string `yaml:"in_cluster_url"`
 	URL          string `yaml:"url"`
 	Auth         Auth   `yaml:"auth"`
@@ -278,7 +279,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Prometheus.Auth = getAuthFromEnv("PROMETHEUS")
 
 	// Grafana Configuration
-	c.ExternalServices.Grafana.DisplayLink = getDefaultBool(EnvGrafanaDisplayLink, true)
+	c.ExternalServices.Grafana.Enabled = getDefaultBool(EnvGrafanaEnabled, true)
 	c.ExternalServices.Grafana.InClusterURL = strings.TrimSpace(getDefaultString(EnvGrafanaInClusterURL, ""))
 	c.ExternalServices.Grafana.URL = strings.TrimSpace(getDefaultString(EnvGrafanaURL, ""))
 	c.ExternalServices.Grafana.Auth = getAuthFromEnv("GRAFANA")

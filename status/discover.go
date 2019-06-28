@@ -176,8 +176,9 @@ func DiscoverJaeger() string {
 // or will try to retrieve it if an OpenShift Route is defined.
 func DiscoverGrafana() string {
 	grafanaConf := config.Get().ExternalServices.Grafana
-	// If display link is disable in Grafana configuration return empty string and avoid discovery
-	if !grafanaConf.DisplayLink {
+
+	// If Grafana is disabled in the configuration return an empty string and avoid discovery
+	if !grafanaConf.Enabled {
 		return ""
 	}
 	if grafanaConf.URL != "" || grafanaConf.InClusterURL == "" {
