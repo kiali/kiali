@@ -117,7 +117,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
         <EmptyState className={emptyStateStyle}>
           <EmptyStateTitle>No namespace is selected</EmptyStateTitle>
           <EmptyStateInfo>
-            There is currently no namespace selected, please select one using the Namespace selection button.
+            There is currently no namespace selected, please select one using the Namespace selector.
           </EmptyStateInfo>
         </EmptyState>
       );
