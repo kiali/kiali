@@ -137,14 +137,13 @@ func ReadWriteOPS(iqnPath string, tpgt string, lun string) (readmb uint64,
 
 // GetFileioUdev is getting the actual info to build up
 // the FILEIO data and match with the enable target
-func (fileio FILEIO) GetFileioUdev(targetCorePath string, fileioNumber string,
-	objectName string) (fio *FILEIO, err error) {
-
-	fileio.Name = "fileio_" + fileioNumber
-	fileio.Fnumber = fileioNumber
-	fileio.ObjectName = objectName
-
-	udevPath := filepath.Join(targetCorePath, fileio.Name, fileio.ObjectName, "udev_path")
+func (fs FS) GetFileioUdev(fileioNumber string, objectName string) (*FILEIO, error) {
+	fileio := FILEIO{
+		Name:       "fileio_" + fileioNumber,
+		Fnumber:    fileioNumber,
+		ObjectName: objectName,
+	}
+	udevPath := fs.configfs.Path(targetCore, fileio.Name, fileio.ObjectName, "udev_path")
 
 	if _, err := os.Stat(udevPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("iscsi: GetFileioUdev: fileio_%s is missing file name", fileio.Fnumber)
@@ -160,14 +159,13 @@ func (fileio FILEIO) GetFileioUdev(targetCorePath string, fileioNumber string,
 
 // GetIblockUdev is getting the actual info to build up
 // the IBLOCK data and match with the enable target
-func (iblock IBLOCK) GetIblockUdev(targetCorePath string, iblockNumber string,
-	objectName string) (ib *IBLOCK, err error) {
-
-	iblock.Name = "iblock_" + iblockNumber
-	iblock.Bnumber = iblockNumber
-	iblock.ObjectName = objectName
-
-	udevPath := filepath.Join(targetCorePath, iblock.Name, iblock.ObjectName, "udev_path")
+func (fs FS) GetIblockUdev(iblockNumber string, objectName string) (*IBLOCK, error) {
+	iblock := IBLOCK{
+		Name:       "iblock_" + iblockNumber,
+		Bnumber:    iblockNumber,
+		ObjectName: objectName,
+	}
+	udevPath := fs.configfs.Path(targetCore, iblock.Name, iblock.ObjectName, "udev_path")
 
 	if _, err := os.Stat(udevPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("iscsi: GetIBlockUdev: iblock_%s is missing file name", iblock.Bnumber)
@@ -183,12 +181,12 @@ func (iblock IBLOCK) GetIblockUdev(targetCorePath string, iblockNumber string,
 
 // GetRBDMatch is getting the actual info to build up
 // the RBD data and match with the enable target
-func (rbd RBD) GetRBDMatch(sysDevicePath string, rbdNumber string, poolImage string) (r *RBD, err error) {
-
-	rbd.Name = "rbd_" + rbdNumber
-	rbd.Rnumber = rbdNumber
-
-	systemRbds, err := filepath.Glob(filepath.Join(sysDevicePath, "/devices/rbd/[0-9]*"))
+func (fs FS) GetRBDMatch(rbdNumber string, poolImage string) (*RBD, error) {
+	rbd := RBD{
+		Name:    "rbd_" + rbdNumber,
+		Rnumber: rbdNumber,
+	}
+	systemRbds, err := filepath.Glob(fs.sysfs.Path(devicePath, "[0-9]*"))
 	if err != nil {
 		return nil, fmt.Errorf("iscsi: GetRBDMatch: Cannot find any rbd block")
 	}
@@ -228,11 +226,12 @@ func (rbd RBD) GetRBDMatch(sysDevicePath string, rbdNumber string, poolImage str
 }
 
 // GetRDMCPPath is getting the actual info to build up RDMCP data
-func (rdmcp RDMCP) GetRDMCPPath(targetCorePath string, rdmcpNumber string, objectName string) (r *RDMCP, err error) {
-	rdmcp.Name = "rd_mcp_" + rdmcpNumber
-	rdmcp.ObjectName = objectName
-
-	rdmcpPath := filepath.Join(targetCorePath, rdmcp.Name, rdmcp.ObjectName)
+func (fs FS) GetRDMCPPath(rdmcpNumber string, objectName string) (*RDMCP, error) {
+	rdmcp := RDMCP{
+		Name:       "rd_mcp_" + rdmcpNumber,
+		ObjectName: objectName,
+	}
+	rdmcpPath := fs.configfs.Path(targetCore, rdmcp.Name, rdmcp.ObjectName)
 
 	if _, err := os.Stat(rdmcpPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("iscsi: GetRDMCPPath: %s does not exist", rdmcpPath)

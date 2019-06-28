@@ -1,5 +1,5 @@
-hash: c9246e3bb34541355a75da7d38b736e35f0fdbce3a8e3d6baebda7d25510e09b
-updated: 2019-06-20T14:00:12.337145356+02:00
+hash: a287a2dc9bc87d9c056d3006b69a248f2c59ad2952d6af31a9e3522c472578e3
+updated: 2019-06-28T10:58:53.326551118+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4b2b341e8d7715fae06375aa633dbb6e91b3fb46
@@ -14,7 +14,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
-  version: dadb625850898f31a8e40e83492f4a7132e520a2
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
   - proto
   - sortkeys
@@ -101,9 +101,10 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 91a8189bfc4f0af678925247c1bc92429c6305f8
+  version: 39e1aff1547e9a628f5714cc5f73d058ba44258e
   subpackages:
   - internal/fs
+  - internal/util
 - name: github.com/stretchr/objx
   version: 35313a95ee26395aa17d366c71a2ccf788fa69b6
 - name: github.com/stretchr/testify

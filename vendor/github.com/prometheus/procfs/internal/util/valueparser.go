@@ -52,6 +52,25 @@ func (vp *ValueParser) PInt64() *int64 {
 	return &v
 }
 
+// PUInt64 interprets the underlying value as an uint64 and returns a pointer to
+// that value.
+func (vp *ValueParser) PUInt64() *uint64 {
+	if vp.err != nil {
+		return nil
+	}
+
+	// A base value of zero makes ParseInt infer the correct base using the
+	// string's prefix, if any.
+	const base = 0
+	v, err := strconv.ParseUint(vp.v, base, 64)
+	if err != nil {
+		vp.err = err
+		return nil
+	}
+
+	return &v
+}
+
 // Err returns the last error, if any, encountered by the ValueParser.
 func (vp *ValueParser) Err() error {
 	return vp.err

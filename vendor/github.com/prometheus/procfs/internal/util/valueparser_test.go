@@ -67,6 +67,46 @@ func TestValueParser(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "bad PUInt64",
+			v:    "-42",
+			fn: func(_ *testing.T, vp *util.ValueParser) {
+				_ = vp.PUInt64()
+			},
+		},
+		{
+			name: "bad hex PUInt64",
+			v:    "0xhello",
+			fn: func(_ *testing.T, vp *util.ValueParser) {
+				_ = vp.PUInt64()
+			},
+		},
+		{
+			name: "ok PUInt64",
+			v:    "1",
+			ok:   true,
+			fn: func(t *testing.T, vp *util.ValueParser) {
+				want := uint64(1)
+				got := vp.PUInt64()
+
+				if diff := cmp.Diff(&want, got); diff != "" {
+					t.Fatalf("unexpected integer (-want +got):\n%s", diff)
+				}
+			},
+		},
+		{
+			name: "ok hex PUInt64",
+			v:    "0xff",
+			ok:   true,
+			fn: func(t *testing.T, vp *util.ValueParser) {
+				want := uint64(255)
+				got := vp.PUInt64()
+
+				if diff := cmp.Diff(&want, got); diff != "" {
+					t.Fatalf("unexpected integer (-want +got):\n%s", diff)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {

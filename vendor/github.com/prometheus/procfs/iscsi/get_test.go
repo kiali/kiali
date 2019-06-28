@@ -14,7 +14,6 @@
 package iscsi_test
 
 import (
-	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -127,11 +126,11 @@ func TestGetStats(t *testing.T) {
 		{1504, 4733, 1234},
 	}
 
-	sysfs, err := iscsi.NewFS("../fixtures/sys/kernel/config")
+	sysconfigfs, err := iscsi.NewFS("../fixtures/sys", "../fixtures/sys/kernel/config")
 	if err != nil {
 		t.Fatalf("failed to access xfs fs: %v", err)
 	}
-	sysfsStat, err := sysfs.ISCSIStats()
+	sysfsStat, err := sysconfigfs.ISCSIStats()
 	statSize := len(sysfsStat)
 	if statSize != 4 {
 		t.Errorf("fixtures size does not match %d", statSize)
@@ -162,8 +161,7 @@ func TestGetStats(t *testing.T) {
 				t.Errorf("unexpected iSCSI iops data :\nwant:\n%v\nhave:\n%v", readTests[i].iops, iops)
 			}
 			if stat.Tpgt[0].Luns[0].Backstore == "rd_mcp" {
-				have_rdmcp := new(iscsi.RDMCP)
-				have_rdmcp, err := have_rdmcp.GetRDMCPPath(filepath.Join("../fixtures/sys/kernel/config", iscsi.TargetCore), "119", "ramdisk_lio_1G")
+				have_rdmcp, err := sysconfigfs.GetRDMCPPath("119", "ramdisk_lio_1G")
 				if err != nil {
 					t.Errorf("fail rdmcp error %v", err)
 				}
@@ -174,8 +172,7 @@ func TestGetStats(t *testing.T) {
 					t.Errorf("unexpected rdmcp data :\nwant:\n%v\nhave:\n%v", want_rdmcp, have_rdmcp)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "iblock" {
-				have_iblock := new(iscsi.IBLOCK)
-				have_iblock, err = have_iblock.GetIblockUdev(filepath.Join("../fixtures/sys/kernel/config", iscsi.TargetCore), "0", "block_lio_rbd1")
+				have_iblock, err := sysconfigfs.GetIblockUdev("0", "block_lio_rbd1")
 				if err != nil {
 					t.Errorf("fail iblock error %v", err)
 				}
@@ -185,8 +182,7 @@ func TestGetStats(t *testing.T) {
 					t.Errorf("unexpected iblock data :\nwant:\n%v\nhave:\n%v", want_iblock, have_iblock)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "fileio" {
-				have_fileio := new(iscsi.FILEIO)
-				have_fileio, err = have_fileio.GetFileioUdev(filepath.Join("../fixtures/sys/kernel/config", iscsi.TargetCore), "1", "file_lio_1G")
+				have_fileio, err := sysconfigfs.GetFileioUdev("1", "file_lio_1G")
 				if err != nil {
 					t.Errorf("fail fileio error %v", err)
 				}
@@ -196,8 +192,7 @@ func TestGetStats(t *testing.T) {
 					t.Errorf("unexpected fileio data :\nwant:\n%v\nhave:\n%v", want_fileio, have_fileio)
 				}
 			} else if stat.Tpgt[0].Luns[0].Backstore == "rbd" {
-				have_rbd := new(iscsi.RBD)
-				have_rbd, err = have_rbd.GetRBDMatch("../fixtures/sys", "0", "iscsi-images-demo")
+				have_rbd, err := sysconfigfs.GetRBDMatch("0", "iscsi-images-demo")
 				if err != nil {
 					t.Errorf("fail rbd error %v", err)
 				}
