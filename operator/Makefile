@@ -3,6 +3,7 @@ SHELL := /bin/bash
 # Details about the Kiali operator image.
 OPERATOR_IMAGE_REPO ?= quay.io
 OPERATOR_IMAGE_NAME ?= ${OPERATOR_IMAGE_REPO}/kiali/kiali-operator
+OPERATOR_IMAGE_PULL_POLICY ?= IfNotPresent
 OPERATOR_IMAGE_VERSION ?= dev
 OPERATOR_NAMESPACE ?= kiali-operator
 OPERATOR_WATCH_NAMESPACE ?= kiali-operator
@@ -16,6 +17,7 @@ CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
 KIALI_IMAGE_REPO ?= quay.io
 KIALI_IMAGE_NAME ?= ${KIALI_IMAGE_REPO}/kiali/kiali
+KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 KIALI_IMAGE_VERSION ?= ${OPERATOR_IMAGE_VERSION}
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
@@ -90,6 +92,7 @@ operator-create: operator-delete .ensure-operator-ns-does-not-exist
 	@echo Deploy Operator
 	deploy/deploy-kiali-operator.sh \
     --operator-image-name      "${OPERATOR_IMAGE_NAME}" \
+    --operator-image-pull-policy "${OPERATOR_IMAGE_PULL_POLICY}" \
     --operator-image-version   "${OPERATOR_IMAGE_VERSION}" \
     --operator-namespace       "${OPERATOR_NAMESPACE}" \
     --operator-watch-namespace "${OPERATOR_WATCH_NAMESPACE}" \
@@ -99,6 +102,7 @@ operator-create: operator-delete .ensure-operator-ns-does-not-exist
     --credentials-username     "${CREDENTIALS_USERNAME}" \
     --credentials-passphrase   "${CREDENTIALS_PASSPHRASE}" \
     --kiali-image-name         "${KIALI_IMAGE_NAME}" \
+    --kiali-image-pull-policy  "${KIALI_IMAGE_PULL_POLICY}" \
     --kiali-image-version      "${KIALI_IMAGE_VERSION}" \
     --namespace                "${NAMESPACE}"
 
@@ -129,6 +133,7 @@ endif
 	cat deploy/kiali/kiali_cr_dev.yaml | \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
 KIALI_IMAGE_NAME=${KIALI_IMAGE_NAME} \
+KIALI_IMAGE_PULL_POLICY=${KIALI_IMAGE_PULL_POLICY} \
 KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
 VERBOSE_MODE="${VERBOSE_MODE}" \

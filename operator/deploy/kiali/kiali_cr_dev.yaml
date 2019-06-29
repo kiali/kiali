@@ -7,6 +7,7 @@ spec:
     strategy: $AUTH_STRATEGY
   deployment:
     image_name: $KIALI_IMAGE_NAME
+    image_pull_policy: $KIALI_IMAGE_PULL_POLICY
     image_version: $KIALI_IMAGE_VERSION
     namespace: $NAMESPACE
     service_type: $SERVICE_TYPE
