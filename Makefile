@@ -293,7 +293,7 @@ k8s-reload-image: openshift-reload-image
 crc-docker-build: crc-docker-build-operator crc-docker-build-kiali
 
 ## crc-docker-build-operator: Builds the operator image for local development on CRC VM
-crc-docker-build-operator: .prepare-crc-vars .prepare-docker-image-files
+crc-docker-build-operator: .prepare-crc-vars
 	@echo Building Kiali Operator for CRC
 	OPERATOR_IMAGE_REPO=${CRC_REPO} OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-build
 
@@ -321,11 +321,11 @@ crc-push-kiali: crc-docker-build-kiali
 
 ## crc-operator-create: Creates the operator in the CRC VM
 crc-operator-create: .prepare-crc-vars
-	OPERATOR_IMAGE_REPO=${CRC_REPO_INTERNAL} OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator operator-create
+	OPERATOR_IMAGE_REPO=${CRC_REPO_INTERNAL} OPERATOR_IMAGE_VERSION=${CONTAINER_VERSION} OPERATOR_IMAGE_PULL_POLICY="Always" "$(MAKE)" -C operator operator-create
 
 ## crc-kiali-create: Deploys Kiali to CRC VM
 crc-kiali-create: .prepare-crc-vars openshift-undeploy
-	KIALI_IMAGE_REPO=${CRC_REPO_INTERNAL} KIALI_IMAGE_NAME=${CRC_REPO_INTERNAL}/${CONTAINER_NAME} KIALI_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" -C operator kiali-create
+	KIALI_IMAGE_REPO=${CRC_REPO_INTERNAL} KIALI_IMAGE_NAME=${CRC_REPO_INTERNAL}/${CONTAINER_NAME} KIALI_IMAGE_VERSION=${CONTAINER_VERSION} "$(MAKE)" KIALI_IMAGE_PULL_POLICY="Always" -C operator kiali-create
 
 ## lint-install: Installs golangci-lint
 lint-install:
