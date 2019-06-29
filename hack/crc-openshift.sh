@@ -691,7 +691,16 @@ if [ "$_CMD" = "start" ]; then
   # See: https://fatmin.com/2016/12/20/how-to-resize-a-qcow2-image-and-filesystem-with-virt-resize/
   # Do this part as the last configuration change since this will require the VM to be stopped.
   debug "Checking the virtual disk size of the VM image..."
-  _CURRENT_VIRTUAL_DISK_SIZE="$(sudo qemu-img info ${CRC_MACHINE_IMAGE} | grep 'virtual size' | sed 's/virtual size: \([0-9]*\)[G].*$/\1/')"
+  _QEMU_IMG_STDOUT="$(sudo qemu-img info ${CRC_MACHINE_IMAGE})"
+  if [ "$?" != "0" ]; then
+    echo "Will attempt to get shared write lock to obtain disk size"
+    _QEMU_IMG_STDOUT="$(sudo qemu-img info -U ${CRC_MACHINE_IMAGE})"
+    if [ "$?" != "0" ]; then
+      echo "Cannnot determine current disk size of VM - will assume there is enough"
+      _QEMU_IMG_STDOUT="virtual size: 9999G (99999999999 bytes)"
+    fi
+  fi
+  _CURRENT_VIRTUAL_DISK_SIZE="$(echo "${_QEMU_IMG_STDOUT}" | grep 'virtual size' | sed 's/virtual size: \([0-9]*\)[G].*$/\1/')"
   if [ "${_CURRENT_VIRTUAL_DISK_SIZE}" -lt "${CRC_VIRTUAL_DISK_SIZE}" ]; then
     _INCREASE_VIRTUAL_DISK_SIZE="+$(expr ${CRC_VIRTUAL_DISK_SIZE} - ${_CURRENT_VIRTUAL_DISK_SIZE})G"
     echo "The virtual disk size is currently ${_CURRENT_VIRTUAL_DISK_SIZE}G."
