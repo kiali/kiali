@@ -190,6 +190,17 @@
     role_kind: "{{ 'ClusterRole' if '**' in kiali_vars.deployment.accessible_namespaces else 'Role' }}"
     role_binding_kind: "{{ 'ClusterRoleBinding' if '**' in kiali_vars.deployment.accessible_namespaces else 'RoleBinding' }}"
 
+- name: Determine if the operator can support accessible_namespaces=**
+  vars:
+    role_json: "{{ lookup('k8s', api_version='rbac.authorization.k8s.io/v1', kind='ClusterRole', resource_name='kiali-operator') | default({}) }}"
+    query_cr: "rules[?apiGroups.contains(@, 'rbac.authorization.k8s.io')].resources.contains(@, 'clusterroles')"
+    query_crb: "rules[?apiGroups.contains(@, 'rbac.authorization.k8s.io')].resources.contains(@, 'clusterrolebindings')"
+  fail:
+    msg: "The operator cannot support deployment.accessible_namespaces set to '**' because it does not have permissions to create clusterroles or clusterrolebindings"
+  when:
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
+  - (role_json | json_query(query_cr) != [true]) or (role_json | json_query(query_crb) != [true])
+
 - name: Find all namespaces (this is limited to what the operator has permission to see)
   set_fact:
     all_namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace') | default({}) | json_query('[].metadata.name') }}"
