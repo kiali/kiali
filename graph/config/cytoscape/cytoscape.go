@@ -18,6 +18,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/kiali/kiali/graph"
 )
@@ -275,7 +277,11 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				// handle low request rates precision trouble
+				delta := calPrecisionDelta(rateVal)
+				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
+				// remove redundant zero and keep at least two decimals
+				protocolTraffic.Rates[string(r.Name)] = rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -323,7 +329,11 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				// handle low request rates precision trouble
+				delta := calPrecisionDelta(rateVal)
+				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
+				// remove redundant zero and keep at least two decimals
+				protocolTraffic.Rates[string(r.Name)] = rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -437,4 +447,13 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 			*nodes = append(*nodes, &nw)
 		}
 	}
+}
+
+func calPrecisionDelta(rateVal float64) int {
+	delta := 0
+	if rateVal < 1 {
+		base := int(1 / rateVal)
+		delta = len(strconv.Itoa(base))
+	}
+	return delta
 }
