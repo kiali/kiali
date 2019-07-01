@@ -17,8 +17,8 @@ package cytoscape
 import (
 	"crypto/md5"
 	"fmt"
+	"math"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/kiali/kiali/graph"
@@ -453,9 +453,9 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 
 func calPrecisionDelta(rateVal float64) int {
 	delta := 0
-	if rateVal < 1 {
-		base := int(1 / rateVal)
-		delta = len(strconv.Itoa(base))
+	if rateVal < 1 && rateVal > 0 {
+		base := 1 / rateVal
+		delta = int(math.Log10(base) + 1)
 	}
 	return delta
 }
