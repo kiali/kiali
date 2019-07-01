@@ -49,7 +49,10 @@ export default class FocusAnimation {
     this.layer.clear(this.context);
   }
 
-  processStep() {
+  // This methods needs to be an arrow function.
+  // the reason is that we call this method from a window.setInterval and having an arrow function is a way to preserve
+  // "this".
+  processStep = () => {
     try {
       if (this.startTimestamp === undefined) {
         this.startTimestamp = Date.now();
@@ -74,7 +77,7 @@ export default class FocusAnimation {
       this.stop();
       throw exception;
     }
-  }
+  };
 
   private easingFunction(t: number) {
     // Do a focus animation in, out and in again.
