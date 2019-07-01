@@ -278,7 +278,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 					protocolTraffic.Rates = make(map[string]string)
 				}
 				// handle low request rates precision trouble.
-				// If rate < 0 then increase precision
+				// If rate < 1 then increase precision
 				delta := calPrecisionDelta(rateVal)
 				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
 				// remove redundant zero and keep at least two decimals
@@ -331,7 +331,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 					protocolTraffic.Rates = make(map[string]string)
 				}
 				// handle low request rates precision trouble
-				// If rate < 0 then increase precision
+				// If rate < 1 then increase precision
 				delta := calPrecisionDelta(rateVal)
 				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
 				// remove redundant zero and keep at least two decimals
