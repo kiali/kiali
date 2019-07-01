@@ -223,6 +223,32 @@ func TestFileDescriptorsLen(t *testing.T) {
 	}
 }
 
+func TestFileDescriptorsInfo(t *testing.T) {
+	p1, err := getProcFixtures(t).Proc(26231)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fdinfos, err := p1.FileDescriptorsInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Sort(fdinfos)
+	var want = ProcFDInfos{
+		ProcFDInfo{FD: "0", Pos: "0", Flags: "02004000", MntID: "13", InotifyInfos: []InotifyInfo{
+			InotifyInfo{WD: "3", Ino: "1", Sdev: "34", Mask: "fce"},
+			InotifyInfo{WD: "2", Ino: "1300016", Sdev: "fd00002", Mask: "fce"},
+			InotifyInfo{WD: "1", Ino: "2e0001", Sdev: "fd00000", Mask: "fce"},
+		}},
+		ProcFDInfo{FD: "1", Pos: "0", Flags: "02004002", MntID: "13", InotifyInfos: nil},
+		ProcFDInfo{FD: "10", Pos: "0", Flags: "02004002", MntID: "9", InotifyInfos: nil},
+		ProcFDInfo{FD: "2", Pos: "0", Flags: "02004002", MntID: "9", InotifyInfos: nil},
+		ProcFDInfo{FD: "3", Pos: "0", Flags: "02004002", MntID: "9", InotifyInfos: nil},
+	}
+	if !reflect.DeepEqual(want, fdinfos) {
+		t.Errorf("want fdinfos %+v, have %+v", want, fdinfos)
+	}
+}
+
 type byUintptr []uintptr
 
 func (a byUintptr) Len() int           { return len(a) }
