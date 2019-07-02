@@ -277,12 +277,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				// handle low request rates precision trouble.
-				// If rate < 1 then increase precision
-				delta := calPrecisionDelta(rateVal)
-				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
-				// remove redundant zero and keep at least two decimals
-				protocolTraffic.Rates[string(r.Name)] = rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -330,12 +325,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				// handle low request rates precision trouble
-				// If rate < 1 then increase precision
-				delta := calPrecisionDelta(rateVal)
-				rate := fmt.Sprintf("%.*f", r.Precision+delta, rateVal)
-				// remove redundant zero and keep at least two decimals
-				protocolTraffic.Rates[string(r.Name)] = rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -449,6 +439,15 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 			*nodes = append(*nodes, &nw)
 		}
 	}
+}
+
+func rateToString(precision int, rateVal float64) string {
+	// handle low request rates precision trouble
+	// If rate < 1 then increase precision
+	delta := calPrecisionDelta(rateVal)
+	rate := fmt.Sprintf("%.*f", precision, rateVal)
+	// remove redundant zero and keep at least two decimals
+	return rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
 }
 
 func calPrecisionDelta(rateVal float64) int {
