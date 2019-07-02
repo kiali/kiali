@@ -17,7 +17,9 @@ package cytoscape
 import (
 	"crypto/md5"
 	"fmt"
+	"math"
 	"sort"
+	"strings"
 
 	"github.com/kiali/kiali/graph"
 )
@@ -275,7 +277,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -323,7 +325,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -437,4 +439,22 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 			*nodes = append(*nodes, &nw)
 		}
 	}
+}
+
+func rateToString(precision int, rateVal float64) string {
+	// handle low request rates precision trouble
+	// If rate < 1 then increase precision
+	delta := calPrecisionDelta(rateVal)
+	rate := fmt.Sprintf("%.*f", precision, rateVal)
+	// remove redundant zero and keep at least two decimals
+	return rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
+}
+
+func calPrecisionDelta(rateVal float64) int {
+	delta := 0
+	if rateVal < 1 && rateVal > 0 {
+		base := 1 / rateVal
+		delta = int(math.Log10(base) + 1)
+	}
+	return delta
 }
