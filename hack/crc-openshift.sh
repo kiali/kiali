@@ -69,29 +69,33 @@ get_status() {
   get_registry_names
   check_insecure_registry
   echo "====================================================================="
-  echo "Version from: ${MAISTRA_ISTIO_OC_COMMAND}"
+  echo "Version from istiooc command [${MAISTRA_ISTIO_OC_COMMAND}]"
   ${MAISTRA_ISTIO_OC_COMMAND} version
   echo "====================================================================="
-  echo "Version from: ${CRC_OC}"
+  echo "Version from oc command [${CRC_OC}]"
   ${CRC_OC} version
   echo "====================================================================="
   echo "Console:    https://console-openshift-console.apps-crc.testing"
   echo "API URL:    https://api.crc.testing:6443/"
+  echo "IP address: $(${CRC_COMMAND} ip)"
   echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
-  echo "oc:      ${CRC_OC}"
-  echo "istiooc: ${MAISTRA_ISTIO_OC_COMMAND}"
+  echo "oc:         ${CRC_OC}"
+  echo "istiooc:    ${MAISTRA_ISTIO_OC_COMMAND}"
   echo "====================================================================="
   echo "Make sure you set KUBECONFIG before attempting to access the cluster:"
   echo "export KUBECONFIG=\"${CRC_KUBECONFIG}\""
   echo "====================================================================="
-  echo "kubeadmin password:" $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})
-  echo "kiali password: kiali"
-  echo "johndoe password: johndoe"
+  echo "To install 'oc' in your environment:"
+  ${CRC_COMMAND} oc-env
+  echo "====================================================================="
+  echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
+  echo "kiali password:     kiali"
+  echo "johndoe password:   johndoe"
   echo "NOTE: for some reason, to oc login as the 'kiali' or 'johndoe' user, you need to unset KUBECONFIG."
   echo "====================================================================="
   echo "To push images to the image repo you need to log in."
   echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-  echo "  oc login -u kubeadmin -p" $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) "api.crc.testing:6443"
+  echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
   echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
   echo "or"
   echo "  oc login -u kiali -p kiali api.crc.testing:6443"
@@ -145,10 +149,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.87.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="0.88.0"
 
 # The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.0"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.3"
 
 # The default version of the istiooc command to be downloaded
 DEFAULT_MAISTRA_ISTIO_OC_DOWNLOAD_VERSION="v3.11.0+maistra-0.11.0"
@@ -807,12 +811,13 @@ EOM
     esac
   done
 
-  # TODO: cannot delete namespaces unless we run this; needed until this is fixed https://github.com/code-ready/crc/issues/268
-  ${MAISTRA_ISTIO_OC_COMMAND} delete apiservice v1beta1.metrics.k8s.io
-
-  # TODO a future version of CRC will do this for us; until then, we have to do it
-  echo "Manually patching image registry operator to expose the internal container repository"
-  ${MAISTRA_ISTIO_OC_COMMAND} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
+  # Make sure the image registry is exposed via the default route
+  if [ "$(${MAISTRA_ISTIO_OC_COMMAND} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.defaultRoute}')" != "true" ]; then
+    echo "Manually patching image registry operator to expose the internal image registry"
+    ${MAISTRA_ISTIO_OC_COMMAND} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
+  else
+    echo "The image registry operator has exposed the internal image registry"
+  fi
 
   ${MAISTRA_ISTIO_OC_COMMAND} get -n istio-system ServiceMeshControlPlane > /dev/null 2>&1
   if [ "$?" != "0" ]; then
@@ -904,10 +909,6 @@ EOM
       echo "Removing Elasticsearch from cluster..."
       ${MAISTRA_ISTIO_OC_COMMAND} delete all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,virtualservices,destinationrules --selector=app=elasticsearch -n istio-system
   fi
-
-  # TODO we can remove this when this is fixed: https://github.com/code-ready/crc/issues/218
-  echo "Working around bug so logs are accessible. See: https://github.com/code-ready/crc/issues/218"
-  ${MAISTRA_ISTIO_OC_COMMAND} adm certificate approve $(${MAISTRA_ISTIO_OC_COMMAND} get csr | egrep ^csr | awk '{ print $1 }')
 
   # show the status message
   get_status
