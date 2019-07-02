@@ -174,6 +174,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on ClusterRbacConfigs are not yet in place
 	case RbacConfigs:
 		// Validations on RbacConfigs are not yet in place
+	case Sidecars:
+		// Validations on Sidecars are not yet in place
 	case ServiceRoles:
 		objectCheckers = []ObjectChecker{noServiceChecker}
 	case ServiceRoleBindings:
