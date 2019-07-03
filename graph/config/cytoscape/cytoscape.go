@@ -17,9 +17,7 @@ package cytoscape
 import (
 	"crypto/md5"
 	"fmt"
-	"math"
 	"sort"
-	"strings"
 
 	"github.com/kiali/kiali/graph"
 )
@@ -441,20 +439,26 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 	}
 }
 
-func rateToString(precision int, rateVal float64) string {
-	// handle low request rates precision trouble
-	// If rate < 1 then increase precision
-	delta := calPrecisionDelta(rateVal)
-	rate := fmt.Sprintf("%.*f", precision, rateVal)
-	// remove redundant zero and keep at least two decimals
-	return rate[:len(rate)-delta] + strings.TrimRight(rate[len(rate)-delta:], "0")
+func rateToString(minPrecision int, rateVal float64) string {
+	precision := minPrecision
+	if requiredPrecision := calcPrecision(rateVal, 5); requiredPrecision > minPrecision {
+		precision = requiredPrecision
+	}
+
+	return fmt.Sprintf("%.*f", precision, rateVal)
 }
 
-func calPrecisionDelta(rateVal float64) int {
-	delta := 0
-	if rateVal < 1 && rateVal > 0 {
-		base := 1 / rateVal
-		delta = int(math.Log10(base) + 1)
+// calcPrecision returns the precision necessary to see at least one significant digit (up to max)
+func calcPrecision(val float64, max int) int {
+	if !(val < 1 && val > 0) {
+		return 0
 	}
-	return delta
+
+	precision := 0
+	min := 0.5
+	for val < min && precision < max {
+		precision++
+		min = min / 10
+	}
+	return precision
 }
