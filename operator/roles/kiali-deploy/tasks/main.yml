@@ -118,19 +118,21 @@
     msg: "AUTH STRATEGY={{ kiali_vars.auth.strategy }}"
 - name: Confirm auth strategy is valid for OpenShift environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', 'token', or 'anonymous'"
   when:
   - is_openshift == True
   - kiali_vars.auth.strategy != 'login'
   - kiali_vars.auth.strategy != 'anonymous'
   - kiali_vars.auth.strategy != 'openshift'
+  - kiali_vars.auth.strategy != 'token'
 - name: Confirm auth strategy is valid for Kubernetes environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'token', or 'anonymous'"
   when:
   - is_k8s == True
   - kiali_vars.auth.strategy != 'login'
   - kiali_vars.auth.strategy != 'anonymous'
+  - kiali_vars.auth.strategy != 'token'
 
 # Fail if ingress is disabled but auth_strategy is openshift. This is because the openshift auth strategy
 # requires OAuth Client which requires a Route. So ingress must be enabled if strategy is openshift.

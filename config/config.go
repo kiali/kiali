@@ -90,10 +90,12 @@ const (
 	AuthStrategyOpenshift = "openshift"
 	AuthStrategyLogin     = "login"
 	AuthStrategyAnonymous = "anonymous"
+	AuthStrategyToken     = "token"
 
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
+	AuthStrategyTokenIssuer     = "kiali-token"
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"

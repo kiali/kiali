@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/kiali/kiali/log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -75,17 +76,22 @@ func GetTokenClaimsIfValid(tokenString string) (*IanaClaims, error) {
 		return nil, fmt.Errorf("unexpected signing method: %s", token.Header["alg"])
 	}
 
+    log.Warningf("Raw token:", token.Raw)
+
 	if token.Valid {
 		cfg := Get()
 		claims := token.Claims.(*IanaClaims)
 
-		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer {
+		if claims.Issuer != AuthStrategyLoginIssuer && claims.Issuer != AuthStrategyOpenshiftIssuer && claims.Issuer != AuthStrategyTokenIssuer {
 			return nil, errors.New("token has invalid issuer (auth strategy)")
 		}
 		if claims.Issuer == AuthStrategyLoginIssuer && cfg.Auth.Strategy != AuthStrategyLogin {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
 		if claims.Issuer == AuthStrategyOpenshiftIssuer && cfg.Auth.Strategy != AuthStrategyOpenshift {
+			return nil, errors.New("token is invalid because of authentication strategy mismatch")
+		}
+		if claims.Issuer == AuthStrategyTokenIssuer && cfg.Auth.Strategy != AuthStrategyToken {
 			return nil, errors.New("token is invalid because of authentication strategy mismatch")
 		}
 
