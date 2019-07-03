@@ -123,8 +123,12 @@
 #    Determines what authentication strategy to use.
 #    Choose "login" to use a username and password.
 #    Choose "anonymous" to allow full access to Kiali without requiring any credentials.
+#    Choose "token" to allow access to Kiali using service account tokens, which controls
+#     access based on RBAC roles assigned to the service account.
 #    Choose "openshift" to use the OpenShift OAuth login which controls access
-#    based on the individual's RBAC roles in OpenShift.
+#     based on the individual's RBAC roles in OpenShift.
+#    Choose "ldap" to enable LDAP based authentication. There are additional configurations for
+#     LDAP auth strategy that are required. See below for the additional LDAP configuration section.
 #    Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
 #
 # CREDENTIALS_CREATE_SECRET
@@ -383,7 +387,7 @@ Valid options for Kiali installation (if Kiali is to be installed):
       Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
   -as|--auth-strategy
       Determines what authentication strategy to use.
-      Valid values are "login", "anonymous", and "openshift"
+      Valid values are "login", "anonymous", "token", "ldap" and "openshift"
       Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
   -ccs|--credentials-create-secret
       When "true" a secret will be created with the credentials provided to this script.
@@ -462,13 +466,13 @@ CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
 if [ "$?" == "0" ]; then
   echo "Using 'oc' located here: ${CLIENT_EXE}"
   _AUTH_STRATEGY_DEFAULT="openshift"
-  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift', 'token', 'ldap' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
 else
   CLIENT_EXE=$(which kubectl 2>/dev/null)
   if [ "$?" == "0" ]; then
     echo "Using 'kubectl' located here: ${CLIENT_EXE}"
     _AUTH_STRATEGY_DEFAULT="login"
-    _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+    _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'token', 'ldap' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
   else
     echo "ERROR: You do not have 'oc' or 'kubectl' in your PATH. Please install it and retry."
     exit 1
@@ -942,8 +946,8 @@ if [ "${AUTH_STRATEGY}" == "" ]; then
 fi
 
 # Verify the AUTH_STRATEGY is a proper known value
-if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; then
-  echo "ERROR: unknown AUTH_STRATEGY [$AUTH_STRATEGY] must be either 'login', 'openshift' or 'anonymous'"
+if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ] && [ "${AUTH_STRATEGY}" != "token" ] && [ "${AUTH_STRATEGY}" != "ldap" ]; then
+  echo "ERROR: unknown AUTH_STRATEGY [$AUTH_STRATEGY] must be either 'login', 'openshift', 'token', 'ldap' or 'anonymous'"
   exit 1
 fi
 

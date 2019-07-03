@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/ldap"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const (
@@ -210,6 +211,62 @@ func performOpenshiftAuthentication(w http.ResponseWriter, r *http.Request) bool
 	return true
 }
 
+func performTokenAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	err := r.ParseForm()
+
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, fmt.Errorf("error parsing form info: %+v", err))
+		return false
+	}
+
+	token := r.Form.Get("token")
+
+	if token == "" {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, "Token is empty.")
+		return false
+	}
+
+	business, err := business.Get(token)
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, "Error retrieving the OAuth package.")
+	}
+
+	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
+	// anonymous access, so it's not feasible to use the version API for token verification.
+	_, err = business.Namespace.GetNamespaces()
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusUnauthorized, "Token is not valid or is expired: "+err.Error())
+		return false
+	}
+
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	tokenClaims := config.IanaClaims{
+		SessionId: token,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   "token",
+			ExpiresAt: timeExpire.Unix(),
+			Issuer:    config.AuthStrategyTokenIssuer,
+		},
+	}
+	tokenString, err := config.GetSignedTokenString(tokenClaims)
+	if err != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, err)
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    tokenString,
+		Expires:  timeExpire,
+		HttpOnly: true,
+		// SameSite: http.SameSiteStrictMode, ** Commented out because unsupported in go < 1.11
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: tokenString, ExpiresOn: timeExpire.Format(time.RFC1123Z), Username: "token"})
+	return true
+}
+
 func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	tokenString := getTokenStringFromRequest(r)
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
@@ -383,6 +440,8 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyLogin:
 			statusCode = checkKialiSession(w, r)
 			token = aHandler.saToken
+		case config.AuthStrategyToken:
+			statusCode, token = checkOpenshiftSession(w, r)
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
@@ -425,6 +484,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		if !performKialiAuthentication(w, r) {
 			writeAuthenticateHeader(w, r)
 		}
+	case config.AuthStrategyToken:
+		performTokenAuthentication(w, r)
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
 	case config.AuthStrategyLDAP:
