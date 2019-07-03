@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ButtonGroup, Button, Icon } from 'patternfly-react';
+import { ButtonGroup, Button, Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -64,49 +64,69 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     return (
       <div className={cytoscapeToolbarStyle}>
         <ButtonGroup>
-          <Button onClick={this.zoomIn}>
-            <Icon type="fa" name="plus" />
-          </Button>
-
-          <Button onClick={this.zoomOut}>
-            <Icon type="fa" name="minus" />
-          </Button>
+          <OverlayTrigger key={'ot_ct_zi'} placement="top" overlay={<Tooltip id={'tt_ct_zi'}>Zoom in</Tooltip>}>
+            <Button onClick={this.zoomIn}>
+              <Icon type="fa" name="plus" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger key={'ot_ct_zo'} placement="top" overlay={<Tooltip id={'tt_ct_zo'}>Zoom out</Tooltip>}>
+            <Button onClick={this.zoomOut}>
+              <Icon type="fa" name="minus" />
+            </Button>
+          </OverlayTrigger>
         </ButtonGroup>
 
-        <Button onClick={this.fit} className={cytoscapeToolbarPadStyle}>
-          <div className="glyphicon glyphicon-fullscreen" />
-        </Button>
+        <OverlayTrigger key={'ot_ct_ztf'} placement="top" overlay={<Tooltip id={'tt_ct_ztf'}>Zoom to fit</Tooltip>}>
+          <Button onClick={this.fit} className={cytoscapeToolbarPadStyle}>
+            <div className="glyphicon glyphicon-fullscreen" />
+          </Button>
+        </OverlayTrigger>
 
         <ButtonGroup id="toolbar_layout_group" className={cytoscapeToolbarPadStyle}>
-          <Button
-            onClick={() => {
-              this.props.setLayout(DagreGraph.getLayout());
-            }}
-            title={DagreGraph.getLayout().name}
-            active={this.props.layout.name === DagreGraph.getLayout().name}
+          <OverlayTrigger
+            key={'ot_ct_l0'}
+            placement="top"
+            overlay={<Tooltip id={'tt_ct_l0'}>Layout default ({DagreGraph.getLayout().name})</Tooltip>}
           >
-            <div className="fa pficon-infrastructure fa-rotate-270" />
-          </Button>
+            <Button
+              onClick={() => {
+                this.props.setLayout(DagreGraph.getLayout());
+              }}
+              active={this.props.layout.name === DagreGraph.getLayout().name}
+            >
+              <div className="fa pficon-infrastructure fa-rotate-270" />
+            </Button>
+          </OverlayTrigger>
 
-          <Button
-            onClick={() => {
-              this.props.setLayout(CoseGraph.getLayout());
-            }}
-            title={CoseGraph.getLayout().name}
-            active={this.props.layout.name === CoseGraph.getLayout().name}
+          <OverlayTrigger
+            key={'ot_ct_l1'}
+            placement="top"
+            overlay={<Tooltip id={'tt_ct_l1'}>Layout 1 ({CoseGraph.getLayout().name})</Tooltip>}
           >
-            <div className="fa pficon-topology" /> 1
-          </Button>
+            <Button
+              onClick={() => {
+                this.props.setLayout(CoseGraph.getLayout());
+              }}
+              active={this.props.layout.name === CoseGraph.getLayout().name}
+            >
+              <div className="fa pficon-topology" /> 1
+            </Button>
+          </OverlayTrigger>
 
-          <Button
-            onClick={() => {
-              this.props.setLayout(ColaGraph.getLayout());
-            }}
-            title={ColaGraph.getLayout().name}
-            active={this.props.layout.name === ColaGraph.getLayout().name}
+          <OverlayTrigger
+            key={'ot_ct_l2'}
+            placement="top"
+            overlay={<Tooltip id={'tt_ct_l2'}>Layout 2 ({ColaGraph.getLayout().name})</Tooltip>}
           >
-            <div className="fa pficon-topology" /> 2
-          </Button>
+            <Button
+              onClick={() => {
+                this.props.setLayout(ColaGraph.getLayout());
+              }}
+              active={this.props.layout.name === ColaGraph.getLayout().name}
+            >
+              <div className="fa pficon-topology" /> 2
+            </Button>
+          </OverlayTrigger>
         </ButtonGroup>
 
         <Button
