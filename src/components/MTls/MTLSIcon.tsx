@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { OverlayTrigger, Tooltip } from 'patternfly-react';
 
+import fullIcon from '../../assets/img/mtls-status-full.svg';
+import hollowIcon from '../../assets/img/mtls-status-partial.svg';
+import fullIconDark from '../../assets/img/mtls-status-full-dark.svg';
+import hollowIconDark from '../../assets/img/mtls-status-partial-dark.svg';
+
+export { fullIcon, hollowIcon, fullIconDark, hollowIconDark };
+
 type Props = {
   icon: string;
   iconClassName: string;
   overlayText: string;
   overlayPosition: string;
 };
-
-const fullIcon = require('../../assets/img/mtls-status-full.svg');
-const hollowIcon = require('../../assets/img/mtls-status-partial.svg');
-const fullIconDark = require('../../assets/img/mtls-status-full-dark.svg');
-const hollowIconDark = require('../../assets/img/mtls-status-partial-dark.svg');
 
 export enum MTLSIconTypes {
   LOCK_FULL = 'LOCK_FULL',

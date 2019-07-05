@@ -181,9 +181,9 @@ class Slider extends React.Component<Props, State> {
     const lockElement = (
       <Button bsSize="xsmall" style={pinButtonStyle} onClick={() => this.props.onLock(!this.props.locked)}>
         {this.props.locked ? (
-          <img src={solidPinIcon} className={lockStyle} />
+          <img src={solidPinIcon} className={lockStyle} alt="solid-pin" />
         ) : (
-          <img src={hollowPinIcon} className={lockStyle} />
+          <img src={hollowPinIcon} className={lockStyle} alt="hollow-pin" />
         )}
       </Button>
     );

@@ -25,7 +25,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
             }
           }
         >
-          <Connect(class_1)
+          <Connect(Component)
             id="service-info-duration-dropdown"
           />
            

@@ -33,7 +33,7 @@ const mergeInGroup = (group: PodsGroup, pod: Pod) => {
   // Update common prefix
   group.commonPrefix = commonPrefix(group.commonPrefix, pod.name);
   // Remove any group.commonLabels that is not found in pod
-  Object.keys(group.commonLabels).map(key => {
+  Object.keys(group.commonLabels).forEach(key => {
     const val = group.commonLabels[key];
     if (!pod.labels || val !== pod.labels[key]) {
       delete group.commonLabels[key];
@@ -60,7 +60,7 @@ export const groupPods = (pods: Pod[]): PodsGroup[] => {
       // Make a copy of the labels. This object might be modified later, so do not use the original reference.
       const labels: { [key: string]: string } = {};
       if (pod.labels) {
-        Object.keys(pod.labels).map(k => {
+        Object.keys(pod.labels).forEach(k => {
           labels[k] = pod.labels![k];
         });
       }

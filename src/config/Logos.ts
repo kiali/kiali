@@ -1,14 +1,22 @@
 // All logo images go in here
 
 // Kiali logo
-export const kialiLogo = require('../assets/img/logo-alt.svg');
+import kialiLogo from '../assets/img/logo-alt.svg';
+import VertxLogo from '../assets/img/vertx-logo.png';
+import NodejsLogo from '../assets/img/nodejs-logo.png';
+import ThorntailLogo from '../assets/img/thorntail-logo.png';
+import GoLogo from '../assets/img/go-logo.png';
+import MicroProfileLogo from '../assets/img/microprofile-logo.png';
+import JVMLogo from '../assets/img/java-logo.png';
 
 // Runtimes
 export const runtimesLogoProviders = {
-  'Vert.x': () => require('../assets/img/vertx-logo.png'),
-  'Node.js': () => require('../assets/img/nodejs-logo.png'),
-  Thorntail: () => require('../assets/img/thorntail-logo.png'),
-  Go: () => require('../assets/img/go-logo.png'),
-  MicroProfile: () => require('../assets/img/microprofile-logo.png'),
-  JVM: () => require('../assets/img/java-logo.png')
+  'Vert.x': VertxLogo,
+  'Node.js': NodejsLogo,
+  Thorntail: ThorntailLogo,
+  Go: GoLogo,
+  MicroProfile: MicroProfileLogo,
+  JVM: JVMLogo
 };
+
+export { kialiLogo };

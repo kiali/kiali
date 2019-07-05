@@ -25,7 +25,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
   renderLogo(name: string, idx: number): JSX.Element {
     const logoProvider = runtimesLogoProviders[name];
     if (logoProvider) {
-      return <img key={'logo-' + idx} src={logoProvider()} alt={name} title={name} />;
+      return <img key={'logo-' + idx} src={logoProvider} alt={name} title={name} />;
     }
     return <span key={'runtime-' + idx}>{name}</span>;
   }

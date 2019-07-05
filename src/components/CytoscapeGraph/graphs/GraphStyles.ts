@@ -5,6 +5,9 @@ import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalSc
 import { icons } from '../../../config';
 import { CyEdge, CyNode } from '../CytoscapeGraphUtils';
 
+import NodeImageTopology from '../../../assets/img/node-background-topology.png';
+import NodeImageKey from '../../../assets/img/node-background-key.png';
+
 export const DimClass = 'mousedim';
 
 // UX-specified colors, widths, etc
@@ -37,8 +40,6 @@ const NodeHeight = '10px';
 const NodeIconCB = icons.istio.circuitBreaker.ascii; // bolt
 const NodeIconMS = icons.istio.missingSidecar.ascii; // exclamation
 const NodeIconVS = icons.istio.virtualService.ascii; // code-branch
-const NodeImageTopology = require('../../../assets/img/node-background-topology.png');
-const NodeImageKey = require('../../../assets/img/node-background-key.png');
 const NodeTextOutlineColor = PfColors.White;
 const NodeTextOutlineWidth = '1px';
 const NodeTextColor = PfColors.Black;

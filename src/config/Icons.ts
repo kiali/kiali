@@ -1,5 +1,10 @@
 import deepFreeze from 'deep-freeze';
 
+import solidPinIcon from '../assets/img/solid-pin.png';
+import hollowPinIcon from '../assets/img/hollow-pin.png';
+
+export { solidPinIcon, hollowPinIcon };
+
 const mutIcons = {
   istio: {
     circuitBreaker: { type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
@@ -20,6 +25,3 @@ const mutIcons = {
 };
 
 export const icons = deepFreeze(mutIcons) as typeof mutIcons;
-
-export const solidPinIcon = require('../assets/img/solid-pin.png');
-export const hollowPinIcon = require('../assets/img/hollow-pin.png');

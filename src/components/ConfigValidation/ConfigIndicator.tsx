@@ -115,7 +115,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
     const validationsInfo: JSX.Element[] = [];
     const showDefinitions = this.props.definition && numChecks !== 0;
     if (showDefinitions) {
-      this.props.validations.map(validation => {
+      this.props.validations.forEach(validation => {
         validationsInfo.push(
           <div style={{ paddingLeft: '10px' }} key={validation.name}>
             {validation.name} : {validation.checks.map(check => check.message).join(',')}

@@ -9,12 +9,12 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
     className=""
     fieldId="jaeger-tags"
     helperText={
-      <UNDEFINED>
+      <React.Fragment>
         <Popover
           appendTo={[Function]}
           aria-label=""
           bodyContent={
-            <UNDEFINED>
+            <React.Fragment>
               Values should be in the
                
               <a
@@ -37,7 +37,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
               <code>
                 error=true db.statement="select * from User"
               </code>
-            </UNDEFINED>
+            </React.Fragment>
           }
           className="f6vm0mb"
           closeBtnAriaLabel="Close"
@@ -56,7 +56,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
           shouldClose={[Function]}
           zIndex={9999}
         >
-          <UNDEFINED>
+          <React.Fragment>
             <Button
               aria-label={null}
               className=""
@@ -76,9 +76,9 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
               />
             </Button>
             e.g. http.status_code=200 error=true
-          </UNDEFINED>
+          </React.Fragment>
         </Popover>
-      </UNDEFINED>
+      </React.Fragment>
     }
     isInline={false}
     isRequired={false}

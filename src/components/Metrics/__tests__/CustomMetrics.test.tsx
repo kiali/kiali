@@ -8,7 +8,6 @@ import CustomMetrics from '../CustomMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 
-(window as any).SVGPathElement = a => a;
 let mounted: ReactWrapper<any, any> | null;
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any): Promise<void> => {

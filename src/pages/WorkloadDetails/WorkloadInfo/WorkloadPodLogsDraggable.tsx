@@ -21,10 +21,6 @@ const draggable = style({
 });
 
 export default class WorkloadPodLogsDraggable extends React.Component<WorkloadPodLogsProps> {
-  constructor(props: WorkloadPodLogsProps) {
-    super(props);
-  }
-
   render() {
     return (
       <Draggable handle="#wpl_header">
