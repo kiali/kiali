@@ -86,7 +86,7 @@ import (
 
 ### React (Javascript / TypeScript)
 
-You can use the react components from `k-charted-react`. Example with `axios`:
+You can use the one of the PatternFly implementations by importing `@kiali/k-charted-pf3` or `@kiali/k-charted-pf4`. Example with `axios`:
 
 ```javascript
   axios.get(`/namespaces/${this.state.namespace}/dashboards/${this.state.dashboardName}`).then(rs => {
@@ -95,23 +95,17 @@ You can use the react components from `k-charted-react`. Example with `axios`:
 
   render() {
     if (this.state.dashboard) {
-      return (<PF3Dashboard dashboard={this.state.dashboard} />)
+      return (<Dashboard dashboard={this.state.dashboard} />)
     }
     return (<>Empty</>);
   }
 ```
 
-Check out [`MetricsOption.ts`](https://github.com/kiali/k-charted/blob/master/web/react/src/types/MetricsOptions.ts) file to see how the dashboard can be tuned (filtering by labels, aggregations, etc.)
+Check out [`MetricsOption.ts`](https://github.com/kiali/k-charted/blob/master/web/common/types/MetricsOptions.ts) file to see how the dashboard can be tuned (filtering by labels, aggregations, etc.)
 
-## First build
+## First build preparation
 
 Go vendors are commited so you don't need to pull them first (unless you want to update them, in which case you can run `make godep`).
-
-For a first run, init the JS dependencies:
-
-```bash
-make reactdep
-```
 
 Install [*golangci-lint*](https://github.com/golangci/golangci-lint), example with v1.16.0:
 
@@ -121,17 +115,20 @@ curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | 
 
 ## Build
 
-To build/lint/test everything:
+To build/lint/test the backend, run:
 
 ```bash
-make build lint test
+make go
 ```
 
-You can also build/lint/test only the Go code, or only the React code:
+For the frontend, run:
 
 ```bash
-make gobuild golint gotest
-make reactbuild reactlint reacttest
+make pf3
+
+# and/or
+
+make pf4
 ```
 
 ## Development setup (e.g. with Kiali)
@@ -153,11 +150,11 @@ make dep-update
 Similarly, you can use `yarn link` for the web UI side. Assuming your kiali-ui is in `/work/kiali-ui`:
 
 ```bash
-cd /go/src/github.com/kiali/k-charted/web/react
+cd /go/src/github.com/kiali/k-charted/web/pf3
 yarn link
 
 cd /work/kiali-ui
-yarn link k-charted-react
+yarn link @kiali/k-charted-pf3
 ```
 
 After testing, you should remove the mirror and link:
@@ -167,7 +164,7 @@ cd /go/src/github.com/kiali/kiali
 glide mirror remove https://github.com/kiali/k-charted
 
 cd /work/kiali-ui
-yarn unlink k-charted-react
+yarn unlink @kiali/k-charted-pf3
 ```
 
 ## Contribute
