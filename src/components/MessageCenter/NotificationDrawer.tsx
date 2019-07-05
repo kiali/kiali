@@ -13,6 +13,17 @@ import {
 
 import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import moment from 'moment';
+import {
+  BoundingClientAwareComponent,
+  PropertyType
+} from '../BoundingClientAwareComponent/BoundingClientAwareComponent';
+import { style } from 'typestyle';
+
+const drawerMarginBottom = 20;
+
+const drawerContainerStyle = style({
+  overflow: 'auto'
+});
 
 const typeForPfIcon = (type: MessageType) => {
   switch (type) {
@@ -168,23 +179,28 @@ export default class NotificationDrawer extends React.PureComponent<PropsType, S
           onExpandClick={this.props.onExpandDrawer}
           onCloseClick={this.props.onHideDrawer}
         />
-        <PfNotificationDrawer.Accordion>
-          {this.props.groups.length === 0 && noNotificationsMessage}
-          {this.props.groups.map(group => {
-            return (
-              <NotificationGroupWrapper
-                key={group.id}
-                group={group}
-                reverseMessageOrder={this.props.reverseMessageOrder}
-                isExpanded={group.id === this.props.expandedGroupId}
-                onToggle={this.props.onToggleGroup}
-                onNotificationClick={(message: NotificationMessage) => this.props.onNotificationClick(message, group)}
-                onMarkGroupAsRead={this.props.onMarkGroupAsRead}
-                onClearGroup={this.props.onClearGroup}
-              />
-            );
-          })}
-        </PfNotificationDrawer.Accordion>
+        <BoundingClientAwareComponent
+          className={drawerContainerStyle}
+          maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: drawerMarginBottom }}
+        >
+          <PfNotificationDrawer.Accordion>
+            {this.props.groups.length === 0 && noNotificationsMessage}
+            {this.props.groups.map(group => {
+              return (
+                <NotificationGroupWrapper
+                  key={group.id}
+                  group={group}
+                  reverseMessageOrder={this.props.reverseMessageOrder}
+                  isExpanded={group.id === this.props.expandedGroupId}
+                  onToggle={this.props.onToggleGroup}
+                  onNotificationClick={(message: NotificationMessage) => this.props.onNotificationClick(message, group)}
+                  onMarkGroupAsRead={this.props.onMarkGroupAsRead}
+                  onClearGroup={this.props.onClearGroup}
+                />
+              );
+            })}
+          </PfNotificationDrawer.Accordion>
+        </BoundingClientAwareComponent>
       </PfNotificationDrawer>
     );
   }
