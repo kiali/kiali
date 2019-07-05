@@ -265,26 +265,10 @@
         "parameters": [
           {
             "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "run all appenders",
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
             "in": "query"
           },
           {
@@ -297,14 +281,6 @@
           },
           {
             "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for injecting the requested service node between source and destination nodes.",
-            "name": "injectServiceNodes",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "workload",
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
@@ -313,10 +289,26 @@
           },
           {
             "type": "string",
-            "default": "now",
+            "default": "none",
             "x-go-name": "Name",
-            "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
-            "name": "queryTime",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {
@@ -326,6 +318,14 @@
             "name": "namespaces",
             "in": "query",
             "required": true
+          },
+          {
+            "type": "string",
+            "default": "now",
+            "x-go-name": "Name",
+            "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
+            "name": "queryTime",
+            "in": "query"
           }
         ],
         "responses": {
@@ -358,17 +358,17 @@
         "parameters": [
           {
             "type": "string",
-            "default": "false",
             "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The app name (label value).",
-            "name": "app",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
@@ -382,14 +382,6 @@
           },
           {
             "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "10m",
             "x-go-name": "Name",
             "description": "Query time-range duration (Golang string duration).",
@@ -398,26 +390,34 @@
           },
           {
             "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for injecting the requested service node between source and destination nodes.",
-            "name": "injectServiceNodes",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "default": "workload",
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {
@@ -459,17 +459,25 @@
         "parameters": [
           {
             "type": "string",
-            "default": "false",
             "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
+            "description": "The app name (label value).",
+            "name": "app",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The app name (label value).",
-            "name": "app",
+            "description": "The app version (label value).",
+            "name": "version",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
@@ -483,22 +491,6 @@
           },
           {
             "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The app version (label value).",
-            "name": "version",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "default": "10m",
             "x-go-name": "Name",
             "description": "Query time-range duration (Golang string duration).",
@@ -507,26 +499,34 @@
           },
           {
             "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for injecting the requested service node between source and destination nodes.",
-            "name": "injectServiceNodes",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "default": "workload",
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {
@@ -647,14 +647,6 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
-            "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "x-go-name": "Name",
             "description": "The app name (label value).",
             "name": "app",
@@ -675,6 +667,45 @@
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -702,42 +733,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -840,14 +840,6 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
-            "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "x-go-name": "Name",
             "description": "The app name (label value).",
             "name": "app",
@@ -868,6 +860,56 @@
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -895,53 +937,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -992,17 +992,25 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "In custom dashboards, labels filters to use when fetching metrics, formatted as key:value pairs. Ex: \"app:foo,version:bar\".",
-            "name": "labelsFilters",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The dashboard resource name.",
+            "name": "dashboard",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "In custom dashboards, additional labels that are made available for grouping in the UI, regardless which aggregations are defined in the MonitoringDashboard CR",
+            "name": "additionalLabels",
+            "in": "query"
           },
           {
             "type": "boolean",
@@ -1010,6 +1018,44 @@
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "In custom dashboards, labels filters to use when fetching metrics, formatted as key:value pairs. Ex: \"app:foo,version:bar\".",
+            "name": "labelsFilters",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -1031,56 +1077,10 @@
           {
             "type": "integer",
             "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
             "default": 15,
             "x-go-name": "Name",
             "description": "Step between [graph] datapoints, in seconds.",
             "name": "step",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The dashboard resource name.",
-            "name": "dashboard",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "In custom dashboards, additional labels that are made available for grouping in the UI, regardless which aggregations are defined in the MonitoringDashboard CR",
-            "name": "additionalLabels",
             "in": "query"
           }
         ],
@@ -1259,14 +1259,6 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -1278,6 +1270,14 @@
             "x-go-name": "Name",
             "description": "The Istio object type.",
             "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
             "in": "path",
             "required": true
           }
@@ -1316,24 +1316,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1343,6 +1335,14 @@
             "x-go-name": "Name",
             "description": "The Istio object type.",
             "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
             "in": "path",
             "required": true
           }
@@ -1379,24 +1379,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1406,6 +1398,14 @@
             "x-go-name": "Name",
             "description": "The Istio object type.",
             "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
             "in": "path",
             "required": true
           }
@@ -1439,24 +1439,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The Istio object subtype.",
-            "name": "object_subtype",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1466,6 +1458,14 @@
             "x-go-name": "Name",
             "description": "The Istio object type.",
             "name": "object_type",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The Istio object subtype.",
+            "name": "object_subtype",
             "in": "path",
             "required": true
           }
@@ -1504,16 +1504,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1559,16 +1559,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1611,16 +1611,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The Istio object name.",
-            "name": "object",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The Istio object name.",
+            "name": "object",
             "in": "path",
             "required": true
           },
@@ -1750,6 +1750,13 @@
           {
             "type": "string",
             "x-go-name": "Name",
+            "description": "The pod container name. Optional for single-container pod. Otherwise required.",
+            "name": "container",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
             "description": "The namespace name.",
             "name": "namespace",
             "in": "path",
@@ -1768,13 +1775,6 @@
             "x-go-name": "Name",
             "description": "The start time for fetching logs. UNIX time in seconds. Default is all logs.",
             "name": "sinceTime",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The pod container name. Optional for single-container pod. Otherwise required.",
-            "name": "container",
             "in": "query"
           }
         ],
@@ -1887,17 +1887,17 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
             "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The service name.",
+            "name": "service",
             "in": "path",
             "required": true
           },
@@ -1907,6 +1907,45 @@
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -1934,50 +1973,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2020,11 +2020,19 @@
         "parameters": [
           {
             "type": "string",
-            "default": "false",
             "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "Name",
+            "description": "The service name.",
+            "name": "service",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
@@ -2032,14 +2040,6 @@
             "x-go-name": "Name",
             "description": "Comma-separated list of Appenders to run. Available appenders: [deadNode, istio, responseTime, securityPolicy, serviceEntry, sidecarsCheck, unusedNode].",
             "name": "appenders",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
             "in": "query"
           },
           {
@@ -2052,18 +2052,26 @@
           },
           {
             "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "default": "workload",
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
             "in": "query"
           },
           {
@@ -2073,14 +2081,6 @@
             "description": "Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.",
             "name": "queryTime",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -2173,17 +2173,17 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
             "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The service name.",
+            "name": "service",
             "in": "path",
             "required": true
           },
@@ -2193,6 +2193,56 @@
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2220,61 +2270,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The service name.",
-            "name": "service",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2396,16 +2396,16 @@
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The workload name.",
-            "name": "workload",
+            "description": "The namespace name.",
+            "name": "namespace",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
             "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
+            "description": "The workload name.",
+            "name": "workload",
             "in": "path",
             "required": true
           }
@@ -2440,11 +2440,11 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
             "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
@@ -2455,19 +2455,50 @@
             "required": true
           },
           {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2495,42 +2526,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2573,11 +2573,11 @@
         "parameters": [
           {
             "type": "string",
-            "default": "false",
             "x-go-name": "Name",
-            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
-            "name": "includeIstio",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
@@ -2597,14 +2597,6 @@
           },
           {
             "type": "string",
-            "default": "none",
-            "x-go-name": "Name",
-            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
-            "name": "groupBy",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "default": "10m",
             "x-go-name": "Name",
             "description": "Query time-range duration (Golang string duration).",
@@ -2613,26 +2605,34 @@
           },
           {
             "type": "string",
-            "default": "false",
-            "x-go-name": "Name",
-            "description": "Flag for injecting the requested service node between source and destination nodes.",
-            "name": "injectServiceNodes",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
             "default": "workload",
             "x-go-name": "Name",
             "description": "Graph type. Available graph types: [app, service, versionedApp, workload].",
             "name": "graphType",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "none",
+            "x-go-name": "Name",
+            "description": "App box grouping characteristic. Available groupings: [app, none, version].",
+            "name": "groupBy",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for including istio-system (infra) services. Ignored if namespace is istio-system.",
+            "name": "includeIstio",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "false",
+            "x-go-name": "Name",
+            "description": "Flag for injecting the requested service node between source and destination nodes.",
+            "name": "injectServiceNodes",
             "in": "query"
           },
           {
@@ -2734,11 +2734,11 @@
         "parameters": [
           {
             "type": "string",
-            "default": "outbound",
             "x-go-name": "Name",
-            "description": "Traffic direction: 'inbound' or 'outbound'.",
-            "name": "direction",
-            "in": "query"
+            "description": "The namespace name.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
           },
           {
             "type": "string",
@@ -2749,19 +2749,61 @@
             "required": true
           },
           {
-            "type": "string",
-            "x-go-name": "Name",
-            "description": "The namespace name.",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "default": true,
             "x-go-name": "Name",
             "description": "Flag for fetching histogram average. Default is true.",
             "name": "avg",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
+            "name": "byLabels[]",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "outbound",
+            "x-go-name": "Name",
+            "description": "Traffic direction: 'inbound' or 'outbound'.",
+            "name": "direction",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1800,
+            "x-go-name": "Name",
+            "description": "Duration of the query period, in seconds.",
+            "name": "duration",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
+            "name": "filters[]",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "x-go-name": "Name",
+            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
+            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -2789,53 +2831,11 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "default": 1800,
-            "x-go-name": "Name",
-            "description": "Duration of the query period, in seconds.",
-            "name": "duration",
-            "in": "query"
-          },
-          {
             "type": "string",
             "default": "source",
             "x-go-name": "Name",
             "description": "Istio telemetry reporter: 'source' or 'destination'.",
             "name": "reporter",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
-            "name": "filters[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
-            "name": "byLabels[]",
-            "in": "query"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "x-go-name": "Name",
-            "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
-            "name": "quantiles[]",
             "in": "query"
           },
           {
@@ -3594,6 +3594,14 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "Histogram": {
+      "description": "Histogram contains Metric objects for several histogram-kind statistics",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Metric"
+      },
+      "x-go-package": "github.com/kiali/kiali/prometheus"
+    },
     "Initializer": {
       "type": "object",
       "title": "Initializer is information about an initializer that has not yet completed.",
@@ -3835,41 +3843,6 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "Location": {
-      "description": "Typically, the Location represents the collection of time offsets\nin use in a geographical area, such as CEST and CET for central Europe.",
-      "type": "object",
-      "title": "A Location maps time instants to the zone in use at that time.",
-      "properties": {
-        "cacheEnd": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "cacheStart": {
-          "description": "Most lookups will be for the current time.\nTo avoid the binary search through tx, keep a\nstatic one-element cache that gives the correct\nzone for the time when the Location was created.\nif cacheStart \u003c= t \u003c cacheEnd,\nlookup can return cacheZone.\nThe units for cacheStart and cacheEnd are seconds\nsince January 1, 1970 UTC, to match the argument\nto lookup.",
-          "type": "integer",
-          "format": "int64"
-        },
-        "cacheZone": {
-          "$ref": "#/definitions/zone"
-        },
-        "name": {
-          "type": "string"
-        },
-        "tx": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/zoneTrans"
-          }
-        },
-        "zone": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/zone"
-          }
-        }
-      },
-      "x-go-package": "time"
-    },
     "MTLSStatus": {
       "description": "MTLSStatus describes the current mTLS status of a mesh entity",
       "type": "object",
@@ -3954,9 +3927,6 @@
       "description": "Metric holds the Prometheus Matrix model, which contains one or more time series (depending on grouping)",
       "type": "object",
       "properties": {
-        "err": {
-          "type": "string"
-        },
         "matrix": {
           "$ref": "#/definitions/Matrix"
         }
@@ -3970,10 +3940,7 @@
         "histograms": {
           "type": "object",
           "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/definitions/Metric"
-            }
+            "$ref": "#/definitions/Histogram"
           },
           "x-go-name": "Histograms"
         },
@@ -4578,31 +4545,15 @@
           "format": "double",
           "x-go-name": "ErrorRatio"
         },
-        "inboundErrorRate": {
-          "type": "number",
-          "format": "double"
-        },
         "inboundErrorRatio": {
           "type": "number",
           "format": "double",
           "x-go-name": "InboundErrorRatio"
         },
-        "inboundRequestRate": {
-          "type": "number",
-          "format": "double"
-        },
-        "outboundErrorRate": {
-          "type": "number",
-          "format": "double"
-        },
         "outboundErrorRatio": {
           "type": "number",
           "format": "double",
           "x-go-name": "OutboundErrorRatio"
-        },
-        "outboundRequestRate": {
-          "type": "number",
-          "format": "double"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -5257,20 +5208,6 @@
       "description": "+protobuf.options.marshal=false\n+protobuf.as=Timestamp\n+protobuf.options.(gogoproto.goproto_stringer)=false",
       "type": "object",
       "title": "Time is a wrapper around time.Time which supports correct\nmarshaling to YAML and JSON.  Wrappers are provided for many\nof the factory methods that the time package offers.",
-      "properties": {
-        "ext": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "loc": {
-          "$ref": "#/definitions/Location"
-        },
-        "wall": {
-          "description": "wall and ext encode the wall time seconds, wall time nanoseconds,\nand optional monotonic clock reading in nanoseconds.\n\nFrom high to low bit position, wall encodes a 1-bit flag (hasMonotonic),\na 33-bit seconds field, and a 30-bit wall time nanoseconds field.\nThe nanoseconds field is in the range [0, 999999999].\nIf the hasMonotonic bit is 0, then the 33-bit field must be zero\nand the full signed 64-bit wall seconds since Jan 1 year 1 is stored in ext.\nIf the hasMonotonic bit is 1, then the 33-bit field holds a 33-bit\nunsigned wall seconds since Jan 1 year 1885, and ext holds a\nsigned 64-bit monotonic clock reading, nanoseconds since process start.",
-          "type": "integer",
-          "format": "uint64"
-        }
-      },
       "x-go-package": "github.com/kiali/kiali/vendor/k8s.io/apimachinery/pkg/apis/meta/v1"
     },
     "TokenResponse": {
@@ -5896,42 +5833,6 @@
       },
       "x-go-name": "VirtualServices",
       "x-go-package": "github.com/kiali/kiali/models"
-    },
-    "zone": {
-      "type": "object",
-      "title": "A zone represents a single time zone such as CEST or CET.",
-      "properties": {
-        "isDST": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "offset": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "x-go-package": "time"
-    },
-    "zoneTrans": {
-      "type": "object",
-      "title": "A zoneTrans represents a single time zone transition.",
-      "properties": {
-        "index": {
-          "type": "integer",
-          "format": "uint8"
-        },
-        "isstd": {
-          "type": "boolean",
-          "x-go-name": "isutc"
-        },
-        "when": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "x-go-package": "time"
     }
   },
   "responses": {
