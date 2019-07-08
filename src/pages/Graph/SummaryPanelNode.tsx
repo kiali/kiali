@@ -436,7 +436,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const isServiceNode = node.data(CyNode.nodeType) === NodeType.SERVICE;
     let serviceWithUnknownSource: boolean = false;
     if (isServiceNode) {
-      for (const n of node.incomers) {
+      for (const n of node.incomers()) {
         if (NodeType.UNKNOWN === n.data(CyNode.nodeType)) {
           serviceWithUnknownSource = true;
           break;
