@@ -21,7 +21,7 @@ provisioner:
         istio:
           control_plane_namespace: istio-system
         kiali:
-          accessible_namespaces: 
+          accessible_namespaces:
           - "default"
           - "istio-system"
           operator_namespace: kiali-operator
@@ -38,6 +38,6 @@ provisioner:
 scenario:
   name: multi-tenancy
   test_sequence:
-    - prepare
-    - converge
-    - destroy
+  - prepare
+  - converge
+  - destroy
