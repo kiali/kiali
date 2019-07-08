@@ -160,3 +160,25 @@ run-playbook:
 # To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
 run-playbook-tag:
 	ansible-playbook -vvv -i dev-hosts dev-playbook.yml --tags test
+
+#
+# MOLECULE TARGETS
+#
+
+MOLECULE_SCENARIO ?= default
+ifeq ($(MOLECULE_DEBUG),true)
+MOLECULE_DEBUG_ARG="--debug"
+endif
+
+.molecule-docker-build-if-needed:
+	@if [ "$(shell docker image ls -q kiali-molecule:latest 2>/dev/null || echo -n "")" == "" ]; then \
+	  $(MAKE) molecule-docker-build ;\
+	fi
+
+## molecule-docker-build: Builds a docker image that can be used to run Molecule without requiring the host to have the proper python/pip installation
+molecule-docker-build:
+	docker build -t kiali-molecule:latest molecule/docker
+
+## molecule-test: Runs Molecule tests using the Molecule docker image
+molecule-test: .molecule-docker-build-if-needed
+	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test --scenario-name ${MOLECULE_SCENARIO}
