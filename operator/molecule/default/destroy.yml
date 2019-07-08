@@ -3,47 +3,76 @@
   connection: local
   tasks:
   - name: Remove Kiali CR
+    vars:
+      custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
     k8s:
       state: absent
-      namespace: '{{ kiali.operator_namespace }}'
-      definition: "{{ lookup('template', cr_file_path) }}"
+      api_version: kiali.io/v1alpha1
+      kind: Kiali
+      namespace: "{{ kiali.operator_namespace }}"
+      name: "{{ custom_resource.metadata.name }}"
 
   - name: Produce Files with Correct Parameters
     shell: " {{ item }}"
     with_items:
-    - cat {{ kiali_operator_assets_path }}/namespace.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }}  envsubst
-    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_IMAGE_NAME={{ kiali.operator_image_name}} OPERATOR_IMAGE_VERSION={{ kiali.operator_version }} OPERATOR_IMAGE_PULL_POLICY={{ kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ kiali.operator_watch_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" envsubst
+    - cat {{ kiali_operator_assets_path }}/namespace.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }}  envsubst
+    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_IMAGE_NAME={{ kiali.operator_image_name}} OPERATOR_IMAGE_VERSION={{ kiali.operator_version }} OPERATOR_IMAGE_PULL_POLICY={{ kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ kiali.operator_watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" envsubst
     register: template
 
-  - name: "Clean Files"
+  - name: Parse Template Yaml Files
     set_fact:
-      namespace: "{{ template.results[0].stdout | regex_replace('---', '') | from_yaml }}"
-      crd: "{{ template.results[1].stdout | regex_replace('---', '') | from_yaml }}"
-      role_binding: "{{ template.results[2].stdout | regex_replace('---', '') | from_yaml }}"
-      service_account: "{{ template.results[3].stdout | regex_replace('---', '') | from_yaml }}"
-      operator: "{{ template.results[4].stdout | regex_replace('---', '') | from_yaml }}"
-      role: "{{ template.results[5].stdout | regex_replace('---', '') | from_yaml }}"
+      namespace: "{{ (template.results[0].stdout | from_yaml_all | list)[0] }}"
+      crd0: "{{ (template.results[1].stdout | from_yaml_all | list)[0] }}"
+      crd1: "{{ (template.results[1].stdout | from_yaml_all | list)[1] }}"
+      role_binding: "{{ (template.results[2].stdout | from_yaml_all | list)[0] }}"
+      service_account: "{{ (template.results[3].stdout | from_yaml_all | list)[0] }}"
+      operator: "{{ (template.results[4].stdout | from_yaml_all | list)[0] }}"
+      role: "{{ (template.results[5].stdout | from_yaml_all | list)[0] }}"
 
   - name: Combine Namespace on the Files that need it
     set_fact:
-      crd: "{{ crd | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       service_account: "{{ service_account | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       role_binding: "{{ role_binding | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       role: "{{ role | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       operator: "{{ operator | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
 
-  - name: Pause in order not to create a namespace stuck problem
-    pause:
-      minutes: 1
+  # Wait for the last things to be removed (which are the configmap and monitoring dashboards). This avoids the namespace-stuck-problem.
+  - name: Wait for Kiali ConfigMap to be uninstalled
+    k8s_facts:
+      api_version: v1
+      kind: ConfigMap
+      namespace: "{{ istio.control_plane_namespace }}"
+      name: kiali
+    register: doomed_list
+    until:
+    - doomed_list | default({}) | json_query("resources[*]") | length == 0
+    retries: 60
+    delay: 5
 
-  - name: Removing Custom Resource Definition
+  - name: Wait for Kiali MonitoringDashboards to be uninstalled
+    k8s_facts:
+      api_version: monitoring.kiali.io/v1alpha1
+      kind: MonitoringDashboard
+      namespace: "{{ istio.control_plane_namespace }}"
+    register: doomed_list
+    until:
+    - doomed_list | default({}) | json_query("resources[*]") | length == 0
+    retries: 60
+    delay: 5
+
+  - name: Removing First Custom Resource Definition
     k8s:
       state: absent
-      definition: "{{ crd }}"
+      definition: "{{ crd0 }}"
+
+  - name: Removing Second Custom Resource Definition
+    k8s:
+      state: absent
+      definition: "{{ crd1 }}"
 
   - name: Removing Role
     k8s:
@@ -65,7 +94,9 @@
       state: absent
       definition: "{{ operator }}"
 
-  - name: Removing kiali-operator namespace
+  - name: Removing Operator namespace
     k8s:
       state: absent
       definition: "{{ namespace }}"
+    when:
+    - kiali.operator_namespace != istio.control_plane_namespace

@@ -1,4 +1,3 @@
-
 - name: Prepare
   hosts: localhost
   connection: local
@@ -6,26 +5,26 @@
   - name: Produce Files with Correct Parameters
     shell: " {{ item }}"
     with_items:
-    - cat {{ kiali_operator_assets_path }}/namespace.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }}  envsubst
-    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_IMAGE_NAME={{ kiali.operator_image_name}} OPERATOR_IMAGE_VERSION={{ kiali.operator_version }} OPERATOR_IMAGE_PULL_POLICY={{ kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ kiali.operator_watch_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.image_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" envsubst
+    - cat {{ kiali_operator_assets_path }}/namespace.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }}  envsubst
+    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_NAMESPACE={{ kiali.operator_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_IMAGE_NAME={{ kiali.operator_image_name}} OPERATOR_IMAGE_VERSION={{ kiali.operator_version }} OPERATOR_IMAGE_PULL_POLICY={{ kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ kiali.operator_watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ kiali.operator_version }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ kiali.operator_clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ kiali.operator_clusterroles }}" envsubst
     register: template
 
-  - name: "Clean Files"
+  - name: Parse Template Yaml Files
     set_fact:
-      namespace: "{{ template.results[0].stdout | regex_replace('---', '') | from_yaml }}"
-      crd: "{{ template.results[1].stdout | regex_replace('---', '') | from_yaml }}"
-      role_binding: "{{ template.results[2].stdout | regex_replace('---', '') | from_yaml }}"
-      service_account: "{{ template.results[3].stdout | regex_replace('---', '') | from_yaml }}"
-      operator: "{{ template.results[4].stdout | regex_replace('---', '') | from_yaml }}"
-      role: "{{ template.results[5].stdout | regex_replace('---', '') | from_yaml }}"
+      namespace: "{{ (template.results[0].stdout | from_yaml_all | list)[0] }}"
+      crd0: "{{ (template.results[1].stdout | from_yaml_all | list)[0] }}"
+      crd1: "{{ (template.results[1].stdout | from_yaml_all | list)[1] }}"
+      role_binding: "{{ (template.results[2].stdout | from_yaml_all | list)[0] }}"
+      service_account: "{{ (template.results[3].stdout | from_yaml_all | list)[0] }}"
+      operator: "{{ (template.results[4].stdout | from_yaml_all | list)[0] }}"
+      role: "{{ (template.results[5].stdout | from_yaml_all | list)[0] }}"
 
   - name: Combine Namespace on the Files that need it
     set_fact:
-      crd: "{{ crd | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       service_account: "{{ service_account | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       role_binding: "{{ role_binding | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       role: "{{ role | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
@@ -36,7 +35,8 @@
       definition: "{{ item }}"
     with_items:
     -  "{{ namespace }}"
-    -  "{{ crd }}"
+    -  "{{ crd0 }}"
+    -  "{{ crd1 }}"
     -  "{{ role }}"
     -  "{{ role_binding }}"
     -  "{{ service_account }}"
@@ -44,17 +44,17 @@
 
   - name: Create Kiali CR
     k8s:
-      namespace: '{{ kiali.operator_namespace }}'
+      namespace: "{{ kiali.operator_namespace }}"
       definition: "{{ lookup('template', cr_file_path) }}"
 
   - name: Asserting that Kiali is Deployed
     k8s_facts:
       api_version: v1
       kind: Deployment
-      namespace: 'istio-system'
+      namespace: "{{ istio.control_plane_namespace }}"
       label_selectors:
       - app = kiali
     register: kiali_deployment
     until: kiali_deployment.resources |length == 1 and kiali_deployment.resources[0].status.availableReplicas is defined and kiali_deployment.resources[0].status.availableReplicas == 1
-    retries: 100
-    delay: 20
+    retries: 60
+    delay: 5
