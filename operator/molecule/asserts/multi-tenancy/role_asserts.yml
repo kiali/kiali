@@ -1,7 +1,6 @@
-
 - name: Get Kiali Configmap
   set_fact:
-      roles: '{{ lookup("k8s", api_version="rbac.authorization.k8s.io/v1", kind="Role", namespace="istio-system", resource_name="kiali-viewer") }}'
+    roles: '{{ lookup("k8s", api_version="rbac.authorization.k8s.io/v1", kind="Role", namespace="istio-system", resource_name="kiali-viewer") }}'
 
 - name: Get Roles
   k8s_facts:
@@ -11,10 +10,8 @@
    name: "{{ item[1] }}"
   register: roles
   with_nested:
-    - "{{ kiali.accessible_namespaces }}"
-    - ['kiali', 'kiali-viewer']
- 
-
+  - "{{ kiali.accessible_namespaces }}"
+  - ['kiali', 'kiali-viewer']
 
 - name: Multi-Tenancy - Assert that Namespaces have the correct Roles
   assert:

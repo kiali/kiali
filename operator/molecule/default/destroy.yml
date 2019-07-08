@@ -1,4 +1,3 @@
-
 - name: Destroy
   hosts: localhost
   connection: local
@@ -9,7 +8,6 @@
       namespace: '{{ kiali.operator_namespace }}'
       definition: "{{ lookup('template', cr_file_path) }}"
 
- 
   - name: Produce Files with Correct Parameters
     shell: " {{ item }}"
     with_items:
@@ -30,8 +28,6 @@
       operator: "{{ template.results[4].stdout | regex_replace('---', '') | from_yaml }}"
       role: "{{ template.results[5].stdout | regex_replace('---', '') | from_yaml }}"
 
-
-      
   - name: Combine Namespace on the Files that need it
     set_fact:
       crd: "{{ crd | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
@@ -40,7 +36,6 @@
       role: "{{ role | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       operator: "{{ operator | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
 
-  
   - name: Pause in order not to create a namespace stuck problem
     pause:
       minutes: 1
@@ -64,16 +59,13 @@
     k8s:
       state: absent
       definition: "{{ service_account  }}"
-      
 
   - name: Removing Operator Deployment
     k8s:
       state: absent
       definition: "{{ operator }}"
-     
 
-
-  - name: Removing kiali-operator namespace 
+  - name: Removing kiali-operator namespace
     k8s:
       state: absent
       definition: "{{ namespace }}"

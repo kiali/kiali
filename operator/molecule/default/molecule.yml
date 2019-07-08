@@ -21,7 +21,7 @@ provisioner:
         istio:
           control_plane_namespace: istio-system
         kiali:
-          accessible_namespaces: 
+          accessible_namespaces:
           - "**"
           operator_namespace: kiali-operator
           operator_image_name: quay.io/kiali/kiali-operator
@@ -38,6 +38,6 @@ provisioner:
 scenario:
   name: default
   test_sequence:
-    - prepare
-    - converge
-    - destroy
+  - prepare
+  - converge
+  - destroy
