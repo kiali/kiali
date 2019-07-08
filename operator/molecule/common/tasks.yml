@@ -8,7 +8,7 @@
     kind: Pod
     namespace: '{{ kiali.operator_namespace }}'
     label_selectors:
-    - app = kiali-operator      
+    - app = kiali-operator
   register: kiali_operator_pod
 
 - name: Get Kiali Pod
@@ -17,14 +17,12 @@
     kind: Pod
     namespace: '{{ istio.control_plane_namespace }}'
     label_selectors:
-    - app = kiali      
+    - app = kiali
   register: kiali_pod
-
 
 - name: Get Kiali Configmap
   set_fact:
-      kiali_configmap: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=istio.control_plane_namespace, resource_name="kiali") }}'
-
+    kiali_configmap: '{{ lookup("k8s", api_version="v1", kind="ConfigMap", namespace=istio.control_plane_namespace, resource_name="kiali") }}'
 
 - name: Format Configmap
   set_fact:

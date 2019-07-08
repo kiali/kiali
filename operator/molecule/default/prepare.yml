@@ -1,7 +1,7 @@
 
 - name: Prepare
   hosts: localhost
-  connection: local    
+  connection: local
   tasks:
   - name: Produce Files with Correct Parameters
     shell: " {{ item }}"
@@ -23,8 +23,6 @@
       operator: "{{ template.results[4].stdout | regex_replace('---', '') | from_yaml }}"
       role: "{{ template.results[5].stdout | regex_replace('---', '') | from_yaml }}"
 
-
-      
   - name: Combine Namespace on the Files that need it
     set_fact:
       crd: "{{ crd | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
@@ -33,9 +31,8 @@
       role: "{{ role | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
       operator: "{{ operator | combine({'metadata':{'namespace': kiali.operator_namespace }}, recursive=True)   }}"
 
-      
   - name: Deploying Templates on Kubernetes
-    k8s: 
+    k8s:
       definition: "{{ item }}"
     with_items:
     -  "{{ namespace }}"
@@ -49,7 +46,6 @@
     k8s:
       namespace: '{{ kiali.operator_namespace }}'
       definition: "{{ lookup('template', cr_file_path) }}"
- 
 
   - name: Asserting that Kiali is Deployed
     k8s_facts:
@@ -57,7 +53,7 @@
       kind: Deployment
       namespace: 'istio-system'
       label_selectors:
-      - app = kiali      
+      - app = kiali
     register: kiali_deployment
     until: kiali_deployment.resources |length == 1 and kiali_deployment.resources[0].status.availableReplicas is defined and kiali_deployment.resources[0].status.availableReplicas == 1
     retries: 100
