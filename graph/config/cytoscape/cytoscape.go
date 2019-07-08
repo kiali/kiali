@@ -450,15 +450,17 @@ func rateToString(minPrecision int, rateVal float64) string {
 
 // calcPrecision returns the precision necessary to see at least one significant digit (up to max)
 func calcPrecision(val float64, max int) int {
-	if !(val < 1 && val > 0) {
+	if val <= 0 {
 		return 0
 	}
 
 	precision := 0
-	min := 0.5
-	for val < min && precision < max {
+	for precision < max {
+		if val >= 1 {
+			break
+		}
+		val *= 10
 		precision++
-		min = min / 10
 	}
 	return precision
 }
