@@ -78,8 +78,7 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
     }
   };
 
-  handleLogout = e => {
-    e.preventDefault();
+  handleLogout = () => {
     if (authenticationConfig.logoutEndpoint) {
       API.logout();
       (document.getElementById('openshiftlogout') as HTMLFormElement).submit();

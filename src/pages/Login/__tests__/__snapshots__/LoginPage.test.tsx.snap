@@ -2,27 +2,20 @@
 
 exports[`#LoginPage render correctly should render LoginPage 1`] = `
 <LoginPage
-  backgroundImgAlt=""
-  backgroundImgSrc=""
   brandImgAlt="Kiali logo"
   brandImgSrc="logo-alt.svg"
-  className=""
   footerListItems={
     <React.Fragment>
       <ListItem>
         <LoginFooterItem
-          className=""
           href="https://www.kiali.io/"
-          target="_blank"
         >
           Documentation
         </LoginFooterItem>
       </ListItem>
       <ListItem>
         <LoginFooterItem
-          className=""
           href="https://github.com/kiali/kiali"
-          target="_blank"
         >
           Contribute
         </LoginFooterItem>
@@ -30,28 +23,19 @@ exports[`#LoginPage render correctly should render LoginPage 1`] = `
     </React.Fragment>
   }
   footerListVariants="inline"
-  forgotCredentials={null}
   loginTitle="Log in Kiali"
-  signUpForAccountMessage={null}
-  socialMediaLoginContent={null}
   textContent="Service Mesh Observability."
 >
   <LoginForm
-    className=""
     helperText={<React.Fragment />}
-    isLoginButtonDisabled={false}
-    isRememberMeChecked={false}
     isValidPassword={true}
     isValidUsername={true}
-    loginButtonLabel="Log In"
     onChangePassword={[Function]}
-    onChangeRememberMe={[Function]}
     onChangeUsername={[Function]}
     onLoginButtonClick={[Function]}
     passwordLabel="Password"
     passwordValue=""
     rememberMeAriaLabel="Remember me Checkbox"
-    rememberMeLabel=""
     showHelperText={true}
     style={
       Object {

@@ -27,13 +27,11 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     this.debugInformation = React.createRef();
   }
 
-  openAbout = e => {
-    e.preventDefault();
+  openAbout = () => {
     this.about.current!.open();
   };
 
-  openDebugInformation = e => {
-    e.preventDefault();
+  openDebugInformation = () => {
     // Using wrapped component, so we have to get the wrappedInstance
     this.debugInformation.current!.getWrappedInstance().open();
   };

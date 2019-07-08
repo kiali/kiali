@@ -8,6 +8,7 @@ exports[`HealthDetails renders deployments failure 1`] = `
     <UnknownIcon
       className="icon-na"
       color="#72767b"
+      noVerticalAlign={false}
       size="sm"
       title={null}
     />
@@ -25,6 +26,7 @@ exports[`HealthDetails renders healthy 1`] = `
     <UnknownIcon
       className="icon-na"
       color="#72767b"
+      noVerticalAlign={false}
       size="sm"
       title={null}
     />

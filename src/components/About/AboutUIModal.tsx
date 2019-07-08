@@ -47,8 +47,6 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         productName=""
         brandImageSrc={kialiLogo}
         brandImageAlt="Kiali Logo"
-        logoImageSrc={kialiLogo}
-        logoImageAlt="Kiali Logo"
       >
         <TextContent>
           <TextList component="dl">

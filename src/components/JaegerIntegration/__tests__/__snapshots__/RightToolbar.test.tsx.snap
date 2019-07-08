@@ -3,19 +3,13 @@
 exports[`RightToolbar renders RightToolbar correctly 1`] = `
 <Button
   aria-label="SearchTraces"
-  className=""
-  component="button"
-  isActive={false}
-  isBlock={false}
   isDisabled={false}
-  isFocus={false}
-  isHover={false}
   onClick={[Function]}
-  type="button"
   variant="primary"
 >
   <SearchIcon
     color="currentColor"
+    noVerticalAlign={false}
     size="sm"
     title={null}
   />

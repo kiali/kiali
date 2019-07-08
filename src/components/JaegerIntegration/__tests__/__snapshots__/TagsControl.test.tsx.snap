@@ -2,11 +2,9 @@
 
 exports[`TagsControls renders TagsControl correctly 1`] = `
 <Form
-  className=""
   isHorizontal={true}
 >
   <FormGroup
-    className=""
     fieldId="jaeger-tags"
     helperText={
       <React.Fragment>
@@ -58,19 +56,11 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
         >
           <React.Fragment>
             <Button
-              aria-label={null}
-              className=""
-              component="button"
-              isActive={false}
-              isBlock={false}
-              isDisabled={false}
-              isFocus={false}
-              isHover={false}
-              type="button"
               variant="plain"
             >
               <InfoAltIcon
                 color="currentColor"
+                noVerticalAlign={false}
                 size="sm"
                 title={null}
               />
@@ -80,9 +70,6 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
         </Popover>
       </React.Fragment>
     }
-    isInline={false}
-    isRequired={false}
-    isValid={true}
     label="Tags"
   >
     <TextInput

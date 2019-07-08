@@ -12,7 +12,6 @@ exports[`NamespaceDropdown renders ServiceDropdown correctly without custom 1`] 
   value=""
 >
   <FormSelectOption
-    className=""
     isDisabled={false}
     key="help_test"
     label="Select a namespace"
