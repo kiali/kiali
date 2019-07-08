@@ -436,12 +436,13 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const isServiceNode = node.data(CyNode.nodeType) === NodeType.SERVICE;
     let serviceWithUnknownSource: boolean = false;
     if (isServiceNode) {
-      for (const n of node.incomers()) {
+      node.incomers().forEach(n => {
         if (NodeType.UNKNOWN === n.data(CyNode.nodeType)) {
           serviceWithUnknownSource = true;
-          break;
+          return false; // Equivalent of break for cytoscapejs forEach API
         }
-      }
+        return undefined; // Every code paths needs to return something to avoid the wrath of the linter.
+      });
     }
 
     let grpcCharts, httpCharts, tcpCharts;
