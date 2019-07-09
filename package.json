@@ -158,10 +158,17 @@
       "pre-commit": "yarn run pretty-quick --staged --pattern \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\" && npm run lint:precommit"
     }
   },
-  "browserslist": [
-    ">10%",
-    "last 2 versions",
-    "not ie <= 11"
-  ],
+  "browserslist": {
+    "production": [
+      ">10%",
+      "last 2 versions",
+      "not ie <= 11"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "snyk": true
 }
