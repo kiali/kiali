@@ -1,11 +1,31 @@
 # Jenkins Pipeline
 
+* [Directory contents](#directory-contents)
+    + [The Pipeline](#the-pipeline)
+    + [Support files](#support-files)
+    + [Development helper files](#development-helper-files)
+    + [README files](#readme-files)
+* [Using the Pipeline](#using-the-pipeline)
+    + [Automatically determine the release type and build it](#automatically-determine-the-release-type-and-build-it)
+    + [Building a minor release](#building-a-minor-release)
+    + [Building a patch release](#building-a-patch-release)
+    + [Building a patch release (back-end only)](#building-a-patch-release-back-end-only)
+    + [Building a major release](#building-a-major-release)
+    + [Building a snapshot release](#building-a-snapshot-release)
+    + [Building an edge/daily release](#building-an-edge-daily-release)
+* [Recovering and troubleshooting a build](#recovering-and-troubleshooting-a-build)
+* [Making test builds](#making-test-builds)
+* [Developer setup](#developer-setup)
+    + [Building the Jenkins image](#building-the-jenkins-image)
+    + [Setup Jenkins credentials](#setup-jenkins-credentials)
+    + [Re-configure the Pipeline](#re-configure-the-pipeline)
+
+## Directory contents
+
 This directory contains the Jenkins Pipeline used to release
 the Kiali project, support files used by the Pipeline during
 building, and support files to ease the development of the
 Pipeline.
-
-## Directory contents
 
 ### The Pipeline
 
