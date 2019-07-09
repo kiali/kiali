@@ -167,7 +167,7 @@ front-end version, use the UI_VERSION parameter; for example.
 In the current Kiali project workflow, major releases are built off
 from a version branch rather than the `master` branch (similar to patch
 releases). Make sure that all code to release is properly committed to the
-repositories (don't change version numbers).
+repositories.
 
 Version numbers must also be pre-setted in the code/version branches.
 Example commits of a preparation for a previous major release:
