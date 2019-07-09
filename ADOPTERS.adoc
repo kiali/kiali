@@ -7,6 +7,7 @@ to the respective section.
 
 * https://istio.io[Istio]
 * https://rancher.com/docs/rancher/v2.x/en/cluster-admin/tools/istio/[Rancher]
+* https://kyma-project.io/docs/components/service-mesh/#details-istio-setup-in-kyma[Kyma]
 
 == End-Users
 
