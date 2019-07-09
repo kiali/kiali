@@ -15,7 +15,7 @@ import * as ListComponent from '../../components/ListPage/ListComponent';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
-import { arrayEquals } from '../../utils/Common';
+import { namespaceEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
@@ -47,7 +47,12 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   componentDidUpdate(prevProps: AppListComponentProps, _prevState: AppListComponentState, _snapshot: any) {
-    if (!this.paramsAreSynced(prevProps)) {
+    const [paramsSynced, nsSynced] = this.paramsAreSynced(prevProps);
+    if (!paramsSynced) {
+      if (!nsSynced) {
+        // If there is a change in the namespace selection, page is set to 1
+        this.pageSet(1);
+      }
       this.setState({
         pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
@@ -61,21 +66,17 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     this.promises.cancelAll();
   }
 
-  paramsAreSynced(prevProps: AppListComponentProps) {
-    const activeNamespacesCompare = arrayEquals(
-      prevProps.activeNamespaces,
-      this.props.activeNamespaces,
-      (n1, n2) => n1.name === n2.name
-    );
-    return (
+  paramsAreSynced = (prevProps: AppListComponentProps): [boolean, boolean] => {
+    const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
+    const paramsSynced =
       prevProps.pagination.page === this.props.pagination.page &&
       prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
-      prevProps.currentSortField.title === this.props.currentSortField.title
-    );
-  }
+      prevProps.currentSortField.title === this.props.currentSortField.title;
+    return [paramsSynced, activeNamespacesCompare];
+  };
 
   sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
