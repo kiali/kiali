@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { DashboardModel, DashboardQuery } from 'k-charted-react';
+import { DashboardModel, DashboardQuery } from '@kiali/k-charted-pf3';
 
 import Namespace from '../types/Namespace';
 import { IstioMetricsOptions } from '../types/MetricsOptions';

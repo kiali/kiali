@@ -62,6 +62,7 @@
     "postinstall": "sed -i -E 's#\\[.*eslint-config-react-app.*\\]#['\\'$PWD/.eslintrc\\'']#g' node_modules/react-scripts/config/webpack*.js"
   },
   "dependencies": {
+    "@kiali/k-charted-pf3": "0.2.0",
     "@patternfly/patternfly": "2.4.1",
     "@patternfly/react-core": "3.58.1",
     "axios": "0.18.1",
@@ -76,7 +77,6 @@
     "deep-freeze": "0.0.1",
     "js-yaml": "3.13.1",
     "json-beautify": "1.0.1",
-    "k-charted-react": "0.1.0",
     "lodash": "4.17.11",
     "logfmt": "1.2.1",
     "moment": "2.24.0",

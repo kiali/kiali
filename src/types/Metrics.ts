@@ -1,4 +1,4 @@
-import { LabelDisplayName, SingleLabelValues } from 'k-charted-react';
+import { LabelDisplayName, SingleLabelValues } from '@kiali/k-charted-pf3';
 
 export interface Metrics {
   metrics: { [key: string]: MetricGroup };

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
-import { DashboardModel, ChartModel } from 'k-charted-react';
+import { DashboardModel, ChartModel } from '@kiali/k-charted-pf3';
 import { shallowToJson } from 'enzyme-to-json';
 
 import IstioMetrics from '../IstioMetrics';

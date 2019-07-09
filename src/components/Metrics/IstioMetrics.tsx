@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { PF3Dashboard, DashboardModel, SingleLabelValues, LabelDisplayName } from 'k-charted-react';
+import { Dashboard, DashboardModel, SingleLabelValues, LabelDisplayName } from '@kiali/k-charted-pf3';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
@@ -200,7 +200,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     return (
       <div>
         {this.renderOptionsBar()}
-        <PF3Dashboard
+        <Dashboard
           dashboard={this.state.dashboard}
           labelValues={convertedLabels}
           expandedChart={expandedChart}

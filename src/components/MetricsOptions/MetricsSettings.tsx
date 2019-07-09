@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 import isEqual from 'lodash/fp/isEqual';
-import { LabelDisplayName } from 'k-charted-react';
+import { LabelDisplayName } from '@kiali/k-charted-pf3';
 
 import history, { URLParam } from '../../app/History';
 import { AllLabelsValues } from '../../types/Metrics';

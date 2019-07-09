@@ -1,4 +1,4 @@
-import { MetricsQuery } from 'k-charted-react';
+import { MetricsQuery } from '@kiali/k-charted-pf3';
 
 export interface IstioMetricsOptions extends MetricsQuery {
   direction: Direction;

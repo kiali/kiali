@@ -1165,6 +1165,11 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
 
+"@kiali/k-charted-pf3@0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@kiali/k-charted-pf3/-/k-charted-pf3-0.2.0.tgz#38912cced3d8c4fb4406a5c0bc9f12cff9a1926e"
+  integrity sha512-XWxLPq9yualiZ1G1mahanXdvv9WlobKXzRFno+9LEgJ0ECfLSCOs3A0etX5DX6M3oyutfds804+QMHZd7Ad4Bw==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -8242,11 +8247,6 @@ jszip@^3.1.5:
     lie "~3.1.0"
     pako "~1.0.2"
     readable-stream "~2.0.6"
-
-k-charted-react@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/k-charted-react/-/k-charted-react-0.1.0.tgz#3256ed789ad3ca1c82b4ed3854d5d9f5a3f5b6d4"
-  integrity sha512-5MQaoN4r2EREy1fU8vQOT7OgLF8jInXJkOv/YHxBu8AGhpavX6pwe51EkNf+V1OBtqYcVZ5vcprZnIt6rsRqhA==
 
 keycode@^2.2.0:
   version "2.2.0"

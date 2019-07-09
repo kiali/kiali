@@ -2,7 +2,7 @@ import * as React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
-import { DashboardModel } from 'k-charted-react';
+import { DashboardModel } from '@kiali/k-charted-pf3';
 
 import CustomMetrics from '../CustomMetrics';
 import * as API from '../../../services/Api';

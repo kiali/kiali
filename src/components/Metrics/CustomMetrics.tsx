@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { PF3Dashboard, DashboardModel, LabelDisplayName, DashboardQuery, Aggregator } from 'k-charted-react';
+import { Dashboard, DashboardModel, LabelDisplayName, DashboardQuery, Aggregator } from '@kiali/k-charted-pf3';
 
 import { serverConfig } from '../../config/ServerConfig';
 import history from '../../app/History';
@@ -119,7 +119,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     return (
       <div>
         {this.renderOptionsBar()}
-        <PF3Dashboard
+        <Dashboard
           dashboard={this.state.dashboard}
           labelValues={convertedLabels}
           expandedChart={expandedChart}
