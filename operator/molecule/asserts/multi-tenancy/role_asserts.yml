@@ -1,7 +1,3 @@
-- name: Get Kiali Configmap
-  set_fact:
-    roles: '{{ lookup("k8s", api_version="rbac.authorization.k8s.io/v1", kind="Role", namespace="istio-system", resource_name="kiali-viewer") }}'
-
 - name: Get Roles
   k8s_facts:
    api_version: rbac.authorization.k8s.io/v1

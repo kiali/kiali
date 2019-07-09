@@ -281,6 +281,14 @@
   - current_configmap.data is defined
   - current_configmap.data['config.yaml'] is defined
 
+- name: Find currently configured view_only_mode flag
+  set_fact:
+    current_view_only_mode: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.view_only_mode') }}"
+  when:
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
+
 # Because we need to remove the labels that were created before, we must not allow the user to change
 # the label_selector. So if the current accessible_namespaces is not ** but the label_select is being changed,
 # we need to abort since we won't know what the old labels were. If current accessible_namespaces is ** then
@@ -315,6 +323,28 @@
     role_namespace: "{{ kiali_vars.deployment.namespace }}"
   include_tasks: remove-clusterroles.yml
   when:
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Delete all Kiali roles from namespaces if view_only_mode is changing since role bindings are immutable
+  include_tasks: remove-roles.yml
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+
+- name: Delete Kiali cluster roles if view_only_mode is changing since role bindings are immutable
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-clusterroles.yml
+  when:
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
   - current_accessible_namespaces is defined
   - '"**" in current_accessible_namespaces'
 

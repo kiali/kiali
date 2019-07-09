@@ -1,0 +1,11 @@
+
+- name: Set accessible namespace to ** in current Kiali CR
+  vars:
+    current_kiali_cr: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=kiali.operator_namespace, resource_name=custom_resource.metadata.name) }}"
+  set_fact:
+    new_kiali_cr: "{{ current_kiali_cr | combine({'spec': {'deployment': {'accessible_namespaces': ['**'] }}}, recursive=True) }}"
+
+- name: Change Kiali CR with accessible namespaces set to **
+  k8s:
+    namespace: '{{ kiali.operator_namespace }}'
+    definition: "{{ new_kiali_cr }}"
