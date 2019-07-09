@@ -173,7 +173,7 @@ spec:
 #   password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
 #   token: Token / API key to access Grafana, for token-based authentication. It only requires viewer permissions.
 #   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
-#       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
+#       token to the Grafana server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
 #       Default is "none"
 #   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
 #       and auth.token config is ignored then.
@@ -248,9 +248,9 @@ spec:
 #   password: Password to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 #   token: Token / API key to access Jaeger, for token-based authentication. It only requires viewer permissions.
 #   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
-#       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
+#       token to Jaeger Query. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
 #       Default is "none"
-#   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
+#   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Jaeger Query,
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
