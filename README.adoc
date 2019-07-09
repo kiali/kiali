@@ -83,9 +83,6 @@ Type: ClusterIP
 ...
 ----
 
-WARNING: The proxy will only serve requests without the text/html accept header,
-using the browser directly won't work.
-
 === Styling
 https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
 All Patternfly build assets are copied to `src`.
