@@ -11,7 +11,8 @@ import {
   DecoratedGraphNodeWrapper,
   GraphEdgeWrapper,
   GraphElements,
-  GraphNodeWrapper
+  GraphNodeWrapper,
+  protocolTrafficHasData
 } from '../../types/Graph';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
@@ -20,36 +21,36 @@ import {
 export const decorateGraphData = (graphData: GraphElements): DecoratedGraphElements => {
   const elementsDefaults = {
     edges: {
-      grpc: 'NaN',
-      grpcErr: 'NaN',
-      grpcPercentErr: 'NaN',
-      grpcPercentReq: 'NaN',
-      http: 'NaN',
-      http3xx: 'NaN',
-      http4xx: 'NaN',
-      http5xx: 'NaN',
-      httpPercentErr: 'NaN',
-      httpPercentReq: 'NaN',
+      grpc: NaN,
+      grpcErr: NaN,
+      grpcPercentErr: NaN,
+      grpcPercentReq: NaN,
+      http: NaN,
+      http3xx: NaN,
+      http4xx: NaN,
+      http5xx: NaN,
+      httpPercentErr: NaN,
+      httpPercentReq: NaN,
       isMTLS: '-1',
       protocol: undefined,
       responses: undefined,
-      responseTime: 'NaN',
-      tcp: 'NaN'
+      responseTime: NaN,
+      tcp: NaN
     },
     nodes: {
       app: undefined,
       destServices: undefined,
-      grpcIn: 'NaN',
-      grpcInErr: 'NaN',
-      grpcOut: 'NaN',
+      grpcIn: NaN,
+      grpcInErr: NaN,
+      grpcOut: NaN,
       hasCB: undefined,
       hasMissingSC: undefined,
       hasVS: undefined,
-      httpIn: 'NaN',
-      httpIn3xx: 'NaN',
-      httpIn4xx: 'NaN',
-      httpIn5xx: 'NaN',
-      httpOut: 'NaN',
+      httpIn: NaN,
+      httpIn3xx: NaN,
+      httpIn4xx: NaN,
+      httpIn5xx: NaN,
+      httpOut: NaN,
       isDead: undefined,
       isGroup: undefined,
       isInaccessible: undefined,
@@ -59,8 +60,8 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       isServiceEntry: undefined,
       isUnused: undefined,
       service: undefined,
-      tcpIn: 'NaN',
-      tcpOut: 'NaN',
+      tcpIn: NaN,
+      tcpOut: NaN,
       version: undefined,
       workload: undefined
     }
@@ -89,6 +90,15 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       tcp: 0
     }
   };
+
+  const propertiesToNumber = object => {
+    const objectWithNumbers = { ...object };
+    for (const key of Object.keys(objectWithNumbers)) {
+      objectWithNumbers[key] = Number(objectWithNumbers[key]);
+    }
+    return objectWithNumbers;
+  };
+
   const decoratedGraph: DecoratedGraphElements = {};
   if (graphData) {
     if (graphData.nodes) {
@@ -101,7 +111,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
           const traffic = decoratedNode.data.traffic;
           decoratedNode.data.traffic = undefined;
           traffic.forEach(protocol => {
-            decoratedNode.data = { ...protocol.rates, ...decoratedNode.data };
+            decoratedNode.data = { ...propertiesToNumber(protocol.rates), ...decoratedNode.data };
           });
         }
         // prettier-ignore
@@ -115,14 +125,16 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
         const decoratedEdge: any = { ...edge };
         const { traffic, ...edgeData } = edge.data;
         // see comment above about the 'traffic' data handling
-        if (traffic && traffic.protocol !== '') {
-          decoratedEdge.data = {
-            protocol: traffic.protocol,
-            responses: traffic.responses,
-            ...edgeProtocolDefaults[traffic.protocol],
-            ...traffic.rates,
-            ...edgeData
-          };
+        if (traffic) {
+          if (protocolTrafficHasData(traffic)) {
+            decoratedEdge.data = {
+              responses: traffic.responses,
+              ...edgeProtocolDefaults[traffic.protocol],
+              ...propertiesToNumber(traffic.rates),
+              ...edgeData
+            };
+          }
+          decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };
         }
         // prettier-ignore
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedGraphEdgeData;

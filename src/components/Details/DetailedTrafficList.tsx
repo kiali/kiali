@@ -2,7 +2,7 @@ import { Icon } from 'patternfly-react';
 import { TableGrid } from 'patternfly-react-extensions';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { NodeType, ProtocolTraffic } from '../../types/Graph';
+import { NodeType, ProtocolTraffic, protocolTrafficHasData } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
 import { REQUESTS_THRESHOLDS } from '../../types/Health';
 import history, { URLParam } from '../../app/History';
@@ -142,20 +142,13 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   };
 
   private renderStatusColumn = (traffic: ProtocolTraffic) => {
-    if (traffic.protocol === 'tcp' || !traffic.protocol) {
-      return (
-        <TableGrid.Col {...statusColumnSizes}>
-          <Icon type="pf" name="unknown" />
-        </TableGrid.Col>
-      );
-    } else {
+    if (protocolTrafficHasData(traffic) && traffic.protocol !== 'tcp') {
       let percentError: number;
       if (traffic.protocol === 'http') {
         percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
       } else {
         percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
       }
-
       let healthIcon = <Icon type="pf" name="ok" />;
 
       if (percentError > REQUESTS_THRESHOLDS.failure) {
@@ -165,6 +158,12 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
       }
 
       return <TableGrid.Col {...statusColumnSizes}>{healthIcon}</TableGrid.Col>;
+    } else {
+      return (
+        <TableGrid.Col {...statusColumnSizes}>
+          <Icon type="pf" name="unknown" />
+        </TableGrid.Col>
+      );
     }
   };
 
@@ -219,27 +218,29 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   };
 
   private renderTrafficColumn = (traffic: ProtocolTraffic) => {
-    if (traffic.protocol === 'tcp') {
-      return <TableGrid.Col {...trafficColumnSizes}>{Number(traffic.rates.tcp).toFixed(2)}</TableGrid.Col>;
-    } else if (!traffic.protocol) {
-      return <TableGrid.Col {...trafficColumnSizes}>N/A</TableGrid.Col>;
-    } else {
-      let rps: number;
-      let percentError: number;
-
-      if (traffic.protocol === 'http') {
-        rps = Number(traffic.rates.http);
-        percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
+    if (protocolTrafficHasData(traffic)) {
+      if (traffic.protocol === 'tcp') {
+        return <TableGrid.Col {...trafficColumnSizes}>{Number(traffic.rates.tcp).toFixed(2)}</TableGrid.Col>;
       } else {
-        rps = Number(traffic.rates.grpc);
-        percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
-      }
+        let rps: number;
+        let percentError: number;
 
-      return (
-        <TableGrid.Col {...trafficColumnSizes}>
-          {rps.toFixed(2)}rps | {(100 - percentError).toFixed(1)}% success
-        </TableGrid.Col>
-      );
+        if (traffic.protocol === 'http') {
+          rps = Number(traffic.rates.http);
+          percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
+        } else {
+          rps = Number(traffic.rates.grpc);
+          percentError = traffic.rates.grpcPercentErr ? Number(traffic.rates.grpcPercentErr) : 0;
+        }
+
+        return (
+          <TableGrid.Col {...trafficColumnSizes}>
+            {rps.toFixed(2)}rps | {(100 - percentError).toFixed(1)}% success
+          </TableGrid.Col>
+        );
+      }
+    } else {
+      return <TableGrid.Col {...trafficColumnSizes}>N/A</TableGrid.Col>;
     }
   };
 
