@@ -277,6 +277,10 @@ while [[ $# -gt 0 ]]; do
       KIALI_USERNAME="$2"
       shift;shift
       ;;
+    -kuca|--kiali-user-cluster-admin)
+      KIALI_USER_IS_CLUSTER_ADMIN="$2"
+      shift;shift
+      ;;
     -kv|--kiali-version)
       KIALI_VERSION="$2"
       shift;shift
@@ -370,6 +374,10 @@ Valid options:
   -ku|--kiali-username <username>
       The username needed when logging into Kiali.
       Default: admin
+      Used only for the 'start' command.
+  -kuca|--kiali-user-cluster-admin (true|false)
+      Determines if the "kiali" OpenShift user is to be given cluster admin rights.
+      Default: not set - you will be prompted during startup
       Used only for the 'start' command.
   -kv|--kiali-version <version>
       The Kiali version to be installed in OpenShift.
@@ -799,22 +807,29 @@ spec:
         name: htpasswd
 EOM
 
-  infomsg 'Do you want the kiali user to be assigned the cluster-admin role?'
-  infomsg 'NOTE: This could expose your machine to root access!'
-  infomsg 'Select "1" for Yes and "2" for No:'
-  select yn in "Yes" "No"; do
-    case $yn in
-      Yes )
-        infomsg "Will assign the cluster-admin role to the kiali user."
-        ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin kiali
-        _CREATE_SMCP_RESOURCE="true"
-        break;;
-      No )
-        infomsg "Kiali user will not be assigned the cluster-admin role."
-        _CREATE_SMCP_RESOURCE="true" # still try to install Istio, it should work with system:admin logged in
-        break;;
-    esac
-  done
+  if [ "${KIALI_USER_IS_CLUSTER_ADMIN}" == "" ]; then
+    infomsg 'Do you want the kiali user to be assigned the cluster-admin role?'
+    infomsg 'Select "1" for Yes and "2" for No:'
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes )
+          KIALI_USER_IS_CLUSTER_ADMIN="true"
+          break;;
+        No )
+          KIALI_USER_IS_CLUSTER_ADMIN="false"
+          break;;
+      esac
+    done
+  fi
+
+  if [ "${KIALI_USER_IS_CLUSTER_ADMIN}" == "true" ]; then
+    infomsg "Will assign the cluster-admin role to the kiali user."
+    ${MAISTRA_ISTIO_OC_COMMAND} adm policy add-cluster-role-to-user cluster-admin kiali
+    _CREATE_SMCP_RESOURCE="true"
+  else
+    infomsg "Kiali user will not be assigned the cluster-admin role."
+    _CREATE_SMCP_RESOURCE="true" # still try to install Istio, it should work with system:admin logged in
+  fi
 
   # Make sure the image registry is exposed via the default route
   if [ "$(${MAISTRA_ISTIO_OC_COMMAND} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.defaultRoute}')" != "true" ]; then
