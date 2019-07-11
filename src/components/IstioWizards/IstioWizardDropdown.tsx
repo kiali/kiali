@@ -84,6 +84,27 @@ class IstioWizardDropdown extends React.Component<Props, State> {
     return this.props.virtualServices.items.length > 0 || this.props.destinationRules.items.length > 0;
   };
 
+  hasSidecarWorkloads = (): boolean => {
+    let hasSidecarWorkloads = false;
+    for (let i = 0; i < this.props.workloads.length; i++) {
+      if (this.props.workloads[i].istioSidecar) {
+        // At least one workload with sidecar
+        hasSidecarWorkloads = true;
+        break;
+      }
+    }
+    return hasSidecarWorkloads;
+  };
+
+  private appLabelName = serverConfig.istioLabels.versionLabelName;
+  private versionLabelName = serverConfig.istioLabels.versionLabelName;
+
+  getValidWorkloads = (): WorkloadOverview[] => {
+    return this.props.workloads.filter(workload => {
+      return workload.labels && workload.labels[this.appLabelName] && workload.labels[this.versionLabelName];
+    });
+  };
+
   getVSWizardLabel = () => {
     return this.props.virtualServices.items.length === 1 &&
       this.props.virtualServices.items[0].metadata.labels &&
@@ -301,32 +322,54 @@ class IstioWizardDropdown extends React.Component<Props, State> {
 
   render() {
     const updateLabel = this.getVSWizardLabel();
+    const hasSidecarWorkloads = this.hasSidecarWorkloads();
+    const validWorkloads = this.getValidWorkloads();
+    const validActions = hasSidecarWorkloads && validWorkloads;
+    const dropdownButton = (
+      <DropdownButton
+        id="service_actions"
+        title="Actions"
+        onSelect={this.onAction}
+        pullRight={true}
+        disabled={!validActions}
+        style={{ pointerEvents: validActions ? 'auto' : 'none' }}
+      >
+        {(this.canCreate() || this.canUpdate()) &&
+          WIZARD_ACTIONS.map(action => this.renderMenuItem(action, updateLabel))}
+        <MenuItem divider={true} />
+        {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING, '')}
+        {this.props.threeScaleInfo.enabled && <MenuItem divider={true} />}
+        {this.props.threeScaleInfo.enabled &&
+          this.renderMenuItem(
+            WIZARD_THREESCALE_INTEGRATION,
+            this.props.threeScaleServiceRule ? WIZARD_THREESCALE_INTEGRATION : ''
+          )}
+        {this.props.threeScaleInfo.enabled && this.renderMenuItem(DELETE_THREESCALE_INTEGRATION, '')}
+      </DropdownButton>
+    );
+    const toolTipMsgActions = !hasSidecarWorkloads
+      ? 'There are not Workloads with sidecar for this service'
+      : 'There are not Workloads with ' + this.appLabelName + ' and ' + this.versionLabelName + ' labels';
     return (
       <>
-        <DropdownButton id="service_actions" title="Actions" onSelect={this.onAction} pullRight={true}>
-          {(this.canCreate() || this.canUpdate()) &&
-            WIZARD_ACTIONS.map(action => this.renderMenuItem(action, updateLabel))}
-          <MenuItem divider={true} />
-          {this.canDelete() && this.renderMenuItem(DELETE_TRAFFIC_ROUTING, '')}
-          {this.props.threeScaleInfo.enabled && <MenuItem divider={true} />}
-          {this.props.threeScaleInfo.enabled &&
-            this.renderMenuItem(
-              WIZARD_THREESCALE_INTEGRATION,
-              this.props.threeScaleServiceRule ? WIZARD_THREESCALE_INTEGRATION : ''
-            )}
-          {this.props.threeScaleInfo.enabled && this.renderMenuItem(DELETE_THREESCALE_INTEGRATION, '')}
-        </DropdownButton>
+        {!hasSidecarWorkloads ? (
+          <OverlayTrigger
+            placement={'top'}
+            overlay={<Tooltip id={'msg-service-actions'}>{toolTipMsgActions}</Tooltip>}
+            trigger={['hover', 'focus']}
+          >
+            <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{dropdownButton}</div>
+          </OverlayTrigger>
+        ) : (
+          dropdownButton
+        )}
         <IstioWizard
           show={this.state.showWizard}
           type={this.state.wizardType}
           update={this.state.updateWizard}
           namespace={this.props.namespace}
           serviceName={this.props.serviceName}
-          workloads={this.props.workloads.filter(workload => {
-            const appLabelName = serverConfig.istioLabels.versionLabelName;
-            const versionLabelName = serverConfig.istioLabels.versionLabelName;
-            return workload.labels && workload.labels[appLabelName] && workload.labels[versionLabelName];
-          })}
+          workloads={validWorkloads}
           virtualServices={this.props.virtualServices}
           destinationRules={this.props.destinationRules}
           gateways={this.props.gateways}
