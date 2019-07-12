@@ -411,6 +411,11 @@ done
 # command line options (see above) or by environment variables.
 #--------------------------------------------------------------
 
+# if sed is gnu-sed then set option to work in posix mode to be compatible with non-gnu-sed versions
+if sed --posix 's/ / /' < /dev/null > /dev/null 2>&1 ; then
+  SEDOPTIONS="--posix"
+fi
+
 # This is where you want the OpenShift binaries to go
 OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 
@@ -442,12 +447,7 @@ CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC="${CRC_ROOT_DIR}/cache/oc/oc"
 
 # The version of Maistra
-MAISTRA_VERSION="$(echo -n ${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION} | sed --posix 's/^v.*\+\(.*\)$/\1/')"
-
-# if sed is gnu-sed then set option to work in posix mode to be compatible with non-gnu-sed versions
-if sed --posix 's/ / /' < /dev/null > /dev/null 2>&1 ; then
-  SEDOPTIONS="--posix"
-fi
+MAISTRA_VERSION="$(echo -n ${MAISTRA_ISTIO_OC_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^v.*\+\(.*\)$/\1/')"
 
 # If ISTIO_ENABLED=true, then the istiooc command will install a version of Istio for you.
 ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
@@ -486,7 +486,7 @@ if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
   eval ${DOWNLOADER} /tmp/kiali-release-latest.json https://api.github.com/repos/kiali/kiali/releases/latest
   KIALI_VERSION=$(cat /tmp/kiali-release-latest.json |\
     grep  "tag_name" | \
-    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+    sed ${SEDOPTIONS} -e 's/.*://' -e 's/ *"//' -e 's/",//')
   if [ "${KIALI_VERSION}" == "" ]; then
     infomsg "ERROR: Cannot determine the latest Kiali version to install. Set KIALI_VERSION env var to the version you want."
     exit 1
@@ -679,7 +679,7 @@ if [ "$_CMD" = "start" ]; then
   fi
 
   debug "Checking the memory of the VM..."
-  _CURRENT_CRC_MEMORY="$(virsh -c qemu:///system dommemstat crc | grep actual | sed  's/actual \([0-9]*\)/\1/')"
+  _CURRENT_CRC_MEMORY="$(virsh -c qemu:///system dommemstat crc | grep actual | sed ${SEDOPTIONS} 's/actual \([0-9]*\)/\1/')"
   if [ "${_CURRENT_CRC_MEMORY}" -lt "${CRC_MEMORY}000000" ]; then
     infomsg "Configuring memory for your VM: memory=${CRC_MEMORY}G."
     virsh -c qemu:///system setmaxmem crc ${CRC_MEMORY}000000 --config
@@ -713,7 +713,7 @@ if [ "$_CMD" = "start" ]; then
       _QEMU_IMG_STDOUT="virtual size: 9999G (99999999999 bytes)"
     fi
   fi
-  _CURRENT_VIRTUAL_DISK_SIZE="$(echo "${_QEMU_IMG_STDOUT}" | grep 'virtual size' | sed 's/virtual size: \([0-9]*\)[G].*$/\1/')"
+  _CURRENT_VIRTUAL_DISK_SIZE="$(echo "${_QEMU_IMG_STDOUT}" | grep 'virtual size' | sed ${SEDOPTIONS} 's/virtual size: \([0-9]*\)[G].*$/\1/')"
   if [ "${_CURRENT_VIRTUAL_DISK_SIZE}" -lt "${CRC_VIRTUAL_DISK_SIZE}" ]; then
     _INCREASE_VIRTUAL_DISK_SIZE="+$(expr ${CRC_VIRTUAL_DISK_SIZE} - ${_CURRENT_VIRTUAL_DISK_SIZE})G"
     infomsg "The virtual disk size is currently ${_CURRENT_VIRTUAL_DISK_SIZE}G."
@@ -852,7 +852,7 @@ EOM
           rm -f /tmp/maistra-smcp.yaml
           get_downloader
           eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/${MAISTRA_VERSION}/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_basic.yaml"
-          cat /tmp/maistra-smcp.yaml | sed -e '1h;2,$H;$!d;g' -e 's/kiali:.*tracing:/kiali:\n      enabled: false\n\n    tracing:/' | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
+          cat /tmp/maistra-smcp.yaml | sed ${SEDOPTIONS} -e '1h;2,$H;$!d;g' -e 's/kiali:.*tracing:/kiali:\n      enabled: false\n\n    tracing:/' | ${MAISTRA_ISTIO_OC_COMMAND} create -n istio-system -f -
         fi
       else
         infomsg "It appears Istio has not yet been installed - after you have ensured that your OpenShift user has the proper"
