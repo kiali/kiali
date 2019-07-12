@@ -1,0 +1,51 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+  - name: Make sure label_selector is not set since its default is nil when accessible namespaces is **
+    assert:
+      that:
+      - kiali_configmap.api.namespaces.label_selector is not defined
+  # change to accessible_namespaces to a fixed list of namespaces
+  - k8s:
+      state: present
+      api_version: v1
+      kind: Namespace
+      name: foo
+  - import_tasks: ../common/set_accessible_namespaces_to_list.yml
+    vars:
+      namespace_list: [ 'istio-system', 'foo' ]
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_equals.yml
+    vars:
+      namespace_list: [ 'istio-system', 'foo' ]
+  - name: "Make sure label_selector is set properly"
+    assert:
+      that:
+      - kiali_configmap.api.namespaces.label_selector == 'kiali.io/member-of=istio-system'
+  - k8s:
+      state: absent
+      api_version: v1
+      kind: Namespace
+      name: foo
+  # change to accessible_namespaces back to **
+  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  - import_tasks: ../asserts/accessible_namespaces_contains.yml
+    vars:
+      namespace_list: [ '**' ]
+  - name: Make sure label_selector is not set since its default is nil when accessible namespaces is **
+    assert:
+      that:
+      - kiali_configmap.api.namespaces.label_selector is not defined
