@@ -23,6 +23,9 @@ NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= NodePort
 
+# Path to CR file for any other parameter
+KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
+
 # Find the client executable (either istiooc or oc or kubectl)
 OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
 
@@ -129,8 +132,8 @@ kiali-create: secret-create
 else
 kiali-create:
 endif
-	@echo Deploy Kiali using the settings found in deploy/kiali/kiali_cr_dev.yaml
-	cat deploy/kiali/kiali_cr_dev.yaml | \
+	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
+	cat ${KIALI_CR_FILE} | \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
 KIALI_IMAGE_NAME=${KIALI_IMAGE_NAME} \
 KIALI_IMAGE_PULL_POLICY=${KIALI_IMAGE_PULL_POLICY} \
