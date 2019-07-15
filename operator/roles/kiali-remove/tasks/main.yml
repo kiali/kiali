@@ -106,6 +106,14 @@
   - current_accessible_namespaces is defined
   - '"**" in current_accessible_namespaces'
 
+- name: Delete Kiali cache cluster roles
+  ignore_errors: yes
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-cache-clusterroles.yml
+  when:
+  - is_openshift == True or is_k8s == True
+
 - name: Delete Kiali resources
   ignore_errors: yes
   k8s:
