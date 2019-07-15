@@ -256,6 +256,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				Id:     edgeId,
 				Source: sourceIdHash,
 				Target: destIdHash,
+				Traffic: ProtocolTraffic{
+					Protocol: protocol,
+				},
 			}
 			addEdgeTelemetry(e, &ed)
 
