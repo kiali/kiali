@@ -15,6 +15,7 @@ const EdgeColor = PfColors.Green400;
 const EdgeColorDead = PfColors.Black500;
 const EdgeColorDegraded = PfColors.Orange;
 const EdgeColorFailure = PfColors.Red;
+const EdgeColorTCPWithTraffic = PfColors.Blue600;
 const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
 const EdgeIconDisabledMTLS = icons.istio.disabledMtls.ascii; // broken lock
 const EdgeTextOutlineColor = PfColors.White;
@@ -70,10 +71,15 @@ export class GraphStyles {
       } else if (ele.data(CyEdge.grpc) > 0) {
         rate = Number(ele.data(CyEdge.grpc));
         pErr = ele.data(CyEdge.grpcPercentErr) > 0 ? Number(ele.data(CyEdge.grpcPercentErr)) : 0;
+      } else if (ele.data(CyEdge.tcp) > 0) {
+        rate = Number(ele.data(CyEdge.tcp));
       }
 
       if (rate === 0) {
         return EdgeColorDead;
+      }
+      if (ele.data(CyEdge.protocol) === 'tcp') {
+        return EdgeColorTCPWithTraffic;
       }
       if (pErr > REQUESTS_THRESHOLDS.failure) {
         return EdgeColorFailure;
@@ -426,11 +432,9 @@ export class GraphStyles {
         }
       },
       {
-        selector: 'edge[tcp > 0]',
+        selector: 'edge[protocol="tcp"]',
         css: {
-          'target-arrow-shape': 'triangle-cross',
-          'line-color': PfColors.Blue600,
-          'target-arrow-color': PfColors.Blue600
+          'target-arrow-shape': 'triangle-cross'
         }
       },
       {
