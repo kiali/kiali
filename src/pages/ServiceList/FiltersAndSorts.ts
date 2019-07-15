@@ -64,7 +64,35 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
 
       return statusForB.priority - statusForA.priority;
     }
-  } as HealthSortField<ServiceListItem>
+  } as HealthSortField<ServiceListItem>,
+  {
+    id: 'configvalidation',
+    title: 'Config',
+    isNumeric: false,
+    param: 'cv',
+    compare: (a: ServiceListItem, b: ServiceListItem) => {
+      let sortValue = -1;
+      if (a.validation && !b.validation) {
+        sortValue = -1;
+      } else if (!a.validation && b.validation) {
+        sortValue = 1;
+      } else if (!a.validation && !b.validation) {
+        sortValue = 0;
+      } else if (a.validation && b.validation) {
+        if (a.validation.valid && !b.validation.valid) {
+          sortValue = -1;
+        } else if (!a.validation.valid && b.validation.valid) {
+          sortValue = 1;
+        } else if (a.validation.valid && b.validation.valid) {
+          sortValue = a.validation.checks.length - b.validation.checks.length;
+        } else if (!a.validation.valid && !b.validation.valid) {
+          sortValue = b.validation.checks.length - a.validation.checks.length;
+        }
+      }
+
+      return sortValue || a.name.localeCompare(b.name);
+    }
+  }
 ];
 
 const serviceNameFilter: FilterType = {

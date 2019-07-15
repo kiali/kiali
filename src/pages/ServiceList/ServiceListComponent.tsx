@@ -1,21 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ListView, ListViewIcon, ListViewItem, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
-import { Link } from 'react-router-dom';
+import { ToolbarRightContent } from 'patternfly-react';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { PfColors } from '../../components/Pf/PfColors';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
 import { ActiveFilter } from '../../types/Filters';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import ItemDescription from './ItemDescription';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
 import * as ServiceListFilters from './FiltersAndSorts';
 import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
-import * as ListComponent from '../../components/ListPage/ListComponent';
-import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import * as FilterComponent from '../../components/FilterList/FilterComponent';
+import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
@@ -23,17 +19,18 @@ import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 
-type ServiceListComponentState = ListComponent.State<ServiceListItem>;
+type ServiceListComponentState = FilterComponent.State<ServiceListItem>;
 
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
 };
 
-type ServiceListComponentProps = ReduxProps & ListComponent.Props<ServiceListItem>;
+type ServiceListComponentProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
 
-class ServiceListComponent extends ListComponent.Component<
+class ServiceListComponent extends FilterComponent.Component<
   ServiceListComponentProps,
   ServiceListComponentState,
   ServiceListItem
@@ -45,7 +42,6 @@ class ServiceListComponent extends ListComponent.Component<
 
     this.state = {
       listItems: [],
-      pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
@@ -56,14 +52,9 @@ class ServiceListComponent extends ListComponent.Component<
   }
 
   componentDidUpdate(prevProps: ServiceListComponentProps, _prevState: ServiceListComponentState, _snapshot: any) {
-    const [paramsSynced, nsSynced] = this.paramsAreSynced(prevProps);
+    const [paramsSynced] = this.paramsAreSynced(prevProps);
     if (!paramsSynced) {
-      if (!nsSynced) {
-        // If there is a change in the namespace selection, page is set to 1
-        this.pageSet(1);
-      }
       this.setState({
-        pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
         isSortAscending: this.props.isSortAscending
       });
@@ -79,8 +70,6 @@ class ServiceListComponent extends ListComponent.Component<
   paramsAreSynced = (prevProps: ServiceListComponentProps): [boolean, boolean] => {
     const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
     const paramsSynced =
-      prevProps.pagination.page === this.props.pagination.page &&
-      prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
@@ -96,7 +85,7 @@ class ServiceListComponent extends ListComponent.Component<
     );
   }
 
-  updateListItems(resetPagination?: boolean) {
+  updateListItems() {
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
@@ -107,12 +96,7 @@ class ServiceListComponent extends ListComponent.Component<
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchServices(
-            namespaces.map(namespace => namespace.name),
-            activeFilters,
-            this.props.duration,
-            resetPagination
-          );
+          this.fetchServices(namespaces.map(namespace => namespace.name), activeFilters, this.props.duration);
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {
@@ -120,7 +104,7 @@ class ServiceListComponent extends ListComponent.Component<
           }
         });
     } else {
-      this.fetchServices(namespacesSelected, activeFilters, this.props.duration, resetPagination);
+      this.fetchServices(namespacesSelected, activeFilters, this.props.duration);
     }
   }
 
@@ -137,7 +121,7 @@ class ServiceListComponent extends ListComponent.Component<
     return [];
   }
 
-  fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
+  fetchServices(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
     const servicesPromises = namespaces.map(ns => API.getServices(ns));
 
     this.promises
@@ -150,19 +134,11 @@ class ServiceListComponent extends ListComponent.Component<
         return ServiceListFilters.filterBy(serviceListItems, filters);
       })
       .then(serviceListItems => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {
-            this.setState(prevState => {
-              return {
-                listItems: sorted,
-                pagination: {
-                  page: currentPage,
-                  perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPagesHelper.perPageOptions
-                }
-              };
+            this.setState({
+              listItems: sorted
             });
           })
           .catch(err => {
@@ -183,64 +159,21 @@ class ServiceListComponent extends ListComponent.Component<
     return validations[type][name];
   }
 
+  sortBy = (sortName: string, isAscending: boolean) => {
+    console.log(sortName);
+    console.log(isAscending);
+  };
+
   render() {
-    const serviceList: React.ReactElement<{}>[] = [];
-    const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
-    let pageEnd = pageStart + this.state.pagination.perPage;
-    pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
-
-    for (let i = pageStart; i < pageEnd; i++) {
-      const serviceItem = this.state.listItems[i];
-      const to = '/namespaces/' + serviceItem.namespace + '/services/' + serviceItem.name;
-
-      serviceList.push(
-        <Link key={to} to={to} style={{ color: PfColors.Black }}>
-          <ListViewItem
-            leftContent={<ListViewIcon type="pf" name="service" />}
-            heading={
-              <div className="ServiceList-Heading">
-                <div className="ServiceList-Title">
-                  {serviceItem.name}
-                  <small>{serviceItem.namespace}</small>
-                </div>
-              </div>
-            }
-            // Prettier makes irrelevant line-breaking clashing with tslint
-            // prettier-ignore
-            description={<ItemDescription item={serviceItem} />}
-          />
-        </Link>
-      );
-    }
     return (
-      <div>
+      <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
         <StatefulFilters initialFilters={ServiceListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort style={{ ...ThinStyle }}>
-            <Sort.TypeSelector
-              sortTypes={ServiceListFilters.sortFields}
-              currentSortType={this.state.currentSortField}
-              onSortTypeSelected={this.updateSortField}
-            />
-            <Sort.DirectionSelector
-              isNumeric={this.state.currentSortField.isNumeric}
-              isAscending={this.state.isSortAscending}
-              onClick={this.updateSortDirection}
-            />
-          </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="service-list-duration-dropdown" />
             <RefreshButtonContainer handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
-        <ListView>{serviceList}</ListView>
-        <Paginator
-          viewType="list"
-          pagination={this.state.pagination}
-          itemCount={this.state.listItems.length}
-          onPageSet={this.pageSet}
-          onPerPageSelect={this.perPageSelect}
-        />
-      </div>
+      </VirtualList>
     );
   }
 }

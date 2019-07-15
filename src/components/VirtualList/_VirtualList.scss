@@ -1,0 +1,70 @@
+.pf-c-scrollablegrid .pf-c-table {
+  table-layout: fixed;
+}
+
+.pf-c-table.pf-c-virtualized tr {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.pf-c-scrollablegrid .pf-c-table tr > * {
+  height: auto;
+}
+
+.pf-c-scrollablegrid .pf-c-table tbody > tr > :first-child::before {
+  content: none;
+  width: 0 !important;
+}
+
+.pf-c-scrollablegrid .pf-c-table .pf-c-table__check {
+  width: 8.333% !important;
+}
+
+@media screen and (max-width: 768px) {
+  .pf-c-scrollablegrid .pf-c-table .pf-c-table__check {
+    width: 16.66% !important;
+  }
+}
+
+.pf-c-scrollablegrid .pf-c-table .pf-c-table__action {
+  width: 5% !important;
+  padding-left: 0px !important;
+}
+@media screen and (max-width: 992px) {
+  .pf-c-scrollablegrid .pf-c-table .pf-c-table__action {
+    width: 10% !important;
+  }
+}
+
+.ObjectDefinition-Heading {
+  vertical-align: top;
+}
+
+.ObjectDefinition-Title {
+  display: inline-block;
+}
+
+.health-icon {
+  top: 3px;
+  position: relative;
+}
+
+.virtualitem_badge_definition {
+  background-color: rgb(115, 188, 247);
+  border-radius: 30em;
+  margin-right: 10px;
+}
+
+.virtualitem_badge_validation {
+  margin-left: 10px;
+  border-radius: 30em;
+}
+
+.virtualitem_definition_link {
+  color: #0066cc;
+}
+
+.virtualitem_definition_link:hover {
+  color: #004080;
+}

@@ -16,7 +16,7 @@ import { AxiosError } from 'axios';
 import _ from 'lodash';
 
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
+import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
 import {
   DEGRADED,
@@ -120,8 +120,8 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
               metrics: previous ? previous.metrics : undefined
             };
           });
-        const isAscending = ListPagesHelper.isCurrentSortAscending();
-        const sortField = ListPagesHelper.currentSortField(Sorts.sortFields);
+        const isAscending = FilterHelper.isCurrentSortAscending();
+        const sortField = FilterHelper.currentSortField(Sorts.sortFields);
         const type = OverviewToolbar.currentOverviewType();
         const displayMode = this.displayModeSet
           ? this.state.displayMode
@@ -152,7 +152,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType) {
-    const duration = ListPagesHelper.currentDuration();
+    const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
@@ -213,7 +213,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   fetchMetrics() {
-    const duration = ListPagesHelper.currentDuration();
+    const duration = FilterHelper.currentDuration();
     // debounce async for back-pressure, ten by ten
     _.chunk(this.state.namespaces, 10).forEach(chunk => {
       this.promises
@@ -282,7 +282,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   handleAxiosError(message: string, error: AxiosError) {
-    ListPagesHelper.handleError(`${message}: ${API.getErrorString(error)}`);
+    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {
@@ -309,7 +309,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         </Breadcrumb>
         <OverviewToolbarContainer
           onRefresh={this.load}
-          onError={ListPagesHelper.handleError}
+          onError={FilterHelper.handleError}
           sort={this.sort}
           displayMode={this.state.displayMode}
           setDisplayMode={this.setDisplayMode}
@@ -358,7 +358,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         <OverviewCardContentExpanded
           key={ns.name}
           name={ns.name}
-          duration={ListPagesHelper.currentDuration()}
+          duration={FilterHelper.currentDuration()}
           status={ns.status}
           type={this.state.type}
           metrics={ns.metrics}

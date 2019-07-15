@@ -65,9 +65,8 @@ export interface WorkloadOverview {
   versionLabel: boolean;
 }
 
-export interface WorkloadListItem {
+export interface WorkloadListItem extends WorkloadOverview {
   namespace: string;
-  workload: WorkloadOverview;
   healthPromise: Promise<WorkloadHealth>;
 }
 

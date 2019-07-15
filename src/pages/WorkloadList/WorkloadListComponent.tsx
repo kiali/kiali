@@ -5,31 +5,30 @@ import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
+import { ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import ItemDescription from './ItemDescription';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
-import * as ListComponent from '../../components/ListPage/ListComponent';
-import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import * as FilterComponent from '../../components/FilterList/FilterComponent';
+import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 
-type WorkloadListComponentState = ListComponent.State<WorkloadListItem>;
+type WorkloadListComponentState = FilterComponent.State<WorkloadListItem>;
 
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
 };
 
-type WorkloadListComponentProps = ReduxProps & ListComponent.Props<WorkloadListItem>;
+type WorkloadListComponentProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
 
-class WorkloadListComponent extends ListComponent.Component<
+class WorkloadListComponent extends FilterComponent.Component<
   WorkloadListComponentProps,
   WorkloadListComponentState,
   WorkloadListItem
@@ -40,7 +39,6 @@ class WorkloadListComponent extends ListComponent.Component<
     super(props);
     this.state = {
       listItems: [],
-      pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
@@ -51,14 +49,9 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   componentDidUpdate(prevProps: WorkloadListComponentProps, _prevState: WorkloadListComponentState, _snapshot: any) {
-    const [paramsSynced, nsSynced] = this.paramsAreSynced(prevProps);
+    const [paramsSynced] = this.paramsAreSynced(prevProps);
     if (!paramsSynced) {
-      if (!nsSynced) {
-        // If there is a change in the namespace selection, page is set to 1
-        this.pageSet(1);
-      }
       this.setState({
-        pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
         isSortAscending: this.props.isSortAscending
       });
@@ -74,8 +67,6 @@ class WorkloadListComponent extends ListComponent.Component<
   paramsAreSynced = (prevProps: WorkloadListComponentProps): [boolean, boolean] => {
     const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
     const paramsSynced =
-      prevProps.pagination.page === this.props.pagination.page &&
-      prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
@@ -91,7 +82,7 @@ class WorkloadListComponent extends ListComponent.Component<
     );
   }
 
-  updateListItems(resetPagination?: boolean) {
+  updateListItems() {
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
@@ -102,7 +93,7 @@ class WorkloadListComponent extends ListComponent.Component<
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters, resetPagination);
+          this.fetchWorkloads(namespaces.map(namespace => namespace.name), activeFilters);
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {
@@ -110,7 +101,7 @@ class WorkloadListComponent extends ListComponent.Component<
           }
         });
     } else {
-      this.fetchWorkloads(namespacesSelected, activeFilters, resetPagination);
+      this.fetchWorkloads(namespacesSelected, activeFilters);
     }
   }
 
@@ -118,7 +109,11 @@ class WorkloadListComponent extends ListComponent.Component<
     if (data.workloads) {
       return data.workloads.map(deployment => ({
         namespace: data.namespace.name,
-        workload: deployment,
+        name: deployment.name,
+        type: deployment.type,
+        appLabel: deployment.appLabel,
+        versionLabel: deployment.versionLabel,
+        istioSidecar: deployment.istioSidecar,
         healthPromise: API.getWorkloadHealth(
           data.namespace.name,
           deployment.name,
@@ -130,7 +125,7 @@ class WorkloadListComponent extends ListComponent.Component<
     return [];
   };
 
-  fetchWorkloads(namespaces: string[], filters: ActiveFilter[], resetPagination?: boolean) {
+  fetchWorkloads(namespaces: string[], filters: ActiveFilter[]) {
     const workloadsConfigPromises = namespaces.map(namespace => API.getWorkloads(namespace));
     this.promises
       .registerAll('workloads', workloadsConfigPromises)
@@ -142,19 +137,11 @@ class WorkloadListComponent extends ListComponent.Component<
         return WorkloadListFilters.filterBy(workloadsItems, filters);
       })
       .then(workloadsItems => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {
-            this.setState(prevState => {
-              return {
-                listItems: sorted,
-                pagination: {
-                  page: currentPage,
-                  perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPagesHelper.perPageOptions
-                }
-              };
+            this.setState({
+              listItems: sorted
             });
           })
           .catch(err => {
@@ -171,50 +158,15 @@ class WorkloadListComponent extends ListComponent.Component<
   }
 
   render() {
-    const workloadList: React.ReactElement<ItemDescription>[] = [];
-    const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
-    let pageEnd = pageStart + this.state.pagination.perPage;
-    pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
-
-    for (let i = pageStart; i < pageEnd; i++) {
-      workloadList.push(
-        <ItemDescription
-          workloadItem={this.state.listItems[i]}
-          key={`ItemDescription_${this.state.listItems[i].workload.name}_${i}`}
-          position={i}
-        />
-      );
-    }
-
     return (
-      <>
+      <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
         <StatefulFilters initialFilters={WorkloadListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort style={{ ...ThinStyle }}>
-            <Sort.TypeSelector
-              sortTypes={WorkloadListFilters.sortFields}
-              currentSortType={this.state.currentSortField}
-              onSortTypeSelected={this.updateSortField}
-            />
-            <Sort.DirectionSelector
-              isNumeric={this.state.currentSortField.isNumeric}
-              isAscending={this.state.isSortAscending}
-              onClick={this.updateSortDirection}
-            />
-          </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="workload-list-duration-dropdown" />
             <RefreshButtonContainer handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
-        <ListView>{workloadList}</ListView>
-        <Paginator
-          viewType="list"
-          pagination={this.state.pagination}
-          itemCount={this.state.listItems.length}
-          onPageSet={this.pageSet}
-          onPerPageSelect={this.perPageSelect}
-        />
-      </>
+      </VirtualList>
     );
   }
 }

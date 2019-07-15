@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Filter, FormControl, Toolbar } from 'patternfly-react';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
-import * as ListPagesHelper from '../ListPage/ListPagesHelper';
+import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
 export interface StatefulFiltersProps {
@@ -50,10 +50,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
     let active = FilterSelected.getSelected();
     if (!FilterSelected.isInitialized()) {
-      active = ListPagesHelper.getFiltersFromURL(this.props.initialFilters);
+      active = FilterHelper.getFiltersFromURL(this.props.initialFilters);
       FilterSelected.setSelected(active);
-    } else if (!ListPagesHelper.filtersMatchURL(this.props.initialFilters, active)) {
-      active = ListPagesHelper.setFiltersToURL(this.props.initialFilters, active);
+    } else if (!FilterHelper.filtersMatchURL(this.props.initialFilters, active)) {
+      active = FilterHelper.setFiltersToURL(this.props.initialFilters, active);
       FilterSelected.setSelected(active);
     }
 
@@ -89,8 +89,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   }
 
   componentDidUpdate(_prevProps: StatefulFiltersProps, _prevState: StatefulFiltersState, _snapshot: any) {
-    if (!ListPagesHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
-      ListPagesHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
+    if (!FilterHelper.filtersMatchURL(this.state.filterTypes, this.state.activeFilters)) {
+      FilterHelper.setFiltersToURL(this.state.filterTypes, this.state.activeFilters);
     }
   }
 
@@ -99,7 +99,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
   }
 
   updateActiveFilters(activeFilters: ActiveFilter[]) {
-    const cleanFilters = ListPagesHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
+    const cleanFilters = FilterHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
     FilterSelected.setSelected(cleanFilters);
     this.setState({ activeFilters: cleanFilters });
     this.props.onFilterChange();

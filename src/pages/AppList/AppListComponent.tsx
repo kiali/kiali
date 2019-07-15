@@ -6,37 +6,36 @@ import { AppListItem } from '../../types/AppList';
 import * as AppListFilters from './FiltersAndSorts';
 import * as AppListClass from './AppListClass';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ListView, Paginator, Sort, ToolbarRightContent } from 'patternfly-react';
+import { ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
 import { SortField } from '../../types/SortFilters';
-import * as ListComponent from '../../components/ListPage/ListComponent';
-import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import * as FilterComponent from '../../components/FilterList/FilterComponent';
+import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { namespaceEquals } from '../../utils/Common';
 import { DurationInSeconds } from '../../types/Common';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { VirtualList } from '../../components/VirtualList/VirtualList';
 
-type AppListComponentState = ListComponent.State<AppListItem>;
+type AppListComponentState = FilterComponent.State<AppListItem>;
 
 type ReduxProps = {
   duration: DurationInSeconds;
   activeNamespaces: Namespace[];
 };
 
-type AppListComponentProps = ReduxProps & ListComponent.Props<AppListItem>;
+type AppListComponentProps = ReduxProps & FilterComponent.Props<AppListItem>;
 
-class AppListComponent extends ListComponent.Component<AppListComponentProps, AppListComponentState, AppListItem> {
+class AppListComponent extends FilterComponent.Component<AppListComponentProps, AppListComponentState, AppListItem> {
   private promises = new PromisesRegistry();
 
   constructor(props: AppListComponentProps) {
     super(props);
     this.state = {
       listItems: [],
-      pagination: this.props.pagination,
       currentSortField: this.props.currentSortField,
       isSortAscending: this.props.isSortAscending
     };
@@ -47,14 +46,9 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   componentDidUpdate(prevProps: AppListComponentProps, _prevState: AppListComponentState, _snapshot: any) {
-    const [paramsSynced, nsSynced] = this.paramsAreSynced(prevProps);
+    const [paramsSynced] = this.paramsAreSynced(prevProps);
     if (!paramsSynced) {
-      if (!nsSynced) {
-        // If there is a change in the namespace selection, page is set to 1
-        this.pageSet(1);
-      }
       this.setState({
-        pagination: this.props.pagination,
         currentSortField: this.props.currentSortField,
         isSortAscending: this.props.isSortAscending
       });
@@ -69,8 +63,6 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   paramsAreSynced = (prevProps: AppListComponentProps): [boolean, boolean] => {
     const activeNamespacesCompare = namespaceEquals(prevProps.activeNamespaces, this.props.activeNamespaces);
     const paramsSynced =
-      prevProps.pagination.page === this.props.pagination.page &&
-      prevProps.pagination.perPage === this.props.pagination.perPage &&
       prevProps.duration === this.props.duration &&
       activeNamespacesCompare &&
       prevProps.isSortAscending === this.props.isSortAscending &&
@@ -78,15 +70,15 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
     return [paramsSynced, activeNamespacesCompare];
   };
 
-  sortItemList(apps: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
+  sortItemList(items: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): Promise<AppListItem[]> {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
     // This ensures that the list will display the new data with the right sorting
-    return this.promises.registerChained('sort', apps, unsorted =>
+    return this.promises.registerChained('sort', items, unsorted =>
       AppListFilters.sortAppsItems(unsorted, sortField, isAscending)
     );
   }
 
-  updateListItems(resetPagination?: boolean) {
+  updateListItems() {
     this.promises.cancelAll();
 
     const activeFilters: ActiveFilter[] = FilterSelected.getSelected();
@@ -97,12 +89,7 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
         .register('namespaces', API.getNamespaces())
         .then(namespacesResponse => {
           const namespaces: Namespace[] = namespacesResponse.data;
-          this.fetchApps(
-            namespaces.map(namespace => namespace.name),
-            activeFilters,
-            this.props.duration,
-            resetPagination
-          );
+          this.fetchApps(namespaces.map(namespace => namespace.name), activeFilters, this.props.duration);
         })
         .catch(namespacesError => {
           if (!namespacesError.isCanceled) {
@@ -110,11 +97,11 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
           }
         });
     } else {
-      this.fetchApps(namespacesSelected, activeFilters, this.props.duration, resetPagination);
+      this.fetchApps(namespacesSelected, activeFilters, this.props.duration);
     }
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number, resetPagination?: boolean) {
+  fetchApps(namespaces: string[], filters: ActiveFilter[], rateInterval: number) {
     const appsPromises = namespaces.map(namespace => API.getApps(namespace));
     this.promises
       .registerAll('apps', appsPromises)
@@ -126,19 +113,11 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
         return AppListFilters.filterBy(appListItems, filters);
       })
       .then(appListItems => {
-        const currentPage = resetPagination ? 1 : this.state.pagination.page;
         this.promises.cancel('sort');
         this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending)
           .then(sorted => {
-            this.setState(prevState => {
-              return {
-                listItems: sorted,
-                pagination: {
-                  page: currentPage,
-                  perPage: prevState.pagination.perPage,
-                  perPageOptions: ListPagesHelper.perPageOptions
-                }
-              };
+            this.setState({
+              listItems: sorted
             });
           })
           .catch(err => {
@@ -155,44 +134,15 @@ class AppListComponent extends ListComponent.Component<AppListComponentProps, Ap
   }
 
   render() {
-    const appItemsList: React.ReactElement<{}>[] = [];
-    const pageStart = (this.state.pagination.page - 1) * this.state.pagination.perPage;
-    let pageEnd = pageStart + this.state.pagination.perPage;
-    pageEnd = pageEnd < this.state.listItems.length ? pageEnd : this.state.listItems.length;
-
-    for (let i = pageStart; i < pageEnd; i++) {
-      appItemsList.push(AppListClass.renderAppListItem(this.state.listItems[i], i));
-    }
-
     return (
-      <>
+      <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
         <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <Sort style={{ ...ThinStyle }}>
-            <Sort.TypeSelector
-              sortTypes={AppListFilters.sortFields}
-              currentSortType={this.state.currentSortField}
-              onSortTypeSelected={this.updateSortField}
-            />
-            <Sort.DirectionSelector
-              isNumeric={this.state.currentSortField.isNumeric}
-              isAscending={this.state.isSortAscending}
-              onClick={this.updateSortDirection}
-            />
-          </Sort>
           <ToolbarRightContent style={{ ...AlignRightStyle }}>
             <DurationDropdownContainer id="app-list-dropdown" />
             <RefreshButtonContainer id="overview-refresh" handleRefresh={this.updateListItems} />
           </ToolbarRightContent>
         </StatefulFilters>
-        <ListView>{appItemsList}</ListView>
-        <Paginator
-          viewType="list"
-          pagination={this.state.pagination}
-          itemCount={this.state.listItems.length}
-          onPageSet={this.pageSet}
-          onPerPageSelect={this.perPageSelect}
-        />
-      </>
+      </VirtualList>
     );
   }
 }
