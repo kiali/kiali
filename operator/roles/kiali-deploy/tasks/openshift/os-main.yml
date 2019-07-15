@@ -51,6 +51,19 @@
   - is_openshift == True
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
+- name: Create cache cluster roles on OpenShift if required
+  include_tasks: process-resource.yml
+  vars:
+    process_resource_cluster: "openshift"
+  loop:
+  - cache-clusterrole
+  - cache-clusterrolebinding
+  loop_control:
+    loop_var: process_resource_item
+  when:
+  - is_openshift == True
+  - kiali_vars.kubernetes_config.cache_enabled == True
+
 - name: Process Kiali OAuth client on OpenShift
   include: openshift/os-oauth.yml
   when:
