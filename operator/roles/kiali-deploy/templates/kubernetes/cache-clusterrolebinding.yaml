@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-cache
+  labels:
+    app: kiali
+    version: {{ kiali_vars.deployment.version_label }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kiali-cache
+subjects:
+- kind: ServiceAccount
+  name: kiali-service-account
+  namespace: {{ kiali_vars.deployment.namespace }}

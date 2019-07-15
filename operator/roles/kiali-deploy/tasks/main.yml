@@ -392,6 +392,13 @@
   - '"**" in current_accessible_namespaces'
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
+- name: Delete Kiali cache cluster roles if no longer required
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-cache-clusterroles.yml
+  when:
+  - kiali_vars.kubernetes_config.cache_enabled != True
+
 - name: Delete all Kiali roles from namespaces if view_only_mode is changing since role bindings are immutable
   include_tasks: remove-roles.yml
   loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
