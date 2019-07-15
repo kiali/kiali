@@ -30,10 +30,22 @@ interface PfTitleState {
   icon: JSX.Element;
 }
 
+const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-]+))?(\/([a-z0-9-]+))?/;
+
 class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
   constructor(props: PfTitleProps) {
     super(props);
-    const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-]+))?(\/([a-z0-9-]+))?/;
+    this.state = {
+      type: '',
+      namespace: '',
+      name: '',
+      cytoscapeGraph: '',
+      graphType: '',
+      icon: <></>
+    };
+  }
+
+  doRefresh() {
     let type,
       ns,
       graphType,
@@ -46,7 +58,6 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
       name = match[3];
     }
     let cytoscapeGraph = new CytoscapeGraphSelectorBuilder().namespace(ns);
-
     switch (type) {
       case 'services':
         graphType = 'service';
@@ -68,15 +79,30 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
         break;
       default:
     }
-
-    this.state = {
+    this.setState({
       namespace: ns,
       type: type,
       name: name,
       graphType: graphType,
       icon: icon,
       cytoscapeGraph: cytoscapeGraph.build()
-    };
+    });
+  }
+
+  componentDidMount(): void {
+    this.doRefresh();
+  }
+
+  componentDidUpdate(prevProps: Readonly<PfTitleProps>): void {
+    if (
+      this.props.location &&
+      prevProps.location &&
+      (this.props.location.pathname !== prevProps.location.pathname ||
+        this.props.location.search !== prevProps.location.search ||
+        this.props.istio !== prevProps.istio)
+    ) {
+      this.doRefresh();
+    }
   }
 
   showOnGraphLink() {
