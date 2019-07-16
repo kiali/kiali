@@ -29,6 +29,7 @@ kiali_defaults:
     #additional_service_yaml:
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
+    image_pull_secrets: []
     image_version: "lastrelease"
     ingress_enabled: true
     namespace: "istio-system"

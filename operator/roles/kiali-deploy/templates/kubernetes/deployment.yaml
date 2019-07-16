@@ -29,6 +29,12 @@ spec:
         kiali.io/runtimes: go,kiali
     spec:
       serviceAccount: kiali-service-account
+{% if kiali_vars.deployment.image_pull_secrets | default([]) | length > 0 %}
+      imagePullSecrets:
+{% for n in kiali_vars.deployment.image_pull_secrets %}
+      - name: {{ n }}
+{% endfor %}
+{% endif %}
       containers:
       - image: {{ kiali_vars.deployment.image_name }}:{{ kiali_vars.deployment.image_version }}
         imagePullPolicy: {{ kiali_vars.deployment.image_pull_policy }}
