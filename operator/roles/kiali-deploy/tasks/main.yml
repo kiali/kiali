@@ -265,25 +265,13 @@
   set_fact:
     current_configmap: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='v1', kind='ConfigMap') }}"
 
-- name: Find currently accessible namespaces
+- name: Find some current configuration settings
   set_fact:
     current_accessible_namespaces: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.accessible_namespaces') }}"
-  when:
-  - current_configmap is defined
-  - current_configmap.data is defined
-  - current_configmap.data['config.yaml'] is defined
-
-- name: Find currently configured label selector
-  set_fact:
     current_label_selector: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('api.namespaces.label_selector') }}"
-  when:
-  - current_configmap is defined
-  - current_configmap.data is defined
-  - current_configmap.data['config.yaml'] is defined
-
-- name: Find currently configured view_only_mode flag
-  set_fact:
     current_view_only_mode: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.view_only_mode') }}"
+    current_image_name: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_name') }}"
+    current_image_version: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_version') }}"
   when:
   - current_configmap is defined
   - current_configmap.data is defined
@@ -370,6 +358,18 @@
     loop_var: the_namespace
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Delete Kiali deployment if image is changing since image is immutable
+  k8s:
+    state: absent
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+    name: kiali
+  when:
+  - is_openshift == True or is_k8s == True
+  - current_image_name is defined and current_image_version is defined
+  - (current_image_name != kiali_vars.deployment.image_name) or (current_image_version != kiali_vars.deployment.image_version)
 
 # Now deploy all resources for the specific cluster environment
 
