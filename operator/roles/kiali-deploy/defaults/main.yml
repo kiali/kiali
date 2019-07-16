@@ -27,6 +27,20 @@ kiali_defaults:
       api_type_annotation_name: "kiali.io/api-type"
 
   auth:
+    ldap:
+      ldap_base: ""
+      ldap_bind_dn: ""
+      ldap_group_filter: "(cn=%s)"
+      ldap_host: ""
+      ldap_insecure_skip_verify: false
+      ldap_mail_id_key: "mail"
+      ldap_member_of_key: "memberOf"
+      ldap_port: 0
+      ldap_role_filter: ""
+      ldap_search_filter: "(&(name={USERID}))"
+      ldap_use_ssl: false
+      ldap_user_filter: "(cn=%s)"
+      ldap_user_id_key: "cn"
     strategy: ""
 
   deployment:

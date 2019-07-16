@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/ldap"
 	"github.com/kiali/kiali/log"
 )
 
@@ -252,6 +253,51 @@ func performOpenshiftLogout(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
+// performLDAPAuthentication is to authenticate user using LDAP
+func performLDAPAuthentication(w http.ResponseWriter, r *http.Request) bool {
+	//Handle request correlation ID
+	conf := config.Get()
+	var token ldap.Token
+	var username string
+	var user ldap.User
+	var tknErr error
+	oldToken := getTokenStringFromRequest(r)
+	if len(oldToken) == 0 {
+		var err error
+		user, err = ldap.ValidateUser(r, conf.Auth)
+		if err != nil {
+			RespondWithCode(w, http.StatusUnauthorized)
+			return false
+		}
+		username = user.Username
+	} else {
+		userInfo, err := ldap.ValidateToken(oldToken)
+		if err != nil {
+			log.Warning("Token error: ", err)
+			return false
+		}
+		user = *userInfo.Status.User
+		username = user.Username
+	}
+
+	token, tknErr = ldap.GenerateToken(user, conf.Auth)
+	if tknErr != nil {
+		RespondWithJSONIndent(w, http.StatusInternalServerError, tknErr)
+		return false
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     config.TokenCookieName,
+		Value:    token.JWT,
+		Expires:  token.Expiry,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	RespondWithJSONIndent(w, http.StatusOK, TokenResponse{Token: token.JWT, ExpiresOn: token.Expiry.Format(time.RFC1123Z), Username: username})
+	return true
+}
+
 func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	if token := getTokenStringFromRequest(r); len(token) > 0 {
 		user, err := config.ValidateToken(token)
@@ -280,6 +326,22 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	}
 
 	return http.StatusOK
+}
+
+// checkLDAPSession is to check validaity of the LDAP session
+func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
+	// Validate token
+	if token := getTokenStringFromRequest(r); len(token) > 0 {
+		user, err := ldap.ValidateToken(token)
+		if err != nil {
+			log.Warning("Token error: ", err)
+			return http.StatusUnauthorized, ""
+		}
+		// Internal header used to propagate the subject of the request for audit purposes
+		r.Header.Add("Kiali-User", user.Status.User.Username)
+		return http.StatusOK, token
+	}
+	return http.StatusUnauthorized, ""
 }
 
 func writeAuthenticateHeader(w http.ResponseWriter, r *http.Request) {
@@ -316,6 +378,9 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			token = aHandler.saToken
 		case config.AuthStrategyAnonymous:
 			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
+			token = aHandler.saToken
+		case config.AuthStrategyLDAP:
+			statusCode, _ = checkLDAPSession(w, r)
 			token = aHandler.saToken
 		}
 
@@ -355,6 +420,11 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		}
 	case config.AuthStrategyAnonymous:
 		log.Warning("Authentication attempt with anonymous access enabled.")
+	case config.AuthStrategyLDAP:
+		// Code to do LDAP Authentication
+		if !performLDAPAuthentication(w, r) {
+			writeAuthenticateHeader(w, r)
+		}
 	default:
 		log.Errorf("Cannot authenticate users, because strategy <%s> is unknown.", conf.Auth.Strategy)
 		RespondWithJSONIndent(w, http.StatusInternalServerError, "Authentication strategy is not configured correctly.")
