@@ -108,6 +108,10 @@ spec:
 #    ---
 #    image_pull_policy: "IfNotPresent"
 #
+# The names of the secrets to be used when container images are to be pulled.
+#    ---
+#    image_pull_secrets: []
+#
 # Determines which version of Kiali to install.
 # Choose "lastrelease" to use the last Kiali release.
 # Choose "latest" to use the latest image (which may or may not be a released version of Kiali).
