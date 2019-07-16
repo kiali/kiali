@@ -68,6 +68,8 @@ property to `package.json` with the url of kiali.
 ...
 ----
 
+If Kiali is configured with a specific web root, make sure to append it to the URL. On many setups with Kubernetes, the web root will be `/kiali` by default.
+
 Run `yarn start` and try it!
 [source, bash]
 ----
@@ -82,9 +84,6 @@ docker-registry = default
 Type: ClusterIP
 ...
 ----
-
-WARNING: The proxy will only serve requests without the text/html accept header,
-using the browser directly won't work.
 
 === Styling
 https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
