@@ -648,7 +648,7 @@ if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
     echo ${github_api_url}
     exit 1
   fi
-  echo "Will use the last Kiali operator release: ${kiali_version_we_want}"
+  echo "Will use the last Kiali release: ${kiali_version_we_want}"
   KIALI_IMAGE_VERSION=${kiali_version_we_want}
 else
   if [ "${KIALI_IMAGE_VERSION}" == "latest" ]; then
