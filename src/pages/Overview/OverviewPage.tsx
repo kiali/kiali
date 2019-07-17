@@ -63,6 +63,7 @@ type State = {
 
 type ReduxProps = {
   meshStatus: string;
+  navCollapse: boolean;
 };
 
 type OverviewProps = ReduxProps & {};
@@ -78,6 +79,14 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       type: OverviewToolbar.currentOverviewType(),
       displayMode: OverviewDisplayMode.EXPAND
     };
+  }
+
+  componentDidUpdate(prevProps: OverviewProps) {
+    if (prevProps.navCollapse !== this.props.navCollapse) {
+      // Reload to avoid graphical glitches with charts
+      // TODO: this workaround should probably be deleted after switch to Patternfly 4, see https://issues.jboss.org/browse/KIALI-3116
+      this.load();
+    }
   }
 
   componentDidMount() {
@@ -356,8 +365,9 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
-  meshStatus: meshWideMTLSStatusSelector(state)
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  meshStatus: meshWideMTLSStatusSelector(state),
+  navCollapse: state.userSettings.interface.navCollapse
 });
 
 const OverviewPageContainer = connect(mapStateToProps)(OverviewPage);
