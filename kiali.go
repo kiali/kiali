@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"errors"
 
 	"github.com/golang/glog"
 
@@ -73,6 +74,9 @@ func main() {
 			glog.Fatal(err)
 		}
 		config.Set(c)
+		if c.Auth.Strategy == config.AuthStrategyLDAP && !config.CheckLDAPConfiguration(c) {
+			glog.Fatal(errors.New("Error: Auth strategy is LDAP but there is no LDAP configuratiom"))
+		}
 	} else {
 		log.Infof("No configuration file specified. Will rely on environment for configuration.")
 		config.Set(config.NewConfig())

@@ -331,6 +331,46 @@ spec:
 ...
 ----
 
+=== LDAP Configuration
+To configure authentication strategy to LDAP add the following configuration to the yaml file. If the auth strategy is LDAP. The application will not start without the basic LDAP settings like ldapHost, ldapPort, ldapBase and ldapBindDN.
+
+----
+auth:
+  strategy: ldap
+  ldap:
+    # AD IP host and port
+    ldapHost: example.com
+    ldapPort: 123
+    ldapUseSSL: false
+    ldapInsecureSkipVerify: true
+    ldapUserFilter: (cn=%s)
+    ldapGroupFilter: (cn=%s)
+    ldapAttributes: ['memberOf', 'cn', 'mail']
+    ldapBase: DC=example,DC=com
+    ldapBindDN: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
+    ldapSearchFilter: (&(name={USERID}))
+    # Time for token expiration
+    ldapTokenExpirationMin: 1440
+    # This can be used to filter the user roles
+    ldapRoleFilter: .*xyz.*
+----
+
+If you don't want to add the configuration to the yaml file you can add the parameters to the environment files
+
+----
+LDAP_HOST
+LDAP_PORT
+LDAP_USE_SSL
+LDAP_INSECURE_SKIP_VERIFY
+LDAP_USER_FILTER
+LDAP_GROUP_FILTER
+LDAP_BASE
+LDAP_BIND_DN
+LDAP_TOKEN_EXPIRATION_MIN
+LDAPROLEFILTER
+LDAP_SEARCH_FILTER
+----
+
 == Additional Notes
 
 === Customize the UI web context root
