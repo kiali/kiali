@@ -23,6 +23,12 @@
 # -----------
 # Environment variables that affect the overall behavior of this script:
 #
+# DRY_RUN
+#    If set to a file path, the script will not create any objects in the cluster but will instead
+#    write to that file all the YAML for the resources that would have been created.
+#    Dry run will be disabled when set to an empty string.
+#    Default: ""
+#
 # UNINSTALL_EXISTING_KIALI
 #    If true, this script first will attempt to uninstall any currently existing Kiali resources.
 #    Note that if Kiali is already installed and you opt not to uninstall it, this script
@@ -220,6 +226,10 @@ while [[ $# -gt 0 ]]; do
       CREDENTIALS_USERNAME="$2"
       shift;shift
       ;;
+    -dr|--dry-run)
+      DRY_RUN="$2"
+      shift;shift
+      ;;
     -gu|--grafana-url)
       GRAFANA_URL="$2"
       shift;shift
@@ -306,6 +316,10 @@ while [[ $# -gt 0 ]]; do
 $0 [option...]
 
 Valid options for overall script behavior:
+  -dr|--dry-run
+      If set to a file path, the script will not create any objects in the cluster but will instead
+      write to that file all the YAML for the resources that would have been created.
+      Default: ""
   -uek|--uninstall-existing-kiali
       If true, this script will attempt to uninstall any currently existing Kiali resources.
       Note that if Kiali is already installed and you opt not to uninstall it, this script
@@ -421,6 +435,21 @@ HELPMSG
   esac
 done
 
+# Make sure the dry run file does not exist
+if [ "${DRY_RUN}" != "" ]; then
+  if [ -f ${DRY_RUN} ]; then
+    echo "ERROR: The dry run output file exists. Delete it or move it out of the way: ${DRY_RUN}"
+    exit 1
+  fi
+  touch ${DRY_RUN}
+  if [ ! -f ${DRY_RUN} ]; then
+    echo "ERROR: The dry run output file could not be created. Make sure this filepath is valid: ${DRY_RUN}"
+    exit 1
+  fi
+  DRY_RUN_ARG="--dry-run"
+  OPERATOR_SKIP_WAIT="true"
+fi
+
 # Determine what cluster client tool we are using.
 # While we have this knowledge here, determine some information about auth_strategy we might need later.
 CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
@@ -492,30 +521,36 @@ delete_kiali_cr() {
 
   # Clear finalizer list to avoid k8s possibly hanging (there was a bug in older versions of k8s where this happens).
   # We know we are going to delete all Kiali resources later, so this is OK.
-  ${CLIENT_EXE} patch kiali ${_name} -n "${_ns}" -p '{"metadata":{"finalizers": []}}' --type=merge
-  ${CLIENT_EXE} delete kiali ${_name} -n "${_ns}"
+  if [ "${DRY_RUN}" == "" ]; then
+    ${CLIENT_EXE} patch kiali ${_name} -n "${_ns}" -p '{"metadata":{"finalizers": []}}' --type=merge
+    ${CLIENT_EXE} delete kiali ${_name} -n "${_ns}"
+  fi
 }
 
 delete_kiali_resources() {
   echo "Deleting resources for any existing Kiali installation"
 
-  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses --selector="app=kiali" -n "${NAMESPACE}"
+  if [ "${DRY_RUN}" == "" ]; then
+    ${CLIENT_EXE} delete --ignore-not-found=true all,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses --selector="app=kiali" -n "${NAMESPACE}"
 
-  # Note we do not delete any existing secrets unless this script was told the user wants his own secret
-  if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
-    ${CLIENT_EXE} delete --ignore-not-found=true secrets --selector="app=kiali" -n "${NAMESPACE}"
+    # Note we do not delete any existing secrets unless this script was told the user wants his own secret
+    if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
+      ${CLIENT_EXE} delete --ignore-not-found=true secrets --selector="app=kiali" -n "${NAMESPACE}"
+    fi
+
+    # purge OpenShift specific resources
+    ${CLIENT_EXE} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}"
+    ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io "kiali-${NAMESPACE}"
   fi
-
-  # purge OpenShift specific resources
-  ${CLIENT_EXE} delete --ignore-not-found=true routes --selector="app=kiali" -n "${NAMESPACE}"
-  ${CLIENT_EXE} delete --ignore-not-found=true oauthclients.oauth.openshift.io "kiali-${NAMESPACE}"
 }
 
 delete_operator_resources() {
   echo "Deleting resources for any existing Kiali operator installation"
 
   # delete CRDs with app=kiali (e.g. monitoring dashboard CRD)
-  ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali"
+  if [ "${DRY_RUN}" == "" ]; then
+    ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali"
+  fi
 
   # explicitly delete the Kiali CRs
   local ns_arg="-n ${OPERATOR_WATCH_NAMESPACE}"
@@ -529,16 +564,20 @@ delete_operator_resources() {
   done
 
   # delete the operator CRD which should trigger an uninstall of any existing Kiali
-  ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
+  if [ "${DRY_RUN}" == "" ]; then
+    ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
 
-  # now purge all operator resources
-  ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+    # now purge all operator resources
+    ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+  fi
 
   # Clean up the operator namespace entirely but only if there are no pods running in it.
   # This avoids removing a namespace in use for other things.
   local _pod_count=$(${CLIENT_EXE} get pods --no-headers -n ${OPERATOR_NAMESPACE} 2>/dev/null | wc -l)
   if [ "${_pod_count}" -eq "0" ]; then
-    ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
+    if [ "${DRY_RUN}" == "" ]; then
+      ${CLIENT_EXE} delete --ignore-not-found=true namespace "${OPERATOR_NAMESPACE}"
+    fi
   else
     echo "There appears to be pods running in the operator namespace [${OPERATOR_NAMESPACE}]; namespace will not be deleted."
   fi
@@ -609,7 +648,7 @@ if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
     echo ${github_api_url}
     exit 1
   fi
-  echo "Will use the last Kiali operator release: ${kiali_version_we_want}"
+  echo "Will use the last Kiali release: ${kiali_version_we_want}"
   KIALI_IMAGE_VERSION=${kiali_version_we_want}
 else
   if [ "${KIALI_IMAGE_VERSION}" == "latest" ]; then
@@ -791,11 +830,17 @@ apply_yaml() {
 
   if [ -f "${yaml_path}" ]; then
     echo "Applying yaml file [${yaml_path}] to namespace [${yaml_namespace}]"
-    cat ${yaml_path} | envsubst | ${CLIENT_EXE} apply -n ${yaml_namespace} -f -
+    cat ${yaml_path} | envsubst | ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${yaml_namespace} -f -
+    if [ "$?" == "0" -a "${DRY_RUN}" != "" ]; then
+      cat ${yaml_path} | envsubst >> ${DRY_RUN}
+    fi
   else
     get_downloader
     echo "Applying yaml from URL via: [${downloader} ${yaml_url}] to namespace [${yaml_namespace}]"
-    ${downloader} ${yaml_url} | envsubst | ${CLIENT_EXE} apply -n ${yaml_namespace} -f -
+    ${downloader} ${yaml_url} | envsubst | ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${yaml_namespace} -f -
+    if [ "$?" == "0" -a "${DRY_RUN}" != "" ]; then
+      ${downloader} ${yaml_url} | envsubst >> ${DRY_RUN}
+    fi
   fi
 }
 
@@ -956,19 +1001,24 @@ if [ "${CREDENTIALS_CREATE_SECRET}" == "true" ]; then
     exit 1
   fi
 
-  ${CLIENT_EXE} create secret generic ${SECRET_NAME} -n ${NAMESPACE} --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}"
-
+  ${CLIENT_EXE} create secret generic ${DRY_RUN_ARG} ${SECRET_NAME} -n ${NAMESPACE} --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}"
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to create a secret named [${SECRET_NAME}] in namespace [${NAMESPACE}]. Aborting Kiali installation."
     exit 1
   else
     echo "A secret named [${SECRET_NAME}] in namespace [${NAMESPACE}] was created."
   fi
+  if [ "${DRY_RUN}" != "" ]; then
+    echo "---" >> ${DRY_RUN}
+    ${CLIENT_EXE} create secret generic ${DRY_RUN_ARG} ${SECRET_NAME} -n ${NAMESPACE} --from-literal "username=${CREDENTIALS_USERNAME}" --from-literal "passphrase=${CREDENTIALS_PASSPHRASE}" -o yaml >> ${DRY_RUN}
+  fi
 
-  ${CLIENT_EXE} label secret ${SECRET_NAME} -n ${NAMESPACE} app=kiali
+  ${CLIENT_EXE} label secret ${DRY_RUN_ARG} ${SECRET_NAME} -n ${NAMESPACE} app=kiali
   if [ "$?" != "0" ]; then
     echo "WARNING: Failed to label the created secret [${SECRET_NAME}] in namespace [${NAMESPACE}]."
   fi
+  # TODO: Note when doing a dry run we don't actually create the secret so we can't get the secret yaml
+  #       with the label using "label secret". So the dry run file will have the secret yaml without the label.
 else
   if [ "${AUTH_STRATEGY}" == "login" ]; then
     if [ "${_SECRET_EXISTS}" == "true" ]; then
@@ -1024,15 +1074,20 @@ build_spec_list_value() {
 }
 
 if [ "${KIALI_CR}" != "" ]; then
-  ${CLIENT_EXE} apply -n ${OPERATOR_NAMESPACE} -f "${KIALI_CR}"
+  ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${OPERATOR_NAMESPACE} -f "${KIALI_CR}"
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy Kiali from custom Kiali CR [${KIALI_CR}]. Aborting."
     exit 1
   else
     echo "Deployed Kiali via custom Kiali CR [${KIALI_CR}]"
   fi
+  if [ "${DRY_RUN}" != "" ]; then
+    echo "---" >> ${DRY_RUN}
+    cat "${KIALI_CR}" >> ${DRY_RUN}
+  fi
 else
-  cat <<EOF | ${CLIENT_EXE} apply -n ${OPERATOR_WATCH_NAMESPACE} -f -
+  _KIALI_CR_YAML=$(cat <<EOF | sed '/^[ ]*$/d'
+---
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
 metadata:
@@ -1054,11 +1109,17 @@ spec:
     jaeger:
       $(build_spec_value url JAEGER_URL true)
 EOF
+)
 
+  echo "${_KIALI_CR_YAML}" | ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${OPERATOR_WATCH_NAMESPACE} -f -
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy Kiali. Aborting."
     exit 1
   fi
+  if [ "${DRY_RUN}" != "" ]; then
+    echo "${_KIALI_CR_YAML}" >> ${DRY_RUN}
+  fi
+
 fi
 
 echo "Done."
