@@ -168,8 +168,8 @@ export interface GraphEdgeData {
   source: string;
   target: string;
   traffic?: ProtocolTraffic;
-  responseTime?: string;
-  isMTLS?: string;
+  responseTime?: number;
+  isMTLS?: number;
 }
 
 export interface GraphNodeWrapper {
@@ -211,6 +211,7 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   grpc: number;
   grpcErr: number;
   grpcPercentErr: number;
+  grpcPercentReq: number;
   http: number;
   http3xx: number;
   http4xx: number;
@@ -220,6 +221,13 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   responses: Responses;
   tcp: number;
   protocol: ValidProtocols;
+
+  // During the decoration process, we make non-optional some number attributes (giving them a default value)
+  // Default value NaN
+  responseTime: number;
+
+  // Default value -1
+  isMTLS: number;
 }
 
 export interface DecoratedGraphNodeWrapper {
