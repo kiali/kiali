@@ -1,10 +1,12 @@
 ---
 name: Bug report
 about: Create a report to help us improve
+title: ''
+labels: 'bug :bug:'
+assignees: ''
 
 ---
 
- 
 **General remarks**
 
 > Please delete this section including header before submitting
@@ -14,6 +16,8 @@ about: Create a report to help us improve
 >
 > For general Kiali-development questions refer to 
 >       [Kiali-dev](https://groups.google.com/forum/#!forum/kiali-dev) mailing list.
+>
+> If you want to propose an enhancement or feature request, please use the feature request template.
 
 
 **Describe the bug**
