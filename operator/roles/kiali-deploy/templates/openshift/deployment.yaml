@@ -83,5 +83,5 @@ spec:
           secretName: kiali-cert-secret
       - name: kiali-secret
         secret:
-          secretName: kiali
+          secretName: {{ kiali_vars.deployment.secret_name }}
           optional: true

@@ -83,5 +83,5 @@ spec:
           secretName: istio.kiali-service-account
       - name: kiali-secret
         secret:
-          secretName: kiali
+          secretName: {{ kiali_vars.deployment.secret_name }}
           optional: true
