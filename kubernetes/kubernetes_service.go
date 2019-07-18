@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"bytes"
 
-	"github.com/kiali/kiali/log"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -23,6 +22,21 @@ import (
 // GetNamespace fetches and returns the specified namespace definition
 // from the cluster
 func (in *IstioClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+	if in.k8sCache != nil {
+		nss, err := in.GetNamespaces("")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ns := range nss {
+			if ns.GetName() == namespace {
+				return &ns, nil
+			}
+		}
+
+		return &core_v1.Namespace{}, nil
+	}
+
 	ns, err := in.k8s.CoreV1().Namespaces().Get(namespace, emptyGetOptions)
 	if err != nil {
 		return &core_v1.Namespace{}, err
@@ -40,6 +54,27 @@ func (in *IstioClient) GetServerVersion() (*version.Info, error) {
 // It returns a list of all namespaces of the cluster.
 // It returns an error on any problem.
 func (in *IstioClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+
+	if in.k8sCache != nil {
+		// Remember labelFiltering
+		nss, err := in.k8sCache.GetNamespaces()
+		if err == nil && len(nss) > 0 && labelSelector != "" {
+			if labelSelector != "" {
+				selector, err := labels.Parse(labelSelector)
+				if err != nil {
+					return nil, err
+				}
+				for i, ns := range nss {
+					if !selector.Matches(labels.Set(ns.GetLabels())) {
+						nss = append(nss[:i], nss[i+1:]...)
+						i--
+					}
+				}
+			}
+			return nss, nil
+		}
+	}
+
 	var listOptions meta_v1.ListOptions
 
 	// Apply labelSelector filtering if specified
@@ -61,8 +96,24 @@ func (in *IstioClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace,
 // the specified name by querying the cluster API. GetProject will fail
 // if the underlying cluster is not Openshift.
 func (in *IstioClient) GetProject(name string) (*osproject_v1.Project, error) {
-	result := &osproject_v1.Project{}
 
+	if in.k8sCache != nil {
+		projects, err := in.GetProjects("")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, proj := range projects {
+			if proj.GetName() == name {
+				return &proj, nil
+			}
+		}
+
+		// Nothing found
+		return &osproject_v1.Project{}, nil
+	}
+
+	result := &osproject_v1.Project{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do().Into(result)
 
 	if err != nil {
@@ -73,14 +124,27 @@ func (in *IstioClient) GetProject(name string) (*osproject_v1.Project, error) {
 }
 
 func (in *IstioClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
-	result := &osproject_v1.ProjectList{}
-
-	log.Infof("Requesting GetProjects")
 	if in.k8sCache != nil {
-		return in.k8sCache.GetProjects()
-	}
-	log.Infof("Cache was nil, trying something else")
+		nss, err := in.k8sCache.GetProjects()
+		if err == nil && len(nss) > 0 && labelSelector != "" {
+			if labelSelector != "" {
+				selector, err := labels.Parse(labelSelector)
+				if err != nil {
+					return nil, err
+				}
+				for i, ns := range nss {
+					if !selector.Matches(labels.Set(ns.GetLabels())) {
+						nss = append(nss[:i], nss[i+1:]...)
+						i--
+					}
+				}
+			}
 
+			return nss, nil
+		}
+	}
+
+	result := &osproject_v1.ProjectList{}
 	request := in.k8s.RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
 
 	// Apply label selector filtering if specified
@@ -128,7 +192,7 @@ func (in *IstioClient) IsMaistraApi() bool {
 func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	var allServices []core_v1.Service
 	var err error
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		allServices, err = in.k8sCache.GetServices(namespace)
 	} else {
 		if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions); err == nil {
@@ -154,7 +218,7 @@ func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]s
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeployment(namespace, deploymentName string) (*apps_v1.Deployment, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetDeployment(namespace, deploymentName)
 	}
 	return in.k8s.AppsV1().Deployments(namespace).Get(deploymentName, emptyGetOptions)
@@ -174,7 +238,7 @@ func (in *IstioClient) GetRoute(namespace, name string) (*osroutes_v1.Route, err
 // GetDeployments returns an array of deployments for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetDeployments(namespace)
 	}
 	if depList, err := in.k8s.AppsV1().Deployments(namespace).List(emptyListOptions); err == nil {
@@ -188,7 +252,7 @@ func (in *IstioClient) GetDeployments(namespace string) ([]apps_v1.Deployment, e
 // An empty labelSelector will fetch all Deployments for a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeploymentsByLabel(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetDeployments(namespace)
 	}
 	listOptions := meta_v1.ListOptions{LabelSelector: labelSelector}
@@ -202,6 +266,7 @@ func (in *IstioClient) GetDeploymentsByLabel(namespace string, labelSelector str
 // GetDeployment returns the definition of a specific deployment.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeploymentConfig(namespace, deploymentconfigName string) (*osapps_v1.DeploymentConfig, error) {
+	// TODO Caching
 	result := &osapps_v1.DeploymentConfig{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(deploymentconfigName).Do().Into(result)
 	if err != nil {
@@ -214,6 +279,7 @@ func (in *IstioClient) GetDeploymentConfig(namespace, deploymentconfigName strin
 // An empty labelSelector will fetch all Deployments for a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
+	// TODO Caching
 	result := &osapps_v1.DeploymentConfigList{}
 	err := in.k8s.RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").Do().Into(result)
 	if err != nil {
@@ -223,7 +289,7 @@ func (in *IstioClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.Deplo
 }
 
 func (in *IstioClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetReplicaSets(namespace)
 	}
 	if rsList, err := in.k8s.AppsV1().ReplicaSets(namespace).List(emptyListOptions); err == nil {
@@ -234,14 +300,14 @@ func (in *IstioClient) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, e
 }
 
 func (in *IstioClient) GetStatefulSet(namespace string, statefulsetName string) (*apps_v1.StatefulSet, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetStatefulSet(namespace, statefulsetName)
 	}
 	return in.k8s.AppsV1().StatefulSets(namespace).Get(statefulsetName, emptyGetOptions)
 }
 
 func (in *IstioClient) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetStatefulSets(namespace)
 	}
 	if ssList, err := in.k8s.AppsV1().StatefulSets(namespace).List(emptyListOptions); err == nil {
@@ -252,7 +318,7 @@ func (in *IstioClient) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet,
 }
 
 func (in *IstioClient) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetReplicationControllers(namespace)
 	}
 	if rcList, err := in.k8s.CoreV1().ReplicationControllers(namespace).List(emptyListOptions); err == nil {
@@ -265,7 +331,7 @@ func (in *IstioClient) GetReplicationControllers(namespace string) ([]core_v1.Re
 // GetService returns the definition of a specific service.
 // It returns an error on any problem.
 func (in *IstioClient) GetService(namespace, serviceName string) (*core_v1.Service, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetService(namespace, serviceName)
 	}
 	return in.k8s.CoreV1().Services(namespace).Get(serviceName, emptyGetOptions)
@@ -274,7 +340,7 @@ func (in *IstioClient) GetService(namespace, serviceName string) (*core_v1.Servi
 // GetEndpoints return the list of endpoint of a specific service.
 // It returns an error on any problem.
 func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*core_v1.Endpoints, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetEndpoints(namespace, serviceName)
 	}
 	return in.k8s.CoreV1().Endpoints(namespace).Get(serviceName, emptyGetOptions)
@@ -284,7 +350,7 @@ func (in *IstioClient) GetEndpoints(namespace, serviceName string) (*core_v1.End
 // An empty labelSelector will fetch all pods found per a namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		pods, err := in.k8sCache.GetPods(namespace)
 		if err != nil {
 			return []core_v1.Pod{}, err
@@ -311,7 +377,7 @@ func (in *IstioClient) GetPods(namespace, labelSelector string) ([]core_v1.Pod, 
 // GetPod returns the pod definitions for a given pod name.
 // It returns an error on any problem.
 func (in *IstioClient) GetPod(namespace, name string) (*core_v1.Pod, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		if pods, err := in.k8sCache.GetPods(namespace); err != nil {
 			return nil, err
 		} else {
@@ -352,7 +418,7 @@ func (in *IstioClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOp
 }
 
 func (in *IstioClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetCronJobs(namespace)
 	}
 	if cjList, err := in.k8s.BatchV1beta1().CronJobs(namespace).List(emptyListOptions); err == nil {
@@ -363,7 +429,7 @@ func (in *IstioClient) GetCronJobs(namespace string) ([]batch_v1beta1.CronJob, e
 }
 
 func (in *IstioClient) GetJobs(namespace string) ([]batch_v1.Job, error) {
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.KubeCached(namespace) {
 		return in.k8sCache.GetJobs(namespace)
 	}
 	if jList, err := in.k8s.BatchV1().Jobs(namespace).List(emptyListOptions); err == nil {

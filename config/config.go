@@ -229,10 +229,15 @@ type IstioLabels struct {
 
 // KubernetesConfig holds the k8s client configuration
 type KubernetesConfig struct {
-	Burst         int     `yaml:"burst,omitempty"`
-	QPS           float32 `yaml:"qps,omitempty"`
-	CacheEnabled  bool    `yaml:"cache_enabled,omitempty"`
-	CacheDuration int64   `yaml:"cache_duration,omitempty"`
+	Burst int     `yaml:"burst,omitempty"`
+	QPS   float32 `yaml:"qps,omitempty"`
+}
+
+type CacheConfig struct {
+	CacheEnabled      bool  `yaml:"cache_enabled,omitempty"`
+	CacheDuration     int64 `yaml:"cache_duration,omitempty"`
+	KubernetesObjects bool  `yaml:"kubernetes_objects,omitempty"`
+	IstioObjects      bool  `yaml:"istio_objects,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
@@ -385,8 +390,12 @@ func NewConfig() (c *Config) {
 	// Kubernetes client Configuration
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
-	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
-	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
+
+	// Cache config
+	c.CacheConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
+	c.CacheConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(10*time.Minute).Nanoseconds())
+	c.CacheConfig.KubernetesObjects = getDefaultBool(EnvKubernetesCacheEnabled, false)
+	c.CacheConfig.IstioObjects = getDefaultBool(EnvKubernetesCacheEnabled, false)
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.API.Namespaces.Exclude {

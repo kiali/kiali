@@ -62,4 +62,4 @@
     loop_var: process_resource_item
   when:
   - is_k8s == True
-  - kiali_vars.kubernetes_config.cache_enabled == True
+  - kiali_vars.cache_config.cache_enabled == True
