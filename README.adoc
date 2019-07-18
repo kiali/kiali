@@ -349,8 +349,6 @@ auth:
     ldap_base: DC=example,DC=com
     ldap_bind_dn: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
     ldap_search_filter: (&(name={USERID}))
-    # Time for token expiration
-    ldap_token_expirationMin: 1440
     # This can be used to filter the user roles
     ldap_role_filter: .*xyz.*
 ----
