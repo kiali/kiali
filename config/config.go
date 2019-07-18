@@ -371,15 +371,6 @@ func NewConfig() (c *Config) {
 	return
 }
 
-// CheckLDAPConfiguration is to check if th required configuration is there in the LDAP configuration
-func CheckLDAPConfiguration(conf *Config) bool {
-	if conf.Auth.LDAP.LDAPHost == "" || conf.Auth.LDAP.LDAPPort == 0 ||
-		conf.Auth.LDAP.LDAPBindDN == "" || conf.Auth.LDAP.LDAPBase == "" {
-		return false
-	}
-	return true
-}
-
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()
