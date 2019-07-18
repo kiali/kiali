@@ -1,6 +1,6 @@
 import { Layout } from '../../types/GraphFilter';
 import * as LayoutDictionary from './graphs/LayoutDictionary';
-import { CytoscapeGlobalScratchNamespace } from '../../types/Graph';
+import { CytoscapeGlobalScratchNamespace, DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
 import { DagreGraph } from './graphs/DagreGraph';
 
 export const CyEdge = {
@@ -87,4 +87,12 @@ export const runLayout = (cy: any, layout: Layout) => {
   }
 
   cy.scratch(CytoscapeGlobalScratchNamespace).showNodeLabels = showNodeLabels;
+};
+
+export const edgeData = (ele: any): DecoratedGraphEdgeData => {
+  return ele.data();
+};
+
+export const nodeData = (ele: any): DecoratedGraphNodeData => {
+  return ele.data();
 };

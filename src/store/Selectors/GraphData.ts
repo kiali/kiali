@@ -31,7 +31,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       http5xx: NaN,
       httpPercentErr: NaN,
       httpPercentReq: NaN,
-      isMTLS: '-1',
+      isMTLS: -1,
       protocol: undefined,
       responses: undefined,
       responseTime: NaN,
@@ -91,9 +91,10 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
     }
   };
 
-  const propertiesToNumber = object => {
+  const propertiesToNumber = (object: Object, keys?: string[]) => {
     const objectWithNumbers = { ...object };
-    for (const key of Object.keys(objectWithNumbers)) {
+    const targetKeys = keys ? keys : Object.keys(objectWithNumbers);
+    for (const key of targetKeys) {
       objectWithNumbers[key] = Number(objectWithNumbers[key]);
     }
     return objectWithNumbers;
@@ -131,7 +132,8 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
               responses: traffic.responses,
               ...edgeProtocolDefaults[traffic.protocol],
               ...propertiesToNumber(traffic.rates),
-              ...edgeData
+              // Base properties that need to be cast as number.
+              ...propertiesToNumber(edgeData, ['isMtls', 'responseTime'])
             };
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };

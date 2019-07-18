@@ -20,7 +20,7 @@ import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config/ServerConfig';
-import { CyEdge } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { edgeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { icons } from '../../config';
 import { ResponseTable } from '../../components/SummaryPanel/ResponseTable';
 
@@ -96,11 +96,12 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   render() {
     const edge = this.props.data.summaryTarget;
+    const data = edgeData(edge);
     const source = edge.source();
     const dest = edge.target();
-    const mTLSPercentage = edge.data(CyEdge.isMTLS);
-    const isMtls = mTLSPercentage && Number(mTLSPercentage) > 0;
-    const protocol = edge.data(CyEdge.protocol);
+    const mTLSPercentage = data.isMTLS;
+    const isMtls = mTLSPercentage && mTLSPercentage > 0;
+    const protocol = data.protocol;
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
@@ -146,8 +147,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                       <>
                         <RateTableGrpc
                           title="GRPC requests per second:"
-                          rate={this.safeRate(edge.data(CyEdge.grpc))}
-                          rateErr={this.safeRate(edge.data(CyEdge.grpcPercentErr))}
+                          rate={this.safeRate(data.grpc)}
+                          rateErr={this.safeRate(data.grpcPercentErr)}
                         />
                       </>
                     )}
@@ -155,19 +156,16 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                       <>
                         <RateTableHttp
                           title="HTTP requests per second:"
-                          rate={this.safeRate(edge.data(CyEdge.http))}
-                          rate3xx={this.safeRate(edge.data(CyEdge.http3xx))}
-                          rate4xx={this.safeRate(edge.data(CyEdge.http4xx))}
-                          rate5xx={this.safeRate(edge.data(CyEdge.http5xx))}
+                          rate={this.safeRate(data.http)}
+                          rate3xx={this.safeRate(data.http3xx)}
+                          rate4xx={this.safeRate(data.http4xx)}
+                          rate5xx={this.safeRate(data.http5xx)}
                         />
                       </>
                     )}
                   </TabPane>
                   <TabPane eventKey="responses" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseTable
-                      title={isGrpc ? 'GRPC codes:' : 'HTTP codes:'}
-                      responses={edge.data(CyEdge.responses)}
-                    />
+                    <ResponseTable title={isGrpc ? 'GRPC codes:' : 'HTTP codes:'} responses={data.responses} />
                   </TabPane>
                 </TabContent>
               </div>
@@ -178,7 +176,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         )}
         {isTcp && (
           <div className="panel-body">
-            <ResponseTable title="TCP Responses:" responses={edge.data(CyEdge.responses)} />
+            <ResponseTable title="TCP Responses:" responses={data.responses} />
             <hr />
             {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
           </div>
@@ -243,11 +241,12 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private updateCharts = (props: SummaryPanelPropType) => {
     const edge = props.data.summaryTarget;
+    const data = edgeData(edge);
     const sourceData = nodeData(edge.source());
     const destData = nodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
-    const protocol = edge.data(CyEdge.protocol);
+    const protocol = data.protocol;
     const isGrpc = protocol === Protocol.GRPC;
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
@@ -499,10 +498,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     );
   }
 
-  private renderBadgeSummary = (mTLSPercentage: string) => {
+  private renderBadgeSummary = (mTLSPercentage: number) => {
     let mtls = 'mTLS Enabled';
-    const isMtls = Number(mTLSPercentage) > 0;
-    if (isMtls && Number(mTLSPercentage) < 100.0) {
+    const isMtls = mTLSPercentage > 0;
+    if (isMtls && mTLSPercentage < 100.0) {
       mtls = `${mtls} [${mTLSPercentage}% of request traffic]`;
     }
     return (
