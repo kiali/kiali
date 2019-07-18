@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
 )
 
@@ -37,6 +38,11 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		return nil, http.StatusNoContent, nil
 	}
 
+	externalUrl := status.DiscoverJaeger()
+	if externalUrl == "" {
+		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
+	}
+
 	apiURL := jaegerConfig.URL
 
 	// If user doesn't have Jaeger url setup, use the Jaeger information auto-discovered
@@ -63,7 +69,7 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 	}
 
 	info := &models.JaegerInfo{
-		URL: apiURL,
+		URL: externalUrl,
 	}
 
 	return info, http.StatusOK, nil
