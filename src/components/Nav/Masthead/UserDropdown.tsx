@@ -128,7 +128,11 @@ class UserDropdownConnected extends React.Component<UserProps, UserState> {
             position="right"
             onSelect={this.onDropdownSelect}
             isOpen={isDropdownOpen}
-            toggle={<DropdownToggle onToggle={this.onDropdownToggle}>{this.props.session.username}</DropdownToggle>}
+            toggle={
+              <DropdownToggle id={'user-dropdown-toggle'} onToggle={this.onDropdownToggle}>
+                {this.props.session.username}
+              </DropdownToggle>
+            }
             dropdownItems={[userDropdownItems]}
           />
         )}
