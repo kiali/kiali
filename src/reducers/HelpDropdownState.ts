@@ -1,5 +1,5 @@
 import { getType } from 'typesafe-actions';
-import { StatusState } from '../store/Store';
+import { StatusState } from '../types/StatusState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 

@@ -39,10 +39,14 @@ const conf = {
       linkText: 'Find us on GitHub'
     },
     website: {
-      url: 'http://kiali.io',
+      url: 'https://www.kiali.io', // Without www, we get an SSL error
       icon: 'HomeIcon',
       linkText: 'Visit our web page'
     }
+  },
+  /** */
+  documentation: {
+    url: 'https://www.kiali.io/documentation/' // Without www, we get an SSL error
   },
   /**  Login configuration */
   login: {
