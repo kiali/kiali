@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -22,7 +21,7 @@ func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
 
 	// Create the token
 	token := jwt.New(jwt.SigningMethodHS256)
-
+	expirationTime := time.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
 	// Create a map to store our claims
 	claims := token.Claims.(jwt.MapClaims)
 
@@ -30,7 +29,7 @@ func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
 	claims["username"] = user.Username
 	claims["uid"] = user.UID
 	claims["groups"] = user.Groups
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	claims["exp"] = expirationTime.Unix()
 	claims["iat"] = time.Now().Unix()
 
 	signedToken, err := token.SignedString([]byte(signingKey))
@@ -40,7 +39,7 @@ func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
 	}
 	return Token{
 		JWT:    signedToken,
-		Expiry: time.Now().Add(time.Minute * time.Duration(rand.Int31n(int32(authConfig.LDAP.LDAPTokenExpirationMin)))),
+		Expiry: expirationTime,
 	}, nil
 }
 
