@@ -361,7 +361,6 @@ func NewConfig() (c *Config) {
 	c.Auth.LDAP.LDAPInsecureSkipVerify = getDefaultBool(EnvLdapInsecureSkipVerify, false)
 	c.Auth.LDAP.LDAPUserFilter = getDefaultString(EnvLdapUserFilter, "(cn=%s)")
 	c.Auth.LDAP.LDAPGroupFilter = getDefaultString(EnvLdapGroupFilter, "(cn=%s)")
-	c.Auth.LDAP.LDAPTokenExpirationMin = getDefaultInt64(EnvLdapTokenExpirationMin, 60)
 	c.Auth.LDAP.LDAPRoleFilter = getDefaultString(EnvLdapRoleFilter, "")
 	c.Auth.LDAP.LDAPSearchFilter = getDefaultString(EnvLdapSearchFilter, "(&(name={USERID}))")
 	c.Auth.LDAP.LDAPAttributes = []string{"memberOf", "cn", "mail"}
