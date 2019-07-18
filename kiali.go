@@ -130,7 +130,6 @@ func CheckLDAPConfiguration(auth config.AuthConfig) bool {
 	return true
 }
 
-
 func waitForSecret() {
 	foundSecretChan := make(chan security.Credentials)
 	go func() {
