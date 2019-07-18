@@ -322,9 +322,10 @@ class IstioWizardDropdown extends React.Component<Props, State> {
 
   render() {
     const updateLabel = this.getVSWizardLabel();
+    const hasActionRights = this.canCreate() || this.canUpdate() || this.canDelete();
     const hasSidecarWorkloads = this.hasSidecarWorkloads();
     const validWorkloads = this.getValidWorkloads();
-    const validActions = hasSidecarWorkloads && validWorkloads;
+    const validActions = hasActionRights && hasSidecarWorkloads && validWorkloads;
     const dropdownButton = (
       <DropdownButton
         id="service_actions"
@@ -347,12 +348,14 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         {this.props.threeScaleInfo.enabled && this.renderMenuItem(DELETE_THREESCALE_INTEGRATION, '')}
       </DropdownButton>
     );
-    const toolTipMsgActions = !hasSidecarWorkloads
+    const toolTipMsgActions = !hasActionRights
+      ? 'User has not permissions on this Service'
+      : !hasSidecarWorkloads
       ? 'There are not Workloads with sidecar for this service'
       : 'There are not Workloads with ' + this.appLabelName + ' and ' + this.versionLabelName + ' labels';
     return (
       <>
-        {!hasSidecarWorkloads ? (
+        {!hasActionRights || !hasSidecarWorkloads ? (
           <OverlayTrigger
             placement={'top'}
             overlay={<Tooltip id={'msg-service-actions'}>{toolTipMsgActions}</Tooltip>}
