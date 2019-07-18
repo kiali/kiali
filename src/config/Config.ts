@@ -2,7 +2,6 @@ import deepFreeze from 'deep-freeze';
 import { UNIT_TIME, MILLISECONDS } from '../types/Common';
 
 const conf = {
-  version: '0.1',
   /** Configuration related with session */
   session: {
     /** TimeOut Session remain for warning user default 1 minute */
