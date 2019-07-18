@@ -1074,16 +1074,16 @@ build_spec_list_value() {
 }
 
 if [ "${KIALI_CR}" != "" ]; then
+  if [ "${DRY_RUN}" != "" ]; then
+    echo "---" >> ${DRY_RUN}
+    cat "${KIALI_CR}" >> ${DRY_RUN}
+  fi
   ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${OPERATOR_NAMESPACE} -f "${KIALI_CR}"
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy Kiali from custom Kiali CR [${KIALI_CR}]. Aborting."
     exit 1
   else
     echo "Deployed Kiali via custom Kiali CR [${KIALI_CR}]"
-  fi
-  if [ "${DRY_RUN}" != "" ]; then
-    echo "---" >> ${DRY_RUN}
-    cat "${KIALI_CR}" >> ${DRY_RUN}
   fi
 else
   _KIALI_CR_YAML=$(cat <<EOF | sed '/^[ ]*$/d'
@@ -1111,15 +1111,15 @@ spec:
 EOF
 )
 
+  if [ "${DRY_RUN}" != "" ]; then
+    echo "${_KIALI_CR_YAML}" >> ${DRY_RUN}
+  fi
+
   echo "${_KIALI_CR_YAML}" | ${CLIENT_EXE} apply ${DRY_RUN_ARG} -n ${OPERATOR_WATCH_NAMESPACE} -f -
   if [ "$?" != "0" ]; then
     echo "ERROR: Failed to deploy Kiali. Aborting."
     exit 1
   fi
-  if [ "${DRY_RUN}" != "" ]; then
-    echo "${_KIALI_CR_YAML}" >> ${DRY_RUN}
-  fi
-
 fi
 
 echo "Done."
