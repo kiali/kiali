@@ -197,7 +197,7 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 // It returns an error on any problem.
 func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
 	var virtualServiceList *GenericIstioObjectList
-	if in.k8sCache != nil {
+	if in.k8sCache != nil && in.k8sCache.IstioCached(namespace) {
 		list, err := in.k8sCache.GetVirtualServices(namespace)
 		if err != nil {
 			return nil, err
@@ -280,6 +280,7 @@ func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject
 }
 
 func (in *IstioClient) GetVirtualService(namespace string, virtualservice string) (IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).SubResource(virtualservice).Do().Get()
 	if err != nil {
 		return nil, err
@@ -300,6 +301,7 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 // GetGateways return all Gateways for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).Do().Get()
 	if err != nil {
 		return nil, err
@@ -322,6 +324,7 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 }
 
 func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).SubResource(gateway).Do().Get()
 	if err != nil {
 		return nil, err
@@ -342,6 +345,7 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 // GetServiceEntries return all ServiceEntry objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).Do().Get()
 	if err != nil {
 		return nil, err
@@ -365,6 +369,7 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 }
 
 func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).SubResource(serviceEntryName).Do().Get()
 	if err != nil {
 		return nil, err
@@ -386,6 +391,7 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).Do().Get()
 	if err != nil {
 		return nil, err
@@ -417,6 +423,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 }
 
 func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).SubResource(destinationrule).Do().Get()
 	if err != nil {
 		return nil, err
@@ -521,6 +528,7 @@ func (in *IstioClient) GetQuotaSpecBinding(namespace string, quotaSpecBindingNam
 }
 
 func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(policies).Do().Get()
 	if err != nil {
 		return nil, err
@@ -545,6 +553,7 @@ func (in *IstioClient) GetPolicies(namespace string) ([]IstioObject, error) {
 }
 
 func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObject, error) {
+	// TODO Caching
 	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(policies).SubResource(policyName).Do().Get()
 	if err != nil {
 		return nil, err

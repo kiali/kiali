@@ -202,9 +202,12 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 	client.k8s = k8s
-	projectApi, err := osproject_v1_client.NewForConfig(config)
-	if err != nil {
-		log.Errorf("Failed to create ProjectClientV1")
+	if client.IsOpenShift() {
+		projectAPI, err := osproject_v1_client.NewForConfig(config)
+		if err != nil {
+			log.Errorf("Failed to create ProjectClientV1")
+		}
+		client.projectApi = projectAPI
 	}
 	client.projectApi = projectApi
 
@@ -304,13 +307,15 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
-	openshiftAPI, err := newClientForAPI(config, OpenshiftGroupVersion, types)
-	if err != nil {
-		return nil, err
+	if client.IsOpenShift() {
+		// TODO This one or the project one..?
+		openshiftAPI, err := newClientForAPI(config, OpenshiftGroupVersion, types)
+		if err != nil {
+			return nil, err
+		}
+
+		client.okd = openshiftAPI
 	}
-
-
-	client.okd = openshiftAPI
 
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
@@ -321,19 +326,19 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 
 	// Init client cache
 	// Note that cache will work only in full permissions scenarios (similar permissions as mixer/istio-telemetry component)
-	// kialiK8sCfg := kialiConfig.Get().KubernetesConfig
-	if client.k8sCache == nil {
-		// if client.k8sCache == nil && kialiK8sCfg.CacheEnabled {
+	cacheCfg := kialiConfig.Get().CacheConfig
+	log.Infof("cacheCfg: %v\n", cacheCfg)
+	// if client.k8sCache == nil {
+	if client.k8sCache == nil && cacheCfg.CacheEnabled {
 		log.Infof("Kiali K8S Cache enabled")
 		client.stopCache = make(chan struct{})
-		client.k8sCache = newCacheController(client, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
+		client.k8sCache = newCacheController(client, cacheCfg)
 		client.k8sCache.Start()
 		if !client.k8sCache.WaitForSync() {
 			log.Errorf("Failed to enable cache")
 			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
 		}
 	}
-
 
 	return &client, nil
 }

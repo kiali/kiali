@@ -118,8 +118,9 @@ kiali_defaults:
   kubernetes_config:
     burst: 200
     qps: 175
+
+  cache_config:
     cache_enabled: false
-    cache_duration: 300000000
 
   login_token:
     expiration_seconds: 86400

@@ -380,16 +380,33 @@ spec:
 # The QPS value of the Kubernetes client.
 #    ---
 #    qps: 175
+
+##########
+#  ---
+#  cache_config:
 #
-# Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
-# Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
+# Flag to use a cache for watching changes in Istio / Kubernetes. Note, enabling cache only
+# caches projects / namespaces. To cache more objects, enable istio_objects and/or kubernetes_objects
+# to cache more items.
+# Caution: Cache is not compatible with reduced permissions scenarios. Performance issues may arise
+# on the Kubernetes registry if too many namespaces are cached.
 #    ---
 #    cache_enabled: false
 #
 # The ratio interval (expressed in nanoseconds) used for the cache to perform a full refresh.
 # Only used when cache_enabled is true.
 #    ---
-#    cache_duration: 300000000
+#    cache_duration: 3000000000
+#
+# Cache Kubernetes objects such as Pods, Services, Deployments, etc.
+# Only used when cache_enabled is true.
+#    ---
+#    kubernetes_objects: true
+#
+# Cache Istio objects such as VirtualServices, Gateways, DestinationRules, etc
+# Only used when cache_enabled is true.
+#    ---
+#    istio_objects: true
 
 ##########
 #  ---

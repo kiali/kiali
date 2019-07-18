@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -14,12 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osproject_v1_client "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
@@ -46,27 +49,38 @@ type (
 		GetServices(namespace string) ([]core_v1.Service, error)
 		GetStatefulSet(namespace string, name string) (*apps_v1.StatefulSet, error)
 		GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, error)
+		GetNamespaces() ([]core_v1.Namespace, error)
 
 		// Openshift caches
 		GetProjects() ([]osproject_v1.Project, error)
 
 		// Istio caches
 		GetVirtualServices(namespace string) (*GenericIstioObjectList, error)
+
+		// Allow subset of cache to be used
+		KubeCached(namespace string) bool
+		// OpenshiftCached(namespace string) bool
+		IstioCached(namespace string) bool
 	}
 
 	controllerImpl struct {
-		istioClient     IstioClient
-		clientset       *kube.Clientset
-		refreshDuration time.Duration
-		stopChan        chan struct{}
-		syncCount       int
-		maxSyncCount    int
-		isErrorState    bool
-		lastError       error
-		lastErrorLock   sync.Mutex
-		controllers     map[string]map[string]cache.SharedIndexInformer
-		projectInformer cache.SharedIndexInformer
-		syncLock        sync.Mutex
+		istioClient       IstioClient
+		clientset         *kube.Clientset
+		refreshDuration   time.Duration
+		stopChans         map[string]chan struct{}
+		controlStopChan   chan struct{}
+		syncCount         int
+		maxSyncCount      int
+		isErrorState      bool
+		lastError         error
+		lastErrorLock     sync.Mutex
+		controllers       map[string]map[string]cache.SharedIndexInformer
+		istioControllers  map[string]map[string]cache.SharedIndexInformer
+		projectInformer   cache.SharedIndexInformer
+		syncLock          sync.Mutex
+		istioEnabled      bool
+		kubernetesEnabled bool
+		// openshiftEnabled  bool
 	}
 )
 
@@ -98,36 +112,33 @@ func registerErrorCallback(callback func(error)) {
 	errorCallbacks = append(errorCallbacks, callback)
 }
 
-func newCacheController(client IstioClient, refreshDuration time.Duration) cacheController {
+func newCacheController(client IstioClient, cacheCfg config.CacheConfig) cacheController {
 	clientset := client.k8s
 	newControllerImpl := controllerImpl{
-		istioClient:     client,
-		clientset:       clientset,
-		refreshDuration: refreshDuration,
-		stopChan:        nil,
-		controllers:     make(map[string]map[string]cache.SharedIndexInformer),
-		projectInformer: createProjectsInformer(client.projectApi, refreshDuration),
-		// controllers:     initControllers(clientset, refreshDuration),
-		syncCount:    0,
-		maxSyncCount: 200, // Move this to config ? or this constant is good enough ?
+		istioClient:       client,
+		clientset:         clientset,
+		refreshDuration:   time.Duration(cacheCfg.CacheDuration),
+		stopChans:         make(map[string]chan struct{}),
+		controllers:       make(map[string]map[string]cache.SharedIndexInformer),
+		istioControllers:  make(map[string]map[string]cache.SharedIndexInformer),
+		syncCount:         0,
+		maxSyncCount:      200, // Move this to config ? or this constant is good enough ?
+		istioEnabled:      cacheCfg.IstioObjects,
+		kubernetesEnabled: cacheCfg.KubernetesObjects,
+		// openshiftEnabled:  cacheCfg.KubernetesObjects, // TODO This is for now the same as there's only a single type
+	}
+	if client.IsOpenShift() {
+		newControllerImpl.projectInformer = createProjectsInformer(client.projectApi, time.Duration(cacheCfg.CacheDuration))
+	} else {
+		newControllerImpl.projectInformer = createNamespaceInformer(clientset, time.Duration(cacheCfg.CacheDuration))
 	}
 	registerErrorCallback(newControllerImpl.ErrorCallback)
 
 	return &newControllerImpl
 }
 
-func initProjectInformer(clientset *kube.Clientset, refreshDuration time.Duration) cache.SharedIndexInformer {
-	// if c, ok := clientset.(*kube.Clientset); ok {
-	// TODO This is only for Openshift, we need separate code for Kubernetes
-	// projectsInformer := createProjectsInformer(c, refreshDuration)
-	// return projectsInformer
-	// }
-	// log.Errorf("Failed to init K8sCache, Clientset not compatible")
-	return nil
-}
-
-func (c *controllerImpl) initControllersNamespace(clientset kube.Interface, refreshDuration time.Duration, namespace string) map[string]cache.SharedIndexInformer {
-	sharedInformers := informers.NewSharedInformerFactoryWithOptions(clientset, refreshDuration, informers.WithNamespace(namespace))
+func (c *controllerImpl) initKubernetesControllersNamespace(namespace string) {
+	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.clientset, c.refreshDuration, informers.WithNamespace(namespace))
 	controllers := make(map[string]cache.SharedIndexInformer)
 	controllers["Pod"] = sharedInformers.Core().V1().Pods().Informer()
 	controllers["ReplicationController"] = sharedInformers.Core().V1().ReplicationControllers().Informer()
@@ -140,59 +151,126 @@ func (c *controllerImpl) initControllersNamespace(clientset kube.Interface, refr
 	controllers["Endpoints"] = sharedInformers.Core().V1().Endpoints().Informer()
 	// controllers["Namespaces"] = sharedInformers.Core().V1().Namespaces().Informer()
 
-	controllers = c.initIstioControllersNamespace(namespace, controllers)
-	return controllers
+	c.controllers[namespace] = controllers
 }
 
-func (c *controllerImpl) initIstioControllersNamespace(namespace string, controllers map[string]cache.SharedIndexInformer) map[string]cache.SharedIndexInformer {
-	controllers["VirtualServices"] = cache.NewSharedIndexInformer(cache.NewListWatchFromClient(c.istioClient.istioNetworkingApi, "virtualservices", namespace, fields.Everything()),
-		&GenericIstioObjectList{},
-		c.refreshDuration,
+func (c *controllerImpl) initIstioControllersNamespace(namespace string) {
+	// Caching only objects that are used in the validations
+
+	controllers := make(map[string]cache.SharedIndexInformer)
+	// Networking API
+	controllers[virtualServiceType] = createIstioIndexInformer(c.istioClient.istioNetworkingApi, virtualServices, c.refreshDuration, namespace)
+	controllers[destinationRuleType] = createIstioIndexInformer(c.istioClient.istioNetworkingApi, destinationRules, c.refreshDuration, namespace)
+	controllers[gatewayType] = createIstioIndexInformer(c.istioClient.istioNetworkingApi, gateways, c.refreshDuration, namespace)
+	controllers[serviceentryType] = createIstioIndexInformer(c.istioClient.istioNetworkingApi, serviceentries, c.refreshDuration, namespace)
+
+	// Authentication API
+	controllers[meshPolicyType] = createIstioIndexInformer(c.istioClient.istioAuthenticationApi, meshPolicies, c.refreshDuration, namespace)
+	controllers[policyType] = createIstioIndexInformer(c.istioClient.istioAuthenticationApi, policies, c.refreshDuration, namespace)
+
+	// RBAC API
+	controllers[serviceroleType] = createIstioIndexInformer(c.istioClient.istioRbacApi, serviceroles, c.refreshDuration, namespace)
+	controllers[servicerolebindingType] = createIstioIndexInformer(c.istioClient.istioRbacApi, servicerolebindings, c.refreshDuration, namespace)
+	controllers[clusterrbacconfigType] = createIstioIndexInformer(c.istioClient.istioRbacApi, clusterrbacconfigs, c.refreshDuration, namespace)
+
+	// Enable
+	c.istioControllers[namespace] = controllers
+}
+
+func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshDuration time.Duration, namespace string) cache.SharedIndexInformer {
+	return cache.NewSharedIndexInformer(cache.NewListWatchFromClient(getter, resourceType, namespace, fields.Everything()),
+		&GenericIstioObject{},
+		refreshDuration,
 		cache.Indexers{},
 	)
-	return controllers
 }
 
 func (c *controllerImpl) ProjectListener() cache.ResourceEventHandlerFuncs {
-	// TODO Might need to sync with NamespaceService to make sure we're not running in Maistra with accessibleNamespaces modifier
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			project := obj.(*osproject_v1.Project)
-			name := project.GetObjectMeta().GetName()
-			if _, found := c.controllers[name]; found {
-				// TODO Existing project reappeared.. close and reopen?
-				return
-			}
-			c.syncLock.Lock()
-			defer c.syncLock.Unlock()
-			log.Infof("Starting controllers for project name: %s\n", name) // TODO Debugf
-			c.controllers[name] = c.initControllersNamespace(c.clientset, c.refreshDuration, name)
-			c.run(c.controllers[name])
-			synced := c.WaitForSync() // WaitForSync before allowing creation of more..
-			if !synced {
-				log.Errorf("Could not sync the cache..")
-			} else {
-				log.Infof("Synced, ready for more..")
-			}
+			namespace := project.GetObjectMeta().GetName()
+			c.controllerInitializer(namespace)
+		},
+		DeleteFunc: func(obj interface{}) {
+			project := obj.(*osproject_v1.Project)
+			namespace := project.GetObjectMeta().GetName()
+			c.stopNamespace(namespace)
 		},
 	}
 }
 
-func (c *controllerImpl) Start() {
-	c.projectInformer.AddEventHandler(c.ProjectListener())
+func (c *controllerImpl) NamespaceListener() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			namespaceObj := obj.(*core_v1.Namespace)
+			namespace := namespaceObj.GetObjectMeta().GetName()
+			c.controllerInitializer(namespace)
+		},
+		DeleteFunc: func(obj interface{}) {
+			namespaceObj := obj.(*core_v1.Namespace)
+			namespace := namespaceObj.GetObjectMeta().GetName()
+			c.stopNamespace(namespace)
+		},
+	}
+}
 
-	if c.stopChan == nil {
-		c.stopChan = make(chan struct{})
-		go c.projectInformer.Run(c.stopChan)
+func (c *controllerImpl) controllerInitializer(namespace string) {
+	if !c.kubernetesEnabled && !c.istioEnabled {
+		return
+	}
+
+	if _, found := c.stopChans[namespace]; found {
+		// Existing project reappeared.. we might have new settings, so closing the previous ones
+		log.Debugf("Namespace %s reappeared to the informer.. closing existing", namespace)
+		c.stopNamespace(namespace)
+	}
+
+	c.syncLock.Lock()
+	defer c.syncLock.Unlock()
+
+	stopChan := make(chan struct{})
+	c.stopChans[namespace] = stopChan
+	log.Debugf("Starting controllers for namespace: %s\n", namespace) // TODO Debugf
+	if c.kubernetesEnabled {
+		c.initKubernetesControllersNamespace(namespace)
+		run(c.controllers[namespace], stopChan)
+	}
+	if c.istioEnabled {
+		c.initIstioControllersNamespace(namespace)
+		run(c.istioControllers[namespace], stopChan)
+	}
+	c.WaitForSync()
+}
+
+func (c *controllerImpl) Start() {
+	if c.istioClient.IsOpenShift() {
+		c.projectInformer.AddEventHandler(c.ProjectListener())
+	} else {
+		c.projectInformer.AddEventHandler(c.NamespaceListener())
+	}
+
+	if c.controlStopChan == nil {
+		c.controlStopChan = make(chan struct{})
+		go c.projectInformer.Run(c.controlStopChan)
 		log.Infof("K8S cache started")
 	} else {
 		log.Warningf("K8S cache is already running")
 	}
 }
 
-func (c *controllerImpl) run(controllers map[string]cache.SharedIndexInformer) {
+func (c *controllerImpl) stopNamespace(namespace string) {
+	if stopChan, found := c.stopChans[namespace]; found {
+		close(stopChan)
+		delete(c.controllers, namespace)
+		delete(c.istioControllers, namespace)
+		delete(c.stopChans, namespace)
+	}
+}
+
+func run(controllers map[string]cache.SharedIndexInformer, stopChan chan struct{}) {
 	for _, cn := range controllers {
-		go cn.Run(c.stopChan)
+		go cn.Run(stopChan)
 	}
 }
 
@@ -223,14 +301,25 @@ func (c *controllerImpl) WaitForSync() bool {
 			synced = append(synced, cn.HasSynced)
 		}
 	}
-	return cache.WaitForCacheSync(c.stopChan, synced...)
+	syncSuccess := cache.WaitForCacheSync(c.controlStopChan, synced...)
+	if !syncSuccess {
+		c.lastErrorLock.Lock()
+		c.isErrorState = true
+		c.lastError = fmt.Errorf("failed to sync cache")
+		c.lastErrorLock.Unlock()
+		c.Stop()
+	}
+	return syncSuccess
 }
 
 func (c *controllerImpl) Stop() {
-	if c.stopChan != nil {
-		close(c.stopChan)
-		c.stopChan = nil
+	c.kubernetesEnabled = false
+	c.istioEnabled = false
+
+	for _, ch := range c.stopChans {
+		close(ch)
 	}
+	close(c.controlStopChan)
 }
 
 func (c *controllerImpl) ErrorCallback(err error) {
@@ -248,8 +337,8 @@ func (c *controllerImpl) checkStateAndRetry() error {
 	if !c.isErrorState {
 		return nil
 	}
+	return c.lastError
 
-	return fmt.Errorf("Errors errors everywhere")
 	/*
 		// Retry of the cache is hold by one single goroutine
 		c.lastErrorLock.Lock()
@@ -577,7 +666,6 @@ func (c *controllerImpl) GetProjects() ([]osproject_v1.Project, error) {
 	}
 
 	projects := c.projectInformer.GetIndexer().List()
-	// projects := c.projectInformer.GetStore().List()
 	if len(projects) > 0 {
 		if _, ok := projects[0].(*osproject_v1.Project); ok {
 			osProjects := make([]osproject_v1.Project, len(projects))
@@ -591,36 +679,100 @@ func (c *controllerImpl) GetProjects() ([]osproject_v1.Project, error) {
 	return []osproject_v1.Project{}, nil
 }
 
+func (c *controllerImpl) GetNamespaces() ([]core_v1.Namespace, error) {
+	if err := c.checkStateAndRetry(); err != nil {
+		return []core_v1.Namespace{}, err
+	}
+
+	namespaces := c.projectInformer.GetIndexer().List()
+	if len(namespaces) > 0 {
+		if _, ok := namespaces[0].(*core_v1.Namespace); ok {
+			coreNamespaces := make([]core_v1.Namespace, len(namespaces))
+			for i, ns := range namespaces {
+				coreNamespaces[i] = *(ns.(*core_v1.Namespace))
+			}
+			return coreNamespaces, nil
+		}
+	}
+
+	return []core_v1.Namespace{}, nil
+
+}
+
 func createProjectsInformer(client *osproject_v1_client.ProjectV1Client, refreshDuration time.Duration) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(cache.NewListWatchFromClient(client.RESTClient(), "projects", meta_v1.NamespaceAll, fields.Everything()),
-		&osproject_v1.ProjectList{},
+		&osproject_v1.Project{},
 		refreshDuration,
 		cache.Indexers{},
 	)
 }
 
+func createNamespaceInformer(clientset kubernetes.Interface, refreshDuration time.Duration) cache.SharedIndexInformer {
+	sharedInformer := informers.NewSharedInformerFactory(clientset, refreshDuration)
+	return sharedInformer.Core().V1().Namespaces().Informer()
+}
+
 func (c *controllerImpl) GetVirtualServices(namespace string) (*GenericIstioObjectList, error) {
-	return c.getGenericIstioObjectList(namespace, "VirtualServices")
+	return c.getGenericIstioObjectList(namespace, virtualServiceType)
 }
 
 func (c *controllerImpl) getGenericIstioObjectList(namespace, istioType string) (*GenericIstioObjectList, error) {
-	// Do the parsing from GenericIstioObjectList to the correct one in istio_details_service.go so we don't replicate this..
+	// Do the parsing from GenericIstioObjectList to the correct one in istio_details_service.go so we don't replicate that code..
 	if err := c.checkStateAndRetry(); err != nil {
 		return nil, err
 	}
-	if _, found := c.controllers[namespace]; !found {
-		log.Infof("No %s informers for %s found", istioType, namespace) // Debugf
-		return nil, nil
+	if _, found := c.istioControllers[namespace]; !found {
+		log.Debugf("No %s informers for %s found", istioType, namespace) // Debugf
+		return nil, fmt.Errorf("Istio caching is not enabled for namespace %s", namespace)
 	}
 
-	vss := c.controllers[namespace][istioType].GetIndexer().List()
+	vss := c.istioControllers[namespace][istioType].GetIndexer().List()
+	log.Infof("Len of vss: %d for %s\n", len(vss), namespace)
 	if len(vss) > 0 {
-		log.Infof("Got %d %s items back from cache", len(vss), istioType) // Debugf
-		list, ok := vss[0].(*GenericIstioObjectList)
+		log.Errorf("Received object of type: %s\n", reflect.TypeOf(vss[0]))
+		itemList := &GenericIstioObjectList{}
+		obj, ok := vss[0].(*GenericIstioObject)
 		if ok {
-			return list, nil
+			itemList.TypeMeta = obj.TypeMeta
+			objects := make([]GenericIstioObject, 0, len(vss))
+			for _, o := range vss {
+				obj, ok := o.(*GenericIstioObject)
+				if ok {
+					objects = append(objects, *obj)
+				}
+			}
+			itemList.Items = objects
+			log.Infof("Returning items size: %d\n", len(itemList.Items))
+			return itemList, nil
+		} else {
+			log.Errorf("Received object of type: %s\n", reflect.TypeOf(vss[0]))
 		}
+		log.Infof("Got %d %s items back from cache", len(vss), istioType) // Debugf
 	}
 
 	return nil, nil
 }
+
+// Allow subset of cache to be used - could be enabled all the way to namespace level
+// TODO There's no config option for namespace level configuration yet
+func (c *controllerImpl) KubeCached(namespace string) bool {
+	if c.kubernetesEnabled && !c.isErrorState {
+		_, found := c.controllers[namespace]
+		return found
+	}
+	return false
+}
+
+// func (c *controllerImpl) OpenshiftCached(namespace string) bool {
+// 	return c.openshiftEnabled && !c.isErrorState
+// }
+
+func (c *controllerImpl) IstioCached(namespace string) bool {
+	if c.istioEnabled && !c.isErrorState {
+		_, found := c.istioControllers[namespace]
+		return found
+	}
+	return false
+}
+
+// Projects / namespaces are always cached if the cache is created
