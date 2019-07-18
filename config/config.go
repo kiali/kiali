@@ -247,7 +247,6 @@ type LDAPConfig struct {
 	LDAPAttributes         []string `yaml:"ldap_attributes,omitempty"`
 	LDAPBase               string   `yaml:"ldap_base,omitempty"`
 	LDAPBindDN             string   `yaml:"ldap_bind_dn,omitempty"`
-	LDAPTokenExpirationMin int64    `yaml:"ldap_token_expiration_min,omitempty"`
 	LDAPRoleFilter         string   `yaml:"ldap_role_filter,omitempty"`
 	LDAPSearchFilter       string   `yaml:"ldap_search_filter,omitempty"`
 }
