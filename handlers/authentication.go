@@ -12,8 +12,8 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/ldap"
+	"github.com/kiali/kiali/log"
 )
 
 const (

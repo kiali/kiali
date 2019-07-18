@@ -16,6 +16,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -25,7 +26,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"errors"
 
 	"github.com/golang/glog"
 

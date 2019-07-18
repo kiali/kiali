@@ -78,17 +78,17 @@ const (
 
 	EnvNamespaceLabelSelector = "NAMESPACE_LABEL_SELECTOR"
 
-	EnvLdapHost = "LDAP_HOST"
-	EnvLdapPort = "LDAP_PORT"
-	EnvLdapUseSSL = "LDAP_USE_SSL"
+	EnvLdapHost               = "LDAP_HOST"
+	EnvLdapPort               = "LDAP_PORT"
+	EnvLdapUseSSL             = "LDAP_USE_SSL"
 	EnvLdapInsecureSkipVerify = "LDAP_INSECURE_SKIP_VERIFY"
-	EnvLdapUserFilter = "LDAP_USER_FILTER"
-	EnvLdapGroupFilter = "LDAP_GROUP_FILTER"
-	EnvLdapBase = "LDAP_BASE"
-	EnvLdapBindDN = "LDAP_BIND_DN"
+	EnvLdapUserFilter         = "LDAP_USER_FILTER"
+	EnvLdapGroupFilter        = "LDAP_GROUP_FILTER"
+	EnvLdapBase               = "LDAP_BASE"
+	EnvLdapBindDN             = "LDAP_BIND_DN"
 	EnvLdapTokenExpirationMin = "LDAP_TOKEN_EXPIRATION_MIN"
-	EnvLdapRoleFilter = "LDAPROLEFILTER"
-	EnvLdapSearchFilter = "LDAP_SEARCH_FILTER"
+	EnvLdapRoleFilter         = "LDAPROLEFILTER"
+	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
 )
 
 // The versions that Kiali requires
@@ -107,7 +107,6 @@ const (
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
 	AuthStrategyLoginIssuer     = "kiali-login"
-	
 
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
@@ -233,24 +232,24 @@ type ApiNamespacesConfig struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	Strategy               string         `yaml:"strategy,omitempty"`
-	LDAP									 LDAPConfig     `yaml:"ldap,omitempty"`
+	Strategy string     `yaml:"strategy,omitempty"`
+	LDAP     LDAPConfig `yaml:"ldap,omitempty"`
 }
 
 // LDAPConfig provides the details of the LDAP related configuration
 type LDAPConfig struct {
-	LDAPHost               string         `yaml:"ldapHost,omitempty"`
-	LDAPPort               int            `yaml:"ldapPort,omitempty"`
-	LDAPUseSSL             bool           `yaml:"ldapUseSSL,omitempty"`
-	LDAPInsecureSkipVerify bool           `yaml:"ldapInsecureSkipVerify,omitempty"`
-	LDAPUserFilter         string         `yaml:"ldapUserFilter,omitempty"`
-	LDAPGroupFilter        string         `yaml:"ldapGroupFilter,omitempty"`
-	LDAPAttributes         []string       `yaml:"ldapAttributes,omitempty"`
-	LDAPBase               string         `yaml:"ldapBase,omitempty"`
-	LDAPBindDN             string         `yaml:"ldapBindDN,omitempty"`
-	LDAPTokenExpirationMin int64          `yaml:"ldapTokenExpirationMin,omitempty"`
-	LDAPRoleFilter         string         `yaml:"ldapRoleFilter,omitempty"`
-	LDAPSearchFilter       string         `yaml:"ldapSearchFilter,omitempty"`
+	LDAPHost               string   `yaml:"ldap_host,omitempty"`
+	LDAPPort               int      `yaml:"ldap_port,omitempty"`
+	LDAPUseSSL             bool     `yaml:"ldap_use_ssl,omitempty"`
+	LDAPInsecureSkipVerify bool     `yaml:"ldap_insecure_skip_verify,omitempty"`
+	LDAPUserFilter         string   `yaml:"ldap_user_filter,omitempty"`
+	LDAPGroupFilter        string   `yaml:"ldap_group_filter,omitempty"`
+	LDAPAttributes         []string `yaml:"ldap_attributes,omitempty"`
+	LDAPBase               string   `yaml:"ldap_base,omitempty"`
+	LDAPBindDN             string   `yaml:"ldap_bind_dn,omitempty"`
+	LDAPTokenExpirationMin int64    `yaml:"ldap_token_expiration_min,omitempty"`
+	LDAPRoleFilter         string   `yaml:"ldap_role_filter,omitempty"`
+	LDAPSearchFilter       string   `yaml:"ldap_search_filter,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -367,21 +366,15 @@ func NewConfig() (c *Config) {
 	c.Auth.LDAP.LDAPRoleFilter = getDefaultString(EnvLdapRoleFilter, "")
 	c.Auth.LDAP.LDAPSearchFilter = getDefaultString(EnvLdapSearchFilter, "(&(name={USERID}))")
 	c.Auth.LDAP.LDAPAttributes = []string{"memberOf", "cn", "mail"}
-
-	
-	if c.Auth.Strategy == AuthStrategyLDAP && CheckLDAPConfiguration(c) {
-		log.Errorf("Error: Auth strategy is LDAP but there is no LDAP configuration")
-	}
-
 	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
 
 	return
 }
 
 // CheckLDAPConfiguration is to check if th required configuration is there in the LDAP configuration
-func CheckLDAPConfiguration(conf *Config) bool{
-	if conf.Auth.LDAP.LDAPHost == "" || conf.Auth.LDAP.LDAPPort == 0 || 
-	conf.Auth.LDAP.LDAPBindDN == ""|| conf.Auth.LDAP.LDAPBase == "" {
+func CheckLDAPConfiguration(conf *Config) bool {
+	if conf.Auth.LDAP.LDAPHost == "" || conf.Auth.LDAP.LDAPPort == 0 ||
+		conf.Auth.LDAP.LDAPBindDN == "" || conf.Auth.LDAP.LDAPBase == "" {
 		return false
 	}
 	return true

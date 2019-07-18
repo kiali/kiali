@@ -3,18 +3,18 @@ package ldap
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-)
 
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
+)
 
 // GenerateToken generates JWT
 func GenerateToken(user User, authConfig config.AuthConfig) (Token, error) {
@@ -109,7 +109,6 @@ func validate(bearerToken string) (UserInfo, error) {
 	return u, nil
 
 }
-
 
 // GetTokenStringFromRequest is to get the token string from the request
 func GetTokenStringFromRequest(r *http.Request) string {

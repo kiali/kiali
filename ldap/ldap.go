@@ -1,14 +1,15 @@
 package ldap
 
 import (
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/jtblin/go-ldap-client"
 	ldapv2 "gopkg.in/ldap.v2"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 //ValidateUser validates user by extracting creds from the request body, then

@@ -339,20 +339,20 @@ auth:
   strategy: ldap
   ldap:
     # AD IP host and port
-    ldapHost: example.com
-    ldapPort: 123
-    ldapUseSSL: false
-    ldapInsecureSkipVerify: true
-    ldapUserFilter: (cn=%s)
-    ldapGroupFilter: (cn=%s)
-    ldapAttributes: ['memberOf', 'cn', 'mail']
-    ldapBase: DC=example,DC=com
-    ldapBindDN: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
-    ldapSearchFilter: (&(name={USERID}))
+    ldap_host: example.com
+    ldap_port: 123
+    ldap_use_ssl: false
+    ldap_insecure_skip_verify: true
+    ldap_user_ilter: (cn=%s)
+    ldap_group_filter: (cn=%s)
+    ldap_attributes: ['memberOf', 'cn', 'mail']
+    ldap_base: DC=example,DC=com
+    ldap_bind_dn: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
+    ldap_search_filter: (&(name={USERID}))
     # Time for token expiration
-    ldapTokenExpirationMin: 1440
+    ldap_token_expirationMin: 1440
     # This can be used to filter the user roles
-    ldapRoleFilter: .*xyz.*
+    ldap_role_filter: .*xyz.*
 ----
 
 If you don't want to add the configuration to the yaml file you can add the parameters to the environment files
