@@ -48,28 +48,6 @@ func ValidateToken(token string) (UserInfo, error) {
 	return validate(token)
 }
 
-// getRequestBody is to get the request body
-func getRequestBody(body io.ReadCloser) (Request, error) {
-	content, err := ioutil.ReadAll(body)
-	rawContent := json.RawMessage(string(content))
-	marshaledContent, err := rawContent.MarshalJSON()
-	if err != nil {
-		log.Errorf("Error in marshaling request body : %s", err)
-		log.Errorf("Request Body might be empty. If so we will try with Authorization Header")
-		return Request{}, err
-	}
-
-	var request Request
-	err = json.Unmarshal(marshaledContent, &request)
-	if err != nil {
-		log.Errorf("Error in un-marshaling request body : %s", err)
-		log.Errorf("Request Body might be empty. If so we will try with Authorization Header")
-		return Request{}, err
-	}
-
-	return request, nil
-}
-
 // validate does much of the work of ValidateToken
 func validate(bearerToken string) (UserInfo, error) {
 
