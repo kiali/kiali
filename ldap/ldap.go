@@ -23,7 +23,7 @@ func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error)
 	bindDN := strings.Replace(authConfig.LDAP.LDAPBindDN, "{USERID}", username, -1)
 	log.Debugf("bindDN : %s", bindDN)
 
-	ldapAttributes := []string{authConfig.LDAP.LDAPMemeberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
+	ldapAttributes := []string{authConfig.LDAP.LDAPMemberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
 	client := ldap.LDAPClient{
 		Base:               authConfig.LDAP.LDAPBase,
 		Host:               authConfig.LDAP.LDAPHost,
@@ -69,7 +69,7 @@ func getUser(ldapClient *ldap.LDAPClient, username, roleFilter string, authConfi
 	groups := []string{}
 	var user User
 
-	ldapAttributes := []string{authConfig.LDAP.LDAPMemeberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
+	ldapAttributes := []string{authConfig.LDAP.LDAPMemberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
 	searchFilter := strings.Replace(authConfig.LDAP.LDAPSearchFilter, "{USERID}", username, -1)
 	searchRequest := ldapv2.NewSearchRequest(
 		authConfig.LDAP.LDAPBase,
