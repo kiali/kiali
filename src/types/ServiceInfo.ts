@@ -40,6 +40,11 @@ export const hasIstioSidecar = (pods?: Pod[]) => {
   return false;
 };
 
+export interface ApiDocumentation {
+  type: string;
+  hasSpec: boolean;
+}
+
 export interface Service {
   type: string;
   name: string;
@@ -63,6 +68,7 @@ export interface ServiceDetailsInfo {
   namespaceMTLS?: TLSStatus;
   errorTraces?: number;
   validations: Validations;
+  apiDocumentation: ApiDocumentation;
 }
 
 const higherThan = [

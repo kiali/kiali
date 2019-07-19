@@ -115,7 +115,8 @@ class ServiceListComponent extends FilterComponent.Component<
         istioSidecar: service.istioSidecar,
         namespace: data.namespace.name,
         healthPromise: API.getServiceHealth(data.namespace.name, service.name, rateInterval, service.istioSidecar),
-        validation: this.getServiceValidation(service.name, data.validations)
+        validation: this.getServiceValidation(service.name, data.validations),
+        apiType: service.apiType
       }));
     }
     return [];

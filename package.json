@@ -86,6 +86,7 @@
     "patternfly": "3.59.3",
     "patternfly-react": "2.31.1",
     "patternfly-react-extensions": "2.16.28",
+    "rapidoc": "5.0.5",
     "react": "16.6.3",
     "react-ace": "6.4.0",
     "react-bootstrap": "0.32.4",
