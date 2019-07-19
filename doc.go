@@ -41,7 +41,7 @@ type ContainerParam struct {
 	Name string `json:"container"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters istioConfigList workloadList workloadDetails serviceDetails workloadValidations appList serviceMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceTls podDetails podLogs getThreeScaleService postThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
 type NamespaceParam struct {
 	// The namespace name.
 	//
@@ -87,7 +87,7 @@ type PodParam struct {
 	Name string `json:"pod"`
 }
 
-// swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService
+// swagger:parameters serviceDetails serviceMetrics graphService serviceDashboard getThreeScaleService patchThreeScaleService deleteThreeScaleService serviceApiDocumentation
 type ServiceParam struct {
 	// The service name.
 	//

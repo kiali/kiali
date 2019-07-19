@@ -79,6 +79,9 @@ const (
 	EnvAuthStrategy = "AUTH_STRATEGY"
 
 	EnvNamespaceLabelSelector = "NAMESPACE_LABEL_SELECTOR"
+
+	EnvApiDocAnnotationNameApiType = "APIDOC_ANNOTATION_NAME_API_TYPE"
+	EnvApiDocAnnotationNameApiSpec = "APIDOC_ANNOTATION_NAME_API_SPEC"
 )
 
 // The versions that Kiali requires
@@ -222,6 +225,17 @@ type ApiNamespacesConfig struct {
 	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
 }
 
+// ApiDocumentation is the top level configuration for API documentation
+type ApiDocumentation struct {
+	Annotations ApiDocAnnotations `yaml:"annotations,omitempty" json:"annotations"`
+}
+
+// ApiDocAnnotations contains the annotation names used for API documentation
+type ApiDocAnnotations struct {
+	ApiTypeAnnotationName string `yaml:"api_type_annotation_name,omitempty" json:"apiTypeAnnotationName"`
+	ApiSpecAnnotationName string `yaml:"api_spec_annotation_name,omitempty" json:"apiSpecAnnotationName"`
+}
+
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
 	Strategy string `yaml:"strategy,omitempty"`
@@ -246,6 +260,7 @@ type Config struct {
 	API              ApiConfig         `yaml:"api,omitempty"`
 	Auth             AuthConfig        `yaml:"auth,omitempty"`
 	Deployment       DeploymentConfig  `yaml:"deployment,omitempty"`
+	ApiDocumentation ApiDocumentation  `yaml:"apidocs,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -278,6 +293,10 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsPort = getDefaultInt(EnvServerMetricsPort, 9090)
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 	c.Server.GzipEnabled = getDefaultBool(EnvServerGzipEnabled, true)
+
+	// API Documentation
+	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.kubernetes.io/api-type"))
+	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.kubernetes.io/api-spec"))
 
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))

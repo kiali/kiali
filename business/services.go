@@ -1,6 +1,10 @@
 package business
 
 import (
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -8,6 +12,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -92,14 +97,73 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		hasSidecar := mPods.HasIstioSidecar()
 		/** Check if Service has the label app required by Istio */
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
+		/** Check if Service has the api annotation */
+		apiTypeFromAnnotation := item.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
 		services[i] = models.ServiceOverview{
 			Name:         item.Name,
 			IstioSidecar: hasSidecar,
 			AppLabel:     appLabel,
+			ApiType:      apiTypeFromAnnotation,
 		}
 	}
 
 	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
+}
+
+//GetServiceApiDocumentation returns the api documentation fetched from a service
+func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (string, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceApiDocumentation")
+	defer promtimer.ObserveNow(&err)
+
+	conf := config.Get()
+	svc, err := in.k8s.GetService(namespace, service)
+	if err != nil {
+		log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err)
+		return "", errors.NewInternalError(err)
+	}
+	apiSpecPath := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
+
+	if apiSpecPath == "" {
+		qualifiedResource := schema.GroupResource{
+			Group:    "",
+			Resource: "",
+		}
+		return "", errors.NewNotFound(qualifiedResource, "No spec annotation found for service")
+	}
+
+	if !strings.HasPrefix(apiSpecPath, "http://") && !strings.HasPrefix(apiSpecPath, "https://") {
+		service := svc.ObjectMeta.Name + "." + svc.ObjectMeta.Namespace
+		if svc.ObjectMeta.Name == "kiali" {
+			// k8s doesn't want to call the service from the pod
+			service = "localhost"
+		}
+		apiSpecPath = "http://" + service + ":" + strconv.Itoa(int(svc.Spec.Ports[0].Port)) + apiSpecPath
+	}
+
+	resp, err2 := http.Get(apiSpecPath)
+	if err2 != nil {
+		log.Errorf("GET error: %v", err)
+		return "", errors.NewInternalError(err2)
+	}
+	defer resp.Body.Close()
+
+	data, err3 := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("Status error: %v", resp.StatusCode)
+		qualifiedResource := schema.GroupResource{
+			Group:    "",
+			Resource: "",
+		}
+		return "", errors.NewGenericServerResponse(resp.StatusCode, "GET", qualifiedResource, "Proxied request error", string(data), -1, true)
+	}
+
+	if err3 != nil {
+		log.Errorf("Read body: %v", err)
+		return "", errors.NewInternalError(err3)
+	}
+
+	return string(data), nil
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
@@ -118,6 +182,16 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var vs, dr []kubernetes.IstioObject
 	var ws models.Workloads
 	var nsmtls models.MTLSStatus
+	var apidoc models.ApiDocumentation
+
+	conf := config.Get()
+	apiSpecFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
+	apiTypeFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
+
+	apidoc = models.ApiDocumentation{
+		Type:    apiTypeFromAnnotation,
+		HasSpec: (apiSpecFromAnnotation != ""),
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(7)
@@ -223,6 +297,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	s.SetVirtualServices(vs, vsCreate, vsUpdate, vsDelete)
 	s.SetDestinationRules(dr, drCreate, drUpdate, drDelete)
 	s.SetErrorTraces(eTraces)
+	s.SetApiDocumentation(apidoc)
 	return &s, nil
 }
 
