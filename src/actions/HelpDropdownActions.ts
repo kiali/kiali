@@ -1,5 +1,5 @@
 import { ActionType, createAction } from 'typesafe-actions';
-import { Component } from '../store/Store';
+import { Component } from '../types/StatusState';
 import { ActionKeys } from './ActionKeys';
 
 export const HelpDropdownActions = {

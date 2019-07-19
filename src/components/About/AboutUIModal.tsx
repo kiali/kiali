@@ -1,18 +1,15 @@
 import * as React from 'react';
 import { AboutModal, TextContent, TextList, TextListItem, Title, Button } from '@patternfly/react-core';
 import * as icons from '@patternfly/react-icons';
-import { Component } from '../../store/Store';
+import { Component, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
-
-const KIALI_CORE_COMMIT_HASH = 'Kiali core commit hash';
-const KIALI_CORE_VERSION = 'Kiali core version';
 
 type AboutUIModalState = {
   showModal: boolean;
 };
 
 type AboutUIModalProps = {
-  status: { [key: string]: string };
+  status: Status;
   components: Component[];
 };
 
@@ -36,9 +33,10 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
         ? process.env.REACT_APP_VERSION
         : `${process.env.REACT_APP_VERSION} (${process.env.REACT_APP_GIT_HASH})`;
     const coreVersion =
-      this.props.status[KIALI_CORE_COMMIT_HASH] === '' || this.props.status[KIALI_CORE_COMMIT_HASH] === 'unknown'
-        ? this.props.status[KIALI_CORE_VERSION]
-        : `${this.props.status[KIALI_CORE_VERSION]} (${this.props.status[KIALI_CORE_COMMIT_HASH]})`;
+      this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === '' ||
+      this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
+        ? this.props.status[StatusKey.KIALI_CORE_VERSION]
+        : `${this.props.status[StatusKey.KIALI_CORE_VERSION]} (${this.props.status[StatusKey.KIALI_CORE_COMMIT_HASH]})`;
 
     return (
       <AboutModal

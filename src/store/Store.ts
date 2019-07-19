@@ -11,6 +11,7 @@ import {
 import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
+import { StatusState } from '../types/StatusState';
 
 // Store is the Redux Data store
 
@@ -89,18 +90,6 @@ export interface LoginState {
   status: LoginStatus;
   session?: LoginSession;
   message: string;
-}
-
-export interface Component {
-  name: string;
-  version?: string;
-  url?: string;
-}
-
-export interface StatusState {
-  status: { [key: string]: string };
-  components: Component[];
-  warningMessages: string[];
 }
 
 export interface InterfaceSettings {
