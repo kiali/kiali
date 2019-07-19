@@ -76,16 +76,15 @@ spec:
 #    ---
 #    strategy: ldap
 #    ldap:
-#       ldap_host: example.com
-#       ldap_port: 123
+#       ldap_host: ''
+#       ldap_port: 0
 #       ldap_use_ssl: false
 #       ldap_insecure_skip_verify: false
 #       ldap_user_filter: (cn=%s)
 #       ldap_group_filter: (cn=%s)
-#       ldap_base: DC=example,DC=com
-#       ldap_bind_dn: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
+#       ldap_base: ''
+#       ldap_bind_dn: ''
 #       ldap_search_filter: (&(name={USERID}))
-#       # Time for token expiration
 #       # This can be used to filter the user roles
 #       ldap_role_filter: .*xyz.*
 #       ldap_mail_id_key: mail

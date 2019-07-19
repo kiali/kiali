@@ -121,7 +121,7 @@ func main() {
 	server.Stop()
 }
 
-// CheckLDAPConfiguration is to check if th required configuration is there in the LDAP configuration
+// CheckLDAPConfiguration is to check if the required configuration is there in the LDAP configuration
 func CheckLDAPConfiguration(auth config.AuthConfig) bool {
 	if auth.LDAP.LDAPHost == "" || auth.LDAP.LDAPPort == 0 ||
 		auth.LDAP.LDAPBindDN == "" || auth.LDAP.LDAPBase == "" {
