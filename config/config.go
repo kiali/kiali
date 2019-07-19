@@ -90,7 +90,7 @@ const (
 	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
 	EnvLdapMailIdKey          = "LDAP_MAIL_ID_KEY"
 	EnvLdapUserIdKey          = "LDAP_USER_ID_KEY"
-	EnvLdapMemberOfKey       = "LDAP_MEMBER_OF_KEY"
+	EnvLdapMemberOfKey        = "LDAP_MEMBER_OF_KEY"
 )
 
 // The versions that Kiali requires
@@ -252,7 +252,7 @@ type LDAPConfig struct {
 	LDAPSearchFilter       string `yaml:"ldap_search_filter,omitempty"`
 	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
 	LDAPUserIDKey          string `yaml:"ldap_user_id_key,omitempty"`
-	LDAPMemberOfKey       string `yaml:"ldap_member_of_key,omitempty"`
+	LDAPMemberOfKey        string `yaml:"ldap_member_of_key,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
