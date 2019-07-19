@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import SwitchErrorBoundary from '../SwitchErrorBoundary/SwitchErrorBoundary';
 import { pathRoutes, defaultRoute, secondaryMastheadRoutes } from '../../routes';
@@ -25,12 +25,16 @@ class RenderPage extends React.Component<{ needScroll: boolean }> {
   render() {
     const component = (
       <div className={`container-fluid ${containerStyle}`}>
-        <SwitchErrorBoundary
-          fallBackComponent={() => <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>}
-        >
-          {this.renderPathRoutes()}
-          <Redirect from="/" to={defaultRoute} />
-        </SwitchErrorBoundary>
+        <Suspense fallback={<div>Loading...</div>}>
+          <SwitchErrorBoundary
+            fallBackComponent={() => (
+              <h2>Sorry, there was a problem. Try a refresh or navigate to a different page.</h2>
+            )}
+          >
+            {this.renderPathRoutes()}
+            <Redirect from="/" to={defaultRoute} />
+          </SwitchErrorBoundary>
+        </Suspense>
       </div>
     );
     return (
