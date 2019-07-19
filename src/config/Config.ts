@@ -1,6 +1,9 @@
 import deepFreeze from 'deep-freeze';
 import { UNIT_TIME, MILLISECONDS } from '../types/Common';
 
+// We assume this is always defined in the .env file
+const documentationUrl = process.env.REACT_APP_KIALI_DOC_URL!;
+
 const conf = {
   /** Configuration related with session */
   session: {
@@ -45,7 +48,7 @@ const conf = {
   },
   /** */
   documentation: {
-    url: 'https://www.kiali.io/documentation/' // Without www, we get an SSL error
+    url: documentationUrl
   },
   /**  Login configuration */
   login: {

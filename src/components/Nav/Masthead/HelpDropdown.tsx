@@ -74,11 +74,11 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
     );
 
     const items = [
-      <DropdownItem component={'span'} key={'view_debug_info'} onClick={this.openDebugInformation}>
-        View Debug Info
-      </DropdownItem>,
       <DropdownItem component={'a'} key={'view_documentation'} href={this.buildDocumentationLink()} target="_blank">
         Documentation
+      </DropdownItem>,
+      <DropdownItem component={'span'} key={'view_debug_info'} onClick={this.openDebugInformation}>
+        View Debug Info
       </DropdownItem>,
       <DropdownItem component={'span'} key={'view_about_info'} onClick={this.openAbout}>
         About
