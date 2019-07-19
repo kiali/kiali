@@ -240,19 +240,19 @@ type AuthConfig struct {
 
 // LDAPConfig provides the details of the LDAP related configuration
 type LDAPConfig struct {
-	LDAPHost               string   `yaml:"ldap_host,omitempty"`
-	LDAPPort               int      `yaml:"ldap_port,omitempty"`
-	LDAPUseSSL             bool     `yaml:"ldap_use_ssl,omitempty"`
-	LDAPInsecureSkipVerify bool     `yaml:"ldap_insecure_skip_verify,omitempty"`
-	LDAPUserFilter         string   `yaml:"ldap_user_filter,omitempty"`
-	LDAPGroupFilter        string   `yaml:"ldap_group_filter,omitempty"`
-	LDAPBase               string   `yaml:"ldap_base,omitempty"`
-	LDAPBindDN             string   `yaml:"ldap_bind_dn,omitempty"`
-	LDAPRoleFilter         string   `yaml:"ldap_role_filter,omitempty"`
-	LDAPSearchFilter       string   `yaml:"ldap_search_filter,omitempty"`
-	LDAPMailIDKey          string   `yaml:"ldap_mail_id_key,omitempty"`
-	LDAPUserIDKey          string   `yaml:"ldap_user_id_key,omitempty"`
-	LDAPMemeberOfKey       string   `yaml:"ldap_member_of_key,omitempty"`
+	LDAPHost               string `yaml:"ldap_host,omitempty"`
+	LDAPPort               int    `yaml:"ldap_port,omitempty"`
+	LDAPUseSSL             bool   `yaml:"ldap_use_ssl,omitempty"`
+	LDAPInsecureSkipVerify bool   `yaml:"ldap_insecure_skip_verify,omitempty"`
+	LDAPUserFilter         string `yaml:"ldap_user_filter,omitempty"`
+	LDAPGroupFilter        string `yaml:"ldap_group_filter,omitempty"`
+	LDAPBase               string `yaml:"ldap_base,omitempty"`
+	LDAPBindDN             string `yaml:"ldap_bind_dn,omitempty"`
+	LDAPRoleFilter         string `yaml:"ldap_role_filter,omitempty"`
+	LDAPSearchFilter       string `yaml:"ldap_search_filter,omitempty"`
+	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
+	LDAPUserIDKey          string `yaml:"ldap_user_id_key,omitempty"`
+	LDAPMemeberOfKey       string `yaml:"ldap_member_of_key,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
