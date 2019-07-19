@@ -39,3 +39,12 @@ external_services:
   # Uncomment service_label_name to set up a different label name for grouping all resources of an app version.
   # Default is "version"
   # version_label_name: version
+
+#apidoc_annotations:
+  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api type
+  # Default is "kiali.kubernetes.io/api-type"
+  # api_type_annotation_name: kiali.kubernetes.io/api-type
+
+  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api spec location
+  # Default is "kiali.kubernetes.io/api-spec"
+  # api_spec_annotation_name: kiali.kubernetes.io/api-spec
