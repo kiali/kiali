@@ -207,7 +207,7 @@ func validateConfig() error {
 
 	// log some messages to let the administrator know when credentials are configured certain ways
 	auth := config.Get().Auth
-	log.Infof("Using authentication strategy [%v]", auth.Strategy)
+	log.Infof("Using authentication strategy [%v], [%+v]", auth.Strategy, auth)
 	if auth.Strategy == config.AuthStrategyLogin {
 		creds := config.Get().Server.Credentials
 		if creds.Username == "" && creds.Passphrase == "" {

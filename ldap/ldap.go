@@ -23,6 +23,7 @@ func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error)
 	bindDN := strings.Replace(authConfig.LDAP.LDAPBindDN, "{USERID}", username, -1)
 	log.Debugf("bindDN : %s", bindDN)
 
+	ldapAttributes := []string{authConfig.LDAP.LDAPMemeberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
 	client := ldap.LDAPClient{
 		Base:               authConfig.LDAP.LDAPBase,
 		Host:               authConfig.LDAP.LDAPHost,
@@ -33,7 +34,7 @@ func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error)
 		BindPassword:       pwd,
 		UserFilter:         authConfig.LDAP.LDAPUserFilter,
 		GroupFilter:        authConfig.LDAP.LDAPGroupFilter,
-		Attributes:         authConfig.LDAP.LDAPAttributes,
+		Attributes:         ldapAttributes,
 	}
 	defer client.Close()
 
@@ -68,13 +69,14 @@ func getUser(ldapClient *ldap.LDAPClient, username, roleFilter string, authConfi
 	groups := []string{}
 	var user User
 
+	ldapAttributes := []string{authConfig.LDAP.LDAPMemeberOfKey, authConfig.LDAP.LDAPUserIDKey, authConfig.LDAP.LDAPMailIDKey}
 	searchFilter := strings.Replace(authConfig.LDAP.LDAPSearchFilter, "{USERID}", username, -1)
 	searchRequest := ldapv2.NewSearchRequest(
 		authConfig.LDAP.LDAPBase,
 		ldapv2.ScopeWholeSubtree,
 		ldapv2.NeverDerefAliases, 0, 0, false,
 		searchFilter,
-		authConfig.LDAP.LDAPAttributes,
+		ldapAttributes,
 		nil,
 	)
 	sr, err := ldapClient.Conn.Search(searchRequest)
@@ -93,9 +95,9 @@ func getUser(ldapClient *ldap.LDAPClient, username, roleFilter string, authConfi
 
 	for _, entry := range sr.Entries {
 		for _, attr := range entry.Attributes {
-			if attr.Name == "cn" {
+			if attr.Name == authConfig.LDAP.LDAPUserIDKey {
 				user.UID = attr.Values[0] //There will always be one CN
-			} else if attr.Name == "mail" {
+			} else if attr.Name == authConfig.LDAP.LDAPMailIDKey {
 				user.Username = attr.Values[0] //There will always be one mail
 			} else {
 				for _, value := range attr.Values {

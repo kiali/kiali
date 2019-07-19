@@ -86,9 +86,11 @@ const (
 	EnvLdapGroupFilter        = "LDAP_GROUP_FILTER"
 	EnvLdapBase               = "LDAP_BASE"
 	EnvLdapBindDN             = "LDAP_BIND_DN"
-	EnvLdapTokenExpirationMin = "LDAP_TOKEN_EXPIRATION_MIN"
 	EnvLdapRoleFilter         = "LDAPROLEFILTER"
 	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
+	EnvLdapMailIdKey          = "LDAP_MAIL_ID_KEY"
+	EnvLdapUserIdKey          = "LDAP_USER_ID_KEY"
+	EnvLdapMemeberOfKey       = "LDAP_MEMBER_OF_KEY"
 )
 
 // The versions that Kiali requires
@@ -244,11 +246,13 @@ type LDAPConfig struct {
 	LDAPInsecureSkipVerify bool     `yaml:"ldap_insecure_skip_verify,omitempty"`
 	LDAPUserFilter         string   `yaml:"ldap_user_filter,omitempty"`
 	LDAPGroupFilter        string   `yaml:"ldap_group_filter,omitempty"`
-	LDAPAttributes         []string `yaml:"ldap_attributes,omitempty"`
 	LDAPBase               string   `yaml:"ldap_base,omitempty"`
 	LDAPBindDN             string   `yaml:"ldap_bind_dn,omitempty"`
 	LDAPRoleFilter         string   `yaml:"ldap_role_filter,omitempty"`
 	LDAPSearchFilter       string   `yaml:"ldap_search_filter,omitempty"`
+	LDAPMailIDKey          string   `yaml:"ldap_mail_id_key,omitempty"`
+	LDAPUserIDKey          string   `yaml:"ldap_user_id_key,omitempty"`
+	LDAPMemeberOfKey       string   `yaml:"ldap_member_of_key,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -363,7 +367,10 @@ func NewConfig() (c *Config) {
 	c.Auth.LDAP.LDAPGroupFilter = getDefaultString(EnvLdapGroupFilter, "(cn=%s)")
 	c.Auth.LDAP.LDAPRoleFilter = getDefaultString(EnvLdapRoleFilter, "")
 	c.Auth.LDAP.LDAPSearchFilter = getDefaultString(EnvLdapSearchFilter, "(&(name={USERID}))")
-	c.Auth.LDAP.LDAPAttributes = []string{"memberOf", "cn", "mail"}
+	c.Auth.LDAP.LDAPMailIDKey = getDefaultString(EnvLdapMailIdKey, "mail")
+	c.Auth.LDAP.LDAPUserIDKey = getDefaultString(EnvLdapUserIdKey, "cn")
+	c.Auth.LDAP.LDAPMemeberOfKey = getDefaultString(EnvLdapMemeberOfKey, "memberof")
+
 	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
 
 	return
