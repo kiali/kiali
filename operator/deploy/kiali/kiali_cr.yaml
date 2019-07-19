@@ -64,6 +64,20 @@ spec:
 
 ##########
 #  ---
+#  apidocs:
+# 
+# Configure the api documentation
+# Use  api_spec_annotation_name and api_type_annotation_name if you want 
+# to customize the annotation names to use on your services
+# 
+#    ---
+#    annotations:
+#      api_spec_annotation_name: "kiali.kubernetes.io/api-spec"
+#      api_type_annotation_name: "kiali.kubernetes.io/api-type"
+
+
+##########
+#  ---
 #  auth:
 #
 # Determines what authentication strategy to use when users log into Kiali.

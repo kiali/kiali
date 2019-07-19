@@ -11,7 +11,6 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -99,7 +98,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 		/** Check if Service has the label app required by Istio */
 		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
 		/** Check if Service has the api annotation */
-		apiTypeFromAnnotation, _ := item.ObjectMeta.Annotations[conf.ApiDocumentation.ApiTypeAnnotationName]
+		apiTypeFromAnnotation := item.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
 		services[i] = models.ServiceOverview{
 			Name:         item.Name,
 			IstioSidecar: hasSidecar,
@@ -123,7 +122,7 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 		log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err)
 		return "", errors.NewInternalError(err)
 	}
-	apiSpecPath, _ := svc.ObjectMeta.Annotations[conf.ApiDocumentation.ApiSpecAnnotationName]
+	apiSpecPath := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
 
 	if apiSpecPath == "" {
 		qualifiedResource := schema.GroupResource{
@@ -149,17 +148,16 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 	}
 	defer resp.Body.Close()
 
+	data, err3 := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		log.Errorf("Status error: %v", resp.StatusCode)
-		return "", &errors.StatusError{meta_v1.Status{
-			Status:  meta_v1.StatusFailure,
-			Code:    int32(resp.StatusCode),
-			Reason:  "",
-			Message: "",
-		}}
+		qualifiedResource := schema.GroupResource{
+			Group:    "",
+			Resource: "",
+		}
+		return "", errors.NewGenericServerResponse(resp.StatusCode, "GET", qualifiedResource, "Proxied request error", string(data), -1, true)
 	}
 
-	data, err3 := ioutil.ReadAll(resp.Body)
 	if err3 != nil {
 		log.Errorf("Read body: %v", err)
 		return "", errors.NewInternalError(err3)
@@ -187,8 +185,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	var apidoc models.ApiDocumentation
 
 	conf := config.Get()
-	apiSpecFromAnnotation, _ := svc.ObjectMeta.Annotations[conf.ApiDocumentation.ApiSpecAnnotationName]
-	apiTypeFromAnnotation, _ := svc.ObjectMeta.Annotations[conf.ApiDocumentation.ApiTypeAnnotationName]
+	apiSpecFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
+	apiTypeFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
 	apiBaseUrl := ""
 	if apiSpecFromAnnotation != "" {
 		apiBaseUrl = conf.Server.WebRoot + "/api/namespaces/" + namespace + "/services/" + service

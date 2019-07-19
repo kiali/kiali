@@ -222,6 +222,11 @@ type ApiNamespacesConfig struct {
 	LabelSelector string `yaml:"label_selector,omitempty" json:"labelSelector"`
 }
 
+// ApiDocumentation is the top level configuration for API documentation
+type ApiDocumentation struct {
+	Annotations ApiDocAnnotations `yaml:"annotations,omitempty" json:"annotations"`
+}
+
 // ApiDocAnnotations contains the annotation names used for API documentation
 type ApiDocAnnotations struct {
 	ApiTypeAnnotationName string `yaml:"api_type_annotation_name,omitempty" json:"apiTypeAnnotationName"`
@@ -252,7 +257,7 @@ type Config struct {
 	API              ApiConfig         `yaml:"api,omitempty"`
 	Auth             AuthConfig        `yaml:"auth,omitempty"`
 	Deployment       DeploymentConfig  `yaml:"deployment,omitempty"`
-	ApiDocumentation ApiDocAnnotations `yaml:"apidoc_annotations,omitempty"`
+	ApiDocumentation ApiDocumentation  `yaml:"apidocs,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -286,8 +291,8 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 
 	// API Documentation
-	c.ApiDocumentation.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.kubernetes.io/api-type"))
-	c.ApiDocumentation.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.kubernetes.io/api-spec"))
+	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.kubernetes.io/api-type"))
+	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.kubernetes.io/api-spec"))
 
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))

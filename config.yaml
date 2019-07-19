@@ -40,7 +40,8 @@ external_services:
   # Default is "version"
   # version_label_name: version
 
-#apidoc_annotations:
+#Uncomment to configure api documentation options
+#apidocs:
   # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api type
   # Default is "kiali.kubernetes.io/api-type"
   # api_type_annotation_name: kiali.kubernetes.io/api-type
