@@ -19,10 +19,10 @@ type ServiceOverview struct {
 	// required: true
 	// example: true
 	AppLabel bool `json:"appLabel"`
-        // Type of api being served (graphql, grpc, rest)
-        // example: rest
-        // required: false
-        ApiType string `json:"apiType,omitempty"`
+	// Type of api being served (graphql, grpc, rest)
+	// example: rest
+	// required: false
+	ApiType string `json:"apiType,omitempty"`
 }
 
 type ServiceList struct {
@@ -42,26 +42,26 @@ type ServiceDetails struct {
 	Validations      IstioValidations  `json:"validations"`
 	ErrorTraces      int               `json:"errorTraces"`
 	NamespaceMTLS    MTLSStatus        `json:"namespaceMTLS"`
-        ApiDocumentation ApiDocumentation  `json:"apiDocumentation"`
+	ApiDocumentation ApiDocumentation  `json:"apiDocumentation"`
 }
 
 type Services []*Service
 type Service struct {
-	Name             string            `json:"name"`
-	CreatedAt        string            `json:"createdAt"`
-	ResourceVersion  string            `json:"resourceVersion"`
-	Namespace        Namespace         `json:"namespace"`
-	Labels           map[string]string `json:"labels"`
-	Selectors        map[string]string `json:"selectors"`
-	Type             string            `json:"type"`
-	Ip               string            `json:"ip"`
-	Ports            Ports             `json:"ports"`
-	ExternalName     string            `json:"externalName"`
+	Name            string            `json:"name"`
+	CreatedAt       string            `json:"createdAt"`
+	ResourceVersion string            `json:"resourceVersion"`
+	Namespace       Namespace         `json:"namespace"`
+	Labels          map[string]string `json:"labels"`
+	Selectors       map[string]string `json:"selectors"`
+	Type            string            `json:"type"`
+	Ip              string            `json:"ip"`
+	Ports           Ports             `json:"ports"`
+	ExternalName    string            `json:"externalName"`
 }
 
 type ApiDocumentation struct {
-        Type          string `json:"type,omitempty"`
-        BaseUrl       string `json:"baseUrl,omitempty"`
+	Type    string `json:"type,omitempty"`
+	BaseUrl string `json:"baseUrl,omitempty"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {
@@ -120,5 +120,5 @@ func (s *ServiceDetails) SetErrorTraces(errorTraces int) {
 }
 
 func (s *ServiceDetails) SetApiDocumentation(apidoc ApiDocumentation) {
-        s.ApiDocumentation  = apidoc
+	s.ApiDocumentation = apidoc
 }
