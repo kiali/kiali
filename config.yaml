@@ -42,10 +42,10 @@ external_services:
 
 #Uncomment to configure api documentation options
 #apidocs:
-  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api type
-  # Default is "kiali.kubernetes.io/api-type"
-  # api_type_annotation_name: kiali.kubernetes.io/api-type
-
   # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api spec location
   # Default is "kiali.kubernetes.io/api-spec"
   # api_spec_annotation_name: kiali.kubernetes.io/api-spec
+
+  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api type
+  # Default is "kiali.kubernetes.io/api-type"
+  # api_type_annotation_name: kiali.kubernetes.io/api-type

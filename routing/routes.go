@@ -421,7 +421,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec services string
+		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec services serviceApiDocumentation
 		// ---
 		// Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec
 		//
