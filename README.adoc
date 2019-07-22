@@ -332,7 +332,7 @@ spec:
 ----
 
 === LDAP Configuration
-To configure authentication strategy to LDAP add the following configuration to the yaml file. If the auth strategy is LDAP. The application will not start without the basic LDAP settings like ldapHost, ldapPort, ldapBase and ldapBindDN.
+To configure authentication strategy to LDAP add the following configuration to the yaml file. If the auth strategy is LDAP. The application will not start without the basic LDAP settings like ldap_host, ldap_port, ldap_base and ldap_bind_dn.
 
 ----
 auth:
@@ -347,9 +347,8 @@ auth:
     ldap_base: DC=example,DC=com
     ldap_bind_dn: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
     ldap_search_filter: (&(name={USERID}))
-    # This can be used to filter the user roles
     ldap_role_filter: .*xyz.*
-	  ldap_mail_id_key: mail
+    ldap_mail_id_key: mail
     ldap_user_id_key: cn
     ldap_member_of_key: memberOf
 ----

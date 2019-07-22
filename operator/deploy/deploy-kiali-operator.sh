@@ -893,7 +893,7 @@ if [ "${AUTH_STRATEGY}" == "" ]; then
 fi
 
 # Verify the AUTH_STRATEGY is a proper known value
-if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ] && [ "${AUTH_STRATEGY}" != "ldap" ]; then
+if [ "${AUTH_STRATEGY}" != "login" ] && [ "${AUTH_STRATEGY}" != "openshift" ] && [ "${AUTH_STRATEGY}" != "anonymous" ]; then
   echo "ERROR: unknown AUTH_STRATEGY [$AUTH_STRATEGY] must be either 'login', 'openshift' or 'anonymous'"
   exit 1
 fi

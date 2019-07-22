@@ -117,7 +117,7 @@
     msg: 'AUTH STRATEGY={{ kiali_vars.auth.strategy }}'
 - name: Confirm auth strategy is valid for OpenShift environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift','ldap, ' or 'anonymous'"
   when:
     - is_openshift == True
     - kiali_vars.auth.strategy != 'login'
@@ -126,12 +126,18 @@
     - kiali_vars.auth.strategy != 'ldap'
 - name: Confirm auth strategy is valid for Kubernetes environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'ldap' or 'anonymous'"
   when:
     - is_k8s == True
     - kiali_vars.auth.strategy != 'login'
     - kiali_vars.auth.strategy != 'anonymous'
-
+    - kiali_vars.auth.strategy != 'ldap'
+- name: Confirm ldap configuration when auth strategy is 'ldap'
+  fail:
+    msg: "Invalid configuration for LDAP! The mandatory parameters should be provided like `ldap_host', 'ldap_port', 'ldap_bind_dn', and 'ldap_base'"
+  when:
+    - kiali_vars.auth.strategy == "ldap"
+    - kiali_vars.auth.ldap.ldap_host == "" or kiali_vars.auth.ldap.ldap_post <= 0 or kiali_vars.auth.ldap.ldap_bind_dn == "" or kiali_vars.auth.ldap.ldap_base == ""
 # Fail if ingress is disabled but auth_strategy is openshift. This is because the openshift auth strategy
 # requires OAuth Client which requires a Route. So ingress must be enabled if strategy is openshift.
 - name: Ensure Ingress is Enabled if Auth Strategy is openshift

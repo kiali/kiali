@@ -8,103 +8,99 @@
 # If new groups are added to these defaults, you must remember to add the merge code to vars/main.yml.
 
 kiali_defaults:
-  installation_tag: ''
-  istio_namespace: ''
+  installation_tag: ""
+  istio_namespace: ""
 
   api:
     namespaces:
       exclude:
-        - 'istio-operator'
-        - 'kube.*'
-        - 'openshift.*'
-        - 'ibm.*'
-        - 'kiali-operator'
+      - "istio-operator"
+      - "kube.*"
+      - "openshift.*"
+      - "ibm.*"
+      - "kiali-operator"
       #label_selector:
 
   auth:
-    strategy: ''
+    strategy: ""
     ldap:
-      ldap_host: ''
+      ldap_host: ""
       ldap_port: 0
       ldap_use_ssl: false
       ldap_insecure_skip_verify: false
       ldap_user_filter: (cn=%s)
       ldap_group_filter: (cn=%s)
-      ldap_base: ''
-      ldap_bind_dn: ''
+      ldap_base: ""
+      ldap_bind_dn: ""
       ldap_search_filter: (&(name={USERID}))
-      # Time for token expiration
-      # This can be used to filter the user roles
-      ldap_role_filter: ''
+      ldap_role_filter: ""
       ldap_mail_id_key: mail
       ldap_user_id_key: cn
       ldap_member_of_key: memberOf
 
   deployment:
-    accessible_namespaces: ['^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$']
+    accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
     #additional_service_yaml:
-    image_name: 'kiali/kiali'
-    image_pull_policy: 'IfNotPresent'
-    image_pull_secrets: []
-    image_version: 'lastrelease'
+    image_name: "kiali/kiali"
+    image_pull_policy: "IfNotPresent"
+    image_version: "lastrelease"
     ingress_enabled: true
-    namespace: 'istio-system'
-    secret_name: 'kiali'
-    service_type: 'NodePort'
-    verbose_mode: '3'
-    version_label: ''
+    namespace: "istio-system"
+    secret_name: "kiali"
+    service_type: "NodePort"
+    verbose_mode: "3"
+    version_label: ""
     view_only_mode: false
 
   external_services:
     grafana:
       auth:
-        ca_file: ''
+        ca_file: ""
         insecure_skip_verify: false
-        password: ''
-        token: ''
-        type: 'none'
+        password: ""
+        token: ""
+        type: "none"
         use_kiali_token: false
-        username: ''
+        username: ""
       enabled: true
-      in_cluster_url: ''
-      url: ''
+      in_cluster_url: ""
+      url: ""
     istio:
-      istio_identity_domain: 'svc.cluster.local'
-      istio_sidecar_annotation: 'sidecar.istio.io/status'
-      url_service_version: ''
+      istio_identity_domain: "svc.cluster.local"
+      istio_sidecar_annotation: "sidecar.istio.io/status"
+      url_service_version: ""
     prometheus:
       auth:
-        ca_file: ''
+        ca_file: ""
         insecure_skip_verify: false
-        password: ''
-        token: ''
-        type: 'none'
+        password: ""
+        token: ""
+        type: "none"
         use_kiali_token: false
-        username: ''
-      custom_metrics_url: ''
-      url: ''
+        username: ""
+      custom_metrics_url: ""
+      url: ""
     tracing:
       auth:
-        ca_file: ''
+        ca_file: ""
         insecure_skip_verify: false
-        password: ''
-        token: ''
-        type: 'none'
+        password: ""
+        token: ""
+        type: "none"
         use_kiali_token: false
-        username: ''
+        username: ""
       enabled: true
-      namespace: ''
-      service: ''
-      url: ''
+      namespace: ""
+      service: ""
+      url: ""
 
-  identity:
-    {}
+  identity: {}
     #cert_file:
     #private_key_file:
 
   istio_labels:
-    app_label_name: 'app'
-    version_label_name: 'version'
+    app_label_name: "app"
+    version_label_name: "version"
 
   kubernetes_config:
     burst: 200
@@ -113,17 +109,17 @@ kiali_defaults:
     cache_duration: 300000000
 
   login_token:
-    signing_key: 'kiali'
+    signing_key: "kiali"
     expiration_seconds: 86400
 
   server:
-    address: ''
+    address: ""
     audit_log: true
     cors_allow_all: false
     metrics_enabled: true
     metrics_port: 9090
     port: 20001
-    web_root: ''
+    web_root: ""
 
 # These variables are outside of the kiali_defaults. Their values will be
 # auto-detected by the role and are not meant to be set by the user.
