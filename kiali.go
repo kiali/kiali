@@ -217,7 +217,7 @@ func validateConfig() error {
 	} else if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
 	} else if auth.Strategy == config.AuthStrategyLDAP && !CheckLDAPConfiguration(auth) {
-		return fmt.Errorf("Error: Auth strategy is LDAP but there is no LDAP configuratiom")
+		return fmt.Errorf("Auth strategy is LDAP but there is no LDAP configuration")
 	}
 
 	return nil
