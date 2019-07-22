@@ -18,6 +18,9 @@ NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= NodePort
 
+# Path to CR file for any other parameter
+KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
+
 # Find the client executable (either istiooc or oc or kubectl)
 OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
 
@@ -111,8 +114,8 @@ kiali-create: secret-create
 else
 kiali-create:
 endif
-	@echo Deploy Kiali using the settings found in deploy/kiali/kiali_cr_dev.yaml
-	cat deploy/kiali/kiali_cr_dev.yaml | \
+	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
+	cat ${KIALI_CR_FILE} | \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
 KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
 NAMESPACE="${NAMESPACE}" \
@@ -129,7 +132,7 @@ kiali-delete: secret-delete
 purge-kiali:
 	@echo Purge Kiali resources
 	${OC} patch kiali kiali -n "${OPERATOR_WATCH_NAMESPACE}" -p '{"metadata":{"finalizers": []}}' --type=merge ; true
-	${OC} delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
+	${OC} delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,roles,rolebindings,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n "${NAMESPACE}"
 	${OC} delete --ignore-not-found=true oauthclients.oauth.openshift.io --selector="app=kiali" -n "${NAMESPACE}" ; true
 
 ## run-playbook: Run the dev playbook to run the Ansible script locally.
@@ -140,3 +143,25 @@ run-playbook:
 # To use this, add "tags: test" to one or more tasks - those are the tasks that will be run.
 run-playbook-tag:
 	ansible-playbook -vvv -i dev-hosts dev-playbook.yml --tags test
+
+#
+# MOLECULE TARGETS
+#
+
+MOLECULE_SCENARIO ?= default
+ifeq ($(MOLECULE_DEBUG),true)
+MOLECULE_DEBUG_ARG="--debug"
+endif
+
+.molecule-docker-build-if-needed:
+	@if [ "$(shell docker image ls -q kiali-molecule:latest 2>/dev/null || echo -n "")" == "" ]; then \
+	  $(MAKE) molecule-docker-build ;\
+	fi
+
+## molecule-docker-build: Builds a docker image that can be used to run Molecule without requiring the host to have the proper python/pip installation
+molecule-docker-build:
+	docker build -t kiali-molecule:latest molecule/docker
+
+## molecule-test: Runs Molecule tests using the Molecule docker image
+molecule-test: .molecule-docker-build-if-needed
+	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test --scenario-name ${MOLECULE_SCENARIO}
