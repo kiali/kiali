@@ -13,8 +13,8 @@
     is_openshift: "{{ True if 'route.openshift.io' in api_groups else False }}"
     is_k8s: "{{ False if 'route.openshift.io' in api_groups else True }}"
   when:
-    - is_openshift == False
-    - is_k8s == False
+  - is_openshift == False
+  - is_k8s == False
 
 # Indicate what kind of cluster we are in (OpenShift or Kubernetes).
 - debug:
@@ -22,8 +22,8 @@
 - fail:
     msg: 'Cannot determine what type of cluster we are in'
   when:
-    - is_openshift == False
-    - is_k8s == False
+  - is_openshift == False
+  - is_k8s == False
 
 - name: Print some debug information
   vars:
@@ -44,7 +44,7 @@
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_namespace': kiali_vars.deployment.namespace}, recursive=True) }}"
   when:
-    - kiali_vars.istio_namespace == ""
+  - kiali_vars.istio_namespace == ""
 
 - name: Set default Grafana in_cluster_url
   set_fact:
@@ -55,25 +55,25 @@
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'namespace': kiali_vars.istio_namespace}}}, recursive=True) }}"
   when:
-    - kiali_vars.external_services.tracing.namespace == ""
+  - kiali_vars.external_services.tracing.namespace == ""
 
 - name: Set default Istio service that provides version info
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'istio': {'url_service_version': 'http://istio-pilot.' + kiali_vars.istio_namespace + ':8080/version'}}}, recursive=True) }}"
   when:
-    - kiali_vars.external_services.istio.url_service_version == ""
+  - kiali_vars.external_services.istio.url_service_version == ""
 
 - name: Set default Prometheus URL
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'url': 'http://prometheus.' + kiali_vars.istio_namespace + ':9090'}}}, recursive=True) }}"
   when:
-    - kiali_vars.external_services.prometheus.url == ""
+  - kiali_vars.external_services.prometheus.url == ""
 
 - name: Set default Prometheus Custom Metrics URL
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'custom_metrics_url': kiali_vars.external_services.prometheus.url}}}, recursive=True) }}"
   when:
-    - kiali_vars.external_services.prometheus.custom_metrics_url == ""
+  - kiali_vars.external_services.prometheus.custom_metrics_url == ""
 
 # Determine some more defaults.
 
@@ -81,36 +81,36 @@
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'server': {'web_root': '/' if is_openshift else '/kiali'}}, recursive=True) }}"
   when:
-    - kiali_vars.server.web_root == ""
+  - kiali_vars.server.web_root == ""
 - name: Make sure web root never ends with a slash
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'server': {'web_root': kiali_vars.server.web_root | regex_replace('\\/$', '')}}, recursive=True) }}"
   when:
-    - kiali_vars.server.web_root != "/"
-    - kiali_vars.server.web_root is match(".*/$")
+  - kiali_vars.server.web_root != "/"
+  - kiali_vars.server.web_root is match(".*/$")
 
 - name: Set default identity cert_file based on cluster type
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'identity': {'cert_file': '/kiali-cert/tls.crt' if is_openshift else '/kiali-cert/cert-chain.pem'}}, recursive=True) }}"
   when:
-    - kiali_vars.identity.cert_file is not defined
+  - kiali_vars.identity.cert_file is not defined
 - name: Set default identity private_key_file based on cluster type
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'identity': {'private_key_file': '/kiali-cert/tls.key' if is_openshift else '/kiali-cert/key.pem'}}, recursive=True) }}"
   when:
-    - kiali_vars.identity.private_key_file is not defined
+  - kiali_vars.identity.private_key_file is not defined
 
 - name: If image version is latest then we will want to always pull
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_pull_policy': 'Always'}}, recursive=True) }}"
   when:
-    - kiali_vars.deployment.image_version == "latest"
+  - kiali_vars.deployment.image_version == "latest"
 
 - name: Set default auth strategy based on cluster type
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'auth': {'strategy': 'openshift' if is_openshift else 'login'}}, recursive=True) }}"
   when:
-    - kiali_vars.auth.strategy == ""
+  - kiali_vars.auth.strategy == ""
 
 # Indicate how users are to authenticate to Kiali, making sure the strategy is valid.
 - debug:
@@ -119,33 +119,33 @@
   fail:
     msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift','ldap, ' or 'anonymous'"
   when:
-    - is_openshift == True
-    - kiali_vars.auth.strategy != 'login'
-    - kiali_vars.auth.strategy != 'anonymous'
-    - kiali_vars.auth.strategy != 'openshift'
-    - kiali_vars.auth.strategy != 'ldap'
+  - is_openshift == True
+  - kiali_vars.auth.strategy != 'login'
+  - kiali_vars.auth.strategy != 'anonymous'
+  - kiali_vars.auth.strategy != 'openshift'
+  - kiali_vars.auth.strategy != 'ldap'
 - name: Confirm auth strategy is valid for Kubernetes environments
   fail:
     msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'ldap' or 'anonymous'"
   when:
-    - is_k8s == True
-    - kiali_vars.auth.strategy != 'login'
-    - kiali_vars.auth.strategy != 'anonymous'
-    - kiali_vars.auth.strategy != 'ldap'
+  - is_k8s == True
+  - kiali_vars.auth.strategy != 'login'
+  - kiali_vars.auth.strategy != 'anonymous'
+  - kiali_vars.auth.strategy != 'ldap'
 - name: Confirm ldap configuration when auth strategy is 'ldap'
   fail:
     msg: "Invalid configuration for LDAP! The mandatory parameters should be provided like `ldap_host', 'ldap_port', 'ldap_bind_dn', and 'ldap_base'"
   when:
-    - kiali_vars.auth.strategy == "ldap"
-    - kiali_vars.auth.ldap.ldap_host == "" or kiali_vars.auth.ldap.ldap_post <= 0 or kiali_vars.auth.ldap.ldap_bind_dn == "" or kiali_vars.auth.ldap.ldap_base == ""
+  - kiali_vars.auth.strategy == "ldap"
+  - kiali_vars.auth.ldap.ldap_host == "" or kiali_vars.auth.ldap.ldap_post <= 0 or kiali_vars.auth.ldap.ldap_bind_dn == "" or kiali_vars.auth.ldap.ldap_base == ""
 # Fail if ingress is disabled but auth_strategy is openshift. This is because the openshift auth strategy
 # requires OAuth Client which requires a Route. So ingress must be enabled if strategy is openshift.
 - name: Ensure Ingress is Enabled if Auth Strategy is openshift
   fail:
     msg: "The auth.strategy is 'openshift' which requires a Route, but deployment.ingress_enabled is false. Aborting."
   when:
-    - kiali_vars.auth.strategy == "openshift"
-    - kiali_vars.deployment.ingress_enabled == False
+  - kiali_vars.auth.strategy == "openshift"
+  - kiali_vars.deployment.ingress_enabled == False
 
 # WHEN ANSIBLE OPERATOR CONTAINS ANSIBLE 2.8,
 # WE CAN REPLACE THIS SHELL TASK BELOW WITH AN ANSIBLE TASK THAT LOOKS LIKE THIS:
@@ -161,21 +161,21 @@
   shell: echo -n $(curl -s https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null | grep  "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
   register: github_lastrelease
   when:
-    - kiali_vars.deployment.image_version == "lastrelease"
+  - kiali_vars.deployment.image_version == "lastrelease"
 - set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': github_lastrelease.stdout}}, recursive=True) }}"
   when:
-    - kiali_vars.deployment.image_version == "lastrelease"
+  - kiali_vars.deployment.image_version == "lastrelease"
 - fail:
     msg: 'Could not determine what the image version should be. Set deployment.image_version to a valid value'
   when:
-    - kiali_vars.deployment.image_version == ""
+  - kiali_vars.deployment.image_version == ""
 
 - name: Determine version_label based on image_version
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'version_label': 'master' if kiali_vars.deployment.image_version == 'latest' else kiali_vars.deployment.image_version}}, recursive=True) }}"
   when:
-    - kiali_vars.deployment.version_label == ""
+  - kiali_vars.deployment.version_label == ""
 
 # Indicate which Kiali image we are going to use.
 - debug:
@@ -204,41 +204,41 @@
   fail:
     msg: "The operator cannot support deployment.accessible_namespaces set to '**' because it does not have permissions to create clusterroles or clusterrolebindings"
   when:
-    - '"**" in kiali_vars.deployment.accessible_namespaces'
-    - (role_json | json_query(query_cr) != [true]) or (role_json | json_query(query_crb) != [true])
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
+  - (role_json | json_query(query_cr) != [true]) or (role_json | json_query(query_crb) != [true])
 
 - name: Find all namespaces (this is limited to what the operator has permission to see)
   set_fact:
     all_namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace') | default({}) | json_query('[].metadata.name') }}"
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Determine all accessible namespaces, expanding regex expressions to matched namespaces
   set_fact:
     all_accessible_namespaces: '{{ ((all_accessible_namespaces | default([ kiali_vars.deployment.namespace ])) + [ item.1 | regex_search(item.0) ]) | unique }}'
   loop: '{{ kiali_vars.deployment.accessible_namespaces | product(all_namespaces) | list }}'
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
-    - item.1 | regex_search(item.0)
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - item.1 | regex_search(item.0)
 
 - name: If Kiali has not been granted access to any namespaces, just use the deployment namespace
   set_fact:
     all_accessible_namespaces: '{{ [ kiali_vars.deployment.namespace ]}}'
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
-    - all_accessible_namespaces is not defined or all_accessible_namespaces | length == 0
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - all_accessible_namespaces is not defined or all_accessible_namespaces | length == 0
 
 - fail:
     msg: 'Kiali has not been granted access to its own namespace of [{{ kiali_vars.deployment.namespace }}]. This is explicitly required. Check the deployment.accessible_namespaces setting.'
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
-    - kiali_vars.deployment.namespace not in all_accessible_namespaces
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.deployment.namespace not in all_accessible_namespaces
 
 - name: If accessible namespaces list has the special all-namespaces indicator, remove all other namespaces from the list
   set_fact:
     all_accessible_namespaces: ['**']
   when:
-    - '"**" in kiali_vars.deployment.accessible_namespaces'
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
 
 - name: Set deployment.accessible_namespaces to a list of full namespace names
   set_fact:
@@ -252,16 +252,16 @@
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'api': {'namespaces': {'label_selector': ('kiali.io/member-of=' + kiali_vars.deployment.namespace)}}}, recursive=True) }}"
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
-    - kiali_vars.api.namespaces.label_selector is not defined
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - kiali_vars.api.namespaces.label_selector is not defined
 
 - name: Make sure label selector is in the valid format name=value
   fail:
     msg: "The api.namespaces.label_selector is not valid [{{ kiali_vars.api.namespaces.label_selector }}] - it must be in the form of 'name=value' following Kubernetes syntax rules for label names and values."
   when:
-    - kiali_vars.api.namespaces.label_selector is defined
-    # this regex is not 100% accurate, but we want to at least catch obvious errors
-    - kiali_vars.api.namespaces.label_selector is not regex('^[a-zA-Z0-9/_.-]+=[a-zA-Z0-9_.-]+$')
+  - kiali_vars.api.namespaces.label_selector is defined
+  # this regex is not 100% accurate, but we want to at least catch obvious errors
+  - kiali_vars.api.namespaces.label_selector is not regex('^[a-zA-Z0-9/_.-]+=[a-zA-Z0-9_.-]+$')
 
 # The following few tasks read the current Kiali configmap (if one exists) in order to figure out what
 # namespaces are no longer accessible. Those namespaces will have their Kiali roles removed.
@@ -279,9 +279,9 @@
     current_image_name: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_name') }}"
     current_image_version: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_version') }}"
   when:
-    - current_configmap is defined
-    - current_configmap.data is defined
-    - current_configmap.data['config.yaml'] is defined
+  - current_configmap is defined
+  - current_configmap.data is defined
+  - current_configmap.data['config.yaml'] is defined
 
 # Because we need to remove the labels that were created before, we must not allow the user to change
 # the label_selector. So if the current accessible_namespaces is not ** but the label_select is being changed,
@@ -291,18 +291,18 @@
   fail:
     msg: 'The api.namespaces.label_selector cannot be changed to a different value. It was [{{ current_label_selector }}] but is now configured to be [{{ kiali_vars.api.namespaces.label_selector }}]. In order to install Kiali with a different label selector than what was used before, please uninstall Kiali first.'
   when:
-    - current_accessible_namespaces is defined
-    - '"**" not in current_accessible_namespaces'
-    - current_label_selector is defined
-    - kiali_vars.api.namespaces.label_selector is defined
-    - current_label_selector != kiali_vars.api.namespaces.label_selector
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+  - current_label_selector is defined
+  - kiali_vars.api.namespaces.label_selector is defined
+  - current_label_selector != kiali_vars.api.namespaces.label_selector
 
 - name: Determine the namespaces that were previously accessible but are now inaccessible
   set_fact:
     no_longer_accessible_namespaces: '{{ current_accessible_namespaces | difference(kiali_vars.deployment.accessible_namespaces) }}'
   when:
-    - current_accessible_namespaces is defined
-    - '"**" not in current_accessible_namespaces'
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
 
 - name: Delete all additional Kiali roles from namespaces that Kiali no longer has access to
   include_tasks: remove-roles.yml
@@ -310,16 +310,16 @@
   loop_control:
     loop_var: role_namespace
   when:
-    - no_longer_accessible_namespaces is defined
+  - no_longer_accessible_namespaces is defined
 
 - name: Delete Kiali cluster roles if no longer given special access to all namespaces
   vars:
     role_namespace: '{{ kiali_vars.deployment.namespace }}'
   include_tasks: remove-clusterroles.yml
   when:
-    - current_accessible_namespaces is defined
-    - '"**" in current_accessible_namespaces'
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Delete all Kiali roles from namespaces if view_only_mode is changing since role bindings are immutable
   include_tasks: remove-roles.yml
@@ -327,20 +327,20 @@
   loop_control:
     loop_var: role_namespace
   when:
-    - current_view_only_mode is defined
-    - current_view_only_mode != kiali_vars.deployment.view_only_mode
-    - current_accessible_namespaces is defined
-    - '"**" not in current_accessible_namespaces'
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
 
 - name: Delete Kiali cluster roles if view_only_mode is changing since role bindings are immutable
   vars:
     role_namespace: '{{ kiali_vars.deployment.namespace }}'
   include_tasks: remove-clusterroles.yml
   when:
-    - current_view_only_mode is defined
-    - current_view_only_mode != kiali_vars.deployment.view_only_mode
-    - current_accessible_namespaces is defined
-    - '"**" in current_accessible_namespaces'
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
 
 - name: Remove Kiali label from namespaces that Kiali no longer has access to
   include_tasks: remove-namespace-label.yml
@@ -350,8 +350,8 @@
   loop_control:
     loop_var: the_namespace
   when:
-    - no_longer_accessible_namespaces is defined
-    - current_label_selector is defined
+  - no_longer_accessible_namespaces is defined
+  - current_label_selector is defined
 
 - name: Create namespace labels on all accessible namespaces
   include_tasks: create-namespace-label.yml
@@ -363,7 +363,7 @@
   loop_control:
     loop_var: the_namespace
   when:
-    - '"**" not in kiali_vars.deployment.accessible_namespaces'
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
 - name: Delete Kiali deployment if image is changing since image is immutable
   k8s:
@@ -373,21 +373,21 @@
     namespace: '{{ kiali_vars.deployment.namespace }}'
     name: kiali
   when:
-    - is_openshift == True or is_k8s == True
-    - current_image_name is defined and current_image_version is defined
-    - (current_image_name != kiali_vars.deployment.image_name) or (current_image_version != kiali_vars.deployment.image_version)
+  - is_openshift == True or is_k8s == True
+  - current_image_name is defined and current_image_version is defined
+  - (current_image_name != kiali_vars.deployment.image_name) or (current_image_version != kiali_vars.deployment.image_version)
 
 # Now deploy all resources for the specific cluster environment
 
 - name: Execute for OpenShift environment
   include: openshift/os-main.yml
   when:
-    - is_openshift == True
+  - is_openshift == True
 
 - name: Execute for Kubernetes environment
   include: kubernetes/k8s-main.yml
   when:
-    - is_k8s == True
+  - is_k8s == True
 
 # The next couple tasks wait for the Monitoring Dashboard CRD to be established, and
 # then adds the monitoring dashboard resources. If there are any errors here, they
@@ -402,7 +402,7 @@
     namespace: '{{ kiali_vars.deployment.namespace }}'
   register: monitoringdashboards_crd
   until:
-    - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
   retries: 6
   delay: 5
   ignore_errors: yes
@@ -411,7 +411,7 @@
   debug:
     msg: 'It does not appear you have the Monitoring Dashboard CRD created. Monitoring Dashboards will not be created.'
   when:
-    - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join != 'True'
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join != 'True'
 
 - name: Create the Monitoring Dashboards
   k8s:
@@ -419,10 +419,10 @@
     namespace: '{{ kiali_vars.deployment.namespace }}'
     definition: "{{ lookup('template', item) }}"
   with_fileglob:
-    - 'templates/dashboards/*.yaml'
+  - 'templates/dashboards/*.yaml'
   ignore_errors: yes
   when:
-    - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
+  - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
 
 - name: Force the Kiali pod to restart if necessary
   k8s:
@@ -435,10 +435,10 @@
     pods: "{{ query('k8s', kind='Pod', namespace=kiali_vars.deployment.namespace, label_selector='app=kiali') }}"
   loop: '{{ pods }}'
   when:
-    - pods is defined
-    - processed_resources.configmap is defined
-    - processed_resources.configmap.changed == True
-    - processed_resources.configmap.method == "patch"
+  - pods is defined
+  - processed_resources.configmap is defined
+  - processed_resources.configmap.changed == True
+  - processed_resources.configmap.method == "patch"
 
 - name: Kiali operator has completed all processing for installation.
   debug:

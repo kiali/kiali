@@ -22,27 +22,28 @@ kiali_defaults:
       #label_selector:
 
   auth:
-    strategy: ""
     ldap:
-      ldap_host: ""
-      ldap_port: 0
-      ldap_use_ssl: false
-      ldap_insecure_skip_verify: false
-      ldap_user_filter: (cn=%s)
-      ldap_group_filter: (cn=%s)
       ldap_base: ""
       ldap_bind_dn: ""
-      ldap_search_filter: (&(name={USERID}))
+      ldap_group_filter: "(cn=%s)"
+      ldap_host: ""
+      ldap_insecure_skip_verify: false
+      ldap_mail_id_key: "mail"
+      ldap_member_of_key: "memberOf"
+      ldap_port: 0
       ldap_role_filter: ""
-      ldap_mail_id_key: mail
-      ldap_user_id_key: cn
-      ldap_member_of_key: memberOf
+      ldap_search_filter: "(&(name={USERID}))"
+      ldap_use_ssl: false
+      ldap_user_filter: "(cn=%s)"
+      ldap_user_id_key: "cn"
+    strategy: ""
 
   deployment:
     accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
     #additional_service_yaml:
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
+    image_pull_secrets: []
     image_version: "lastrelease"
     ingress_enabled: true
     namespace: "istio-system"
