@@ -85,8 +85,10 @@ func getPathURL(endpoint string) (path string) {
 	return u.Path
 }
 
-func discoverTracingService() (service string) {
+func discoverTracingService() (service string, port int32) {
 	client, err := getClient()
+	tracingConfig := config.Get().ExternalServices.Tracing
+
 	//  Return if there is a problem with the client
 	if err != nil {
 		log.Debugf("[TRACING] Service discovery failed: %v", err)
@@ -96,9 +98,15 @@ func discoverTracingService() (service string) {
 	for _, name := range tracingLookupRoutes {
 		service = name
 		// Try to discover the service
-		serv, err := client.GetService(config.Get().IstioNamespace, service)
+		serv, err := client.GetService(tracingConfig.Namespace, service)
 		// If there is no error and the service is not nil that means that we found tracing
 		if serv != nil && err == nil {
+			// Discover the port where service is serving. Defautl port, Jaeger default port.
+			port = tracingConfig.Port
+			if len(serv.Spec.Ports) > 0 {
+				port = serv.Spec.Ports[0].Port
+			}
+
 			log.Debugf("[TRACING] Service in: %s", service)
 			break
 		} else {
@@ -144,7 +152,7 @@ func DiscoverJaeger() string {
 
 	// There is not a service in the configuration we need discover the service
 	if tracingConfig.Service == "" {
-		tracingConfig.Service = discoverTracingService()
+		tracingConfig.Service, tracingConfig.Port = discoverTracingService()
 		appstate.JaegerConfig = tracingConfig
 	}
 
