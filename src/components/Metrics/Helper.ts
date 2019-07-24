@@ -1,116 +1,103 @@
-import assign from 'lodash/fp/assign';
 import {
   TimeSeries,
   DashboardModel,
   AggregationModel,
   SingleLabelValues,
-  LabelDisplayName,
   AllPromLabelsValues,
   PromLabel,
   MetricsQuery
 } from '@kiali/k-charted-pf3';
 
-import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
+import { MetricsSettings, LabelsSettings, Quantiles, LabelSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import { DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { AllLabelsValues } from '../../types/Metrics';
+import history, { URLParam } from '../../app/History';
 
-export const extractLabelValuesOnSeries = (
+export const extractLabelsSettingsOnSeries = (
   series: TimeSeries[],
   aggregations: AggregationModel[],
-  extracted: AllLabelsValues
+  extracted: LabelsSettings
 ): void => {
   series.forEach(ts => {
     Object.keys(ts.labelSet).forEach(k => {
       const agg = aggregations.find(a => a.label === k);
       if (agg) {
         const value = ts.labelSet[k];
-        let values = extracted.get(agg.displayName);
-        if (!values) {
-          values = {};
-          extracted.set(agg.displayName, values);
+        let lblObj = extracted.get(agg.label);
+        if (!lblObj) {
+          lblObj = {
+            checked: true,
+            displayName: agg.displayName,
+            values: {},
+            defaultValue: true
+          };
+          extracted.set(agg.label, lblObj);
+        } else {
+          lblObj.checked = true;
         }
-        values[value] = true;
+        lblObj.values[value] = true;
       }
     });
   });
 };
 
-export const extractLabelValues = (dashboard: DashboardModel, previousValues: AllLabelsValues): AllLabelsValues => {
+export const extractLabelsSettings = (dashboard: DashboardModel): LabelsSettings => {
   // Find all labels on all series
-  const labelsWithValues: AllLabelsValues = new Map();
-  dashboard.aggregations.forEach(agg => labelsWithValues.set(agg.displayName, {}));
+  const newSettings: LabelsSettings = new Map();
+  dashboard.aggregations.forEach(agg =>
+    newSettings.set(agg.label, {
+      checked: false,
+      displayName: agg.displayName,
+      values: {},
+      defaultValue: true
+    })
+  );
   dashboard.charts.forEach(chart => {
     if (chart.metric) {
-      extractLabelValuesOnSeries(chart.metric, dashboard.aggregations, labelsWithValues);
+      extractLabelsSettingsOnSeries(chart.metric, dashboard.aggregations, newSettings);
     }
     if (chart.histogram) {
       Object.keys(chart.histogram).forEach(stat => {
-        extractLabelValuesOnSeries(chart.histogram![stat], dashboard.aggregations, labelsWithValues);
+        extractLabelsSettingsOnSeries(chart.histogram![stat], dashboard.aggregations, newSettings);
       });
     }
   });
-  // Keep existing show flag
-  labelsWithValues.forEach((values: SingleLabelValues, key: LabelDisplayName) => {
-    const previous = previousValues.get(key);
-    if (previous) {
-      Object.keys(values).forEach(k => {
-        if (previous.hasOwnProperty(k)) {
-          values[k] = previous[k];
-        } else if (Object.getOwnPropertyNames(previous).length > 0) {
-          values[k] = false;
-        }
-      });
-    }
-  });
-  return labelsWithValues;
+  return newSettings;
 };
 
 export const mergeLabelFilter = (
-  labelValues: AllLabelsValues,
-  label: LabelDisplayName,
+  lblSettings: LabelsSettings,
+  label: PromLabel,
   value: string,
   checked: boolean
-): AllLabelsValues => {
-  const newLabels = new Map();
-  labelValues.forEach((val, key) => {
-    const newVal = assign(val)({});
-    if (key === label) {
-      newVal[value] = checked;
-    }
-    newLabels.set(key, newVal);
-  });
-  return newLabels;
+): LabelsSettings => {
+  // Note: we don't really care that the new map references same objects as the old one (at least at the moment) so shallow copy is fine
+  const newSettings = new Map(lblSettings);
+  const objLbl = newSettings.get(label);
+  if (objLbl) {
+    objLbl.values[value] = checked;
+  }
+  return newSettings;
 };
 
-export const convertAsPromLabels = (aggregations: AggregationModel[], labels: AllLabelsValues): AllPromLabelsValues => {
+export const convertAsPromLabels = (lblSettings: LabelsSettings): AllPromLabelsValues => {
   const promLabels = new Map<PromLabel, SingleLabelValues>();
-  labels.forEach((val, k) => {
-    const chartLabel = aggregations.find(l => l.displayName === k);
-    if (chartLabel) {
-      promLabels.set(chartLabel.label, val);
-    }
+  lblSettings.forEach((objLbl, k) => {
+    promLabels.set(k, objLbl.values);
   });
   return promLabels;
 };
 
-export const settingsToOptions = (settings: MetricsSettings, opts: MetricsQuery, aggregations?: AggregationModel[]) => {
+export const settingsToOptions = (settings: MetricsSettings, opts: MetricsQuery) => {
   opts.avg = settings.showAverage;
   opts.quantiles = settings.showQuantiles;
   opts.byLabels = [];
-  if (aggregations) {
-    settings.activeLabels.forEach(lbl => {
-      const agg = aggregations.find(a => a.displayName === lbl);
-      if (agg) {
-        opts.byLabels!.push(agg.label);
-      }
-    });
-  }
-};
-
-export const initMetricsSettings = (opts: MetricsQuery, aggregations?: AggregationModel[]) => {
-  settingsToOptions(MetricsSettingsDropdown.initialMetricsSettings(), opts, aggregations);
+  settings.labelsSettings.forEach((objLbl, k) => {
+    if (objLbl.checked) {
+      opts.byLabels!.push(k);
+    }
+  });
 };
 
 export const durationToOptions = (duration: DurationInSeconds, opts: MetricsQuery) => {
@@ -123,4 +110,46 @@ export const durationToOptions = (duration: DurationInSeconds, opts: MetricsQuer
 export const initDuration = (opts: MetricsQuery): MetricsQuery => {
   durationToOptions(MetricsDuration.initialDuration(), opts);
   return opts;
+};
+
+export const readMetricsSettingsFromURL = (): MetricsSettings => {
+  const urlParams = new URLSearchParams(history.location.search);
+  const settings: MetricsSettings = {
+    showAverage: true,
+    showQuantiles: ['0.5', '0.95', '0.99'],
+    labelsSettings: new Map()
+  };
+  const avg = urlParams.get(URLParam.SHOW_AVERAGE);
+  if (avg !== null) {
+    settings.showAverage = avg === 'true';
+  }
+  const quantiles = urlParams.get(URLParam.QUANTILES);
+  if (quantiles !== null) {
+    if (quantiles.trim().length !== 0) {
+      settings.showQuantiles = quantiles.split(' ').map(val => val.trim() as Quantiles);
+    } else {
+      settings.showQuantiles = [];
+    }
+  }
+  const byLabels = urlParams.getAll(URLParam.BY_LABELS);
+  if (byLabels.length !== 0) {
+    byLabels.forEach(val => {
+      const kvpair = val.split('=', 2);
+      const lblObj: LabelSettings = {
+        displayName: '',
+        checked: true,
+        values: {},
+        defaultValue: true
+      };
+      if (kvpair[1]) {
+        kvpair[1].split(',').forEach(v => {
+          lblObj.values[v] = true;
+        });
+        // When values filters are provided by URL, other filters should be false by default
+        lblObj.defaultValue = false;
+      }
+      settings.labelsSettings.set(kvpair[0], lblObj);
+    });
+  }
+  return settings;
 };
