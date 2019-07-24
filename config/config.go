@@ -57,7 +57,7 @@ const (
 	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
 	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
-	EnvTracingServicePort 	   = "TRACING_SERVICE_PORT"
+	EnvTracingServicePort      = "TRACING_SERVICE_PORT"
 
 	EnvThreeScaleAdapterName = "THREESCALE_ADAPTER_NAME"
 	EnvThreeScaleServiceName = "THREESCALE_SERVICE_NAME"
@@ -158,7 +158,7 @@ type TracingConfig struct {
 	Enabled   bool   `yaml:"enabled"`
 	Namespace string `yaml:"namespace"`
 	Service   string `yaml:"service"`
-	Port      int32 `yaml: "port""`
+	Port      int32  `yaml:"port"`
 	Protocol  string `yaml:"protocol"`
 	URL       string `yaml:"url"`
 	Auth      Auth   `yaml:"auth"`
