@@ -118,7 +118,7 @@ func discoverTracingService() (service string, port int32) {
 }
 
 func discoverTracingPath() (path string) {
-	tracingConfig := config.Get().ExternalServices.Tracing
+	tracingConfig := appstate.JaegerConfig
 	// We had the service so we can check the Path
 	path, err := checkIfQueryBasePath(tracingConfig.Namespace, tracingConfig.Service)
 	if err != nil {
