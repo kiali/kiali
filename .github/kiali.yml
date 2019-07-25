@@ -1,0 +1,4 @@
+checks:
+  pull_requests:
+    required_approvals:
+      - [gbaufake, mattmahoneyrh, hhovsepy, skondkar]
