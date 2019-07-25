@@ -1,0 +1,66 @@
+---
+dependency:
+  name: galaxy
+platforms:
+- name: default
+  groups:
+  - k8s
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_whitelist: junit
+  inventory:
+    group_vars:
+      all:
+        kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/maistra-operator.yaml"
+        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/maistra-cr.yaml"
+        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/jaeger-operator.yaml"
+        istio:
+          control_plane_namespace: istio-system
+        operators:
+          pull_secret:
+            enabled: false
+            name: secret
+          jaeger:
+            image: docker.io/jaegertracing/jaeger-operator:1.13.1
+            namespace: observability
+          maistra:
+            image: docker.io/maistra/istio-operator-ubi8:0.12.0
+            namespace: istio-operator
+          kiali:
+            namespace: kiali-operator
+            hub: quay.io/kiali/kiali-operator
+            tag: v1.0.0
+            watch_namespace: "kiali-operator"
+            pull_policy: Always
+            clusterrolebindings: ""
+            clusterroles: ""
+            image_pull_policy: Always
+        maistra:
+          cr:
+            control_planes:
+            - "istio-system"
+            - "istio-system2"
+            global:
+              hub:  docker.io/maistra
+              tag: 0.12.0
+            maistra_tag: 0.12.0
+            kiali_hub: quay.io/kiali
+            kiali_tag: "{{ operators.kiali.tag }}"
+            threescale_hub: quay.io/3scale
+            threescale_tag: 0.7.1
+            jaeger_hub: docker.io/jaegertracing
+            jaeger_tag: 1.13.1
+        kiali:
+          accessible_namespaces:
+          - "dummy-istio-system"
+          - "istio-system"
+          label_selector: kiali.io/member-of={{ istio.control_plane_namespace }}
+scenario:
+  name: maistra-e2e
+  test_sequence:
+  - prepare
+  - converge
+  - destroy

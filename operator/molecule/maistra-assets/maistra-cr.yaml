@@ -1,0 +1,98 @@
+apiVersion: maistra.io/v1
+kind: ServiceMeshControlPlane
+metadata:
+  name: install-{{ item }}
+spec:
+  istio:
+    global:
+      hub: {{ maistra.cr.global.hub }}
+      tag: {{ maistra.cr.global.tag }}
+      multitenant: true
+      imagePullPolicy: Always
+      controlPlaneSecurityEnabled: false
+      mtls:
+        enabled: false
+{% if operators.pull_secret.enabled %}
+      imagePullSecrets:
+       - name:  {{ operators.pull_secret.name }}
+{% endif %}
+      proxy:
+        # constrain resources for use in smaller environments
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
+
+    istio_cni:
+      enabled: true
+
+    gateways:
+      istio-egressgateway:
+        # disable autoscaling for use in smaller environments
+        autoscaleEnabled: false
+      istio-ingressgateway:
+        # disable autoscaling for use in smaller environments
+        autoscaleEnabled: false
+        type: ClusterIP
+        ports:
+        - port: 15020
+          targetPort: 15020
+          name: status-port
+        - port: 80
+          targetPort: 80
+          name: http2
+        - port: 443
+          name: https
+          # This is the port where sni routing happens
+        - port: 15443
+          targetPort: 15443
+          name: tls
+    mixer:
+      policy:
+        # disable autoscaling for use in smaller environments
+        autoscaleEnabled: false
+
+      telemetry:
+        # disable autoscaling for use in smaller environments
+        autoscaleEnabled: false
+        # constrain resources for use in smaller environments
+        resources:
+          requests:
+            cpu: 100m
+            memory: 1G
+          limits:
+            cpu: 500m
+            memory: 4G
+
+    pilot:
+      # disable autoscaling for use in smaller environments
+      autoscaleEnabled: false
+      # increase random sampling rate for development/testing
+      traceSampling: 100.0
+
+    kiali:
+      # to disable kiali
+      enabled: true
+      hub: {{ maistra.cr.kiali_hub }}
+      tag: {{ maistra.cr.kiali_tag }}
+    
+    # disable grafana
+    grafana:
+      enabled: true
+
+     # to disable tracing (i.e. jaeger)
+    tracing:
+      enabled: true
+      jaeger:
+        # simple, all-in-one strategy
+        template: all-in-one
+        hub:  {{ maistra.cr.jaeger_hub }}
+        tag:  {{ maistra.cr.jaeger_tag }}
+      
+    threeScale:
+      enabled: true
+      hub: {{ maistra.cr.threescale_hub }}
+      tag: {{ maistra.cr.threescale_tag }}

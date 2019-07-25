@@ -1,0 +1,123 @@
+- name: Destroy
+  hosts: localhost
+  connection: local
+  tasks:
+  
+  - name: Remove Maistra CR from Control Planes
+    vars:
+      maistra_custom_resource: "{{ lookup('template', maistra_cr_file_path) | from_yaml }}"
+    k8s:
+      state: absent
+      api_version: maistra.io/v1
+      kind: ServiceMeshControlPlane
+      namespace: "{{ item }}"
+      name: "{{ maistra_custom_resource.metadata.name }}"
+    with_items:
+    - "{{ maistra.cr.control_planes }}"
+  
+  - name: Produce Files with Correct Parameters for Kiali Operator
+    shell: " {{ item }}"
+    with_items:
+    - cat {{ kiali_operator_assets_path }}/namespace.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }}  envsubst
+    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ operators.kiali.clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ operators.kiali.clusterroles }}" envsubst
+    register: template
+
+  - name: Parse Template Yaml Files
+    set_fact:
+      namespace: "{{ (template.results[0].stdout | from_yaml_all | list)[0] }}"
+      crd0: "{{ (template.results[1].stdout | from_yaml_all | list)[0] }}"
+      crd1: "{{ (template.results[1].stdout | from_yaml_all | list)[1] }}"
+      role_binding: "{{ (template.results[2].stdout | from_yaml_all | list)[0] }}"
+      service_account: "{{ (template.results[3].stdout | from_yaml_all | list)[0] }}"
+      operator: "{{ (template.results[4].stdout | from_yaml_all | list)[0] }}"
+      role: "{{ (template.results[5].stdout | from_yaml_all | list)[0] }}"
+
+  - name: Combine Namespace on the Files that need it
+    set_fact:
+      service_account: "{{ service_account | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
+      role_binding: "{{ role_binding | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
+      role: "{{ role | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
+      operator: "{{ operator | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
+
+  - name: Wait for Kiali MonitoringDashboards to be uninstalled
+    k8s_facts:
+      api_version: monitoring.kiali.io/v1alpha1
+      kind: MonitoringDashboard
+      namespace: "{{ item }}"
+    register: doomed_list
+    until:
+    - doomed_list | default({}) | json_query("resources[*]") | length == 0
+    retries: 60
+    delay: 5
+    with_items:
+    - "{{ maistra.cr.control_planes }}"
+
+
+
+  - name: Removing Kiali Operator First Custom Resource Definition
+    k8s:
+      state: absent
+      definition: "{{ crd0 }}"
+
+  - name: Removing Kiali Operator Second Custom Resource Definition
+    k8s:
+      state: absent
+      definition: "{{ crd1 }}"
+
+  - name: Removing Kiali Operator Role
+    k8s:
+      state: absent
+      definition: "{{ role }}"
+
+  - name: Removing Kiali Operator Role Binding
+    k8s:
+      state: absent
+      definition: "{{ role_binding }}"
+
+  - name: Removing Kiali Operator Service Account
+    k8s:
+      state: absent
+      definition: "{{ service_account  }}"
+
+  - name: Removing Kiali Operator Deployment
+    k8s:
+      state: absent
+      definition: "{{ operator }}"
+
+  - name: Removing Kiali Operator namespace
+    k8s:
+      state: absent
+      definition: "{{ namespace }}"
+
+  - name: Remove Jaeger Operator
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', jaeger_operator_file_path) }}"
+
+
+  - name: Remove Jaeger Operator Namespace
+    k8s:
+      name: "{{ operators.jaeger.namespace }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
+  
+  - name: Delete Control Planes Namespaces
+    k8s:
+      name: "{{ item }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
+    with_items:
+    - "{{ maistra.cr.control_planes }}"
+
+  - name: Delete Istio Operator Namespace
+    k8s:
+      name: "{{ operators.maistra.namespace }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
