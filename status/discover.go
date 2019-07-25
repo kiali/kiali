@@ -107,7 +107,7 @@ func discoverTracingService() (service string, port int32) {
 				port = serv.Spec.Ports[0].Port
 			}
 
-			log.Debugf("[TRACING] Service in: %s", service)
+			log.Debugf("[TRACING] Discovered Service and Port:  %s, %d", service, port)
 			break
 		} else {
 			// No service found set to empty for the last iteration
