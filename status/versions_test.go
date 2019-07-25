@@ -78,7 +78,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-deadbeef-Clean",
 			name:       "Istio Snapshot",
 			version:    "1.0-20180927",
-			supported:  false,
+			supported:  true,
 		},
 		{
 			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.1-20190327-21-10-deadbeef-Clean",

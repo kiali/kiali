@@ -81,7 +81,7 @@ const (
 
 // The versions that Kiali requires
 const (
-	IstioVersionSupported   = ">= 1.1"
+	IstioVersionSupported   = ">= 1.0"
 	MaistraVersionSupported = ">= 0.7.0"
 )
 
