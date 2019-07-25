@@ -158,7 +158,6 @@ type TracingConfig struct {
 	Namespace string `yaml:"namespace"`
 	Service   string `yaml:"service"`
 	Port      int32  `yaml:"port"`
-	Protocol  string `yaml:"protocol"`
 	URL       string `yaml:"url"`
 	Auth      Auth   `yaml:"auth"`
 	// Path store the value of QUERY_BASE_PATH

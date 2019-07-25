@@ -79,6 +79,7 @@ kiali_defaults:
       enabled: true
       namespace: ""
       service: ""
+      port: 16686
       url: ""
 
   identity: {}
