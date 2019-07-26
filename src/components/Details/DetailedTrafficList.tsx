@@ -112,12 +112,13 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
 
     if (node.type === NodeType.APP) {
       // All metrics tabs can filter by remote app. No need to switch context.
-      metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('Remote app=' + node.name);
+      const side = this.props.direction === 'inbound' ? 'source' : 'destination';
+      metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent(side + '_app=' + node.name);
     } else if (node.type === NodeType.SERVICE) {
       // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
       // switch context to the service details page.
       if (this.props.direction === 'outbound') {
-        metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('Remote service=' + node.name);
+        metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('destination_service_name=' + node.name);
       } else {
         // Services have only one metrics tab.
         metricsLink = `/namespaces/${node.namespace}/services/${node.name}?tab=metrics`;

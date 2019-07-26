@@ -76,7 +76,7 @@ describe('DetailedTrafficList', () => {
       type: NodeType.WORKLOAD
     },
     traffic: {
-      protocol: ''
+      protocol: 'http'
     }
   });
 
@@ -88,7 +88,7 @@ describe('DetailedTrafficList', () => {
       type: NodeType.UNKNOWN
     },
     traffic: {
-      protocol: ''
+      protocol: 'http'
     }
   });
 
@@ -101,7 +101,7 @@ describe('DetailedTrafficList', () => {
       isInaccessible: false
     },
     traffic: {
-      protocol: ''
+      protocol: 'http'
     }
   });
 
@@ -115,7 +115,7 @@ describe('DetailedTrafficList', () => {
       isInaccessible: false
     },
     traffic: {
-      protocol: ''
+      protocol: 'http'
     }
   });
 
@@ -391,7 +391,7 @@ describe('DetailedTrafficList', () => {
       .find('TableGridCol')
       .at(METRICS_LINK_COLUMN_IDX);
     let link = cell.find('Link');
-    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=Remote%20app%3Dapp3');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_app%3Dapp3');
 
     cell = wrapper
       .find('DetailedTrafficList')
@@ -399,7 +399,7 @@ describe('DetailedTrafficList', () => {
       .find('TableGridCol')
       .at(METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
-    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=in_metrics&bylbl=Remote%20app%3Dapp3');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=in_metrics&bylbl=source_app%3Dapp3');
   });
 
   it('renders metrics link of a workload node', () => {
@@ -450,7 +450,7 @@ describe('DetailedTrafficList', () => {
       .find('TableGridCol')
       .at(METRICS_LINK_COLUMN_IDX);
     let link = cell.find('Link');
-    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=Remote%20service%3Dsvc1');
+    expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_service_name%3Dsvc1');
 
     cell = wrapper
       .find('DetailedTrafficList')

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { Dashboard, DashboardModel, LabelDisplayName, DashboardQuery, Aggregator } from '@kiali/k-charted-pf3';
+import { Dashboard, DashboardModel, DashboardQuery, Aggregator } from '@kiali/k-charted-pf3';
 
 import { serverConfig } from '../../config/ServerConfig';
 import history from '../../app/History';
@@ -13,14 +13,14 @@ import { DurationInSeconds } from '../../types/Common';
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import * as MetricsHelper from './Helper';
-import { MetricsSettingsDropdown, MetricsSettings } from '../MetricsOptions/MetricsSettings';
+import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
+import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
-import { AllLabelsValues } from '../../types/Metrics';
 
 type MetricsState = {
   dashboard?: DashboardModel;
-  labelValues: AllLabelsValues;
+  labelsSettings: LabelsSettings;
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -41,13 +41,13 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   constructor(props: CustomMetricsProps) {
     super(props);
 
-    this.options = this.initOptions();
-    this.state = {
-      labelValues: new Map()
-    };
+    const settings = MetricsHelper.readMetricsSettingsFromURL();
+    this.options = this.initOptions(settings);
+    // Initialize active filters from URL
+    this.state = { labelsSettings: settings.labelsSettings };
   }
 
-  initOptions(): DashboardQuery {
+  initOptions(settings: MetricsSettings): DashboardQuery {
     const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
     const options: DashboardQuery = this.props.version
       ? {
@@ -57,7 +57,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
           labelsFilters: filters,
           additionalLabels: 'version:Version'
         };
-    MetricsHelper.initMetricsSettings(options);
+    MetricsHelper.settingsToOptions(settings, options);
     MetricsHelper.initDuration(options);
     return options;
   }
@@ -69,10 +69,10 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   fetchMetrics = () => {
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
       .then(response => {
-        const labelValues = MetricsHelper.extractLabelValues(response.data, this.state.labelValues);
+        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data);
         this.setState({
           dashboard: response.data,
-          labelValues: labelValues
+          labelsSettings: labelsSettings
         });
       })
       .catch(error => {
@@ -82,13 +82,12 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   };
 
   onMetricsSettingsChanged = (settings: MetricsSettings) => {
-    MetricsHelper.settingsToOptions(settings, this.options, this.state.dashboard && this.state.dashboard.aggregations);
+    MetricsHelper.settingsToOptions(settings, this.options);
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (label: LabelDisplayName, value: string, checked: boolean) => {
-    const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
-    this.setState({ labelValues: newValues });
+  onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
+    this.setState({ labelsSettings: labelsFilters });
   };
 
   onDurationChanged = (duration: DurationInSeconds) => {
@@ -112,16 +111,12 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
-    const convertedLabels = MetricsHelper.convertAsPromLabels(
-      this.state.dashboard.aggregations,
-      this.state.labelValues
-    );
     return (
       <div>
         {this.renderOptionsBar()}
         <Dashboard
           dashboard={this.state.dashboard}
-          labelValues={convertedLabels}
+          labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
         />
@@ -144,7 +139,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
           <MetricsSettingsDropdown
             onChanged={this.onMetricsSettingsChanged}
             onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-            labelValues={this.state.labelValues}
+            labelsSettings={this.state.labelsSettings}
             hasHistograms={hasHistograms}
           />
         </FormGroup>

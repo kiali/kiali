@@ -1,5 +1,3 @@
-import { LabelDisplayName, SingleLabelValues } from '@kiali/k-charted-pf3';
-
 export interface Metrics {
   metrics: { [key: string]: MetricGroup };
   histograms: { [key: string]: Histogram };
@@ -29,6 +27,3 @@ export enum MetricsObjectTypes {
   WORKLOAD,
   APP
 }
-
-// Map of all labels, each with its set of values
-export type AllLabelsValues = Map<LabelDisplayName, SingleLabelValues>;

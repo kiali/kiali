@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { Dashboard, DashboardModel, SingleLabelValues, LabelDisplayName } from '@kiali/k-charted-pf3';
+import { Dashboard, DashboardModel } from '@kiali/k-charted-pf3';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
@@ -12,15 +12,16 @@ import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOpt
 import * as MessageCenter from '../../utils/MessageCenter';
 
 import * as MetricsHelper from './Helper';
-import { MetricsSettings, MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettings';
+import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
+import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
-import history, { URLParam } from '../../app/History';
-import { AllLabelsValues, MetricsObjectTypes } from '../../types/Metrics';
+import history from '../../app/History';
+import { MetricsObjectTypes } from '../../types/Metrics';
 
 type MetricsState = {
   dashboard?: DashboardModel;
-  labelValues: AllLabelsValues;
+  labelsSettings: LabelsSettings;
 };
 
 type ObjectId = {
@@ -47,72 +48,25 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   constructor(props: IstioMetricsProps) {
     super(props);
 
-    this.options = this.initOptions();
     this.grafanaLink = this.getGrafanaLink();
-    this.state = {
-      labelValues: new Map()
-    };
+    const settings = MetricsHelper.readMetricsSettingsFromURL();
+    this.options = this.initOptions(settings);
+    // Initialize active filters from URL
+    this.state = { labelsSettings: settings.labelsSettings };
   }
 
-  initOptions(): IstioMetricsOptions {
+  initOptions(settings: MetricsSettings): IstioMetricsOptions {
     const options: IstioMetricsOptions = {
       reporter: MetricsReporter.initialReporter(this.props.direction),
       direction: this.props.direction
     };
-    MetricsHelper.initMetricsSettings(options);
+    MetricsHelper.settingsToOptions(settings, options);
     MetricsHelper.initDuration(options);
     return options;
   }
 
   componentDidMount() {
-    this.fetchMetrics().then(() => {
-      const urlParams = new URLSearchParams(history.location.search);
-      const byLabels = urlParams.getAll(URLParam.BY_LABELS);
-
-      if (byLabels.length === 0 || !this.state.dashboard) {
-        return;
-      }
-
-      // On first load, if there are aggregations enabled,
-      // re-initialize the options.
-      MetricsHelper.initMetricsSettings(this.options, this.state.dashboard.aggregations);
-
-      // Get the labels passed by URL
-      const labelsMap = new Map<string, string[]>();
-      byLabels.forEach(val => {
-        const splitted = val.split('=', 2);
-        labelsMap.set(splitted[0], splitted[1] ? splitted[1].split(',') : []);
-      });
-
-      // Then, set label values using the URL, if aggregation was applied.
-      const newLabelValues: AllLabelsValues = new Map();
-      this.state.dashboard!.aggregations.forEach(aggregation => {
-        if (!this.state.labelValues.has(aggregation.displayName)) {
-          return;
-        }
-        const lblVal = this.state.labelValues.get(aggregation.displayName)!;
-        newLabelValues.set(aggregation.displayName, lblVal);
-
-        if (!this.options.byLabels!.includes(aggregation.label)) {
-          return;
-        }
-
-        const urlLabels = labelsMap.get(aggregation.displayName)!;
-        const newVals: SingleLabelValues = {};
-        urlLabels.forEach(val => {
-          newVals[val] = true;
-        });
-        newLabelValues.set(aggregation.displayName, newVals);
-      });
-
-      // Fetch again to display the right groupings for the initial load
-      this.setState(
-        {
-          labelValues: newLabelValues
-        },
-        this.fetchMetrics
-      );
-    });
+    this.fetchMetrics();
   }
 
   fetchMetrics = () => {
@@ -131,10 +85,10 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     }
     return promise
       .then(response => {
-        const labelValues = MetricsHelper.extractLabelValues(response.data, this.state.labelValues);
+        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data);
         this.setState({
           dashboard: response.data,
-          labelValues: labelValues
+          labelsSettings: labelsSettings
         });
       })
       .catch(error => {
@@ -163,13 +117,12 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   }
 
   onMetricsSettingsChanged = (settings: MetricsSettings) => {
-    MetricsHelper.settingsToOptions(settings, this.options, this.state.dashboard && this.state.dashboard.aggregations);
+    MetricsHelper.settingsToOptions(settings, this.options);
     this.fetchMetrics();
   };
 
-  onLabelsFiltersChanged = (label: LabelDisplayName, value: string, checked: boolean) => {
-    const newValues = MetricsHelper.mergeLabelFilter(this.state.labelValues, label, value, checked);
-    this.setState({ labelValues: newValues });
+  onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
+    this.setState({ labelsSettings: labelsFilters });
   };
 
   onDurationChanged = (duration: DurationInSeconds) => {
@@ -193,16 +146,12 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
 
-    const convertedLabels = MetricsHelper.convertAsPromLabels(
-      this.state.dashboard.aggregations,
-      this.state.labelValues
-    );
     return (
       <div>
         {this.renderOptionsBar()}
         <Dashboard
           dashboard={this.state.dashboard}
-          labelValues={convertedLabels}
+          labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
         />
@@ -217,7 +166,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           <MetricsSettingsDropdown
             onChanged={this.onMetricsSettingsChanged}
             onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-            labelValues={this.state.labelValues}
+            labelsSettings={this.state.labelsSettings}
             hasHistograms={true}
           />
         </FormGroup>
