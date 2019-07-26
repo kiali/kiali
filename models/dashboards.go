@@ -56,6 +56,10 @@ func buildIstioAggregations(local, remote string) []kmodel.Aggregation {
 			Label:       "response_code",
 			DisplayName: "Response code",
 		},
+		{
+			Label:       "response_flags",
+			DisplayName: "Response flags",
+		},
 	}...)
 	return aggs
 }
