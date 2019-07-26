@@ -76,8 +76,8 @@ spec:
     kiali:
       # to disable kiali
       enabled: true
-      hub: {{ maistra.cr.kiali_hub }}
-      tag: {{ maistra.cr.kiali_tag }}
+      hub: {{ maistra.cr.kiali.hub }}
+      tag: {{ maistra.cr.kiali.tag }}
     
     # disable grafana
     grafana:
@@ -88,11 +88,11 @@ spec:
       enabled: true
       jaeger:
         # simple, all-in-one strategy
-        template: all-in-one
-        hub:  {{ maistra.cr.jaeger_hub }}
-        tag:  {{ maistra.cr.jaeger_tag }}
+        template: {{ maistra.cr.jaeger.template }}
+        hub:  {{ maistra.cr.jaeger.hub }}
+        tag:  {{ maistra.cr.jaeger.tag }}
       
     threeScale:
       enabled: true
-      hub: {{ maistra.cr.threescale_hub }}
-      tag: {{ maistra.cr.threescale_tag }}
+      hub: {{ maistra.cr.threescale.hub }}
+      tag: {{ maistra.cr.threescale.tag }}
