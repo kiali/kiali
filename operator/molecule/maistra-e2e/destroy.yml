@@ -115,6 +115,10 @@
     with_items:
     - "{{ maistra.cr.control_planes }}"
 
+  - name: Pause for 2 minutes in order to give time to remove everything from istio
+    pause:
+      minutes: 2
+
   - name: Delete Istio Operator Namespace
     k8s:
       name: "{{ operators.maistra.namespace }}"
