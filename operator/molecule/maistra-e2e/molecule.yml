@@ -32,7 +32,7 @@ provisioner:
           kiali:
             namespace: kiali-operator
             hub: quay.io/kiali/kiali-operator
-            tag: v1.0.0
+            tag: v1.0.1
             watch_namespace: "kiali-operator"
             pull_policy: Always
             clusterrolebindings: ""
@@ -44,11 +44,11 @@ provisioner:
             - "istio-system"
             - "istio-system2"
             global:
-              hub:  docker.io/maistra
+              hub: docker.io/maistra
               tag: 0.12.0
             maistra_tag: 0.12.0
             kiali_hub: quay.io/kiali
-            kiali_tag: "{{ operators.kiali.tag }}"
+            kiali_tag: v1.0.1
             threescale_hub: quay.io/3scale
             threescale_tag: 0.7.1
             jaeger_hub: docker.io/jaegertracing
