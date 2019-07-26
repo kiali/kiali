@@ -51,8 +51,8 @@
     register: doomed_list
     until:
     - doomed_list | default({}) | json_query("resources[*]") | length == 0
-    retries: 60
-    delay: 5
+    retries: 100
+    delay: 100
     with_items:
     - "{{ maistra.cr.control_planes }}"
 
@@ -125,3 +125,73 @@
       api_version: v1
       kind: Namespace
       state: absent
+
+  - name: Remove Bookinfo CRs
+    k8s:
+      state: absent
+      namespace: "{{ item.namespace }}"
+      definition:
+        apiVersion: bookinfo.kiali.io/v1
+        kind: Bookinfo
+        metadata:
+          name: bookinfo-installation
+        spec:
+          bookinfo:
+            version: "{{ item.version }}"
+            namespace: "{{ item.namespace }}"
+            hub: "{{ item.hub }}"
+            control_plane_namespace: "{{ item.control_plane }}"
+            mongodb: "{{ item.mongodb }}"
+            mysql: "{{ item.mysql }}"
+    when: item.kind == "Bookinfo" 
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+  - name: Remove Red Hat Tutorial CR
+    k8s:
+      namespace: "{{ item.namespace }}"
+      state: absent
+      definition:
+        apiVersion: redhattutorial.kiali.io/v1
+        kind: RedHatTutorial
+        metadata:
+          name: redhattutorial-installation
+        spec:
+          redhat_tutorial:
+            namespace: "{{ item.namespace }}"
+            control_plane_namespace: "{{ item.control_plane }}"
+    when: item.kind == "RedHatTutorial" 
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+  - name: Delete Meshes Namespaces
+    k8s:
+      name: "{{ item.namespace }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+
+  - name: Remove Kiali Test Mesh Operator Resources
+    k8s:
+      namespace: "{{ kiali.test_mesh.operator.namespace }}"
+      definition: "{{ lookup('template', item) }}"
+      state: absent
+    with_items:
+    -  "{{ kiali_test_mesh_operator_path }}/bookinfo-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/complex_mesh-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/redhat_tutorial-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/service_account.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/role_binding.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/operator.yaml"
+
+  - name: Remove Kiali Test Mesh Operator Namespace
+    k8s:
+      name: "{{ item }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
+    with_items:
+    - "{{ kiali.test_mesh.operator.namespace }}"

@@ -1,0 +1,20 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: bookinfos.bookinfo.kiali.io
+spec:
+  group: bookinfo.kiali.io
+  names:
+    kind: Bookinfo
+    listKind: BookinfoList
+    plural: bookinfos
+    singular: bookinfo
+  scope: Namespaced
+  subresources:
+    status: {}
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
