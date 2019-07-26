@@ -13,6 +13,7 @@ import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import { DurationInSeconds } from '../../types/Common';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import history, { URLParam } from '../../app/History';
+import responseFlags from 'utils/ResponseFlags';
 
 export const extractLabelsSettingsOnSeries = (
   series: TimeSeries[],
@@ -152,4 +153,18 @@ export const readMetricsSettingsFromURL = (): MetricsSettings => {
     });
   }
   return settings;
+};
+
+export const prettyLabelValues = (promName: PromLabel, val: string): string => {
+  if (promName === 'response_flags') {
+    if (val === '-') {
+      return 'None';
+    }
+    const flagObj = responseFlags[val];
+    if (flagObj) {
+      const text = flagObj.short ? flagObj.short : flagObj.help;
+      return `${text} (${val})`;
+    }
+  }
+  return val;
 };

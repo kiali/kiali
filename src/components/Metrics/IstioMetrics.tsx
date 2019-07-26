@@ -154,6 +154,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
+          labelPrettifier={MetricsHelper.prettyLabelValues}
         />
       </div>
     );

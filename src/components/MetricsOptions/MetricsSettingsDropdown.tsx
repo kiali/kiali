@@ -6,7 +6,7 @@ import { PromLabel } from '@kiali/k-charted-pf3';
 
 import history, { URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
-import { readMetricsSettingsFromURL, mergeLabelFilter } from 'components/Metrics/Helper';
+import { readMetricsSettingsFromURL, mergeLabelFilter, prettyLabelValues } from 'components/Metrics/Helper';
 
 interface Props {
   onChanged: (state: MetricsSettings) => void;
@@ -142,7 +142,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
                     checked={lblObj.values[val]}
                     onChange={event => this.onLabelsFiltersChanged(promName, val, event.target.checked)}
                   />
-                  <span className={checkboxStyle}>{val}</span>
+                  <span className={checkboxStyle}>{prettyLabelValues(promName, val)}</span>
                 </label>
               </div>
             ))

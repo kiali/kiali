@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Responses } from '../../types/Graph';
 import _ from 'lodash';
+import { Responses } from '../../types/Graph';
+import responseFlags from '../../utils/ResponseFlags';
 
 type ResponseTableProps = {
   responses: Responses;
@@ -13,28 +14,6 @@ interface Row {
   key: string;
   val: string;
 }
-
-// The Envoy flags can be found here:
-// https://github.com/envoyproxy/envoy/blob/master/source/common/stream_info/utility.cc
-const Flags: object = {
-  DC: { code: '500', help: 'Downstream Connection Termination' },
-  DI: { help: 'Delayed via fault injection' },
-  FI: { help: 'Aborted via fault injection' },
-  LH: { code: '503', help: 'Local service failed health check request' },
-  LR: { code: '503', help: 'Connection local reset' },
-  NR: { code: '404', help: 'No route configured (check DestinationRule or VirtualService)' },
-  RL: { code: '429', help: 'Ratelimited locally by the HTTP rate limit filter' },
-  RLSE: { help: 'Rate limited service error' },
-  SI: { help: 'Stream idle timeout' },
-  UAEX: { help: 'Unauthorized external service' },
-  UC: { code: '503', help: 'Upstream connection termination' },
-  UF: { code: '503', help: 'Upstream connection failure (check for mutual TLS configuration conflict)' },
-  UH: { code: '503', help: 'No healthy upstream hosts in upstream cluster' },
-  UO: { code: '503', help: 'Upstream overflow (circuit breaker open)' },
-  UR: { code: '503', help: 'Upstream remote reset' },
-  URX: { code: '503', help: 'Upstream retry limit exceeded' },
-  UT: { code: '504', help: 'Upstream request timeout' }
-};
 
 export class ResponseTable extends React.PureComponent<ResponseTableProps> {
   render() {
@@ -78,7 +57,7 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
       .split(',')
       .map(flagToken => {
         flagToken = flagToken.trim();
-        const flag = Flags[flagToken];
+        const flag = responseFlags[flagToken];
         return flagToken === '-' ? '' : `[${flagToken}] ${flag ? flag.help : 'Unknown Flag'}`;
       })
       .join('\n');
