@@ -8,7 +8,7 @@ spec:
       hub: {{ maistra.cr.global.hub }}
       tag: {{ maistra.cr.global.tag }}
       multitenant: true
-      imagePullPolicy: Always
+      imagePullPolicy: {{ maistra.cr.global.image_pull_policy }}
       controlPlaneSecurityEnabled: false
       mtls:
         enabled: false

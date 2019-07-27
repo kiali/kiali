@@ -14,6 +14,19 @@
       name: "{{ maistra_custom_resource.metadata.name }}"
     with_items:
     - "{{ maistra.cr.control_planes }}"
+
+  - name: Wait for ServiceMeshControlPlane to be uninstalled
+    k8s_facts:
+      api_version: maistra.io/v1
+      kind: ServiceMeshControlPlane
+      namespace: "{{ item }}"
+    register: doomed_list
+    until:
+    - doomed_list | default({}) | json_query("resources[*]") | length == 0
+    retries: 100
+    delay: 100
+    with_items:
+    - "{{ maistra.cr.control_planes }}"
   
   - name: Produce Files with Correct Parameters for Kiali Operator
     shell: " {{ item }}"
@@ -55,7 +68,6 @@
     delay: 100
     with_items:
     - "{{ maistra.cr.control_planes }}"
-
 
 
   - name: Removing Kiali Operator First Custom Resource Definition
@@ -115,11 +127,13 @@
     with_items:
     - "{{ maistra.cr.control_planes }}"
 
-  - name: Pause for 2 minutes in order to give time to remove everything from istio
-    pause:
-      minutes: 2
+  - name: Remove Maistra Operator Definitions
+    k8s:
+      namespace: "{{ operators.maistra.namespace }}"
+      definition: "{{ lookup('template', maistra_operator_file_path) }}"
+    ignore_errors: true
 
-  - name: Delete Istio Operator Namespace
+  - name: Delete Maistra Operator Namespace
     k8s:
       name: "{{ operators.maistra.namespace }}"
       api_version: v1

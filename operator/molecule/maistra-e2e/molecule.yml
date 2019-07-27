@@ -14,15 +14,18 @@ provisioner:
     group_vars:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
-        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/maistra-operator.yaml"
-        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/maistra-cr.yaml"
-        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-assets/jaeger-operator.yaml"
-        istio:
-          control_plane_namespace: istio-system
+        kiali_operator_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
+        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-operator.yaml"
+        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
+        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
+        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
+        # secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml" - uncomment when the secret is enabled
+        # secret: "{{ lookup('template', secret_file_path) | from_yaml }}" - Uncomment when the secret is enabled
+
         operators:
           pull_secret:
             enabled: false
-            name: secret
+            #name: "{{ secret.metadata.name }}" - Uncomment when the secret is enabled
           jaeger:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
@@ -34,10 +37,10 @@ provisioner:
             hub: quay.io/kiali/kiali-operator
             tag: v1.0.1
             watch_namespace: ""
-            pull_policy: Always
             clusterrolebindings: ""
             clusterroles: ""
             image_pull_policy: Always
+        
         maistra:
           cr:
             control_planes:
@@ -46,6 +49,7 @@ provisioner:
             global:
               hub: docker.io/maistra
               tag: 0.12.0
+              image_pull_policy: Always
             kiali:
               hub: quay.io/kiali
               tag: v1.0.1
@@ -56,12 +60,31 @@ provisioner:
               hub: docker.io/jaegertracing
               tag: 1.13.1
               template: all-in-one
-
         kiali:
-          accessible_namespaces:
-          - "dummy-istio-system"
-          - "istio-system"
-          label_selector: kiali.io/member-of={{ istio.control_plane_namespace }}
+          test_mesh:             
+            operator:
+              namespace: kiali-test-mesh-operator
+              image: kiali/kiali-test-mesh-operator:latest
+            installations:
+              - namespace: bookinfo
+                control_plane: istio-system
+                kind: Bookinfo
+                version: 1.14.0
+                hub: docker.io/istio
+                mongodb: true
+                mysql: true
+              
+              - namespace: bookinfo2
+                control_plane: istio-system2
+                kind: Bookinfo
+                version: 0.12.0
+                hub: docker.io/maistra
+                mongodb: true
+                mysql: false
+              
+              - namespace: redhat-istio-tutorial
+                control_plane: istio-system
+                kind: RedHatTutorial
 scenario:
   name: maistra-e2e
   test_sequence:
