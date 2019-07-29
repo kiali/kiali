@@ -29,6 +29,25 @@
   - "{{ maistra.cr.control_planes }}"
   
 
+- name: Get Service Mesh MemberRolls
+  k8s_facts:
+    api_version: maistra.io/v1
+    kind: ServiceMeshMemberRoll
+    namespace: "{{ item }}"
+    name: default
+  register: smmrs
+  with_items:
+  - "{{ maistra.cr.control_planes }}"
+
+- name: Get Service Mesh Control Planes
+  k8s_facts:
+    api_version: maistra.io/v1
+    kind: ServiceMeshControlPlane
+    namespace: "{{ item }}"
+    name: "install-{{ item }}"
+  register: smcps
+  with_items:
+  - "{{ maistra.cr.control_planes }}"
 
 - name: Format Configmap
   set_fact:
