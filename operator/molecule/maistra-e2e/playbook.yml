@@ -1,8 +1,6 @@
 - name: Tests
   hosts: localhost
   connection: local
-  vars:
-   kiali_operator_cr: "{{ lookup('template', kiali_operator_cr_file_path) | from_yaml }}"
   tasks:
   - import_tasks: 'tests/tasks.yml'
   # - import_tasks: ../asserts/accessible_namespaces_contains.yml

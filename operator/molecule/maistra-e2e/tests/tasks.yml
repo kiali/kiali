@@ -49,9 +49,12 @@
   with_items:
   - "{{ maistra.cr.control_planes }}"
 
-- name: Format Configmap
+- name: Extract Configmaps
   set_fact:
-     kiali_configmap: " {{ kiali_configmaps | json_query(query) | list }}"
-    # second_kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+     kiali_configurations: "{{ kiali_configurations + [(item['config.yaml'] | from_yaml)] }}"
+  with_items:
+  - "{{ cmaps }}"
   vars:
-      query: "results[*].resources[0].data"
+    cmaps: "{{ kiali_configmaps | json_query(query) | list  }}"
+    query: "results[*].resources[0].data"
+    kiali_configurations: []
