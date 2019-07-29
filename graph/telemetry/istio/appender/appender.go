@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -53,6 +54,7 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if _, ok := requestedAppenders[ServiceEntryAppenderName]; ok || o.Appenders.All {
 		a := ServiceEntryAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
+			GraphType:            o.GraphType,
 		}
 		appenders = append(appenders, a)
 	}
@@ -114,18 +116,27 @@ const (
 	workloadListKey      = "workloadList"      // namespace vendor info
 )
 
-type serviceEntryHost struct {
+type serviceEntry struct {
 	location string
-	host     string
+	name     string // serviceEntry name
 }
 
-func newServiceEntryHosts() []serviceEntryHost {
-	return []serviceEntryHost{}
+type serviceEntryHosts map[string]*serviceEntry
+
+func newServiceEntryHosts() serviceEntryHosts {
+	return make(map[string]*serviceEntry)
 }
 
-func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) ([]serviceEntryHost, bool) {
+func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
+	if existingSe, ok := seh[host]; ok {
+		log.Warningf("Same host [%s] found in ServiceEntry [%s] and [%s]", host, existingSe.name, se.name)
+	}
+	seh[host] = se
+}
+
+func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
 	if seHosts, ok := gi.Vendor[serviceEntryHostsKey]; ok {
-		return seHosts.([]serviceEntryHost), true
+		return seHosts.(serviceEntryHosts), true
 	}
 	return newServiceEntryHosts(), false
 }

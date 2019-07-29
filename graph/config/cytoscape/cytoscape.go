@@ -228,7 +228,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have destination service info
 		if val, ok := n.Metadata[graph.DestServices]; ok {
 			nd.DestServices = []graph.Service{}
-			for _, val := range val.(map[string]graph.Service) {
+			for _, val := range val.(graph.DestServicesMetadata) {
 				nd.DestServices = append(nd.DestServices, val)
 			}
 		}
@@ -256,6 +256,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				Id:     edgeId,
 				Source: sourceIdHash,
 				Target: destIdHash,
+				Traffic: ProtocolTraffic{
+					Protocol: protocol,
+				},
 			}
 			addEdgeTelemetry(e, &ed)
 
@@ -275,7 +278,7 @@ func addNodeTelemetry(n *graph.Node, nd *NodeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -323,7 +326,7 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 				if protocolTraffic.Rates == nil {
 					protocolTraffic.Rates = make(map[string]string)
 				}
-				protocolTraffic.Rates[string(r.Name)] = fmt.Sprintf("%.*f", r.Precision, rateVal)
+				protocolTraffic.Rates[string(r.Name)] = rateToString(r.Precision, rateVal)
 			}
 		}
 		if protocolTraffic.Rates != nil {
@@ -437,4 +440,30 @@ func generateGroupCompoundNodes(appBox map[string][]*NodeData, nodes *[]*NodeWra
 			*nodes = append(*nodes, &nw)
 		}
 	}
+}
+
+func rateToString(minPrecision int, rateVal float64) string {
+	precision := minPrecision
+	if requiredPrecision := calcPrecision(rateVal, 5); requiredPrecision > minPrecision {
+		precision = requiredPrecision
+	}
+
+	return fmt.Sprintf("%.*f", precision, rateVal)
+}
+
+// calcPrecision returns the precision necessary to see at least one significant digit (up to max)
+func calcPrecision(val float64, max int) int {
+	if val <= 0 {
+		return 0
+	}
+
+	precision := 0
+	for precision < max {
+		if val >= 1 {
+			break
+		}
+		val *= 10
+		precision++
+	}
+	return precision
 }

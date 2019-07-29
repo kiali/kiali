@@ -3,6 +3,8 @@ package services
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	"github.com/kiali/kiali/models"
 
 	"github.com/kiali/kiali/config"
@@ -25,6 +27,41 @@ func TestPortMappingMatch(t *testing.T) {
 	}
 
 	validations, valid := pmc.Check()
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestTargetPortMappingMatch(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	service := getService(9080, "http")
+	service.Spec.Ports[0].TargetPort = intstr.FromInt(8080)
+
+	/*
+		// If this is a string, it will be looked up as a named port in the
+		// target Pod's container ports. If this is not specified, the value
+		// of the 'port' field is used (an identity map).
+		// This field is ignored for services with clusterIP=None, and should be
+		// omitted or set equal to the 'port' field.
+
+	*/
+
+	pmc := PortMappingChecker{
+		Service:     service,
+		Deployments: getDeployment(8080),
+	}
+
+	validations, valid := pmc.Check()
+	assert.True(valid)
+	assert.Empty(validations)
+
+	// Now check with named port only
+	service.Spec.Ports[0].TargetPort = intstr.FromString("http-container")
+
+	validations, valid = pmc.Check()
 	assert.True(valid)
 	assert.Empty(validations)
 }
@@ -100,6 +137,7 @@ func getDeployment(containerPort int32) []apps_v1.Deployment {
 							v1.Container{
 								Ports: []v1.ContainerPort{
 									v1.ContainerPort{
+										Name:          "http-container",
 										ContainerPort: containerPort,
 									},
 								},

@@ -23,16 +23,23 @@ import (
 
 // iscsi target started with /sys/kernel/config/target/iscsi/iqn*
 // configfs + target/iscsi/iqn*
-// IqnGlob is representing all the possible IQN
-const IqnGlob = "target/iscsi/iqn*"
+// iqnGlob is representing all the possible IQN
+const iqnGlob = "target/iscsi/iqn*"
 
-// TargetCore static path /sys/kernel/config/target/core for node_exporter
+// targetCore static path /sys/kernel/config/target/core for node_exporter
 // reading runtime status
-const TargetCore = "target/core"
+const targetCore = "target/core"
+
+// devicePath static path /sys/devices/rbd/[0-9]* for rbd devices to
+// read at runtime status
+const devicePath = "devices/rbd"
 
 // FS represents the pseudo-filesystem configfs, which provides an interface to
-// iscsi kernel data structures in /sys/kernel/config.
+// iscsi kernel data structures in
+// sysfs	as /sys
+// configfs as /sys/kernel/config
 type FS struct {
+	sysfs    *fs.FS
 	configfs *fs.FS
 }
 
@@ -40,7 +47,14 @@ type FS struct {
 // error and return empty FS if the mount point can't be read. For the ease of
 // use, an empty string parameter configfsMountPoint will call internal fs for
 // the default sys path as /sys/kernel/config
-func NewFS(configfsMountPoint string) (FS, error) {
+func NewFS(sysfsPath string, configfsMountPoint string) (FS, error) {
+	if strings.TrimSpace(sysfsPath) == "" {
+		sysfsPath = fs.DefaultSysMountPoint
+	}
+	sysfs, err := fs.NewFS(sysfsPath)
+	if err != nil {
+		return FS{}, err
+	}
 	if strings.TrimSpace(configfsMountPoint) == "" {
 		configfsMountPoint = fs.DefaultConfigfsMountPoint
 	}
@@ -48,12 +62,17 @@ func NewFS(configfsMountPoint string) (FS, error) {
 	if err != nil {
 		return FS{}, err
 	}
-	return FS{&configfs}, nil
+	return FS{&sysfs, &configfs}, nil
+}
+
+// helper function to get configfs path
+func (fs FS) Path(p ...string) string {
+	return fs.configfs.Path(p...)
 }
 
 // ISCSIStats getting iscsi runtime information
 func (fs FS) ISCSIStats() ([]*Stats, error) {
-	matches, err := filepath.Glob(fs.configfs.Path(IqnGlob))
+	matches, err := filepath.Glob(fs.configfs.Path(iqnGlob))
 	if err != nil {
 		return nil, err
 	}

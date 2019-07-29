@@ -5,6 +5,7 @@ import (
 	"math"
 	"testing"
 
+	pmod "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
@@ -79,4 +80,14 @@ func TestJSONMarshallingNaN(t *testing.T) {
 	res, err := json.Marshal(samplePair)
 	assert.Nil(err)
 	assert.Equal("[123456.789,\"NaN\"]", string(res))
+}
+
+func TestConvertEmptyMatrix(t *testing.T) {
+	assert := assert.New(t)
+	var matrix pmod.Matrix
+
+	// Make sure matrices are never nil, but empty slices
+	res := ConvertMatrix(matrix)
+	assert.NotNil(res)
+	assert.Len(res, 0)
 }

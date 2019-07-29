@@ -190,6 +190,17 @@
     role_kind: "{{ 'ClusterRole' if '**' in kiali_vars.deployment.accessible_namespaces else 'Role' }}"
     role_binding_kind: "{{ 'ClusterRoleBinding' if '**' in kiali_vars.deployment.accessible_namespaces else 'RoleBinding' }}"
 
+- name: Determine if the operator can support accessible_namespaces=**
+  vars:
+    role_json: "{{ lookup('k8s', api_version='rbac.authorization.k8s.io/v1', kind='ClusterRole', resource_name='kiali-operator') | default({}) }}"
+    query_cr: "rules[?apiGroups.contains(@, 'rbac.authorization.k8s.io')].resources.contains(@, 'clusterroles')"
+    query_crb: "rules[?apiGroups.contains(@, 'rbac.authorization.k8s.io')].resources.contains(@, 'clusterrolebindings')"
+  fail:
+    msg: "The operator cannot support deployment.accessible_namespaces set to '**' because it does not have permissions to create clusterroles or clusterrolebindings"
+  when:
+  - '"**" in kiali_vars.deployment.accessible_namespaces'
+  - (role_json | json_query(query_cr) != [true]) or (role_json | json_query(query_crb) != [true])
+
 - name: Find all namespaces (this is limited to what the operator has permission to see)
   set_fact:
     all_namespaces: "{{ lookup('k8s', api_version='v1', kind='Namespace') | default({}) | json_query('[].metadata.name') }}"
@@ -254,17 +265,13 @@
   set_fact:
     current_configmap: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='v1', kind='ConfigMap') }}"
 
-- name: Find currently accessible namespaces
+- name: Find some current configuration settings
   set_fact:
     current_accessible_namespaces: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.accessible_namespaces') }}"
-  when:
-  - current_configmap is defined
-  - current_configmap.data is defined
-  - current_configmap.data['config.yaml'] is defined
-
-- name: Find currently configured label selector
-  set_fact:
     current_label_selector: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('api.namespaces.label_selector') }}"
+    current_view_only_mode: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.view_only_mode') }}"
+    current_image_name: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_name') }}"
+    current_image_version: "{{ current_configmap.data['config.yaml'] | from_yaml | json_query('deployment.image_version') }}"
   when:
   - current_configmap is defined
   - current_configmap.data is defined
@@ -306,6 +313,28 @@
   when:
   - current_accessible_namespaces is defined
   - '"**" in current_accessible_namespaces'
+  - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Delete all Kiali roles from namespaces if view_only_mode is changing since role bindings are immutable
+  include_tasks: remove-roles.yml
+  loop: "{{ kiali_vars.deployment.accessible_namespaces }}"
+  loop_control:
+    loop_var: role_namespace
+  when:
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
+  - current_accessible_namespaces is defined
+  - '"**" not in current_accessible_namespaces'
+
+- name: Delete Kiali cluster roles if view_only_mode is changing since role bindings are immutable
+  vars:
+    role_namespace: "{{ kiali_vars.deployment.namespace }}"
+  include_tasks: remove-clusterroles.yml
+  when:
+  - current_view_only_mode is defined
+  - current_view_only_mode != kiali_vars.deployment.view_only_mode
+  - current_accessible_namespaces is defined
+  - '"**" in current_accessible_namespaces'
 
 - name: Remove Kiali label from namespaces that Kiali no longer has access to
   include_tasks: remove-namespace-label.yml
@@ -329,6 +358,18 @@
     loop_var: the_namespace
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
+
+- name: Delete Kiali deployment if image is changing since image is immutable
+  k8s:
+    state: absent
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ kiali_vars.deployment.namespace }}"
+    name: kiali
+  when:
+  - is_openshift == True or is_k8s == True
+  - current_image_name is defined and current_image_version is defined
+  - (current_image_name != kiali_vars.deployment.image_name) or (current_image_version != kiali_vars.deployment.image_version)
 
 # Now deploy all resources for the specific cluster environment
 

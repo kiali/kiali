@@ -19,22 +19,22 @@ func setupTrafficMap() (map[string]*graph.Node, string, string, string, string, 
 	trafficMap := graph.NewTrafficMap()
 
 	appNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, "ratings", "", graph.GraphTypeVersionedApp)
-	appNode.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.Service{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNode.ID] = &appNode
 
 	appNodeV1 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", "ratings", "v1", graph.GraphTypeVersionedApp)
-	appNodeV1.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNodeV1.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.Service{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNodeV1.ID] = &appNodeV1
 
 	appNodeV2 := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v2", "ratings", "v2", graph.GraphTypeVersionedApp)
-	appNodeV2.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	appNodeV2.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.Service{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[appNodeV2.ID] = &appNodeV2
 
 	serviceNode := graph.NewNode("testNamespace", "ratings", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)
 	trafficMap[serviceNode.ID] = &serviceNode
 
 	workloadNode := graph.NewNode("testNamespace", "ratings", "testNamespace", "ratings-v1", graph.Unknown, graph.Unknown, graph.GraphTypeWorkload)
-	workloadNode.Metadata[graph.DestServices] = map[string]graph.Service{"testNamespace ratings": graph.Service{Namespace: "testNamespace", Name: "ratings"}}
+	workloadNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata().Add("testNamespace ratings", graph.Service{Namespace: "testNamespace", Name: "ratings"})
 	trafficMap[workloadNode.ID] = &workloadNode
 
 	fooServiceNode := graph.NewNode("testNamespace", "foo", "testNamespace", graph.Unknown, graph.Unknown, graph.Unknown, graph.GraphTypeVersionedApp)

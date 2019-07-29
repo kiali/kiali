@@ -1,5 +1,5 @@
-hash: c9246e3bb34541355a75da7d38b736e35f0fdbce3a8e3d6baebda7d25510e09b
-updated: 2019-06-20T14:00:12.337145356+02:00
+hash: 006f98a248334a4ac3ad172aabda766e89b927c83ddd5ac36445973e1d71ffc8
+updated: 2019-07-05T09:48:29.25821396+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4b2b341e8d7715fae06375aa633dbb6e91b3fb46
@@ -14,7 +14,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
-  version: dadb625850898f31a8e40e83492f4a7132e520a2
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
   - proto
   - sortkeys
@@ -39,7 +39,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gorilla/mux
-  version: ed099d42384823742bba0bf9a72b53b55c9e2e38
+  version: 00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15
 - name: github.com/gregjones/httpcache
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
@@ -53,10 +53,11 @@ imports:
 - name: github.com/json-iterator/go
   version: f2b4162afba35581b6d4a50d3b8f34e33c144682
 - name: github.com/kiali/k-charted
-  version: 0f63d3fa1f95c574ab2c5afa8771145ae1a51945
+  version: e976df91ce3841eb68be124c6ca08dc517f7decb
   subpackages:
   - business
   - config
+  - config/promconfig
   - http
   - kubernetes
   - kubernetes/v1alpha1
@@ -101,9 +102,10 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 91a8189bfc4f0af678925247c1bc92429c6305f8
+  version: 8f55e607908ea781ad9d08521730d73e047d9ac4
   subpackages:
   - internal/fs
+  - internal/util
 - name: github.com/stretchr/objx
   version: 35313a95ee26395aa17d366c71a2ccf788fa69b6
 - name: github.com/stretchr/testify

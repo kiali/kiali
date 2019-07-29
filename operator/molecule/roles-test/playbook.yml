@@ -1,0 +1,27 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/configmap_asserts.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  # by default, view only mode is off, so the read-write role should be in effect
+  - import_tasks: ../asserts/roles-test/rw_role_asserts.yml
+  # turn on view only mode and see the viewer (read-only) role is now in effect
+  - import_tasks: ../common/set_view_only_mode.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../asserts/roles-test/ro_role_asserts.yml
+  # turn off view only mode which should return back to the read-write role
+  - import_tasks: ../common/unset_view_only_mode.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../asserts/roles-test/rw_role_asserts.yml
+  # change to accessible_namespaces=** which switches to cluster roles
+  - import_tasks: ../common/set_accessible_namespaces_to_all.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../asserts/roles-test/rw_clusterrole_asserts.yml
+  # turn on view only mode and see the viewer (read-only) cluster role is now in effect
+  - import_tasks: ../common/set_view_only_mode.yml
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../asserts/roles-test/ro_clusterrole_asserts.yml

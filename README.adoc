@@ -256,10 +256,10 @@ make purge-kiali
 make operator-delete
 ----
 
-==== Reloading Kiali image in OpenShift
+==== Reloading Kiali image in Kubernetes
 
 [NOTE]
-To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build k8s-reload-image` to quickly get your new Kiali build into your running OpenShift.
+To easily facilitate development, this target is in the main, top-level Makefile. This allows you to do `make clean build docker-build k8s-reload-image` to quickly get your new Kiali build into your running Kubernetes.
 
 If you already have Kiali installed but you want to recreate the pod with a new container image, you can run the following command:
 

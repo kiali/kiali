@@ -62,7 +62,7 @@ type TrafficMap map[string]*Node
 func NewNode(serviceNamespace, service, workloadNamespace, workload, app, version, graphType string) Node {
 	id, nodeType := Id(serviceNamespace, service, workloadNamespace, workload, app, version, graphType)
 	namespace := workloadNamespace
-	if IsOK(namespace) {
+	if !IsOK(namespace) {
 		namespace = serviceNamespace
 	}
 

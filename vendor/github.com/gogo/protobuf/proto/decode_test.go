@@ -29,8 +29,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// +build go1.7
-
 package proto_test
 
 import (
@@ -40,7 +38,10 @@ import (
 	tpb "github.com/gogo/protobuf/proto/proto3_proto"
 )
 
-var msgBlackhole = new(tpb.Message)
+var (
+	bytesBlackhole []byte
+	msgBlackhole   = new(tpb.Message)
+)
 
 // Disabled this Benchmark because it is using features (b.Run) from go1.7 and gogoprotobuf still have compatibility with go1.5
 // BenchmarkVarint32ArraySmall shows the performance on an array of small int32 fields (1 and

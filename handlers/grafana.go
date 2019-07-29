@@ -43,7 +43,7 @@ func GetGrafanaInfo(w http.ResponseWriter, r *http.Request) {
 func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := config.Get().ExternalServices.Grafana
 
-	if !grafanaConfig.DisplayLink {
+	if !grafanaConfig.Enabled {
 		return nil, http.StatusNoContent, nil
 	}
 

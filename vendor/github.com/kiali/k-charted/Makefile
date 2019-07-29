@@ -1,36 +1,35 @@
 SHELL=/bin/bash
 
-dep: godep reactdep
-
 godep:
 	glide up
-
-reactdep:
-	cd web/react && yarn
-
-build: gobuild reactbuild
 
 gobuild:
 	go build
 
-reactbuild:
-	cd web/react && yarn build
+pf3build:
+	cd web/pf3 && yarn && yarn build
 
-test: gotest reacttest
+pf4build:
+	cd web/pf4 && yarn && yarn build
 
 gotest:
 	go test ./...
 
-reacttest:
-	cd web/react && yarn test
+pf3test:
+	cd web/pf3 && yarn test
 
-lint: golint reactlint
+pf4test:
+	cd web/pf4 && yarn test
 
 golint:
 	golangci-lint run
 
-reactlint:
-	cd web/react && yarn lint
+pf3lint:
+	cd web/pf3 && yarn lint
+
+pf4lint:
+	cd web/pf4 && yarn lint
 
 go: gobuild golint gotest
-react: reactbuild reactlint reacttest
+pf3: pf3build pf3lint pf3test
+pf4: pf4build pf4lint pf4test

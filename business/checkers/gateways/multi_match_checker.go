@@ -122,10 +122,18 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 			}
 
 			// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-			current := strings.Replace(host.Hostname, "*", ".*", -1)
-			previous := strings.Replace(h.Hostname, "*", ".*", -1)
+			current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
+			previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
-			if regexp.MustCompile(current).MatchString(previous) || regexp.MustCompile(previous).MatchString(current) {
+			// We anchor the beginning and end of the string when it's
+			// to be used as a regex, so that we don't get spurious
+			// substring matches, e.g., "example.com" matching
+			// "foo.example.com".
+			current_re := strings.Join([]string{"^", current, "$"}, "")
+			previous_re := strings.Join([]string{"^", previous, "$"}, "")
+
+			if regexp.MustCompile(current_re).MatchString(previous) ||
+				regexp.MustCompile(previous_re).MatchString(current) {
 				duplicates = append(duplicates, h)
 				break
 			}

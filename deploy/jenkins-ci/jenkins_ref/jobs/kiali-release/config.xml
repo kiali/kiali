@@ -1,0 +1,129 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.31">
+  <actions>
+    <org.jenkinsci.plugins.workflow.multibranch.JobPropertyTrackerAction plugin="workflow-multibranch@2.20">
+      <jobPropertyDescriptors>
+        <string>org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty</string>
+        <string>hudson.model.ParametersDefinitionProperty</string>
+      </jobPropertyDescriptors>
+    </org.jenkinsci.plugins.workflow.multibranch.JobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>RELEASE_TYPE</name>
+          <description>Valid values are: auto, minor, snapshot.0, snapshot.1, edge. When &quot;auto&quot; is
+specified, the type of the release will be determined based on the current date.</description>
+          <defaultValue>auto</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BACKEND_RELEASING_BRANCH</name>
+          <description>Branch of the backend to release</description>
+          <defaultValue>refs/heads/master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>UI_RELEASING_BRANCH</name>
+          <description>Branch of the UI to release</description>
+          <defaultValue>refs/heads/master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BACKEND_GITHUB_URI</name>
+          <description>SSH Url of the kiali-backend GitHub repository</description>
+          <defaultValue>git@github.com:kiali/kiali.git</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>UI_GITHUB_URI</name>
+          <description>SSH Url of the kiali-ui GitHub repository</description>
+          <defaultValue>git@github.com:kiali/kiali-ui.git</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>DOCKER_NAME</name>
+          <description>The name of the Docker repository to push the release</description>
+          <defaultValue>docker.io/kiali/kiali</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>QUAY_NAME</name>
+          <description>The name of the Quay repository to push the release</description>
+          <defaultValue>quay.io/kiali/kiali</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>QUAY_OPERATOR_NAME</name>
+          <description>The name of the Quay repository to push the operator release</description>
+          <defaultValue>quay.io/kiali/kiali-operator</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BACKEND_PULL_URI</name>
+          <description>The URL of the GitHub API to use to create pull requests for the
+back-end (changes to prepare for next version)</description>
+          <defaultValue>https://api.github.com/repos/kiali/kiali/pulls</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>UI_PULL_URI</name>
+          <description>The URL of the GitHub API to use to create pull requests for the
+UI (changes to prepare for next version)</description>
+          <defaultValue>https://api.github.com/repos/kiali/kiali-ui/pulls</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NPM_DRY_RUN</name>
+          <description>Set to &quot;y&quot; if you want to make a &quot;dry run&quot; of the front-end release process</description>
+          <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_UI_RELEASE</name>
+          <description>Set to &apos;y&apos; if you don&apos;t want to release the UI</description>
+          <defaultValue>n</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>UI_VERSION</name>
+          <description>If you are skipping UI release. Specify the UI version to package, or leave 
+unset to use the version present in the main Makefile (e.g. leave unset for patch releases)</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.63">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@3.9.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>git@github.com:kiali/kiali.git</url>
+          <credentialsId>kiali-bot-gh-ssh</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>refs/heads/master</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>deploy/jenkins-ci/Jenkinsfile</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

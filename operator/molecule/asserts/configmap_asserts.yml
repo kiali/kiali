@@ -8,13 +8,12 @@
     that:
     - kiali_configmap.deployment.image_version ==  kiali.image_version
 
-    
 - name: Assert Kiali Configmap has the correct Image Pull Policy
   assert:
     that:
     - kiali_configmap.deployment.image_pull_policy ==  kiali.image_pull_policy
 
-- name: Assert Kiali Configmap has the correct Istio Namespace 
+- name: Assert Kiali Configmap has the correct Istio Namespace
   assert:
     that:
     - kiali_configmap.istio_namespace == istio.control_plane_namespace
@@ -24,25 +23,20 @@
     that:
     - kiali_configmap.external_services.prometheus.custom_metrics_url == "http://prometheus.{{ istio.control_plane_namespace }}:9090"
 
-
-
 - name: Assert Kiali Configmap has the correct Prometheus Url
   assert:
     that:
     - kiali_configmap.external_services.prometheus.url == "http://prometheus.{{ istio.control_plane_namespace }}:9090"
-
 
 - name: Assert Kiali Configmap has the correct Grafana Url
   assert:
     that:
     - kiali_configmap.external_services.grafana.in_cluster_url == "http://grafana.{{ istio.control_plane_namespace }}:3000"
 
-
 - name: Assert Kiali Configmap has the correct Pilot Url Version
   assert:
     that:
     - kiali_configmap.external_services.istio.url_service_version == "http://istio-pilot.{{ istio.control_plane_namespace }}:8080/version"
-
 
 - name: Actual Kiali Accessible namespace list should be the same as the CR
   assert:

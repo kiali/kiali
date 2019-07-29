@@ -40,7 +40,11 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 			auth.Token = requestToken
 		}
 
-		u, errParse := url.Parse(fmt.Sprintf("http://%s%s/api/traces", appstate.JaegerConfig.Service, appstate.JaegerConfig.Path))
+		u, errParse := GetJaegerInternalURL("/api/traces")
+		if !config.Get().InCluster {
+			u, errParse = url.Parse(config.Get().ExternalServices.Tracing.URL + "/api/traces")
+		}
+
 		if errParse != nil {
 			log.Errorf("Error parse Jaeger URL fetching Error Traces: %s", err)
 			return -1, errParse
@@ -75,6 +79,11 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 		}
 	}
 	return errorTraces, err
+}
+
+func GetJaegerInternalURL(path string) (*url.URL, error) {
+	return url.Parse(fmt.Sprintf("http://%s.%s:%d%s%s", appstate.JaegerConfig.Service,
+		appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Port, appstate.JaegerConfig.Path, path))
 }
 
 func GetJaegerServices() (services JaegerServices, err error) {

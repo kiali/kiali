@@ -1,0 +1,28 @@
+- name: Get cluster roles
+  k8s_facts:
+   api_version: rbac.authorization.k8s.io/v1
+   kind: ClusterRole
+   name: "{{ item }}"
+  register: clusterroles
+  loop:
+  - kiali
+  - kiali-viewer
+
+- name: Assert that cluster roles exist
+  assert:
+    that: "{{ item.resources | length == 1 }}"
+  with_items:
+  - "{{ clusterroles.results }}"
+
+- name: Get cluster role binding
+  k8s_facts:
+   api_version: rbac.authorization.k8s.io/v1
+   kind: ClusterRoleBinding
+   name: kiali
+  register: clusterrolebindings
+
+- name: Assert the cluster role binding provides the read-write role
+  assert:
+    that:
+    - "{{ clusterrolebindings.resources[0] | default({}) | json_query('roleRef.name') == 'kiali' }}"
+    fail_msg: "The kiali cluster role binding did not have the read-write roleref 'kiali'"

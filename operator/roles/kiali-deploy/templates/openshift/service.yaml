@@ -11,7 +11,7 @@ metadata:
 spec:
   type: {{ kiali_vars.deployment.service_type }}
   ports:
-  - name: tcp
+  - name: {{ 'http' if kiali_vars.identity.cert_file == "" else 'tcp' }}
     protocol: TCP
     port: {{ kiali_vars.server.port }}
   selector:

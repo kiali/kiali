@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -37,15 +38,24 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		return nil, http.StatusNoContent, nil
 	}
 
-	apiURL := status.DiscoverJaeger()
-	if apiURL == "" {
+	externalUrl := status.DiscoverJaeger()
+	if externalUrl == "" {
 		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
 	}
 
-	// Check if URL is valid
-	_, err := validateURL(apiURL)
-	if err != nil {
-		return nil, http.StatusServiceUnavailable, errors.New("wrong format for Jaeger URL: " + err.Error())
+	apiURL := jaegerConfig.URL
+
+	// If user doesn't have Jaeger url setup, use the Jaeger information auto-discovered
+	if jaegerConfig.URL == "" {
+		internalURL, err := business.GetJaegerInternalURL("/api/services")
+		if err != nil {
+			return nil, http.StatusServiceUnavailable, errors.New("wrong format for Jaeger URL: " + err.Error())
+		}
+		apiURL = internalURL.String()
+	}
+
+	if apiURL == "" {
+		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
 	}
 
 	// Be sure to copy config.Auth and not modify the existing
@@ -59,7 +69,7 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 	}
 
 	info := &models.JaegerInfo{
-		URL: apiURL,
+		URL: externalUrl,
 	}
 
 	return info, http.StatusOK, nil

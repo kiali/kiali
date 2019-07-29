@@ -2,7 +2,10 @@ _This README is currently targeted to developers only and only discusses using t
 
 == Build the Operator
 
-The operator isn't on Docker Hub or Quay.io yet, so you need to build it to get the image on your machine:
+The operator is on Docker Hub or Quay.io, so you don't need to build it to get the image on your machine.
+In fact it is even available on link:https://OperatorHub.io
+
+If you want to build it on your own, run:
 
 ```
 make operator-build

@@ -1,0 +1,4 @@
+- name: Assert Accessible Namespaces is {{ namespace_list }}
+  assert:
+    that:
+    - kiali_configmap.deployment.accessible_namespaces | symmetric_difference(namespace_list) | length == 0

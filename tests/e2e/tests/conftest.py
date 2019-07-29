@@ -14,6 +14,7 @@ ASSETS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../asset
 CIRCUIT_BREAKER_FILE = ASSETS_PATH + '/bookinfo-reviews-all-cb.yaml'
 VIRTUAL_SERVICE_FILE = ASSETS_PATH + '/bookinfo-ratings-delay.yaml'
 WORKLOADS_FILE = ASSETS_PATH  + '/bookinfo-workloads.yaml'
+EXTERNAL_HOST_SERVICE_FILE = ASSETS_PATH  + '//bookinfo-ext-service-entry.yaml'
 
 CURRENT_CONFIGMAP_FILE = './current_kiali_configmap.yaml'
 NEW_CONFIG_MAP_FILE = './new_kiali_configmap.yaml'

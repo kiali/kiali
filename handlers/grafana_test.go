@@ -22,7 +22,7 @@ var anError = map[string]string{
 
 func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.DisplayLink = false
+	conf.ExternalServices.Grafana.Enabled = false
 	config.Set(conf)
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(dashboard, 200, "whatever", t))
 	assert.Nil(t, err)
