@@ -1,5 +1,4 @@
 import { lazy } from 'react';
-import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
 import { MenuItem, Path } from './types/Routes';
 import { icons, Paths } from './config';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -105,7 +104,7 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
-    component: AppDetailsPage
+    component: lazy(() => import('./pages/AppDetails/AppDetailsPage'))
   },
   {
     path: '/' + Paths.WORKLOADS,
