@@ -19,13 +19,15 @@ provisioner:
         maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
         jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
         kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
-        # secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml" - uncomment when the secret is enabled
-        # secret: "{{ lookup('template', secret_file_path) | from_yaml }}" - Uncomment when the secret is enabled
+        # Uncomment the following parameters for the secret
+        # secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml"
+        # secret: "{{ lookup('template', secret_file_path) | from_yaml }}"
 
         operators:
           pull_secret:
             enabled: false
-            #name: "{{ secret.metadata.name }}" - Uncomment when the secret is enabled
+            # Uncomment the following parameters for the secret
+            # name: "{{ secret.metadata.name }}"
           jaeger:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
