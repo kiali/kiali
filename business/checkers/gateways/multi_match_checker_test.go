@@ -99,6 +99,35 @@ func TestWildCardMatchingHost(t *testing.T) {
 
 }
 
+func TestAnotherSubdomainWildcardCombination(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"*.echidna.com",
+			"tachyglossa.echidna.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("shouldnotbevalid", "test", map[string]string{
+			"app": "monotreme",
+		}))
+
+	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject}}
+
+	validations := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	assert.Equal(1, len(validations))
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "shouldnotbevalid"}]
+	assert.True(ok)
+	assert.True(validation.Valid)
+}
+
 func TestNoMatchOnSubdomainHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
