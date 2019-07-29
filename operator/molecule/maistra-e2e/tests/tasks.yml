@@ -1,13 +1,3 @@
-- name: Get Kiali CR
-  k8s_facts:
-    api_version: kiali.io/v1alpha1
-    kind: Kiali
-    name: kiali
-    namespace: "{{ operators.kiali.namespace }}"
-  register: kiali_crs
-  with_items:
-  - "{{ maistra.cr.control_planes }}"
-
 - name: Get Kiali Operator Pod
   k8s_facts:
     api_version: v1
