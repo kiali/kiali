@@ -82,9 +82,9 @@ provisioner:
                 mongodb: true
                 mysql: false
               
-              - namespace: redhat-istio-tutorial
-                control_plane: istio-system
-                kind: RedHatTutorial
+              # - namespace: redhat-istio-tutorial
+              #   control_plane: istio-system
+              #   kind: RedHatTutorial
 scenario:
   name: maistra-e2e
   test_sequence:
