@@ -1,7 +1,16 @@
-import { lazy } from 'react';
+import WorkloadListPage from './pages/WorkloadList/WorkloadListPage';
+import ServiceListPage from './pages/ServiceList/ServiceListPage';
+import IstioConfigPage from './pages/IstioConfigList/IstioConfigListPage';
+import ServiceJaegerPage from './pages/ServiceJaeger/ServiceJaegerPage';
+import IstioConfigDetailsPage from './pages/IstioConfigDetails/IstioConfigDetailsPage';
+import WorkloadDetailsPage from './pages/WorkloadDetails/WorkloadDetailsPage';
+import AppListPage from './pages/AppList/AppListPage';
 import AppDetailsPage from './pages/AppDetails/AppDetailsPage';
+import OverviewPageContainer from './pages/Overview/OverviewPage';
 import { MenuItem, Path } from './types/Routes';
+import GraphPageContainer from './pages/Graph/GraphPage';
 import { icons, Paths } from './config';
+import ServiceDetailsPageContainer from './pages/ServiceDetails/ServiceDetailsPage';
 import DefaultSecondaryMasthead from './components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 
 /**
@@ -54,54 +63,51 @@ const navItems: MenuItem[] = [
 
 const defaultRoute = '/overview';
 
-const graphPage = lazy(() => import('./pages/Graph/GraphPage'));
-const istioConfigDetailsPage = lazy(() => import('./pages/IstioConfigDetails/IstioConfigDetailsPage'));
-
 const pathRoutes: Path[] = [
   {
     path: '/overview',
-    component: lazy(() => import('./pages/Overview/OverviewPage'))
+    component: OverviewPageContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app/versions/:version',
-    component: graphPage
+    component: GraphPageContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
-    component: graphPage
+    component: GraphPageContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.SERVICES + '/:service',
-    component: graphPage
+    component: GraphPageContainer
   },
   {
     path: '/graph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
-    component: graphPage
+    component: GraphPageContainer
   },
   {
     path: '/graph/namespaces',
-    component: graphPage
+    component: GraphPageContainer
   },
   {
     path: '/namespaces/:namespace/' + Paths.SERVICES + '/:service',
-    component: lazy(() => import('./pages/ServiceDetails/ServiceDetailsPage'))
+    component: ServiceDetailsPageContainer
   },
   // NOTE that order on routes is important
   {
     path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:objectSubtype/:object',
-    component: istioConfigDetailsPage
+    component: IstioConfigDetailsPage
   },
   {
     path: '/namespaces/:namespace/' + Paths.ISTIO + '/:objectType/:object',
-    component: istioConfigDetailsPage
+    component: IstioConfigDetailsPage
   },
   {
     path: '/' + Paths.SERVICES,
-    component: lazy(() => import('./pages/ServiceList/ServiceListPage'))
+    component: ServiceListPage
   },
   {
     path: '/' + Paths.APPLICATIONS,
-    component: lazy(() => import('./pages/AppList/AppListPage'))
+    component: AppListPage
   },
   {
     path: '/namespaces/:namespace/' + Paths.APPLICATIONS + '/:app',
@@ -109,19 +115,19 @@ const pathRoutes: Path[] = [
   },
   {
     path: '/' + Paths.WORKLOADS,
-    component: lazy(() => import('./pages/WorkloadList/WorkloadListPage'))
+    component: WorkloadListPage
   },
   {
     path: '/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
-    component: lazy(() => import('./pages/WorkloadDetails/WorkloadDetailsPage'))
+    component: WorkloadDetailsPage
   },
   {
     path: '/' + Paths.ISTIO,
-    component: lazy(() => import('./pages/IstioConfigList/IstioConfigListPage'))
+    component: IstioConfigPage
   },
   {
     path: '/' + Paths.JAEGER,
-    component: lazy(() => import('./pages/ServiceJaeger/ServiceJaegerPage'))
+    component: ServiceJaegerPage
   }
 ];
 
