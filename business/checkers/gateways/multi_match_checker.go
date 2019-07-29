@@ -122,8 +122,8 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 			}
 
 			// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-			current := strings.Replace(host.Hostname, "*", ".*", -1)
-			previous := strings.Replace(h.Hostname, "*", ".*", -1)
+			current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
+			previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
 			// We anchor the beginning and end of the string when it's
 			// to be used as a regex, so that we don't get spurious
