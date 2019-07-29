@@ -3,9 +3,76 @@
   connection: local
   tasks:
   - import_tasks: 'tests/tasks.yml'
-  # - import_tasks: ../asserts/accessible_namespaces_contains.yml
-  #   vars:
-  #     namespace_list: [ '**' ]
+
+  - name: Assert Kialis have the list accessible namespaces of 
+    assert:
+      that:
+      - "{{ item.0.deployment.accessible_namespaces }} | difference({{ item.1.resources[0].spec.members }}) | length == 1"
+    with_together:
+    - "{{ kiali_configurations }}"
+    - "{{ smmrs.results }}"
+  
+  - name: Assert Kialis Configmaps have OAuth Strategy
+    assert:
+      that:
+      - "item.auth.strategy == auth "
+    with_items:
+    - "{{ kiali_configurations }}"
+    vars:
+      auth: "openshift"
+
+  - name: Assert Kialis Configmaps have the same image version that was defined on Service Mesh Control Plane
+    assert:
+      that:
+      - item.0.deployment.image_version ==  item.1.resources[0].spec.istio.kiali.tag
+    with_together:
+    - "{{ kiali_configurations }}"
+    - "{{ smcps.results }}"
+
+
+  - name: Assert Kiali Configmap are correct to Service Mesh Control Plane
+    assert:
+      that:
+      - item.0.istio_namespace == item.1.resources[0].metadata.namespace
+    with_together:
+    - "{{ kiali_configurations }}"
+    - "{{ smcps.results }}"
+ 
+
+  - name: Assert Kiali Pods are running on correct Service Mesh Control Plane
+    assert:
+      that:
+      - item.0.resources[0].metadata.namespace == item.1.resources[0].metadata.namespace
+    with_together:
+    - "{{ kiali_pods.results }}"
+    - "{{ smcps.results }}"
+
+# - name: Assert Kiali Configmap has the correct Custom Prometheus Url
+#   assert:
+#     that:
+#     - kiali_configmap.external_services.prometheus.custom_metrics_url == "http://prometheus.{{ istio.control_plane_namespace }}:9090"
+
+# - name: Assert Kiali Configmap has the correct Prometheus Url
+#   assert:
+#     that:
+#     - kiali_configmap.external_services.prometheus.url == "http://prometheus.{{ istio.control_plane_namespace }}:9090"
+
+# - name: Assert Kiali Configmap has the correct Grafana Url
+#   assert:
+#     that:
+#     - kiali_configmap.external_services.grafana.in_cluster_url == "http://grafana.{{ istio.control_plane_namespace }}:3000"
+
+# - name: Assert Kiali Configmap has the correct Pilot Url Version
+#   assert:
+#     that:
+#     - kiali_configmap.external_services.istio.url_service_version == "http://istio-pilot.{{ istio.control_plane_namespace }}:8080/version"
+
+# - name: Multi-Tenancy - Assert Kiali has the correct Label Selector
+#   assert:
+#     that:
+#     - (kiali_configmap.api.namespaces.label_selector is defined) and (kiali_configmap.api.namespaces.label_selector ==  kiali.label_selector)
+
+
   # - import_tasks: '../asserts/configmap_asserts.yml'
   # - import_tasks: '../asserts/pod_asserts.yml'
   # - import_tasks: '../asserts/multi-tenancy/label_selector_asserts.yml'
