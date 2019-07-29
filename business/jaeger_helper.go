@@ -77,5 +77,6 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 }
 
 func GetJaegerInternalURL(path string) (*url.URL, error) {
-	return url.Parse(fmt.Sprintf("http://%s%s%s", appstate.JaegerConfig.Service, appstate.JaegerConfig.Path, path))
+	return url.Parse(fmt.Sprintf("http://%s.%s:%d%s%s", appstate.JaegerConfig.Service,
+		appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Port, appstate.JaegerConfig.Path, path))
 }

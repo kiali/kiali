@@ -57,6 +57,7 @@ const (
 	EnvTracingEnabled          = "TRACING_ENABLED"
 	EnvTracingURL              = "TRACING_URL"
 	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
+	EnvTracingServicePort      = "TRACING_SERVICE_PORT"
 
 	EnvThreeScaleAdapterName = "THREESCALE_ADAPTER_NAME"
 	EnvThreeScaleServiceName = "THREESCALE_SERVICE_NAME"
@@ -156,6 +157,7 @@ type TracingConfig struct {
 	Enabled   bool   `yaml:"enabled"`
 	Namespace string `yaml:"namespace"`
 	Service   string `yaml:"service"`
+	Port      int32  `yaml:"port"`
 	URL       string `yaml:"url"`
 	Auth      Auth   `yaml:"auth"`
 	// Path store the value of QUERY_BASE_PATH
@@ -288,6 +290,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, c.IstioNamespace))
+	c.ExternalServices.Tracing.Port = getDefaultInt32(EnvTracingServicePort, 16686)
 	c.ExternalServices.Tracing.Auth = getAuthFromEnv("TRACING")
 
 	// Istio Configuration
@@ -387,6 +390,14 @@ func getDefaultInt(envvar string, defaultValue int) (retVal int) {
 }
 
 func getDefaultInt64(envvar string, defaultValue int64) (retVal int64) {
+	return envToInteger(envvar, defaultValue)
+}
+
+func getDefaultInt32(envvar string, defaultValue int32) (retVal int32) {
+	return int32(envToInteger(envvar, int64(defaultValue)))
+}
+
+func envToInteger(envvar string, defaultValue int64) (retVal int64) {
 	retValString := os.Getenv(envvar)
 	if retValString == "" {
 		retVal = defaultValue
