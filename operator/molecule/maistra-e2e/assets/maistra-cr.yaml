@@ -12,7 +12,7 @@ spec:
       controlPlaneSecurityEnabled: false
       mtls:
         enabled: false
-{% if operators.pull_secret.enabled %}
+{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
       imagePullSecrets:
        - name:  {{ operators.pull_secret.name }}
 {% endif %}

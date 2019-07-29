@@ -571,7 +571,7 @@ spec:
           volumeMounts:
           - name: discovery-cache
             mountPath: /home/istio-operator/.kube/cache/discovery
-{% if operators.pull_secret.enabled %}
+{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
       imagePullSecrets:
        - name: {{ operators.pull_secret.name }}
 {% endif %}
