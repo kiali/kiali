@@ -104,6 +104,11 @@
     until: operator_deployment.resources |length == 1 and operator_deployment.resources[0].status.availableReplicas is defined and operator_deployment.resources[0].status.availableReplicas == 1
     retries: 2000
     delay: 10
+
+  - name: Pause for 1 minute to wait Maistra to create Admission Controller
+    pause:
+      minutes: 1
+    
   
   - name: Deploy Control Planes
     k8s:
