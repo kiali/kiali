@@ -1,9 +1,12 @@
-# - name: Get Kiali CR 
-#   set_fact:
-#     kiali_crs: "{{ lookup('k8s', api_version='kiali.io/v1alpha1', kind='Kiali', namespace=item, resource_name=kiali_operator_cr.metadata.name) }}"
-#     with_items:
-#     - "{{ maistra.cr.control_planes }}"
-
+- name: Get Kiali CR
+  k8s_facts:
+    api_version: kiali.io/v1alpha1
+    kind: Kiali
+    name: kiali
+    namespace: "{{ operators.kiali.namespace }}"
+  register: kiali_crs
+  with_items:
+  - "{{ maistra.cr.control_planes }}"
 
 - name: Get Kiali Operator Pod
   k8s_facts:
@@ -13,17 +16,6 @@
     label_selectors:
     - app = kiali-operator
   register: kiali_operator_pod
-
-- name: Get Kiali Pod
-  k8s_facts:
-    api_version: v1
-    kind: Pod
-    namespace: "{{ item }}"
-    label_selectors:
-    - app = kiali
-  register: kiali_pods
-  with_items:
-  - "{{ maistra.cr.control_planes }}"
 
 - name: Get Kiali Pod
   k8s_facts:
@@ -46,12 +38,11 @@
   with_items:
   - "{{ maistra.cr.control_planes }}"
   
-# - name: Get Kiali Configmap
-#   set_fact:
-#     kiali_configmaps: "{{ lookup('k8s', api_version='v1', kind='ConfigMap', namespace=item , resource_name='kiali') }}"
-#     with_items:
-#     - "{{ maistra.cr.control_planes }}"
 
-# - name: Format Configmap
-#   set_fact:
-#     kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+
+- name: Format Configmap
+  set_fact:
+     kiali_configmap: " {{ kiali_configmaps | json_query(query) | list }}"
+    # second_kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+  vars:
+      query: "results[*].resources[0].data"
