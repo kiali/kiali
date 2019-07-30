@@ -18,7 +18,7 @@ def test_external_host_node(kiali_client):
 
         nodes = response.json().get('elements').get('nodes')
 
-        with timeout(seconds=20, error_message='Timed out waiting for \"{}\"'.format(EXPECTED_EXTERNAL_SERVICE_NAME)):
+        with timeout(seconds=60, error_message='Timed out waiting for \"{}\"'.format(EXPECTED_EXTERNAL_SERVICE_NAME)):
             wiat_for = True
             while wiat_for:
                 for node in nodes:
