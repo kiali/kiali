@@ -1,16 +1,6 @@
 import * as React from 'react';
 import { Collapse } from 'react-bootstrap';
 
-import {
-  NotificationDrawer as PfNotificationDrawer,
-  Notification,
-  Icon,
-  Button,
-  EmptyState,
-  EmptyStateTitle,
-  EmptyStateIcon
-} from 'patternfly-react';
-
 import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import moment from 'moment';
 import {
@@ -18,6 +8,14 @@ import {
   PropertyType
 } from '../BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { style } from 'typestyle';
+
+// KIALI-3172 For some reason not fully explained, when loaded with "import" it happens that the NotificationDrawer
+// does not come with the expected ".Title", ".Accordion" (etc.) fields.
+// Which ends up in React error "Element type is invalid" as those components are undefined.
+// Using the "require" way is a workaround.
+// Note that it is unclear what triggers the error
+// (may happen with or without lazy loading, generally not seen using `yarn start` but seen with build)
+const Pf = require('patternfly-react');
 
 const drawerMarginBottom = 20;
 
@@ -54,10 +52,10 @@ const getUnreadMessageLabel = (messages: NotificationMessage[]) => {
 type StatelessType = {};
 
 const noNotificationsMessage = (
-  <EmptyState>
-    <EmptyStateIcon name="info" />
-    <EmptyStateTitle> No Messages Available </EmptyStateTitle>
-  </EmptyState>
+  <Pf.EmptyState>
+    <Pf.EmptyStateIcon name="info" />
+    <Pf.EmptyStateTitle> No Messages Available </Pf.EmptyStateTitle>
+  </Pf.EmptyState>
 );
 
 type NotificationWrapperPropsType = {
@@ -68,23 +66,23 @@ type NotificationWrapperPropsType = {
 class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsType, StatelessType> {
   render() {
     return (
-      <Notification seen={this.props.message.seen} onClick={() => this.props.onClick(this.props.message)}>
-        <Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
-        <Notification.Content>
-          <Notification.Message>
+      <Pf.Notification seen={this.props.message.seen} onClick={() => this.props.onClick(this.props.message)}>
+        <Pf.Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
+        <Pf.Notification.Content>
+          <Pf.Notification.Message>
             {this.props.message.content}
             {this.props.message.count > 1 && (
               <div>
                 {this.props.message.count} {moment().from(this.props.message.firstTriggered)}
               </div>
             )}
-          </Notification.Message>
-          <Notification.Info
+          </Pf.Notification.Message>
+          <Pf.Notification.Info
             leftText={this.props.message.created.toLocaleDateString()}
             rightText={this.props.message.created.toLocaleTimeString()}
           />
-        </Notification.Content>
-      </Notification>
+        </Pf.Notification.Content>
+      </Pf.Notification>
     );
   }
 }
@@ -113,41 +111,41 @@ class NotificationGroupWrapper extends React.PureComponent<NotificationGroupWrap
     }
 
     return (
-      <PfNotificationDrawer.Panel expanded={isExpanded}>
-        <PfNotificationDrawer.PanelHeading onClick={() => this.props.onToggle(group)}>
-          <PfNotificationDrawer.PanelTitle>
+      <Pf.NotificationDrawer.Panel expanded={isExpanded}>
+        <Pf.NotificationDrawer.PanelHeading onClick={() => this.props.onToggle(group)}>
+          <Pf.NotificationDrawer.PanelTitle>
             <a className={isExpanded ? '' : 'collapsed'} aria-expanded="true">
               {group.title}
             </a>
-          </PfNotificationDrawer.PanelTitle>
-          <PfNotificationDrawer.PanelCounter text={getUnreadMessageLabel(group.messages)} />
-        </PfNotificationDrawer.PanelHeading>
+          </Pf.NotificationDrawer.PanelTitle>
+          <Pf.NotificationDrawer.PanelCounter text={getUnreadMessageLabel(group.messages)} />
+        </Pf.NotificationDrawer.PanelHeading>
         <Collapse in={isExpanded}>
-          <PfNotificationDrawer.PanelCollapse>
-            <PfNotificationDrawer.PanelBody>
+          <Pf.NotificationDrawer.PanelCollapse>
+            <Pf.NotificationDrawer.PanelBody>
               {group.messages.length === 0 && noNotificationsMessage}
               {this.getMessages().map(message => (
                 <NotificationWrapper key={message.id} message={message} onClick={this.props.onNotificationClick} />
               ))}
-            </PfNotificationDrawer.PanelBody>
+            </Pf.NotificationDrawer.PanelBody>
             {group.showActions && group.messages.length > 0 && (
-              <PfNotificationDrawer.PanelAction>
-                <PfNotificationDrawer.PanelActionLink className="drawer-pf-action-link">
-                  <Button bsStyle="link" onClick={() => this.props.onMarkGroupAsRead(group)}>
+              <Pf.NotificationDrawer.PanelAction>
+                <Pf.NotificationDrawer.PanelActionLink className="drawer-pf-action-link">
+                  <Pf.Button bsStyle="link" onClick={() => this.props.onMarkGroupAsRead(group)}>
                     Mark All Read
-                  </Button>
-                </PfNotificationDrawer.PanelActionLink>
-                <PfNotificationDrawer.PanelActionLink data-toggle="clear-all">
-                  <Button bsStyle="link" onClick={() => this.props.onClearGroup(group)}>
-                    <Icon type="pf" name="close" />
+                  </Pf.Button>
+                </Pf.NotificationDrawer.PanelActionLink>
+                <Pf.NotificationDrawer.PanelActionLink data-toggle="clear-all">
+                  <Pf.Button bsStyle="link" onClick={() => this.props.onClearGroup(group)}>
+                    <Pf.Icon type="pf" name="close" />
                     Clear All
-                  </Button>
-                </PfNotificationDrawer.PanelActionLink>
-              </PfNotificationDrawer.PanelAction>
+                  </Pf.Button>
+                </Pf.NotificationDrawer.PanelActionLink>
+              </Pf.NotificationDrawer.PanelAction>
             )}
-          </PfNotificationDrawer.PanelCollapse>
+          </Pf.NotificationDrawer.PanelCollapse>
         </Collapse>
-      </PfNotificationDrawer.Panel>
+      </Pf.NotificationDrawer.Panel>
     );
   }
 }
@@ -173,8 +171,8 @@ type StateType = {};
 export default class NotificationDrawer extends React.PureComponent<PropsType, StateType> {
   render() {
     return (
-      <PfNotificationDrawer hide={this.props.isHidden} expanded={this.props.isExpanded}>
-        <PfNotificationDrawer.Title
+      <Pf.NotificationDrawer hide={this.props.isHidden} expanded={this.props.isExpanded}>
+        <Pf.NotificationDrawer.Title
           title={this.props.title}
           onExpandClick={this.props.onExpandDrawer}
           onCloseClick={this.props.onHideDrawer}
@@ -183,7 +181,7 @@ export default class NotificationDrawer extends React.PureComponent<PropsType, S
           className={drawerContainerStyle}
           maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: drawerMarginBottom }}
         >
-          <PfNotificationDrawer.Accordion>
+          <Pf.NotificationDrawer.Accordion>
             {this.props.groups.length === 0 && noNotificationsMessage}
             {this.props.groups.map(group => {
               return (
@@ -199,9 +197,9 @@ export default class NotificationDrawer extends React.PureComponent<PropsType, S
                 />
               );
             })}
-          </PfNotificationDrawer.Accordion>
+          </Pf.NotificationDrawer.Accordion>
         </BoundingClientAwareComponent>
-      </PfNotificationDrawer>
+      </Pf.NotificationDrawer>
     );
   }
 }
