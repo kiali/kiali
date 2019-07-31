@@ -196,17 +196,18 @@
     - "{{ kiali.test_mesh.installations }}"
 
 
-  - name: Add Privileged to Meshes Namespaces
+  - name: Add Privileged to Meshes
     shell: "oc adm policy add-scc-to-user privileged -z default -n {{ item.namespace }}"
-    when: not item.kind == "Bookinfo" and item.hub is defined and item.hub == "docker.io/maistra"
+    when: not (item.kind == "Bookinfo" and item.hub is defined and item.hub == "docker.io/maistra")
     with_items:
     - "{{ kiali.test_mesh.installations }}"
 
-  - name: Add Privileged to Meshes Namespaces
+  - name: Add Anyuid to Meshes
     shell: "oc adm policy add-scc-to-user anyuid -z default -n {{ item.namespace }}"
     when: not (item.kind == "Bookinfo" and item.hub is defined and  item.hub == "docker.io/maistra")
     with_items:
     - "{{ kiali.test_mesh.installations }}"
+    
 
   - name: Adding Secret to Deployer Account
     shell: "oc secrets link deployer {{ operators.pull_secret.name }} --for=pull -n {{ item.namespace }} "
