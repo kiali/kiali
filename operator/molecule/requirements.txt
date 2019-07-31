@@ -2,6 +2,5 @@
 # 'pip install -r requirements.txt'
 molecule
 openshift
-kubernetes
 jmespath
 junit-xml
