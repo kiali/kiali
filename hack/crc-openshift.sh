@@ -76,6 +76,9 @@ get_status() {
   echo "Version from oc command [${CRC_OC}]"
   ${CRC_OC} version
   echo "====================================================================="
+  echo "CRC Status from oc command [${CRC_OC}]"
+  ${CRC_OC} status
+  echo "====================================================================="
   echo "Console:    https://console-openshift-console.apps-crc.testing"
   echo "API URL:    https://api.crc.testing:6443/"
   echo "IP address: $(${CRC_COMMAND} ip)"
@@ -97,8 +100,6 @@ get_status() {
   echo "  oc login -u kiali -p kiali api.crc.testing:6443"
   echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
   echo "====================================================================="
-
-  echo "CRC does not yet have a status command. This hack script will be updated once this github issue is implemented: https://github.com/code-ready/crc/issues/68"
 }
 
 check_app() {
@@ -145,10 +146,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.88.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="0.89.0"
 
 # The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.3"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.6"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -419,7 +420,7 @@ CRC_ROOT_DIR="${HOME}/.crc"
 CRC_KUBEADMIN_PASSWORD_FILE="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/kubeadmin-password"
 CRC_KUBECONFIG="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/kubeconfig"
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
-CRC_OC="${CRC_ROOT_DIR}/cache/oc/oc"
+CRC_OC="${CRC_ROOT_DIR}/bin/oc"
 
 # The version of Maistra/Istio to be installed if enabled
 MAISTRA_VERSION="maistra-0.11.0"
@@ -470,13 +471,13 @@ if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
 fi
 
 # Determine where to get the binaries and their full paths and how to execute them.
-CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_VERSION}-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
+CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_VERSION}-alpha-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
 
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/libvirt/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
-CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
+CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/libvirt/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
+CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 
 # If Kiali is to be installed, set up some things that may be needed
 if [ "${KIALI_ENABLED}" == "true" ]; then
@@ -559,7 +560,7 @@ else
     rm "${CRC_EXE_PATH}.tar.xz"
     exit 1
   fi
-  tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})"
+  tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})" --strip 1 '*/crc'
   chmod +x ${CRC_EXE_PATH}
   rm "${CRC_EXE_PATH}.tar.xz"
 fi
