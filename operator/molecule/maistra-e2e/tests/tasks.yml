@@ -49,29 +49,6 @@
   with_items:
   - "{{ maistra.cr.control_planes }}"
 
-# - name: Get Kiali Roles
-#   k8s_facts:
-#    api_version: rbac.authorization.k8s.io/v1
-#    kind: Role
-#    namespace: "{{ item[0] }}"
-#    name: "{{ item[1] }}"
-#   register: roles
-#   with_nested:
-#   - "{{ smmrs.results[0].resources[0].spec.members }}"
-#   - ['kiali', 'kiali-viewer']
-
-
-# - name: Get role binding
-#   k8s_facts:
-#    api_version: rbac.authorization.k8s.io/v1
-#    kind: RoleBinding
-#    namespace: "{{ item[0] }}"
-#    name: "{{ item[1] }}"
-#   register: rolebindings
-#   with_nested:
-#   - "{{ kiali.accessible_namespaces }}"
-#   - kiali
-
 - name: Extract Configmaps
   set_fact:
      kiali_configurations: "{{ kiali_configurations + [(item['config.yaml'] | from_yaml)] }}"
@@ -81,3 +58,35 @@
     cmaps: "{{ kiali_configmaps | json_query(query) | list  }}"
     query: "results[*].resources[0].data"
     kiali_configurations: []
+
+- name: Extract Acessible namespaces
+  set_fact:
+     kiali_accessible_namespaces: "{{ kiali_accessible_namespaces + item.deployment.accessible_namespaces }}"
+  with_items:
+  - "{{ kiali_configurations }}"
+  vars:
+    kiali_accessible_namespaces: []
+
+
+- name: Get Kiali Roles
+  k8s_facts:
+   api_version: rbac.authorization.k8s.io/v1
+   kind: Role
+   namespace: "{{ item[0] }}"
+   name: "{{ item[1] }}"
+  register: kiali_roles
+  with_nested:
+  - "{{ kiali_accessible_namespaces }}"
+  - ['kiali', 'kiali-viewer']
+
+
+- name: Get Kiali Role Bindings
+  k8s_facts:
+   api_version: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   namespace: "{{ item[0] }}"
+   name: "{{ item[1] }}"
+  register: kiali_rolebindings
+  with_nested:
+  - "{{ kiali_accessible_namespaces }}"
+  - kiali

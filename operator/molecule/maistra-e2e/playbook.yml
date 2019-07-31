@@ -30,7 +30,7 @@
     - "{{ smcps.results }}"
 
 
-  - name: Assert Kiali Configmap are correct to Service Mesh Control Plane
+  - name: Assert Kiali Configmap  Namespaces are correct to Service Mesh Control Plane Namespace
     assert:
       that:
       - item.0.istio_namespace == item.1.resources[0].metadata.namespace
@@ -83,26 +83,18 @@
     - "{{ smcps.results }}"
 
   
-  - name: Assert Kialis have the list accessible namespaces of 
+
+  - name: Assert that namespaces have the correct Kiali roles
+    assert:
+      that: "{{ item.resources | length == 1 }}"
+    with_items:
+    - "{{ kiali_roles.results }}"
+
+
+  - name: Assert the role binding provides the read-only viewer role for Kiali
     assert:
       that:
-      - "{{ item.0.deployment.accessible_namespaces }} | difference({{ item.1.resources[0].spec.members }}) | length == 1"
-    with_together:
-    - "{{ kiali_configurations }}"
-    - "{{ smmrs.results }}"
-  
-
-  # - name: Assert that namespaces have the correct roles
-  #   assert:
-  #     that: "{{ item.resources | length == 1 }}"
-  #   with_items:
-  #   - "{{ roles.results }}"
-
-
-  # - name: Assert the role binding provides the read-only viewer role
-  #   assert:
-  #     that:
-  #     - "{{ item.resources[0] | default({}) | json_query('roleRef.name') == 'kiali-viewer' }}"
-  #     fail_msg: "The kiali role binding did not have the read-only roleref 'kiali-viewer'"
-  #   with_items:
-  #   - "{{ rolebindings.results }}"
+      - "{{ item.resources[0] | default({}) | json_query('roleRef.name') == 'kiali' }}"
+      fail_msg: "The kiali role binding did not have the read-only roleref 'kiali'"
+    with_items:
+    - "{{ kiali_rolebindings.results }}"
