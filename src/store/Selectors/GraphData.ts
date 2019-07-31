@@ -12,7 +12,7 @@ import {
   GraphEdgeWrapper,
   GraphElements,
   GraphNodeWrapper,
-  protocolTrafficHasData
+  hasProtocolTraffic
 } from '../../types/Graph';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
@@ -25,6 +25,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       grpcErr: NaN,
       grpcPercentErr: NaN,
       grpcPercentReq: NaN,
+      hasTraffic: undefined,
       http: NaN,
       http3xx: NaN,
       http4xx: NaN,
@@ -66,7 +67,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       workload: undefined
     }
   };
-  // It's not easy to get find/hide to work exactly as users users may expect.  Because edges represent
+  // It's not easy to get find/hide to work exactly as users may expect.  Because edges represent
   // traffic for only one protocol it is best to use 0 defaults for that one protocol, and leave the others
   // as NaN. In that way numerical expressions affect only edges for a desired protocol.  Because nodes
   // can involve traffic from multiple protocols, it seems (for now) best to only set the values explicitly
@@ -127,8 +128,9 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
         const { traffic, ...edgeData } = edge.data;
         // see comment above about the 'traffic' data handling
         if (traffic) {
-          if (protocolTrafficHasData(traffic)) {
+          if (hasProtocolTraffic(traffic)) {
             decoratedEdge.data = {
+              hasTraffic: true,
               responses: traffic.responses,
               ...edgeProtocolDefaults[traffic.protocol],
               ...propertiesToNumber(traffic.rates),

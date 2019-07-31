@@ -8,6 +8,7 @@ export const CyEdge = {
   grpcErr: 'grpcErr',
   grpcPercentErr: 'grpcPercentErr',
   grpcPercentReq: 'grpcPercentReq',
+  hasTraffic: 'hasTraffic',
   http: 'http',
   http3xx: 'http3xx',
   http4xx: 'http4xx',

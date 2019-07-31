@@ -112,9 +112,9 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('mtls')).toEqual('edge[isMTLS > 0]');
     // @ts-ignore
-    expect(instance.parseValue('traffic')).toEqual('edge[?protocol]');
+    expect(instance.parseValue('traffic')).toEqual('edge[?hasTraffic]');
     // @ts-ignore
-    expect(instance.parseValue('!traffic')).toEqual('edge[^protocol]');
+    expect(instance.parseValue('!traffic')).toEqual('edge[^hasTraffic]');
 
     // check all numeric operators
     // @ts-ignore

@@ -2,7 +2,7 @@ import { Icon } from 'patternfly-react';
 import { TableGrid } from 'patternfly-react-extensions';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { NodeType, ProtocolTraffic, protocolTrafficHasData } from '../../types/Graph';
+import { NodeType, ProtocolTraffic, hasProtocolTraffic } from '../../types/Graph';
 import { Direction } from '../../types/MetricsOptions';
 import { REQUESTS_THRESHOLDS } from '../../types/Health';
 import history, { URLParam } from '../../app/History';
@@ -143,7 +143,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   };
 
   private renderStatusColumn = (traffic: ProtocolTraffic) => {
-    if (protocolTrafficHasData(traffic) && traffic.protocol !== 'tcp') {
+    if (hasProtocolTraffic(traffic) && traffic.protocol !== 'tcp') {
       let percentError: number;
       if (traffic.protocol === 'http') {
         percentError = traffic.rates.httpPercentErr ? Number(traffic.rates.httpPercentErr) : 0;
@@ -219,7 +219,7 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   };
 
   private renderTrafficColumn = (traffic: ProtocolTraffic) => {
-    if (protocolTrafficHasData(traffic)) {
+    if (hasProtocolTraffic(traffic)) {
       if (traffic.protocol === 'tcp') {
         return <TableGrid.Col {...trafficColumnSizes}>{Number(traffic.rates.tcp).toFixed(2)}</TableGrid.Col>;
       } else {

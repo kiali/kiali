@@ -97,7 +97,7 @@ export type Responses = object;
 
 type ValidProtocols = 'http' | 'grpc' | 'tcp';
 
-export type ProtocolTrafficNoData = {
+export type ProtocolNoTraffic = {
   protocol: ValidProtocols;
 };
 
@@ -127,15 +127,13 @@ export type ProtocolTrafficTcp = {
   responses: Responses;
 };
 
-export type ProtocolTrafficWithData = ProtocolTrafficHttp | ProtocolTrafficTcp | ProtocolTrafficGrpc;
-export type ProtocolTraffic = ProtocolTrafficWithData | ProtocolTrafficNoData;
+export type ProtocolWithTraffic = ProtocolTrafficHttp | ProtocolTrafficTcp | ProtocolTrafficGrpc;
+export type ProtocolTraffic = ProtocolWithTraffic | ProtocolNoTraffic;
 
-export const protocolTrafficHasData = (
-  protocolTraffic: ProtocolTraffic
-): protocolTraffic is ProtocolTrafficWithData => {
+export const hasProtocolTraffic = (protocolTraffic: ProtocolTraffic): protocolTraffic is ProtocolWithTraffic => {
   return (
-    (protocolTraffic as ProtocolTrafficWithData).rates !== undefined &&
-    (protocolTraffic as ProtocolTrafficWithData).responses !== undefined
+    (protocolTraffic as ProtocolWithTraffic).rates !== undefined &&
+    (protocolTraffic as ProtocolWithTraffic).responses !== undefined
   );
 };
 
