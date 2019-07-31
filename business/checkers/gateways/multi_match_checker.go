@@ -75,10 +75,7 @@ func addError(validations models.IstioValidations, gatewayRuleName string, serve
 		},
 	}
 
-	if _, exists := validations[key]; !exists {
-		validations.MergeValidations(models.IstioValidations{key: rrValidation})
-	}
-	return validations
+	return validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
 func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
@@ -129,12 +126,13 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 			// to be used as a regex, so that we don't get spurious
 			// substring matches, e.g., "example.com" matching
 			// "foo.example.com".
-			current_re := strings.Join([]string{"^", current, "$"}, "")
-			previous_re := strings.Join([]string{"^", previous, "$"}, "")
+			currentRegexp := strings.Join([]string{"^", current, "$"}, "")
+			previousRegexp := strings.Join([]string{"^", previous, "$"}, "")
 
-			if regexp.MustCompile(current_re).MatchString(previous) ||
-				regexp.MustCompile(previous_re).MatchString(current) {
+			if regexp.MustCompile(currentRegexp).MatchString(previous) ||
+				regexp.MustCompile(previousRegexp).MatchString(current) {
 				duplicates = append(duplicates, h)
+				duplicates = append(duplicates, host)
 				break
 			}
 		}

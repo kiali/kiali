@@ -211,3 +211,41 @@ func TestTwoWildCardsMatching(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
+
+func TestDuplicateGatewaysErrorCount(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer([]string{"valid", "second.valid"}, 80, "http", "http"),
+		data.CreateEmptyGateway("validgateway", "test", map[string]string{
+			"app": "real",
+		}))
+
+	gwObjectIdentical := data.AddServerToGateway(data.CreateServer([]string{"valid", "second.valid"}, 80, "http", "http"),
+		data.CreateEmptyGateway("duplicatevalidgateway", "test", map[string]string{
+			"app": "real",
+		}))
+
+	gws := [][]kubernetes.IstioObject{[]kubernetes.IstioObject{gwObject, gwObjectIdentical}}
+
+	validations := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.NotEmpty(validations)
+	validgateway, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "validgateway"}]
+	assert.True(ok)
+
+	duplicatevalidgateway, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "duplicatevalidgateway"}]
+	assert.True(ok)
+
+	assert.Equal(2, len(validgateway.Checks))
+	assert.Equal("spec/servers[0]/hosts[0]", validgateway.Checks[0].Path)
+	assert.Equal("spec/servers[0]/hosts[1]", validgateway.Checks[1].Path)
+
+	assert.Equal(2, len(duplicatevalidgateway.Checks))
+	assert.Equal("spec/servers[0]/hosts[0]", duplicatevalidgateway.Checks[0].Path)
+	assert.Equal("spec/servers[0]/hosts[1]", duplicatevalidgateway.Checks[1].Path)
+}
