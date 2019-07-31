@@ -330,28 +330,28 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           );
           rtAvg = this.getNodeDataPoints(
             histograms.request_duration.avg,
-            'Average',
+            'avg',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rtMed = this.getNodeDataPoints(
             histograms.request_duration['0.5'],
-            'Median',
+            'p50',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rt95 = this.getNodeDataPoints(
             histograms.request_duration['0.95'],
-            '95th',
+            'p95',
             sourceMetricType,
             destMetricType,
             sourceData
           );
           rt99 = this.getNodeDataPoints(
             histograms.request_duration['0.99'],
-            '99th',
+            'p99',
             sourceMetricType,
             destMetricType,
             sourceData
