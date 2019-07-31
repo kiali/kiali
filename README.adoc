@@ -333,12 +333,12 @@ spec:
 
 == Services API Documentation
 
-Kiali can display API Documentation of your services. See https://user-images.githubusercontent.com/1235410/61569413-0e870480-aa3c-11e9-9527-bbea18eff475.png[Api documentation screen capture] and https://user-images.githubusercontent.com/1235410/61569419-1777d600-aa3c-11e9-82cc-f9510e5b9808.png[Api type list screen capture].
+Kiali can display API Documentation of your services. See https://user-images.githubusercontent.com/1235410/61569413-0e870480-aa3c-11e9-9527-bbea18eff475.png[API documentation screen capture] and https://user-images.githubusercontent.com/1235410/61569419-1777d600-aa3c-11e9-82cc-f9510e5b9808.png[API type list screen capture].
 
 === Configure your services
 
-Your services must be annotated with the type of api ('rest', 'grpc', 'graphql') and a url to the spec of the api. 
-If the api spec is served from the service itself, Kiali will infer the hostname and port :
+Your services must be annotated with the type of API ('rest', 'grpc', 'graphql') and a URL to the spec of the API. 
+If the API spec is served from the service itself, Kiali will infer the hostname and port :
 
 [source,yaml]
 ----
@@ -353,7 +353,7 @@ spec:
 ...
 ----
 
-The api spec can also be served from any http/s url, internal or external to the cluster :
+The API spec can also be served from any http/s URL, internal or external to the cluster :
 
 [source,yaml]
 ----
@@ -368,12 +368,12 @@ spec:
 ...
 ----
 
-For now, only REST apis have their spec displayed but we are working to support gRpc and GraphQL soon.
+For now, only REST APIs have their spec displayed but we are working to support gRpc and GraphQL soon.
 A live console to test your APIs directly with Kiali is also being worked on.
 
-=== Customize api docs annotations
+=== Customize API docs annotations
 
-You can configure Kiali to use your own annotation names with the operator cr
+You can configure Kiali to use your own annotation names with the Kiali CR
 
 [source,yaml]
 ----
