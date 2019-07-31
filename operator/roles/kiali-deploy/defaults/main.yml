@@ -78,8 +78,8 @@ kiali_defaults:
         username: ""
       enabled: true
       namespace: ""
-      service: ""
       port: 16686
+      service: ""
       url: ""
 
   identity: {}
@@ -97,8 +97,8 @@ kiali_defaults:
     cache_duration: 300000000
 
   login_token:
-    signing_key: "kiali"
     expiration_seconds: 86400
+    signing_key: "kiali"
 
   server:
     address: ""
