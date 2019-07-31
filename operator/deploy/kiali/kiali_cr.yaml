@@ -99,6 +99,15 @@ spec:
 #    ---
 #    #additional_service_yaml:
 #
+# Affinity definitions that are to be used to define the nodes where the Kiali pod should be contrained.
+# See the Kubernetes documentation on Assigning Pods to Nodes for the proper syntax for these three
+# different affinity types.
+#    ---
+#    affinity:
+#      node: {}
+#      pod: {}
+#      pod_anti: {}
+#
 # Determines which Kiali image to download and install.
 #    ---
 #    image_name: "kiali/kiali"
@@ -139,6 +148,11 @@ spec:
 # Common values are "NodePort", "ClusterIP", and "LoadBalancer".
 #    ---
 #    service_type: "NodePort"
+#
+# A list of tolerations which declare which node taints Kiali can tolerate.
+# See the Kubernetes documentation on Taints and Tolerations for more details.
+#    ---
+#    tolerations: []
 #
 # Determines which priority levels of log messages Kiali will output.
 # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.

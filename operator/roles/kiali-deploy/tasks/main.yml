@@ -25,6 +25,62 @@
   - is_openshift == False
   - is_k8s == False
 
+# Because we are passing through some yaml directly to Kubernetes resources, we have to retain the camelCase keys.
+# All CR parameters are converted to snake_case, but the original yaml is found in the special _kiali_io_kiali param.
+# We need to copy that original yaml into our vars where appropriate to keep the camelCase.
+
+- name: Get the original CR as-is for the camelCase keys
+  set_fact:
+    current_cr: "{{ _kiali_io_kiali }}"
+
+- name: Replace snake_case with camelCase in deployment.affinity.node
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('node') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'node': current_cr.spec.deployment.affinity.node }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.node is defined
+  - kiali_vars.deployment.affinity.node | length > 0
+
+- name: Replace snake_case with camelCase in deployment.affinity.pod
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('pod') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'pod': current_cr.spec.deployment.affinity.pod }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.pod is defined
+  - kiali_vars.deployment.affinity.pod | length > 0
+
+- name: Replace snake_case with camelCase in deployment.affinity.pod_anti
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('pod_anti') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'pod_anti': current_cr.spec.deployment.affinity.pod_anti }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.pod_anti is defined
+  - kiali_vars.deployment.affinity.pod_anti | length > 0
+
+- name: Replace snake_case with camelCase in deployment.tolerations
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('tolerations') %}
+      {{ kiali_vars | combine({'deployment': {'tolerations': current_cr.spec.deployment.tolerations }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.tolerations is defined
+  - kiali_vars.deployment.tolerations | length > 0
+
+- name: Replace snake_case with camelCase in deployment.additional_service_yaml
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('additional_service_yaml') %}
+      {{ kiali_vars | combine({'deployment': {'additional_service_yaml': current_cr.spec.deployment.additional_service_yaml }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.additional_service_yaml is defined
+  - kiali_vars.deployment.additional_service_yaml | length > 0
+
 - name: Print some debug information
   vars:
     msg: |

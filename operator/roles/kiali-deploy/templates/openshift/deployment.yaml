@@ -85,3 +85,22 @@ spec:
         secret:
           secretName: {{ kiali_vars.deployment.secret_name }}
           optional: true
+{% if kiali_vars.deployment.affinity.node|length > 0 or kiali_vars.deployment.affinity.pod|length > 0 or kiali_vars.deployment.affinity.pod_anti|length > 0 %}
+      affinity:
+{% if kiali_vars.deployment.affinity.node|length > 0 %}
+        nodeAffinity:
+          {{ kiali_vars.deployment.affinity.node | to_nice_yaml(indent=0) | trim | indent(10) }}
+{% endif %}
+{% if kiali_vars.deployment.affinity.pod|length > 0 %}
+        podAffinity:
+          {{ kiali_vars.deployment.affinity.pod | to_nice_yaml(indent=0) | trim | indent(10) }}
+{% endif %}
+{% if kiali_vars.deployment.affinity.pod_anti|length > 0 %}
+        podAntiAffinity:
+          {{ kiali_vars.deployment.affinity.pod_anti | to_nice_yaml(indent=0) | trim | indent(10) }}
+{% endif %}
+{% endif %}
+{% if kiali_vars.deployment.tolerations|length > 0 %}
+      tolerations:
+      {{ kiali_vars.deployment.tolerations | to_nice_yaml(indent=0) | trim | indent(6) }}
+{% endif %}
