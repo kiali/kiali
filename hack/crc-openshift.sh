@@ -275,6 +275,10 @@ while [[ $# -gt 0 ]]; do
       WAIT_FOR_ISTIO=false
       shift
       ;;
+    -p|--pull-secret-file)
+      PULL_SECRET_ARG="-p $2"
+      shift;shift
+      ;;
     -v|--verbose)
       _VERBOSE=true
       shift
@@ -367,6 +371,12 @@ Valid options:
       is ignored when --kiali-enabled is true.
       This will also be ignored when --istio-enabled is false.
       Used only for the 'start' command.
+  -p|--pull-secret-file <filename>
+      Specifies the file containing your Image pull secret.
+      You can download it from https://cloud.redhat.com/openshift/install/metal/user-provisioned
+      CRC will ignore this if the pull secret was already installed during a previous start.
+      Used only for the 'start' command.
+      Default: not set (you will be prompted for the pull secret json at startup if it does not exist yet)
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -602,8 +612,8 @@ if [ "$_CMD" = "start" ]; then
 
   infomsg "Starting the OpenShift cluster..."
   # if you change the command line here, also change it below during the restart
-  debug "${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
-  ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
+  debug "${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
+  ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
 
   if [ "$?" != "0" ]; then
     infomsg "ERROR: failed to start the VM."
@@ -687,7 +697,7 @@ if [ "$_CMD" = "start" ]; then
 
   if [ "${_NEED_VM_START}" == "true" ]; then
     infomsg "Restarting the VM to pick up the new configuration."
-    ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
+    ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
     if [ "$?" != "0" ]; then
       infomsg "ERROR: failed to restart the VM."
       exit 1
