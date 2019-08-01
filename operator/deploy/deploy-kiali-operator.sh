@@ -119,7 +119,6 @@
 #    Choose "anonymous" to allow full access to Kiali without requiring any credentials.
 #    Choose "openshift" to use the OpenShift OAuth login which controls access
 #    based on the individual's RBAC roles in OpenShift.
-#    Choose "ldap" for using your LDAP server for authenticating the user. There are additional configurations for LDAP
 #    Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
 #
 # CREDENTIALS_CREATE_SECRET
@@ -366,7 +365,7 @@ Valid options for Kiali installation (if Kiali is to be installed):
       Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
   -as|--auth-strategy
       Determines what authentication strategy to use.
-      Valid values are "login", "anonymous", "ldap" and "openshift"
+      Valid values are "login", "anonymous" and "openshift"
       Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
   -ccs|--credentials-create-secret
       When "true" a secret will be created with the credentials provided to this script.
@@ -428,7 +427,7 @@ CLIENT_EXE=$(which istiooc 2>/dev/null || which oc 2>/dev/null)
 if [ "$?" == "0" ]; then
   echo "Using 'oc' located here: ${CLIENT_EXE}"
   _AUTH_STRATEGY_DEFAULT="openshift"
-  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift', 'ldap' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
+  _AUTH_STRATEGY_PROMPT="Choose a login strategy of either 'login', 'openshift' or 'anonymous'. Use 'anonymous' at your own risk. [${_AUTH_STRATEGY_DEFAULT}]: "
 else
   CLIENT_EXE=$(which kubectl 2>/dev/null)
   if [ "$?" == "0" ]; then
