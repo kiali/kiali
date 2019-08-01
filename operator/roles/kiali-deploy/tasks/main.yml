@@ -18,9 +18,9 @@
 
 # Indicate what kind of cluster we are in (OpenShift or Kubernetes).
 - debug:
-    msg: 'CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}'
+    msg: "CLUSTER TYPE: is_openshift={{ is_openshift }}; is_k8s={{ is_k8s }}"
 - fail:
-    msg: 'Cannot determine what type of cluster we are in'
+    msg: "Cannot determine what type of cluster we are in"
   when:
   - is_openshift == False
   - is_k8s == False
@@ -28,9 +28,9 @@
 - name: Print some debug information
   vars:
     msg: |
-      Kiali Variables:
-      --------------------------------
-      {{ kiali_vars | to_nice_yaml }}
+        Kiali Variables:
+        --------------------------------
+        {{ kiali_vars | to_nice_yaml }}
   debug:
     msg: "{{ msg.split('\n') }}"
   tags: test
@@ -49,7 +49,8 @@
 - name: Set default Grafana in_cluster_url
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'external_services': {'grafana': {'in_cluster_url': 'http://grafana.' + kiali_vars.istio_namespace + ':3000'}}}, recursive=True) }}"
-  when: kiali_vars.external_services.grafana.in_cluster_url == ""
+  when:
+    kiali_vars.external_services.grafana.in_cluster_url == ""
 
 - name: Set default Tracing service namespace
   set_fact:
@@ -114,10 +115,10 @@
 
 # Indicate how users are to authenticate to Kiali, making sure the strategy is valid.
 - debug:
-    msg: 'AUTH STRATEGY={{ kiali_vars.auth.strategy }}'
+    msg: "AUTH STRATEGY={{ kiali_vars.auth.strategy }}"
 - name: Confirm auth strategy is valid for OpenShift environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift','ldap, ' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'openshift', or 'anonymous'"
   when:
   - is_openshift == True
   - kiali_vars.auth.strategy != 'login'
@@ -126,7 +127,7 @@
   - kiali_vars.auth.strategy != 'ldap'
 - name: Confirm auth strategy is valid for Kubernetes environments
   fail:
-    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login', 'ldap' or 'anonymous'"
+    msg: "Invalid auth.strategy [{{ kiali_vars.auth.strategy }}]! Must be one of either 'login' or 'anonymous'"
   when:
   - is_k8s == True
   - kiali_vars.auth.strategy != 'login'
@@ -167,7 +168,7 @@
   when:
   - kiali_vars.deployment.image_version == "lastrelease"
 - fail:
-    msg: 'Could not determine what the image version should be. Set deployment.image_version to a valid value'
+    msg: "Could not determine what the image version should be. Set deployment.image_version to a valid value"
   when:
   - kiali_vars.deployment.image_version == ""
 
@@ -179,7 +180,7 @@
 
 # Indicate which Kiali image we are going to use.
 - debug:
-    msg: 'IMAGE_NAME={{ kiali_vars.deployment.image_name }}; IMAGE VERSION={{ kiali_vars.deployment.image_version }}; VERSION LABEL={{ kiali_vars.deployment.version_label }}'
+    msg: "IMAGE_NAME={{ kiali_vars.deployment.image_name }}; IMAGE VERSION={{ kiali_vars.deployment.image_version }}; VERSION LABEL={{ kiali_vars.deployment.version_label }}"
 
 # Determine the accessible namespaces. The user may have specified names using regex expressions.
 # We need to get a list of all namespaces and match them to the regex expressions.
