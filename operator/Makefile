@@ -45,7 +45,7 @@ help: Makefile
 	    echo "You do not have operator-sdk installed in your PATH. Will use the one found here: ../_output/operator-sdk-install/operator-sdk" ;\
 	  else \
 	    echo "You do not have operator-sdk installed in your PATH. The binary will be downloaded to ../_output/operator-sdk-install/operator-sdk" ;\
-	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.8.0/operator-sdk-v0.8.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
+	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
 	    chmod +x ../_output/operator-sdk-install/operator-sdk ;\
 	  fi ;\
 	fi

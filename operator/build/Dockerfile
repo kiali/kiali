@@ -1,4 +1,4 @@
-FROM quay.io/operator-framework/ansible-operator:v0.8.0
+FROM quay.io/operator-framework/ansible-operator:v0.9.0
 
 COPY roles/ ${HOME}/roles/
 COPY playbooks/ ${HOME}/playbooks/
