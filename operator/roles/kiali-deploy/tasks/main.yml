@@ -5,8 +5,8 @@
   set_fact:
     api_groups: "{{ lookup('k8s', cluster_info='api_groups') }}"
   when:
-    - is_openshift == False
-    - is_k8s == False
+  - is_openshift == False
+  - is_k8s == False
 
 - name: Determine the cluster type
   set_fact:
