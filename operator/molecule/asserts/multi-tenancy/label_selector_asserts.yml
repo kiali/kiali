@@ -1,4 +1,0 @@
-- name: Multi-Tenancy - Assert Kiali has the correct Label Selector
-  assert:
-    that:
-    - (kiali_configmap.api.namespaces.label_selector is defined) and (kiali_configmap.api.namespaces.label_selector ==  kiali.label_selector)

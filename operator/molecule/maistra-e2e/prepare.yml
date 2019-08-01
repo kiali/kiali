@@ -1,5 +1,6 @@
 - name: Prepare
   hosts: localhost
+  gather_facts: false
   connection: local
   tasks:
   - name: Create Namespaces for Control Planes and Operators
@@ -45,6 +46,11 @@
     with_items:
       - "{{ kiali.test_mesh.installations }}"
 
+  - name: Deploy Elasticsearch Operator
+    k8s:
+      namespace: "{{ operators.elasticsearch.namespace }}"
+      definition: "{{ lookup('template', elasticsearch_operator_file_path) }}"
+
   - name: Deploy Jaeger Operator
     k8s:
       namespace: "{{ operators.jaeger.namespace }}"
@@ -57,7 +63,7 @@
     - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
     - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator_without_ao.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ operators.kiali.clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ operators.kiali.clusterroles }}" envsubst
     register: template
 
@@ -76,6 +82,13 @@
       role_binding: "{{ role_binding | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
       role: "{{ role | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
       operator: "{{ operator | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
+
+
+  - name: Combine Secret on Kiali Operator
+    set_fact:
+      operator: "{{ operator | combine({'spec':{'template': {'spec': {'imagePullSecrets': [{'name': operators.pull_secret.name }]}}}}, recursive=True) }}" 
+    when: operators.pull_secret.enabled
+   
 
   - name: Deploying Kiali Operator
     k8s:
@@ -117,7 +130,7 @@
     with_items:
     - "{{ maistra.cr.control_planes }}"
 
-  - name: Asserting that Kialis is Deployed
+  - name: Asserting that Kialis are Deployed
     k8s_facts:
       api_version: v1
       kind: Deployment

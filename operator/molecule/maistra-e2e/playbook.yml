@@ -1,5 +1,6 @@
 - name: Tests
   hosts: localhost
+  gather_facts: false
   connection: local
   tasks:
   - import_tasks: 'tests/tasks.yml'

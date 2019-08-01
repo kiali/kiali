@@ -22,7 +22,7 @@ If you want to run without the destroy, you can run with `molecule test --destro
 
 For other scenarios than default, you can run `molecule test -s scenario_name` where scenario name is configured on molecule.yml of scenario_name folder under the molecule folder.
 
-Eg: `molecule test -s multi-tenancy` will run the multi-tenancy scenario.
+Eg: `molecule test -s maistra-e2e` will run the multi-tenancy scenario.
 
 
 For all the scenarios use `molecule test --all`.

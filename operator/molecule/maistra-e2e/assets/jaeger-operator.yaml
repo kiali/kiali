@@ -12,6 +12,10 @@ spec:
     singular: jaeger
   scope: Namespaced
   version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -64,6 +68,10 @@ rules:
 - apiGroups:
   - extensions
   resources:
+  - replicasets
+  - deployments
+  - daemonsets
+  - statefulsets
   - ingresses
   verbs:
   - "*"
@@ -92,6 +100,21 @@ rules:
   - '*'
   verbs:
   - '*'
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - 'clusterrolebindings'
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  - extensions
+  resourceNames:
+  - jaeger-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -111,6 +134,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jaeger-operator
+  namespace: observability
 spec:
   replicas: 1
   selector:

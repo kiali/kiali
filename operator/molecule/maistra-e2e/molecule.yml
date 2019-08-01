@@ -16,28 +16,33 @@ provisioner:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
         kiali_operator_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
         maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-operator.yaml"
+        elasticsearch_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/elasticsearch-operator.yaml"
         maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
         jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
         kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
         # Uncomment the following parameters for the secret
-        # secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml"
-        # secret: "{{ lookup('template', secret_file_path) | from_yaml }}"
+        secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml"
+        secret: "{{ lookup('template', secret_file_path) | from_yaml }}"
 
         operators:
           pull_secret:
             enabled: false
             # Uncomment the following parameters for the secret
-            # name: "{{ secret.metadata.name }}"
+            name: "{{ secret.metadata.name }}"
+          elasticsearch:
+            namespace: openshift-logging
           jaeger:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
           maistra:
-            image: docker.io/maistra/istio-operator-ubi8:0.12.0
+            image: docker.io/maistra/istio-operator-ubi8:1.0.0
             namespace: istio-operator
+            cni:
+              image: docker.io/maistra/istio-cni-ubi8:1.0.0
           kiali:
             namespace: kiali-operator
             hub: quay.io/kiali/kiali-operator
-            tag: v1.0.2
+            tag: 1.0.5
             watch_namespace: ""
             clusterrolebindings: ""
             clusterroles: ""
@@ -50,18 +55,22 @@ provisioner:
             - "istio-system2"
             global:
               hub: docker.io/maistra
-              tag: 0.12.0
+              tag: 1.0.0
               image_pull_policy: Always
+            oauthproxy:
+              image: ose-oauth-proxy
+              hub: registry.redhat.io/openshift4
             kiali:
-              hub: quay.io/kiali
-              tag: v1.0.1
+              hub: docker.io/maistra
+              tag: 1.0.5
             threescale:
               hub: quay.io/3scale
-              tag: 0.7.1
+              tag: v1.0.0
             jaeger:
               hub: docker.io/jaegertracing
               tag: 1.13.1
-              template: all-in-one
+              elasticsearch:
+                image: quay.io/openshift/origin-logging-elasticsearch5:4.1
         kiali:
           test_mesh:             
             operator:

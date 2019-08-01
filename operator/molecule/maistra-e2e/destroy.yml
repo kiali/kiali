@@ -1,5 +1,6 @@
 - name: Destroy
   hosts: localhost
+  gather_facts: false
   connection: local
   tasks:
   
@@ -35,7 +36,7 @@
     - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
     - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
+    - cat {{ kiali_operator_assets_path }}/operator_without_ao.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
     - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ operators.kiali.clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ operators.kiali.clusterroles }}" envsubst
     register: template
 
@@ -105,6 +106,11 @@
       state: absent
       definition: "{{ namespace }}"
 
+  - name: Remove Elasticsearch Operator
+    k8s:
+      state: absent
+      definition: "{{ lookup('template', elasticsearch_operator_file_path) }}"
+
   - name: Remove Jaeger Operator
     k8s:
       state: absent
@@ -158,6 +164,7 @@
             mongodb: "{{ item.mongodb }}"
             mysql: "{{ item.mysql }}"
     when: item.kind == "Bookinfo" 
+    ignore_errors: true
     with_items:
     - "{{ kiali.test_mesh.installations }}"
 
@@ -175,6 +182,7 @@
             namespace: "{{ item.namespace }}"
             control_plane_namespace: "{{ item.control_plane }}"
     when: item.kind == "RedHatTutorial" 
+    ignore_errors: true
     with_items:
     - "{{ kiali.test_mesh.installations }}"
 

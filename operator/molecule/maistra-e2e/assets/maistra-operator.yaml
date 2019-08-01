@@ -1,24 +1,6 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: controlplanes.istio.openshift.com
-spec:
-  group: istio.openshift.com
-  names:
-    kind: ControlPlane
-    listKind: ControlPlaneList
-    plural: controlplanes
-    singular: controlplane
-  scope: Namespaced
-  subresources:
-    status: {}
-  version: v1alpha3
-
----
-
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
   name: servicemeshcontrolplanes.maistra.io
 spec:
   group: maistra.io
@@ -28,11 +10,31 @@ spec:
     plural: servicemeshcontrolplanes
     singular: servicemeshcontrolplane
     shortNames:
-     - smcp
+      - smcp
   scope: Namespaced
   subresources:
     status: {}
   version: v1
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=="Ready")].status
+    name: Ready
+    description: Whether or not the control plane installation is up to date and ready to handle requests.
+    type: string
+  - JSONPath: .status.conditions[?(@.type=="Ready")].message
+    name: Status
+    description: The status of the control plane installation.
+    type: string
+    priority: 1
+  - JSONPath: .status.conditions[?(@.type=="Reconciled")].status
+    name: Reconciled
+    description: Whether or not the control plane installation is up to date with the latest version of this resource.
+    type: string
+    priority: 1
+  - JSONPath: .status.conditions[?(@.type=="Reconciled")].message
+    name: Reconciliation Status
+    description: The status of the reconciliation process, if the control plane is not up to date with the latest version this resource.
+    type: string
+    priority: 1
 
 ---
 
@@ -105,6 +107,12 @@ rules:
 - apiGroups: ["rbac.istio.io"]
   resources: ["*"]
   verbs: ["*"]
+- apiGroups: ["authentication.maistra.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["rbac.maistra.io"]
+  resources: ["*"]
+  verbs: ["*"]
 
 ---
 
@@ -127,23 +135,27 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
   - configmaps
+  - endpoints
+  - namespaces
+  - persistentvolumeclaims
+  - pods
+  - replicationcontrollers
   - secrets
   - serviceaccounts
-  - namespaces
-  - routes
+  - services
+  - events # is this needed?
   verbs:
   - '*'
 - apiGroups:
   - apps
+  - extensions
   resources:
-  - deployments
   - daemonsets
+  - deployments
+  - deployments/finalizers
+  - ingresses # is this needed? should it be converted to a route?
+  - ingresses/status
   - replicasets
   - statefulsets
   verbs:
@@ -152,20 +164,6 @@ rules:
   - autoscaling
   resources:
   - horizontalpodautoscalers
-  verbs:
-  - '*'
-- apiGroups:
-  - extensions
-  resources:
-  - daemonsets
-  - deployments
-  verbs:
-  - '*'
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  - jobs
   verbs:
   - '*'
 - apiGroups:
@@ -179,6 +177,12 @@ rules:
   resources:
   - mutatingwebhookconfigurations
   - validatingwebhookconfigurations
+  verbs:
+  - '*'
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
   verbs:
   - '*'
 - apiGroups:
@@ -198,69 +202,32 @@ rules:
   resources:
   - clusterrolebindings
   - clusterroles
-  - roles
   - rolebindings
+  - roles
   verbs:
   - '*'
 - apiGroups:
   - authentication.istio.io
   resources:
-  # for galley, *: get, list, watch
-  # for mixer, *: create, get, list, watch
-  # for pilot, *: *
-  # for istio-admin, *: *
   - '*'
-  - meshpolicies
   verbs:
   - '*'
 - apiGroups:
   - config.istio.io
   resources:
-  # for galley, *: get, list, watch
-  # for pilot, *: *
-  # for istio-admin, *: *
   - '*'
-  - attributemanifests
-  - handlers
-  - logentries
-  - rules
-  - metrics
-  - kuberneteses
   verbs:
   - '*'
 - apiGroups:
   - networking.istio.io
   resources:
-  # for galley, *: get, list, watch
-  # for pilot, *: *
-  # for istio-admin, *: *
-  - '*'
-  - gateways
-  - destinationrules
-  - virtualservices
-  - envoyfilters
-  verbs:
-  - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
-- apiGroups:
-  - maistra.io
-  resources:
-  # for istio-admin clusterrole
   - '*'
   verbs:
   - '*'
 - apiGroups:
-  - istio.openshift.com
+  - rbac.istio.io
   resources:
-  - controlplanes
-  - controlplanes/status
-  - controlplanes/finalizers
+  - '*'
   verbs:
   - '*'
 - apiGroups:
@@ -276,37 +243,21 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - apps.openshift.io
+  - maistra.io
   resources:
-  - deploymentconfigs
+  - '*'
   verbs:
   - '*'
 - apiGroups:
-  - network.openshift.io
+  - authentication.maistra.io
   resources:
-  - clusternetworks
-  verbs:
-  - 'get'
-- apiGroups:
-  - network.openshift.io
-  resources:
-  - netnamespaces
-  verbs:
-  - 'get'
-  - 'list'
-  - 'watch'
-  - 'update'
-- apiGroups:
-  - oauth.openshift.io
-  resources:
-  - oauthclients
+  - '*'
   verbs:
   - '*'
 - apiGroups:
-  - project.openshift.io
+  - rbac.maistra.io
   resources:
-  - projects
-  - projectrequests
+  - '*'
   verbs:
   - '*'
 - apiGroups:
@@ -316,129 +267,70 @@ rules:
   - routes/custom-host
   verbs:
   - '*'
-- apiGroups:
-  - security.openshift.io
-  resources:
-  - securitycontextconstraints
-  resourceNames:
-  - privileged
-  - anyuid
-  verbs:
-  - 'use'
-# for galley (pilot and prometheus also watch nodes)
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  - apps
-  resources:
-  - deployments/finalizers
-  resourceNames:
-  - istio-galley
-  - istio-sidecar-injector
-  verbs:
-  - update
-# for mixer
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - replicasets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - replicationcontrollers
-  verbs:
-  - get
-  - list
-  - watch
-# for pilot
-# for istio-admin, *: *
-- apiGroups:
-  - rbac.istio.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - '*'
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  - ingresses/status
-  verbs:
-  - '*'
-# prometheus
-- apiGroups:
-  - ""
-  resources:
-  - nodes/proxy
-  verbs:
-  - get
-  - list
-  - watch
-- nonResourceURLs:
-  - "/metrics"
-  verbs:
-  - get
-# citadel and oauth proxy
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-# oauth proxy
+# required by smmr controller
 - apiGroups:
   - authorization.k8s.io
   resources:
   - subjectaccessreviews
   verbs:
   - create
-# cni
-- apiGroups: ["k8s.cni.cncf.io"]
+- apiGroups:
+  - network.openshift.io
   resources:
-    - network-attachment-definitions
+  - clusternetworks
   verbs:
-    - create
-    - delete
-    - get
-    - list
-    - patch
-    - watch
+  - get
+- apiGroups:
+  - network.openshift.io
+  resources:
+  - netnamespaces
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups: 
+  - k8s.cni.cncf.io
+  resources:
+  - network-attachment-definitions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - watch
+
+# required by cni daemonset
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  resourceNames:
+  - privileged
+  verbs:
+  - use
+
+# required by pod locality controller
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - nodes/proxy
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: # might be required by citadel
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- nonResourceURLs:
+  - '/metrics'
+  verbs:
+  - get
 
 ---
 
@@ -463,53 +355,6 @@ roleRef:
   name: istio-operator
   apiGroup: rbac.authorization.k8s.io
 
----
-
-apiVersion: admissionregistration.k8s.io/v1beta1
-kind: ValidatingWebhookConfiguration
-metadata:
-  # this must match what is used inside the operator, which is <operator-namespace>.servicemesh-resources.maistra.io
-  name: istio-operator.servicemesh-resources.maistra.io
-webhooks:
-- name: smcp.validation.maistra.io
-  rules:
-  - apiGroups:
-    - maistra.io
-    apiVersions:
-    - v1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - servicemeshcontrolplanes
-  failurePolicy: Fail
-  clientConfig:
-    caBundle: ""
-    service:
-      name: admission-controller
-      namespace: istio-operator
-      path: /validate-smcp
-  namespaceSelector: {}
-- name: smmr.validation.maistra.io
-  rules:
-  - apiGroups:
-    - maistra.io
-    apiVersions:
-    - v1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - servicemeshmemberrolls
-  failurePolicy: Fail
-  clientConfig:
-    caBundle: ""
-    service:
-      name: admission-controller
-      namespace: istio-operator
-      path: /validate-smmr
-  namespaceSelector: {}
-  
 ---
 
 apiVersion: v1
@@ -552,6 +397,8 @@ spec:
         - name: istio-operator
           image: {{ operators.maistra.image }}
           ports:
+          - containerPort: 11999
+            name: validation
           - containerPort: 60000
             name: metrics
           command:
@@ -567,7 +414,13 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "istio-operator"
+              value: istio-operator
+            - name: ISTIO_CNI_IMAGE
+              value: {{ operators.maistra.cni.image }}
+{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
+            - name: ISTIO_CNI_IMAGE_PULL_SECRET
+              value: {{ operators.pull_secret.name }}
+{% endif %}
           volumeMounts:
           - name: discovery-cache
             mountPath: /home/istio-operator/.kube/cache/discovery
