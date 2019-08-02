@@ -153,7 +153,7 @@ func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
-	hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
+	_, _ = hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 
 	// Make sure unnecessary call isn't performed
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)

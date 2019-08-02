@@ -181,7 +181,7 @@ func TestMissingSecretFlagPresent(t *testing.T) {
 
 	var reply map[string]interface{}
 	body, _ := ioutil.ReadAll(response.Body)
-	json.Unmarshal(body, &reply)
+	_ = json.Unmarshal(body, &reply)
 
 	assert.Contains(t, reply, "secretMissing")
 	assert.Equal(t, true, reply["secretMissing"])
@@ -206,7 +206,7 @@ func TestMissingSecretFlagAbsent(t *testing.T) {
 
 	var reply map[string]interface{}
 	body, _ := ioutil.ReadAll(response.Body)
-	json.Unmarshal(body, &reply)
+	_ = json.Unmarshal(body, &reply)
 
 	assert.NotContains(t, reply, "secretMissing")
 }

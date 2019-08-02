@@ -335,10 +335,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run --skip-files "doc\.go" --tests -D errcheck
-
-## lint-all: Runs gometalinter with items from good to have list but does not run during travis
-lint-all:
-	gometalinter --disable-all --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
-	--enable=ineffassign --enable=unconvert --enable=goimports -enable=gosimple --enable=staticcheck \
-	--enable=nakedret --tests  --vendor ./...
+	golangci-lint run --skip-files "doc\.go" --tests

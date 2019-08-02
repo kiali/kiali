@@ -50,7 +50,7 @@ var (
 
 func init() {
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
-	flag.Set("logtostderr", "true")
+	_ = flag.Set("logtostderr", "true")
 
 }
 
