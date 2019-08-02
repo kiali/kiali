@@ -1,8 +1,8 @@
-hash: 006f98a248334a4ac3ad172aabda766e89b927c83ddd5ac36445973e1d71ffc8
-updated: 2019-07-05T09:48:29.25821396+02:00
+hash: 755fcf3bf03c705fa0058ae0e84c2b2059a82b5372806b5e17aa8de6d89f9ef3
+updated: 2019-08-02T16:52:20.29170619-05:00
 imports:
 - name: github.com/beorn7/perks
-  version: 4b2b341e8d7715fae06375aa633dbb6e91b3fb46
+  version: 37c8de3658fcb183f997c4e13e8337516ab753e6
   subpackages:
   - quantile
 - name: github.com/davecgh/go-spew
@@ -71,6 +71,8 @@ imports:
   version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
 - name: github.com/modern-go/reflect2
   version: 05fbef0ca5da472bbf96c9322b84a53edc03c9fd
+- name: github.com/nytimes/gziphandler
+  version: dd0439581c7657cb652dfe5c71d7d48baf39541d
 - name: github.com/openshift/api
   version: 8741ff068a473be041d7bafb4502c12e4f10aab5
   subpackages:
@@ -102,7 +104,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 8f55e607908ea781ad9d08521730d73e047d9ac4
+  version: 5da962fa40f1c9b54ed78f10ba32429b396e712b
   subpackages:
   - internal/fs
   - internal/util

@@ -34,3 +34,5 @@ import:
   version: 91cfa479c814065e420cee7ed227db0f63a5854e
 - package: github.com/kiali/k-charted
   version: v0.2.0
+- package: github.com/nytimes/gziphandler
+  version: v1.1.1
