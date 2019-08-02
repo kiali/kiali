@@ -14,7 +14,7 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	_, _ = w.Write(response)
 }
 
 func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{}) {
@@ -26,7 +26,7 @@ func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	_, _ = w.Write(response)
 }
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {

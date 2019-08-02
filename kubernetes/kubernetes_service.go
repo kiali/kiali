@@ -323,7 +323,11 @@ func (in *IstioClient) GetPodLogs(namespace, name string, opts *core_v1.PodLogOp
 
 	defer readCloser.Close()
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(readCloser)
+	_, err = buf.ReadFrom(readCloser)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PodLogs{Logs: buf.String()}, nil
 }
 

@@ -421,7 +421,10 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
 	conf := config.Get()
 	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
-		performOpenshiftLogout(w, r)
+		err := performOpenshiftLogout(w, r)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		}
 	}
 	RespondWithCode(w, http.StatusNoContent)
 }

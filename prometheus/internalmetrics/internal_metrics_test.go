@@ -29,7 +29,7 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 	}
 
 	// simulate a failure - our failure counter metric should increment to 1
-	doSomeWork(true)
+	_ = doSomeWork(true)
 	metrics, err = registry.Gather()
 	assert.Nil(t, err)
 	if len(metrics) != 2 {
@@ -50,7 +50,7 @@ func TestSuccessOrFailureMetric(t *testing.T) {
 	}
 
 	// simulate a success
-	doSomeWork(false)
+	_ = doSomeWork(false)
 	metrics, err = registry.Gather()
 	assert.Nil(t, err)
 
