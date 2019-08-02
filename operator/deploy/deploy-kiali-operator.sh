@@ -514,6 +514,23 @@ get_downloader() {
   fi
 }
 
+resolve_latest_kiali_release() {
+  get_downloader
+  github_api_url="https://api.github.com/repos/kiali/kiali/releases"
+  kiali_version_we_want=$(${downloader} ${github_api_url} 2> /dev/null |\
+    grep  "tag_name" | \
+    sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
+    grep -v "snapshot" | \
+    sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | \
+    tail -n 1)
+  if [ -z "${kiali_version_we_want}" ]; then
+    echo "ERROR: Failed to determine latest Kiali release."
+    echo "Make sure this URL is accessible and returning valid results:"
+    echo ${github_api_url}
+    exit 1
+  fi
+}
+
 delete_kiali_cr() {
   local _name="$1"
   local _ns="$2"
@@ -610,17 +627,7 @@ fi
 # If asking for the last release of operator (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${OPERATOR_IMAGE_VERSION}" == "lastrelease" ]; then
-  get_downloader
-  github_api_url="https://api.github.com/repos/kiali/kiali/releases/latest"
-  kiali_version_we_want=$(${downloader} ${github_api_url} 2> /dev/null |\
-    grep  "tag_name" | \
-    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-  if [ -z "${kiali_version_we_want}" ]; then
-    echo "ERROR: Failed to determine the version of the last Kiali operator release."
-    echo "Make sure this URL is accessible and returning valid results:"
-    echo ${github_api_url}
-    exit 1
-  fi
+  resolve_latest_kiali_release
   echo "Will use the last Kiali operator release: ${kiali_version_we_want}"
   OPERATOR_IMAGE_VERSION=${kiali_version_we_want}
   if [ "${OPERATOR_VERSION_LABEL}" == "lastrelease" ]; then
@@ -637,17 +644,7 @@ fi
 # If asking for the last release of Kiali (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
-  get_downloader
-  github_api_url="https://api.github.com/repos/kiali/kiali/releases/latest"
-  kiali_version_we_want=$(${downloader} ${github_api_url} 2> /dev/null |\
-    grep  "tag_name" | \
-    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-  if [ -z "${kiali_version_we_want}" ]; then
-    echo "ERROR: Failed to determine the version of the last Kiali release."
-    echo "Make sure this URL is accessible and returning valid results:"
-    echo ${github_api_url}
-    exit 1
-  fi
+  resolve_latest_kiali_release
   echo "Will use the last Kiali release: ${kiali_version_we_want}"
   KIALI_IMAGE_VERSION=${kiali_version_we_want}
 else

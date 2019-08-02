@@ -141,18 +141,8 @@
   - kiali_vars.auth.strategy == "openshift"
   - kiali_vars.deployment.ingress_enabled == False
 
-# WHEN ANSIBLE OPERATOR CONTAINS ANSIBLE 2.8,
-# WE CAN REPLACE THIS SHELL TASK BELOW WITH AN ANSIBLE TASK THAT LOOKS LIKE THIS:
-#- name: Determine image version when last release is to be installed
-#  github_release:
-#    user: kiali
-#    repo: kiali
-#    action: latest_release
-#  register: image_version
-#  when: kiali_vars.deployment.image_version == "lastrelease"
-
 - name: Determine image version when last release is to be installed
-  shell: echo -n $(curl -s https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null | grep  "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  shell: echo -n $(curl -s https://api.github.com/repos/kiali/kiali/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
   register: github_lastrelease
   when:
   - kiali_vars.deployment.image_version == "lastrelease"
