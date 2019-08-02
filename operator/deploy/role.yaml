@@ -8,6 +8,11 @@ metadata:
     app: kiali-operator
     version: ${OPERATOR_VERSION_LABEL}
 rules:
+- apiGroups: ["policy"]
+  resources: ["podsecuritypolicies"]
+  verbs: ["use"]
+  resourceNames:
+    - kiali-operator
 - apiGroups: [""]
   resources:
   - configmaps

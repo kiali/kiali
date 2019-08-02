@@ -1,0 +1,22 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: kiali-operator
+  labels:
+    app: kiali-operator
+    version: ${OPERATOR_VERSION_LABEL}
+spec:
+  fsGroup:
+    rule: RunAsAny
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - downwardAPI
+  - hostPath
+  - secret
+  - configMap
+  - emptyDir

@@ -98,7 +98,7 @@ echo OPERATOR_NAMESPACE=${OPERATOR_NAMESPACE}
 echo OPERATOR_VERSION_LABEL="${OPERATOR_VERSION_LABEL}"
 echo OPERATOR_WATCH_NAMESPACE=${OPERATOR_WATCH_NAMESPACE}
 
-YAML_LIST="crd.yaml role.yaml service_account.yaml role_binding.yaml operator.yaml "
+YAML_LIST="crd.yaml role.yaml service_account.yaml psp.yaml role_binding.yaml operator.yaml "
 YAML_FILE="${YAML_FILE:-${YAML_DIR}/kiali-operator.yaml}"
 
 # remove any old file that still exists
