@@ -81,7 +81,7 @@ func getUser(ldapClient *ldap.LDAPClient, username, roleFilter string, authConfi
 	)
 	sr, err := ldapClient.Conn.Search(searchRequest)
 	if err != nil {
-		log.Errorf("Error searching AD : %s", err.Error())
+		log.Errorf("Error searching LDAP : %s", err.Error())
 		return user, err
 	}
 

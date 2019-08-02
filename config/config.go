@@ -86,7 +86,7 @@ const (
 	EnvLdapGroupFilter        = "LDAP_GROUP_FILTER"
 	EnvLdapBase               = "LDAP_BASE"
 	EnvLdapBindDN             = "LDAP_BIND_DN"
-	EnvLdapRoleFilter         = "LDAPROLEFILTER"
+	EnvLdapRoleFilter         = "LDAP_ROLE_FILTER"
 	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
 	EnvLdapMailIdKey          = "LDAP_MAIL_ID_KEY"
 	EnvLdapUserIdKey          = "LDAP_USER_ID_KEY"
