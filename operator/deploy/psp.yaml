@@ -1,10 +1,10 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: kiali-operator-psp
+  name: kiali-operator
   labels:
     app: kiali-operator
-    version: v1.1.0
+    version: ${OPERATOR_VERSION_LABEL}
 spec:
   fsGroup:
     rule: RunAsAny

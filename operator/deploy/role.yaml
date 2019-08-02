@@ -12,7 +12,7 @@ rules:
   resources: ["podsecuritypolicies"]
   verbs: ["use"]
   resourceNames:
-    - kiali-operator-psp
+    - kiali-operator
 - apiGroups: [""]
   resources:
   - configmaps

@@ -568,7 +568,7 @@ delete_operator_resources() {
     ${CLIENT_EXE} delete --ignore-not-found=true customresourcedefinitions --selector="app=kiali-operator"
 
     # now purge all operator resources
-    ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings --selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
+    ${CLIENT_EXE} delete --ignore-not-found=true all,sa,deployments,roles,rolebindings,clusterroles,clusterrolebindings,podsecuritypolicies--selector="app=kiali-operator" -n "${OPERATOR_NAMESPACE}"
   fi
 
   # Clean up the operator namespace entirely but only if there are no pods running in it.
@@ -854,7 +854,7 @@ apply_operator_resource() {
 # Now deploy all the Kiali operator components.
 echo "Deploying Kiali operator to namespace [${OPERATOR_NAMESPACE}]"
 
-for yaml in namespace crd service_account role role_binding operator
+for yaml in namespace crd service_account psp role role_binding operator
 do
   apply_operator_resource ${yaml}
 
