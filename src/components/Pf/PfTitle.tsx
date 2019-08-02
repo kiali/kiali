@@ -117,7 +117,7 @@ class PfTitle extends React.Component<PfTitleProps, PfTitleState> {
         {this.state.icon} {this.state.name}
         {this.state.name && this.props.istio !== undefined && !this.props.istio && (
           <span style={{ marginLeft: '10px' }}>
-            <MissingSidecar />
+            <MissingSidecar namespace={this.state.namespace} />
           </span>
         )}
         {this.state.name && (

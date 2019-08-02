@@ -58,7 +58,9 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
         <div className="ServiceList-Title">
           <div className="component-label">
             Workload{' '}
-            {!workload.istioSidecar && <MissingSidecar style={{ marginLeft: '10px' }} tooltip={true} text={''} />}
+            {!workload.istioSidecar && (
+              <MissingSidecar namespace={namespace} style={{ marginLeft: '10px' }} tooltip={true} text={''} />
+            )}
           </div>
           <Link to={this.workloadLink(namespace, workload.workloadName)}>{workload.workloadName}</Link>
         </div>

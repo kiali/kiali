@@ -55,7 +55,7 @@ export default class ItemDescription extends React.PureComponent<Props, State> {
           <HealthIndicator id={this.props.item.name} health={this.state.health} mode={DisplayMode.SMALL} />
         </Col>
         <Col xs={12} sm={12} md={4} lg={4}>
-          {!this.props.item.istioSidecar && <MissingSidecar />}
+          {!this.props.item.istioSidecar && <MissingSidecar namespace={this.props.item.namespace} />}
         </Col>
         <Col xs={12} sm={12} md={4} lg={4} />
       </Row>

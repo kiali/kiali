@@ -78,7 +78,7 @@ class ItemDescription extends React.Component<ItemDescriptionProps, ItemDescript
           )}
         </Col>
         <Col xs={12} sm={12} md={4} lg={4}>
-          {!object.istioSidecar && <MissingSidecar />}
+          {!object.istioSidecar && <MissingSidecar namespace={namespace} />}
         </Col>
         <Col xs={12} sm={12} md={4} lg={4}>
           {object.appLabel || object.versionLabel ? (

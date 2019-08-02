@@ -87,18 +87,20 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           valid: true,
           checks: []
         };
-        if (!pod.istioContainers || pod.istioContainers.length === 0) {
-          validations.pod[pod.name].checks.push(noIstiosidecar);
-        }
-        if (!pod.labels) {
-          validations.pod[pod.name].checks.push(noAppLabel);
-          validations.pod[pod.name].checks.push(noVersionLabel);
-        } else {
-          if (!pod.appLabel) {
-            validations.pod[pod.name].checks.push(noAppLabel);
+        if (this.props.match.params.namespace !== serverConfig.istioNamespace) {
+          if (!pod.istioContainers || pod.istioContainers.length === 0) {
+            validations.pod[pod.name].checks.push(noIstiosidecar);
           }
-          if (!pod.versionLabel) {
+          if (!pod.labels) {
+            validations.pod[pod.name].checks.push(noAppLabel);
             validations.pod[pod.name].checks.push(noVersionLabel);
+          } else {
+            if (!pod.appLabel) {
+              validations.pod[pod.name].checks.push(noAppLabel);
+            }
+            if (!pod.versionLabel) {
+              validations.pod[pod.name].checks.push(noVersionLabel);
+            }
           }
         }
         switch (pod.status) {

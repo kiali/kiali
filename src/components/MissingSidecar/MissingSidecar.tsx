@@ -1,10 +1,10 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
-import { icons } from '../../config';
+import { icons, serverConfig } from '../../config';
 
 const MissingSidecar = props => {
-  const { style, text, textTooltip, type, name, color, tooltip, ...otherProps } = props;
+  const { style, text, textTooltip, type, name, namespace, color, tooltip, ...otherProps } = props;
 
   const iconComponent = (
     <span style={style} {...otherProps}>
@@ -12,6 +12,11 @@ const MissingSidecar = props => {
       {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
     </span>
   );
+
+  if (namespace === serverConfig.istioNamespace) {
+    return <></>;
+  }
+
   return tooltip ? (
     <OverlayTrigger
       overlay={
