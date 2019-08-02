@@ -591,7 +591,6 @@ func getPermissions(k8s kubernetes.IstioClientInterface, namespace, objectType, 
 			resourceType = objectSubtype
 		}
 		ssars, permErr := k8s.GetSelfSubjectAccessReview(namespace, api, resourceType, []string{"create", "patch", "update", "delete"})
-		log.Debugf("get role value is %s", json.Marshal(ssars))
 		if permErr == nil {
 			for _, ssar := range ssars {
 				if ssar.Spec.ResourceAttributes != nil {
