@@ -29,6 +29,7 @@ var (
 	// Example Istio snapshot version is:
 	//   root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-cbe9c05c470ec1924f7bcf02334b183e7e6175cb-Clean
 	maistraProductVersionExpr = regexp.MustCompile(`maistra-([0-9]+\.[0-9]+\.[0-9]+)`)
+	ossmVersionExpr           = regexp.MustCompile(`openshift-service-mesh-([0-9]+\.[0-9]+\.[0-9]+)`)
 	maistraProjectVersionExpr = regexp.MustCompile(`openshift-istio.*-([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioVersionExpr          = regexp.MustCompile(`([0-9]+\.[0-9]+\.[0-9]+)`)
 	istioSnapshotVersionExpr  = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
@@ -142,6 +143,21 @@ func parseIstioRawVersion(rawVersion string) (*ExternalServiceInfo, error) {
 			}
 
 			// we know this is Maistra - either a supported or unsupported version - return now
+			return &product, nil
+		}
+	}
+
+	ossmStringArr := ossmVersionExpr.FindStringSubmatch(rawVersion)
+	if ossmStringArr != nil {
+		log.Debugf("Detected OpenShift Service Mesh version [%v]", rawVersion)
+		if len(ossmStringArr) > 1 {
+			product.Name = "OpenShift Service Mesh"
+			product.Version = ossmStringArr[1] // get regex group #1 ,which is the "#.#.#" version string
+			if !validateVersion(config.OSSMVersionSupported, product.Version) {
+				info.WarningMessages = append(info.WarningMessages, "OpenShift Service Mesh version "+product.Version+" is not supported, the version should be "+config.OSSMVersionSupported)
+			}
+
+			// we know this is OpenShift Service Mesh - either a supported or unsupported version - return now
 			return &product, nil
 		}
 	}
