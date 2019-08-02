@@ -45,6 +45,18 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  true,
 		},
 		{
+			rawVersion: "redhat@redhat-docker.io/openshift-service-mesh-1.0.0-1-123454535353-unknown",
+			name:       "OpenShift Service Mesh",
+			version:    "1.0.0",
+			supported:  true,
+		},
+		{
+			rawVersion: "redhat@redhat-docker.io/openshift-service-mesh-0.9.0-1-123454535353-unknown",
+			name:       "OpenShift Service Mesh",
+			version:    "0.9.0",
+			supported:  false,
+		},
+		{
 			rawVersion: "foobar-maistra-11.12.13-wotgorilla?",
 			name:       "Maistra",
 			version:    "11.12.13",
