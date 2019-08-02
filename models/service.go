@@ -61,7 +61,7 @@ type Service struct {
 
 type ApiDocumentation struct {
 	Type    string `json:"type,omitempty"`
-	BaseUrl string `json:"baseUrl,omitempty"`
+	HasSpec bool `json:"hasSpec,omitempty"`
 }
 
 func (ss *Services) Parse(services []core_v1.Service) {

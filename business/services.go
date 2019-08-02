@@ -187,14 +187,10 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	conf := config.Get()
 	apiSpecFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
 	apiTypeFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
-	apiBaseUrl := ""
-	if apiSpecFromAnnotation != "" {
-		apiBaseUrl = conf.Server.WebRoot + "/api/namespaces/" + namespace + "/services/" + service
-	}
 
 	apidoc = models.ApiDocumentation{
 		Type:    apiTypeFromAnnotation,
-		BaseUrl: apiBaseUrl,
+		HasSpec: (apiSpecFromAnnotation != ""),
 	}
 
 	wg := sync.WaitGroup{}

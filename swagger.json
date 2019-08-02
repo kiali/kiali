@@ -3250,9 +3250,9 @@
     "ApiDocumentation": {
       "type": "object",
       "properties": {
-        "baseUrl": {
-          "type": "string",
-          "x-go-name": "BaseUrl"
+        "hasSpec": {
+          "type": "boolean",
+          "x-go-name": "HasSpec"
         },
         "type": {
           "type": "string",
