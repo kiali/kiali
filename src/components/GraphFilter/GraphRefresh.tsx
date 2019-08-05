@@ -49,13 +49,11 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
-    HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
   }
 
   componentDidUpdate() {
     // ensure redux state and URL are aligned
-    HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
   }
 

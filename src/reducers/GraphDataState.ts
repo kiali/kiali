@@ -7,6 +7,7 @@ import { EdgeLabelMode } from '../types/GraphFilter';
 import { GraphType } from '../types/Graph';
 import { GraphFilterActions } from '../actions/GraphFilterActions';
 import { DagreGraph } from '../components/CytoscapeGraph/graphs/DagreGraph';
+import { updateState } from '../utils/Reducer';
 
 export const INITIAL_GRAPH_STATE: GraphState = {
   cyData: null,
@@ -39,127 +40,171 @@ export const INITIAL_GRAPH_STATE: GraphState = {
 
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAppAction): GraphState => {
-  const newState: GraphState = {
-    ...state
-  };
-
   switch (action.type) {
     case getType(GraphDataActions.getGraphDataStart):
-      newState.isLoading = true;
-      newState.isError = false;
-      break;
+      return updateState(state, { isError: false, isLoading: true });
     case getType(GraphDataActions.getGraphDataSuccess):
-      newState.isLoading = false;
-      newState.isError = false;
-      newState.graphDataDuration = action.payload.graphDuration;
-      newState.graphDataTimestamp = action.payload.timestamp;
-      newState.graphData = action.payload.graphData;
-      break;
+      return updateState(state, {
+        isLoading: false,
+        isError: false,
+        graphDataDuration: action.payload.graphDuration,
+        graphDataTimestamp: action.payload.timestamp,
+        graphData: action.payload.graphData
+      });
     case getType(GraphDataActions.getGraphDataFailure):
-      newState.isLoading = false;
-      newState.isError = true;
-      newState.error = action.payload.error;
-      break;
+      return updateState(state, {
+        isLoading: false,
+        isError: true,
+        error: action.payload.error
+      });
     case getType(GraphDataActions.getGraphDataWithoutNamespaces):
-      newState.isLoading = false;
-      newState.isError = false;
-      newState.error = INITIAL_GRAPH_STATE.error;
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
-      break;
+      return updateState(state, {
+        isLoading: false,
+        isError: false,
+        error: INITIAL_GRAPH_STATE.error,
+        graphData: INITIAL_GRAPH_STATE.graphData,
+        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
+        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
+        summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
     case getType(GraphActions.changed):
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
-      break;
+      return updateState(state, {
+        graphData: INITIAL_GRAPH_STATE.graphData,
+        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
+        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
+        summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
     case getType(GraphActions.setLayout):
-      newState.layout = action.payload;
-      break;
+      return updateState(state, { layout: action.payload });
     case getType(GraphActions.setNode):
-      newState.node = action.payload;
-      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
-      break;
+      return updateState(state, {
+        node: action.payload,
+        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on node change)
+        graphData: INITIAL_GRAPH_STATE.graphData,
+        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
+        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
+        summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
     case getType(GraphActions.updateGraph):
-      newState.cyData = {
-        updateTimestamp: action.payload.updateTimestamp,
-        cyRef: action.payload.cyRef
-      };
-      break;
+      return updateState(state, {
+        cyData: updateState(state.cyData, {
+          updateTimestamp: action.payload.updateTimestamp,
+          cyRef: action.payload.cyRef
+        })
+      });
     case getType(GraphActions.updateSummary):
-      newState.summaryData = {
-        summaryType: action.payload.summaryType,
-        summaryTarget: action.payload.summaryTarget
-      };
-      break;
+      return updateState(state, {
+        summaryData: updateState(state.summaryData, {
+          summaryType: action.payload.summaryType,
+          summaryTarget: action.payload.summaryTarget
+        })
+      });
     // Filter actions
     //
     case getType(GraphFilterActions.setEdgelLabelMode):
-      newState.filterState.edgeLabelMode = action.payload;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          edgeLabelMode: action.payload
+        })
+      });
     case getType(GraphFilterActions.setFindValue):
-      newState.filterState.findValue = action.payload;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          findValue: action.payload
+        })
+      });
     case getType(GraphFilterActions.setGraphType):
-      newState.filterState.graphType = action.payload;
-      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          graphType: action.payload
+        }),
+        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
+        graphData: INITIAL_GRAPH_STATE.graphData,
+        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
+        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
+        summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
     case getType(GraphFilterActions.setHideValue):
-      newState.filterState.hideValue = action.payload;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          hideValue: action.payload
+        })
+      });
     case getType(GraphFilterActions.setShowUnusedNodes):
-      newState.filterState.showUnusedNodes = action.payload;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showUnusedNodes: action.payload
+        })
+      });
     case getType(GraphFilterActions.toggleFindHelp):
-      newState.filterState.showFindHelp = !state.filterState.showFindHelp;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showFindHelp: !state.filterState.showFindHelp
+        })
+      });
     case getType(GraphFilterActions.toggleGraphNodeLabel):
-      newState.filterState.showNodeLabels = !state.filterState.showNodeLabels;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showNodeLabels: !state.filterState.showNodeLabels
+        })
+      });
     case getType(GraphFilterActions.toggleGraphCircuitBreakers):
-      newState.filterState.showCircuitBreakers = !state.filterState.showCircuitBreakers;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showCircuitBreakers: !state.filterState.showCircuitBreakers
+        })
+      });
     case getType(GraphFilterActions.toggleGraphVirtualServices):
-      newState.filterState.showVirtualServices = !state.filterState.showVirtualServices;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showVirtualServices: !state.filterState.showVirtualServices
+        })
+      });
     case getType(GraphFilterActions.toggleGraphMissingSidecars):
-      newState.filterState.showMissingSidecars = !state.filterState.showMissingSidecars;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showMissingSidecars: !state.filterState.showMissingSidecars
+        })
+      });
     case getType(GraphFilterActions.toggleGraphSecurity):
-      newState.filterState.showSecurity = !state.filterState.showSecurity;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showSecurity: !state.filterState.showSecurity
+        })
+      });
     case getType(GraphFilterActions.toggleLegend):
-      newState.filterState.showLegend = !state.filterState.showLegend;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showLegend: !state.filterState.showLegend
+        })
+      });
     case getType(GraphFilterActions.toggleServiceNodes):
-      newState.filterState.showServiceNodes = !state.filterState.showServiceNodes;
-      // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on serviceNodeschange)
-      newState.graphData = INITIAL_GRAPH_STATE.graphData;
-      newState.graphDataDuration = INITIAL_GRAPH_STATE.graphDataDuration;
-      newState.graphDataTimestamp = INITIAL_GRAPH_STATE.graphDataTimestamp;
-      newState.summaryData = INITIAL_GRAPH_STATE.summaryData;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showServiceNodes: !state.filterState.showServiceNodes
+        }),
+        // TODO: This should be handled in GraphPage.ComponentDidUpdate (Init graph on type change)
+        graphData: INITIAL_GRAPH_STATE.graphData,
+        graphDataDuration: INITIAL_GRAPH_STATE.graphDataDuration,
+        graphDataTimestamp: INITIAL_GRAPH_STATE.graphDataTimestamp,
+        summaryData: INITIAL_GRAPH_STATE.summaryData
+      });
     case getType(GraphFilterActions.toggleTrafficAnimation):
-      newState.filterState.showTrafficAnimation = !state.filterState.showTrafficAnimation;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showTrafficAnimation: !state.filterState.showTrafficAnimation
+        })
+      });
     case getType(GraphFilterActions.toggleUnusedNodes):
-      newState.filterState.showUnusedNodes = !state.filterState.showUnusedNodes;
-      break;
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          showUnusedNodes: !state.filterState.showUnusedNodes
+        })
+      });
     default:
-      break;
+      // Return unmodified state if there are no changes.
+      return state;
   }
-
-  return newState;
 };
 
 export default graphDataState;

@@ -39,11 +39,13 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
+const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState'], INITIAL_GRAPH_STATE);
+
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['namespaces', 'jaegerState', 'statusState'],
-  transforms: [namespacePersistFilter]
+  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph'],
+  transforms: [namespacePersistFilter, graphPersistFilter]
 };
 
 const composeEnhancers =

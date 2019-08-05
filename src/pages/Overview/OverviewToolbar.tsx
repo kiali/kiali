@@ -68,7 +68,6 @@ export class OverviewToolbar extends React.Component<Props, State> {
     if (urlPollInterval !== undefined && urlPollInterval !== props.refreshInterval) {
       props.setRefreshInterval(urlPollInterval);
     }
-    HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
     this.state = {
@@ -80,7 +79,6 @@ export class OverviewToolbar extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     // ensure redux state and URL are aligned
-    HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
     const urlSortField = ListPagesHelper.currentSortField(Sorts.sortFields);

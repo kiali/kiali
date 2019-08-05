@@ -75,7 +75,8 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const graphChanged =
-      this.props.cyData && prevProps.cyData && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp;
+      (!prevProps.cyData && this.props.cyData) ||
+      (this.props.cyData && prevProps.cyData && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp);
 
     // make sure the value is updated if there was a change
     if (findChanged) {
