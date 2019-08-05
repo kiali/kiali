@@ -70,35 +70,45 @@ get_installer() {
 }
 
 get_status() {
-  get_registry_names
+  check_crc_running
   check_insecure_registry
   echo "====================================================================="
-  echo "Version from oc command [${CRC_OC}]"
-  ${CRC_OC} version
+  echo "Status from crc command [${CRC_COMMAND}]"
+  ${CRC_COMMAND} status
   echo "====================================================================="
-  echo "Console:    https://console-openshift-console.apps-crc.testing"
-  echo "API URL:    https://api.crc.testing:6443/"
-  echo "IP address: $(${CRC_COMMAND} ip)"
-  echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
-  echo "oc:         ${CRC_OC}"
-  echo "====================================================================="
-  echo "To install 'oc' in your environment:"
-  ${CRC_COMMAND} oc-env
-  echo "====================================================================="
-  echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
-  echo "kiali password:     kiali"
-  echo "johndoe password:   johndoe"
-  echo "====================================================================="
-  echo "To push images to the image repo you need to log in."
-  echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-  echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
-  echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
-  echo "or"
-  echo "  oc login -u kiali -p kiali api.crc.testing:6443"
-  echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+  echo "oc:  ${CRC_OC}"
+  echo "crc: ${CRC_COMMAND}"
   echo "====================================================================="
 
-  echo "CRC does not yet have a status command. This hack script will be updated once this github issue is implemented: https://github.com/code-ready/crc/issues/68"
+  if [ "${_CRC_RUNNING}" == "true" ]; then
+    get_registry_names
+    echo "Version from oc command [${CRC_OC}]"
+    ${CRC_OC} version
+    echo "====================================================================="
+    echo "Status from oc command [${CRC_OC}]"
+    ${CRC_OC} status
+    echo "====================================================================="
+    echo "Console:    https://console-openshift-console.apps-crc.testing"
+    echo "API URL:    https://api.crc.testing:6443/"
+    echo "IP address: $(${CRC_COMMAND} ip)"
+    echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
+    echo "====================================================================="
+    echo "To install 'oc' in your environment:"
+    ${CRC_COMMAND} oc-env
+    echo "====================================================================="
+    echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
+    echo "kiali password:     kiali"
+    echo "johndoe password:   johndoe"
+    echo "====================================================================="
+    echo "To push images to the image repo you need to log in."
+    echo "You can use docker or podman, and you can use kubeadmin or kiali user."
+    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
+    echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "or"
+    echo "  oc login -u kiali -p kiali api.crc.testing:6443"
+    echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "====================================================================="
+  fi
 }
 
 check_app() {
@@ -113,9 +123,25 @@ check_app() {
   return 1
 }
 
+check_crc_running() {
+  if [ -z ${_CRC_RUNNING} ]; then
+    if crc status | grep "CRC VM:.*Running" > /dev/null 2>&1; then
+      _CRC_RUNNING="true"
+    else
+      _CRC_RUNNING="false"
+    fi
+    debug "CRC running status: ${_CRC_RUNNING}"
+  fi
+}
+
 get_registry_names() {
-  local ext=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
-  local int=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  local ext="not running"
+  local int="not running"
+  check_crc_running
+  if [ "_CRC_RUNNING" == "true" ]; then
+    ext=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
+    int=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  fi
   EXTERNAL_IMAGE_REGISTRY=${ext:-<unknown>}
   INTERNAL_IMAGE_REGISTRY=${int:-<unknown>}
 }
@@ -145,10 +171,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.88.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="0.89.0"
 
 # The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.3"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.6"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -274,6 +300,10 @@ while [[ $# -gt 0 ]]; do
       WAIT_FOR_ISTIO=false
       shift
       ;;
+    -p|--pull-secret-file)
+      PULL_SECRET_ARG="-p $2"
+      shift;shift
+      ;;
     -v|--verbose)
       _VERBOSE=true
       shift
@@ -366,6 +396,12 @@ Valid options:
       is ignored when --kiali-enabled is true.
       This will also be ignored when --istio-enabled is false.
       Used only for the 'start' command.
+  -p|--pull-secret-file <filename>
+      Specifies the file containing your Image pull secret.
+      You can download it from https://cloud.redhat.com/openshift/install/metal/user-provisioned
+      CRC will ignore this if the pull secret was already installed during a previous start.
+      Used only for the 'start' command.
+      Default: not set (you will be prompted for the pull secret json at startup if it does not exist yet)
   -v|--verbose
       Enable logging of debug messages from this script.
 
@@ -419,7 +455,7 @@ CRC_ROOT_DIR="${HOME}/.crc"
 CRC_KUBEADMIN_PASSWORD_FILE="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/kubeadmin-password"
 CRC_KUBECONFIG="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/kubeconfig"
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
-CRC_OC="${CRC_ROOT_DIR}/cache/oc/oc"
+CRC_OC="${CRC_ROOT_DIR}/bin/oc"
 
 # The version of Maistra/Istio to be installed if enabled
 MAISTRA_VERSION="maistra-0.11.0"
@@ -470,13 +506,13 @@ if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
 fi
 
 # Determine where to get the binaries and their full paths and how to execute them.
-CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_VERSION}-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
+CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_VERSION}-alpha-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
 
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/libvirt/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
-CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.tar.xz"
+CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/libvirt/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
+CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 
 # If Kiali is to be installed, set up some things that may be needed
 if [ "${KIALI_ENABLED}" == "true" ]; then
@@ -559,7 +595,7 @@ else
     rm "${CRC_EXE_PATH}.tar.xz"
     exit 1
   fi
-  tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})"
+  tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})" --strip 1 '*/crc'
   chmod +x ${CRC_EXE_PATH}
   rm "${CRC_EXE_PATH}.tar.xz"
 fi
@@ -601,8 +637,8 @@ if [ "$_CMD" = "start" ]; then
 
   infomsg "Starting the OpenShift cluster..."
   # if you change the command line here, also change it below during the restart
-  debug "${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
-  ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
+  debug "${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
+  ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
 
   if [ "$?" != "0" ]; then
     infomsg "ERROR: failed to start the VM."
@@ -686,7 +722,7 @@ if [ "$_CMD" = "start" ]; then
 
   if [ "${_NEED_VM_START}" == "true" ]; then
     infomsg "Restarting the VM to pick up the new configuration."
-    ${CRC_COMMAND} start -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
+    ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
     if [ "$?" != "0" ]; then
       infomsg "ERROR: failed to restart the VM."
       exit 1
