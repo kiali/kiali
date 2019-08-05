@@ -101,7 +101,10 @@ func handlePanic(w http.ResponseWriter) {
 			message = fmt.Sprintf("%v", r)
 		}
 		if code == http.StatusInternalServerError {
-			log.Errorf("%s: %s", message, debug.Stack())
+			stack := debug.Stack()
+			log.Errorf("%s: %s", message, stack)
+			RespondWithDetailedError(w, code, message, string(stack))
+			return
 		}
 		RespondWithError(w, code, message)
 	}
@@ -110,7 +113,7 @@ func handlePanic(w http.ResponseWriter) {
 func respond(w http.ResponseWriter, code int, payload interface{}) {
 	if code == http.StatusOK {
 		RespondWithJSONIndent(w, code, payload)
-	} else {
-		RespondWithError(w, code, payload.(string))
+		return
 	}
+	RespondWithError(w, code, payload.(string))
 }

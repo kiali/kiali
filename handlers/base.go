@@ -5,10 +5,15 @@ import (
 	"net/http"
 )
 
+type responseError struct {
+	Error  string `json:"error,omitempty"`
+	Detail string `json:"detail,omitempty"`
+}
+
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
-		response, _ = json.Marshal(map[string]string{"error": err.Error()})
+		response, _ = json.Marshal(responseError{Error: err.Error()})
 		code = http.StatusInternalServerError
 	}
 
@@ -20,7 +25,7 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
-		response, _ = json.Marshal(map[string]string{"error": err.Error()})
+		response, _ = json.Marshal(responseError{Error: err.Error()})
 		code = http.StatusInternalServerError
 	}
 
@@ -30,7 +35,11 @@ func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{})
 }
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {
-	RespondWithJSON(w, code, map[string]string{"error": message})
+	RespondWithJSON(w, code, responseError{Error: message})
+}
+
+func RespondWithDetailedError(w http.ResponseWriter, code int, message, detail string) {
+	RespondWithJSON(w, code, responseError{Error: message, Detail: detail})
 }
 
 func RespondWithCode(w http.ResponseWriter, code int) {
