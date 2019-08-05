@@ -70,36 +70,45 @@ get_installer() {
 }
 
 get_status() {
-  get_registry_names
+  check_crc_running
   check_insecure_registry
   echo "====================================================================="
-  echo "Version from oc command [${CRC_OC}]"
-  ${CRC_OC} version
+  echo "Status from crc command [${CRC_COMMAND}]"
+  ${CRC_COMMAND} status
   echo "====================================================================="
-  echo "CRC Status from oc command [${CRC_OC}]"
-  ${CRC_OC} status
+  echo "oc:  ${CRC_OC}"
+  echo "crc: ${CRC_COMMAND}"
   echo "====================================================================="
-  echo "Console:    https://console-openshift-console.apps-crc.testing"
-  echo "API URL:    https://api.crc.testing:6443/"
-  echo "IP address: $(${CRC_COMMAND} ip)"
-  echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
-  echo "oc:         ${CRC_OC}"
-  echo "====================================================================="
-  echo "To install 'oc' in your environment:"
-  ${CRC_COMMAND} oc-env
-  echo "====================================================================="
-  echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
-  echo "kiali password:     kiali"
-  echo "johndoe password:   johndoe"
-  echo "====================================================================="
-  echo "To push images to the image repo you need to log in."
-  echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-  echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
-  echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
-  echo "or"
-  echo "  oc login -u kiali -p kiali api.crc.testing:6443"
-  echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
-  echo "====================================================================="
+
+  if [ "${_CRC_RUNNING}" == "true" ]; then
+    get_registry_names
+    echo "Version from oc command [${CRC_OC}]"
+    ${CRC_OC} version
+    echo "====================================================================="
+    echo "Status from oc command [${CRC_OC}]"
+    ${CRC_OC} status
+    echo "====================================================================="
+    echo "Console:    https://console-openshift-console.apps-crc.testing"
+    echo "API URL:    https://api.crc.testing:6443/"
+    echo "IP address: $(${CRC_COMMAND} ip)"
+    echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
+    echo "====================================================================="
+    echo "To install 'oc' in your environment:"
+    ${CRC_COMMAND} oc-env
+    echo "====================================================================="
+    echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
+    echo "kiali password:     kiali"
+    echo "johndoe password:   johndoe"
+    echo "====================================================================="
+    echo "To push images to the image repo you need to log in."
+    echo "You can use docker or podman, and you can use kubeadmin or kiali user."
+    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
+    echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "or"
+    echo "  oc login -u kiali -p kiali api.crc.testing:6443"
+    echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "====================================================================="
+  fi
 }
 
 check_app() {
@@ -114,9 +123,25 @@ check_app() {
   return 1
 }
 
+check_crc_running() {
+  if [ -z ${_CRC_RUNNING} ]; then
+    if crc status | grep "CRC VM:.*Running" > /dev/null 2>&1; then
+      _CRC_RUNNING="true"
+    else
+      _CRC_RUNNING="false"
+    fi
+    debug "CRC running status: ${_CRC_RUNNING}"
+  fi
+}
+
 get_registry_names() {
-  local ext=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
-  local int=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  local ext="not running"
+  local int="not running"
+  check_crc_running
+  if [ "_CRC_RUNNING" == "true" ]; then
+    ext=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
+    int=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  fi
   EXTERNAL_IMAGE_REGISTRY=${ext:-<unknown>}
   INTERNAL_IMAGE_REGISTRY=${int:-<unknown>}
 }
