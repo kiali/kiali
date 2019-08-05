@@ -27,6 +27,10 @@ kiali_defaults:
   deployment:
     accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
     #additional_service_yaml:
+    affinity:
+      node: {}
+      pod: {}
+      pod_anti: {}
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_pull_secrets: []
@@ -35,6 +39,7 @@ kiali_defaults:
     namespace: "istio-system"
     secret_name: "kiali"
     service_type: "NodePort"
+    tolerations: []
     verbose_mode: "3"
     version_label: ""
     view_only_mode: false

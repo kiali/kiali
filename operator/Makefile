@@ -170,7 +170,10 @@ run-playbook-tag:
 
 MOLECULE_SCENARIO ?= default
 ifeq ($(MOLECULE_DEBUG),true)
-MOLECULE_DEBUG_ARG="--debug"
+MOLECULE_DEBUG_ARG = --debug
+endif
+ifeq ($(MOLECULE_DESTROY_NEVER),true)
+MOLECULE_DESTROY_NEVER_ARG = --destroy never
 endif
 
 .molecule-docker-build-if-needed:
@@ -184,4 +187,4 @@ molecule-docker-build:
 
 ## molecule-test: Runs Molecule tests using the Molecule docker image
 molecule-test: .molecule-docker-build-if-needed
-	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test --scenario-name ${MOLECULE_SCENARIO}
+	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name ${MOLECULE_SCENARIO}

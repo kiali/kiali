@@ -27,3 +27,21 @@
 - name: Format Configmap
   set_fact:
     kiali_configmap: "{{ kiali_configmap.data['config.yaml'] | from_yaml }}"
+
+- name: Get Kiali Deployment
+  k8s_facts:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ istio.control_plane_namespace }}"
+    label_selectors:
+    - app = kiali
+  register: kiali_deployment
+
+- name: Get Kiali Service
+  k8s_facts:
+    api_version: v1
+    kind: Service
+    namespace: "{{ istio.control_plane_namespace }}"
+    label_selectors:
+    - app = kiali
+  register: kiali_service

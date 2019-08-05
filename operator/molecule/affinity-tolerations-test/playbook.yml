@@ -1,0 +1,74 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+  # set affinity and tolerations
+  - import_tasks: set_affinity_tolerations.yml
+    vars:
+      new_affinity:
+        node:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 71
+            preference:
+              matchExpressions:
+              - key: affinity-kiali-test
+                operator: In
+                values:
+                - affinity-kiali-test
+        pod:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 72
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: affinity-kiali-test
+                  operator: In
+                  values:
+                  - affinity-kiali-test1
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+        pod_anti:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 73
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: affinity-kiali-test
+                  operator: In
+                  values:
+                  - affinity-kiali-test2
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+      new_tolerations:
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 777
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 777
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  - name: Assert that tolerations were applied to the deployment
+    assert:
+      that:
+      - "{{ kiali_deployment.resources[0].spec.template.spec.tolerations | length > 0 }}"
+      fail_msg: "Tolerations were not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.tolerations }}"
+  - name: Assert that affinity was applied
+    assert:
+      that:
+      - "{{ kiali_deployment.resources[0].spec.template.spec.affinity.nodeAffinity | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.affinity.podAffinity | length > 0 }}"
+      - "{{ kiali_deployment.resources[0].spec.template.spec.affinity.podAntiAffinity | length > 0 }}"
+      fail_msg: "Affinity was not applied successfully: {{ kiali_deployment.resources[0].spec.template.spec.affinity }}"
+  - name: Assert that camelCase is retained in additional service yaml
+    assert:
+      that:
+      - "{{ kiali_service.resources[0].spec.externalName is defined }}"
+      - "{{ kiali_service.resources[0].spec.externalName == 'my.kiali.example.com' }}"
+      fail_msg: "Additional service yaml was not applied successfully: {{ kiali_service.resources[0].spec }}"
