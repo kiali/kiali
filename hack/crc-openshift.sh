@@ -138,7 +138,7 @@ get_registry_names() {
   local ext="not running"
   local int="not running"
   check_crc_running
-  if [ "_CRC_RUNNING" == "true" ]; then
+  if [ "${_CRC_RUNNING}" == "true" ]; then
     ext=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
     int=$(${CRC_OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
   fi
