@@ -38,6 +38,7 @@ const (
 	EnvServerAuditLog                   = "SERVER_AUDIT_LOG"
 	EnvServerMetricsPort                = "SERVER_METRICS_PORT"
 	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
+	EnvServerGzipEnabled                = "SERVER_GZIP_ENABLED"
 
 	EnvAuthSuffixType               = "_AUTH_TYPE"
 	EnvAuthSuffixUsername           = "_USERNAME"
@@ -124,6 +125,7 @@ type Server struct {
 	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
 	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
 	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -275,6 +277,7 @@ func NewConfig() (c *Config) {
 	c.Server.AuditLog = getDefaultBool(EnvServerAuditLog, true)
 	c.Server.MetricsPort = getDefaultInt(EnvServerMetricsPort, 9090)
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
+	c.Server.GzipEnabled = getDefaultBool(EnvServerGzipEnabled, true)
 
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))

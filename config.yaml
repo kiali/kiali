@@ -13,6 +13,10 @@ server:
   # Uncomment cors_allow_all to allow serving front-end from a different host (mainly for development)
   # Default is false
   # cors_allow_all: true
+
+  # Support gzip compressed requests, uncomment to disable it.
+  # Default is true
+  # gzip_enabled: false
 external_services:
   prometheus_service_url: http://prometheus-istio-system.127.0.0.1.nip.io
   # Uncomment istio_identity_domain to set a different value. This value must match the Istio configuration.
