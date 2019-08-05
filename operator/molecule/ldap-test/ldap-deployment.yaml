@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ldap
+  labels:
+    app: ldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ldap
+  template:
+    metadata:
+      labels:
+        app: ldap
+    spec:
+      containers:
+        - name: ldap
+          image: openshift/openldap-2441-centos7:latest
+          volumeMounts:
+            - name: etc-openldap
+              mountPath: /etc/openldap
+            - name: ldap-data
+              mountPath: /var/lib/ldap
+          ports:
+            - containerPort: 389
+              name: ldap-port
+            - containerPort: 636
+              name: ssl-ldap-port
+          env:
+            - name: OPENLDAP_DEBUG_LEVEL
+              value: "320" # 64 + 256
+            - name: OPENLDAP_ROOT_PASSWORD
+              value: "admin"
+            - name: OPENLDAP_ROOT_DN_SUFFIX
+              value: "dc=example,dc=com"
+            - name: OPENLDAP_ROOT_DN_PREFIX
+              value: "cn=Manager"
+      volumes:
+        - name: etc-openldap
+          emptyDir: {}
+        - name: ldap-data
+          emptyDir: {}

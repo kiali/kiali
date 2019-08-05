@@ -1,0 +1,20 @@
+# based on https://github.com/osixia/docker-openldap/tree/stable/example/kubernetes/simple
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ldap
+  name: ldap-service
+spec:
+  type: NodePort
+  ports:
+    - name: ldap-port
+      targetPort: ldap-port
+      port: 389
+      protocol: TCP
+    - name: ssl-ldap-port
+      targetPort: ssl-ldap-port
+      port: 636
+      protocol: TCP
+  selector:
+    app: ldap
