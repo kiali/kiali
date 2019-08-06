@@ -38,7 +38,6 @@ kiali_defaults:
     ingress_enabled: true
     namespace: "istio-system"
     secret_name: "kiali"
-    service_type: "NodePort"
     tolerations: []
     verbose_mode: "3"
     version_label: ""

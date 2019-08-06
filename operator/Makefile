@@ -21,7 +21,7 @@ KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 KIALI_IMAGE_VERSION ?= ${OPERATOR_IMAGE_VERSION}
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
-SERVICE_TYPE ?= NodePort
+SERVICE_TYPE ?= ClusterIP
 
 # Path to CR file for any other parameter
 KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
