@@ -42,7 +42,7 @@ export class VirtualList extends React.Component<VirtualListProps, VirtualListSt
       scrollableElement: null,
       type,
       sortBy: {
-        index: 0,
+        index: -1,
         direction: undefined
       },
       columns,
