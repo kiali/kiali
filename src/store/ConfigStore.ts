@@ -39,13 +39,19 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
-const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState'], INITIAL_GRAPH_STATE);
+const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState', 'layout'], INITIAL_GRAPH_STATE);
+
+const userSettingsPersitFilter = whitelistInputWithInitialState(
+  'userSettings',
+  ['duration', 'refreshInterval'],
+  INITIAL_USER_SETTINGS_STATE
+);
 
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph'],
-  transforms: [namespacePersistFilter, graphPersistFilter]
+  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph', 'userSettings', 'messageCenter'],
+  transforms: [namespacePersistFilter, graphPersistFilter, userSettingsPersitFilter]
 };
 
 const composeEnhancers =
