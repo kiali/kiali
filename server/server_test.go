@@ -286,6 +286,16 @@ func TestSecureComm(t *testing.T) {
 	}
 }
 
+func TestConfigureGzipHandler(t *testing.T) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			t.Errorf("Failed to create Gzip handler [%v]", err)
+		}
+	}()
+	configureGzipHandler(nil)
+}
+
 func getRequestResults(t *testing.T, httpClient *http.Client, url string, credentials *security.Credentials) (string, error) {
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
