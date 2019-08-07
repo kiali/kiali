@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Collapse } from 'react-bootstrap';
-
+import { Expandable } from '@patternfly/react-core';
 import { MessageType, NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
 import moment from 'moment';
 import {
@@ -63,14 +63,41 @@ type NotificationWrapperPropsType = {
   onClick: (message: NotificationMessage) => void;
 };
 
-class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsType, StatelessType> {
+type NotificationWrapperStateType = {
+  isExpanded: boolean;
+};
+
+class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsType, NotificationWrapperStateType> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isExpanded: false
+    };
+  }
+
+  onToggle = () => {
+    this.setState(state => ({
+      isExpanded: !state.isExpanded
+    }));
+  };
+
   render() {
+    const { isExpanded } = this.state;
     return (
       <Pf.Notification seen={this.props.message.seen} onClick={() => this.props.onClick(this.props.message)}>
         <Pf.Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
         <Pf.Notification.Content>
           <Pf.Notification.Message>
             {this.props.message.content}
+            {this.props.message.detail && (
+              <Expandable
+                toggleText={isExpanded ? 'Hide Detail' : 'Show Detail'}
+                onToggle={this.onToggle}
+                isExpanded={isExpanded}
+              >
+                <pre>{this.props.message.detail}</pre>
+              </Expandable>
+            )}
             {this.props.message.count > 1 && (
               <div>
                 {this.props.message.count} {moment().from(this.props.message.firstTriggered)}

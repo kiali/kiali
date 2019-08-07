@@ -6,7 +6,7 @@ import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { KialiAppAction } from './KialiAppAction';
 import { GraphDataActions } from './GraphDataActions';
-import { MessageCenterActions } from './MessageCenterActions';
+import * as MessageCenter from '../utils/MessageCenter';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { serverConfig } from '../config/ServerConfig';
@@ -87,17 +87,11 @@ const GraphDataThunkActions = {
             dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphDuration, graphData));
           },
           error => {
-            let emsg: string;
             if (error.isCanceled) {
               return;
             }
-            if (error.response && error.response.data && error.response.data.error) {
-              emsg = 'Cannot load the graph: ' + error.response.data.error;
-            } else {
-              emsg = 'Cannot load the graph: ' + error.toString();
-            }
-            dispatch(MessageCenterActions.addMessage(emsg));
-            dispatch(GraphDataActions.getGraphDataFailure(emsg));
+            MessageCenter.addError('Cannot load the graph', error);
+            dispatch(GraphDataActions.getGraphDataFailure(`Cannot load the graph: ${API.getErrorString(error)}`));
           }
         );
       }
@@ -112,17 +106,11 @@ const GraphDataThunkActions = {
           dispatch(GraphDataActions.getGraphDataSuccess(timestamp, graphDuration, graphData));
         },
         error => {
-          let emsg: string;
           if (error.isCanceled) {
             return;
           }
-          if (error.response && error.response.data && error.response.data.error) {
-            emsg = 'Cannot load the graph: ' + error.response.data.error;
-          } else {
-            emsg = 'Cannot load the graph: ' + error.toString();
-          }
-          dispatch(MessageCenterActions.addMessage(emsg));
-          dispatch(GraphDataActions.getGraphDataFailure(emsg));
+          MessageCenter.addError('Cannot load the graph', error);
+          dispatch(GraphDataActions.getGraphDataFailure(`Cannot load the graph: ${API.getErrorString(error)}`));
         }
       );
     };

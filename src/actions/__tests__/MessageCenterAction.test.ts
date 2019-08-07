@@ -12,10 +12,11 @@ describe('MessageCenterActions', () => {
   it('should add a message', () => {
     const expectedPayload = {
       content: 'my message',
+      detail: 'my detail',
       groupId: 'great-messages',
       messageType: MessageType.WARNING
     };
-    const action = MessageCenterActions.addMessage('my message', 'great-messages', MessageType.WARNING);
+    const action = MessageCenterActions.addMessage('my message', 'my detail', 'great-messages', MessageType.WARNING);
     expect(action.payload).toEqual(expectedPayload);
   });
   it('should remove a single message', () => {

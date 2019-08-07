@@ -69,7 +69,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch IstioConfig details', error));
+        MessageCenter.addError('Could not fetch IstioConfig details.', error);
       });
   };
 
@@ -149,7 +149,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     deletePromise
       .then(_r => this.backToList())
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not delete IstioConfig details.', error));
+        MessageCenter.addError('Could not delete IstioConfig details.', error);
       });
   };
 
@@ -184,7 +184,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
-          MessageCenter.add(API.getErrorMsg('Could not update IstioConfig details.', error));
+          MessageCenter.addError('Could not update IstioConfig details.', error);
         });
     });
   };

@@ -65,17 +65,9 @@ class MeshMTLSStatus extends React.Component<Props> {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
         if (informative) {
-          MessageCenter.add(
-            API.getInfoMsg('Mesh-wide mTLS status feature disabled.', error),
-            'default',
-            MessageType.INFO
-          );
+          MessageCenter.addError('Mesh-wide mTLS status feature disabled.', error, 'default', MessageType.INFO);
         } else {
-          MessageCenter.add(
-            API.getErrorMsg('Error fetching Mesh-wide mTLS status.', error),
-            'default',
-            MessageType.ERROR
-          );
+          MessageCenter.addError('Error fetching Mesh-wide mTLS status.', error, 'default', MessageType.ERROR);
         }
       });
   };

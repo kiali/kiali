@@ -441,27 +441,29 @@ export const getPodLogs = (
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };
 
-export const getMessage = (type: string, msg: string, error: AxiosError) => {
-  let errorMessage = msg;
+export const getErrorString = (error: AxiosError): string => {
   if (error && error.response) {
     if (error.response.data && error.response.data.error) {
-      errorMessage = `${msg}, ${type}: [ ${error.response.data.error} ]`;
-    } else if (error.response.statusText) {
-      errorMessage = `${msg}, ${type}: [ ${error.response.statusText} ]`;
+      return error.response.data.error;
+    }
+    if (error.response.statusText) {
+      let errorString = error.response.statusText;
       if (error.response.status === 401) {
-        errorMessage += ' Has your session expired? Try logging in again.';
+        errorString += ': Has your session expired? Try logging in again.';
       }
+      return errorString;
     }
   }
-  return errorMessage;
+  return '';
 };
 
-export const getInfoMsg = (msg: string, error: AxiosError) => {
-  return getMessage('Info', msg, error);
-};
-
-export const getErrorMsg = (msg: string, error: AxiosError) => {
-  return getMessage('Error', msg, error);
+export const getErrorDetail = (error: AxiosError): string => {
+  if (error && error.response) {
+    if (error.response.data && error.response.data.detail) {
+      return error.response.data.detail;
+    }
+  }
+  return '';
 };
 
 export const getThreeScaleInfo = () => {

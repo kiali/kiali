@@ -144,7 +144,11 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           }
         );
       })
-      .catch(namespacesError => this.handleAxiosError('Could not fetch namespace list', namespacesError));
+      .catch(namespacesError => {
+        if (!namespacesError.isCanceled) {
+          this.handleAxiosError('Could not fetch namespace list', namespacesError);
+        }
+      });
   };
 
   fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType) {
@@ -278,7 +282,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   }
 
   handleAxiosError(message: string, error: AxiosError) {
-    ListPagesHelper.handleError(API.getErrorMsg(message, error));
+    ListPagesHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean) => {

@@ -12,8 +12,12 @@ const toNumberArray = (n: numberOrNumberArray) => (Array.isArray(n) ? n : [n]);
 export const MessageCenterActions = {
   addMessage: createAction(
     ActionKeys.MC_ADD_MESSAGE,
-    resolve => (content: string, groupId: string = DEFAULT_GROUP_ID, messageType: MessageType = DEFAULT_MESSAGE_TYPE) =>
-      resolve({ content, groupId, messageType })
+    resolve => (
+      content: string,
+      detail: string,
+      groupId: string = DEFAULT_GROUP_ID,
+      messageType: MessageType = DEFAULT_MESSAGE_TYPE
+    ) => resolve({ content, detail, groupId, messageType })
   ),
   removeMessage: createAction(ActionKeys.MC_REMOVE_MESSAGE, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })

@@ -59,7 +59,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 0
         },
-        MessageCenterActions.addMessage('my new message', 'default', MessageType.WARNING)
+        MessageCenterActions.addMessage('my new message', 'my detail', 'default', MessageType.WARNING)
       )
     ).toEqual({
       expanded: false,
@@ -73,6 +73,7 @@ describe('MessageCenter reducer', () => {
               seen: false,
               show_notification: true,
               content: 'my new message',
+              detail: 'my detail',
               type: MessageType.WARNING,
               count: 1,
               firstTriggered: undefined,
@@ -105,6 +106,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: true,
                   content: 'my new message',
+                  detail: 'my detail',
                   type: MessageType.WARNING,
                   count: 1,
                   firstTriggered: undefined,
@@ -119,7 +121,7 @@ describe('MessageCenter reducer', () => {
           hidden: true,
           nextId: 0
         },
-        MessageCenterActions.addMessage('my new message', 'default', MessageType.WARNING)
+        MessageCenterActions.addMessage('my new message', 'my detail', 'default', MessageType.WARNING)
       )
     ).toEqual({
       expanded: false,
@@ -133,6 +135,7 @@ describe('MessageCenter reducer', () => {
               seen: false,
               show_notification: true,
               content: 'my new message',
+              detail: 'my detail',
               type: MessageType.WARNING,
               count: 2,
               firstTriggered: date,
@@ -167,6 +170,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: true,
                   content: 'my new message',
+                  detail: 'my detail',
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -176,6 +180,7 @@ describe('MessageCenter reducer', () => {
                   seen: true,
                   show_notification: false,
                   content: 'other message',
+                  detail: 'my detail',
                   type: MessageType.ERROR,
                   count: 1,
                   created: date
@@ -185,6 +190,7 @@ describe('MessageCenter reducer', () => {
                   seen: true,
                   show_notification: false,
                   content: 'other',
+                  detail: 'my detail',
                   type: MessageType.INFO,
                   count: 1,
                   created: date
@@ -210,6 +216,7 @@ describe('MessageCenter reducer', () => {
               seen: true,
               show_notification: false,
               content: 'other message',
+              detail: 'my detail',
               type: MessageType.ERROR,
               count: 1,
               created: date
@@ -243,6 +250,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: true,
                   content: 'my new message',
+                  detail: 'my detail',
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -252,6 +260,7 @@ describe('MessageCenter reducer', () => {
                   seen: true,
                   show_notification: false,
                   content: 'other message',
+                  detail: 'my detail',
                   type: MessageType.ERROR,
                   count: 1,
                   created: date
@@ -261,6 +270,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: false,
                   content: 'other',
+                  detail: 'my detail',
                   type: MessageType.INFO,
                   count: 1,
                   created: date
@@ -286,6 +296,7 @@ describe('MessageCenter reducer', () => {
               seen: true,
               show_notification: false,
               content: 'my new message',
+              detail: 'my detail',
               type: MessageType.WARNING,
               count: 1,
               created: date
@@ -295,6 +306,7 @@ describe('MessageCenter reducer', () => {
               seen: true,
               show_notification: false,
               content: 'other message',
+              detail: 'my detail',
               type: MessageType.ERROR,
               count: 1,
               created: date
@@ -304,6 +316,7 @@ describe('MessageCenter reducer', () => {
               seen: false,
               show_notification: false,
               content: 'other',
+              detail: 'my detail',
               type: MessageType.INFO,
               count: 1,
               created: date
@@ -337,6 +350,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: true,
                   content: 'my new message',
+                  detail: 'my detail',
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -346,6 +360,7 @@ describe('MessageCenter reducer', () => {
                   seen: false,
                   show_notification: true,
                   content: 'other message',
+                  detail: 'my detail',
                   type: MessageType.ERROR,
                   count: 1,
                   created: date
@@ -371,6 +386,7 @@ describe('MessageCenter reducer', () => {
               seen: false,
               show_notification: false,
               content: 'my new message',
+              detail: 'my detail',
               type: MessageType.WARNING,
               count: 1,
               created: date
@@ -380,6 +396,7 @@ describe('MessageCenter reducer', () => {
               seen: false,
               show_notification: true,
               content: 'other message',
+              detail: 'my detail',
               type: MessageType.ERROR,
               count: 1,
               created: date

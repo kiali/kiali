@@ -177,7 +177,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Workload', error));
+        MessageCenter.addError('Could not fetch Workload.', error);
       });
   };
 

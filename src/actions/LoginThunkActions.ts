@@ -5,8 +5,8 @@ import * as API from '../services/Api';
 import * as Login from '../services/Login';
 import { AuthResult, AuthStrategy } from '../types/Auth';
 import { KialiDispatch } from '../types/Redux';
-import { MessageCenterActions } from './MessageCenterActions';
 import authenticationConfig from '../config/AuthenticationConfig';
+import * as MessageCenter from '../utils/MessageCenter';
 
 const Dispatcher = new Login.LoginDispatcher();
 
@@ -80,7 +80,7 @@ const LoginThunkActions = {
           dispatch(LoginActions.logoutSuccess());
         }
       } catch (err) {
-        dispatch(MessageCenterActions.addMessage(API.getErrorMsg('Logout failed', err)));
+        MessageCenter.addError('Logout failed', err);
       }
     };
   }

@@ -41,7 +41,8 @@ export abstract class Component<P extends Props<R>, S extends State<R>, R> exten
   };
 
   handleAxiosError(message: string, error: AxiosError) {
-    const errMsg = API.getErrorMsg(message, error);
+    const errMsg = `${message}: ${API.getErrorString(error)}`;
+    // TODO: Do we really need this console logging?
     console.error(errMsg);
     this.handleError(errMsg);
   }

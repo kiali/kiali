@@ -224,8 +224,9 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
         this.props.onClose(true);
       })
       .catch(error => {
-        MessageCenter.add(
-          API.getErrorMsg('Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.', error)
+        MessageCenter.addError(
+          'Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.',
+          error
         );
         this.props.onClose(true);
       });

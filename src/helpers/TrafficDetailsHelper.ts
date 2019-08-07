@@ -17,7 +17,7 @@ export const fetchTrafficDetails = (
       return response.data;
     },
     error => {
-      MessageCenter.add(API.getErrorMsg('Could not fetch traffic data', error));
+      MessageCenter.addError('Could not fetch traffic data.', error);
       return undefined;
     }
   );

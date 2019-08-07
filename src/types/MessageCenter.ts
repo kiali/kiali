@@ -10,6 +10,7 @@ export interface NotificationMessage {
   seen: boolean;
   type: MessageType;
   content: string;
+  detail: string;
   created: Date;
   firstTriggered?: Date; // when was it first triggered
   count: number; // how many times did this message occur

@@ -110,7 +110,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch ThreeScaleHandlers', error));
+        MessageCenter.addError('Could not fetch ThreeScaleHandlers.', error);
       });
   };
 
@@ -143,7 +143,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not update ThreeScaleHandlers', error));
+        MessageCenter.addError('Could not update ThreeScaleHandlers.', error);
       });
   };
 
@@ -176,7 +176,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not delete ThreeScaleHandlers', error));
+        MessageCenter.addError('Could not delete ThreeScaleHandlers.', error);
       });
   };
 
@@ -270,7 +270,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not create ThreeScaleHandlers', error));
+        MessageCenter.addError('Could not create ThreeScaleHandlers.', error);
       });
   };
 

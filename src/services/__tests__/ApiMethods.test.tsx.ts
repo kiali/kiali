@@ -2,8 +2,7 @@ import * as API from '../Api';
 import { AxiosError } from 'axios';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 
-describe('#GetErrorMessage', () => {
-  const errormsg = 'Error sample';
+describe('#GetErrorString', () => {
   it('should return an error message with status', () => {
     const axErr: AxiosError = {
       config: { method: 'GET' },
@@ -17,7 +16,7 @@ describe('#GetErrorMessage', () => {
         config: {}
       }
     };
-    expect(API.getErrorMsg(errormsg, axErr)).toEqual(`${errormsg}, Error: [ InternalError ]`);
+    expect(API.getErrorString(axErr)).toEqual(`InternalError`);
   });
   it('should return an error message with data', () => {
     const responseServerError = 'Internal Error';
@@ -33,7 +32,24 @@ describe('#GetErrorMessage', () => {
         config: {}
       }
     };
-    expect(API.getErrorMsg(errormsg, axErr)).toEqual(`${errormsg}, Error: [ ${responseServerError} ]`);
+    expect(API.getErrorString(axErr)).toEqual(`${responseServerError}`);
+  });
+  it('should return a detail error message with data', () => {
+    const responseServerError = 'Internal Error';
+    const responseServerDetail = 'Error Detail';
+    const axErr: AxiosError = {
+      config: { method: 'GET' },
+      name: 'AxiosError',
+      message: 'Error in Response',
+      response: {
+        data: { error: responseServerError, detail: responseServerDetail },
+        status: 400,
+        statusText: 'InternalError',
+        headers: null,
+        config: {}
+      }
+    };
+    expect(API.getErrorDetail(axErr)).toEqual(`${responseServerDetail}`);
   });
   it('should return specific error message for unauthorized', () => {
     const axErr: AxiosError = {
@@ -48,9 +64,7 @@ describe('#GetErrorMessage', () => {
         config: {}
       }
     };
-    expect(API.getErrorMsg(errormsg, axErr)).toEqual(
-      `${errormsg}, Error: [ Unauthorized ] Has your session expired? Try logging in again.`
-    );
+    expect(API.getErrorString(axErr)).toEqual(`Unauthorized: Has your session expired? Try logging in again.`);
   });
 });
 

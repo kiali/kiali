@@ -176,7 +176,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         this.props.onChange();
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not delete Istio config objects', error));
+        MessageCenter.addError('Could not delete Istio config objects.', error);
         this.setState({
           isDeleting: false
         });

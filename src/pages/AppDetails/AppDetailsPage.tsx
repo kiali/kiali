@@ -96,7 +96,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch App Details', error));
+        MessageCenter.addError('Could not fetch App Details.', error);
       });
   };
 

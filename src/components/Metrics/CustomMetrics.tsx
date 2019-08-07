@@ -76,7 +76,8 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Cannot fetch custom dashboard', error));
+        MessageCenter.addError('Could not fetch custom dashboard.', error);
+        // TODO: is this console logging necessary?
         console.error(error);
       });
   };

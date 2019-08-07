@@ -92,7 +92,8 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
         });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Cannot fetch metrics', error));
+        MessageCenter.addError('Could not fetch metrics.', error);
+        // TODO: Is this console logging necessary?
         console.error(error);
         throw error;
       });

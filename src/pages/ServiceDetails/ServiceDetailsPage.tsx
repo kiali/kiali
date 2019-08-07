@@ -197,11 +197,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             });
           })
           .catch(gwError => {
-            MessageCenter.add(API.getErrorMsg('Could not fetch Namespaces list', gwError));
+            MessageCenter.addError('Could not fetch Namespaces list.', gwError);
           });
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Namespaces list', error));
+        MessageCenter.addError('Could not fetch Namespaces list.', error);
       });
 
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
@@ -223,7 +223,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         }
       })
       .catch(error => {
-        MessageCenter.add(API.getErrorMsg('Could not fetch Service Details', error));
+        MessageCenter.addError('Could not fetch Service Details.', error);
       });
 
     API.getThreeScaleInfo()
@@ -244,14 +244,15 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               });
               // Only log 500 errors. 404 response is a valid response on this composition case
               if (error.response && error.response.status >= 500) {
-                MessageCenter.add(API.getErrorMsg('Could not fetch ThreeScaleServiceRule', error));
+                MessageCenter.addError('Could not fetch ThreeScaleServiceRule.', error);
               }
             });
         }
       })
       .catch(error => {
-        MessageCenter.add(
-          API.getInfoMsg('Could not fetch 3scale info. Turning off 3scale integration.', error),
+        MessageCenter.addError(
+          'Could not fetch 3scale info. Turning off 3scale integration.',
+          error,
           'default',
           MessageType.INFO
         );

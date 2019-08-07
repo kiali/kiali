@@ -101,14 +101,15 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       const getStatusPromise = API.getStatus()
         .then(response => this.props.setServerStatus(response.data))
         .catch(error => {
-          MessageCenter.add(API.getErrorMsg('Error fetching status.', error), 'default', MessageType.WARNING);
+          MessageCenter.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
       const getGrafanaInfoPromise = API.getGrafanaInfo()
         .then(response => this.props.setGrafanaInfo(response.data))
         .catch(error => {
           this.props.setGrafanaInfo(null);
-          MessageCenter.add(
-            API.getInfoMsg('Could not fetch Grafana info. Turning off links to Grafana.', error),
+          MessageCenter.addError(
+            'Could not fetch Grafana info. Turning off links to Grafana.',
+            error,
             'default',
             MessageType.INFO
           );
@@ -117,8 +118,9 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         .then(response => this.setJaegerInfo(response.data))
         .catch(error => {
           this.props.setJaegerInfo(null);
-          MessageCenter.add(
-            API.getInfoMsg('Could not fetch Jaeger info. Turning off Jaeger integration.', error),
+          MessageCenter.addError(
+            'Could not fetch Jaeger info. Turning off Jaeger integration.',
+            error,
             'default',
             MessageType.INFO
           );
@@ -166,7 +168,7 @@ const processServerStatus = (dispatch: KialiDispatch, serverStatus: ServerStatus
   );
 
   serverStatus.warningMessages.forEach(wMsg => {
-    dispatch(MessageCenterActions.addMessage(wMsg, 'systemErrors', MessageType.WARNING));
+    dispatch(MessageCenterActions.addMessage(wMsg, '', 'systemErrors', MessageType.WARNING));
   });
 };
 
