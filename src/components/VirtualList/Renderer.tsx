@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { IstioTypes, Resource, TResource } from './Config';
 import * as React from 'react';
 import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
-import { Badge } from '@patternfly/react-core';
+import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ConfigIndicator } from '../ConfigValidation/ConfigIndicator';
 import { WorkloadListItem } from '../../types/Workload';
 import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
@@ -46,9 +46,15 @@ export const Sidecar = (item: AppListItem | WorkloadListItem | ServiceListItem) 
 
 export const Item = (item: TResource, config: Resource, icon: string) => {
   const key = 'link_definition_' + config.name + '_' + item.namespace + '_' + item.name;
+  let itemName = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+  if (config.name === 'istio') {
+    itemName = IstioTypes[item['type']].name;
+  }
   return (
     <td role="gridcell" key={'VirtuaItem_Name_' + item.namespace + '_' + item.name}>
-      <Badge className={'virtualitem_badge_definition'}>{icon}</Badge>
+      <Tooltip position={TooltipPosition.top} content={<>{itemName}</>}>
+        <Badge className={'virtualitem_badge_definition'}>{icon}</Badge>
+      </Tooltip>
       <Link key={key} to={getLink(item, config)} className={'virtualitem_definition_link'}>
         {item.name}
       </Link>
@@ -59,7 +65,9 @@ export const Item = (item: TResource, config: Resource, icon: string) => {
 export const Namespace = (item: TResource) => {
   return (
     <td role="gridcell" key={'VirtuaItem_Namespace_' + item.namespace + '_' + item.name}>
-      <Badge className={'virtualitem_badge_definition'}>NS</Badge>
+      <Tooltip position={TooltipPosition.top} content={<>Namespace</>}>
+        <Badge className={'virtualitem_badge_definition'}>NS</Badge>
+      </Tooltip>
       {item.namespace}
     </td>
   );
