@@ -102,27 +102,51 @@
   when:
   - kiali_vars.istio_namespace == ""
 
+- name: Set default istio component namespace: grafana
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'grafana': kiali_vars.istio_namespace}}, recursive=True) }}"
+  when:
+  - kiali_vars.istio_component_namespaces.grafana is not defined or kiali_vars.istio_component_namespaces.grafana == ""
+
+- name: Set default istio component namespace: tracing
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'tracing': kiali_vars.istio_namespace}}, recursive=True) }}"
+  when:
+  - kiali_vars.istio_component_namespaces.tracing is not defined or kiali_vars.istio_component_namespaces.tracing == ""
+
+- name: Set default istio component namespace: pilot
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'pilot': kiali_vars.istio_namespace}}, recursive=True) }}"
+  when:
+  - kiali_vars.istio_component_namespaces.pilot is not defined or kiali_vars.istio_component_namespaces.pilot == ""
+
+- name: Set default istio component namespace: prometheus
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'prometheus': kiali_vars.istio_namespace}}, recursive=True) }}"
+  when:
+  - kiali_vars.istio_component_namespaces.prometheus is not defined or kiali_vars.istio_component_namespaces.prometheus == ""
+
 - name: Set default Grafana in_cluster_url
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'external_services': {'grafana': {'in_cluster_url': 'http://grafana.' + kiali_vars.istio_namespace + ':3000'}}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'grafana': {'in_cluster_url': 'http://grafana.' + kiali_vars.istio_component_namespaces.grafana + ':3000'}}}, recursive=True) }}"
   when:
     kiali_vars.external_services.grafana.in_cluster_url == ""
 
 - name: Set default Tracing service namespace
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'namespace': kiali_vars.istio_namespace}}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'tracing': {'namespace': kiali_vars.istio_component_namespaces.tracing}}}, recursive=True) }}"
   when:
   - kiali_vars.external_services.tracing.namespace == ""
 
 - name: Set default Istio service that provides version info
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'external_services': {'istio': {'url_service_version': 'http://istio-pilot.' + kiali_vars.istio_namespace + ':8080/version'}}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'istio': {'url_service_version': 'http://istio-pilot.' + kiali_vars.istio_component_namespaces.pilot + ':8080/version'}}}, recursive=True) }}"
   when:
   - kiali_vars.external_services.istio.url_service_version == ""
 
 - name: Set default Prometheus URL
   set_fact:
-    kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'url': 'http://prometheus.' + kiali_vars.istio_namespace + ':9090'}}}, recursive=True) }}"
+    kiali_vars: "{{ kiali_vars | combine({'external_services': {'prometheus': {'url': 'http://prometheus.' + kiali_vars.istio_component_namespaces.prometheus + ':9090'}}}, recursive=True) }}"
   when:
   - kiali_vars.external_services.prometheus.url == ""
 
