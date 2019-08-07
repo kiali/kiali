@@ -38,12 +38,17 @@ export class VirtualList extends React.Component<VirtualListProps, VirtualListSt
             info.transforms ? { title: info.column, transforms: info.transforms } : { title: info.column }
           )
         : [];
+    let index = -1;
+    const sortParam = HistoryManager.getParam(URLParam.SORT);
+    if (sortParam) {
+      index = conf.columns.findIndex(column => column.param === sortParam);
+    }
     this.state = {
       scrollableElement: null,
       type,
       sortBy: {
-        index: -1,
-        direction: undefined
+        index,
+        direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
       },
       columns,
       conf
