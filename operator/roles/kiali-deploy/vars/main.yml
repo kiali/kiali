@@ -14,6 +14,7 @@
 
 kiali_vars:
   installation_tag: "{{ installation_tag | default(kiali_defaults.installation_tag) }}"
+  istio_component_namespaces: "{{ istio_component_namespaces | default(kiali_defaults.istio_component_namespaces) }}"
   istio_namespace: "{{ istio_namespace | default(kiali_defaults.istio_namespace) }}"
 
   api: |
