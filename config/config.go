@@ -279,21 +279,26 @@ type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
 }
 
+// IstioComponentNamespaces holds the component-specific Istio namespaces. Any mising component
+// defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
+type IstioComponentNamespaces map[string]string
+
 // Config defines full YAML configuration.
 type Config struct {
-	Identity         security.Identity `yaml:",omitempty"`
-	Server           Server            `yaml:",omitempty"`
-	InCluster        bool              `yaml:"in_cluster,omitempty"`
-	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
-	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
-	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
-	InstallationTag  string            `yaml:"installation_tag,omitempty"`
-	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
-	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
-	API              ApiConfig         `yaml:"api,omitempty"`
-	Auth             AuthConfig        `yaml:"auth,omitempty"`
-	Deployment       DeploymentConfig  `yaml:"deployment,omitempty"`
-	ApiDocumentation ApiDocumentation  `yaml:"apidocs,omitempty"`
+	Identity         security.Identity        `yaml:",omitempty"`
+	Server           Server                   `yaml:",omitempty"`
+	InCluster        bool                     `yaml:"in_cluster,omitempty"`
+	ExternalServices ExternalServices         `yaml:"external_services,omitempty"`
+	LoginToken       LoginToken               `yaml:"login_token,omitempty"`
+	IstioNamespace   string                   `yaml:"istio_namespace,omitempty"`
+	IstioNamespaces  IstioComponentNamespaces `yaml:"istio_namespaces,omitempty"`
+	InstallationTag  string                   `yaml:"installation_tag,omitempty"`
+	IstioLabels      IstioLabels              `yaml:"istio_labels,omitempty"`
+	KubernetesConfig KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
+	API              ApiConfig                `yaml:"api,omitempty"`
+	Auth             AuthConfig               `yaml:"auth,omitempty"`
+	Deployment       DeploymentConfig         `yaml:"deployment,omitempty"`
+	ApiDocumentation ApiDocumentation         `yaml:"apidocs,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -585,4 +590,13 @@ func getAuthFromEnv(prefix string) Auth {
 	auth.InsecureSkipVerify = getDefaultBool(prefix+EnvAuthSuffixInsecureSkipVerify, false)
 	auth.CAFile = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixCAFile, ""))
 	return auth
+}
+
+// IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
+func IsIstioNamespace(namespace string) bool {
+	if namespace == configuration.IstioNamespace {
+		return true
+	}
+	_, found := configuration.IstioNamespaces[namespace]
+	return found
 }

@@ -2,6 +2,7 @@ package appender
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -22,7 +23,6 @@ const (
 // Name: securityPolicy
 type SecurityPolicyAppender struct {
 	GraphType          string
-	IncludeIstio       bool
 	InjectServiceNodes bool
 	Namespaces         map[string]graph.NamespaceInfo
 	QueryTime          int64 // unix time in seconds
@@ -67,8 +67,9 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 
 	// 2) query for requests originating from a workload inside of the namespace
 	istioCondition := ""
-	if !a.IncludeIstio {
-		istioCondition = fmt.Sprintf(`,destination_service_namespace!="%s"`, config.Get().IstioNamespace)
+	if !config.IsIstioNamespace(namespace) {
+		istioNamespacesRegex := strings.Join(GetIstioNamespaces(a.Namespaces), "|")
+		istioCondition = fmt.Sprintf(`,destination_service_namespace!~"%s"`, istioNamespacesRegex)
 	}
 	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",

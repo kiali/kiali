@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -35,4 +36,15 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, a graph.Appen
 	}
 
 	return nil
+}
+
+// GetIstioNamespaces returns the subset of Istio namespace names from the provided namespaces
+func GetIstioNamespaces(namespaceInfos map[string]graph.NamespaceInfo) []string {
+	istioNamespaces := []string{}
+	for _, ni := range namespaceInfos {
+		if config.IsIstioNamespace(ni.Name) {
+			istioNamespaces = append(istioNamespaces, ni.Name)
+		}
+	}
+	return istioNamespaces
 }

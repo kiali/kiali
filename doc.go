@@ -168,16 +168,6 @@ type GroupByParam struct {
 	Name string `json:"groupBy"`
 }
 
-// swagger:parameters graphApp graphAppVersion graphNamespaces graphService graphWorkload
-type IncludeIstioParam struct {
-	// Flag for including istio-system (infra) services. Ignored if namespace is istio-system.
-	//
-	// in: query
-	// required: false
-	// default: false
-	Name string `json:"includeIstio"`
-}
-
 // swagger:parameters graphApp graphAppVersion graphNamespaces graphWorkload
 type InjectServiceNodes struct {
 	// Flag for injecting the requested service node between source and destination nodes.
