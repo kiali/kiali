@@ -7,7 +7,9 @@ metadata:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
 spec:
+{% if kiali_vars.deployment.service_type is defined %}
   type: {{ kiali_vars.deployment.service_type }}
+{% endif %}
   ports:
   - name: {{ 'http' if kiali_vars.identity.cert_file == "" else 'tcp' }}
     protocol: TCP
