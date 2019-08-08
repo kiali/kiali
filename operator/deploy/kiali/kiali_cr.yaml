@@ -3,7 +3,7 @@ kind: Kiali
 metadata:
   name: kiali
 annotations:
-  ansible.operator-sdk/reconcile-period: "0s"
+  ansible.operator-sdk/reconcile-period: '0s'
 spec:
 ###################################################################
 # kiali_cr.yaml

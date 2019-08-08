@@ -379,7 +379,7 @@ Valid options for Kiali installation (if Kiali is to be installed):
       Default: "^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"
   -as|--auth-strategy
       Determines what authentication strategy to use.
-      Valid values are "login", "anonymous", and "openshift"
+      Valid values are "login", "anonymous" and "openshift"
       Default: "openshift" (when using OpenShift), "login" (when using Kubernetes)
   -ccs|--credentials-create-secret
       When "true" a secret will be created with the credentials provided to this script.
