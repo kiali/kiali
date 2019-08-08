@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/rest"
 	"regexp"
 	"strings"
 	"sync"
@@ -56,6 +57,24 @@ func (in *IstioClient) GetIstioDetails(namespace string, serviceName string) (*I
 	return &istioDetails, nil
 }
 
+// Aux method to fetch proper (RESTClient, APIVersion) per API group
+func (in *IstioClient) getApiClientVersion(apiGroup string) (*rest.RESTClient, string) {
+	if apiGroup == ConfigGroupVersion.Group {
+		return in.istioConfigApi, ApiConfigVersion
+	} else if apiGroup == NetworkingGroupVersion.Group {
+		return in.istioNetworkingApi, ApiNetworkingVersion
+	} else if apiGroup == AuthenticationGroupVersion.Group {
+		return in.istioAuthenticationApi, ApiAuthenticationVersion
+	} else if apiGroup == RbacGroupVersion.Group {
+		return in.istioRbacApi, ApiRbacVersion
+	} else if apiGroup == MaistraAuthenticationGroupVersion.Group {
+		return in.maistraAuthenticationApi, ApiMaistraAuthenticationVersion
+	} else if apiGroup == MaistraRbacGroupVersion.Group {
+		return in.maistraRbacApi, ApiMaistraRbacVersion
+	}
+	return nil, ""
+}
+
 // CreateIstioObject creates an Istio object
 func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json string) (IstioObject, error) {
 	var result runtime.Object
@@ -67,20 +86,14 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 	}
 	typeMeta.Kind = PluralType[resourceType]
 	byteJson := []byte(json)
-	if api == ConfigGroupVersion.Group {
-		result, err = in.istioConfigApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-		typeMeta.APIVersion = ApiConfigVersion
-	} else if api == NetworkingGroupVersion.Group {
-		result, err = in.istioNetworkingApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-		typeMeta.APIVersion = ApiNetworkingVersion
-	} else if api == AuthenticationGroupVersion.Group {
-		result, err = in.istioAuthenticationApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-		typeMeta.APIVersion = ApiAuthenticationVersion
-	} else {
-		result, err = in.istioRbacApi.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
-		typeMeta.APIVersion = ApiRbacVersion
+
+	var apiClient *rest.RESTClient
+	apiClient, typeMeta.APIVersion = in.getApiClientVersion(api)
+	if apiClient == nil {
+		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
+	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -97,15 +110,11 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name string) error {
 	log.Debugf("DeleteIstioObject input: %s / %s / %s / %s", api, namespace, resourceType, name)
 	var err error
-	if api == ConfigGroupVersion.Group {
-		_, err = in.istioConfigApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else if api == NetworkingGroupVersion.Group {
-		_, err = in.istioNetworkingApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else if api == AuthenticationGroupVersion.Group {
-		_, err = in.istioAuthenticationApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
-	} else {
-		_, err = in.istioRbacApi.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	apiClient, _ := in.getApiClientVersion(api)
+	if apiClient == nil {
+		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
+	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
 	return err
 }
 
@@ -121,19 +130,13 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	}
 	typeMeta.Kind = PluralType[resourceType]
 	bytePatch := []byte(jsonPatch)
-	if api == ConfigGroupVersion.Group {
-		result, err = in.istioConfigApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-		typeMeta.APIVersion = ApiConfigVersion
-	} else if api == NetworkingGroupVersion.Group {
-		result, err = in.istioNetworkingApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-		typeMeta.APIVersion = ApiNetworkingVersion
-	} else if api == AuthenticationGroupVersion.Group {
-		result, err = in.istioAuthenticationApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-		typeMeta.APIVersion = ApiAuthenticationVersion
-	} else {
-		result, err = in.istioRbacApi.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
-		typeMeta.APIVersion = ApiRbacVersion
+	var apiClient *rest.RESTClient
+	apiClient, typeMeta.APIVersion = in.getApiClientVersion(api)
+	if apiClient == nil {
+		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
+
+	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +158,7 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 	}
 
 	rbacResources := map[string]bool{}
+	// TODO Update with Maistra API
 	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/rbac.istio.io/v1alpha1").Do().Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
@@ -570,6 +574,48 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 	return p, nil
 }
 
+func (in *IstioClient) GetServiceMeshPolicies(namespace string) ([]IstioObject, error) {
+	result, err := in.maistraAuthenticationApi.Get().Namespace(namespace).Resource(serviceMeshPolicies).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceMeshPolicies],
+		APIVersion: ApiMaistraAuthenticationVersion,
+	}
+	serviceMeshPolicyList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("it doesn't return a ServiceMeshPolicyList list")
+	}
+
+	policies := make([]IstioObject, 0)
+	for _, ps := range serviceMeshPolicyList.GetItems() {
+		p := ps.DeepCopyIstioObject()
+		p.SetTypeMeta(typeMeta)
+		policies = append(policies, p)
+	}
+
+	return policies, nil
+}
+
+func (in *IstioClient) GetServiceMeshPolicy(namespace string, name string) (IstioObject, error) {
+	result, err := in.maistraAuthenticationApi.Get().Namespace(namespace).Resource(serviceMeshPolicies).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceMeshPolicies],
+		APIVersion: ApiMaistraAuthenticationVersion,
+	}
+	serviceMeshPolicy, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceMeshPolicy object", namespace)
+	}
+	p := serviceMeshPolicy.DeepCopyIstioObject()
+	p.SetTypeMeta(typeMeta)
+	return p, nil
+}
+
 func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
 	// In case ClusterRbacConfigs aren't present on Istio, return empty array.
 	if !in.hasRbacResource(clusterrbacconfigs) {
@@ -612,6 +658,47 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", namespace)
 	}
 	c := clusterRbacConfig.DeepCopyIstioObject()
+	c.SetTypeMeta(typeMeta)
+	return c, nil
+}
+
+func (in *IstioClient) GetServiceMeshRbacConfigs(namespace string) ([]IstioObject, error) {
+	result, err := in.maistraRbacApi.Get().Namespace(namespace).Resource(serviceMeshRbacConfigs).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceMeshRbacConfigs],
+		APIVersion: ApiMaistraRbacVersion,
+	}
+	serviceMeshRbacConfigList, ok := result.(*GenericIstioObjectList)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceMeshRbacConfigList list", namespace)
+	}
+
+	serviceMeshRbacConfigs := make([]IstioObject, 0)
+	for _, crc := range serviceMeshRbacConfigList.GetItems() {
+		c := crc.DeepCopyIstioObject()
+		c.SetTypeMeta(typeMeta)
+		serviceMeshRbacConfigs = append(serviceMeshRbacConfigs, c)
+	}
+	return serviceMeshRbacConfigs, nil
+}
+
+func (in *IstioClient) GetServiceMeshRbacConfig(namespace string, name string) (IstioObject, error) {
+	result, err := in.maistraRbacApi.Get().Namespace(namespace).Resource(serviceMeshRbacConfigs).SubResource(name).Do().Get()
+	if err != nil {
+		return nil, err
+	}
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[serviceMeshRbacConfigs],
+		APIVersion: ApiMaistraRbacVersion,
+	}
+	serviceMeshRbacConfig, ok := result.(*GenericIstioObject)
+	if !ok {
+		return nil, fmt.Errorf("%s doesn't return a ServiceMeshRbacConfig object", namespace)
+	}
+	c := serviceMeshRbacConfig.DeepCopyIstioObject()
 	c.SetTypeMeta(typeMeta)
 	return c, nil
 }
@@ -758,25 +845,54 @@ func (in *IstioClient) GetServiceRoleBinding(namespace string, name string) (Ist
 func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, error) {
 	rb := &RBACDetails{}
 
-	// TODO Should we use concurrency here? Are these cached?
-	srb, err := in.GetServiceRoleBindings(namespace)
-	if err != nil {
-		return nil, err
-	}
+	errChan := make(chan error, 1)
+	var wg sync.WaitGroup
+	wg.Add(3)
 
-	sr, err := in.GetServiceRoles(namespace)
-	if err != nil {
-		return nil, err
-	}
+	go func(errChan chan error) {
+		defer wg.Done()
+		if srb, err := in.GetServiceRoleBindings(namespace); err == nil {
+			rb.ServiceRoleBindings = srb
+		} else {
+			errChan <- err
+		}
+	}(errChan)
 
-	crc, err := in.GetClusterRbacConfigs(namespace)
-	if err != nil {
-		return nil, err
-	}
+	go func(errChan chan error) {
+		defer wg.Done()
+		if sr, err := in.GetServiceRoles(namespace); err == nil {
+			rb.ServiceRoles = sr
+		} else {
+			errChan <- err
+		}
+	}(errChan)
 
-	rb.ServiceRoleBindings = srb
-	rb.ServiceRoles = sr
-	rb.ClusterRbacConfigs = crc
+	go func(errChan chan error) {
+		defer wg.Done()
+		// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
+		if !in.IsMaistraApi() {
+			if crc, err := in.GetClusterRbacConfigs(namespace); err == nil {
+				rb.ClusterRbacConfigs = crc
+			} else {
+				errChan <- err
+			}
+		} else {
+			if smrc, err := in.GetServiceMeshRbacConfigs(namespace); err == nil {
+				rb.ServiceMeshRbacConfigs = smrc
+			} else {
+				errChan <- err
+			}
+		}
+	}(errChan)
+
+	wg.Wait()
+	close(errChan)
+
+	for e := range errChan {
+		if e != nil { // Check that default value wasn't returned
+			return rb, e
+		}
+	}
 
 	return rb, nil
 }

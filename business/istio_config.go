@@ -21,68 +21,76 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
-	Namespace                  string
-	IncludeGateways            bool
-	IncludeVirtualServices     bool
-	IncludeDestinationRules    bool
-	IncludeServiceEntries      bool
-	IncludeRules               bool
-	IncludeAdapters            bool
-	IncludeTemplates           bool
-	IncludeQuotaSpecs          bool
-	IncludeQuotaSpecBindings   bool
-	IncludePolicies            bool
-	IncludeMeshPolicies        bool
-	IncludeClusterRbacConfigs  bool
-	IncludeRbacConfigs         bool
-	IncludeServiceRoles        bool
-	IncludeServiceRoleBindings bool
-	IncludeSidecars            bool
+	Namespace                     string
+	IncludeGateways               bool
+	IncludeVirtualServices        bool
+	IncludeDestinationRules       bool
+	IncludeServiceEntries         bool
+	IncludeRules                  bool
+	IncludeAdapters               bool
+	IncludeTemplates              bool
+	IncludeQuotaSpecs             bool
+	IncludeQuotaSpecBindings      bool
+	IncludePolicies               bool
+	IncludeMeshPolicies           bool
+	IncludeServiceMeshPolicies    bool
+	IncludeClusterRbacConfigs     bool
+	IncludeRbacConfigs            bool
+	IncludeServiceMeshRbacConfigs bool
+	IncludeServiceRoles           bool
+	IncludeServiceRoleBindings    bool
+	IncludeSidecars               bool
 }
 
 const (
-	VirtualServices     = "virtualservices"
-	DestinationRules    = "destinationrules"
-	ServiceEntries      = "serviceentries"
-	Gateways            = "gateways"
-	Rules               = "rules"
-	Adapters            = "adapters"
-	Templates           = "templates"
-	QuotaSpecs          = "quotaspecs"
-	QuotaSpecBindings   = "quotaspecbindings"
-	Policies            = "policies"
-	MeshPolicies        = "meshpolicies"
-	ClusterRbacConfigs  = "clusterrbacconfigs"
-	RbacConfigs         = "rbacconfigs"
-	ServiceRoles        = "serviceroles"
-	ServiceRoleBindings = "servicerolebindings"
-	Sidecars            = "sidecars"
+	VirtualServices        = "virtualservices"
+	DestinationRules       = "destinationrules"
+	ServiceEntries         = "serviceentries"
+	Gateways               = "gateways"
+	Rules                  = "rules"
+	Adapters               = "adapters"
+	Templates              = "templates"
+	QuotaSpecs             = "quotaspecs"
+	QuotaSpecBindings      = "quotaspecbindings"
+	Policies               = "policies"
+	MeshPolicies           = "meshpolicies"
+	ClusterRbacConfigs     = "clusterrbacconfigs"
+	RbacConfigs            = "rbacconfigs"
+	ServiceRoles           = "serviceroles"
+	ServiceRoleBindings    = "servicerolebindings"
+	Sidecars               = "sidecars"
+	ServiceMeshPolicies    = "servicemeshpolicies"
+	ServiceMeshRbacConfigs = "servicemeshrbacconfigs"
 )
 
 var resourceTypesToAPI = map[string]string{
-	DestinationRules:    kubernetes.NetworkingGroupVersion.Group,
-	VirtualServices:     kubernetes.NetworkingGroupVersion.Group,
-	ServiceEntries:      kubernetes.NetworkingGroupVersion.Group,
-	Gateways:            kubernetes.NetworkingGroupVersion.Group,
-	Sidecars:            kubernetes.NetworkingGroupVersion.Group,
-	Adapters:            kubernetes.ConfigGroupVersion.Group,
-	Templates:           kubernetes.ConfigGroupVersion.Group,
-	Rules:               kubernetes.ConfigGroupVersion.Group,
-	QuotaSpecs:          kubernetes.ConfigGroupVersion.Group,
-	QuotaSpecBindings:   kubernetes.ConfigGroupVersion.Group,
-	Policies:            kubernetes.AuthenticationGroupVersion.Group,
-	MeshPolicies:        kubernetes.AuthenticationGroupVersion.Group,
-	ClusterRbacConfigs:  kubernetes.RbacGroupVersion.Group,
-	RbacConfigs:         kubernetes.RbacGroupVersion.Group,
-	ServiceRoles:        kubernetes.RbacGroupVersion.Group,
-	ServiceRoleBindings: kubernetes.RbacGroupVersion.Group,
+	DestinationRules:       kubernetes.NetworkingGroupVersion.Group,
+	VirtualServices:        kubernetes.NetworkingGroupVersion.Group,
+	ServiceEntries:         kubernetes.NetworkingGroupVersion.Group,
+	Gateways:               kubernetes.NetworkingGroupVersion.Group,
+	Sidecars:               kubernetes.NetworkingGroupVersion.Group,
+	Adapters:               kubernetes.ConfigGroupVersion.Group,
+	Templates:              kubernetes.ConfigGroupVersion.Group,
+	Rules:                  kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecs:             kubernetes.ConfigGroupVersion.Group,
+	QuotaSpecBindings:      kubernetes.ConfigGroupVersion.Group,
+	Policies:               kubernetes.AuthenticationGroupVersion.Group,
+	MeshPolicies:           kubernetes.AuthenticationGroupVersion.Group,
+	ClusterRbacConfigs:     kubernetes.RbacGroupVersion.Group,
+	RbacConfigs:            kubernetes.RbacGroupVersion.Group,
+	ServiceRoles:           kubernetes.RbacGroupVersion.Group,
+	ServiceRoleBindings:    kubernetes.RbacGroupVersion.Group,
+	ServiceMeshPolicies:    kubernetes.MaistraAuthenticationGroupVersion.Group,
+	ServiceMeshRbacConfigs: kubernetes.MaistraRbacGroupVersion.Group,
 }
 
 var apiToVersion = map[string]string{
-	kubernetes.NetworkingGroupVersion.Group: kubernetes.ApiNetworkingVersion,
-	kubernetes.ConfigGroupVersion.Group:     kubernetes.ApiConfigVersion,
-	kubernetes.ApiAuthenticationVersion:     kubernetes.ApiAuthenticationVersion,
-	kubernetes.RbacGroupVersion.Group:       kubernetes.ApiRbacVersion,
+	kubernetes.NetworkingGroupVersion.Group:            kubernetes.ApiNetworkingVersion,
+	kubernetes.ConfigGroupVersion.Group:                kubernetes.ApiConfigVersion,
+	kubernetes.AuthenticationGroupVersion.Group:        kubernetes.ApiAuthenticationVersion,
+	kubernetes.RbacGroupVersion.Group:                  kubernetes.ApiRbacVersion,
+	kubernetes.MaistraAuthenticationGroupVersion.Group: kubernetes.ApiMaistraAuthenticationVersion,
+	kubernetes.MaistraRbacGroupVersion.Group:           kubernetes.ApiMaistraRbacVersion,
 }
 
 // GetIstioConfigList returns a list of Istio routing objects, Mixer Rules, (etc.)
@@ -96,180 +104,242 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		return models.IstioConfigList{}, errors.New("GetIstioConfigList needs a non empty Namespace")
 	}
 	istioConfigList := models.IstioConfigList{
-		Namespace:           models.Namespace{Name: criteria.Namespace},
-		Gateways:            models.Gateways{},
-		VirtualServices:     models.VirtualServices{Items: []models.VirtualService{}},
-		DestinationRules:    models.DestinationRules{Items: []models.DestinationRule{}},
-		ServiceEntries:      models.ServiceEntries{},
-		Rules:               models.IstioRules{},
-		Adapters:            models.IstioAdapters{},
-		Templates:           models.IstioTemplates{},
-		QuotaSpecs:          models.QuotaSpecs{},
-		QuotaSpecBindings:   models.QuotaSpecBindings{},
-		Policies:            models.Policies{},
-		MeshPolicies:        models.MeshPolicies{},
-		ClusterRbacConfigs:  models.ClusterRbacConfigs{},
-		RbacConfigs:         models.RbacConfigs{},
-		Sidecars:            models.Sidecars{},
-		ServiceRoles:        models.ServiceRoles{},
-		ServiceRoleBindings: models.ServiceRoleBindings{},
+		Namespace:              models.Namespace{Name: criteria.Namespace},
+		Gateways:               models.Gateways{},
+		VirtualServices:        models.VirtualServices{Items: []models.VirtualService{}},
+		DestinationRules:       models.DestinationRules{Items: []models.DestinationRule{}},
+		ServiceEntries:         models.ServiceEntries{},
+		Rules:                  models.IstioRules{},
+		Adapters:               models.IstioAdapters{},
+		Templates:              models.IstioTemplates{},
+		QuotaSpecs:             models.QuotaSpecs{},
+		QuotaSpecBindings:      models.QuotaSpecBindings{},
+		Policies:               models.Policies{},
+		MeshPolicies:           models.MeshPolicies{},
+		ServiceMeshPolicies:    models.ServiceMeshPolicies{},
+		ClusterRbacConfigs:     models.ClusterRbacConfigs{},
+		RbacConfigs:            models.RbacConfigs{},
+		ServiceMeshRbacConfigs: models.ServiceMeshRbacConfigs{},
+		Sidecars:               models.Sidecars{},
+		ServiceRoles:           models.ServiceRoles{},
+		ServiceRoleBindings:    models.ServiceRoleBindings{},
 	}
-	var gg, vs, dr, se, qs, qb, aa, tt, mr, pc, mp, crc, rc, sr, srb []kubernetes.IstioObject
-	var ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, pcErr, mpErr, crcErr, rcErr, srErr, srbErr error
-	var wg sync.WaitGroup
-	wg.Add(16)
 
-	go func() {
+	errChan := make(chan error, 1)
+
+	var wg sync.WaitGroup
+	wg.Add(18)
+
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeGateways {
-			if gg, ggErr = in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
+			if gg, ggErr := in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
 				(&istioConfigList.Gateways).Parse(gg)
+			} else {
+				errChan <- ggErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeVirtualServices {
-			if vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
+			if vs, vsErr := in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
 				(&istioConfigList.VirtualServices).Parse(vs)
+			} else {
+				errChan <- vsErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeDestinationRules {
-			if dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
+			if dr, drErr := in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
 				(&istioConfigList.DestinationRules).Parse(dr)
+			} else {
+				errChan <- drErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeServiceEntries {
-			if se, seErr = in.k8s.GetServiceEntries(criteria.Namespace); seErr == nil {
+			if se, seErr := in.k8s.GetServiceEntries(criteria.Namespace); seErr == nil {
 				(&istioConfigList.ServiceEntries).Parse(se)
+			} else {
+				errChan <- seErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeRules {
-			if mr, mrErr = in.k8s.GetIstioRules(criteria.Namespace, ""); mrErr == nil {
+			if mr, mrErr := in.k8s.GetIstioRules(criteria.Namespace, ""); mrErr == nil {
 				istioConfigList.Rules = models.CastIstioRulesCollection(mr)
+			} else {
+				errChan <- mrErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeAdapters {
-			if aa, aaErr = in.k8s.GetAdapters(criteria.Namespace, ""); aaErr == nil {
+			if aa, aaErr := in.k8s.GetAdapters(criteria.Namespace, ""); aaErr == nil {
 				istioConfigList.Adapters = models.CastIstioAdaptersCollection(aa)
+			} else {
+				errChan <- aaErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeTemplates {
-			if tt, ttErr = in.k8s.GetTemplates(criteria.Namespace, ""); ttErr == nil {
+			if tt, ttErr := in.k8s.GetTemplates(criteria.Namespace, ""); ttErr == nil {
 				istioConfigList.Templates = models.CastIstioTemplatesCollection(tt)
+			} else {
+				errChan <- ttErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeQuotaSpecs {
-			if qs, qsErr = in.k8s.GetQuotaSpecs(criteria.Namespace); qsErr == nil {
+			if qs, qsErr := in.k8s.GetQuotaSpecs(criteria.Namespace); qsErr == nil {
 				(&istioConfigList.QuotaSpecs).Parse(qs)
+			} else {
+				errChan <- qsErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeQuotaSpecBindings {
-			if qb, qbErr = in.k8s.GetQuotaSpecBindings(criteria.Namespace); qbErr == nil {
+			if qb, qbErr := in.k8s.GetQuotaSpecBindings(criteria.Namespace); qbErr == nil {
 				(&istioConfigList.QuotaSpecBindings).Parse(qb)
+			} else {
+				errChan <- qbErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludePolicies {
-			if pc, pcErr = in.k8s.GetPolicies(criteria.Namespace); pcErr == nil {
+			if pc, pcErr := in.k8s.GetPolicies(criteria.Namespace); pcErr == nil {
 				(&istioConfigList.Policies).Parse(pc)
+			} else {
+				errChan <- pcErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		// MeshPolicies are not namespaced. They will be only listed for the namespace
-		// where istio is deployed.
-		if criteria.IncludeMeshPolicies && criteria.Namespace == config.Get().IstioNamespace {
-			if mp, mpErr = in.k8s.GetMeshPolicies(criteria.Namespace); mpErr == nil {
+		// where Istio is deployed. Only listed in non Maistra environments.
+		if criteria.IncludeMeshPolicies && criteria.Namespace == config.Get().IstioNamespace && !in.k8s.IsMaistraApi() {
+			if mp, mpErr := in.k8s.GetMeshPolicies(criteria.Namespace); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
+			} else {
+				errChan <- mpErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
-		if criteria.IncludeClusterRbacConfigs && criteria.Namespace == config.Get().IstioNamespace {
-			if crc, crcErr = in.k8s.GetClusterRbacConfigs(criteria.Namespace); crcErr == nil {
+		// ClusterRbacConfigs are not namespaced. They will be only listed for the namespace
+		// where Istio is deployed. Only listed in non Maistra environments.
+		if criteria.IncludeClusterRbacConfigs && criteria.Namespace == config.Get().IstioNamespace && !in.k8s.IsMaistraApi() {
+			if crc, crcErr := in.k8s.GetClusterRbacConfigs(criteria.Namespace); crcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
+			} else {
+				errChan <- crcErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeRbacConfigs {
-			if rc, rcErr = in.k8s.GetRbacConfigs(criteria.Namespace); rcErr == nil {
+			if rc, rcErr := in.k8s.GetRbacConfigs(criteria.Namespace); rcErr == nil {
 				(&istioConfigList.RbacConfigs).Parse(rc)
+			} else {
+				errChan <- rcErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeSidecars {
-			if rc, rcErr = in.k8s.GetSidecars(criteria.Namespace); rcErr == nil {
-				(&istioConfigList.Sidecars).Parse(rc)
+			if sc, scErr := in.k8s.GetSidecars(criteria.Namespace); scErr == nil {
+				(&istioConfigList.Sidecars).Parse(sc)
+			} else {
+				errChan <- scErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeServiceRoles {
-			if sr, srErr = in.k8s.GetServiceRoles(criteria.Namespace); srErr == nil {
+			if sr, srErr := in.k8s.GetServiceRoles(criteria.Namespace); srErr == nil {
 				(&istioConfigList.ServiceRoles).Parse(sr)
+			} else {
+				errChan <- srErr
 			}
 		}
-	}()
+	}(errChan)
 
-	go func() {
+	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeServiceRoleBindings {
-			if srb, srbErr = in.k8s.GetServiceRoleBindings(criteria.Namespace); srbErr == nil {
+			if srb, srbErr := in.k8s.GetServiceRoleBindings(criteria.Namespace); srbErr == nil {
 				(&istioConfigList.ServiceRoleBindings).Parse(srb)
+			} else {
+				errChan <- srbErr
 			}
 		}
-	}()
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		// This query is only executed if Maistra API is present, backend will ignore it in other environments
+		if criteria.IncludeServiceMeshPolicies && in.k8s.IsMaistraApi() {
+			if smp, smpErr := in.k8s.GetServiceMeshPolicies(criteria.Namespace); smpErr == nil {
+				(&istioConfigList.ServiceMeshPolicies).Parse(smp)
+			} else {
+				errChan <- smpErr
+			}
+		}
+	}(errChan)
+
+	go func(errChan chan error) {
+		defer wg.Done()
+		// This query is only executed if Maistra API is present, backend will ignore it in other environments
+		if criteria.IncludeServiceMeshRbacConfigs && in.k8s.IsMaistraApi() {
+			if smrc, smrcErr := in.k8s.GetServiceMeshRbacConfigs(criteria.Namespace); smrcErr == nil {
+				(&istioConfigList.ServiceMeshRbacConfigs).Parse(smrc)
+			} else {
+				errChan <- smrcErr
+			}
+		}
+	}(errChan)
 
 	wg.Wait()
 
-	for _, genErr := range []error{ggErr, vsErr, drErr, seErr, mrErr, qsErr, qbErr, aaErr, ttErr, mpErr, pcErr, rcErr, srErr, srbErr} {
-		if genErr != nil {
-			err = genErr
+	close(errChan)
+	for e := range errChan {
+		if e != nil { // Check that default value wasn't returned
+			err = e // To update the Kiali metric
 			return models.IstioConfigList{}, err
 		}
 	}
@@ -291,7 +361,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
-	var gw, vs, dr, se, sc, qs, qb, r, a, t, pc, mp, crc, rc, sr, srb kubernetes.IstioObject
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -307,84 +377,130 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 
 	switch objectType {
 	case Gateways:
-		if gw, err = in.k8s.GetGateway(namespace, object); err == nil {
+		if gw, iErr := in.k8s.GetGateway(namespace, object); iErr == nil {
 			istioConfigDetail.Gateway = &models.Gateway{}
 			istioConfigDetail.Gateway.Parse(gw)
+		} else {
+			err = iErr
 		}
 	case VirtualServices:
-		if vs, err = in.k8s.GetVirtualService(namespace, object); err == nil {
+		if vs, iErr := in.k8s.GetVirtualService(namespace, object); iErr == nil {
 			istioConfigDetail.VirtualService = &models.VirtualService{}
 			istioConfigDetail.VirtualService.Parse(vs)
+		} else {
+			err = iErr
 		}
 	case DestinationRules:
-		if dr, err = in.k8s.GetDestinationRule(namespace, object); err == nil {
+		if dr, iErr := in.k8s.GetDestinationRule(namespace, object); iErr == nil {
 			istioConfigDetail.DestinationRule = &models.DestinationRule{}
 			istioConfigDetail.DestinationRule.Parse(dr)
+		} else {
+			err = iErr
 		}
 	case ServiceEntries:
-		if se, err = in.k8s.GetServiceEntry(namespace, object); err == nil {
+		if se, iErr := in.k8s.GetServiceEntry(namespace, object); iErr == nil {
 			istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 			istioConfigDetail.ServiceEntry.Parse(se)
+		} else {
+			err = iErr
 		}
 	case Sidecars:
-		if sc, err = in.k8s.GetSidecar(namespace, object); err == nil {
+		if sc, iErr := in.k8s.GetSidecar(namespace, object); iErr == nil {
 			istioConfigDetail.Sidecar = &models.Sidecar{}
 			istioConfigDetail.Sidecar.Parse(sc)
+		} else {
+			err = iErr
 		}
 	case Rules:
-		if r, err = in.k8s.GetIstioRule(namespace, object); err == nil {
+		if r, iErr := in.k8s.GetIstioRule(namespace, object); iErr == nil {
 			istioRule := models.CastIstioRule(r)
 			istioConfigDetail.Rule = &istioRule
+		} else {
+			err = iErr
 		}
 	case Adapters:
-		if a, err = in.k8s.GetAdapter(namespace, objectSubtype, object); err == nil {
+		if a, iErr := in.k8s.GetAdapter(namespace, objectSubtype, object); iErr == nil {
 			adapter := models.CastIstioAdapter(a)
 			istioConfigDetail.Adapter = &adapter
+		} else {
+			err = iErr
 		}
 	case Templates:
-		if t, err = in.k8s.GetTemplate(namespace, objectSubtype, object); err == nil {
+		if t, iErr := in.k8s.GetTemplate(namespace, objectSubtype, object); iErr == nil {
 			template := models.CastIstioTemplate(t)
 			istioConfigDetail.Template = &template
+		} else {
+			err = iErr
 		}
 	case QuotaSpecs:
-		if qs, err = in.k8s.GetQuotaSpec(namespace, object); err == nil {
+		if qs, iErr := in.k8s.GetQuotaSpec(namespace, object); iErr == nil {
 			istioConfigDetail.QuotaSpec = &models.QuotaSpec{}
 			istioConfigDetail.QuotaSpec.Parse(qs)
+		} else {
+			err = iErr
 		}
 	case QuotaSpecBindings:
-		if qb, err = in.k8s.GetQuotaSpecBinding(namespace, object); err == nil {
+		if qb, iErr := in.k8s.GetQuotaSpecBinding(namespace, object); iErr == nil {
 			istioConfigDetail.QuotaSpecBinding = &models.QuotaSpecBinding{}
 			istioConfigDetail.QuotaSpecBinding.Parse(qb)
+		} else {
+			err = iErr
 		}
 	case Policies:
-		if pc, err = in.k8s.GetPolicy(namespace, object); err == nil {
+		if pc, iErr := in.k8s.GetPolicy(namespace, object); iErr == nil {
 			istioConfigDetail.Policy = &models.Policy{}
 			istioConfigDetail.Policy.Parse(pc)
+		} else {
+			err = iErr
 		}
 	case MeshPolicies:
-		if mp, err = in.k8s.GetMeshPolicy(namespace, object); err == nil {
+		if mp, iErr := in.k8s.GetMeshPolicy(namespace, object); iErr == nil {
 			istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 			istioConfigDetail.MeshPolicy.Parse(mp)
+		} else {
+			err = iErr
+		}
+	case ServiceMeshPolicies:
+		if mp, iErr := in.k8s.GetServiceMeshPolicy(namespace, object); iErr == nil {
+			istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
+			istioConfigDetail.ServiceMeshPolicy.Parse(mp)
+		} else {
+			err = iErr
 		}
 	case ClusterRbacConfigs:
-		if crc, err = in.k8s.GetClusterRbacConfig(namespace, object); err == nil {
+		if crc, iErr := in.k8s.GetClusterRbacConfig(namespace, object); iErr == nil {
 			istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 			istioConfigDetail.ClusterRbacConfig.Parse(crc)
+		} else {
+			err = iErr
 		}
 	case RbacConfigs:
-		if rc, err = in.k8s.GetRbacConfig(namespace, object); err == nil {
+		if rc, iErr := in.k8s.GetRbacConfig(namespace, object); iErr == nil {
 			istioConfigDetail.RbacConfig = &models.RbacConfig{}
 			istioConfigDetail.RbacConfig.Parse(rc)
+		} else {
+			err = iErr
+		}
+	case ServiceMeshRbacConfigs:
+		if rc, iErr := in.k8s.GetServiceMeshRbacConfig(namespace, object); iErr == nil {
+			istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
+			istioConfigDetail.ServiceMeshRbacConfig.Parse(rc)
+		} else {
+			err = iErr
 		}
 	case ServiceRoles:
-		if sr, err = in.k8s.GetServiceRole(namespace, object); err == nil {
+		if sr, iErr := in.k8s.GetServiceRole(namespace, object); iErr == nil {
 			istioConfigDetail.ServiceRole = &models.ServiceRole{}
 			istioConfigDetail.ServiceRole.Parse(sr)
+		} else {
+			err = iErr
 		}
 	case ServiceRoleBindings:
-		if srb, err = in.k8s.GetServiceRoleBinding(namespace, object); err == nil {
+		if srb, iErr := in.k8s.GetServiceRoleBinding(namespace, object); iErr == nil {
 			istioConfigDetail.ServiceRoleBinding = &models.ServiceRoleBinding{}
 			istioConfigDetail.ServiceRoleBinding.Parse(srb)
+		} else {
+			err = iErr
 		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
@@ -451,6 +567,12 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	case MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		err = json.Unmarshal(body, istioConfigDetail.MeshPolicy)
+	case ServiceMeshPolicies:
+		istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
+		err = json.Unmarshal(body, istioConfigDetail.ServiceMeshPolicy)
+	case ServiceMeshRbacConfigs:
+		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
+		err = json.Unmarshal(body, istioConfigDetail.ServiceMeshRbacConfig)
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
@@ -550,12 +672,18 @@ func (in *IstioConfigService) modifyIstioConfigDetail(api, namespace, resourceTy
 	case MeshPolicies:
 		istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 		istioConfigDetail.MeshPolicy.Parse(result)
+	case ServiceMeshPolicies:
+		istioConfigDetail.ServiceMeshPolicy = &models.ServiceMeshPolicy{}
+		istioConfigDetail.ServiceMeshPolicy.Parse(result)
 	case ClusterRbacConfigs:
 		istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 		istioConfigDetail.ClusterRbacConfig.Parse(result)
 	case RbacConfigs:
 		istioConfigDetail.RbacConfig = &models.RbacConfig{}
 		istioConfigDetail.RbacConfig.Parse(result)
+	case ServiceMeshRbacConfigs:
+		istioConfigDetail.ServiceMeshRbacConfig = &models.ServiceMeshRbacConfig{}
+		istioConfigDetail.ServiceMeshRbacConfig.Parse(result)
 	case ServiceRoles:
 		istioConfigDetail.ServiceRole = &models.ServiceRole{}
 		istioConfigDetail.ServiceRole.Parse(result)

@@ -26,7 +26,13 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// In case any Policy enables mTLS, check among MeshPolicies for a rule enabling it
-	for _, mp := range m.MTLSDetails.MeshPolicies {
+	// ServiceMeshPolicies are a clone of MeshPolicies but used in Maistra scenarios
+	// MeshPolicies and ServiceMeshPolicies won't co-exist, only ony array will be populated
+	mPolicies := m.MTLSDetails.MeshPolicies
+	if m.MTLSDetails.ServiceMeshPolicies != nil {
+		mPolicies = m.MTLSDetails.ServiceMeshPolicies
+	}
+	for _, mp := range mPolicies {
 		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}

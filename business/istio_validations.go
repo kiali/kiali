@@ -103,6 +103,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(namespace string, istioD
 		checkers.DestinationRulesChecker{DestinationRules: istioDetails.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioDetails.ServiceEntries},
 		checkers.GatewayChecker{GatewaysPerNamespace: gatewaysPerNamespace, Namespace: namespace, WorkloadList: workloads},
 		checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails},
+		checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails},
 		checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails},
 		checkers.ServiceEntryChecker{ServiceEntries: istioDetails.ServiceEntries},
 		checkers.ServiceRoleBindChecker{RBACDetails: rbacDetails},
@@ -152,6 +153,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 	case MeshPolicies:
 		meshPoliciesChecker := checkers.MeshPolicyChecker{MeshPolicies: mtlsDetails.MeshPolicies, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{meshPoliciesChecker}
+	case ServiceMeshPolicies:
+		smPoliciesChecker := checkers.ServiceMeshPolicyChecker{ServiceMeshPolicies: mtlsDetails.ServiceMeshPolicies, MTLSDetails: mtlsDetails}
+		objectCheckers = []ObjectChecker{smPoliciesChecker}
 	case Policies:
 		policiesChecker := checkers.PolicyChecker{Policies: mtlsDetails.Policies, MTLSDetails: mtlsDetails}
 		objectCheckers = []ObjectChecker{policiesChecker}
@@ -320,11 +324,23 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		meshPolicies, err := in.k8s.GetMeshPolicies(namespace)
+		var err error
+		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
+		if !in.k8s.IsMaistraApi() {
+			if meshPolicies, iErr := in.k8s.GetMeshPolicies(namespace); iErr == nil {
+				details.MeshPolicies = meshPolicies
+			} else {
+				err = iErr
+			}
+		} else {
+			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(namespace); iErr == nil {
+				details.ServiceMeshPolicies = serviceMeshPolicies
+			} else {
+				err = iErr
+			}
+		}
 		if err != nil {
 			errChan <- err
-		} else {
-			details.MeshPolicies = meshPolicies
 		}
 	}(mtlsDetails)
 
