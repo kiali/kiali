@@ -1,10 +1,5 @@
 import * as React from 'react';
-import {
-  AggregateStatusNotification,
-  AggregateStatusNotifications,
-  StackedBarChart,
-  SparklineChart
-} from 'patternfly-react';
+import { AggregateStatusNotification, AggregateStatusNotifications } from 'patternfly-react';
 import { Link } from 'react-router-dom';
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
@@ -13,9 +8,9 @@ import { NamespaceStatus } from './NamespaceInfo';
 import { switchType } from './OverviewHelper';
 import { Paths } from '../../config';
 import { TimeSeries } from '../../types/Metrics';
-import graphUtils from '../../utils/Graphing';
 import { DurationInSeconds } from '../../types/Common';
-import { getName } from '../../utils/RateIntervals';
+import OverviewCardSparkline from './OverviewCardSparkline';
+import OverviewCardBars from './OverviewCardBars';
 
 type Props = {
   name: string;
@@ -40,7 +35,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
             verticalAlign: 'top'
           }}
         >
-          {this.renderRight()}
+          <OverviewCardSparkline metrics={this.props.metrics} duration={this.props.duration} />
         </div>
       </>
     );
@@ -72,27 +67,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
     return (
       <>
         {mainLink}
-        <StackedBarChart
-          style={{ paddingLeft: 13 }}
-          id={'card-barchart-' + name}
-          size={{ height: 50 }}
-          axis={{ rotated: true, x: { show: false, categories: ['Health'], type: 'category' }, y: { show: false } }}
-          grid={{ x: { show: false }, y: { show: false } }}
-          tooltip={{ show: false }}
-          data={{
-            groups: [[FAILURE.name, DEGRADED.name, HEALTHY.name]],
-            columns: [
-              [FAILURE.name, status.inError.length],
-              [DEGRADED.name, status.inWarning.length],
-              [HEALTHY.name, status.inSuccess.length]
-            ],
-            order: null,
-            type: 'bar'
-          }}
-          color={{ pattern: [FAILURE.color, DEGRADED.color, HEALTHY.color] }}
-          bar={{ width: 20 }}
-          legend={{ hide: true }}
-        />
+        <OverviewCardBars status={this.props.status} />
         <AggregateStatusNotifications style={{ marginTop: -20, position: 'relative' }}>
           {status.inError.length > 0 && (
             <OverviewStatus
@@ -124,26 +99,6 @@ class OverviewCardContentExpanded extends React.Component<Props> {
         </AggregateStatusNotifications>
       </>
     );
-  }
-
-  renderRight(): JSX.Element {
-    if (this.props.metrics && this.props.metrics.length > 0) {
-      return (
-        <>
-          {'Traffic, ' + getName(this.props.duration).toLowerCase()}
-          <SparklineChart
-            id={'card-sparkline-' + this.props.name}
-            data={{ x: 'x', columns: graphUtils.toC3Columns(this.props.metrics, 'RPS'), type: 'area' }}
-            tooltip={{}}
-            axis={{
-              x: { show: false, type: 'timeseries', tick: { format: '%H:%M:%S' } },
-              y: { show: false }
-            }}
-          />
-        </>
-      );
-    }
-    return <div style={{ marginTop: 20 }}>No traffic</div>;
   }
 }
 

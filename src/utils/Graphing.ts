@@ -19,5 +19,21 @@ export default {
 
     // timestamps + data is the format required by C3 (all concatenated: an array with arrays)
     return [xseries, ...yseries];
+  },
+
+  toVCLines(ts: TimeSeries[]) {
+    return {
+      series: ts.map(line => {
+        return line.values
+          .map(dp => {
+            return {
+              name: line.name!,
+              x: new Date(dp[0] * 1000) as any,
+              y: Number(dp[1])
+            };
+          })
+          .filter(dp => !isNaN(dp.y));
+      })
+    };
   }
 };
