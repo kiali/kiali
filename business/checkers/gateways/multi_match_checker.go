@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/intutil"
 )
 
 type MultiMatchChecker struct {
@@ -83,8 +84,8 @@ func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
 	if portDef, found := serverDef["port"]; found {
 		if ports, ok := portDef.(map[string]interface{}); ok {
 			if numberDef, found := ports["number"]; found {
-				if portNumber, ok := numberDef.(int64); ok {
-					port = int(portNumber)
+				if portNumber, err := intutil.Convert(numberDef); err == nil {
+					port = portNumber
 				}
 			}
 		}
