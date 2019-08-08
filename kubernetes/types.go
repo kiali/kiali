@@ -58,6 +58,12 @@ const (
 	meshPolicyType     = "MeshPolicy"
 	meshPolicyTypeList = "MeshPolicyList"
 
+	// ServiceMeshPolicies
+
+	serviceMeshPolicies       = "servicemeshpolicies"
+	serviceMeshPolicyType     = "ServiceMeshPolicy"
+	serviceMeshPolicyTypeList = "ServiceMeshPolicyList"
+
 	// Rbac
 	clusterrbacconfigs        = "clusterrbacconfigs"
 	clusterrbacconfigType     = "ClusterRbacConfig"
@@ -74,6 +80,10 @@ const (
 	servicerolebindings        = "servicerolebindings"
 	servicerolebindingType     = "ServiceRoleBinding"
 	servicerolebindingTypeList = "ServiceRoleBindingList"
+
+	serviceMeshRbacConfigs        = "servicemeshrbacconfigs"
+	serviceMeshRbacConfigType     = "ServiceMeshRbacConfig"
+	serviceMeshRbacConfigTypeList = "ServiceMeshRbacConfigList"
 
 	// Config - Rules
 
@@ -251,6 +261,18 @@ var (
 	}
 	ApiRbacVersion = RbacGroupVersion.Group + "/" + RbacGroupVersion.Version
 
+	MaistraAuthenticationGroupVersion = schema.GroupVersion{
+		Group:   "authentication.maistra.io",
+		Version: "v1",
+	}
+	ApiMaistraAuthenticationVersion = MaistraAuthenticationGroupVersion.Group + "/" + MaistraAuthenticationGroupVersion.Version
+
+	MaistraRbacGroupVersion = schema.GroupVersion{
+		Group:   "rbac.maistra.io",
+		Version: "v1",
+	}
+	ApiMaistraRbacVersion = MaistraRbacGroupVersion.Group + "/" + MaistraRbacGroupVersion.Version
+
 	networkingTypes = []struct {
 		objectKind     string
 		collectionKind string
@@ -307,6 +329,16 @@ var (
 		{
 			objectKind:     meshPolicyType,
 			collectionKind: meshPolicyTypeList,
+		},
+	}
+
+	maistraAuthenticationTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     serviceMeshPolicyType,
+			collectionKind: serviceMeshPolicyTypeList,
 		},
 	}
 
@@ -486,6 +518,16 @@ var (
 		},
 	}
 
+	maistraRbacTypes = []struct {
+		objectKind     string
+		collectionKind string
+	}{
+		{
+			objectKind:     serviceMeshRbacConfigType,
+			collectionKind: serviceMeshRbacConfigTypeList,
+		},
+	}
+
 	// A map to get the plural for a Istio type using the singlar type
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
@@ -583,14 +625,16 @@ var (
 		tracespans:     tracespanType,
 
 		// Policies
-		policies:     policyType,
-		meshPolicies: meshPolicyType,
+		policies:            policyType,
+		meshPolicies:        meshPolicyType,
+		serviceMeshPolicies: serviceMeshPolicyType,
 
 		// Rbac
-		clusterrbacconfigs:  clusterrbacconfigType,
-		rbacconfigs:         rbacconfigType,
-		serviceroles:        serviceroleType,
-		servicerolebindings: servicerolebindingType,
+		clusterrbacconfigs:     clusterrbacconfigType,
+		rbacconfigs:            rbacconfigType,
+		serviceroles:           serviceroleType,
+		servicerolebindings:    servicerolebindingType,
+		serviceMeshRbacConfigs: serviceMeshRbacConfigType,
 	}
 )
 
@@ -642,16 +686,18 @@ type IstioDetails struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules []IstioObject `json:"destinationrules"`
-	MeshPolicies     []IstioObject `json:"meshpolicies"`
-	Policies         []IstioObject `json:"policies"`
+	DestinationRules    []IstioObject `json:"destinationrules"`
+	MeshPolicies        []IstioObject `json:"meshpolicies"`
+	ServiceMeshPolicies []IstioObject `json:"servicemeshpolicies"`
+	Policies            []IstioObject `json:"policies"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
 type RBACDetails struct {
-	ClusterRbacConfigs  []IstioObject `json:"clusterrbacconfigs"`
-	ServiceRoles        []IstioObject `json:"serviceroles"`
-	ServiceRoleBindings []IstioObject `json:"servicerolebindings"`
+	ClusterRbacConfigs     []IstioObject `json:"clusterrbacconfigs"`
+	ServiceMeshRbacConfigs []IstioObject `json:"servicemeshrbacconfigs"`
+	ServiceRoles           []IstioObject `json:"serviceroles"`
+	ServiceRoleBindings    []IstioObject `json:"servicerolebindings"`
 }
 
 type istioResponse struct {
