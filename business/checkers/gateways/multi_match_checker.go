@@ -75,10 +75,7 @@ func addError(validations models.IstioValidations, gatewayRuleName string, serve
 		},
 	}
 
-	if _, exists := validations[key]; !exists {
-		validations.MergeValidations(models.IstioValidations{key: rrValidation})
-	}
-	return validations
+	return validations.MergeValidations(models.IstioValidations{key: rrValidation})
 }
 
 func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
@@ -122,11 +119,20 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 			}
 
 			// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
-			current := strings.Replace(host.Hostname, "*", ".*", -1)
-			previous := strings.Replace(h.Hostname, "*", ".*", -1)
+			current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
+			previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
-			if regexp.MustCompile(current).MatchString(previous) || regexp.MustCompile(previous).MatchString(current) {
+			// We anchor the beginning and end of the string when it's
+			// to be used as a regex, so that we don't get spurious
+			// substring matches, e.g., "example.com" matching
+			// "foo.example.com".
+			currentRegexp := strings.Join([]string{"^", current, "$"}, "")
+			previousRegexp := strings.Join([]string{"^", previous, "$"}, "")
+
+			if regexp.MustCompile(currentRegexp).MatchString(previous) ||
+				regexp.MustCompile(previousRegexp).MatchString(current) {
 				duplicates = append(duplicates, h)
+				duplicates = append(duplicates, host)
 				break
 			}
 		}

@@ -41,6 +41,10 @@ kiali_defaults:
   deployment:
     accessible_namespaces: ["^((?!(istio-operator|kube.*|openshift.*|ibm.*|kiali-operator)).)*$"]
     #additional_service_yaml:
+    affinity:
+      node: {}
+      pod: {}
+      pod_anti: {}
     image_name: "kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_pull_secrets: []
@@ -48,7 +52,8 @@ kiali_defaults:
     ingress_enabled: true
     namespace: "istio-system"
     secret_name: "kiali"
-    service_type: "NodePort"
+    #service_type: "NodePort"
+    tolerations: []
     verbose_mode: "3"
     version_label: ""
     view_only_mode: false
@@ -92,6 +97,7 @@ kiali_defaults:
         username: ""
       enabled: true
       namespace: ""
+      port: 16686
       service: ""
       url: ""
 
@@ -110,8 +116,8 @@ kiali_defaults:
     cache_duration: 300000000
 
   login_token:
-    signing_key: "kiali"
     expiration_seconds: 86400
+    signing_key: "kiali"
 
   server:
     address: ""

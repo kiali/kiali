@@ -45,6 +45,18 @@ func TestParseIstioRawVersion(t *testing.T) {
 			supported:  true,
 		},
 		{
+			rawVersion: "redhat@redhat-docker.io/openshift-service-mesh-1.0.0-1-123454535353-unknown",
+			name:       "OpenShift Service Mesh",
+			version:    "1.0.0",
+			supported:  true,
+		},
+		{
+			rawVersion: "redhat@redhat-docker.io/openshift-service-mesh-0.9.0-1-123454535353-unknown",
+			name:       "OpenShift Service Mesh",
+			version:    "0.9.0",
+			supported:  false,
+		},
+		{
 			rawVersion: "foobar-maistra-11.12.13-wotgorilla?",
 			name:       "Maistra",
 			version:    "11.12.13",
@@ -78,7 +90,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.0-20180927-21-10-deadbeef-Clean",
 			name:       "Istio Snapshot",
 			version:    "1.0-20180927",
-			supported:  false,
+			supported:  true,
 		},
 		{
 			rawVersion: "root@f72e3d3ef3c2-docker.io/istio-release-1.1-20190327-21-10-deadbeef-Clean",

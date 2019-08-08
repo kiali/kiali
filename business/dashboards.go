@@ -7,6 +7,7 @@ import (
 	kmodel "github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -27,17 +28,25 @@ func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
 
 func DashboardsConfig() dlgconfig.Config {
 	cfg := config.Get()
+	auth := cfg.ExternalServices.Prometheus.Auth
+	if auth.UseKialiToken {
+		token, err := kubernetes.GetKialiToken()
+		if err != nil {
+			log.Errorf("Could not read the Kiali Service Account token: %v", err)
+		}
+		auth.Token = token
+	}
 	return dlgconfig.Config{
 		GlobalNamespace: cfg.IstioNamespace,
 		Prometheus: promconfig.PrometheusConfig{
 			URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
 			Auth: promconfig.Auth{
-				Type:               cfg.ExternalServices.Prometheus.Auth.Type,
-				Username:           cfg.ExternalServices.Prometheus.Auth.Username,
-				Password:           cfg.ExternalServices.Prometheus.Auth.Password,
-				Token:              cfg.ExternalServices.Prometheus.Auth.Token,
-				InsecureSkipVerify: cfg.ExternalServices.Prometheus.Auth.InsecureSkipVerify,
-				CAFile:             cfg.ExternalServices.Prometheus.Auth.CAFile,
+				Type:               auth.Type,
+				Username:           auth.Username,
+				Password:           auth.Password,
+				Token:              auth.Token,
+				InsecureSkipVerify: auth.InsecureSkipVerify,
+				CAFile:             auth.CAFile,
 			},
 		},
 		Errorf: log.Errorf,

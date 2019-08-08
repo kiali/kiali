@@ -1,4 +1,3 @@
 FROM quay.io/ansible/molecule:latest
 RUN apk add gettext
-RUN pip install openshift
-RUN pip install junit-xml
+RUN pip install openshift junit-xml jmespath

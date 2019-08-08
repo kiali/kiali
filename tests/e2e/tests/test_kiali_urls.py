@@ -14,7 +14,7 @@ def test_grafana_url_endpoint(kiali_client):
     else:
         print("Skipping Grafana URL Connection Validation")
 
-def test_jaeger_url_endpoint(kiali_client):
+def __test_jaeger_url_endpoint(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo')
     if response.status_code == 200:
         url = response.json().get('url')

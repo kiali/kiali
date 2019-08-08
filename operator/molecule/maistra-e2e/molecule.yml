@@ -1,0 +1,95 @@
+---
+dependency:
+  name: galaxy
+platforms:
+- name: default
+  groups:
+  - k8s
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_whitelist: junit
+  inventory:
+    group_vars:
+      all:
+        kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
+        kiali_operator_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
+        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-operator.yaml"
+        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
+        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
+        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
+        # Uncomment the following parameters for the secret
+        # secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml"
+        # secret: "{{ lookup('template', secret_file_path) | from_yaml }}"
+
+        operators:
+          pull_secret:
+            enabled: false
+            # Uncomment the following parameters for the secret
+            # name: "{{ secret.metadata.name }}"
+          jaeger:
+            image: docker.io/jaegertracing/jaeger-operator:1.13.1
+            namespace: observability
+          maistra:
+            image: docker.io/maistra/istio-operator-ubi8:0.12.0
+            namespace: istio-operator
+          kiali:
+            namespace: kiali-operator
+            hub: quay.io/kiali/kiali-operator
+            tag: v1.0.2
+            watch_namespace: ""
+            clusterrolebindings: ""
+            clusterroles: ""
+            image_pull_policy: Always
+        
+        maistra:
+          cr:
+            control_planes:
+            - "istio-system"
+            - "istio-system2"
+            global:
+              hub: docker.io/maistra
+              tag: 0.12.0
+              image_pull_policy: Always
+            kiali:
+              hub: quay.io/kiali
+              tag: v1.0.1
+            threescale:
+              hub: quay.io/3scale
+              tag: 0.7.1
+            jaeger:
+              hub: docker.io/jaegertracing
+              tag: 1.13.1
+              template: all-in-one
+        kiali:
+          test_mesh:             
+            operator:
+              namespace: kiali-test-mesh-operator
+              image: kiali/kiali-test-mesh-operator:latest
+            installations:
+              - namespace: bookinfo
+                control_plane: istio-system
+                kind: Bookinfo
+                version: 1.14.0
+                hub: docker.io/istio
+                mongodb: true
+                mysql: true
+              
+              - namespace: bookinfo2
+                control_plane: istio-system2
+                kind: Bookinfo
+                version: 0.12.0
+                hub: docker.io/maistra
+                mongodb: true
+                mysql: false
+              
+              - namespace: redhat-istio-tutorial
+                control_plane: istio-system
+                kind: RedHatTutorial
+scenario:
+  name: maistra-e2e
+  test_sequence:
+  - prepare
+  - converge
+  - destroy

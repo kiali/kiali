@@ -363,7 +363,7 @@ func generateCertificate(t *testing.T, certPath string, keyPath string, host str
 	if err != nil {
 		return err
 	}
-	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	_ = pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 
 	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -372,7 +372,7 @@ func generateCertificate(t *testing.T, certPath string, keyPath string, host str
 	}
 
 	pemBlockForKey := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}
-	pem.Encode(keyOut, pemBlockForKey)
+	_ = pem.Encode(keyOut, pemBlockForKey)
 	keyOut.Close()
 
 	t.Logf("Generated security data: %v|%v|%v", certPath, keyPath, host)

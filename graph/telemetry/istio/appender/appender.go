@@ -94,8 +94,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if _, ok := requestedAppenders[UnusedNodeAppenderName]; ok || o.Appenders.All {
 		hasNodeOptions := o.App != "" || o.Workload != "" || o.Service != ""
 		a := UnusedNodeAppender{
-			GraphType:   o.GraphType,
-			IsNodeGraph: hasNodeOptions,
+			GraphType:          o.GraphType,
+			InjectServiceNodes: o.InjectServiceNodes,
+			IsNodeGraph:        hasNodeOptions,
 		}
 		appenders = append(appenders, a)
 	}

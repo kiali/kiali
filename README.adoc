@@ -336,21 +336,21 @@ To configure authentication strategy to LDAP add the following configuration to 
 
 ----
 auth:
-  strategy: ldap
+  strategy: "ldap"
   ldap:
-    ldap_host: example.com
-    ldap_port: 123
-    ldap_use_ssl: false
+    ldap_base: "DC=example,DC=com"
+    ldap_bind_dn: "CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com"
+    ldap_group_filter: "(cn=%s)"
+    ldap_host: "example.com"
     ldap_insecure_skip_verify: true
-    ldap_user_filter: (cn=%s)
-    ldap_group_filter: (cn=%s)
-    ldap_base: DC=example,DC=com
-    ldap_bind_dn: CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com
-    ldap_search_filter: (&(name={USERID}))
-    ldap_role_filter: .*xyz.*
-    ldap_mail_id_key: mail
-    ldap_user_id_key: cn
-    ldap_member_of_key: memberOf
+    ldap_mail_id_key: "mail"
+    ldap_member_of_key: "memberOf"
+    ldap_port: 123
+    ldap_role_filter: ".*xyz.*"
+    ldap_search_filter: "(&(name={USERID}))"
+    ldap_use_ssl: false
+    ldap_user_filter: "(cn=%s)"
+    ldap_user_id_key: "cn"
 ----
 
 == Additional Notes

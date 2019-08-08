@@ -76,6 +76,7 @@ spec:
 #    ---
 #    ldap:
 #        ldap_base: ""
+#
 # The binding that determines a user. For example, "CN={USERID},OU=xyz,OU=Users,OU=Accounts,DC=example,DC=com".
 #        ---
 #        ldap_bind_dn: ""
@@ -85,7 +86,9 @@ spec:
 #        ldap_mail_id_key: mail
 #        ldap_member_of_key: memberOf
 #        ldap_port: 0
+#
 # The role filter can be used to filter the user roles using regular expressions. For example, ".*xyz.*".
+#        ---
 #        ldap_role_filter: .*xyz.*
 #        ldap_search_filter: (&(name={USERID}))
 #        ldap_use_ssl: false
@@ -118,6 +121,15 @@ spec:
 # A final example would be if external IPs need to be set: additional_service_yaml: { "externalIPs": ["80.11.12.10"] }
 #    ---
 #    #additional_service_yaml:
+#
+# Affinity definitions that are to be used to define the nodes where the Kiali pod should be contrained.
+# See the Kubernetes documentation on Assigning Pods to Nodes for the proper syntax for these three
+# different affinity types.
+#    ---
+#    affinity:
+#      node: {}
+#      pod: {}
+#      pod_anti: {}
 #
 # Determines which Kiali image to download and install.
 #    ---
@@ -158,7 +170,12 @@ spec:
 # The Kiali service type. Kubernetes determines what values are valid.
 # Common values are "NodePort", "ClusterIP", and "LoadBalancer".
 #    ---
-#    service_type: "NodePort"
+#    #service_type: "NodePort"
+#
+# A list of tolerations which declare which node taints Kiali can tolerate.
+# See the Kubernetes documentation on Taints and Tolerations for more details.
+#    ---
+#    tolerations: []
 #
 # Determines which priority levels of log messages Kiali will output.
 # Typical values are "3" for INFO and higher priority, "4" for DEBUG and higher priority.
@@ -275,6 +292,7 @@ spec:
 #   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
+# port: The kubernetes port where the tracing service is mount. Default port is Jaeger port, 16686. Autodiscovered when service is not specified.
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
 #      the cluster in order for the integration to work properly. If empty, an attempt to auto-discover it is made.
@@ -291,6 +309,7 @@ spec:
 #        username: ""
 #      enabled: true
 #      namespace: ""
+#      port: 16686
 #      service : ""
 #      url: ""
 
@@ -348,13 +367,13 @@ spec:
 #  ---
 #  login_token:
 #
-# The signing key used to generate tokens for user authentication.
-#    ---
-#    signing_key: "kiali"
-#
 # The token expiration in seconds.
 #    ---
 #    expiration_seconds: 86400
+#
+# The signing key used to generate tokens for user authentication.
+#    ---
+#    signing_key: "kiali"
 
 ##########
 #  ---

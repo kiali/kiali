@@ -21,7 +21,7 @@ KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 KIALI_IMAGE_VERSION ?= ${OPERATOR_IMAGE_VERSION}
 NAMESPACE ?= istio-system
 VERBOSE_MODE ?= 3
-SERVICE_TYPE ?= NodePort
+SERVICE_TYPE ?= ClusterIP
 
 # Path to CR file for any other parameter
 KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
@@ -45,7 +45,7 @@ help: Makefile
 	    echo "You do not have operator-sdk installed in your PATH. Will use the one found here: ../_output/operator-sdk-install/operator-sdk" ;\
 	  else \
 	    echo "You do not have operator-sdk installed in your PATH. The binary will be downloaded to ../_output/operator-sdk-install/operator-sdk" ;\
-	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.7.0/operator-sdk-v0.7.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
+	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
 	    chmod +x ../_output/operator-sdk-install/operator-sdk ;\
 	  fi ;\
 	fi
@@ -170,7 +170,10 @@ run-playbook-tag:
 
 MOLECULE_SCENARIO ?= default
 ifeq ($(MOLECULE_DEBUG),true)
-MOLECULE_DEBUG_ARG="--debug"
+MOLECULE_DEBUG_ARG = --debug
+endif
+ifeq ($(MOLECULE_DESTROY_NEVER),true)
+MOLECULE_DESTROY_NEVER_ARG = --destroy never
 endif
 
 .molecule-docker-build-if-needed:
@@ -184,4 +187,4 @@ molecule-docker-build:
 
 ## molecule-test: Runs Molecule tests using the Molecule docker image
 molecule-test: .molecule-docker-build-if-needed
-	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test --scenario-name ${MOLECULE_SCENARIO}
+	docker run --rm -it -v "${PWD}":/tmp/$(basename "${PWD}"):ro -v "${HOME}/.kube":/root/.kube:ro -v /var/run/docker.sock:/var/run/docker.sock -w /tmp/$(basename "${PWD}") --network="host" --add-host="api.crc.testing:192.168.130.11" kiali-molecule:latest molecule ${MOLECULE_DEBUG_ARG} test ${MOLECULE_DESTROY_NEVER_ARG} --scenario-name ${MOLECULE_SCENARIO}

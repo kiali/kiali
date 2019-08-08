@@ -15,16 +15,19 @@ func TestNonTrafficScenario(t *testing.T) {
 
 	config.Set(config.NewConfig())
 
-	// Empty trafficMap
-	trafficMap := graph.NewTrafficMap()
-	workloads := mockWorkloads()
-
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
+		true,
 		false,
 	}
-	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
-	assert.Equal(4, len(trafficMap))
+
+	// Empty trafficMap
+	trafficMap := graph.NewTrafficMap()
+	services := mockServices(a)
+	workloads := mockWorkloads(a)
+
+	a.addUnusedNodes(trafficMap, "testNamespace", services, workloads)
+	assert.Equal(7, len(trafficMap))
 
 	id, _ := graph.Id("testNamespace", "customer", "testNamespace", "customer-v1", "customer", "v1", a.GraphType)
 	n, ok := trafficMap[id]
@@ -57,6 +60,27 @@ func TestNonTrafficScenario(t *testing.T) {
 	assert.Equal("recommendation", n.App)
 	assert.Equal("v2", n.Version)
 	assert.Equal(true, n.Metadata[graph.IsUnused])
+
+	id, _ = graph.Id("testNamespace", "customer", "", "", "", "", a.GraphType)
+	n, ok = trafficMap[id]
+	assert.Equal(true, ok)
+	assert.Equal(graph.NodeTypeService, n.NodeType)
+	assert.Equal("customer", n.Service)
+	assert.Equal(true, n.Metadata[graph.IsUnused])
+
+	id, _ = graph.Id("testNamespace", "preference", "", "", "", "", a.GraphType)
+	n, ok = trafficMap[id]
+	assert.Equal(true, ok)
+	assert.Equal(graph.NodeTypeService, n.NodeType)
+	assert.Equal("preference", n.Service)
+	assert.Equal(true, n.Metadata[graph.IsUnused])
+
+	id, _ = graph.Id("testNamespace", "recommendation", "", "", "", "", a.GraphType)
+	n, ok = trafficMap[id]
+	assert.Equal(true, ok)
+	assert.Equal(graph.NodeTypeService, n.NodeType)
+	assert.Equal("recommendation", n.Service)
+	assert.Equal(true, n.Metadata[graph.IsUnused])
 }
 
 func TestOneNodeTrafficScenario(t *testing.T) {
@@ -67,12 +91,14 @@ func TestOneNodeTrafficScenario(t *testing.T) {
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
 		false,
+		false,
 	}
 
 	trafficMap := a.oneNodeTraffic()
-	workloads := mockWorkloads()
+	services := mockServices(a)
+	workloads := mockWorkloads(a)
 
-	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
+	a.addUnusedNodes(trafficMap, "testNamespace", services, workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -122,12 +148,14 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	a := UnusedNodeAppender{
 		graph.GraphTypeVersionedApp,
 		false,
+		false,
 	}
 
 	trafficMap := a.v1Traffic()
-	workloads := mockWorkloads()
+	services := mockServices(a)
+	workloads := mockWorkloads(a)
 
-	a.addUnusedNodes(trafficMap, "testNamespace", workloads)
+	a.addUnusedNodes(trafficMap, "testNamespace", services, workloads)
 
 	assert.Equal(5, len(trafficMap))
 	id, _ := graph.Id(graph.Unknown, "", graph.Unknown, graph.Unknown, graph.Unknown, graph.Unknown, a.GraphType)
@@ -162,7 +190,32 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(nil, recommendationV1.Metadata[graph.IsUnused])
 }
 
-func mockWorkloads() []models.WorkloadListItem {
+func mockServices(a UnusedNodeAppender) []models.ServiceOverview {
+	if !(a.GraphType == graph.GraphTypeService || a.InjectServiceNodes) {
+		return []models.ServiceOverview{}
+	}
+
+	return []models.ServiceOverview{
+		{
+			Name: "customer",
+		},
+		{
+			Name: "preference",
+		},
+		{
+			Name: "recommendation",
+		},
+		{
+			Name: "recommendation",
+		},
+	}
+}
+
+func mockWorkloads(a UnusedNodeAppender) []models.WorkloadListItem {
+	if a.GraphType == graph.GraphTypeService {
+		return []models.WorkloadListItem{}
+	}
+
 	return []models.WorkloadListItem{
 		{
 			Name:   "customer-v1",

@@ -25,6 +25,62 @@
   - is_openshift == False
   - is_k8s == False
 
+# Because we are passing through some yaml directly to Kubernetes resources, we have to retain the camelCase keys.
+# All CR parameters are converted to snake_case, but the original yaml is found in the special _kiali_io_kiali param.
+# We need to copy that original yaml into our vars where appropriate to keep the camelCase.
+
+- name: Get the original CR as-is for the camelCase keys
+  set_fact:
+    current_cr: "{{ _kiali_io_kiali }}"
+
+- name: Replace snake_case with camelCase in deployment.affinity.node
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('node') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'node': current_cr.spec.deployment.affinity.node }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.node is defined
+  - kiali_vars.deployment.affinity.node | length > 0
+
+- name: Replace snake_case with camelCase in deployment.affinity.pod
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('pod') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'pod': current_cr.spec.deployment.affinity.pod }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.pod is defined
+  - kiali_vars.deployment.affinity.pod | length > 0
+
+- name: Replace snake_case with camelCase in deployment.affinity.pod_anti
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment']['affinity'].pop('pod_anti') %}
+      {{ kiali_vars | combine({'deployment': {'affinity': {'pod_anti': current_cr.spec.deployment.affinity.pod_anti }}}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.affinity is defined
+  - kiali_vars.deployment.affinity.pod_anti is defined
+  - kiali_vars.deployment.affinity.pod_anti | length > 0
+
+- name: Replace snake_case with camelCase in deployment.tolerations
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('tolerations') %}
+      {{ kiali_vars | combine({'deployment': {'tolerations': current_cr.spec.deployment.tolerations }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.tolerations is defined
+  - kiali_vars.deployment.tolerations | length > 0
+
+- name: Replace snake_case with camelCase in deployment.additional_service_yaml
+  set_fact:
+    kiali_vars: |
+      {% set a=kiali_vars['deployment'].pop('additional_service_yaml') %}
+      {{ kiali_vars | combine({'deployment': {'additional_service_yaml': current_cr.spec.deployment.additional_service_yaml }}, recursive=True) }}
+  when:
+  - kiali_vars.deployment.additional_service_yaml is defined
+  - kiali_vars.deployment.additional_service_yaml | length > 0
+
 - name: Print some debug information
   vars:
     msg: |
@@ -138,7 +194,7 @@
     msg: "Invalid configuration for LDAP! The mandatory parameters should be provided like `ldap_host', 'ldap_port', 'ldap_bind_dn', and 'ldap_base'"
   when:
   - kiali_vars.auth.strategy == "ldap"
-  - kiali_vars.auth.ldap.ldap_host == "" or kiali_vars.auth.ldap.ldap_post <= 0 or kiali_vars.auth.ldap.ldap_bind_dn == "" or kiali_vars.auth.ldap.ldap_base == ""
+  - kiali_vars.auth.ldap.ldap_host == "" or kiali_vars.auth.ldap.ldap_port <= 0 or kiali_vars.auth.ldap.ldap_bind_dn == "" or kiali_vars.auth.ldap.ldap_base == ""
 # Fail if ingress is disabled but auth_strategy is openshift. This is because the openshift auth strategy
 # requires OAuth Client which requires a Route. So ingress must be enabled if strategy is openshift.
 - name: Ensure Ingress is Enabled if Auth Strategy is openshift
@@ -148,18 +204,8 @@
   - kiali_vars.auth.strategy == "openshift"
   - kiali_vars.deployment.ingress_enabled == False
 
-# WHEN ANSIBLE OPERATOR CONTAINS ANSIBLE 2.8,
-# WE CAN REPLACE THIS SHELL TASK BELOW WITH AN ANSIBLE TASK THAT LOOKS LIKE THIS:
-#- name: Determine image version when last release is to be installed
-#  github_release:
-#    user: kiali
-#    repo: kiali
-#    action: latest_release
-#  register: image_version
-#  when: kiali_vars.deployment.image_version == "lastrelease"
-
 - name: Determine image version when last release is to be installed
-  shell: echo -n $(curl -s https://api.github.com/repos/kiali/kiali/releases/latest 2> /dev/null | grep  "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  shell: echo -n $(curl -s https://api.github.com/repos/kiali/kiali/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
   register: github_lastrelease
   when:
   - kiali_vars.deployment.image_version == "lastrelease"

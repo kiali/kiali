@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 # Identifies the current build.
 # These will be embedded in the app and displayed when it starts.
-VERSION ?= v1.2.0-SNAPSHOT
+VERSION ?= v1.3.0-SNAPSHOT
 COMMIT_HASH ?= $(shell git rev-parse HEAD)
 
 # Indicates which version of the UI console is to be embedded
@@ -101,7 +101,7 @@ format:
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test:
 	@echo Building executable for system tests with code coverage enabled
-	go test -c -covermode=count -coverpkg ./...  -o ${GOPATH}/bin/kiali
+	go test -c -covermode=count -coverpkg $(shell go list ./... | grep -v test |  awk -vORS=, "{ print $$1 }" | sed "s/,$$//") -o ${GOPATH}/bin/kiali
 
 ## build-test: Run tests and installing test dependencies, excluding third party tests under vendor. Runs `go test -i` internally
 build-test:
@@ -335,10 +335,4 @@ lint-install:
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run --skip-files "doc\.go" --tests -D errcheck
-
-## lint-all: Runs gometalinter with items from good to have list but does not run during travis
-lint-all:
-	gometalinter --disable-all --enable=vet --enable=vetshadow --enable=varcheck --enable=structcheck \
-	--enable=ineffassign --enable=unconvert --enable=goimports -enable=gosimple --enable=staticcheck \
-	--enable=nakedret --tests  --vendor ./...
+	golangci-lint run --skip-files "doc\.go" --tests

@@ -1,4 +1,6 @@
 # Project requirements
 # 'pip install -r requirements.txt'
 molecule
+openshift
+jmespath
 junit-xml
