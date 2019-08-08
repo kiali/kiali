@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/nytimes/gziphandler"
 	"net/http"
 
 	"github.com/kiali/kiali/config"
@@ -25,12 +26,17 @@ func NewServer() *Server {
 		router.Use(corsAllowed)
 	}
 
+	handler := http.Handler(router)
+	if conf.Server.GzipEnabled {
+		handler = configureGzipHandler(router)
+	}
+
 	// The Kiali server has only a single http server ever during its lifetime. But to support
 	// testing that wants to start multiple servers over the lifetime of the process,
 	// we need to override the default server mux with a new one everytime.
 	mux := http.NewServeMux()
 	http.DefaultServeMux = mux
-	http.Handle("/", router)
+	http.Handle("/", handler)
 
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
@@ -79,4 +85,20 @@ func corsAllowed(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
 		next.ServeHTTP(w, r)
 	})
+}
+
+func configureGzipHandler(handler http.Handler) http.Handler {
+	contentTypeOption := gziphandler.ContentTypes([]string{
+		"application/javascript",
+		"application/json",
+		"image/svg+xml",
+		"text/css",
+		"text/html",
+	})
+	if handlerFunc, err := gziphandler.GzipHandlerWithOpts(contentTypeOption); err == nil {
+		return handlerFunc(handler)
+	} else {
+		// This could happen by a wrong configuration being sent to GzipHandlerWithOpts
+		panic(err)
+	}
 }

@@ -14,10 +14,12 @@ func TestEnvVar(t *testing.T) {
 	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
 	defer os.Setenv(EnvServerCORSAllowAll, os.Getenv(EnvServerCORSAllowAll))
 	defer os.Setenv(EnvPrometheusCustomMetricsURL, os.Getenv(EnvPrometheusCustomMetricsURL))
+	defer os.Setenv(EnvServerGzipEnabled, os.Getenv(EnvServerGzipEnabled))
 	os.Setenv(EnvServerAddress, "test-address")
 	os.Setenv(EnvServerPort, "12345")
 	os.Setenv(EnvServerCORSAllowAll, "true")
 	os.Setenv(EnvPrometheusCustomMetricsURL, "test-address")
+	os.Setenv(EnvServerGzipEnabled, "false")
 
 	conf := NewConfig()
 
@@ -32,6 +34,10 @@ func TestEnvVar(t *testing.T) {
 	}
 	if !conf.Server.CORSAllowAll {
 		t.Error("server CORS setting is wrong")
+	}
+
+	if conf.Server.GzipEnabled {
+		t.Error("server GzipEnabled setting is wrong")
 	}
 }
 
@@ -87,6 +93,10 @@ func TestDefaults(t *testing.T) {
 			conf.API.Namespaces.Exclude[3] != "ibm.*" {
 			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.API.Namespaces.Exclude)
 		}
+	}
+
+	if !conf.Server.GzipEnabled {
+		t.Error("server GzipEnabled default setting is wrong")
 	}
 }
 

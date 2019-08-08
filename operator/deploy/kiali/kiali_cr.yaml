@@ -369,6 +369,12 @@ spec:
 #    ---
 #    cors_allow_all: false
 #
+# When true, Kiali serves http requests with gzip enabled (if the browser supports it) when the requests are
+#  over 1400 bytes.
+#
+#    ---
+#    gzip_enabled: true
+#
 # When true, the metrics endpoint will be available for Prometheus to scrape.
 #    ---
 #    metrics_enabled: true

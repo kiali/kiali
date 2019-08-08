@@ -13,7 +13,9 @@
 
 package procfs
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSchedstat(t *testing.T) {
 	stats, err := getProcFixtures(t).Schedstat()
@@ -36,18 +38,12 @@ func TestSchedstat(t *testing.T) {
 		t.Error("could not find cpu0")
 	}
 
-	if want, have := uint64(2045936778163039), cpu.RunningJiffies; want != have {
-		t.Errorf("want RunningJiffies %v, have %v", want, have)
-	}
-	if want, have := float64(2045936778163039)/userHZ, cpu.RunningSeconds(); want != have {
-		t.Errorf("want RunningSeconds() %v, have %v", want, have)
+	if want, have := uint64(2045936778163039), cpu.RunningNanoseconds; want != have {
+		t.Errorf("want RunningNanoseconds %v, have %v", want, have)
 	}
 
-	if want, have := uint64(343796328169361), cpu.WaitingJiffies; want != have {
-		t.Errorf("want WaitingJiffies %v, have %v", want, have)
-	}
-	if want, have := float64(343796328169361)/userHZ, cpu.WaitingSeconds(); want != have {
-		t.Errorf("want WaitingSeconds() %v, have %v", want, have)
+	if want, have := uint64(343796328169361), cpu.WaitingNanoseconds; want != have {
+		t.Errorf("want WaitingNanoseconds %v, have %v", want, have)
 	}
 
 	if want, have := uint64(4767485306), cpu.RunTimeslices; want != have {
@@ -66,18 +62,12 @@ func TestProcSchedstat(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if want, have := uint64(411605849), schedstat.RunningJiffies; want != have {
-		t.Errorf("want RunningJiffies %v, have %v", want, have)
-	}
-	if want, have := float64(411605849)/userHZ, schedstat.RunningSeconds(); want != have {
-		t.Errorf("want RunningSeconds() %v, have %v", want, have)
+	if want, have := uint64(411605849), schedstat.RunningNanoseconds; want != have {
+		t.Errorf("want RunningNanoseconds %v, have %v", want, have)
 	}
 
-	if want, have := uint64(93680043), schedstat.WaitingJiffies; want != have {
-		t.Errorf("want WaitingJiffies %v, have %v", want, have)
-	}
-	if want, have := float64(93680043)/userHZ, schedstat.WaitingSeconds(); want != have {
-		t.Errorf("want WaitingSeconds() %v, have %v", want, have)
+	if want, have := uint64(93680043), schedstat.WaitingNanoseconds; want != have {
+		t.Errorf("want WaitingNanoseconds %v, have %v", want, have)
 	}
 
 	if want, have := uint64(79), schedstat.RunTimeslices; want != have {
@@ -113,11 +103,11 @@ func TestProcSchedstatMultipleLines(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want, have := uint64(123), schedstat.RunningJiffies; want != have {
-		t.Errorf("want RunningJiffies %v, have %v", want, have)
+	if want, have := uint64(123), schedstat.RunningNanoseconds; want != have {
+		t.Errorf("want RunningNanoseconds %v, have %v", want, have)
 	}
-	if want, have := uint64(456), schedstat.WaitingJiffies; want != have {
-		t.Errorf("want WaitingJiffies %v, have %v", want, have)
+	if want, have := uint64(456), schedstat.WaitingNanoseconds; want != have {
+		t.Errorf("want WaitingNanoseconds %v, have %v", want, have)
 	}
 	if want, have := uint64(789), schedstat.RunTimeslices; want != have {
 		t.Errorf("want RunTimeslices %v, have %v", want, have)
