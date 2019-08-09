@@ -62,9 +62,7 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 		var smps []kubernetes.IstioObject
 		for _, ns := range namespaces {
 			if smps, err = in.k8s.GetServiceMeshPolicies(ns); err == nil {
-				for _, smp := range smps {
-					mps = append(mps, smp)
-				}
+				mps = append(mps, smps...)
 			} else {
 				return false, err
 			}
