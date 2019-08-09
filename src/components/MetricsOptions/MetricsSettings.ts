@@ -1,4 +1,4 @@
-import { PromLabel, LabelDisplayName, SingleLabelValues } from '@kiali/k-charted-pf3';
+import { PromLabel, LabelDisplayName, SingleLabelValues } from '@kiali/k-charted-pf4';
 
 export type Quantiles = '0.5' | '0.95' | '0.99' | '0.999';
 export const allQuantiles: Quantiles[] = ['0.5', '0.95', '0.99', '0.999'];

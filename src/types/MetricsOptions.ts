@@ -1,4 +1,4 @@
-import { MetricsQuery } from '@kiali/k-charted-pf3';
+import { MetricsQuery } from '@kiali/k-charted-pf4';
 
 export interface IstioMetricsOptions extends MetricsQuery {
   direction: Direction;

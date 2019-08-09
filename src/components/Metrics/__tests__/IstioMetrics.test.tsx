@@ -2,7 +2,7 @@ import * as React from 'react';
 import { mount, shallow, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
-import { DashboardModel, ChartModel } from '@kiali/k-charted-pf3';
+import { DashboardModel, ChartModel } from '@kiali/k-charted-pf4';
 import { shallowToJson } from 'enzyme-to-json';
 
 import IstioMetrics from '../IstioMetrics';
@@ -136,8 +136,7 @@ describe('Metrics for a service', () => {
       mockServiceDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('.card-pf')).toHaveLength(1);
-          mounted!.find('.card-pf').forEach(pfCard => expect(pfCard.children().length === 0));
+          expect(mounted!.find('GridItem')).toHaveLength(0);
         })
         .catch(err => done.fail(err))
     ];
@@ -180,7 +179,7 @@ describe('Metrics for a service', () => {
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('LineChart')).toHaveLength(4);
+          expect(mounted!.find('GridItem')).toHaveLength(4);
         })
         .catch(err => done.fail(err))
     ];
@@ -249,8 +248,7 @@ describe('Inbound Metrics for a workload', () => {
       mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [] })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('.card-pf')).toHaveLength(1);
-          mounted!.find('.card-pf').forEach(pfCard => expect(pfCard.children().length === 0));
+          expect(mounted!.find('GridItem')).toHaveLength(0);
         })
         .catch(err => done.fail(err))
     ];
@@ -293,7 +291,7 @@ describe('Inbound Metrics for a workload', () => {
       })
         .then(() => {
           mounted!.update();
-          expect(mounted!.find('LineChart')).toHaveLength(4);
+          expect(mounted!.find('GridItem')).toHaveLength(4);
         })
         .catch(err => done.fail(err))
     ];

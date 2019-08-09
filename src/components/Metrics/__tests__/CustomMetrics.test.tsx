@@ -2,7 +2,7 @@ import * as React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route } from 'react-router';
-import { DashboardModel } from '@kiali/k-charted-pf3';
+import { DashboardModel } from '@kiali/k-charted-pf4';
 
 import CustomMetrics from '../CustomMetrics';
 import * as API from '../../../services/Api';
@@ -45,8 +45,7 @@ describe('Custom metrics', () => {
     mockCustomDashboard({ title: 'foo', aggregations: [], charts: [] })
       .then(() => {
         mounted!.update();
-        expect(mounted!.find('.card-pf')).toHaveLength(1);
-        mounted!.find('.card-pf').forEach(pfCard => expect(pfCard.children().length === 0));
+        expect(mounted!.find('GridItem')).toHaveLength(0);
         done();
       })
       .catch(err => done.fail(err));

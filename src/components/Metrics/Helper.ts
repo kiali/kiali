@@ -6,7 +6,7 @@ import {
   AllPromLabelsValues,
   PromLabel,
   MetricsQuery
-} from '@kiali/k-charted-pf3';
+} from '@kiali/k-charted-pf4';
 
 import { MetricsSettings, LabelsSettings, Quantiles, LabelSettings } from '../MetricsOptions/MetricsSettings';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';

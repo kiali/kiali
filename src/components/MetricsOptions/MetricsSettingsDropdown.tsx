@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
 import { style } from 'typestyle';
 import isEqual from 'lodash/fp/isEqual';
-import { PromLabel } from '@kiali/k-charted-pf3';
+import { PromLabel } from '@kiali/k-charted-pf4';
 
 import history, { URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';

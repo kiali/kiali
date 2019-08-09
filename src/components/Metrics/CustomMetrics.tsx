@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { Dashboard, DashboardModel, DashboardQuery, Aggregator } from '@kiali/k-charted-pf3';
+import { Dashboard, DashboardModel, DashboardQuery, Aggregator } from '@kiali/k-charted-pf4';
 
 import { serverConfig } from '../../config/ServerConfig';
 import history from '../../app/History';

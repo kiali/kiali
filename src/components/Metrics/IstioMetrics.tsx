@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
-import { Dashboard, DashboardModel } from '@kiali/k-charted-pf3';
+import { Dashboard, DashboardModel } from '@kiali/k-charted-pf4';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
