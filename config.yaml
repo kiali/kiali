@@ -43,3 +43,13 @@ external_services:
   # Uncomment service_label_name to set up a different label name for grouping all resources of an app version.
   # Default is "version"
   # version_label_name: version
+
+#Uncomment to configure api documentation options
+#apidocs:
+  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api spec location
+  # Default is "kiali.io/api-spec"
+  # api_spec_annotation_name: kiali.io/api-spec
+
+  # Uncomment api_type_annotation_name to set up a different annotation name for defining a service api type
+  # Default is "kiali.io/api-type"
+  # api_type_annotation_name: kiali.io/api-type
