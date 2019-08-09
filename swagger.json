@@ -674,7 +674,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -702,7 +702,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -867,7 +867,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -895,7 +895,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
@@ -906,7 +906,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -1025,7 +1025,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -1052,7 +1052,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -1953,7 +1953,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -1981,7 +1981,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2239,7 +2239,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2267,7 +2267,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
@@ -2278,7 +2278,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2506,7 +2506,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2534,7 +2534,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
@@ -2800,7 +2800,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of labels to use for grouping metrics (via Prometheus 'by' clause).",
             "name": "byLabels[]",
@@ -2828,7 +2828,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.",
             "name": "filters[]",
@@ -2839,7 +2839,7 @@
             "items": {
               "type": "string"
             },
-            "default": "[]",
+            "default": [],
             "x-go-name": "Name",
             "description": "List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].",
             "name": "quantiles[]",
