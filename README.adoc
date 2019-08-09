@@ -347,8 +347,8 @@ kind: Service
 metadata:
   name: myservice
   annotations:
-    kiali.kubernetes.io/api-type: rest
-    kiali.kubernetes.io/api-spec: /v1/api-spec  
+    kiali.io/api-type: rest
+    kiali.io/api-spec: /v1/api-spec  
 spec:
 ...
 ----
@@ -362,8 +362,8 @@ kind: Service
 metadata:
   name: petstore
   annotations:
-    kiali.kubernetes.io/api-type: rest
-    kiali.kubernetes.io/api-spec: https://petstore.swagger.io/v2/swagger.json  
+    kiali.io/api-type: rest
+    kiali.io/api-spec: https://petstore.swagger.io/v2/swagger.json  
 spec:
 ...
 ----

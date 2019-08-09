@@ -295,8 +295,8 @@ func NewConfig() (c *Config) {
 	c.Server.GzipEnabled = getDefaultBool(EnvServerGzipEnabled, true)
 
 	// API Documentation
-	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.kubernetes.io/api-type"))
-	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.kubernetes.io/api-spec"))
+	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.io/api-type"))
+	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.io/api-spec"))
 
 	// Prometheus configuration
 	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))

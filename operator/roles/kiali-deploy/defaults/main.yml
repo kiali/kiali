@@ -23,8 +23,8 @@ kiali_defaults:
 
   apidocs:
     annotations:
-      api_spec_annotation_name: "kiali.kubernetes.io/api-spec"
-      api_type_annotation_name: "kiali.kubernetes.io/api-type"
+      api_spec_annotation_name: "kiali.io/api-spec"
+      api_type_annotation_name: "kiali.io/api-type"
 
   auth:
     strategy: ""
