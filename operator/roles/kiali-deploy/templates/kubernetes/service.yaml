@@ -6,9 +6,6 @@ metadata:
   labels:
     app: kiali
     version: {{ kiali_vars.deployment.version_label }}
-  annotations:
-    {{ kiali_vars.apidocs.annotations.api_spec_annotation_name }}: {{ '' if kiali_vars.server.web_root == '/' else kiali_vars.server.web_root }}/swagger.json
-    {{ kiali_vars.apidocs.annotations.api_type_annotation_name }}: rest
 spec:
 {% if kiali_vars.deployment.service_type is defined %}
   type: {{ kiali_vars.deployment.service_type }}

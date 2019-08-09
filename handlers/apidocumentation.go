@@ -30,6 +30,6 @@ func handleApiDocumentationResponse(w http.ResponseWriter, apidoc string, err er
 		}
 	} else {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(apidoc))
+		_, _ = w.Write([]byte(apidoc))
 	}
 }
