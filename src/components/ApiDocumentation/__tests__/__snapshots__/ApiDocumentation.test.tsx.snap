@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ApiDocumentation renders when not known 1`] = `
+<div>
+  <rapi-doc
+    allow-authentication="false"
+    allow-try="false"
+    layout="column"
+    show-header="false"
+    show-info="false"
+    spec-url="api/namespaces/ns1/services/serv1/apispec"
+  />
+</div>
+`;

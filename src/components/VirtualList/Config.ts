@@ -4,9 +4,14 @@ import { WorkloadListItem } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { sortable } from '@patternfly/react-table';
 import { IstioConfigItem } from '../../types/IstioConfigList';
+import { serverConfig } from '../../config';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
+
+export const hasMissingSidecar = (r: SortResource): boolean => {
+  return r.namespace !== serverConfig.istioNamespace && !r.istioSidecar;
+};
 
 type ResourceType = {
   name: string;
@@ -50,8 +55,8 @@ const health: ResourceType = {
   transforms: [sortable]
 };
 
-const sidecar: ResourceType = {
-  name: 'Sidecar',
+const details: ResourceType = {
+  name: 'Details',
   param: 'is',
   column: 'Details',
   transforms: [sortable]
@@ -113,19 +118,19 @@ export type Resource = {
 
 const workloads: Resource = {
   name: 'workloads',
-  columns: [item, namespace, workloadType, health, sidecar, labelValidation],
+  columns: [item, namespace, workloadType, health, details, labelValidation],
   icon: 'W'
 };
 
 const applications: Resource = {
   name: 'applications',
-  columns: [item, namespace, health, sidecar],
+  columns: [item, namespace, health, details],
   icon: 'A'
 };
 
 const services: Resource = {
   name: 'services',
-  columns: [serviceItem, namespace, health, sidecar, configuration],
+  columns: [serviceItem, namespace, health, details, configuration],
   icon: 'S'
 };
 

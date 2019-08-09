@@ -1,0 +1,9 @@
+Notes on dependencies and resolutions
+-------------------------------------
+
+- Resolution "marked": "0.7.0"
+Was added to fix vulnerability https://app.snyk.io/vuln/SNYK-JS-MARKED-451341
+"marked" was added by "rapidoc", which we use for rendering API documentation of services.
+At this time, current version is 5.0.5, which pulls marked ^0.6.2 (0.6.3)
+The explicit dependency on "marked": "0.7.0", and its resolution, can be removed once fixed in rapidoc.
+

@@ -1,14 +1,16 @@
-import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { Link } from 'react-router-dom';
-import { IstioTypes, Resource, TResource } from './Config';
 import * as React from 'react';
-import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
+import { Link } from 'react-router-dom';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
+
+import MissingSidecar from '../MissingSidecar/MissingSidecar';
+import { IstioTypes, Resource, TResource, hasMissingSidecar } from './Config';
+import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
 import { ConfigIndicator } from '../ConfigValidation/ConfigIndicator';
 import { WorkloadListItem } from '../../types/Workload';
 import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
+import { ApiTypeIndicator } from '../ApiDocumentation/ApiTypeIndicator';
 
 // Links
 
@@ -35,11 +37,11 @@ const getIstioLink = (item: TResource) => {
 };
 
 // Cells
-export const Sidecar = (item: AppListItem | WorkloadListItem | ServiceListItem) => {
-  const istioSidecar = !item.istioSidecar;
+export const Details = (item: AppListItem | WorkloadListItem | ServiceListItem) => {
   return (
-    <td role="gridcell" key={'VirtuaItem_Sidecar_' + item.namespace + '_' + item.name}>
-      {istioSidecar && <MissingSidecar namespace={item.namespace} />}
+    <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
+      {hasMissingSidecar(item) && <MissingSidecar />}{' '}
+      {(item as ServiceListItem).apiType && <ApiTypeIndicator apiType={(item as ServiceListItem).apiType} />}
     </td>
   );
 };
