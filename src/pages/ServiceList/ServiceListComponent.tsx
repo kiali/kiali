@@ -159,11 +159,6 @@ class ServiceListComponent extends FilterComponent.Component<
     return validations[type][name];
   }
 
-  sortBy = (sortName: string, isAscending: boolean) => {
-    console.log(sortName);
-    console.log(isAscending);
-  };
-
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>

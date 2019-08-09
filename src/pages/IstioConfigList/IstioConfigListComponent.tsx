@@ -158,11 +158,6 @@ class IstioConfigListComponent extends FilterComponent.Component<
       });
   }
 
-  sortBy = (sortName: string, isAscending: boolean) => {
-    console.log(sortName);
-    console.log(isAscending);
-  };
-
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
