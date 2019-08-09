@@ -1,7 +1,6 @@
 import history, { URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import { ActiveFilter, FilterType } from '../../types/Filters';
-import { Pagination } from '../../types/Pagination';
 import { SortField } from '../../types/SortFilters';
 import * as MessageCenter from '../../utils/MessageCenter';
 
@@ -42,7 +41,6 @@ export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFilter
     urlParams.append(filterType.id, activeFilter.value);
   });
   // Resetting pagination when filters change
-  urlParams.delete(URLParam.PAGE);
   history.push(history.location.pathname + '?' + urlParams.toString());
   return cleanFilters;
 };
@@ -76,15 +74,6 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
   });
 
   return equalFilters;
-};
-
-export const currentPagination = (): Pagination => {
-  const urlParams = new URLSearchParams(history.location.search);
-  return {
-    page: HistoryManager.getNumericParam(URLParam.PAGE, urlParams) || 1,
-    perPage: HistoryManager.getNumericParam(URLParam.PER_PAGE, urlParams) || perPageOptions[1],
-    perPageOptions: perPageOptions
-  };
 };
 
 export const isCurrentSortAscending = (): boolean => {

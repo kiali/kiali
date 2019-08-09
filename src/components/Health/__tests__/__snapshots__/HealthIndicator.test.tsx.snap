@@ -98,7 +98,7 @@ exports[`HealthIndicator renders healthy 1`] = `
     ]
   }
 >
-  <OkIcon
+  <CheckCircleIcon
     className="icon-healthy"
     color="#3f9c35"
     noVerticalAlign={false}

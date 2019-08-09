@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Breadcrumb } from 'patternfly-react';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
+import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import AppListContainer from './AppListComponent';
 import * as AppListFilters from './FiltersAndSorts';
 
@@ -11,9 +11,8 @@ const AppListPage: React.SFC<{}> = () => {
         <Breadcrumb.Item active={true}>Applications</Breadcrumb.Item>
       </Breadcrumb>
       <AppListContainer
-        pagination={ListPagesHelper.currentPagination()}
-        currentSortField={ListPagesHelper.currentSortField(AppListFilters.sortFields)}
-        isSortAscending={ListPagesHelper.isCurrentSortAscending()}
+        currentSortField={FilterHelper.currentSortField(AppListFilters.sortFields)}
+        isSortAscending={FilterHelper.isCurrentSortAscending()}
       />
     </>
   );

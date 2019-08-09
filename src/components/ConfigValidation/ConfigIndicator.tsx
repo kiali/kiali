@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { ObjectValidation } from '../../types/IstioObjects';
 import { PfColors } from '../Pf/PfColors';
-import { Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { OverlayTrigger, Popover } from 'patternfly-react';
+import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { ErrorCircleOIcon, WarningTriangleIcon, CheckCircleIcon } from '@patternfly/react-icons';
+import { createIcon } from '../Health/Helper';
 import { style } from 'typestyle';
 
 interface Props {
@@ -11,34 +14,38 @@ interface Props {
   size?: string;
 }
 
-interface Validation {
+export interface Validation {
   name: string;
   color: string;
-  icon: string;
+  icon: IconType;
+  class: string;
 }
 
 export const NOT_VALID: Validation = {
   name: 'Not Valid',
   color: PfColors.Red100,
-  icon: 'error-circle-o'
+  icon: ErrorCircleOIcon,
+  class: 'health-icon'
 };
 
 export const WARNING: Validation = {
   name: 'Warning',
   color: PfColors.Gold100,
-  icon: 'warning-triangle-o'
+  icon: WarningTriangleIcon,
+  class: 'health-icon'
 };
 
 export const VALID: Validation = {
   name: 'Valid',
   color: PfColors.Green400,
-  icon: 'ok'
+  icon: CheckCircleIcon,
+  class: 'health-icon'
 };
 
 export const SMALL_SIZE = '12px';
 export const MEDIUM_SIZE = '18px';
 export const BIG_SIZE = '35px';
-export const INHERITED_SIZE = 'inherited';
+export const INHERITED_SIZE = 'inherit';
 
 const sizeMapper = new Map<string, string>([
   ['small', SMALL_SIZE],
@@ -151,15 +158,7 @@ export class ConfigIndicator extends React.PureComponent<Props, {}> {
           trigger={['hover', 'focus']}
           rootClose={false}
         >
-          <span style={{ color: this.getValid().color }}>
-            <Icon
-              type="pf"
-              name={this.getValid().icon}
-              style={{ fontSize: this.size() }}
-              className="health-icon"
-              tabIndex="0"
-            />
-          </span>
+          <span style={{ color: this.getValid().color }}>{createIcon(this.getValid(), 'sm')}</span>
         </OverlayTrigger>
       </span>
     );

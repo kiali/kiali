@@ -20,7 +20,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     compare: (a, b) => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
-        sortValue = a.workload.name.localeCompare(b.workload.name);
+        sortValue = a.name.localeCompare(b.name);
       }
       return sortValue;
     }
@@ -30,14 +30,14 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     title: 'Workload Name',
     isNumeric: false,
     param: 'wn',
-    compare: (a, b) => a.workload.name.localeCompare(b.workload.name)
+    compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
     id: 'workloadtype',
     title: 'Workload Type',
     isNumeric: false,
     param: 'wt',
-    compare: (a, b) => a.workload.type.localeCompare(b.workload.type)
+    compare: (a, b) => a.type.localeCompare(b.type)
   },
   {
     id: 'istiosidecar',
@@ -45,12 +45,12 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     isNumeric: false,
     param: 'is',
     compare: (a, b) => {
-      if (a.workload.istioSidecar && !b.workload.istioSidecar) {
+      if (a.istioSidecar && !b.istioSidecar) {
         return -1;
-      } else if (!a.workload.istioSidecar && b.workload.istioSidecar) {
+      } else if (!a.istioSidecar && b.istioSidecar) {
         return 1;
       } else {
-        return a.workload.name.localeCompare(b.workload.name);
+        return a.name.localeCompare(b.name);
       }
     }
   },
@@ -60,12 +60,12 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     isNumeric: false,
     param: 'al',
     compare: (a, b) => {
-      if (a.workload.appLabel && !b.workload.appLabel) {
+      if (a.appLabel && !b.appLabel) {
         return -1;
-      } else if (!a.workload.appLabel && b.workload.appLabel) {
+      } else if (!a.appLabel && b.appLabel) {
         return 1;
       } else {
-        return a.workload.name.localeCompare(b.workload.name);
+        return a.name.localeCompare(b.name);
       }
     }
   },
@@ -75,12 +75,39 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
     isNumeric: false,
     param: 'vl',
     compare: (a, b) => {
-      if (a.workload.versionLabel && !b.workload.versionLabel) {
+      if (a.versionLabel && !b.versionLabel) {
         return -1;
-      } else if (!a.workload.versionLabel && b.workload.versionLabel) {
+      } else if (!a.versionLabel && b.versionLabel) {
         return 1;
       } else {
-        return a.workload.name.localeCompare(b.workload.name);
+        return a.name.localeCompare(b.name);
+      }
+    }
+  },
+  {
+    id: 'labelValidation',
+    title: 'Label Validation',
+    isNumeric: false,
+    param: 'lb',
+    compare: (a, b) => {
+      if (a.versionLabel && a.appLabel && !(b.versionLabel && b.appLabel)) {
+        return -1;
+      } else if (!(a.versionLabel && a.appLabel) && (b.versionLabel && b.appLabel)) {
+        return 1;
+      } else {
+        if (a.appLabel && !b.appLabel) {
+          return 1;
+        } else if (!a.appLabel && b.appLabel) {
+          return -1;
+        } else {
+          if (a.versionLabel && !b.versionLabel) {
+            return 1;
+          } else if (!a.versionLabel && b.versionLabel) {
+            return -1;
+          } else {
+            return a.name.localeCompare(b.name);
+          }
+        }
       }
     }
   },
@@ -97,7 +124,7 @@ export const sortFields: GenericSortField<WorkloadListItem>[] = [
         // If both workloads have same health status, use error rate to determine order.
         const ratioA = getRequestErrorsStatus(a.health.requests.errorRatio).value;
         const ratioB = getRequestErrorsStatus(b.health.requests.errorRatio).value;
-        return ratioA === ratioB ? a.workload.name.localeCompare(b.workload.name) : ratioB - ratioA;
+        return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
       }
 
       return statusForB.priority - statusForA.priority;
@@ -201,7 +228,7 @@ const filterByType = (items: WorkloadListItem[], filter: string[]): WorkloadList
   if (filter && filter.length === 0) {
     return items;
   }
-  return items.filter(item => includeName(item.workload.type, filter));
+  return items.filter(item => includeName(item.type, filter));
 };
 
 const filterByLabel = (
@@ -212,13 +239,13 @@ const filterByLabel = (
 ): WorkloadListItem[] => {
   let result = items;
   if (istioSidecar !== undefined) {
-    result = result.filter(item => item.workload.istioSidecar === istioSidecar);
+    result = result.filter(item => item.istioSidecar === istioSidecar);
   }
   if (app !== undefined) {
-    result = result.filter(item => item.workload.appLabel === app);
+    result = result.filter(item => item.appLabel === app);
   }
   if (version !== undefined) {
-    result = result.filter(item => item.workload.versionLabel === version);
+    result = result.filter(item => item.versionLabel === version);
   }
   return result;
 };
@@ -227,7 +254,7 @@ const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListI
   if (names.length === 0) {
     return items;
   }
-  return items.filter(item => names.some(name => item.workload.name.includes(name)));
+  return items.filter(item => names.some(name => item.name.includes(name)));
 };
 
 export const filterBy = (

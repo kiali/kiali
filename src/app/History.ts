@@ -18,8 +18,6 @@ export enum URLParam {
   GRAPH_TYPE = 'graphType',
   NAMESPACES = 'namespaces',
   OVERVIEW_TYPE = 'otype',
-  PAGE = 'page',
-  PER_PAGE = 'perPage',
   POLL_INTERVAL = 'pi',
   QUANTILES = 'quantiles',
   REPORTER = 'reporter',

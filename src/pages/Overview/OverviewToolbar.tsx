@@ -7,7 +7,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import history, { HistoryManager, URLParam } from '../../app/History';
 import { StatefulFilters } from '../../components/Filters/StatefulFilters';
-import * as ListPagesHelper from '../../components/ListPage/ListPagesHelper';
+import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import RefreshContainer from '../../components/Refresh/Refresh';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
@@ -71,9 +71,9 @@ export class OverviewToolbar extends React.Component<Props, State> {
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
     this.state = {
-      isSortAscending: ListPagesHelper.isCurrentSortAscending(),
+      isSortAscending: FilterHelper.isCurrentSortAscending(),
       overviewType: OverviewToolbar.currentOverviewType(),
-      sortField: ListPagesHelper.currentSortField(Sorts.sortFields)
+      sortField: FilterHelper.currentSortField(Sorts.sortFields)
     };
   }
 
@@ -81,8 +81,8 @@ export class OverviewToolbar extends React.Component<Props, State> {
     // ensure redux state and URL are aligned
     HistoryManager.setParam(URLParam.POLL_INTERVAL, String(this.props.refreshInterval));
 
-    const urlSortField = ListPagesHelper.currentSortField(Sorts.sortFields);
-    const urlIsSortAscending = ListPagesHelper.isCurrentSortAscending();
+    const urlSortField = FilterHelper.currentSortField(Sorts.sortFields);
+    const urlIsSortAscending = FilterHelper.isCurrentSortAscending();
     if (!this.paramsAreSynced(urlSortField, urlIsSortAscending) || this.props.duration !== prevProps.duration) {
       this.setState({
         sortField: urlSortField,

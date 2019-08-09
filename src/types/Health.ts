@@ -1,4 +1,4 @@
-import { ErrorCircleOIcon, WarningTriangleIcon, OkIcon, UnknownIcon } from '@patternfly/react-icons';
+import { ErrorCircleOIcon, WarningTriangleIcon, CheckCircleIcon, UnknownIcon } from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { PfColors } from '../components/Pf/PfColors';
 import { getName } from '../utils/RateIntervals';
@@ -54,7 +54,7 @@ export const HEALTHY: Status = {
   name: 'Healthy',
   color: PfColors.Green400,
   priority: 1,
-  icon: OkIcon,
+  icon: CheckCircleIcon,
   class: 'icon-healthy'
 };
 export const NA: Status = {
