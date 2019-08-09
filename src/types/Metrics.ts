@@ -27,4 +27,3 @@ export enum MetricsObjectTypes {
   WORKLOAD,
   APP
 }
-

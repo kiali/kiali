@@ -9,6 +9,7 @@ import {
   getFilterSelectedValues,
   filterByHealth
 } from '../../components/Filters/CommonFilters';
+import { hasMissingSidecar } from '../../components/VirtualList/Config';
 
 export const sortFields: GenericSortField<ServiceListItem>[] = [
   {
@@ -32,18 +33,24 @@ export const sortFields: GenericSortField<ServiceListItem>[] = [
     compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
-    id: 'istiosidecar',
-    title: 'Istio Sidecar',
+    id: 'details',
+    title: 'Details',
     isNumeric: false,
     param: 'is',
     compare: (a, b) => {
-      if (a.istioSidecar && !b.istioSidecar) {
-        return -1;
-      } else if (!a.istioSidecar && b.istioSidecar) {
-        return 1;
-      } else {
-        return a.name.localeCompare(b.name);
+      // First sort by missing sidecar
+      const aSC = hasMissingSidecar(a) ? 1 : 0;
+      const bSC = hasMissingSidecar(b) ? 1 : 0;
+      if (aSC !== bSC) {
+        return aSC - bSC;
       }
+      // Then by API type
+      const cmp = (a.apiType || '').localeCompare(b.apiType || '');
+      if (cmp !== 0) {
+        return cmp;
+      }
+      // Finally by name
+      return a.name.localeCompare(b.name);
     }
   },
   {

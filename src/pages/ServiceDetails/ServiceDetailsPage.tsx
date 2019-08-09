@@ -358,9 +358,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                     </>
                   </NavItem>
                 ))}
-              { this.state.serviceDetailsInfo.apiDocumentation && this.state.serviceDetailsInfo.apiDocumentation.hasSpec && (
-                <NavItem eventKey="api">API Doc</NavItem>
-              )}  
+              {this.state.serviceDetailsInfo.apiDocumentation &&
+                this.state.serviceDetailsInfo.apiDocumentation.hasSpec && <NavItem eventKey="api">API Doc</NavItem>}
             </Nav>
             <TabContent>
               <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
@@ -404,15 +403,16 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
                   />
                 </TabPane>
               )}
-              {this.state.serviceDetailsInfo.apiDocumentation && this.state.serviceDetailsInfo.apiDocumentation.hasSpec && (
-                <TabPane eventKey="api" mountOnEnter={true} unmountOnExit={true}>
-                  <ApiDocumentation
-                    apiType={this.state.serviceDetailsInfo.apiDocumentation.type}
-                    namespace={this.props.match.params.namespace}
-                    service={this.props.match.params.service}
-                  />
-                </TabPane>
-              )}
+              {this.state.serviceDetailsInfo.apiDocumentation &&
+                this.state.serviceDetailsInfo.apiDocumentation.hasSpec && (
+                  <TabPane eventKey="api" mountOnEnter={true} unmountOnExit={true}>
+                    <ApiDocumentation
+                      apiType={this.state.serviceDetailsInfo.apiDocumentation.type}
+                      namespace={this.props.match.params.namespace}
+                      service={this.props.match.params.service}
+                    />
+                  </TabPane>
+                )}
             </TabContent>
           </div>
         </TabContainer>

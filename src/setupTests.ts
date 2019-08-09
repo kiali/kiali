@@ -6,7 +6,7 @@ var JSDOM = require('jsdom').JSDOM;
 
 global.window = new JSDOM().window;
 window.SVGPathElement = function() {};
-window.customElements = function () {};
-window.customElements.define = function () {};
+window.customElements = function() {};
+window.customElements.define = function() {};
 
 Enzyme.configure({ adapter: new Adapter() });

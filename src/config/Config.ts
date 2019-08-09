@@ -98,7 +98,8 @@ const conf = {
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/graph`,
-      serviceApiDocumentation: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/apispec`,
+      serviceApiDocumentation: (namespace: string, service: string) =>
+        `api/namespaces/${namespace}/services/${service}/apispec`,
       serviceHealth: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/health`,
       serviceMetrics: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}/metrics`,
       serviceDashboard: (namespace: string, service: string) =>

@@ -12,7 +12,7 @@ interface Props {
 const nameToSource = new Map<string, string>([
   ['grpc', apiGrpcIcon],
   ['rest', apiRestIcon],
-  ['graphql', apiGraphqlIcon],
+  ['graphql', apiGraphqlIcon]
 ]);
 
 const iconStyle = style({
@@ -22,22 +22,12 @@ const iconStyle = style({
 });
 
 export class ApiTypeIndicator extends React.Component<Props> {
-
   render() {
     return this.props.apiType ? this.renderIcon(this.props.apiType) : <span />;
   }
 
   renderIcon(apiType: string) {
     let iconToRender = nameToSource.get(this.props.apiType);
-    return iconToRender ? (
-      <img
-        className={iconStyle}
-        src={iconToRender}
-        alt={apiType}
-      />
-    ) : (
-      <span />
-    )
+    return iconToRender ? <img className={iconStyle} src={iconToRender} alt={apiType} /> : <span />;
   }
-
 }
