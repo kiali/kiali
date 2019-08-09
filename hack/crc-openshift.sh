@@ -12,6 +12,8 @@
 #   delete: deletes the OpenShift environment removing persisted data
 #   status: outputs the current status of the OpenShift environment
 #      ssh: logs into the CRC VM via ssh so you can probe in the VM
+#   routes: outputs all known route URLs
+# services: outputs all known service endpoints (excluding internal openshift services)
 #
 # This script accepts several options - see --help for details.
 #
@@ -166,6 +168,61 @@ check_insecure_registry() {
   fi
 }
 
+get_route_url() {
+  # takes as input "routeName:routeNamespace"
+  local routename=$(echo ${1} | cut -d: -f1)
+  local routenamespace=$(echo ${1} | cut -d: -f2)
+  local protocol="https"
+  local termination=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=T:spec.tls.termination --no-headers)
+  if [ "${termination}" == "<none>" ]; then
+    protocol="http"
+  fi
+  local host=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=H:spec.host --no-headers)
+
+  ROUTE_URL="${protocol}://${host}"
+}
+
+print_all_route_urls() {
+  allnames_namespaces="$(${CRC_OC} get routes --all-namespaces --no-headers -o custom-columns=NAME:.metadata.name,NS:.metadata.namespace | sed ${SEDOPTIONS} 's/  */:/g')"
+  for n in ${allnames_namespaces}
+  do
+    get_route_url ${n}
+    printf '=====\n%s\n  %s\n' "${n}" "${ROUTE_URL}"
+  done
+}
+
+get_service_endpoint() {
+  # takes as input "serviceName:serviceNamespace"
+  local servicename=$(echo ${1} | cut -d: -f1)
+  local servicenamespace=$(echo ${1} | cut -d: -f2)
+  local data="$(${CRC_OC} get service ${servicename} -n ${servicenamespace} -o custom-columns=I:spec.clusterIP,T:spec.type,NP:spec.ports[*].nodePort,P:spec.ports[*].port --no-headers | sed ${SEDOPTIONS} 's/  */:/g')"
+  local clusterIP=$(echo ${data} | cut -d: -f1)
+  local servicetype=$(echo ${data} | cut -d: -f2)
+  local nodeports=$(echo ${data} | cut -d: -f3)
+  local ports=$(echo ${data} | cut -d: -f4)
+  local host="$(${CRC_COMMAND} ip)"
+  # really only NodePort services are exposed outside of the CRC VM, so we just report those
+  if [ ${servicetype} == "NodePort" ]; then
+    SERVICE_ENDPOINT="${host}:${nodeports}"
+  else
+    if [ "${nodeports}" == "<none>" ]; then
+      SERVICE_ENDPOINT="inaccessible - (${servicetype}) ${clusterIP}, ports=${ports}"
+    else
+      SERVICE_ENDPOINT="inaccessible - (${servicetype}) ${clusterIP}, ports=${nodeports}"
+    fi
+  fi
+}
+
+print_all_service_endpoints() {
+  # we do filter out services from the internal openshift* and default namespaces
+  allnames_namespaces="$(${CRC_OC} get services --all-namespaces --no-headers -o custom-columns=NAME:.metadata.name,NS:.metadata.namespace | sed ${SEDOPTIONS} 's/  */:/g' | grep -v ':openshift*' | grep -v ':default')"
+  for n in ${allnames_namespaces}
+  do
+    get_service_endpoint ${n}
+    printf '=====\n%s\n  %s\n' "${n}" "${SERVICE_ENDPOINT}"
+  done
+}
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
@@ -218,6 +275,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     ssh)
       _CMD="ssh"
+      shift
+      ;;
+    routes)
+      _CMD="routes"
+      shift
+      ;;
+    services)
+      _CMD="services"
       shift
       ;;
     -a|--address)
@@ -405,7 +470,16 @@ Valid options:
   -v|--verbose
       Enable logging of debug messages from this script.
 
-The command must be either: start, stop, delete, status, or ssh
+The command must be either: start, stop, delete, status, ssh, routes, services:
+
+  * start: Starts the CRC VM with OpenShift and optionally installs Maistra/Istio and Kiali.
+  * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
+  * delete: Stops the CRC VM and removes all persistent data. 'start' will then bring up a clean CRC VM.
+  * status: Information about the CRC VM and the OpenShift cluster running inside it.
+  * ssh: Provides a command line prompt with root access inside the CRC VM.
+  * routes: Outputs URLs for all known routes.
+  * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
+
 HELPMSG
       exit 1
       ;;
@@ -913,7 +987,15 @@ elif [ "$_CMD" = "status" ];then
 elif [ "$_CMD" = "ssh" ];then
 
   infomsg "Logging into the CRC VM..."
-  ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@192.168.130.11
+  ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@$(${CRC_COMMAND} ip)
+
+elif [ "$_CMD" = "routes" ];then
+
+  print_all_route_urls
+
+elif [ "$_CMD" = "services" ];then
+
+  print_all_service_endpoints
 
 else
   infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh"
