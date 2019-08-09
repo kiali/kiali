@@ -82,6 +82,7 @@
     "json-beautify": "1.0.1",
     "lodash": "4.17.13",
     "logfmt": "1.2.1",
+    "marked": "0.7.0",
     "moment": "2.24.0",
     "patternfly": "3.59.3",
     "patternfly-react": "2.31.1",
@@ -144,7 +145,8 @@
     "handlebars": "4.0.14",
     "js-yaml": "3.13.1",
     "hoist-non-react-statics": "3.3.0",
-    "caniuse-lite": "1.0.30000974"
+    "caniuse-lite": "1.0.30000974",
+    "marked": "0.7.0"
   },
   "engines": {
     "node": ">=10.0.0 && <11",
