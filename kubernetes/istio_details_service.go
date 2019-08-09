@@ -158,7 +158,6 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 	}
 
 	rbacResources := map[string]bool{}
-	// TODO Update with Maistra API
 	resourceListRaw, err := in.k8s.RESTClient().Get().AbsPath("/apis/rbac.istio.io/v1alpha1").Do().Raw()
 	if err == nil {
 		resourceList := meta_v1.APIResourceList{}
