@@ -112,7 +112,6 @@ func TestResponseTime(t *testing.T) {
 	duration, _ := time.ParseDuration("60s")
 	appender := ResponseTimeAppender{
 		GraphType:          graph.GraphTypeVersionedApp,
-		IncludeIstio:       false,
 		InjectServiceNodes: true,
 		Namespaces: map[string]graph.NamespaceInfo{
 			"bookinfo": {

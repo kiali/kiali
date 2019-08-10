@@ -38,13 +38,11 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, a graph.Appen
 	return nil
 }
 
-// GetIstioNamespaces returns the subset of Istio namespace names from the provided namespaces
-func GetIstioNamespaces(namespaceInfos map[string]graph.NamespaceInfo) []string {
-	istioNamespaces := []string{}
-	for _, ni := range namespaceInfos {
-		if config.IsIstioNamespace(ni.Name) {
-			istioNamespaces = append(istioNamespaces, ni.Name)
-		}
+// getIstioNamespaces returns all Istio namespaces, less the exclusions
+func getIstioNamespaces(excludeMap graph.NamespaceInfoMap) []string {
+	var exclude []string
+	if excludeMap != nil {
+		exclude = config.GetIstioNamespaces(excludeMap.GetIstioNamespaces())
 	}
-	return istioNamespaces
+	return config.GetIstioNamespaces(exclude)
 }

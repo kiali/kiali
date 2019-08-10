@@ -594,6 +594,26 @@ func getAuthFromEnv(prefix string) Auth {
 	return auth
 }
 
+// GetIstioNamespaces returns all Istio namespaces, less the exclusions
+func GetIstioNamespaces(exclude []string) []string {
+	excludeMap := map[string]bool{}
+	if exclude != nil {
+		for _, e := range exclude {
+			excludeMap[e] = true
+		}
+	}
+	result := []string{}
+	if _, found := excludeMap[configuration.IstioNamespace]; !found {
+		result = append(result, configuration.IstioNamespace)
+	}
+	for _, ns := range configuration.IstioComponentNamespaces {
+		if _, found := excludeMap[ns]; !found {
+			result = append(result, ns)
+		}
+	}
+	return result
+}
+
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
 func IsIstioNamespace(namespace string) bool {
 	if namespace == configuration.IstioNamespace {

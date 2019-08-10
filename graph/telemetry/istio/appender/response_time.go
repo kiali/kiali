@@ -26,7 +26,7 @@ const (
 type ResponseTimeAppender struct {
 	GraphType          string
 	InjectServiceNodes bool
-	Namespaces         map[string]graph.NamespaceInfo
+	Namespaces         graph.NamespaceInfoMap
 	Quantile           float64
 	QueryTime          int64 // unix time in seconds
 }
@@ -81,16 +81,23 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 
-	// 2) query for responseTime originating from a workload outside of the namespace. Exclude any "unknown" source telemetry (an unusual corner case)
+	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
 	reporter := "source"
+	sourceWorkloadQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
 	if isIstio {
+		// also exclude any non-requested istio namespaces
 		reporter = "destination"
+		excludedIstioNamespaces := config.GetIstioNamespaces(a.Namespaces.GetIstioNamespaces())
+		if len(excludedIstioNamespaces) > 0 {
+			excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
+			sourceWorkloadQuery = fmt.Sprintf(`source_workload_namespace!~"%s|%s"`, namespace, excludedIstioRegex)
+		}
 	}
-	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",source_workload_namespace!="%v",source_workload!="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		reporter,
-		namespace,
+		sourceWorkloadQuery,
 		namespace,
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
@@ -112,7 +119,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	// Query3 misses istio-to-istio traffic, which is only reported destination-side, we must perform an additional query
 	if isIstio {
 		// find traffic from the source istio namespace to any of the requested istio namespaces
-		istioNamespacesRegex := strings.Join(GetIstioNamespaces(a.Namespaces), "|")
+		istioNamespacesRegex := strings.Join(getIstioNamespaces(a.Namespaces), "|")
 
 		// 3a) supplemental query for istio-to-istio traffic
 		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload_namespace="%s",destination_service_namespace=~"%s",response_code=~"%s"}[%vs])) by (%s))`,

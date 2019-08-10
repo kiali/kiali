@@ -7,7 +7,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
@@ -55,7 +54,9 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	duration := a.Namespaces[namespace].Duration
 
 	// query prometheus for mutual_tls info in two queries (use dest telemetry because it reports the security policy):
-	// 1) query for requests originating from a workload outside the namespace
+	// 1) query for requests originating from a workload outside the namespace. This may include unnecessary istio
+	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
+	//    traffic will be ignored because it won't map to the trafficMap.
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy"
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",
@@ -65,16 +66,14 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		groupBy)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
-	// 2) query for requests originating from a workload inside of the namespace
-	istioCondition := ""
-	if !config.IsIstioNamespace(namespace) {
-		istioNamespacesRegex := strings.Join(GetIstioNamespaces(a.Namespaces), "|")
-		istioCondition = fmt.Sprintf(`,destination_service_namespace!~"%s"`, istioNamespacesRegex)
-	}
-	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
+	// 2) query for requests originating from a workload inside of the namespace, exclude traffic to non-requested
+	//    istio namespaces. (note, do we need to ease this restriction to ensure we don't miss egressgateway traffic?)
+	excludedIstioNamespaces := getIstioNamespaces(a.Namespaces)
+	excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
+	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v",destination_service_namespace!~"%s"}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",
 		namespace,
-		istioCondition,
+		excludedIstioRegex,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
