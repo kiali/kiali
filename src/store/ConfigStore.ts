@@ -50,7 +50,7 @@ const userSettingsPersitFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph', 'userSettings', 'messageCenter'],
+  whitelist: ['namespaces', 'jaegerState', 'statusState', 'graph', 'userSettings'],
   transforms: [namespacePersistFilter, graphPersistFilter, userSettingsPersitFilter]
 };
 
