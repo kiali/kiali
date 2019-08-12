@@ -176,6 +176,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(namespace string, o
 		// Validations on QuotaSpecBindings are not yet in place
 	case ClusterRbacConfigs:
 		// Validations on ClusterRbacConfigs are not yet in place
+	case ServiceMeshRbacConfigs:
+		// Validations on ServiceMeshRbacConfigs are not yet in place
 	case RbacConfigs:
 		// Validations on RbacConfigs are not yet in place
 	case Sidecars:
