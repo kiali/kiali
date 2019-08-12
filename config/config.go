@@ -264,7 +264,7 @@ type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
 }
 
-// IstioComponentNamespaces holds the component-specific Istio namespaces. Any mising component
+// IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
 // defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
 type IstioComponentNamespaces map[string]string
 
@@ -596,7 +596,6 @@ func getAuthFromEnv(prefix string) Auth {
 
 // GetIstioNamespaces returns all Istio namespaces, less the exclusions
 func GetIstioNamespaces(exclude []string) []string {
-	fmt.Printf("!!! GetIstioNamespaces(exclude=%v)\n", exclude)
 	excludeMap := map[string]bool{}
 	if exclude != nil {
 		for _, e := range exclude {
@@ -605,16 +604,13 @@ func GetIstioNamespaces(exclude []string) []string {
 	}
 	result := []string{}
 	if _, found := excludeMap[configuration.IstioNamespace]; !found {
-		fmt.Printf("!!! adding configuration.IstioNamespace [%s]\n", configuration.IstioNamespace)
 		result = append(result, configuration.IstioNamespace)
 	}
 	for _, ns := range configuration.IstioComponentNamespaces {
 		if _, found := excludeMap[ns]; !found {
-			fmt.Printf("!!! adding istio namespace [%s]\n", ns)
 			result = append(result, ns)
 		}
 	}
-	fmt.Printf("!!! GetIstioNamespaces return=%v\n", result)
 	return result
 }
 

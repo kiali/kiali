@@ -71,9 +71,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	destinationWorkloadNamespaceQuery := ""
 	excludedIstioNamespaces := getIstioNamespaces(a.Namespaces)
 	if len(excludedIstioNamespaces) > 0 {
-		fmt.Printf("!!! ExcludedIstioNamespaces=%s\n", excludedIstioNamespaces)
 		excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
-		fmt.Printf("!!! ExcludedIstioRegex=%s\n", excludedIstioRegex)
 		destinationWorkloadNamespaceQuery = fmt.Sprintf(`,destination_service_namespace!~"%s"`, excludedIstioRegex)
 	}
 	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
