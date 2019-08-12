@@ -68,12 +68,18 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 
 	// 2) query for requests originating from a workload inside of the namespace, exclude traffic to non-requested
 	//    istio namespaces. (note, do we need to ease this restriction to ensure we don't miss egressgateway traffic?)
+	destinationWorkloadNamespaceQuery := ""
 	excludedIstioNamespaces := getIstioNamespaces(a.Namespaces)
-	excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
-	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v",destination_service_namespace!~"%s"}[%vs]) > 0) by (%s)`,
+	if len(excludedIstioNamespaces) > 0 {
+		fmt.Printf("!!! ExcludedIstioNamespaces=%s\n", excludedIstioNamespaces)
+		excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
+		fmt.Printf("!!! ExcludedIstioRegex=%s\n", excludedIstioRegex)
+		destinationWorkloadNamespaceQuery = fmt.Sprintf(`,destination_service_namespace!~"%s"`, excludedIstioRegex)
+	}
+	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
 		"istio_requests_total",
 		namespace,
-		excludedIstioRegex,
+		destinationWorkloadNamespaceQuery,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)

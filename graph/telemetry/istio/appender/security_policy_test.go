@@ -69,10 +69,11 @@ func TestSecurityPolicy(t *testing.T) {
 	appender := SecurityPolicyAppender{
 		GraphType:          graph.GraphTypeVersionedApp,
 		InjectServiceNodes: false,
-		Namespaces: map[string]graph.NamespaceInfo{
-			"bookinfo": {
+		Namespaces: graph.NamespaceInfoMap{
+			"bookinfo": graph.NamespaceInfo{
 				Name:     "bookinfo",
 				Duration: duration,
+				IsIstio:  false,
 			},
 		},
 		QueryTime: time.Now().Unix(),

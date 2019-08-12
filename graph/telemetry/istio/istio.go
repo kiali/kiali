@@ -268,20 +268,20 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 
 	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
 	reporter := "source"
-	sourceWorkloadQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
+	sourceWorkloadNamespaceQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
 	if isIstioNamespace {
 		// also exclude any non-requested istio namespaces
 		reporter = "destination"
 		excludedIstioNamespaces := config.GetIstioNamespaces(o.Namespaces.GetIstioNamespaces())
 		if len(excludedIstioNamespaces) > 0 {
 			excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
-			sourceWorkloadQuery = fmt.Sprintf(`source_workload_namespace!~"%s|%s"`, namespace, excludedIstioRegex)
+			sourceWorkloadNamespaceQuery = fmt.Sprintf(`source_workload_namespace!~"%s|%s"`, namespace, excludedIstioRegex)
 		}
 	}
 	query = fmt.Sprintf(`sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		reporter,
-		sourceWorkloadQuery,
+		sourceWorkloadNamespaceQuery,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)

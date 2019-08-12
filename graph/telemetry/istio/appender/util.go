@@ -40,9 +40,8 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API, a graph.Appen
 
 // getIstioNamespaces returns all Istio namespaces, less the exclusions
 func getIstioNamespaces(excludeMap graph.NamespaceInfoMap) []string {
-	var exclude []string
 	if excludeMap != nil {
-		exclude = config.GetIstioNamespaces(excludeMap.GetIstioNamespaces())
+		return config.GetIstioNamespaces(excludeMap.GetIstioNamespaces())
 	}
-	return config.GetIstioNamespaces(exclude)
+	return config.GetIstioNamespaces(nil)
 }
