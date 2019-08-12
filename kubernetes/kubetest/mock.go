@@ -326,12 +326,32 @@ func (o *K8SClientMock) GetMeshPolicy(namespace string, policyName string) (kube
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
+func (o *K8SClientMock) GetServiceMeshPolicies(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetServiceMeshPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
 func (o *K8SClientMock) GetClusterRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
 func (o *K8SClientMock) GetClusterRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetServiceMeshRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
+	args := o.Called(namespace)
+	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
+}
+
+func (o *K8SClientMock) GetServiceMeshRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
 	args := o.Called(namespace)
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
@@ -372,6 +392,11 @@ func (o *K8SClientMock) GetAuthorizationDetails(namespace string) (*kubernetes.R
 }
 
 func (o *K8SClientMock) IsOpenShift() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsMaistraApi() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

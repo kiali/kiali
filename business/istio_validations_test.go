@@ -73,6 +73,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
 	k8s.On("GetNamespaces").Return(fakeNamespaces(), nil)
@@ -102,7 +103,7 @@ func mockCombinedValidationService(istioObjects *kubernetes.IstioDetails, servic
 	k8s.On("GetMeshPolicies", mock.AnythingOfType("string")).Return(fakeMeshPolicies(), nil)
 	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakePolicies(), nil)
 	k8s.On("IsOpenShift").Return(false)
-
+	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeCombinedIstioDetails().Gateways, nil)

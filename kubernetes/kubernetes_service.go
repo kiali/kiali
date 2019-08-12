@@ -102,6 +102,19 @@ func (in *IstioClient) IsOpenShift() bool {
 	return *in.isOpenShift
 }
 
+func (in *IstioClient) IsMaistraApi() bool {
+	if in.isMaistraApi == nil {
+		isMaistraApi := false
+		// Note that if authentication.maistra.io is present, rbac.maistra.io will be present too
+		_, err := in.k8s.RESTClient().Get().AbsPath("/apis/authentication.maistra.io").Do().Raw()
+		if err == nil {
+			isMaistraApi = true
+		}
+		in.isMaistraApi = &isMaistraApi
+	}
+	return *in.isMaistraApi
+}
+
 // GetServices returns a list of services for a given namespace.
 // If selectorLabels is defined the list of services is filtered for those that matches Services selector labels.
 // It returns an error on any problem.

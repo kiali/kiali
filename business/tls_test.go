@@ -18,6 +18,7 @@ func TestCorrectMeshPolicy(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -31,6 +32,7 @@ func TestMeshPolicyWithoutNamespaces(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{})
@@ -44,6 +46,7 @@ func TestPolicyWithWrongName(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -57,6 +60,7 @@ func TestPolicyWithPermissiveMode(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakePermissiveMeshPolicy("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -70,6 +74,7 @@ func TestPolicyWithStrictMode(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakeStrictMeshPolicy("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -115,6 +120,7 @@ func TestWithoutMeshPolicy(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -128,6 +134,7 @@ func TestMeshPolicyWithTargets(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
@@ -218,6 +225,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
@@ -235,6 +243,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
@@ -252,6 +261,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
 	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
 	status, err := (tlsService).MeshWidemTLSStatus([]string{"test"})
@@ -336,6 +346,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects").Return(fakeProjects(), nil)
 	k8s.On("GetDestinationRules", "foo", "").Return(drs, nil)
 	k8s.On("GetDestinationRules", "bookinfo", "").Return([]kubernetes.IstioObject{}, nil)
@@ -353,6 +364,7 @@ func testNamespaceScenario(exStatus string, drs []kubernetes.IstioObject, ps []k
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetProjects").Return(fakeProjects(), nil)
 	k8s.On("GetDestinationRules", "bookinfo", "").Return(drs, nil)
 	k8s.On("GetDestinationRules", "foo", "").Return([]kubernetes.IstioObject{}, nil)

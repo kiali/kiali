@@ -6,18 +6,20 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
+type MeshPolicySpec struct {
+	Targets          interface{} `json:"targets"`
+	Peers            interface{} `json:"peers"`
+	PeerIsOptional   interface{} `json:"peerIsOptional"`
+	Origins          interface{} `json:"origins"`
+	OriginIsOptional interface{} `json:"originIsOptional"`
+	PrincipalBinding interface{} `json:"principalBinding"`
+}
+
 type MeshPolicies []MeshPolicy
 type MeshPolicy struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
-	Spec     struct {
-		Targets          interface{} `json:"targets"`
-		Peers            interface{} `json:"peers"`
-		PeerIsOptional   interface{} `json:"peerIsOptional"`
-		Origins          interface{} `json:"origins"`
-		OriginIsOptional interface{} `json:"originIsOptional"`
-		PrincipalBinding interface{} `json:"principalBinding"`
-	} `json:"spec"`
+	Spec     MeshPolicySpec     `json:"spec"`
 }
 
 func (mps *MeshPolicies) Parse(meshPolicies []kubernetes.IstioObject) {
@@ -37,4 +39,33 @@ func (mp *MeshPolicy) Parse(meshPolicy kubernetes.IstioObject) {
 	mp.Spec.Origins = meshPolicy.GetSpec()["origins"]
 	mp.Spec.OriginIsOptional = meshPolicy.GetSpec()["originIsOptinal"]
 	mp.Spec.PrincipalBinding = meshPolicy.GetSpec()["principalBinding"]
+}
+
+// ServiceMeshPolicy is a clone of MeshPolicy used by Maistra for multitenancy scenarios
+// Used in the same file for easy maintenance
+
+type ServiceMeshPolicies []ServiceMeshPolicy
+type ServiceMeshPolicy struct {
+	meta_v1.TypeMeta
+	Metadata meta_v1.ObjectMeta `json:"metadata"`
+	Spec     MeshPolicySpec     `json:"spec"`
+}
+
+func (mps *ServiceMeshPolicies) Parse(smPolicies []kubernetes.IstioObject) {
+	for _, qs := range smPolicies {
+		smPolicy := ServiceMeshPolicy{}
+		smPolicy.Parse(qs)
+		*mps = append(*mps, smPolicy)
+	}
+}
+
+func (mp *ServiceMeshPolicy) Parse(smPolicy kubernetes.IstioObject) {
+	mp.TypeMeta = smPolicy.GetTypeMeta()
+	mp.Metadata = smPolicy.GetObjectMeta()
+	mp.Spec.Targets = smPolicy.GetSpec()["targets"]
+	mp.Spec.Peers = smPolicy.GetSpec()["peers"]
+	mp.Spec.PeerIsOptional = smPolicy.GetSpec()["peersIsOptional"]
+	mp.Spec.Origins = smPolicy.GetSpec()["origins"]
+	mp.Spec.OriginIsOptional = smPolicy.GetSpec()["originIsOptinal"]
+	mp.Spec.PrincipalBinding = smPolicy.GetSpec()["principalBinding"]
 }
