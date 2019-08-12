@@ -134,12 +134,20 @@ export const istioTypeFilter: FilterType = {
       title: 'MeshPolicy'
     },
     {
+      id: 'ServiceMeshPolicy',
+      title: 'ServiceMeshPolicy'
+    },
+    {
       id: 'ClusterRbacConfig',
       title: 'ClusterRbacConfig'
     },
     {
       id: 'RbacConfig',
       title: 'RbacConfig'
+    },
+    {
+      id: 'ServiceMeshRbacConfig',
+      title: 'ServiceMeshRbacConfig'
     },
     {
       id: 'Sidecar',

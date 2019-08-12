@@ -102,8 +102,10 @@ export const IstioTypes = {
   quotaspecbinding: { name: 'QuotaSpecBinding', icon: 'QSB' },
   policy: { name: 'Policy', icon: 'P' },
   meshpolicy: { name: 'MeshPolicy', icon: 'MP' },
+  servicemeshpolicy: { name: 'ServiceMeshPolicy', icon: 'SMP' },
   clusterrbacconfig: { name: 'ClusterRbacConfig', icon: 'CRC' },
   rbacconfig: { name: 'RbacConfig', icon: 'RC' },
+  servicemeshrbacconfig: { name: 'ServiceMeshRbacConfig', icon: 'SRC' },
   sidecar: { name: 'Sidecar', icon: 'S' },
   servicerole: { name: 'ServiceRole', icon: 'SR' },
   servicerolebinding: { name: 'ServiceRoleBinding', icon: 'SRB' }

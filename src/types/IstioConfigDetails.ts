@@ -17,7 +17,8 @@ import {
   ServiceRole,
   ServiceRoleBinding,
   ClusterRbacConfig,
-  Sidecar
+  Sidecar,
+  ServiceMeshRbacConfig
 } from './IstioObjects';
 
 export interface IstioConfigId {
@@ -41,8 +42,10 @@ export interface IstioConfigDetails {
   quotaSpecBinding: QuotaSpecBinding;
   policy: Policy;
   meshPolicy: Policy;
+  serviceMeshPolicy: Policy;
   clusterRbacConfig: ClusterRbacConfig;
   rbacConfig: RbacConfig;
+  serviceMeshRbacConfig: ServiceMeshRbacConfig;
   serviceRole: ServiceRole;
   serviceRoleBinding: ServiceRoleBinding;
   permissions: ResourcePermissions;
