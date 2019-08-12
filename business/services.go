@@ -143,14 +143,14 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 
 	resp, err2 := http.Get(apiSpecPath)
 	if err2 != nil {
-		log.Errorf("GET error: %v", err)
+		log.Errorf("API Documentation error while fetching spec URL (%s): %v", apiSpecPath, err)
 		return "", errors.NewInternalError(err2)
 	}
 	defer resp.Body.Close()
 
 	data, err3 := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		log.Errorf("Status error: %v", resp.StatusCode)
+		log.Errorf("API Documentation status error: %d", resp.StatusCode)
 		qualifiedResource := schema.GroupResource{
 			Group:    "",
 			Resource: "",
@@ -159,7 +159,7 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 	}
 
 	if err3 != nil {
-		log.Errorf("Read body: %v", err)
+		log.Errorf("API Documentation error while reading body: %v", err)
 		return "", errors.NewInternalError(err3)
 	}
 
