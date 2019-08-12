@@ -73,6 +73,7 @@ var ObjectTypeSingular = map[string]string{
 	"quotaspecs":          "quotaspec",
 	"quotaspecbindings":   "quotaspecbinding",
 	"meshpolicies":        "meshpolicy",
+	"servicemeshpolicies": "servicemeshpolicy",
 	"policies":            "policy",
 	"serviceroles":        "servicerole",
 	"servicerolebindings": "servicerolebinding",
@@ -100,6 +101,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "MeshPolicy enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
+	"destinationrules.mtls.servicemeshpolicymissing": {
+		Message:  "ServiceMeshPolicy enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
 	"destinationrules.mtls.nspolicymissing": {
 		Message:  "Policy enabling namespace-wide mTLS is missing",
 		Severity: ErrorSeverity,
@@ -110,6 +115,10 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"destinationrules.mtls.meshpolicymtlsenabled": {
 		Message:  "MeshPolicy enabling mTLS found, permissive policy is needed",
+		Severity: ErrorSeverity,
+	},
+	"destinationrules.mtls.servicemeshpolicymtlsenabled": {
+		Message:  "ServiceMeshPolicy enabling mTLS found, permissive policy is needed",
 		Severity: ErrorSeverity,
 	},
 	"gateways.multimatch": {
@@ -165,6 +174,10 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"meshpolicies.mtls.destinationrulemissing": {
+		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
+		Severity: ErrorSeverity,
+	},
+	"servicemeshpolicies.mtls.destinationrulemissing": {
 		Message:  "Mesh-wide Destination Rule enabling mTLS is missing",
 		Severity: ErrorSeverity,
 	},
