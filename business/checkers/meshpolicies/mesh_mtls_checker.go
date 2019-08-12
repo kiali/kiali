@@ -5,9 +5,12 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+// Note that MeshMtlsChecker will work with MeshPolicy and ServiceMeshPolicy resources
 type MeshMtlsChecker struct {
-	MeshPolicy  kubernetes.IstioObject
-	MTLSDetails kubernetes.MTLSDetails
+	// MeshPolicy or ServiceMeshPolicy, it depends of the parent checker
+	MeshPolicy    kubernetes.IstioObject
+	MTLSDetails   kubernetes.MTLSDetails
+	IsServiceMesh bool
 }
 
 func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
@@ -25,7 +28,12 @@ func (t MeshMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 		}
 	}
 
-	check := models.Build("meshpolicies.mtls.destinationrulemissing", "spec/peers/mtls")
+	checkerId := "meshpolicies.mtls.destinationrulemissing"
+	if t.IsServiceMesh {
+		checkerId = "servicemeshpolicies.mtls.destinationrulemissing"
+	}
+
+	check := models.Build(checkerId, "spec/peers/mtls")
 	validations = append(validations, &check)
 
 	return validations, false

@@ -19,13 +19,21 @@ func (m MeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// otherwise, check among MeshPolicies for a rule enabling mesh-wide mTLS
-	for _, mp := range m.MTLSDetails.MeshPolicies {
+	// ServiceMeshPolicies are a clone of MeshPolicies but used in Maistra scenarios
+	// MeshPolicies and ServiceMeshPolicies won't co-exist, only ony array will be populated
+	mPolicies := m.MTLSDetails.MeshPolicies
+	checkerId := "destinationrules.mtls.meshpolicymissing"
+	if m.MTLSDetails.ServiceMeshPolicies != nil {
+		mPolicies = m.MTLSDetails.ServiceMeshPolicies
+		checkerId = "destinationrules.mtls.servicemeshpolicymissing"
+	}
+	for _, mp := range mPolicies {
 		if enabled, _ := kubernetes.PolicyHasMTLSEnabled(mp); enabled {
 			return validations, true
 		}
 	}
 
-	check := models.Build("destinationrules.mtls.meshpolicymissing", "spec/trafficPolicy/tls/mode")
+	check := models.Build(checkerId, "spec/trafficPolicy/tls/mode")
 	validations = append(validations, &check)
 
 	return validations, false

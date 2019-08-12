@@ -118,6 +118,20 @@ rules:
   - get
   - list
   - watch
+- apiGroups: ["authentication.maistra.io"]
+  resources:
+  - servicemeshpolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["rbac.maistra.io"]
+  resources:
+  - servicemeshrbacconfigs
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups: ["apps.openshift.io"]
   resources:
   - deploymentconfigs

@@ -91,6 +91,10 @@ type IstioClientInterface interface {
 	GetClusterRbacConfigs(namespace string) ([]IstioObject, error)
 	GetRbacConfig(namespace string, name string) (IstioObject, error)
 	GetRbacConfigs(namespace string) ([]IstioObject, error)
+	GetServiceMeshPolicy(namespace string, name string) (IstioObject, error)
+	GetServiceMeshPolicies(namespace string) ([]IstioObject, error)
+	GetServiceMeshRbacConfig(namespace string, name string) (IstioObject, error)
+	GetServiceMeshRbacConfigs(namespace string) ([]IstioObject, error)
 	GetServiceRole(namespace string, name string) (IstioObject, error)
 	GetServiceRoles(namespace string) ([]IstioObject, error)
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
@@ -98,6 +102,7 @@ type IstioClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
+	IsMaistraApi() bool
 	IsOpenShift() bool
 	Stop()
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
@@ -107,15 +112,23 @@ type IstioClientInterface interface {
 // It hides the way it queries each API
 type IstioClient struct {
 	IstioClientInterface
-	k8s                    *kube.Clientset
-	istioConfigApi         *rest.RESTClient
-	istioNetworkingApi     *rest.RESTClient
-	istioAuthenticationApi *rest.RESTClient
-	istioRbacApi           *rest.RESTClient
+	k8s                      *kube.Clientset
+	istioConfigApi           *rest.RESTClient
+	istioNetworkingApi       *rest.RESTClient
+	istioAuthenticationApi   *rest.RESTClient
+	istioRbacApi             *rest.RESTClient
+	maistraAuthenticationApi *rest.RESTClient
+	maistraRbacApi           *rest.RESTClient
 	// isOpenShift private variable will check if kiali is deployed under an OpenShift cluster or not
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
+
+	// isMaistraApi private variable will check if specific Maistra APIs for authentication and rbac are present.
+	// It is represented as a pointer to include the initialization phase.
+	// See kubernetes_service.go#IsMaistraApi() for more details.
+	isMaistraApi *bool
+
 	// rbacResources private variable will check which resources kiali has access to from rbac.istio.io group
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#HasRbacResource() for more details.
@@ -230,16 +243,28 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(AuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
 			}
+			for _, at := range maistraAuthenticationTypes {
+				scheme.AddKnownTypeWithName(MaistraAuthenticationGroupVersion.WithKind(at.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(MaistraAuthenticationGroupVersion.WithKind(at.collectionKind), &GenericIstioObjectList{})
+			}
 			// Register rbac types
 			for _, rt := range rbacTypes {
 				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
 				scheme.AddKnownTypeWithName(RbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
 
 			}
+			for _, rt := range maistraRbacTypes {
+				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.objectKind), &GenericIstioObject{})
+				scheme.AddKnownTypeWithName(MaistraRbacGroupVersion.WithKind(rt.collectionKind), &GenericIstioObjectList{})
+
+			}
+
 			meta_v1.AddToGroupVersion(scheme, ConfigGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, NetworkingGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, AuthenticationGroupVersion)
 			meta_v1.AddToGroupVersion(scheme, RbacGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, MaistraAuthenticationGroupVersion)
+			meta_v1.AddToGroupVersion(scheme, MaistraRbacGroupVersion)
 			return nil
 		})
 
@@ -269,10 +294,22 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 
+	maistraAuthenticationAPI, err := newClientForAPI(config, MaistraAuthenticationGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
+	maistraRbacApi, err := newClientForAPI(config, MaistraRbacGroupVersion, types)
+	if err != nil {
+		return nil, err
+	}
+
 	client.istioConfigApi = istioConfigAPI
 	client.istioNetworkingApi = istioNetworkingAPI
 	client.istioAuthenticationApi = istioAuthenticationAPI
 	client.istioRbacApi = istioRbacApi
+	client.maistraAuthenticationApi = maistraAuthenticationAPI
+	client.maistraRbacApi = maistraRbacApi
 	return &client, nil
 }
 

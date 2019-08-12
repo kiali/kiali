@@ -37,9 +37,17 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	// In case any Policy enables mTLS, check among MeshPolicies for a rule enabling it
-	for _, mp := range m.MTLSDetails.MeshPolicies {
+	// ServiceMeshPolicies are a clone of MeshPolicies but used in Maistra scenarios
+	// MeshPolicies and ServiceMeshPolicies won't co-exist, only ony array will be populated
+	mPolicies := m.MTLSDetails.MeshPolicies
+	checkerId := "destinationrules.mtls.meshpolicymtlsenabled"
+	if m.MTLSDetails.ServiceMeshPolicies != nil {
+		mPolicies = m.MTLSDetails.ServiceMeshPolicies
+		checkerId = "destinationrules.mtls.servicemeshpolicymtlsenabled"
+	}
+	for _, mp := range mPolicies {
 		if strictMode := kubernetes.PolicyHasStrictMTLS(mp); strictMode {
-			check := models.Build("destinationrules.mtls.meshpolicymtlsenabled", "spec/trafficPolicy/tls/mode")
+			check := models.Build(checkerId, "spec/trafficPolicy/tls/mode")
 			return append(validations, &check), false
 		}
 	}

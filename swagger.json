@@ -3430,22 +3430,25 @@
           "$ref": "#/definitions/ObjectMeta"
         },
         "spec": {
+          "$ref": "#/definitions/ClusterRbacConfigSpec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ClusterRbacConfigSpec": {
+      "type": "object",
+      "properties": {
+        "exclusion": {
           "type": "object",
-          "properties": {
-            "exclusion": {
-              "type": "object",
-              "x-go-name": "Exclusion"
-            },
-            "inclusion": {
-              "type": "object",
-              "x-go-name": "Inclusion"
-            },
-            "mode": {
-              "type": "object",
-              "x-go-name": "Mode"
-            }
-          },
-          "x-go-name": "Spec"
+          "x-go-name": "Exclusion"
+        },
+        "inclusion": {
+          "type": "object",
+          "x-go-name": "Inclusion"
+        },
+        "mode": {
+          "type": "object",
+          "x-go-name": "Mode"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -3757,6 +3760,12 @@
         "serviceEntry": {
           "$ref": "#/definitions/ServiceEntry"
         },
+        "serviceMeshPolicy": {
+          "$ref": "#/definitions/ServiceMeshPolicy"
+        },
+        "serviceMeshRbacConfig": {
+          "$ref": "#/definitions/ServiceMeshRbacConfig"
+        },
         "serviceRole": {
           "$ref": "#/definitions/ServiceRole"
         },
@@ -3821,6 +3830,12 @@
         },
         "serviceEntries": {
           "$ref": "#/definitions/ServiceEntries"
+        },
+        "serviceMeshPolicies": {
+          "$ref": "#/definitions/ServiceMeshPolicies"
+        },
+        "serviceMeshRbacConfigs": {
+          "$ref": "#/definitions/ServiceMeshRbacConfigs"
         },
         "serviceRoleBindings": {
           "$ref": "#/definitions/ServiceRoleBindings"
@@ -3944,34 +3959,37 @@
           "$ref": "#/definitions/ObjectMeta"
         },
         "spec": {
+          "$ref": "#/definitions/MeshPolicySpec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "MeshPolicySpec": {
+      "type": "object",
+      "properties": {
+        "originIsOptional": {
           "type": "object",
-          "properties": {
-            "originIsOptional": {
-              "type": "object",
-              "x-go-name": "OriginIsOptional"
-            },
-            "origins": {
-              "type": "object",
-              "x-go-name": "Origins"
-            },
-            "peerIsOptional": {
-              "type": "object",
-              "x-go-name": "PeerIsOptional"
-            },
-            "peers": {
-              "type": "object",
-              "x-go-name": "Peers"
-            },
-            "principalBinding": {
-              "type": "object",
-              "x-go-name": "PrincipalBinding"
-            },
-            "targets": {
-              "type": "object",
-              "x-go-name": "Targets"
-            }
-          },
-          "x-go-name": "Spec"
+          "x-go-name": "OriginIsOptional"
+        },
+        "origins": {
+          "type": "object",
+          "x-go-name": "Origins"
+        },
+        "peerIsOptional": {
+          "type": "object",
+          "x-go-name": "PeerIsOptional"
+        },
+        "peers": {
+          "type": "object",
+          "x-go-name": "Peers"
+        },
+        "principalBinding": {
+          "type": "object",
+          "x-go-name": "PrincipalBinding"
+        },
+        "targets": {
+          "type": "object",
+          "x-go-name": "Targets"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4880,6 +4898,64 @@
         "validations": {
           "$ref": "#/definitions/IstioValidations"
         }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceMeshPolicies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceMeshPolicy"
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceMeshPolicy": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "$ref": "#/definitions/MeshPolicySpec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceMeshRbacConfig": {
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources\n+optional",
+          "type": "string",
+          "x-go-name": "APIVersion"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\n+optional",
+          "type": "string",
+          "x-go-name": "Kind"
+        },
+        "metadata": {
+          "$ref": "#/definitions/ObjectMeta"
+        },
+        "spec": {
+          "$ref": "#/definitions/ClusterRbacConfigSpec"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceMeshRbacConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ServiceMeshRbacConfig"
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },

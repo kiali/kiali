@@ -29,7 +29,7 @@ func (m MeshPolicyChecker) runChecks(meshPolicy kubernetes.IstioObject) models.I
 	key, rrValidation := EmptyValidValidation(meshPolicyName, MeshPolicyCheckerType)
 
 	enabledCheckers := []Checker{
-		meshpolicies.MeshMtlsChecker{MeshPolicy: meshPolicy, MTLSDetails: m.MTLSDetails},
+		meshpolicies.MeshMtlsChecker{MeshPolicy: meshPolicy, MTLSDetails: m.MTLSDetails, IsServiceMesh: false},
 	}
 
 	for _, checker := range enabledCheckers {

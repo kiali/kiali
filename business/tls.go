@@ -48,11 +48,25 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 		return false, fmt.Errorf("Unable to determine mesh-wide mTLS status without access to any namespace")
 	}
 
-	// MeshPolicies are not namespaced. So any namespace user has access to
-	// will work to retrieve all the MeshPolicies.
-	mps, err := in.k8s.GetMeshPolicies(namespaces[0])
-	if err != nil {
-		return false, err
+	var mps = make([]kubernetes.IstioObject, 0)
+	var err error
+	if !in.k8s.IsMaistraApi() {
+		// MeshPolicies are not namespaced. So any namespace user has access to
+		// will work to retrieve all the MeshPolicies.
+		mps, err = in.k8s.GetMeshPolicies(namespaces[0])
+		if err != nil {
+			return false, err
+		}
+	} else {
+		// ServiceMeshPolicies are namespaces. So we need to iterate on available namespaces.
+		var smps []kubernetes.IstioObject
+		for _, ns := range namespaces {
+			if smps, err = in.k8s.GetServiceMeshPolicies(ns); err == nil {
+				mps = append(mps, smps...)
+			} else {
+				return false, err
+			}
+		}
 	}
 
 	for _, mp := range mps {
