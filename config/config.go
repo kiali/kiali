@@ -444,9 +444,14 @@ func getDefaultStringMap(envvar string, defaultValue string) (retVal map[string]
 	}
 	retVal = map[string]string{}
 	for _, token := range strings.Split(csv, ",") {
-		mapEntry := strings.Split(token, "=")
+		mapEntry := strings.SplitN(token, "=", 2)
 		if len(mapEntry) == 2 {
 			retVal[strings.TrimSpace(mapEntry[0])] = strings.TrimSpace(mapEntry[1])
+			if strings.Contains(mapEntry[1], "=") {
+				log.Warningf("Check configuration for [%s]. Entry value for [%s] contains '='. Ignore this warning if intended.", envvar, token)
+			}
+		} else {
+			log.Warningf("Unexpected configuration for [%s]. Expected mapEntry like aa=bb, found [%s]", envvar, token)
 		}
 	}
 	return
