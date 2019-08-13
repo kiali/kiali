@@ -2,9 +2,9 @@ package business
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/config"
 	"sync"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
