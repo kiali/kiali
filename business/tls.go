@@ -50,7 +50,7 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 		return false, fmt.Errorf("Unable to determine mesh-wide mTLS status without access to any namespace")
 	}
 
-	var mps = make([]kubernetes.IstioObject, 0)
+	var mps []kubernetes.IstioObject
 	var err error
 	if !in.k8s.IsMaistraApi() {
 		// MeshPolicies are not namespaced. So any namespace user has access to
