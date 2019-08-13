@@ -88,6 +88,11 @@ endif
 
 ui-build:
 	rm -fr build/*
+	# If NPM_CONFIG_REGISTRY is set, change yarn.lock to use that mirror.
+	if [ -n "$$NPM_CONFIG_REGISTRY" ]; then \
+	  sed -i -e "s#https://registry.yarnpkg.com/#$$NPM_CONFIG_REGISTRY/#g" yarn.lock; \
+	  sed -i -e "s#https://registry.npmjs.org/#$$NPM_CONFIG_REGISTRY/#g" yarn.lock; \
+	fi
 	CI=true yarn --frozen-lockfile --non-interactive
 	CI=true yarn build:dev
 	echo '$(UI_VERSION)' > build/version.txt
@@ -103,7 +108,8 @@ endif
 ifeq ($(NPM_DRY_RUN), y)
 	npm publish --dry-run
 else
-	npm publish
+	# To publish, use always the NPM registry
+	npm publish --registry https://registry.npmjs.org
 endif
 ifdef NPM_TOKEN
 	rm .npmrc
