@@ -18,6 +18,7 @@ import (
 
 // Environment vars can define some default values. This list is ALPHABETIZED for readability.
 const (
+	EnvActiveNamespace                  = "ACTIVE_NAMESPACE"
 	EnvApiDocAnnotationNameApiType      = "APIDOC_ANNOTATION_NAME_API_TYPE"
 	EnvApiDocAnnotationNameApiSpec      = "APIDOC_ANNOTATION_NAME_API_SPEC"
 	EnvApiNamespacesExclude             = "API_NAMESPACES_EXCLUDE"
@@ -120,15 +121,15 @@ var rwMutex sync.RWMutex
 // Server configuration
 type Server struct {
 	Address                    string               `yaml:",omitempty"`
-	Port                       int                  `yaml:",omitempty"`
-	Credentials                security.Credentials `yaml:",omitempty"`
-	WebRoot                    string               `yaml:"web_root,omitempty"`
-	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
-	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
 	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
-	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
-	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
+	Credentials                security.Credentials `yaml:",omitempty"`
 	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
+	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
+	Port                       int                  `yaml:",omitempty"`
+	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	WebRoot                    string               `yaml:"web_root,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -262,6 +263,7 @@ type LDAPConfig struct {
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 }
 
 // IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
@@ -299,6 +301,8 @@ func NewConfig() (c *Config) {
 	c.API.Namespaces.LabelSelector = strings.TrimSpace(getDefaultString(EnvNamespaceLabelSelector, ""))
 
 	// Server configuration
+	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
+
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
@@ -314,12 +318,19 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 	c.Server.GzipEnabled = getDefaultBool(EnvServerGzipEnabled, true)
 
+	// Istio Configuration
+	c.IstioComponentNamespaces = getDefaultStringMap(EnvIstioComponentNamespaces, "")
+	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
+	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
+	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
+
 	// API Documentation
 	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.io/api-type"))
 	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.io/api-spec"))
 
 	// Prometheus configuration
-	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))
+	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090",
+		getIstioComponentNamespace("prometheus", c.IstioNamespace, c.IstioComponentNamespaces))))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 	c.ExternalServices.Prometheus.Auth = getAuthFromEnv("PROMETHEUS")
 
@@ -333,15 +344,9 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
 	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
-	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, c.IstioNamespace))
+	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, getIstioComponentNamespace("tracing", c.IstioNamespace, c.IstioComponentNamespaces)))
 	c.ExternalServices.Tracing.Port = getDefaultInt32(EnvTracingServicePort, 16686)
 	c.ExternalServices.Tracing.Auth = getAuthFromEnv("TRACING")
-
-	// Istio Configuration
-	c.IstioComponentNamespaces = getDefaultStringMap(EnvIstioComponentNamespaces, "")
-	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
-	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
-	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
@@ -390,6 +395,7 @@ func NewConfig() (c *Config) {
 	c.Auth.LDAP.LDAPMemberOfKey = getDefaultString(EnvLdapMemberOfKey, "memberof")
 
 	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
+	c.Deployment.Namespace = getDefaultString(EnvActiveNamespace, c.IstioNamespace)
 
 	return
 }
@@ -617,6 +623,18 @@ func GetIstioNamespaces(exclude []string) []string {
 		}
 	}
 	return result
+}
+
+// GetIstioComponentNamespace returns the Istio component namespace (defaulting to IstioNamespace)
+func GetIstioComponentNamespace(component string) string {
+	return getIstioComponentNamespace(component, configuration.IstioNamespace, configuration.IstioComponentNamespaces)
+}
+
+func getIstioComponentNamespace(component, istioNamespace string, istioComponentNamespaces IstioComponentNamespaces) string {
+	if ns, found := istioComponentNamespaces[component]; found {
+		return ns
+	}
+	return istioNamespace
 }
 
 // IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace

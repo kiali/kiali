@@ -37,7 +37,7 @@ func DashboardsConfig() dlgconfig.Config {
 		auth.Token = token
 	}
 	return dlgconfig.Config{
-		GlobalNamespace: cfg.IstioNamespace,
+		GlobalNamespace: cfg.Deployment.Namespace,
 		Prometheus: promconfig.PrometheusConfig{
 			URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
 			Auth: promconfig.Auth{

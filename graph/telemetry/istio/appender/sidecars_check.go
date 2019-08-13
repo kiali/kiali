@@ -33,9 +33,6 @@ func (a SidecarsCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 }
 
 func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap, namespaceInfo *graph.AppenderNamespaceInfo) {
-	cfg := config.Get()
-	istioNamespace := cfg.IstioNamespace
-
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
 		if n.Namespace != namespaceInfo.Namespace {
@@ -43,7 +40,7 @@ func (a *SidecarsCheckAppender) applySidecarsChecks(trafficMap graph.TrafficMap,
 		}
 
 		// We whitelist istio components because they may not report telemetry using injected sidecars.
-		if n.Namespace == istioNamespace {
+		if config.IsIstioNamespace(n.Namespace) {
 			continue
 		}
 
