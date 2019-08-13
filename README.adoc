@@ -383,11 +383,13 @@ apidocs:
     api_spec_annotation_name: "my-annotation-for-api-spec"
     api_type_annotation_name: "my-annotation-for-api-type"
 ...
----
+----
 
 === LDAP Configuration
-To configure authentication strategy to LDAP add the following configuration to the yaml file. If the auth strategy is LDAP. The application will not start without the basic LDAP settings like ldap_host, ldap_port, ldap_base and ldap_bind_dn.
 
+The `auth.ldap` section is used to configure Kiali when the authentication strategy is LDAP. The following configuration is an example. Kiali will not start without the required LDAP settings of `ldap_host`, `ldap_port`, `ldap_base` and `ldap_bind_dn`.
+
+[source,yaml]
 ----
 auth:
   strategy: "ldap"

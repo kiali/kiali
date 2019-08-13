@@ -12,8 +12,8 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-//ValidateUser validates user by extracting creds from the request body, then
-//    authenticating against an ID backend and filling out the User struct therefrom
+// ValidateUser validates user by extracting creds from the request body, then
+//    authenticating against an ID backend and filling out the User struct from there.
 func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error) {
 
 	// access LDAP as the user we are validating
@@ -38,7 +38,7 @@ func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error)
 	}
 	defer client.Close()
 
-	// uname and password (ID) correct?
+	// uname and password (ID) correct? Note that err==nil does not mean things are OK.
 	authOk, err := isAuthenticated(&client, username, pwd)
 
 	if authOk { // get the rest of the info for this person -- groups, app ownershop etc.
@@ -50,6 +50,9 @@ func ValidateUser(req *http.Request, authConfig config.AuthConfig) (User, error)
 }
 
 // isAuthenticated checks whether uname and password are correct according to ID (LDAP currently) backend
+// Note that technically err may be nil but the bool returned may still be false. When checking
+// if the user is authenticated, look at the bool, not the err. In other words, err==nil does not
+// mean the user is authenticated; you must look at the bool to determine that.
 func isAuthenticated(ldapClient *ldap.LDAPClient, username, password string) (bool, error) {
 	ok, _, err := ldapClient.Authenticate(username, password)
 	if err != nil {

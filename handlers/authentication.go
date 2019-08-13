@@ -328,7 +328,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 	return http.StatusOK
 }
 
-// checkLDAPSession is to check validaity of the LDAP session
+// checkLDAPSession is to check validity of the LDAP session
 func checkLDAPSession(w http.ResponseWriter, r *http.Request) (int, string) {
 	// Validate token
 	if token := getTokenStringFromRequest(r); len(token) > 0 {

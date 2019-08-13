@@ -50,8 +50,16 @@ func validate(bearerToken string) (UserInfo, error) {
 
 	signingKey := config.Get().LoginToken.SigningKey
 
-	var auth bool
+	auth := false
 	var claims JWTClaimsJSON // special struct for decoding the json
+	u := UserInfo{           // user we'll return, initially in error state
+		APIVersion: "authentication.k8s.io/v1beta1",
+		Kind:       "TokenReview",
+		Status: &Status{
+			Authenticated: &auth,
+			User:          nil,
+		},
+	}
 
 	token, err := jwt.ParseWithClaims(bearerToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		if !strings.HasPrefix(token.Method.Alg(), "HS") { // HMAC are the only allowed signing methods
@@ -61,16 +69,7 @@ func validate(bearerToken string) (UserInfo, error) {
 		return []byte(signingKey), nil
 	})
 
-	u := UserInfo{ // user we'll return, initially in error state
-		APIVersion: "authentication.k8s.io/v1beta1",
-		Kind:       "TokenReview",
-		Status: &Status{
-			Authenticated: &auth,
-			User:          nil,
-		},
-	}
-
-	if !token.Valid {
+	if token == nil || !token.Valid {
 		log.Debugf("Token not valid: %v", err)
 		return u, err
 	}
@@ -81,7 +80,6 @@ func validate(bearerToken string) (UserInfo, error) {
 	u.Status.User = &User{Username: claims.Username, UID: claims.UID, Groups: claims.Groups}
 
 	return u, nil
-
 }
 
 // GetTokenStringFromRequest is to get the token string from the request
@@ -91,7 +89,7 @@ func GetTokenStringFromRequest(r *http.Request) string {
 	// Token can be provided by a browser in a Cookie or
 	// in an authorization HTTP header.
 	// The token in the cookie has priority.
-	if authCookie, err := r.Cookie(config.TokenCookieName); err != http.ErrNoCookie {
+	if authCookie, err := r.Cookie(config.TokenCookieName); err == nil && authCookie != nil {
 		tokenString = authCookie.Value
 	} else if headerValue := r.Header.Get("Authorization"); strings.Contains(headerValue, "Bearer") {
 		tokenString = strings.TrimPrefix(headerValue, "Bearer ")
