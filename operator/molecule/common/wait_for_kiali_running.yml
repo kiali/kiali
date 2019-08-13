@@ -1,0 +1,13 @@
+- name: Wait for Kiali to be running and accepting requests
+  uri:
+    url: "{{ kiali_base_url }}/api"
+    return_content: yes
+    validate_certs: false
+  register: _kiali_output
+  until:
+  - _kiali_output is defined
+  - _kiali_output.json is defined
+  - _kiali_output.json.status is defined
+  - _kiali_output.json.status['Kiali state'] == "running"
+  retries: 60
+  delay: 5

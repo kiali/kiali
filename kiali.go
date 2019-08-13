@@ -121,6 +121,15 @@ func main() {
 	server.Stop()
 }
 
+// CheckLDAPConfiguration is to check if the required configuration is there in the LDAP configuration
+func CheckLDAPConfiguration(auth config.AuthConfig) bool {
+	if auth.LDAP.LDAPHost == "" || auth.LDAP.LDAPPort == 0 ||
+		auth.LDAP.LDAPBindDN == "" || auth.LDAP.LDAPBase == "" {
+		return false
+	}
+	return true
+}
+
 func waitForSecret() {
 	foundSecretChan := make(chan security.Credentials)
 	go func() {
@@ -207,6 +216,8 @@ func validateConfig() error {
 		}
 	} else if auth.Strategy == config.AuthStrategyAnonymous {
 		log.Warningf("Kiali auth strategy is configured for anonymous access - users will not be authenticated.")
+	} else if auth.Strategy == config.AuthStrategyLDAP && !CheckLDAPConfiguration(auth) {
+		return fmt.Errorf("Auth strategy is LDAP but there is no LDAP configuration")
 	}
 
 	return nil

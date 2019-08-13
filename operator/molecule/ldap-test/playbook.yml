@@ -1,0 +1,30 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  # deploy the LDAP server
+  - import_tasks: prepare-ldap.yml
+
+  # test Kiali access to unsecure LDAP
+  - import_tasks: ../asserts/ldap-test/assert-ldap-access.yml
+
+  # tell Kiali to access secure LDAP
+  - name: Change Kiali CR to use secure LDAP
+    set_fact:
+      ldap: "{{ ldap | combine({'use_ssl': true}, recursive=True) }}"
+  - name: Deploy new Kiali CR
+    k8s:
+      namespace: "{{ kiali.operator_namespace }}"
+      definition: "{{ lookup('template', cr_file_path) }}"
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+
+  # test Kiali access to secure LDAP
+  - import_tasks: ../asserts/ldap-test/assert-ldap-access.yml
+
+  # clean up LDAP
+  - import_tasks: destroy-ldap.yml

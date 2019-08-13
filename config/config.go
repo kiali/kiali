@@ -82,6 +82,20 @@ const (
 
 	EnvApiDocAnnotationNameApiType = "APIDOC_ANNOTATION_NAME_API_TYPE"
 	EnvApiDocAnnotationNameApiSpec = "APIDOC_ANNOTATION_NAME_API_SPEC"
+
+	EnvLdapHost               = "LDAP_HOST"
+	EnvLdapPort               = "LDAP_PORT"
+	EnvLdapUseSSL             = "LDAP_USE_SSL"
+	EnvLdapInsecureSkipVerify = "LDAP_INSECURE_SKIP_VERIFY"
+	EnvLdapUserFilter         = "LDAP_USER_FILTER"
+	EnvLdapGroupFilter        = "LDAP_GROUP_FILTER"
+	EnvLdapBase               = "LDAP_BASE"
+	EnvLdapBindDN             = "LDAP_BIND_DN"
+	EnvLdapRoleFilter         = "LDAP_ROLE_FILTER"
+	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
+	EnvLdapMailIdKey          = "LDAP_MAIL_ID_KEY"
+	EnvLdapUserIdKey          = "LDAP_USER_ID_KEY"
+	EnvLdapMemberOfKey        = "LDAP_MEMBER_OF_KEY"
 )
 
 // The versions that Kiali requires
@@ -96,6 +110,7 @@ const (
 	AuthStrategyOpenshift = "openshift"
 	AuthStrategyLogin     = "login"
 	AuthStrategyAnonymous = "anonymous"
+	AuthStrategyLDAP      = "ldap"
 
 	TokenCookieName             = "kiali-token"
 	AuthStrategyOpenshiftIssuer = "kiali-openshift"
@@ -238,7 +253,25 @@ type ApiDocAnnotations struct {
 
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
-	Strategy string `yaml:"strategy,omitempty"`
+	Strategy string     `yaml:"strategy,omitempty"`
+	LDAP     LDAPConfig `yaml:"ldap,omitempty"`
+}
+
+// LDAPConfig provides the details of the LDAP related configuration
+type LDAPConfig struct {
+	LDAPHost               string `yaml:"ldap_host,omitempty"`
+	LDAPPort               int    `yaml:"ldap_port,omitempty"`
+	LDAPUseSSL             bool   `yaml:"ldap_use_ssl,omitempty"`
+	LDAPInsecureSkipVerify bool   `yaml:"ldap_insecure_skip_verify,omitempty"`
+	LDAPUserFilter         string `yaml:"ldap_user_filter,omitempty"`
+	LDAPGroupFilter        string `yaml:"ldap_group_filter,omitempty"`
+	LDAPBase               string `yaml:"ldap_base,omitempty"`
+	LDAPBindDN             string `yaml:"ldap_bind_dn,omitempty"`
+	LDAPRoleFilter         string `yaml:"ldap_role_filter,omitempty"`
+	LDAPSearchFilter       string `yaml:"ldap_search_filter,omitempty"`
+	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
+	LDAPUserIDKey          string `yaml:"ldap_user_id_key,omitempty"`
+	LDAPMemberOfKey        string `yaml:"ldap_member_of_key,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -349,6 +382,20 @@ func NewConfig() (c *Config) {
 	c.API.Namespaces.Exclude = trimmedExclusionPatterns
 
 	c.Auth.Strategy = getDefaultString(EnvAuthStrategy, AuthStrategyLogin)
+
+	c.Auth.LDAP.LDAPHost = getDefaultString(EnvLdapHost, "")
+	c.Auth.LDAP.LDAPPort = getDefaultInt(EnvLdapPort, 0)
+	c.Auth.LDAP.LDAPBase = getDefaultString(EnvLdapBase, "")
+	c.Auth.LDAP.LDAPBindDN = getDefaultString(EnvLdapBindDN, "")
+	c.Auth.LDAP.LDAPUseSSL = getDefaultBool(EnvLdapUseSSL, false)
+	c.Auth.LDAP.LDAPInsecureSkipVerify = getDefaultBool(EnvLdapInsecureSkipVerify, false)
+	c.Auth.LDAP.LDAPUserFilter = getDefaultString(EnvLdapUserFilter, "(cn=%s)")
+	c.Auth.LDAP.LDAPGroupFilter = getDefaultString(EnvLdapGroupFilter, "(cn=%s)")
+	c.Auth.LDAP.LDAPRoleFilter = getDefaultString(EnvLdapRoleFilter, "")
+	c.Auth.LDAP.LDAPSearchFilter = getDefaultString(EnvLdapSearchFilter, "(&(name={USERID}))")
+	c.Auth.LDAP.LDAPMailIDKey = getDefaultString(EnvLdapMailIdKey, "mail")
+	c.Auth.LDAP.LDAPUserIDKey = getDefaultString(EnvLdapUserIdKey, "cn")
+	c.Auth.LDAP.LDAPMemberOfKey = getDefaultString(EnvLdapMemberOfKey, "memberof")
 
 	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
 

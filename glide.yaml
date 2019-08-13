@@ -36,3 +36,7 @@ import:
   version: v0.2.0
 - package: github.com/nytimes/gziphandler
   version: v1.1.1
+- package: github.com/jtblin/go-ldap-client
+  version: v0.0.3
+- package: gopkg.in/ldap.v2
+  version: v3.0.3

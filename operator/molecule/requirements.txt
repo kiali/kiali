@@ -4,3 +4,5 @@ molecule
 openshift
 jmespath
 junit-xml
+pyasn1>=0.4.6
+python-ldap

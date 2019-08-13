@@ -1,5 +1,5 @@
-hash: 755fcf3bf03c705fa0058ae0e84c2b2059a82b5372806b5e17aa8de6d89f9ef3
-updated: 2019-08-02T16:52:20.29170619-05:00
+hash: 21e9fe4148fee60060d1a39369f82943094b3b0d921e5332b6c00d8cc1858319
+updated: 2019-08-08T16:56:29.284566625-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -52,6 +52,8 @@ imports:
   - simplelru
 - name: github.com/json-iterator/go
   version: f2b4162afba35581b6d4a50d3b8f34e33c144682
+- name: github.com/jtblin/go-ldap-client
+  version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
   version: e976df91ce3841eb68be124c6ca08dc517f7decb
   subpackages:
@@ -143,8 +145,12 @@ imports:
   version: f51c12702a4d776e4c1fa9b0fabab841babae631
   subpackages:
   - rate
+- name: gopkg.in/asn1-ber.v1
+  version: f715ec2f112d1e4195b827ad68cf44017a3ef2b1
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
+- name: gopkg.in/ldap.v2
+  version: 9f0d712775a0973b7824a1585a86a4ea1d5263d9
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 - name: k8s.io/api
