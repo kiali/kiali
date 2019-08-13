@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"github.com/kiali/kiali/config"
 	"sync"
 
 	apps_v1 "k8s.io/api/apps/v1"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
@@ -335,10 +337,18 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 				err = iErr
 			}
 		} else {
-			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(namespace); iErr == nil {
+			// ServiceMeshPolicies are namespace scoped.
+			// And Maistra will only consider resources under control-plane namespace
+			// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
+			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
+			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
+			controlPlaneNs := config.Get().IstioNamespace
+			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(controlPlaneNs); iErr == nil {
 				details.ServiceMeshPolicies = serviceMeshPolicies
 			} else {
-				err = iErr
+				// This query can return false if user can't access to controlPlaneNs
+				// On this case we log internally the error but we return a false with nil
+				log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to this. Error: %s", iErr)
 			}
 		}
 		if err != nil {
