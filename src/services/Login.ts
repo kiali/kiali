@@ -67,6 +67,21 @@ class WebLogin implements LoginStrategy<WebLoginData> {
   }
 }
 
+class LdapLogin implements LoginStrategy<WebLoginData> {
+  public async prepare(_info: AuthConfig) {
+    return AuthResult.CONTINUE;
+  }
+
+  public async perform(request: DispatchRequest<WebLoginData>): Promise<LoginResult> {
+    const session = (await API.login(request.data)).data;
+
+    return {
+      status: AuthResult.SUCCESS,
+      session: session
+    };
+  }
+}
+
 class OpenshiftLogin implements LoginStrategy<unknown> {
   public async prepare(info: AuthConfig) {
     if (!info.authorizationEndpoint) {
@@ -107,6 +122,7 @@ export class LoginDispatcher {
     this.strategyMapping.set(AuthStrategy.anonymous, new AnonymousLogin());
     this.strategyMapping.set(AuthStrategy.login, new WebLogin());
     this.strategyMapping.set(AuthStrategy.openshift, new OpenshiftLogin());
+    this.strategyMapping.set(AuthStrategy.ldap, new LdapLogin());
   }
 
   public async prepare(): Promise<AuthResult> {

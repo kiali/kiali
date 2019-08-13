@@ -199,7 +199,7 @@ export class LoginPage extends React.Component<LoginProps, LoginState> {
         textContent="Service Mesh Observability."
         loginTitle="Log in Kiali"
       >
-        {authenticationConfig.strategy === AuthStrategy.login ? (
+        {authenticationConfig.strategy === AuthStrategy.login || authenticationConfig.strategy === AuthStrategy.ldap ? (
           loginForm
         ) : (
           <Button onClick={this.handleSubmit} style={{ width: '100%' }} variant="primary">
