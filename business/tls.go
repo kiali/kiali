@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -48,7 +50,7 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 		return false, fmt.Errorf("Unable to determine mesh-wide mTLS status without access to any namespace")
 	}
 
-	var mps = make([]kubernetes.IstioObject, 0)
+	var mps []kubernetes.IstioObject
 	var err error
 	if !in.k8s.IsMaistraApi() {
 		// MeshPolicies are not namespaced. So any namespace user has access to
@@ -58,14 +60,17 @@ func (in *TLSService) hasMeshPolicyEnabled(namespaces []string) (bool, error) {
 			return false, err
 		}
 	} else {
-		// ServiceMeshPolicies are namespaces. So we need to iterate on available namespaces.
-		var smps []kubernetes.IstioObject
-		for _, ns := range namespaces {
-			if smps, err = in.k8s.GetServiceMeshPolicies(ns); err == nil {
-				mps = append(mps, smps...)
-			} else {
-				return false, err
-			}
+		// ServiceMeshPolicies are namespace scoped.
+		// And Maistra will only consider resources under control-plane namespace
+		// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
+		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
+		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
+		controlPlaneNs := config.Get().IstioNamespace
+		if mps, err = in.k8s.GetServiceMeshPolicies(controlPlaneNs); err != nil {
+			// This query can return false if user can't access to controlPlaneNs
+			// On this case we log internally the error but we return a false with nil
+			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to this. Error: %s", err)
+			return false, nil
 		}
 	}
 
