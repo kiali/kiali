@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Icon, Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Dashboard, DashboardModel } from '@kiali/k-charted-pf4';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
@@ -31,17 +32,12 @@ type ObjectId = {
 
 type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
-    isPageVisible?: boolean;
     grafanaInfo?: GrafanaInfo;
     objectType: MetricsObjectTypes;
     direction: Direction;
   };
 
 class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
-  static defaultProps = {
-    isPageVisible: true
-  };
-
   options: IstioMetricsOptions;
   grafanaLink: string | undefined;
 
@@ -137,9 +133,6 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   };
 
   render() {
-    if (!this.props.isPageVisible) {
-      return null;
-    }
     if (!this.state.dashboard) {
       return this.renderOptionsBar();
     }
@@ -163,29 +156,39 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 
   renderOptionsBar() {
     return (
-      <Toolbar>
-        <FormGroup>
-          <MetricsSettingsDropdown
-            onChanged={this.onMetricsSettingsChanged}
-            onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-            labelsSettings={this.state.labelsSettings}
-            hasHistograms={true}
-          />
-        </FormGroup>
-        <FormGroup>
-          <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
-        </FormGroup>
-        {this.grafanaLink && (
-          <FormGroup style={{ borderRight: 'none' }}>
-            <a id={'grafana_link'} href={this.grafanaLink} target="_blank" rel="noopener noreferrer">
-              View in Grafana <Icon type={'fa'} name={'external-link'} />
-            </a>
-          </FormGroup>
-        )}
-        <ToolbarRightContent>
-          <MetricsDuration onChanged={this.onDurationChanged} />
-          <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
-        </ToolbarRightContent>
+      <Toolbar style={{ padding: 10 }}>
+        <ToolbarGroup>
+          <ToolbarItem>
+            <MetricsSettingsDropdown
+              onChanged={this.onMetricsSettingsChanged}
+              onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+              labelsSettings={this.state.labelsSettings}
+              hasHistograms={true}
+            />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <ToolbarItem>
+            <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          {this.grafanaLink && (
+            <ToolbarItem style={{ borderRight: 'none' }}>
+              <a id={'grafana_link'} href={this.grafanaLink} target="_blank" rel="noopener noreferrer">
+                View in Grafana <ExternalLinkAltIcon />
+              </a>
+            </ToolbarItem>
+          )}
+        </ToolbarGroup>
+        <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
+          <ToolbarItem>
+            <MetricsDuration onChanged={this.onDurationChanged} />
+          </ToolbarItem>
+          <ToolbarItem>
+            <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
+          </ToolbarItem>
+        </ToolbarGroup>
       </Toolbar>
     );
   }
@@ -201,7 +204,6 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  isPageVisible: state.globalState.isPageVisible,
   grafanaInfo: state.grafanaInfo || undefined
 });
 

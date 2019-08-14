@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
-import { Toolbar, ToolbarRightContent, FormGroup } from 'patternfly-react';
+import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { Dashboard, DashboardModel, DashboardQuery, Aggregator } from '@kiali/k-charted-pf4';
 
 import { serverConfig } from '../../config/ServerConfig';
@@ -28,14 +28,9 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   app: string;
   version?: string;
   template: string;
-  isPageVisible?: boolean;
 };
 
-class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
-  static defaultProps = {
-    isPageVisible: true
-  };
-
+export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   options: DashboardQuery;
 
   constructor(props: CustomMetricsProps) {
@@ -102,9 +97,6 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   };
 
   render() {
-    if (!this.props.isPageVisible) {
-      return null;
-    }
     if (!this.state.dashboard) {
       return this.renderOptionsBar();
     }
@@ -113,7 +105,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
     const expandedChart = urlParams.get('expand') || undefined;
 
     return (
-      <div>
+      <>
         {this.renderOptionsBar()}
         <Dashboard
           dashboard={this.state.dashboard}
@@ -121,7 +113,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
           expandedChart={expandedChart}
           expandHandler={this.expandHandler}
         />
-      </div>
+      </>
     );
   }
 
@@ -135,22 +127,30 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
         return false;
       });
     return (
-      <Toolbar>
-        <FormGroup>
-          <MetricsSettingsDropdown
-            onChanged={this.onMetricsSettingsChanged}
-            onLabelsFiltersChanged={this.onLabelsFiltersChanged}
-            labelsSettings={this.state.labelsSettings}
-            hasHistograms={hasHistograms}
-          />
-        </FormGroup>
-        <FormGroup>
-          <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
-        </FormGroup>
-        <ToolbarRightContent>
-          <MetricsDuration onChanged={this.onDurationChanged} />
-          <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
-        </ToolbarRightContent>
+      <Toolbar style={{ padding: 10 }}>
+        <ToolbarGroup>
+          <ToolbarItem>
+            <MetricsSettingsDropdown
+              onChanged={this.onMetricsSettingsChanged}
+              onLabelsFiltersChanged={this.onLabelsFiltersChanged}
+              labelsSettings={this.state.labelsSettings}
+              hasHistograms={hasHistograms}
+            />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <ToolbarItem>
+            <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
+          </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
+          <ToolbarItem>
+            <MetricsDuration onChanged={this.onDurationChanged} />
+          </ToolbarItem>
+          <ToolbarItem>
+            <RefreshContainer id="metrics-refresh" handleRefresh={this.fetchMetrics} hideLabel={true} />
+          </ToolbarItem>
+        </ToolbarGroup>
       </Toolbar>
     );
   }
@@ -165,9 +165,7 @@ class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
-  isPageVisible: state.globalState.isPageVisible
-});
+const mapStateToProps = (_: KialiAppState) => ({});
 
 const CustomMetricsContainer = withRouter<RouteComponentProps<{}> & CustomMetricsProps>(
   connect(mapStateToProps)(CustomMetrics)
