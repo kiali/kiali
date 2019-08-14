@@ -22,6 +22,9 @@ export const MessageCenterActions = {
   removeMessage: createAction(ActionKeys.MC_REMOVE_MESSAGE, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })
   ),
+  toggleMessageDetail: createAction(ActionKeys.MC_TOGGLE_MESSAGE_DETAIL, resolve => (messageId: numberOrNumberArray) =>
+    resolve({ messageId: toNumberArray(messageId) })
+  ),
   markAsRead: createAction(ActionKeys.MC_MARK_MESSAGE_AS_READ, resolve => (messageId: numberOrNumberArray) =>
     resolve({ messageId: toNumberArray(messageId) })
   ),

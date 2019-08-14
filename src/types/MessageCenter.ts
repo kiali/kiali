@@ -15,6 +15,7 @@ export interface NotificationMessage {
   firstTriggered?: Date; // when was it first triggered
   count: number; // how many times did this message occur
 
+  showDetail: boolean;
   show_notification?: boolean;
   groupId?: string;
 }
@@ -40,6 +41,7 @@ export interface MessageCenterPropsType {
   onMarkGroupAsRead: (group: NotificationGroup) => void;
   onClearGroup: (group: NotificationGroup) => void;
   onNotificationClick: (message: NotificationMessage, group: NotificationGroup) => void;
+  onNotificationToggleDetail: (message: NotificationMessage, group: NotificationGroup) => void;
 
   onDismissNotification: (message: NotificationMessage, group: NotificationGroup, userDismissed: boolean) => void;
 

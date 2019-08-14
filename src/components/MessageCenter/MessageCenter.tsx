@@ -54,6 +54,7 @@ export class MessageCenter extends React.Component<MessageCenterPropsType, State
           onMarkGroupAsRead={this.props.onMarkGroupAsRead}
           onClearGroup={this.props.onClearGroup}
           onNotificationClick={this.props.onNotificationClick}
+          onNotificationToggleDetail={this.props.onNotificationToggleDetail}
         />
         <NotificationList
           messages={this.getNotificationMessages(this.props.groups)}
@@ -81,6 +82,7 @@ const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, 
     onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
     onClearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
     onNotificationClick: message => dispatch(MessageCenterActions.markAsRead(message.id)),
+    onNotificationToggleDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id)),
     onDismissNotification: (message, _group, userDismissed) => {
       if (userDismissed) {
         dispatch(MessageCenterActions.markAsRead(message.id));

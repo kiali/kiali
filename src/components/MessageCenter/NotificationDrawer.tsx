@@ -61,28 +61,15 @@ const noNotificationsMessage = (
 type NotificationWrapperPropsType = {
   message: NotificationMessage;
   onClick: (message: NotificationMessage) => void;
+  onToggleDetail: (message: NotificationMessage) => void;
 };
 
-type NotificationWrapperStateType = {
-  isExpanded: boolean;
-};
-
-class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsType, NotificationWrapperStateType> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isExpanded: false
-    };
-  }
-
-  onToggle = () => {
-    this.setState(state => ({
-      isExpanded: !state.isExpanded
-    }));
+class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsType> {
+  toggleDetail = () => {
+    this.props.onToggleDetail(this.props.message);
   };
 
   render() {
-    const { isExpanded } = this.state;
     return (
       <Pf.Notification seen={this.props.message.seen} onClick={() => this.props.onClick(this.props.message)}>
         <Pf.Icon className="pull-left" type="pf" name={typeForPfIcon(this.props.message.type)} />
@@ -91,9 +78,9 @@ class NotificationWrapper extends React.PureComponent<NotificationWrapperPropsTy
             {this.props.message.content}
             {this.props.message.detail && (
               <Expandable
-                toggleText={isExpanded ? 'Hide Detail' : 'Show Detail'}
-                onToggle={this.onToggle}
-                isExpanded={isExpanded}
+                toggleText={this.props.message.showDetail ? 'Hide Detail' : 'Show Detail'}
+                onToggle={this.toggleDetail}
+                isExpanded={this.props.message.showDetail}
               >
                 <pre>{this.props.message.detail}</pre>
               </Expandable>
@@ -119,6 +106,7 @@ type NotificationGroupWrapperPropsType = {
   isExpanded: boolean;
   reverseMessageOrder?: boolean;
   onNotificationClick: (message: NotificationMessage) => void;
+  onNotificationToggleDetail: (message: NotificationMessage) => void;
   onMarkGroupAsRead: (group: NotificationGroup) => void;
   onClearGroup: (group: NotificationGroup) => void;
   onToggle: (group: NotificationGroup) => void;
@@ -152,7 +140,12 @@ class NotificationGroupWrapper extends React.PureComponent<NotificationGroupWrap
             <Pf.NotificationDrawer.PanelBody>
               {group.messages.length === 0 && noNotificationsMessage}
               {this.getMessages().map(message => (
-                <NotificationWrapper key={message.id} message={message} onClick={this.props.onNotificationClick} />
+                <NotificationWrapper
+                  key={message.id}
+                  message={message}
+                  onClick={this.props.onNotificationClick}
+                  onToggleDetail={this.props.onNotificationToggleDetail}
+                />
               ))}
             </Pf.NotificationDrawer.PanelBody>
             {group.showActions && group.messages.length > 0 && (
@@ -191,6 +184,7 @@ type PropsType = {
   onMarkGroupAsRead: (group: NotificationGroup) => void;
   onClearGroup: (group: NotificationGroup) => void;
   onNotificationClick: (message: NotificationMessage, group: NotificationGroup) => void;
+  onNotificationToggleDetail: (message: NotificationMessage, group: NotificationGroup) => void;
 };
 
 type StateType = {};
@@ -219,6 +213,9 @@ export default class NotificationDrawer extends React.PureComponent<PropsType, S
                   isExpanded={group.id === this.props.expandedGroupId}
                   onToggle={this.props.onToggleGroup}
                   onNotificationClick={(message: NotificationMessage) => this.props.onNotificationClick(message, group)}
+                  onNotificationToggleDetail={(message: NotificationMessage) =>
+                    this.props.onNotificationToggleDetail(message, group)
+                  }
                   onMarkGroupAsRead={this.props.onMarkGroupAsRead}
                   onClearGroup={this.props.onClearGroup}
                 />

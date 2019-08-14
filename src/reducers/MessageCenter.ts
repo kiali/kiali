@@ -37,6 +37,7 @@ const createMessage = (
   type: MessageType,
   count: number,
   created: Date,
+  showDetail: boolean,
   firstTriggered?: Date
 ) => {
   return {
@@ -48,6 +49,7 @@ const createMessage = (
     show_notification: type === MessageType.ERROR || type === MessageType.WARNING || type === MessageType.SUCCESS,
     seen: false,
     created: created,
+    showDetail: showDetail,
     firstTriggered
   };
 };
@@ -81,6 +83,9 @@ const Messages = (
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
           const existingMessage = group.messages.find(message => {
+            // Note, we don't include detail when determining same-ness, just the main content.  This is to avoid
+            // trivial detail differences (like a timestamp).  If changing this approach apply the same change below
+            // for message removal.
             return message.content === content;
           });
 
@@ -94,11 +99,12 @@ const Messages = (
 
             newMessage = createMessage(
               state.nextId,
-              content,
-              detail,
+              existingMessage.content,
+              existingMessage.detail,
               messageType,
               existingMessage.count + 1,
               new Date(),
+              existingMessage.showDetail,
               firstTriggered
             );
 
@@ -109,7 +115,7 @@ const Messages = (
 
             group = { ...group, messages: filteredArray.concat(newMessage) };
           } else {
-            newMessage = createMessage(state.nextId, content, detail, messageType, 1, new Date(), undefined);
+            newMessage = createMessage(state.nextId, content, detail, messageType, 1, new Date(), false, undefined);
             group = { ...group, messages: group.messages.concat(newMessage) };
           }
 
@@ -132,6 +138,13 @@ const Messages = (
         return group;
       });
       return updateState(state, { groups });
+    }
+
+    case getType(MessageCenterActions.toggleMessageDetail): {
+      return updateMessage(state, action.payload.messageId, message => ({
+        ...message,
+        showDetail: !message.showDetail
+      }));
     }
 
     case getType(MessageCenterActions.markAsRead): {
