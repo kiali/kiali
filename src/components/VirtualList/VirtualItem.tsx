@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { TResource, Resource, IstioTypes } from './Config';
+import { TResource, Resource, IstioTypes, hasHealth } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import * as Renderer from './Renderer';
+import { Health } from '../../types/Health';
 
 type VirtualItemProps = {
   item: TResource;
@@ -10,8 +10,9 @@ type VirtualItemProps = {
   index: number;
   config: Resource;
 };
+
 type VirtualItemState = {
-  health?: any;
+  health?: Health;
 };
 
 export default class VirtualItem extends React.Component<VirtualItemProps, VirtualItemState> {
@@ -23,14 +24,14 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
   }
 
   componentDidMount() {
-    if (this.props.item['healthPromise']) {
-      this.onItemChanged(this.props.item);
+    if (hasHealth(this.props.item)) {
+      this.onHealthPromiseChanged(this.props.item.healthPromise);
     }
   }
 
   componentDidUpdate(prevProps: VirtualItemProps) {
-    if (this.props.item['healthPromise'] && this.props.item['healthPromise'] !== prevProps.item['healthPromise']) {
-      this.onItemChanged(this.props.item);
+    if (hasHealth(this.props.item) && this.props.item.healthPromise !== prevProps.item['healthPromise']) {
+      this.onHealthPromiseChanged(this.props.item.healthPromise);
     }
   }
 
@@ -38,9 +39,9 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
     this.promises.cancelAll();
   }
 
-  onItemChanged = async (item: TResource): Promise<void> => {
+  onHealthPromiseChanged = async (promise: Promise<Health>): Promise<void> => {
     this.promises
-      .register('health', item['healthPromise'])
+      .register('health', promise)
       .then(h => {
         this.setState({ health: h });
       })
@@ -52,9 +53,9 @@ export default class VirtualItem extends React.Component<VirtualItemProps, Virtu
       });
   };
 
-  renderDetails = (item: TResource, health?: any) => {
+  renderDetails = (item: TResource, health?: Health) => {
     const icon = this.getIcon();
-    return this.props.config.columns.map(object => Renderer[object.name](item, this.props.config, icon, health));
+    return this.props.config.columns.map(object => object.renderer(item, this.props.config, icon, health));
   };
 
   getIcon = () => {

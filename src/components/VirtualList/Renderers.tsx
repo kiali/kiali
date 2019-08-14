@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 
 import MissingSidecar from '../MissingSidecar/MissingSidecar';
-import { IstioTypes, Resource, TResource, hasMissingSidecar } from './Config';
+import { IstioTypes, Resource, TResource, hasMissingSidecar, Renderer } from './Config';
 import { DisplayMode, HealthIndicator } from '../Health/HealthIndicator';
 import { ConfigIndicator } from '../ConfigValidation/ConfigIndicator';
 import { WorkloadListItem } from '../../types/Workload';
@@ -11,6 +11,7 @@ import { dicIstioType, IstioConfigItem } from '../../types/IstioConfigList';
 import { AppListItem } from '../../types/AppList';
 import { ServiceListItem } from '../../types/ServiceList';
 import { ApiTypeIndicator } from '../ApiDocumentation/ApiTypeIndicator';
+import { Health } from '../../types/Health';
 
 // Links
 
@@ -37,7 +38,9 @@ const getIstioLink = (item: TResource) => {
 };
 
 // Cells
-export const Details = (item: AppListItem | WorkloadListItem | ServiceListItem) => {
+export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem> = (
+  item: AppListItem | WorkloadListItem | ServiceListItem
+) => {
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
       {hasMissingSidecar(item) && <MissingSidecar />}{' '}
@@ -46,7 +49,7 @@ export const Details = (item: AppListItem | WorkloadListItem | ServiceListItem) 
   );
 };
 
-export const Item = (item: TResource, config: Resource, icon: string) => {
+export const item: Renderer<TResource> = (item: TResource, config: Resource, icon: string) => {
   const key = 'link_definition_' + config.name + '_' + item.namespace + '_' + item.name;
   let itemName = config.name.charAt(0).toUpperCase() + config.name.slice(1);
   if (config.name === 'istio') {
@@ -64,7 +67,7 @@ export const Item = (item: TResource, config: Resource, icon: string) => {
   );
 };
 
-export const Namespace = (item: TResource) => {
+export const namespace: Renderer<TResource> = (item: TResource) => {
   return (
     <td role="gridcell" key={'VirtuaItem_Namespace_' + item.namespace + '_' + item.name}>
       <Tooltip position={TooltipPosition.top} content={<>Namespace</>}>
@@ -75,7 +78,7 @@ export const Namespace = (item: TResource) => {
   );
 };
 
-export const Health = (item: TResource, __: Resource, _: string, health: any) => {
+export const health: Renderer<TResource> = (item: TResource, __: Resource, _: string, health?: Health) => {
   return (
     health && (
       <td role="gridcell" key={'VirtuaItem_Health_' + item.namespace + '_' + item.name}>
@@ -85,7 +88,7 @@ export const Health = (item: TResource, __: Resource, _: string, health: any) =>
   );
 };
 
-export const LabelValidation = (item: WorkloadListItem, __: Resource, _: string, ___: any) => {
+export const labelValidation: Renderer<WorkloadListItem> = (item: WorkloadListItem) => {
   const appLabel = item.appLabel;
   const versionLabel = item.versionLabel;
   return (
@@ -110,7 +113,7 @@ export const LabelValidation = (item: WorkloadListItem, __: Resource, _: string,
   );
 };
 
-export const WorkloadType = (item: WorkloadListItem) => {
+export const workloadType: Renderer<WorkloadListItem> = (item: WorkloadListItem) => {
   return (
     <td role="gridcell" key={'VirtuaItem_WorkloadType_' + item.namespace + '_' + item.name}>
       {item.type}
@@ -118,7 +121,7 @@ export const WorkloadType = (item: WorkloadListItem) => {
   );
 };
 
-export const IstioType = (item: IstioConfigItem) => {
+export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
   const type = item.type;
   const object = IstioTypes[type];
   return (
@@ -128,7 +131,7 @@ export const IstioType = (item: IstioConfigItem) => {
   );
 };
 
-export const Configuration = (item: ServiceListItem | IstioConfigItem) => {
+export const configuration: Renderer<ServiceListItem | IstioConfigItem> = (item: ServiceListItem | IstioConfigItem) => {
   const validation = item.validation;
   return (
     <td role="gridcell" key={'VirtuaItem_Conf_' + item.namespace + '_' + item.name}>

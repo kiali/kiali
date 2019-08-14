@@ -2,12 +2,12 @@ import * as React from 'react';
 import { Table, TableHeader, TableGridBreakpoint } from '@patternfly/react-table';
 import VirtualTable from './VirtualTable';
 import history, { HistoryManager, URLParam } from '../../app/History';
-import { config, Resource } from './Config';
+import { config, Resource, TResource } from './Config';
 
 type Direction = 'asc' | 'desc' | undefined;
 
-type VirtualListProps = {
-  rows: any[];
+type VirtualListProps<R> = {
+  rows: R[];
   scrollFilters?: boolean;
   updateItems: () => void;
 };
@@ -26,12 +26,12 @@ type VirtualListState = {
 // get the type of list user request
 const listRegex = /\/([a-z0-9-]+)/;
 
-export class VirtualList extends React.Component<VirtualListProps, VirtualListState> {
-  constructor(props: VirtualListProps) {
+export class VirtualList<R extends TResource> extends React.Component<VirtualListProps<R>, VirtualListState> {
+  constructor(props: VirtualListProps<R>) {
     super(props);
     const match = history.location.pathname.match(listRegex) || [];
     const type = match[1] || '';
-    const conf = config[type];
+    const conf = config[type] as Resource;
     const columns =
       conf.columns && config.headerTable
         ? conf.columns.map(info =>
@@ -81,7 +81,7 @@ export class VirtualList extends React.Component<VirtualListProps, VirtualListSt
     const { sortBy, columns, conf } = this.state;
     const tableProps = {
       cells: columns,
-      rows: rows,
+      rows: [],
       gridBreakPoint: TableGridBreakpoint.none,
       role: 'presentation',
       caption: conf.caption ? conf.caption : undefined
