@@ -611,10 +611,8 @@ func getAuthFromEnv(prefix string) Auth {
 // GetIstioNamespaces returns all Istio namespaces, less the exclusions
 func GetIstioNamespaces(exclude []string) []string {
 	excludeMap := map[string]bool{}
-	if exclude != nil {
-		for _, e := range exclude {
-			excludeMap[e] = true
-		}
+	for _, e := range exclude {
+		excludeMap[e] = true
 	}
 	result := []string{}
 	if _, found := excludeMap[configuration.IstioNamespace]; !found {
