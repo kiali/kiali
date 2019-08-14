@@ -450,6 +450,9 @@ func getDefaultStringMap(envvar string, defaultValue string) (retVal map[string]
 	}
 	retVal = map[string]string{}
 	for _, token := range strings.Split(csv, ",") {
+		if token := strings.TrimSpace(token); token == "" {
+			continue
+		}
 		mapEntry := strings.SplitN(token, "=", 2)
 		if len(mapEntry) == 2 {
 			retVal[strings.TrimSpace(mapEntry[0])] = strings.TrimSpace(mapEntry[1])

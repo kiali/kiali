@@ -16,17 +16,20 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
+// ThreeScaleService is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 type ThreeScaleService struct {
 	k8s kubernetes.IstioClientInterface
 }
 
+// GetThreeScaleInfo is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleInfo")
 	defer promtimer.ObserveNow(&err)
 
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for ADAPTERS
 	_, err2 := in.k8s.GetAdapter(conf.IstioNamespace, "adapters", conf.ExternalServices.ThreeScale.AdapterName)
 	if err2 != nil {
 		if errors.IsNotFound(err2) {
@@ -35,7 +38,6 @@ func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) 
 			return models.ThreeScaleInfo{}, err2
 		}
 	}
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for PERMISSIONS
 	canCreate, canUpdate, canDelete := getPermissions(in.k8s, conf.IstioNamespace, "adapters", "adapters")
 	return models.ThreeScaleInfo{
 		Enabled: true,
@@ -46,6 +48,8 @@ func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) 
 		}}, nil
 }
 
+// GetThreeScaleHandlers is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleHandlers")
@@ -54,6 +58,8 @@ func (in *ThreeScaleService) GetThreeScaleHandlers() (models.ThreeScaleHandlers,
 	return in.getThreeScaleHandlers()
 }
 
+// CreateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "CreateThreeScaleHandler")
@@ -83,12 +89,10 @@ func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeS
 
 	go func() {
 		defer wg.Done()
-		// TODO[3195] Which istio component namespace should replace IstioNamespace for TEMPLATES
 		_, errInstance = in.k8s.CreateIstioObject(resourceTypesToAPI["templates"], conf.IstioNamespace, "instances", jsonInstance)
 	}()
 
 	// Create handler on main goroutine
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for ADAPTERS
 	_, errHandler = in.k8s.CreateIstioObject(resourceTypesToAPI["adapters"], conf.IstioNamespace, "handlers", jsonHandler)
 
 	wg.Wait()
@@ -103,11 +107,10 @@ func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeS
 	return in.getThreeScaleHandlers()
 }
 
-// Private get 3scale handlers to be reused for several public methods
+// getThreeScaleHandlers is to be reused for several public methods
 func (in *ThreeScaleService) getThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
 	conf := config.Get()
 	// Istio config generated from Kiali will be labeled as kiali_wizard
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for ADAPTERS
 	tsh, err2 := in.k8s.GetAdapters(conf.IstioNamespace, "kiali_wizard")
 	if err2 != nil {
 		return models.ThreeScaleHandlers{}, err2
@@ -115,7 +118,7 @@ func (in *ThreeScaleService) getThreeScaleHandlers() (models.ThreeScaleHandlers,
 	return models.CastThreeScaleHandlers(tsh), nil
 }
 
-// It will generate the JSON representing the Handler and Instance that will be used for the ThreeScale Handler
+// generateJsonHandlerInstance will generate the JSON representing the Handler and Instance that will be used for the ThreeScale Handler
 func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, string, error) {
 	conf := config.Get()
 	newHandler := kubernetes.GenericIstioObject{
@@ -124,8 +127,7 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 			Kind:       "handler",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: handler.Name,
-			// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLERS
+			Name:      handler.Name,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
 				"kiali_wizard": "threescale-handler",
@@ -150,8 +152,7 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 			Kind:       "instance",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "threescale-authorization-" + handler.Name,
-			// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLER
+			Name:      "threescale-authorization-" + handler.Name,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
 				"kiali_wizard": "threescale-handler",
@@ -186,6 +187,8 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 	return string(bHandler), string(bInstance), nil
 }
 
+// UpdateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) UpdateThreeScaleHandler(handlerName string, body []byte) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "UpdateThreeScaleHandler")
@@ -210,7 +213,6 @@ func (in *ThreeScaleService) UpdateThreeScaleHandler(handlerName string, body []
 
 	conf := config.Get()
 
-	// TODO[3195] Which istio component namespace should replace  for HANDLER
 	_, err2 = in.k8s.UpdateIstioObject(resourceTypesToAPI["adapters"], conf.IstioNamespace, "handlers", handlerName, jsonUpdatedHandler)
 	if err2 != nil {
 		return nil, err2
@@ -241,6 +243,8 @@ func checkHandler(istioObject kubernetes.IstioObject, handlerName string) bool {
 	return false
 }
 
+// DeleteThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "DeleteThreeScaleHandler")
@@ -248,21 +252,18 @@ func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models
 
 	conf := config.Get()
 
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLER
 	err = in.k8s.DeleteIstioObject(resourceTypesToAPI["adapters"], conf.IstioNamespace, "handlers", handlerName)
 	if err != nil {
 		return nil, err
 	}
 
 	instanceName := "threescale-authorization-" + handlerName
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLER
 	err = in.k8s.DeleteIstioObject(resourceTypesToAPI["templates"], conf.IstioNamespace, "instances", instanceName)
 	if err != nil {
 		return nil, err
 	}
 
 	// It should delete all Rules generated by Wizard that used the deleted handler
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	rules, err := in.k8s.GetIstioRules(conf.IstioNamespace, "kiali_wizard")
 	if err != nil {
 		return nil, err
@@ -283,7 +284,6 @@ func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models
 		go func(ruleNameToDelete string) {
 			defer wg.Done()
 			if len(errChan) == 0 {
-				// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 				err = in.k8s.DeleteIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", ruleNameToDelete)
 				if err != nil {
 					errChan <- err
@@ -325,6 +325,8 @@ func getThreeScaleRuleDetails(rule kubernetes.IstioObject) string {
 	return threeScaleHandlerName
 }
 
+// GetThreeScaleRule is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleRule")
@@ -333,7 +335,6 @@ func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (model
 	conf := config.Get()
 
 	ruleName := "threescale-" + namespace + "-" + service
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	rule, err := in.k8s.GetIstioRule(conf.IstioNamespace, ruleName)
 	if err != nil {
 		return models.ThreeScaleServiceRule{}, err
@@ -366,8 +367,7 @@ func generateJsonRule(threeScaleServiceRule models.ThreeScaleServiceRule) (strin
 			Kind:       "rule",
 		},
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "threescale-" + threeScaleServiceRule.ServiceNamespace + "-" + threeScaleServiceRule.ServiceName,
-			// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
+			Name:      "threescale-" + threeScaleServiceRule.ServiceNamespace + "-" + threeScaleServiceRule.ServiceName,
 			Namespace: conf.IstioNamespace,
 			Labels: map[string]string{
 				"kiali_wizard": threeScaleServiceRule.ServiceNamespace + "-" + threeScaleServiceRule.ServiceName,
@@ -377,7 +377,6 @@ func generateJsonRule(threeScaleServiceRule models.ThreeScaleServiceRule) (strin
 			"match": generateMatch(threeScaleServiceRule),
 			"actions": []interface{}{
 				map[string]interface{}{
-					// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLER
 					"handler": threeScaleServiceRule.ThreeScaleHandlerName + "." + conf.IstioNamespace,
 					"instances": []interface{}{
 						"threescale-authorization-" + threeScaleServiceRule.ThreeScaleHandlerName,
@@ -395,6 +394,8 @@ func generateJsonRule(threeScaleServiceRule models.ThreeScaleServiceRule) (strin
 	return string(bRule), nil
 }
 
+// CreateThreeScaleRule is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) CreateThreeScaleRule(namespace string, body []byte) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "CreateThreeScaleRule")
@@ -416,7 +417,6 @@ func (in *ThreeScaleService) CreateThreeScaleRule(namespace string, body []byte)
 	}
 
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	_, errRule := in.k8s.CreateIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", jsonRule)
 	if errRule != nil {
 		return models.ThreeScaleServiceRule{}, errRule
@@ -425,6 +425,8 @@ func (in *ThreeScaleService) CreateThreeScaleRule(namespace string, body []byte)
 	return *threeScaleServiceRule, nil
 }
 
+// UpdateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, body []byte) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "UpdateThreeScaleRule")
@@ -452,7 +454,6 @@ func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, bod
 	ruleName := "threescale-" + namespace + "-" + service
 
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	_, errRule := in.k8s.UpdateIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", ruleName, jsonRule)
 	if errRule != nil {
 		return models.ThreeScaleServiceRule{}, errRule
@@ -461,6 +462,8 @@ func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, bod
 	return *threeScaleServiceRule, nil
 }
 
+// DeleteThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) DeleteThreeScaleRule(namespace, service string) error {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "DeleteThreeScaleRule")
@@ -468,7 +471,6 @@ func (in *ThreeScaleService) DeleteThreeScaleRule(namespace, service string) err
 
 	conf := config.Get()
 	ruleName := "threescale-" + namespace + "-" + service
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	err = in.k8s.DeleteIstioObject(resourceTypesToAPI["rules"], conf.IstioNamespace, "rules", ruleName)
 	return err
 }

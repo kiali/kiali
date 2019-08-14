@@ -12,6 +12,8 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// ThreeScale is Maistra-only. Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
+
 func ThreeScaleStatus(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {
@@ -69,7 +71,6 @@ func ThreeScaleHandlersCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLERS
 	audit(r, "CREATE on Namespace: "+conf.IstioNamespace+" ThreeScale Adapter. Json: "+string(body))
 
 	RespondWithJSON(w, http.StatusOK, threeScaleHandlers)
@@ -101,7 +102,6 @@ func ThreeScaleHandlersUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLERS
 	audit(r, "UPDATE on Namespace: "+conf.IstioNamespace+" ThreeScale Adapter Name: "+threescaleHandlerName)
 
 	RespondWithJSON(w, http.StatusOK, threeScaleHandlers)
@@ -128,7 +128,6 @@ func ThreeScaleHandlersDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for HANDLERS
 	audit(r, "DELETE on Namespace: "+conf.IstioNamespace+" ThreeScale Adapter Name: "+threescaleHandlerName)
 
 	RespondWithJSON(w, http.StatusOK, threeScaleHandlers)
@@ -184,7 +183,6 @@ func ThreeScaleServiceRuleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	audit(r, "CREATE on Namespace: "+conf.IstioNamespace+" ThreeScale Rule Name: threescale-"+namespace+"-"+threeScaleRule.ServiceName)
 
 	RespondWithJSON(w, http.StatusOK, threeScaleRule)
@@ -216,7 +214,6 @@ func ThreeScaleServiceRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	audit(r, "UPDATE on Namespace: "+conf.IstioNamespace+" ThreeScale Rule Name: threescale-"+namespace+"-"+service)
 
 	RespondWithJSON(w, http.StatusOK, threeScaleRule)
@@ -244,7 +241,6 @@ func ThreeScaleServiceRuleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conf := config.Get()
-	// TODO[3195] Which istio component namespace should replace IstioNamespace for RULES
 	audit(r, "DELETE on Namespace: "+conf.IstioNamespace+" ThreeScale Rule Name: threescale-"+namespace+"-"+service)
 
 	RespondWithCode(w, http.StatusOK)
