@@ -228,10 +228,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.89.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="0.90.0"
 
 # The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.6"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.9"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -584,8 +584,12 @@ CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC
 CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
+if [ "${_VERBOSE}" == "true" ]; then
+  CRC_COMMAND="${CRC_COMMAND} --log-level debug"
+fi
 
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/libvirt/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
+# TODO: crc folks are probably going to rename the "/linux/" part of the path to "/libvirt/" in the next version
+CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/linux/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 
 # If Kiali is to be installed, set up some things that may be needed
