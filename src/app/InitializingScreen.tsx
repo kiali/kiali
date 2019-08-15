@@ -1,19 +1,9 @@
 import * as React from 'react';
-import {
-  BasicLoginCardLayout,
-  BasicLoginPageLayout,
-  Icon,
-  LoginCard,
-  LoginCardHeader,
-  LoginPageContainer,
-  LoginPageFooter,
-  LoginPageHeader,
-  Spinner
-} from 'patternfly-react';
+import { Alert } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
-import kialiTitle from '../assets/img/logo-login.svg';
+import kialiTitle from '../assets/img/logo-lightbkg.svg';
 
 type initializingScreenProps = {
   errorMsg?: string;
@@ -22,26 +12,41 @@ type initializingScreenProps = {
 
 const defaultErrorStyle = style({
   $nest: {
-    '& p:last-of-type': {
-      textAlign: 'right'
-    },
-    '& textarea, & hr': {
+    '& > textarea': {
       display: 'none'
     },
-    '& p:first-of-type': {
-      textAlign: 'left'
+    '& > p:last-of-type': {
+      marginTop: '3em'
     }
   }
 });
 
 const expandedErrorStyle = style({
   $nest: {
-    '& p:last-of-type': {
+    '& > p:last-of-type': {
       display: 'none'
     },
-    '& textarea': {
+    '& > textarea': {
       width: '100%',
-      whiteSpace: 'pre'
+      whiteSpace: 'pre',
+      marginTop: '3em'
+    }
+  }
+});
+
+const centerVerticalHorizontalStyle = style({
+  position: 'relative',
+  top: '10em',
+  textAlign: 'center',
+  $nest: {
+    '& > img': {
+      marginBottom: '3em'
+    },
+    '& > div': {
+      width: '40em',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      textAlign: 'left'
     }
   }
 });
@@ -61,43 +66,28 @@ const InitializingScreen: React.FC<initializingScreenProps> = (props: initializi
   }
 
   return (
-    <LoginPageContainer style={{ backgroundImage: 'none' }}>
-      <BasicLoginPageLayout>
-        <LoginPageHeader logoSrc={kialiTitle} />
-        <BasicLoginCardLayout>
-          <LoginCard>
-            <LoginCardHeader>
-              {props.errorMsg ? (
-                <div ref={errorDiv} className={defaultErrorStyle}>
-                  <p>
-                    <Icon type="pf" name="error-circle-o" /> {props.errorMsg}
-                  </p>
-                  {props.errorDetails ? (
-                    <>
-                      <p>
-                        <a href="#" onClick={onClickHandler}>
-                          Show details
-                        </a>
-                      </p>
-                      <hr />
-                      <textarea readOnly={true} rows={10}>
-                        {props.errorDetails}
-                      </textarea>
-                    </>
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <Spinner loading={true} />
-                  <h1>Initializing...</h1>
-                </>
-              )}
-            </LoginCardHeader>
-          </LoginCard>
-          <LoginPageFooter />
-        </BasicLoginCardLayout>
-      </BasicLoginPageLayout>
-    </LoginPageContainer>
+    <div className={centerVerticalHorizontalStyle}>
+      <img alt="Kiali Logo" src={kialiTitle} width="200" />
+      {props.errorMsg ? (
+        <div ref={errorDiv} className={defaultErrorStyle}>
+          <Alert variant="danger" title={props.errorMsg} />
+          {props.errorDetails ? (
+            <>
+              <p>
+                <a href="#" onClick={onClickHandler}>
+                  Show details
+                </a>
+              </p>
+              <textarea readOnly={true} rows={10}>
+                {props.errorDetails}
+              </textarea>
+            </>
+          ) : null}
+        </div>
+      ) : (
+        <h1>Loading...</h1>
+      )}
+    </div>
   );
 };
 
