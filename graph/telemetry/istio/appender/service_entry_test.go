@@ -68,7 +68,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	n3 := graph.NewNode("testNamespace", "host1.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n3.Metadata = graph.NewMetadata()
 	destServices := graph.NewDestServicesMetadata()
-	destService := graph.Service{Namespace: n3.Namespace, Name: n3.Service}
+	destService := graph.ServiceName{Namespace: n3.Namespace, Name: n3.Service}
 	destServices[destService.Key()] = destService
 	n3.Metadata[graph.DestServices] = destServices
 
@@ -76,7 +76,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	n4 := graph.NewNode("testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n4.Metadata = graph.NewMetadata()
 	destServices = graph.NewDestServicesMetadata()
-	destService = graph.Service{Namespace: n4.Namespace, Name: n4.Service}
+	destService = graph.ServiceName{Namespace: n4.Namespace, Name: n4.Service}
 	destServices[destService.Key()] = destService
 	n4.Metadata[graph.DestServices] = destServices
 
@@ -87,7 +87,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	n6 := graph.NewNode("testNamespace", "internalHost1", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n6.Metadata = graph.NewMetadata()
 	destServices = graph.NewDestServicesMetadata()
-	destService = graph.Service{Namespace: n6.Namespace, Name: n6.Service}
+	destService = graph.ServiceName{Namespace: n6.Namespace, Name: n6.Service}
 	destServices[destService.Key()] = destService
 	n6.Metadata[graph.DestServices] = destServices
 
@@ -95,7 +95,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	n7 := graph.NewNode("testNamespace", "internalHost2", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
 	n7.Metadata = graph.NewMetadata()
 	destServices = graph.NewDestServicesMetadata()
-	destService = graph.Service{Namespace: n7.Namespace, Name: n7.Service}
+	destService = graph.ServiceName{Namespace: n7.Namespace, Name: n7.Service}
 	destServices[destService.Key()] = destService
 	n7.Metadata[graph.DestServices] = destServices
 

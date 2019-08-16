@@ -61,12 +61,12 @@ func (in NamespaceInfoMap) GetIstioNamespaces() []string {
 	return result
 }
 
-type Service struct {
+type ServiceName struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 }
 
-func (s *Service) Key() string {
+func (s *ServiceName) Key() string {
 	return fmt.Sprintf("%s %s", s.Namespace, s.Name)
 }
 

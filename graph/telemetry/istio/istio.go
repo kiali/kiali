@@ -527,7 +527,7 @@ func addToDestServices(md graph.Metadata, namespace, service string) {
 		destServices = graph.NewDestServicesMetadata()
 		md[graph.DestServices] = destServices
 	}
-	destService := graph.Service{Namespace: namespace, Name: service}
+	destService := graph.ServiceName{Namespace: namespace, Name: service}
 	destServices.(graph.DestServicesMetadata)[destService.Key()] = destService
 }
 

@@ -43,25 +43,25 @@ type NodeData struct {
 	Parent string `json:"parent,omitempty"` // Compound Node parent ID
 
 	// App Fields (not required by Cytoscape)
-	NodeType        string            `json:"nodeType"`
-	Namespace       string            `json:"namespace"`
-	Workload        string            `json:"workload,omitempty"`
-	App             string            `json:"app,omitempty"`
-	Version         string            `json:"version,omitempty"`
-	Service         string            `json:"service,omitempty"`         // requested service for NodeTypeService
-	DestServices    []graph.Service   `json:"destServices,omitempty"`    // requested services for [dest] node
-	Traffic         []ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for all detected protocols
-	HasCB           bool              `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
-	HasMissingSC    bool              `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
-	HasVS           bool              `json:"hasVS,omitempty"`           // true (has route rule) | false
-	IsDead          bool              `json:"isDead,omitempty"`          // true (has no pods) | false
-	IsGroup         string            `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
-	IsInaccessible  bool              `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
-	IsMisconfigured string            `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
-	IsOutside       bool              `json:"isOutside,omitempty"`       // true | false
-	IsRoot          bool              `json:"isRoot,omitempty"`          // true | false
-	IsServiceEntry  string            `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
-	IsUnused        bool              `json:"isUnused,omitempty"`        // true | false
+	NodeType        string              `json:"nodeType"`
+	Namespace       string              `json:"namespace"`
+	Workload        string              `json:"workload,omitempty"`
+	App             string              `json:"app,omitempty"`
+	Version         string              `json:"version,omitempty"`
+	Service         string              `json:"service,omitempty"`         // requested service for NodeTypeService
+	DestServices    []graph.ServiceName `json:"destServices,omitempty"`    // requested services for [dest] node
+	Traffic         []ProtocolTraffic   `json:"traffic,omitempty"`         // traffic rates for all detected protocols
+	HasCB           bool                `json:"hasCB,omitempty"`           // true (has circuit breaker) | false
+	HasMissingSC    bool                `json:"hasMissingSC,omitempty"`    // true (has missing sidecar) | false
+	HasVS           bool                `json:"hasVS,omitempty"`           // true (has route rule) | false
+	IsDead          bool                `json:"isDead,omitempty"`          // true (has no pods) | false
+	IsGroup         string              `json:"isGroup,omitempty"`         // set to the grouping type, current values: [ 'app', 'version' ]
+	IsInaccessible  bool                `json:"isInaccessible,omitempty"`  // true if the node exists in an inaccessible namespace
+	IsMisconfigured string              `json:"isMisconfigured,omitempty"` // set to misconfiguration list, current values: [ 'labels' ]
+	IsOutside       bool                `json:"isOutside,omitempty"`       // true | false
+	IsRoot          bool                `json:"isRoot,omitempty"`          // true | false
+	IsServiceEntry  string              `json:"isServiceEntry,omitempty"`  // set to the location, current values: [ 'MESH_EXTERNAL', 'MESH_INTERNAL' ]
+	IsUnused        bool                `json:"isUnused,omitempty"`        // true | false
 }
 
 type EdgeData struct {
@@ -227,7 +227,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node may have destination service info
 		if val, ok := n.Metadata[graph.DestServices]; ok {
-			nd.DestServices = []graph.Service{}
+			nd.DestServices = []graph.ServiceName{}
 			for _, val := range val.(graph.DestServicesMetadata) {
 				nd.DestServices = append(nd.DestServices, val)
 			}
