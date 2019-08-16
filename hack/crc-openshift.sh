@@ -237,7 +237,7 @@ DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.9"
 DEFAULT_CRC_CPUS="5"
 
 # The default memory (in GB) assigned to the CRC VM
-DEFAULT_CRC_MEMORY="16"
+DEFAULT_CRC_MEMORY="20"
 
 # The default virtual disk size (in GB) assigned to the CRC VM
 DEFAULT_CRC_VIRTUAL_DISK_SIZE="30"
@@ -1002,6 +1002,6 @@ elif [ "$_CMD" = "services" ];then
   print_all_service_endpoints
 
 else
-  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh"
+  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, routes, services"
   exit 1
 fi
