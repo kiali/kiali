@@ -4028,7 +4028,7 @@
         "destServices": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Service"
+            "$ref": "#/definitions/ServiceName"
           },
           "x-go-name": "DestServices"
         },
@@ -4918,6 +4918,20 @@
         "$ref": "#/definitions/ServiceMeshRbacConfig"
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "ServiceName": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph"
     },
     "ServiceOverview": {
       "type": "object",
