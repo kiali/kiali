@@ -27,6 +27,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ kiali_vars.server.metrics_port }}"
         kiali.io/runtimes: go,kiali
+        operator.kiali.io/last-updated: "{{ deployment_last_updated }}"
     spec:
       serviceAccount: kiali-service-account
 {% if kiali_vars.deployment.image_pull_secrets | default([]) | length > 0 %}

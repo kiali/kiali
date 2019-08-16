@@ -22,6 +22,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ kiali_vars.server.metrics_port }}"
         kiali.io/runtimes: go,kiali
+        operator.kiali.io/last-updated: "{{ deployment_last_updated }}"
     strategy:
       rollingUpdate:
         maxSurge: 1
