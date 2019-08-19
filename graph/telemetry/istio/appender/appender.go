@@ -11,12 +11,11 @@ import (
 )
 
 const (
-	defaultQuantile          = 0.95
-	defaultIncludeIstio bool = false
+	defaultQuantile = 0.95
 )
 
+// ParseAppenders determines which appenders should run for this graphing request
 func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
-	includeIstio := IncludeIstio(o)
 	requestedAppenders := make(map[string]bool)
 	if !o.Appenders.All {
 		for _, appenderName := range o.Appenders.AppenderNames {
@@ -75,7 +74,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 			Quantile:           quantile,
 			GraphType:          o.GraphType,
 			InjectServiceNodes: o.InjectServiceNodes,
-			IncludeIstio:       includeIstio,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
 		}
@@ -84,7 +82,6 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 	if _, ok := requestedAppenders[SecurityPolicyAppenderName]; ok || o.Appenders.All {
 		a := SecurityPolicyAppender{
 			GraphType:          o.GraphType,
-			IncludeIstio:       includeIstio,
 			InjectServiceNodes: o.InjectServiceNodes,
 			Namespaces:         o.Namespaces,
 			QueryTime:          o.QueryTime,
@@ -179,19 +176,4 @@ func getAppWorkloads(app, version string, ni *graph.AppenderNamespaceInfo) []mod
 		}
 	}
 	return result
-}
-
-func IncludeIstio(o graph.TelemetryOptions) bool {
-	var includeIstio bool
-	includeIstioString := o.Params.Get("includeIstio")
-	if includeIstioString == "" {
-		includeIstio = defaultIncludeIstio
-	} else {
-		var err error
-		if includeIstio, err = strconv.ParseBool(includeIstioString); err != nil {
-			graph.BadRequest(fmt.Sprintf("Invalid includeIstio [%s]", includeIstioString))
-		}
-	}
-
-	return includeIstio
 }

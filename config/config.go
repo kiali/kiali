@@ -16,86 +16,72 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// Environment vars can define some default values.
-// NOTE: If you add a new variable, don't forget to update README.adoc
+// Environment vars can define some default values. This list is ALPHABETIZED for readability.
 const (
-	EnvInstallationTag = "KIALI_INSTALLATION_TAG"
-
-	EnvIdentityCertFile       = "IDENTITY_CERT_FILE"
-	EnvIdentityPrivateKeyFile = "IDENTITY_PRIVATE_KEY_FILE"
-
-	EnvInCluster              = "IN_CLUSTER"
-	EnvIstioIdentityDomain    = "ISTIO_IDENTITY_DOMAIN"
-	EnvIstioSidecarAnnotation = "ISTIO_SIDECAR_ANNOTATION"
-	EnvIstioUrlServiceVersion = "ISTIO_URL_SERVICE_VERSION"
-	EnvApiNamespacesExclude   = "API_NAMESPACES_EXCLUDE"
-
+	EnvActiveNamespace                  = "ACTIVE_NAMESPACE"
+	EnvApiDocAnnotationNameApiType      = "APIDOC_ANNOTATION_NAME_API_TYPE"
+	EnvApiDocAnnotationNameApiSpec      = "APIDOC_ANNOTATION_NAME_API_SPEC"
+	EnvApiNamespacesExclude             = "API_NAMESPACES_EXCLUDE"
+	EnvAuthStrategy                     = "AUTH_STRATEGY"
+	EnvAuthSuffixCAFile                 = "_CA_FILE"
+	EnvAuthSuffixInsecureSkipVerify     = "_INSECURE_SKIP_VERIFY"
+	EnvAuthSuffixPassword               = "_PASSWORD"
+	EnvAuthSuffixToken                  = "_TOKEN"
+	EnvAuthSuffixType                   = "_AUTH_TYPE"
+	EnvAuthSuffixUseKialiToken          = "_USE_KIALI_TOKEN"
+	EnvAuthSuffixUsername               = "_USERNAME"
+	EnvGrafanaEnabled                   = "GRAFANA_ENABLED"
+	EnvGrafanaInClusterURL              = "GRAFANA_IN_CLUSTER_URL"
+	EnvGrafanaURL                       = "GRAFANA_URL"
+	EnvIdentityCertFile                 = "IDENTITY_CERT_FILE"
+	EnvIdentityPrivateKeyFile           = "IDENTITY_PRIVATE_KEY_FILE"
+	EnvInCluster                        = "IN_CLUSTER"
+	EnvInstallationTag                  = "KIALI_INSTALLATION_TAG"
+	EnvIstioComponentNamespaces         = "ISTIO_COMPONENT_NAMESPACES"
+	EnvIstioIdentityDomain              = "ISTIO_IDENTITY_DOMAIN"
+	EnvIstioLabelNameApp                = "ISTIO_LABEL_NAME_APP"
+	EnvIstioLabelNameVersion            = "ISTIO_LABEL_NAME_VERSION"
+	EnvIstioNamespace                   = "ISTIO_NAMESPACE"
+	EnvIstioSidecarAnnotation           = "ISTIO_SIDECAR_ANNOTATION"
+	EnvIstioUrlServiceVersion           = "ISTIO_URL_SERVICE_VERSION"
+	EnvKubernetesBurst                  = "KUBERNETES_BURST"
+	EnvKubernetesQPS                    = "KUBERNETES_QPS"
+	EnvKubernetesCacheEnabled           = "KUBERNETES_CACHE_ENABLED"
+	EnvKubernetesCacheDuration          = "KUBERNETES_CACHE_DURATION"
+	EnvLdapBase                         = "LDAP_BASE"
+	EnvLdapBindDN                       = "LDAP_BIND_DN"
+	EnvLdapGroupFilter                  = "LDAP_GROUP_FILTER"
+	EnvLdapHost                         = "LDAP_HOST"
+	EnvLdapInsecureSkipVerify           = "LDAP_INSECURE_SKIP_VERIFY"
+	EnvLdapMailIdKey                    = "LDAP_MAIL_ID_KEY"
+	EnvLdapMemberOfKey                  = "LDAP_MEMBER_OF_KEY"
+	EnvLdapPort                         = "LDAP_PORT"
+	EnvLdapRoleFilter                   = "LDAP_ROLE_FILTER"
+	EnvLdapSearchFilter                 = "LDAP_SEARCH_FILTER"
+	EnvLdapUserFilter                   = "LDAP_USER_FILTER"
+	EnvLdapUserIdKey                    = "LDAP_USER_ID_KEY"
+	EnvLdapUseSSL                       = "LDAP_USE_SSL"
+	EnvLoginTokenExpirationSeconds      = "LOGIN_TOKEN_EXPIRATION_SECONDS"
+	EnvLoginTokenSigningKey             = "LOGIN_TOKEN_SIGNING_KEY"
+	EnvNamespaceLabelSelector           = "NAMESPACE_LABEL_SELECTOR"
+	EnvPrometheusCustomMetricsURL       = "PROMETHEUS_CUSTOM_METRICS_URL"
+	EnvPrometheusServiceURL             = "PROMETHEUS_SERVICE_URL"
 	EnvServerAddress                    = "SERVER_ADDRESS"
-	EnvServerPort                       = "SERVER_PORT"
-	EnvWebRoot                          = "SERVER_WEB_ROOT"
-	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
-	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
 	EnvServerAuditLog                   = "SERVER_AUDIT_LOG"
+	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
+	EnvServerGzipEnabled                = "SERVER_GZIP_ENABLED"
 	EnvServerMetricsPort                = "SERVER_METRICS_PORT"
 	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
-	EnvServerGzipEnabled                = "SERVER_GZIP_ENABLED"
-
-	EnvAuthSuffixType               = "_AUTH_TYPE"
-	EnvAuthSuffixUsername           = "_USERNAME"
-	EnvAuthSuffixPassword           = "_PASSWORD"
-	EnvAuthSuffixToken              = "_TOKEN"
-	EnvAuthSuffixUseKialiToken      = "_USE_KIALI_TOKEN"
-	EnvAuthSuffixCAFile             = "_CA_FILE"
-	EnvAuthSuffixInsecureSkipVerify = "_INSECURE_SKIP_VERIFY"
-
-	EnvPrometheusServiceURL       = "PROMETHEUS_SERVICE_URL"
-	EnvPrometheusCustomMetricsURL = "PROMETHEUS_CUSTOM_METRICS_URL"
-
-	EnvGrafanaEnabled      = "GRAFANA_ENABLED"
-	EnvGrafanaInClusterURL = "GRAFANA_IN_CLUSTER_URL"
-	EnvGrafanaURL          = "GRAFANA_URL"
-
-	EnvTracingEnabled          = "TRACING_ENABLED"
-	EnvTracingURL              = "TRACING_URL"
-	EnvTracingServiceNamespace = "TRACING_SERVICE_NAMESPACE"
-	EnvTracingServicePort      = "TRACING_SERVICE_PORT"
-
-	EnvThreeScaleAdapterName = "THREESCALE_ADAPTER_NAME"
-	EnvThreeScaleServiceName = "THREESCALE_SERVICE_NAME"
-	EnvThreeScaleServicePort = "THREESCALE_SERVICE_PORT"
-
-	EnvLoginTokenSigningKey        = "LOGIN_TOKEN_SIGNING_KEY"
-	EnvLoginTokenExpirationSeconds = "LOGIN_TOKEN_EXPIRATION_SECONDS"
-	EnvIstioNamespace              = "ISTIO_NAMESPACE"
-
-	EnvIstioLabelNameApp     = "ISTIO_LABEL_NAME_APP"
-	EnvIstioLabelNameVersion = "ISTIO_LABEL_NAME_VERSION"
-
-	EnvKubernetesBurst         = "KUBERNETES_BURST"
-	EnvKubernetesQPS           = "KUBERNETES_QPS"
-	EnvKubernetesCacheEnabled  = "KUBERNETES_CACHE_ENABLED"
-	EnvKubernetesCacheDuration = "KUBERNETES_CACHE_DURATION"
-
-	EnvAuthStrategy = "AUTH_STRATEGY"
-
-	EnvNamespaceLabelSelector = "NAMESPACE_LABEL_SELECTOR"
-
-	EnvApiDocAnnotationNameApiType = "APIDOC_ANNOTATION_NAME_API_TYPE"
-	EnvApiDocAnnotationNameApiSpec = "APIDOC_ANNOTATION_NAME_API_SPEC"
-
-	EnvLdapHost               = "LDAP_HOST"
-	EnvLdapPort               = "LDAP_PORT"
-	EnvLdapUseSSL             = "LDAP_USE_SSL"
-	EnvLdapInsecureSkipVerify = "LDAP_INSECURE_SKIP_VERIFY"
-	EnvLdapUserFilter         = "LDAP_USER_FILTER"
-	EnvLdapGroupFilter        = "LDAP_GROUP_FILTER"
-	EnvLdapBase               = "LDAP_BASE"
-	EnvLdapBindDN             = "LDAP_BIND_DN"
-	EnvLdapRoleFilter         = "LDAP_ROLE_FILTER"
-	EnvLdapSearchFilter       = "LDAP_SEARCH_FILTER"
-	EnvLdapMailIdKey          = "LDAP_MAIL_ID_KEY"
-	EnvLdapUserIdKey          = "LDAP_USER_ID_KEY"
-	EnvLdapMemberOfKey        = "LDAP_MEMBER_OF_KEY"
+	EnvServerPort                       = "SERVER_PORT"
+	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvThreeScaleAdapterName            = "THREESCALE_ADAPTER_NAME"
+	EnvThreeScaleServiceName            = "THREESCALE_SERVICE_NAME"
+	EnvThreeScaleServicePort            = "THREESCALE_SERVICE_PORT"
+	EnvTracingEnabled                   = "TRACING_ENABLED"
+	EnvTracingServiceNamespace          = "TRACING_SERVICE_NAMESPACE"
+	EnvTracingServicePort               = "TRACING_SERVICE_PORT"
+	EnvTracingURL                       = "TRACING_URL"
+	EnvWebRoot                          = "SERVER_WEB_ROOT"
 )
 
 // The versions that Kiali requires
@@ -135,15 +121,15 @@ var rwMutex sync.RWMutex
 // Server configuration
 type Server struct {
 	Address                    string               `yaml:",omitempty"`
-	Port                       int                  `yaml:",omitempty"`
-	Credentials                security.Credentials `yaml:",omitempty"`
-	WebRoot                    string               `yaml:"web_root,omitempty"`
-	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
-	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
 	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
-	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
-	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
+	Credentials                security.Credentials `yaml:",omitempty"`
 	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
+	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
+	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
+	Port                       int                  `yaml:",omitempty"`
+	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
+	WebRoot                    string               `yaml:"web_root,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -259,41 +245,47 @@ type AuthConfig struct {
 
 // LDAPConfig provides the details of the LDAP related configuration
 type LDAPConfig struct {
-	LDAPHost               string `yaml:"ldap_host,omitempty"`
-	LDAPPort               int    `yaml:"ldap_port,omitempty"`
-	LDAPUseSSL             bool   `yaml:"ldap_use_ssl,omitempty"`
-	LDAPInsecureSkipVerify bool   `yaml:"ldap_insecure_skip_verify,omitempty"`
-	LDAPUserFilter         string `yaml:"ldap_user_filter,omitempty"`
-	LDAPGroupFilter        string `yaml:"ldap_group_filter,omitempty"`
 	LDAPBase               string `yaml:"ldap_base,omitempty"`
 	LDAPBindDN             string `yaml:"ldap_bind_dn,omitempty"`
+	LDAPInsecureSkipVerify bool   `yaml:"ldap_insecure_skip_verify,omitempty"`
+	LDAPGroupFilter        string `yaml:"ldap_group_filter,omitempty"`
+	LDAPHost               string `yaml:"ldap_host,omitempty"`
+	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
+	LDAPMemberOfKey        string `yaml:"ldap_member_of_key,omitempty"`
+	LDAPPort               int    `yaml:"ldap_port,omitempty"`
 	LDAPRoleFilter         string `yaml:"ldap_role_filter,omitempty"`
 	LDAPSearchFilter       string `yaml:"ldap_search_filter,omitempty"`
-	LDAPMailIDKey          string `yaml:"ldap_mail_id_key,omitempty"`
+	LDAPUserFilter         string `yaml:"ldap_user_filter,omitempty"`
 	LDAPUserIDKey          string `yaml:"ldap_user_id_key,omitempty"`
-	LDAPMemberOfKey        string `yaml:"ldap_member_of_key,omitempty"`
+	LDAPUseSSL             bool   `yaml:"ldap_use_ssl,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
+	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 }
+
+// IstioComponentNamespaces holds the component-specific Istio namespaces. Any missing component
+// defaults to the namespace configured for IstioNamespace (which itself defaults to 'istio-system').
+type IstioComponentNamespaces map[string]string
 
 // Config defines full YAML configuration.
 type Config struct {
-	Identity         security.Identity `yaml:",omitempty"`
-	Server           Server            `yaml:",omitempty"`
-	InCluster        bool              `yaml:"in_cluster,omitempty"`
-	ExternalServices ExternalServices  `yaml:"external_services,omitempty"`
-	LoginToken       LoginToken        `yaml:"login_token,omitempty"`
-	IstioNamespace   string            `yaml:"istio_namespace,omitempty"`
-	InstallationTag  string            `yaml:"installation_tag,omitempty"`
-	IstioLabels      IstioLabels       `yaml:"istio_labels,omitempty"`
-	KubernetesConfig KubernetesConfig  `yaml:"kubernetes_config,omitempty"`
-	API              ApiConfig         `yaml:"api,omitempty"`
-	Auth             AuthConfig        `yaml:"auth,omitempty"`
-	Deployment       DeploymentConfig  `yaml:"deployment,omitempty"`
-	ApiDocumentation ApiDocumentation  `yaml:"apidocs,omitempty"`
+	Identity                 security.Identity        `yaml:",omitempty"`
+	Server                   Server                   `yaml:",omitempty"`
+	InCluster                bool                     `yaml:"in_cluster,omitempty"`
+	ExternalServices         ExternalServices         `yaml:"external_services,omitempty"`
+	LoginToken               LoginToken               `yaml:"login_token,omitempty"`
+	IstioNamespace           string                   `yaml:"istio_namespace,omitempty"` // default component namespace
+	IstioComponentNamespaces IstioComponentNamespaces `yaml:"istio_component_namespaces,omitempty"`
+	InstallationTag          string                   `yaml:"installation_tag,omitempty"`
+	IstioLabels              IstioLabels              `yaml:"istio_labels,omitempty"`
+	KubernetesConfig         KubernetesConfig         `yaml:"kubernetes_config,omitempty"`
+	API                      ApiConfig                `yaml:"api,omitempty"`
+	Auth                     AuthConfig               `yaml:"auth,omitempty"`
+	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
+	ApiDocumentation         ApiDocumentation         `yaml:"apidocs,omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -305,13 +297,12 @@ func NewConfig() (c *Config) {
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
 	c.Identity.PrivateKeyFile = getDefaultString(EnvIdentityPrivateKeyFile, "")
 	c.InCluster = getDefaultBool(EnvInCluster, true)
-	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
-	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
-	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
 	c.API.Namespaces.Exclude = getDefaultStringArray(EnvApiNamespacesExclude, "istio-operator,kube.*,openshift.*,ibm.*")
 	c.API.Namespaces.LabelSelector = strings.TrimSpace(getDefaultString(EnvNamespaceLabelSelector, ""))
 
 	// Server configuration
+	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
+
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
 	c.Server.Credentials = security.Credentials{
@@ -327,12 +318,19 @@ func NewConfig() (c *Config) {
 	c.Server.MetricsEnabled = getDefaultBool(EnvServerMetricsEnabled, true)
 	c.Server.GzipEnabled = getDefaultBool(EnvServerGzipEnabled, true)
 
+	// Istio Configuration
+	c.IstioComponentNamespaces = getDefaultStringMap(EnvIstioComponentNamespaces, "")
+	c.IstioNamespace = strings.TrimSpace(getDefaultString(EnvIstioNamespace, "istio-system"))
+	c.IstioLabels.AppLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameApp, "app"))
+	c.IstioLabels.VersionLabelName = strings.TrimSpace(getDefaultString(EnvIstioLabelNameVersion, "version"))
+
 	// API Documentation
 	c.ApiDocumentation.Annotations.ApiTypeAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiType, "kiali.io/api-type"))
 	c.ApiDocumentation.Annotations.ApiSpecAnnotationName = strings.TrimSpace(getDefaultString(EnvApiDocAnnotationNameApiSpec, "kiali.io/api-spec"))
 
 	// Prometheus configuration
-	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090", c.IstioNamespace)))
+	c.ExternalServices.Prometheus.URL = strings.TrimSpace(getDefaultString(EnvPrometheusServiceURL, fmt.Sprintf("http://prometheus.%s:9090",
+		getIstioComponentNamespace("prometheus", c.IstioNamespace, c.IstioComponentNamespaces))))
 	c.ExternalServices.Prometheus.CustomMetricsURL = strings.TrimSpace(getDefaultString(EnvPrometheusCustomMetricsURL, c.ExternalServices.Prometheus.URL))
 	c.ExternalServices.Prometheus.Auth = getAuthFromEnv("PROMETHEUS")
 
@@ -346,11 +344,10 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
 	c.ExternalServices.Tracing.Path = ""
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
-	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, c.IstioNamespace))
+	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, getIstioComponentNamespace("tracing", c.IstioNamespace, c.IstioComponentNamespaces)))
 	c.ExternalServices.Tracing.Port = getDefaultInt32(EnvTracingServicePort, 16686)
 	c.ExternalServices.Tracing.Auth = getAuthFromEnv("TRACING")
 
-	// Istio Configuration
 	c.ExternalServices.Istio.IstioIdentityDomain = strings.TrimSpace(getDefaultString(EnvIstioIdentityDomain, "svc.cluster.local"))
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
@@ -398,6 +395,7 @@ func NewConfig() (c *Config) {
 	c.Auth.LDAP.LDAPMemberOfKey = getDefaultString(EnvLdapMemberOfKey, "memberof")
 
 	c.Deployment.AccessibleNamespaces = getDefaultStringArray("_not_overridable_via_env", "**")
+	c.Deployment.Namespace = getDefaultString(EnvActiveNamespace, c.IstioNamespace)
 
 	return
 }
@@ -442,6 +440,29 @@ func getDefaultStringArray(envvar string, defaultValue string) (retVal []string)
 		csv = defaultValue
 	}
 	retVal = strings.Split(csv, ",")
+	return
+}
+
+func getDefaultStringMap(envvar string, defaultValue string) (retVal map[string]string) {
+	csv := os.Getenv(envvar)
+	if csv == "" {
+		csv = defaultValue
+	}
+	retVal = map[string]string{}
+	for _, token := range strings.Split(csv, ",") {
+		if token := strings.TrimSpace(token); token == "" {
+			continue
+		}
+		mapEntry := strings.SplitN(token, "=", 2)
+		if len(mapEntry) == 2 {
+			retVal[strings.TrimSpace(mapEntry[0])] = strings.TrimSpace(mapEntry[1])
+			if strings.Contains(mapEntry[1], "=") {
+				log.Warningf("Check configuration for [%s]. Entry value for [%s] contains '='. Ignore this warning if intended.", envvar, token)
+			}
+		} else {
+			log.Warningf("Unexpected configuration for [%s]. Expected mapEntry like aa=bb, found [%s]", envvar, token)
+		}
+	}
 	return
 }
 
@@ -585,4 +606,47 @@ func getAuthFromEnv(prefix string) Auth {
 	auth.InsecureSkipVerify = getDefaultBool(prefix+EnvAuthSuffixInsecureSkipVerify, false)
 	auth.CAFile = strings.TrimSpace(getDefaultString(prefix+EnvAuthSuffixCAFile, ""))
 	return auth
+}
+
+// GetIstioNamespaces returns all Istio namespaces, less the exclusions
+func GetIstioNamespaces(exclude []string) []string {
+	excludeMap := map[string]bool{}
+	for _, e := range exclude {
+		excludeMap[e] = true
+	}
+	result := []string{}
+	if _, found := excludeMap[configuration.IstioNamespace]; !found {
+		result = append(result, configuration.IstioNamespace)
+	}
+	for _, ns := range configuration.IstioComponentNamespaces {
+		if _, found := excludeMap[ns]; !found {
+			result = append(result, ns)
+		}
+	}
+	return result
+}
+
+// GetIstioComponentNamespace returns the Istio component namespace (defaulting to IstioNamespace)
+func GetIstioComponentNamespace(component string) string {
+	return getIstioComponentNamespace(component, configuration.IstioNamespace, configuration.IstioComponentNamespaces)
+}
+
+func getIstioComponentNamespace(component, istioNamespace string, istioComponentNamespaces IstioComponentNamespaces) string {
+	if ns, found := istioComponentNamespaces[component]; found {
+		return ns
+	}
+	return istioNamespace
+}
+
+// IsIstioNamespace returns true if the namespace is the default istio namespace or an Istio component namespace
+func IsIstioNamespace(namespace string) bool {
+	if namespace == configuration.IstioNamespace {
+		return true
+	}
+	for _, ns := range configuration.IstioComponentNamespaces {
+		if ns == namespace {
+			return true
+		}
+	}
+	return false
 }

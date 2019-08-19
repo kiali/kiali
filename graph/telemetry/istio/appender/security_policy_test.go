@@ -16,7 +16,7 @@ func TestSecurityPolicy(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!~"istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -68,12 +68,12 @@ func TestSecurityPolicy(t *testing.T) {
 	duration, _ := time.ParseDuration("60s")
 	appender := SecurityPolicyAppender{
 		GraphType:          graph.GraphTypeVersionedApp,
-		IncludeIstio:       false,
 		InjectServiceNodes: false,
-		Namespaces: map[string]graph.NamespaceInfo{
-			"bookinfo": {
+		Namespaces: graph.NamespaceInfoMap{
+			"bookinfo": graph.NamespaceInfo{
 				Name:     "bookinfo",
 				Duration: duration,
+				IsIstio:  false,
 			},
 		},
 		QueryTime: time.Now().Unix(),
@@ -98,7 +98,7 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!="istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo",destination_service_namespace!~"istio-system"}[60s]) > 0) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -135,7 +135,6 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 	duration, _ := time.ParseDuration("60s")
 	appender := SecurityPolicyAppender{
 		GraphType:          graph.GraphTypeVersionedApp,
-		IncludeIstio:       false,
 		InjectServiceNodes: true,
 		Namespaces: map[string]graph.NamespaceInfo{
 			"bookinfo": {

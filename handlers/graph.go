@@ -22,11 +22,9 @@ package handlers
 //   duration:        time.Duration indicating desired query range duration, (default: 10m)
 //   graphType:       Determines how to present the telemetry data. app | service | versionedApp | workload (default: workload)
 //   groupBy:         If supported by vendor, visually group by a specified node attribute (default: version)
-//   includeIstio:    Include istio-system (infra) services (default false)
 //   namespaces:      Comma-separated list of namespace names to use in the graph. Will override namespace path param
 //   queryTime:       Unix time (seconds) for query such that range is queryTime-duration..queryTime (default now)
 //   TelemetryVendor: default: istio
-//   vendor:          Deprecated: use configVendor
 //
 //  Note: some handlers may ignore some query parameters.
 //  Note: vendors may support additional, vendor-specific query parameters.

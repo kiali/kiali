@@ -342,6 +342,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
 			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
 			// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
+			// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
 			controlPlaneNs := config.Get().IstioNamespace
 			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(controlPlaneNs); iErr == nil {
 				details.ServiceMeshPolicies = serviceMeshPolicies

@@ -16,10 +16,14 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
+// ThreeScaleService is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 type ThreeScaleService struct {
 	k8s kubernetes.IstioClientInterface
 }
 
+// GetThreeScaleInfo is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleInfo")
@@ -44,6 +48,8 @@ func (in *ThreeScaleService) GetThreeScaleInfo() (models.ThreeScaleInfo, error) 
 		}}, nil
 }
 
+// GetThreeScaleHandlers is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleHandlers")
@@ -52,6 +58,8 @@ func (in *ThreeScaleService) GetThreeScaleHandlers() (models.ThreeScaleHandlers,
 	return in.getThreeScaleHandlers()
 }
 
+// CreateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "CreateThreeScaleHandler")
@@ -99,7 +107,7 @@ func (in *ThreeScaleService) CreateThreeScaleHandler(body []byte) (models.ThreeS
 	return in.getThreeScaleHandlers()
 }
 
-// Private get 3scale handlers to be reused for several public methods
+// getThreeScaleHandlers is to be reused for several public methods
 func (in *ThreeScaleService) getThreeScaleHandlers() (models.ThreeScaleHandlers, error) {
 	conf := config.Get()
 	// Istio config generated from Kiali will be labeled as kiali_wizard
@@ -110,7 +118,7 @@ func (in *ThreeScaleService) getThreeScaleHandlers() (models.ThreeScaleHandlers,
 	return models.CastThreeScaleHandlers(tsh), nil
 }
 
-// It will generate the JSON representing the Handler and Instance that will be used for the ThreeScale Handler
+// generateJsonHandlerInstance will generate the JSON representing the Handler and Instance that will be used for the ThreeScale Handler
 func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, string, error) {
 	conf := config.Get()
 	newHandler := kubernetes.GenericIstioObject{
@@ -179,6 +187,8 @@ func generateJsonHandlerInstance(handler models.ThreeScaleHandler) (string, stri
 	return string(bHandler), string(bInstance), nil
 }
 
+// UpdateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) UpdateThreeScaleHandler(handlerName string, body []byte) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "UpdateThreeScaleHandler")
@@ -233,6 +243,8 @@ func checkHandler(istioObject kubernetes.IstioObject, handlerName string) bool {
 	return false
 }
 
+// DeleteThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) DeleteThreeScaleHandler(handlerName string) (models.ThreeScaleHandlers, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "DeleteThreeScaleHandler")
@@ -313,6 +325,8 @@ func getThreeScaleRuleDetails(rule kubernetes.IstioObject) string {
 	return threeScaleHandlerName
 }
 
+// GetThreeScaleRule is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) GetThreeScaleRule(namespace, service string) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "GetThreeScaleRule")
@@ -380,6 +394,8 @@ func generateJsonRule(threeScaleServiceRule models.ThreeScaleServiceRule) (strin
 	return string(bRule), nil
 }
 
+// CreateThreeScaleRule is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) CreateThreeScaleRule(namespace string, body []byte) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "CreateThreeScaleRule")
@@ -409,6 +425,8 @@ func (in *ThreeScaleService) CreateThreeScaleRule(namespace string, body []byte)
 	return *threeScaleServiceRule, nil
 }
 
+// UpdateThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, body []byte) (models.ThreeScaleServiceRule, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "UpdateThreeScaleRule")
@@ -444,6 +462,8 @@ func (in *ThreeScaleService) UpdateThreeScaleRule(namespace, service string, bod
 	return *threeScaleServiceRule, nil
 }
 
+// DeleteThreeScaleHandler is Maistra-Only. Maistra does not allow Istio multi-namespace deployment, use
+// the single Istio namespace.
 func (in *ThreeScaleService) DeleteThreeScaleRule(namespace, service string) error {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "ThreeScaleService", "DeleteThreeScaleRule")

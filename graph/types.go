@@ -41,14 +41,32 @@ type Edge struct {
 type NamespaceInfo struct {
 	Name     string
 	Duration time.Duration
+	IsIstio  bool
 }
 
-type Service struct {
+type NamespaceInfoMap map[string]NamespaceInfo
+
+func NewNamespaceInfoMap() NamespaceInfoMap {
+	return make(map[string]NamespaceInfo)
+}
+
+// GetIstioNamespaces returns all Istio namespaces found in the NamespaceInfo value set
+func (in NamespaceInfoMap) GetIstioNamespaces() []string {
+	result := []string{}
+	for _, info := range in {
+		if info.IsIstio {
+			result = append(result, info.Name)
+		}
+	}
+	return result
+}
+
+type ServiceName struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 }
 
-func (s *Service) Key() string {
+func (s *ServiceName) Key() string {
 	return fmt.Sprintf("%s %s", s.Namespace, s.Name)
 }
 

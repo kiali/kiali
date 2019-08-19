@@ -30,15 +30,15 @@ const (
 )
 
 // DestServicesMetadata key=Service.Key()
-type DestServicesMetadata map[string]Service
+type DestServicesMetadata map[string]ServiceName
 
 // NewDestServicesMetadata returns an empty DestServicesMetadata map
 func NewDestServicesMetadata() DestServicesMetadata {
-	return make(map[string]Service)
+	return make(map[string]ServiceName)
 }
 
 // Add adds or replaces a destService
-func (dsm DestServicesMetadata) Add(key string, service Service) DestServicesMetadata {
+func (dsm DestServicesMetadata) Add(key string, service ServiceName) DestServicesMetadata {
 	dsm[key] = service
 	return dsm
 }

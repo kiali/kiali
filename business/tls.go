@@ -60,6 +60,7 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 		// https://github.com/Maistra/istio/pull/39/files#diff-e3109392080297ee093b7189648289e1R40
 		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L958
 		// see https://github.com/Maistra/istio/blob/maistra-1.0/pilot/pkg/model/config.go#L990
+		// note - Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
 		controlPlaneNs := config.Get().IstioNamespace
 		if mps, err = in.k8s.GetServiceMeshPolicies(controlPlaneNs); err != nil {
 			// This query can return false if user can't access to controlPlaneNs

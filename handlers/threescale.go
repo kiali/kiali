@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"io/ioutil"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"net/http"
 
 	"github.com/kiali/kiali/log"
 )
+
+// ThreeScale is Maistra-only. Maistra does not allow Istio multi-namespace deployment, use the single Istio namespace.
 
 func ThreeScaleStatus(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)

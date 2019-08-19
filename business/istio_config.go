@@ -242,9 +242,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		// MeshPolicies are not namespaced. They will be only listed for the namespace
-		// where Istio is deployed. Only listed in non Maistra environments.
-		if criteria.IncludeMeshPolicies && criteria.Namespace == config.Get().IstioNamespace && !in.k8s.IsMaistraApi() {
+		// MeshPolicies are not namespaced. They will be only listed for an Istio namespace.
+		// Only listed in non Maistra environments.
+		if criteria.IncludeMeshPolicies && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
 			if mp, mpErr := in.k8s.GetMeshPolicies(); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
 			} else {
@@ -255,9 +255,9 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 
 	go func(errChan chan error) {
 		defer wg.Done()
-		// ClusterRbacConfigs are not namespaced. They will be only listed for the namespace
-		// where Istio is deployed. Only listed in non Maistra environments.
-		if criteria.IncludeClusterRbacConfigs && criteria.Namespace == config.Get().IstioNamespace && !in.k8s.IsMaistraApi() {
+		// ClusterRbacConfigs are not namespaced. They will be only listed for an Istio namespace.
+		// Only listed in non Maistra environments.
+		if criteria.IncludeClusterRbacConfigs && config.IsIstioNamespace(criteria.Namespace) && !in.k8s.IsMaistraApi() {
 			if crc, crcErr := in.k8s.GetClusterRbacConfigs(); crcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
 			} else {
@@ -454,9 +454,9 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			err = iErr
 		}
 	case MeshPolicies:
-		// MeshPolicies are not namespaced. They will be only listed for the namespace
-		// where Istio is deployed. Only listed in non Maistra environments.
-		if config.Get().IstioNamespace == namespace {
+		// MeshPolicies are not namespaced. They will be only listed for an Istio namespace.
+		// Only listed in non Maistra environments.
+		if config.IsIstioNamespace(namespace) {
 			if mp, iErr := in.k8s.GetMeshPolicy(object); iErr == nil {
 				istioConfigDetail.MeshPolicy = &models.MeshPolicy{}
 				istioConfigDetail.MeshPolicy.Parse(mp)
@@ -472,9 +472,9 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 			err = iErr
 		}
 	case ClusterRbacConfigs:
-		// ClusterRbacConfigs are not namespaced. They will be only listed for the namespace
-		// where Istio is deployed. Only listed in non Maistra environments.
-		if config.Get().IstioNamespace == namespace {
+		// ClusterRbacConfigs are not namespaced. They will be only listed for an istio namespace.
+		// Only listed in non Maistra environments.
+		if config.IsIstioNamespace(namespace) {
 			if crc, iErr := in.k8s.GetClusterRbacConfig(object); iErr == nil {
 				istioConfigDetail.ClusterRbacConfig = &models.ClusterRbacConfig{}
 				istioConfigDetail.ClusterRbacConfig.Parse(crc)

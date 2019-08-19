@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 )
 
 // The supported vendors
@@ -73,7 +74,7 @@ type TelemetryOptions struct {
 	AccessibleNamespaces map[string]time.Time
 	Appenders            RequestedAppenders // requested appenders, nil if param not supplied
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
-	Namespaces           map[string]NamespaceInfo
+	Namespaces           NamespaceInfoMap
 	CommonOptions
 	NodeOptions
 }
@@ -109,7 +110,6 @@ func NewOptions(r *net_http.Request) Options {
 	namespaces := params.Get("namespaces") // csl of namespaces
 	queryTimeString := params.Get("queryTime")
 	telemetryVendor := params.Get("telemetryVendor")
-	vendor := params.Get("vendor") // deprecated, use configVendor
 
 	if _, ok := params["appenders"]; ok {
 		appenderNames := strings.Split(params.Get("appenders"), ",")
@@ -119,10 +119,6 @@ func NewOptions(r *net_http.Request) Options {
 		appenders = RequestedAppenders{All: false, AppenderNames: appenderNames}
 	}
 
-	// vendor is deprecated, configVendor is preferred
-	if configVendor == "" && vendor != "" {
-		configVendor = vendor
-	}
 	if configVendor == "" {
 		configVendor = defaultConfigVendor
 	} else if configVendor != VendorCytoscape {
@@ -176,7 +172,7 @@ func NewOptions(r *net_http.Request) Options {
 	}
 
 	// Process namespaces options:
-	namespaceMap := make(map[string]NamespaceInfo)
+	namespaceMap := NewNamespaceInfoMap()
 
 	tokenContext := r.Context().Value("token")
 	var token string
@@ -209,6 +205,7 @@ func NewOptions(r *net_http.Request) Options {
 			namespaceMap[namespaceToken] = NamespaceInfo{
 				Name:     namespaceToken,
 				Duration: resolveNamespaceDuration(creationTime, time.Duration(duration), queryTime),
+				IsIstio:  config.IsIstioNamespace(namespaceToken),
 			}
 		} else {
 			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceToken))

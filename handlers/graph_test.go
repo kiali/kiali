@@ -47,6 +47,7 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 			},
 		}, nil)
 
+	fmt.Println("!!! Set up standard mock")
 	k8s.On("GetProjects").Return(
 		[]osproject_v1.Project{
 			osproject_v1.Project{
@@ -57,6 +58,78 @@ func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K
 			osproject_v1.Project{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name: "tutorial",
+				},
+			},
+		}, nil)
+
+	k8s.On("IsOpenShift").Return(true)
+
+	api := new(prometheustest.PromAPIMock)
+	client, err := prometheus.NewClient()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	client.Inject(api)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
+
+	return client, api, k8s, nil
+}
+
+func setupMockedWithIstioComponentNamespaces() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
+	testConfig := config.NewConfig()
+	testConfig.IstioComponentNamespaces = config.IstioComponentNamespaces{"telemetry": "istio-telemetry"}
+	config.Set(testConfig)
+	k8s := new(kubetest.K8SClientMock)
+
+	fmt.Println("!!! Set up complex mock")
+	k8s.On("GetNamespaces").Return(
+		&core_v1.NamespaceList{
+			Items: []core_v1.Namespace{
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "bookinfo",
+					},
+				},
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "tutorial",
+					},
+				},
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "istio-system",
+					},
+				},
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "istio-telemetry",
+					},
+				},
+			},
+		}, nil)
+
+	k8s.On("GetProjects").Return(
+		[]osproject_v1.Project{
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "bookinfo",
+				},
+			},
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "tutorial",
+				},
+			},
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "istio-system",
+				},
+			},
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "istio-telemetry",
 				},
 			},
 		}, nil)
@@ -1502,9 +1575,10 @@ func TestServiceNodeGraph(t *testing.T) {
 }
 
 // TestComplexGraph aims to provide test coverage for a more robust graph and specific corner cases. Listed below are coverage cases
-// - multi-namespace
+// - multi-namespace graph
+// - istio component namesaces
 // - a "shared" node (internal in ns-1, outsider in ns-2)
-// note: this is still not particularly robust, not sure how to include appenders in unit tests given that they create their own new business/kube clients
+// note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	q0m0 := model.Metric{
@@ -1593,7 +1667,19 @@ func TestComplexGraph(t *testing.T) {
 	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v11 := model.Vector{}
 
-	client, api, _, err := setupMocked()
+	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	v12 := model.Vector{}
+
+	q13 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!~"istio-system|istio-telemetry",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	v13 := model.Vector{}
+
+	q14 := `round(sum(rate(istio_requests_total{reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	v14 := model.Vector{}
+
+	q15 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="istio-system",destination_service_namespace=~"istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	v15 := model.Vector{}
+
+	client, api, _, err := setupMockedWithIstioComponentNamespaces()
 	if err != nil {
 		t.Error(err)
 		return
@@ -1610,6 +1696,10 @@ func TestComplexGraph(t *testing.T) {
 	mockQuery(api, q9, &v9)
 	mockQuery(api, q10, &v10)
 	mockQuery(api, q11, &v11)
+	mockQuery(api, q12, &v12)
+	mockQuery(api, q13, &v13)
+	mockQuery(api, q14, &v14)
+	mockQuery(api, q15, &v15)
 
 	var fut func(w http.ResponseWriter, r *http.Request, c *prometheus.Client)
 
@@ -1624,7 +1714,7 @@ func TestComplexGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphNamespaces
-	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&groupBy=app&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial"
+	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&groupBy=app&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
