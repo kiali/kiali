@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
-import { NodeType, SummaryPanelPropType, Protocol } from '../../types/Graph';
+import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
@@ -10,21 +10,7 @@ import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import Label from '../../components/Label/Label';
 import { serverConfig } from '../../config/ServerConfig';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-
-export interface NodeData {
-  app: string;
-  hasParent: boolean;
-  isInaccessible: boolean;
-  isOutsider: boolean;
-  isRoot: boolean;
-  isServiceEntry: string | undefined;
-  namespace: string;
-  nodeType: NodeType;
-  service: string;
-  version: string;
-  workload: string;
-}
+import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 export enum NodeMetricType {
   APP = 1,
@@ -60,27 +46,11 @@ export const updateHealth = (summaryTarget: any, stateSetter: (hs: HealthState) 
   }
 };
 
-export const nodeData = (node: any): NodeData => {
-  return {
-    app: node.data(CyNode.app),
-    hasParent: !!node.data('parent'),
-    isInaccessible: node.data(CyNode.isInaccessible),
-    isOutsider: node.data(CyNode.isOutside),
-    isRoot: node.data(CyNode.isRoot),
-    isServiceEntry: node.data(CyNode.isServiceEntry),
-    namespace: node.data(CyNode.namespace),
-    nodeType: node.data(CyNode.nodeType),
-    service: node.data(CyNode.service),
-    version: node.data(CyNode.version),
-    workload: node.data(CyNode.workload)
-  };
-};
-
-export const getNodeMetricType = (data: NodeData): NodeMetricType => {
-  switch (data.nodeType) {
+export const getNodeMetricType = (nodeData: DecoratedGraphNodeData): NodeMetricType => {
+  switch (nodeData.nodeType) {
     case NodeType.APP:
       // treat versioned app like a workload to narrow to the specific version
-      return data.workload ? NodeMetricType.WORKLOAD : NodeMetricType.APP;
+      return nodeData.workload ? NodeMetricType.WORKLOAD : NodeMetricType.APP;
     case NodeType.SERVICE:
       return NodeMetricType.SERVICE;
     default:
@@ -100,7 +70,7 @@ export const getNodeMetrics = (
   quantiles?: Array<string>,
   byLabels?: Array<string>
 ): Promise<Response<M.Metrics>> => {
-  const data = nodeData(node);
+  const nodeData = decoratedNodeData(node);
   const options: IstioMetricsOptions = {
     queryTime: props.queryTime,
     duration: props.duration,
@@ -116,11 +86,11 @@ export const getNodeMetrics = (
 
   switch (nodeMetricType) {
     case NodeMetricType.APP:
-      return API.getAppMetrics(data.namespace, data.app, options);
+      return API.getAppMetrics(nodeData.namespace, nodeData.app!, options);
     case NodeMetricType.SERVICE:
-      return API.getServiceMetrics(data.namespace, data.service, options);
+      return API.getServiceMetrics(nodeData.namespace, nodeData.service!, options);
     case NodeMetricType.WORKLOAD:
-      return API.getWorkloadMetrics(data.namespace, data.workload, options);
+      return API.getWorkloadMetrics(nodeData.namespace, nodeData.workload!, options);
     default:
       return Promise.reject(new Error(`Unknown NodeMetricType: ${nodeMetricType}`));
   }
@@ -169,15 +139,15 @@ export const getDatapoints = (
   return graphUtils.toC3Columns(series, title);
 };
 
-export const renderLabels = (data: NodeData) => {
+export const renderLabels = (nodeData: DecoratedGraphNodeData) => {
   const hasNamespace =
-    data.nodeType !== NodeType.UNKNOWN && !(data.nodeType === NodeType.SERVICE && data.isServiceEntry);
-  const hasVersion = hasNamespace && data.version;
+    nodeData.nodeType !== NodeType.UNKNOWN && !(nodeData.nodeType === NodeType.SERVICE && nodeData.isServiceEntry);
+  const hasVersion = hasNamespace && nodeData.version;
   return (
     <>
       <div className="label-collection" style={{ paddingTop: '3px' }}>
-        {hasNamespace && <Label name="namespace" value={data.namespace} />}
-        {hasVersion && <Label name={serverConfig.istioLabels.versionLabelName} value={data.version} />}
+        {hasNamespace && <Label name="namespace" value={nodeData.namespace} />}
+        {hasVersion && <Label name={serverConfig.istioLabels.versionLabelName} value={nodeData.version!} />}
       </div>
     </>
   );

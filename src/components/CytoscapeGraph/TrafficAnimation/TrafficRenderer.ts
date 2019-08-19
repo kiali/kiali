@@ -7,7 +7,7 @@ import {
   TrafficPointRenderer,
   Diamond
 } from './TrafficPointRenderer';
-import { edgeData } from '../CytoscapeGraphUtils';
+import { decoratedEdgeData } from '../CytoscapeGraphUtils';
 import { Protocol } from '../../../types/Graph';
 
 const TCP_SETTINGS = {
@@ -402,7 +402,7 @@ export default class TrafficRenderer {
   }
 
   private getTrafficEdgeType(edge: any) {
-    switch (edgeData(edge).protocol) {
+    switch (decoratedEdgeData(edge).protocol) {
       case Protocol.GRPC:
       case Protocol.HTTP:
         return TrafficEdgeType.RPS;
@@ -417,7 +417,7 @@ export default class TrafficRenderer {
     return edges.reduce((trafficEdges: TrafficEdgeHash, edge: any) => {
       const type = this.getTrafficEdgeType(edge);
       if (type !== TrafficEdgeType.NONE) {
-        const edgeId = edgeData(edge).id;
+        const edgeId = decoratedEdgeData(edge).id;
         if (edgeId in this.trafficEdges) {
           trafficEdges[edgeId] = this.trafficEdges[edgeId];
         } else {
@@ -446,16 +446,16 @@ export default class TrafficRenderer {
       );
     }
 
-    const data = edgeData(edge);
+    const edgeData = decoratedEdgeData(edge);
     if (trafficEdge.getType() === TrafficEdgeType.RPS) {
-      const isHttp = data.protocol === Protocol.HTTP;
-      const rate = isHttp ? data.http : data.grpc;
-      const pErr = isHttp ? data.httpPercentErr : data.grpcPercentErr;
+      const isHttp = edgeData.protocol === Protocol.HTTP;
+      const rate = isHttp ? edgeData.http : edgeData.grpc;
+      const pErr = isHttp ? edgeData.httpPercentErr : edgeData.grpcPercentErr;
 
       const timer = this.timerFromRate(rate);
       // The edge of the length also affects the speed, include a factor in the speed to even visual speed for
       // long and short edges.
-      const speed = this.speedFromResponseTime(data.responseTime) * edgeLengthFactor;
+      const speed = this.speedFromResponseTime(edgeData.responseTime) * edgeLengthFactor;
       const errorRate = isNaN(pErr) ? 0 : pErr / 100;
       trafficEdge.setSpeed(speed);
       trafficEdge.setTimer(timer);
@@ -464,7 +464,7 @@ export default class TrafficRenderer {
     } else if (trafficEdge.getType() === TrafficEdgeType.TCP) {
       trafficEdge.setSpeed(TCP_SETTINGS.baseSpeed * edgeLengthFactor);
       trafficEdge.setErrorRate(TCP_SETTINGS.errorRate);
-      trafficEdge.setTimer(this.timerFromTcpSentRate(data.tcp)); // 150 - 500
+      trafficEdge.setTimer(this.timerFromTcpSentRate(edgeData.tcp)); // 150 - 500
       trafficEdge.setEdge(edge);
     }
   }

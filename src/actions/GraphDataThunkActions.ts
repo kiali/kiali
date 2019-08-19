@@ -9,7 +9,6 @@ import { GraphDataActions } from './GraphDataActions';
 import * as MessageCenter from '../utils/MessageCenter';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
-import { serverConfig } from '../config/ServerConfig';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 
 const EMPTY_GRAPH_DATA = { nodes: [], edges: [] };
@@ -43,9 +42,6 @@ const GraphDataThunkActions = {
         graphType: graphType,
         injectServiceNodes: injectServiceNodes
       };
-      if (namespaces.find(namespace => namespace.name === serverConfig.istioNamespace)) {
-        restParams.includeIstio = true;
-      }
 
       if (graphType === GraphType.APP || graphType === GraphType.VERSIONED_APP) {
         restParams.groupBy = GroupByType.APP;

@@ -10,7 +10,6 @@ import { RenderLink, renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
   updateHealth,
-  nodeData,
   getNodeMetrics,
   getNodeMetricType,
   renderNoTraffic
@@ -23,7 +22,7 @@ import { Metrics } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config/ServerConfig';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { icons } from '../../config';
 
 type SummaryPanelGroupState = {
@@ -101,8 +100,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   render() {
     const group = this.props.data.summaryTarget;
-    const data = nodeData(group);
-    const { namespace } = data;
+    const nodeData = decoratedNodeData(group);
+    const { namespace } = nodeData;
     const serviceList = this.renderServiceList(group);
     const workloadList = this.renderWorkloadList(group);
 
@@ -122,7 +121,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
               />
             )
           )}
-          <span> {renderTitle(data)}</span>
+          <span> {renderTitle(nodeData)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
             <Label name="namespace" value={namespace} key={namespace} />
             {this.renderVersionBadges()}
@@ -160,8 +159,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
 
   private updateRpsCharts = (props: SummaryPanelPropType) => {
     const target = props.data.summaryTarget;
-    const data = nodeData(target);
-    const nodeMetricType = getNodeMetricType(data);
+    const nodeData = decoratedNodeData(target);
+    const nodeMetricType = getNodeMetricType(nodeData);
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
@@ -174,8 +173,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     }
 
     const filters = ['request_count', 'request_error_count', 'tcp_sent', 'tcp_received'];
-    const reporter: Reporter =
-      this.props.data.summaryTarget.namespace === serverConfig.istioNamespace ? 'destination' : 'source';
+    const reporter: Reporter = nodeData.isIstio ? 'destination' : 'source';
 
     const promiseOut = getNodeMetrics(nodeMetricType, target, props, filters, 'outbound', reporter);
     // use dest metrics for incoming
@@ -381,8 +379,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const serviceList: any[] = [];
 
     group.children(`node[nodeType = "${NodeType.SERVICE}"]`).forEach((node, index) => {
-      const data = nodeData(node);
-      serviceList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.SERVICE} />);
+      const nodeData = decoratedNodeData(node);
+      serviceList.push(<RenderLink key={`node-${index}`} nodeData={nodeData} nodeType={NodeType.SERVICE} />);
       serviceList.push(<span key={`node-comma-${index}`}>, </span>);
     });
 
@@ -397,8 +395,8 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     const workloadList: any[] = [];
 
     group.children('node[workload]').forEach((node, index) => {
-      const data = nodeData(node);
-      workloadList.push(<RenderLink key={`node-${index}`} data={data} nodeType={NodeType.WORKLOAD} />);
+      const nodeData = decoratedNodeData(node);
+      workloadList.push(<RenderLink key={`node-${index}`} nodeData={nodeData} nodeType={NodeType.WORKLOAD} />);
       workloadList.push(<span key={`node-comma-${index}`}>, </span>);
     });
 

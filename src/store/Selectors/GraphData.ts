@@ -14,6 +14,7 @@ import {
   GraphNodeWrapper,
   hasProtocolTraffic
 } from '../../types/Graph';
+import { isIstioNamespace } from '../../config/ServerConfig';
 
 // When updating the cytoscape graph, the element data expects to have all the changes
 // non provided values are taken as "this didn't change", similar as setState does.
@@ -55,6 +56,7 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
       isDead: undefined,
       isGroup: undefined,
       isInaccessible: undefined,
+      isIstio: undefined,
       isMisconfigured: undefined,
       isOutside: undefined,
       isRoot: undefined,
@@ -116,8 +118,9 @@ export const decorateGraphData = (graphData: GraphElements): DecoratedGraphEleme
             decoratedNode.data = { ...propertiesToNumber(protocol.rates), ...decoratedNode.data };
           });
         }
+        const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;
         // prettier-ignore
-        decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data } as DecoratedGraphNodeData;
+        decoratedNode.data = { isIstio: isIstio, ...elementsDefaults.nodes, ...decoratedNode.data } as DecoratedGraphNodeData;
         // prettier-ignore
         return decoratedNode as DecoratedGraphNodeWrapper;
       });

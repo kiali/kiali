@@ -10,7 +10,7 @@ import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import CustomMetricsContainer from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/ServerConfig';
+import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import BreadcrumbView from '../../components/BreadcrumbView/BreadcrumbView';
 import PfTitle from '../../components/Pf/PfTitle';
 import { GraphDefinition, GraphType, NodeParamsType, NodeType } from '../../types/Graph';
@@ -87,7 +87,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           valid: true,
           checks: []
         };
-        if (this.props.match.params.namespace !== serverConfig.istioNamespace) {
+        if (!isIstioNamespace(this.props.match.params.namespace)) {
           if (!pod.istioContainers || pod.istioContainers.length === 0) {
             validations.pod[pod.name].checks.push(noIstiosidecar);
           }

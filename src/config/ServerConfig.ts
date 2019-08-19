@@ -45,6 +45,7 @@ const computeValidDurations = (cfg: ComputedServerConfig) => {
 let serverConfig: ComputedServerConfig = {
   installationTag: 'Kiali Console',
   istioNamespace: 'istio-system',
+  istioComponentNamespaces: new Map<string, string>(),
   istioLabels: {
     appLabelName: 'app',
     versionLabelName: 'version'
@@ -79,4 +80,13 @@ export const setServerConfig = (svcConfig: ServerConfig) => {
   };
 
   computeValidDurations(serverConfig);
+};
+
+export const isIstioNamespace = (namespace: string): boolean => {
+  if (namespace === serverConfig.istioNamespace) {
+    return true;
+  }
+  return serverConfig.istioComponentNamespaces
+    ? Object.values(serverConfig.istioComponentNamespaces).includes(namespace)
+    : false;
 };

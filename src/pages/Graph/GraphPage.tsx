@@ -379,7 +379,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private getTitle(node: NodeParamsType) {
     if (node.nodeType === NodeType.APP) {
       let title = node.app;
-      if (node.version) {
+      if (node.version && node.version !== 'unknown') {
         title += ' - ' + node.version;
       }
 

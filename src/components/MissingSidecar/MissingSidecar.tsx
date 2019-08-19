@@ -1,7 +1,8 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
-import { icons, serverConfig } from '../../config';
+import { isIstioNamespace } from 'config/ServerConfig';
+import { icons } from 'config';
 
 const MissingSidecar = props => {
   const { style, text, textTooltip, type, name, namespace, color, tooltip, ...otherProps } = props;
@@ -13,7 +14,7 @@ const MissingSidecar = props => {
     </span>
   );
 
-  if (namespace === serverConfig.istioNamespace) {
+  if (isIstioNamespace(namespace)) {
     return <></>;
   }
 

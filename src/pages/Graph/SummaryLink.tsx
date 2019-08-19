@@ -1,60 +1,55 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from 'patternfly-react';
-import { NodeType } from '../../types/Graph';
-import { nodeData, NodeData } from './SummaryPanelCommon';
-import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { NodeType, DecoratedGraphNodeData, GraphNodeData } from '../../types/Graph';
+import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
-const getTitle = (data: NodeData) => {
-  if (data.nodeType === NodeType.UNKNOWN) {
+const getTitle = (nodeData: DecoratedGraphNodeData) => {
+  if (nodeData.nodeType === NodeType.UNKNOWN) {
     return 'Traffic Source';
   }
-  if (data.nodeType === NodeType.SERVICE && data.isServiceEntry !== undefined) {
-    return data.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry';
+  if (nodeData.nodeType === NodeType.SERVICE && nodeData.isServiceEntry !== undefined) {
+    return nodeData.isServiceEntry === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry';
   }
-  return data.nodeType.charAt(0).toUpperCase() + data.nodeType.slice(1);
+  return nodeData.nodeType.charAt(0).toUpperCase() + nodeData.nodeType.slice(1);
 };
 
-const isInaccessible = (data: NodeData): boolean => {
-  return data.isInaccessible;
-};
-
-const getLink = (data: NodeData, nodeType?: NodeType) => {
-  const namespace = data.namespace;
-  if (!nodeType || data.nodeType === NodeType.UNKNOWN) {
-    nodeType = data.nodeType;
+const getLink = (nodeData: GraphNodeData, nodeType?: NodeType) => {
+  const namespace = nodeData.namespace;
+  if (!nodeType || nodeData.nodeType === NodeType.UNKNOWN) {
+    nodeType = nodeData.nodeType;
   }
-  const { app, service, workload } = data;
+  const { app, service, workload } = nodeData;
   let displayName: string = 'unknown';
   let link: string | undefined;
   let key: string | undefined;
 
   switch (nodeType) {
     case NodeType.APP:
-      link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app)}`;
+      link = `/namespaces/${encodeURIComponent(namespace)}/applications/${encodeURIComponent(app!)}`;
       key = `${namespace}.app.${app}`;
-      displayName = app;
+      displayName = app!;
       break;
     case NodeType.SERVICE:
-      if (data.isServiceEntry) {
-        link = `/namespaces/${encodeURIComponent(namespace)}/istio/serviceentries/${encodeURIComponent(service)}`;
+      if (nodeData.isServiceEntry) {
+        link = `/namespaces/${encodeURIComponent(namespace)}/istio/serviceentries/${encodeURIComponent(service!)}`;
       } else {
-        link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service)}`;
+        link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service!)}`;
       }
       key = `${namespace}.svc.${service}`;
-      displayName = service;
+      displayName = service!;
       break;
     case NodeType.WORKLOAD:
-      link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload)}`;
+      link = `/namespaces/${encodeURIComponent(namespace)}/workloads/${encodeURIComponent(workload!)}`;
       key = `${namespace}.wl.${workload}`;
-      displayName = workload;
+      displayName = workload!;
       break;
     default:
       // NOOP
       break;
   }
 
-  if (link && !isInaccessible(data)) {
+  if (link && !nodeData.isInaccessible) {
     return (
       <Link key={key} to={link}>
         {displayName}
@@ -66,36 +61,36 @@ const getLink = (data: NodeData, nodeType?: NodeType) => {
 };
 
 type RenderLinkProps = {
-  data: NodeData;
+  nodeData: GraphNodeData;
   nodeType?: NodeType;
 };
 
 export const RenderLink = (props: RenderLinkProps) => {
-  const link = getLink(props.data, props.nodeType);
+  const link = getLink(props.nodeData, props.nodeType);
 
   return (
     <>
       {link}
-      {isInaccessible(props.data) && (
+      {props.nodeData.isInaccessible && (
         <Icon key="link-icon" name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />
       )}
     </>
   );
 };
 
-export const renderTitle = (data: NodeData) => {
-  const link = getLink(data);
+export const renderTitle = (nodeData: DecoratedGraphNodeData) => {
+  const link = getLink(nodeData);
 
   return (
     <>
-      <strong>{getTitle(data)}:</strong> {link}{' '}
-      {isInaccessible(data) && <Icon name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />}
+      <strong>{getTitle(nodeData)}:</strong> {link}{' '}
+      {nodeData.isInaccessible && <Icon name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />}
     </>
   );
 };
 
 export const renderDestServicesLinks = (node: any) => {
-  const data = nodeData(node);
+  const nodeData = decoratedNodeData(node);
   const destServices = node.data(CyNode.destServices);
 
   const links: any[] = [];
@@ -104,20 +99,20 @@ export const renderDestServicesLinks = (node: any) => {
   }
 
   destServices.forEach((ds, index) => {
-    const serviceNodeData: NodeData = {
+    const serviceNodeData: GraphNodeData = {
+      id: nodeData.id,
       app: '',
-      hasParent: false,
-      isInaccessible: data.isInaccessible,
-      isOutsider: data.isOutsider,
-      isRoot: data.isRoot,
-      isServiceEntry: data.isServiceEntry,
+      isInaccessible: nodeData.isInaccessible,
+      isOutside: nodeData.isOutside,
+      isRoot: nodeData.isRoot,
+      isServiceEntry: nodeData.isServiceEntry,
       namespace: ds.namespace,
       nodeType: NodeType.SERVICE,
       service: ds.name,
       version: '',
       workload: ''
     };
-    links.push(<RenderLink key={`service-${index}`} data={serviceNodeData} nodeType={NodeType.SERVICE} />);
+    links.push(<RenderLink key={`service-${index}`} nodeData={serviceNodeData} nodeType={NodeType.SERVICE} />);
     links.push(<span key={`comma-after-${ds.name}`}>, </span>);
   });
 

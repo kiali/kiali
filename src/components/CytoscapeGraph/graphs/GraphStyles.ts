@@ -6,7 +6,7 @@ import { icons } from '../../../config';
 
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
-import { edgeData, nodeData } from '../CytoscapeGraphUtils';
+import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 
 export const DimClass = 'mousedim';
 
@@ -65,21 +65,21 @@ export class GraphStyles {
     const getEdgeColor = (ele: any): string => {
       let rate = 0;
       let pErr = 0;
-      const data = edgeData(ele);
-      if (data.http > 0) {
-        rate = data.http;
-        pErr = data.httpPercentErr > 0 ? data.httpPercentErr : 0;
-      } else if (data.grpc > 0) {
-        rate = data.grpc;
-        pErr = data.grpcPercentErr > 0 ? data.grpcPercentErr : 0;
-      } else if (data.tcp > 0) {
-        rate = data.tcp;
+      const edgeData = decoratedEdgeData(ele);
+      if (edgeData.http > 0) {
+        rate = edgeData.http;
+        pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
+      } else if (edgeData.grpc > 0) {
+        rate = edgeData.grpc;
+        pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
+      } else if (edgeData.tcp > 0) {
+        rate = edgeData.tcp;
       }
 
       if (rate === 0) {
         return EdgeColorDead;
       }
-      if (data.protocol === 'tcp') {
+      if (edgeData.protocol === 'tcp') {
         return EdgeColorTCPWithTraffic;
       }
       if (pErr > REQUESTS_THRESHOLDS.failure) {
@@ -95,20 +95,20 @@ export class GraphStyles {
       const cyGlobal = getCyGlobalData(ele);
       const edgeLabelMode = cyGlobal.edgeLabelMode;
       let content = '';
-      const data = edgeData(ele);
+      const edgeData = decoratedEdgeData(ele);
 
       switch (edgeLabelMode) {
         case EdgeLabelMode.REQUESTS_PER_SECOND: {
           let rate = 0;
           let pErr = 0;
-          if (data.http > 0) {
-            rate = data.http;
-            pErr = data.httpPercentErr > 0 ? data.httpPercentErr : 0;
-          } else if (data.grpc > 0) {
-            rate = data.grpc;
-            pErr = data.grpcPercentErr > 0 ? data.grpcPercentErr : 0;
-          } else if (data.tcp > 0) {
-            rate = data.tcp;
+          if (edgeData.http > 0) {
+            rate = edgeData.http;
+            pErr = edgeData.httpPercentErr > 0 ? edgeData.httpPercentErr : 0;
+          } else if (edgeData.grpc > 0) {
+            rate = edgeData.grpc;
+            pErr = edgeData.grpcPercentErr > 0 ? edgeData.grpcPercentErr : 0;
+          } else if (edgeData.tcp > 0) {
+            rate = edgeData.tcp;
           }
 
           if (rate > 0) {
@@ -123,7 +123,7 @@ export class GraphStyles {
           break;
         }
         case EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE: {
-          const responseTime = data.responseTime > 0 ? data.responseTime : 0;
+          const responseTime = edgeData.responseTime > 0 ? edgeData.responseTime : 0;
           if (responseTime > 0) {
             content = responseTime < 1000.0 ? `${responseTime.toFixed(0)}ms` : `${(responseTime / 1000.0).toFixed(2)}s`;
           }
@@ -131,10 +131,10 @@ export class GraphStyles {
         }
         case EdgeLabelMode.REQUESTS_PERCENTAGE: {
           let pReq;
-          if (data.httpPercentReq > 0) {
-            pReq = data.httpPercentReq;
-          } else if (data.grpcPercentReq > 0) {
-            pReq = data.grpcPercentReq;
+          if (edgeData.httpPercentReq > 0) {
+            pReq = edgeData.httpPercentReq;
+          } else if (edgeData.grpcPercentReq > 0) {
+            pReq = edgeData.grpcPercentReq;
           }
           if (pReq > 0) {
             const sReq = pReq.toFixed(1);
@@ -147,11 +147,11 @@ export class GraphStyles {
       }
 
       if (includeProtocol) {
-        const protocol = data.protocol;
+        const protocol = edgeData.protocol;
         content = protocol ? `${protocol} ${content}` : content;
       }
 
-      const mtlsPercentage = data.isMTLS;
+      const mtlsPercentage = edgeData.isMTLS;
       if (cyGlobal.showSecurity && mtlsPercentage && mtlsPercentage >= 0) {
         if (mtlsPercentage > 0 && !cyGlobal.mtlsEnabled) {
           content = `${EdgeIconMTLS} ${content}`;
@@ -164,14 +164,14 @@ export class GraphStyles {
     };
 
     const getNodeBackgroundImage = (ele: any): string => {
-      const data = nodeData(ele);
-      const isInaccessible = data.isInaccessible;
-      const isServiceEntry = data.isServiceEntry;
-      const isGroup = data.isGroup;
+      const nodeData = decoratedNodeData(ele);
+      const isInaccessible = nodeData.isInaccessible;
+      const isServiceEntry = nodeData.isServiceEntry;
+      const isGroup = nodeData.isGroup;
       if (isInaccessible && !isServiceEntry && !isGroup) {
         return NodeImageKey;
       }
-      const isOutside = data.isOutside;
+      const isOutside = nodeData.isOutside;
       if (isOutside && !isGroup) {
         return NodeImageTopology;
       }
@@ -191,20 +191,20 @@ export class GraphStyles {
     const getNodeLabel = (ele: any): string => {
       let content = '';
       const cyGlobal = getCyGlobalData(ele);
-      const data = nodeData(ele);
+      const nodeData = decoratedNodeData(ele);
 
       if (getCyGlobalData(ele).showNodeLabels) {
-        const app = data.app || '';
-        const isGroup = data.isGroup;
-        const isGroupMember = data.parent;
+        const app = nodeData.app || '';
+        const isGroup = nodeData.isGroup;
+        const isGroupMember = nodeData.parent;
         const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
-        const isOutside = data.isOutside;
-        const isServiceEntry = data.isServiceEntry !== undefined;
-        const namespace = data.namespace;
-        const nodeType = data.nodeType;
-        const service = data.service || '';
-        const version = data.version || '';
-        const workload = data.workload || '';
+        const isOutside = nodeData.isOutside;
+        const isServiceEntry = nodeData.isServiceEntry !== undefined;
+        const namespace = nodeData.namespace;
+        const nodeType = nodeData.nodeType;
+        const service = nodeData.service || '';
+        const version = nodeData.version || '';
+        const workload = nodeData.workload || '';
 
         if (isGroupMember) {
           switch (nodeType) {
@@ -257,26 +257,26 @@ export class GraphStyles {
       }
 
       let badges = '';
-      if (cyGlobal.showMissingSidecars && data.hasMissingSC) {
+      if (cyGlobal.showMissingSidecars && nodeData.hasMissingSC) {
         badges = NodeIconMS + badges;
       }
-      if (cyGlobal.showCircuitBreakers && data.hasCB) {
+      if (cyGlobal.showCircuitBreakers && nodeData.hasCB) {
         badges = NodeIconCB + badges;
       }
-      if (cyGlobal.showVirtualServices && data.hasVS) {
+      if (cyGlobal.showVirtualServices && nodeData.hasVS) {
         badges = NodeIconVS + badges;
       }
       return badges + content;
     };
 
     const getNodeShape = (ele: any): string => {
-      const data = nodeData(ele);
-      const nodeType = data.nodeType;
+      const nodeData = decoratedNodeData(ele);
+      const nodeType = nodeData.nodeType;
       switch (nodeType) {
         case NodeType.APP:
           return 'square';
         case NodeType.SERVICE:
-          return data.isServiceEntry ? 'tag' : 'triangle';
+          return nodeData.isServiceEntry ? 'tag' : 'triangle';
         case NodeType.UNKNOWN:
           return 'diamond';
         case NodeType.WORKLOAD:
@@ -288,14 +288,14 @@ export class GraphStyles {
 
     const isNodeBadged = (ele: any): boolean => {
       const cyGlobal = getCyGlobalData(ele);
-      const data = nodeData(ele);
-      if (cyGlobal.showMissingSidecars && data.hasMissingSC) {
+      const nodeData = decoratedNodeData(ele);
+      if (cyGlobal.showMissingSidecars && nodeData.hasMissingSC) {
         return true;
       }
-      if (cyGlobal.showCircuitBreakers && data.hasCB) {
+      if (cyGlobal.showCircuitBreakers && nodeData.hasCB) {
         return true;
       }
-      if (cyGlobal.showVirtualServices && data.hasVS) {
+      if (cyGlobal.showVirtualServices && nodeData.hasVS) {
         return true;
       }
       return false;
@@ -328,7 +328,7 @@ export class GraphStyles {
             return getNodeBorderColor(ele);
           },
           'border-style': (ele: any) => {
-            return nodeData(ele).isUnused ? 'dotted' : 'solid';
+            return decoratedNodeData(ele).isUnused ? 'dotted' : 'solid';
           },
           'border-width': NodeBorderWidth,
           color: (ele: any) => {
