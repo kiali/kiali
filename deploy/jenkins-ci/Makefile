@@ -147,15 +147,21 @@ endif
 	  OPERATOR_IMAGE_NAME="$(QUAY_OPERATOR_NAME)" \
 	  make docker-build container-push
 ifneq ($(IS_SNAPSHOT),y)
-   # docker.io
+   # Create or update vX.Y tags (without the patch number)
+   # docker.io/kiali
 	docker tag "$(DOCKER_NAME):$(VERSION_TAG)" "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(DOCKER_NAME):v$(BACKEND_VERSION_BRANCH)"
-   # quay.io
+   # quay.io/kiali
 	docker tag "$(QUAY_NAME):$(VERSION_TAG)" "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker push "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
 	docker rmi "$(QUAY_NAME):v$(BACKEND_VERSION_BRANCH)"
+   # quay.io/kiali-operator
+	docker tag "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)" "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker push "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
+	docker rmi "$(QUAY_OPERATOR_NAME):v$(BACKEND_VERSION_BRANCH)"
 endif
+   # Clean-up
 	docker rmi "$(DOCKER_NAME):$(VERSION_TAG)"
 	docker rmi "$(QUAY_NAME):$(VERSION_TAG)"
 	docker rmi "$(QUAY_OPERATOR_NAME):$(VERSION_TAG)"
