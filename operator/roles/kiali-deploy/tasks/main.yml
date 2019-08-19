@@ -102,25 +102,25 @@
   when:
   - kiali_vars.istio_namespace == ""
 
-- name: Set default istio component namespace: grafana
+- name: "Set default istio component namespace: grafana"
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'grafana': kiali_vars.istio_namespace}}, recursive=True) }}"
   when:
   - kiali_vars.istio_component_namespaces.grafana is not defined or kiali_vars.istio_component_namespaces.grafana == ""
 
-- name: Set default istio component namespace: tracing
+- name: "Set default istio component namespace: tracing"
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'tracing': kiali_vars.istio_namespace}}, recursive=True) }}"
   when:
   - kiali_vars.istio_component_namespaces.tracing is not defined or kiali_vars.istio_component_namespaces.tracing == ""
 
-- name: Set default istio component namespace: pilot
+- name: "Set default istio component namespace: pilot"
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'pilot': kiali_vars.istio_namespace}}, recursive=True) }}"
   when:
   - kiali_vars.istio_component_namespaces.pilot is not defined or kiali_vars.istio_component_namespaces.pilot == ""
 
-- name: Set default istio component namespace: prometheus
+- name: "Set default istio component namespace: prometheus"
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'istio_component_namespaces': {'prometheus': kiali_vars.istio_namespace}}, recursive=True) }}"
   when:
