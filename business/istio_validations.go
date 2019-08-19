@@ -331,7 +331,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		var err error
 		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
 		if !in.k8s.IsMaistraApi() {
-			if meshPolicies, iErr := in.k8s.GetMeshPolicies(namespace); iErr == nil {
+			if meshPolicies, iErr := in.k8s.GetMeshPolicies(); iErr == nil {
 				details.MeshPolicies = meshPolicies
 			} else {
 				err = iErr

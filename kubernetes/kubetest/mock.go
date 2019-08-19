@@ -316,13 +316,13 @@ func (o *K8SClientMock) GetPolicy(namespace string, policyName string) (kubernet
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetMeshPolicies(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetMeshPolicies() ([]kubernetes.IstioObject, error) {
+	args := o.Called()
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetMeshPolicy(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetMeshPolicy(policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called()
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
@@ -336,13 +336,13 @@ func (o *K8SClientMock) GetServiceMeshPolicy(namespace string, policyName string
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetClusterRbacConfigs(namespace string) ([]kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetClusterRbacConfigs() ([]kubernetes.IstioObject, error) {
+	args := o.Called()
 	return args.Get(0).([]kubernetes.IstioObject), args.Error(1)
 }
 
-func (o *K8SClientMock) GetClusterRbacConfig(namespace string, policyName string) (kubernetes.IstioObject, error) {
-	args := o.Called(namespace)
+func (o *K8SClientMock) GetClusterRbacConfig(policyName string) (kubernetes.IstioObject, error) {
+	args := o.Called()
 	return args.Get(0).(kubernetes.IstioObject), args.Error(1)
 }
 

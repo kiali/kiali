@@ -17,11 +17,11 @@ func TestCorrectMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(true, meshPolicyEnabled)
@@ -31,25 +31,26 @@ func TestMeshPolicyWithoutNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{})
+	// Update: KIALI-3223, now this API doesn't require a list of namespaces, as it has a MeshPolicy it will return true
+	// Perhaps this test can be removed in the future
+	meshPolicyEnabled, _ := (tlsService).hasMeshPolicyEnabled()
 
-	assert.EqualError(err, "Unable to determine mesh-wide mTLS status without access to any namespace")
-	assert.Equal(false, meshPolicyEnabled)
+	assert.Equal(true, meshPolicyEnabled)
 }
 
 func TestPolicyWithWrongName(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, isGloballyEnabled)
@@ -59,11 +60,11 @@ func TestPolicyWithPermissiveMode(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakePermissiveMeshPolicy("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakePermissiveMeshPolicy("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, isGloballyEnabled)
@@ -73,11 +74,11 @@ func TestPolicyWithStrictMode(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakeStrictMeshPolicy("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeStrictMeshPolicy("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	isGloballyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(true, isGloballyEnabled)
@@ -119,11 +120,11 @@ func TestWithoutMeshPolicy(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return([]kubernetes.IstioObject{}, nil)
+	k8s.On("GetMeshPolicies").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
@@ -133,11 +134,11 @@ func TestMeshPolicyWithTargets(t *testing.T) {
 	assert := assert.New(t)
 
 	k8s := new(kubetest.K8SClientMock)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEnablingMTLSSpecificTarget(), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
-	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled([]string{"test"})
+	meshPolicyEnabled, err := (tlsService).hasMeshPolicyEnabled()
 
 	assert.NoError(err)
 	assert.Equal(false, meshPolicyEnabled)
@@ -224,7 +225,7 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -242,7 +243,7 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("default"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}
@@ -260,7 +261,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("GetDestinationRules", "test", "").Return([]kubernetes.IstioObject{dr}, nil)
-	k8s.On("GetMeshPolicies", "test").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
+	k8s.On("GetMeshPolicies").Return(fakeMeshPolicyEmptyMTLS("wrong-name"), nil)
 	k8s.On("IsMaistraApi").Return(false)
 
 	tlsService := TLSService{k8s: k8s}

@@ -93,7 +93,14 @@ func (in *IstioClient) CreateIstioObject(api, namespace, resourceType, json stri
 		return nil, fmt.Errorf("%s is not supported in CreateIstioObject operation", api)
 	}
 
-	result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
+		result, err = apiClient.Post().Resource(resourceType).Body(byteJson).Do().Get()
+	} else {
+		result, err = apiClient.Post().Namespace(namespace).Resource(resourceType).Body(byteJson).Do().Get()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +121,14 @@ func (in *IstioClient) DeleteIstioObject(api, namespace, resourceType, name stri
 	if apiClient == nil {
 		return fmt.Errorf("%s is not supported in DeleteIstioObject operation", api)
 	}
-	_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
+		_, err = apiClient.Delete().Resource(resourceType).Name(name).Do().Get()
+	} else {
+		_, err = apiClient.Delete().Namespace(namespace).Resource(resourceType).Name(name).Do().Get()
+	}
 	return err
 }
 
@@ -135,8 +149,14 @@ func (in *IstioClient) UpdateIstioObject(api, namespace, resourceType, name, jso
 	if apiClient == nil {
 		return nil, fmt.Errorf("%s is not supported in UpdateIstioObject operation", api)
 	}
-
-	result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	// MeshPolicies and ClusterRbacConfigs are cluster scope objects
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	if resourceType == meshPolicies || resourceType == clusterrbacconfigs {
+		result, err = apiClient.Patch(types.MergePatchType).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	} else {
+		result, err = apiClient.Patch(types.MergePatchType).Namespace(namespace).Resource(resourceType).SubResource(name).Body(bytePatch).Do().Get()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -529,10 +549,12 @@ func (in *IstioClient) GetPolicy(namespace string, policyName string) (IstioObje
 	return p, nil
 }
 
-func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) {
+func (in *IstioClient) GetMeshPolicies() ([]IstioObject, error) {
 	// MeshPolicies are not namespaced. However, API returns all the instances even asking for one specific namespace.
 	// Due to soft-multitenancy, the call performed is namespaced to avoid triggering an error for cluster-wide access.
-	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(meshPolicies).Do().Get()
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	result, err := in.istioAuthenticationApi.Get().Resource(meshPolicies).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +564,7 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 	}
 	policyList, ok := result.(*GenericIstioObjectList)
 	if !ok {
-		return nil, fmt.Errorf("it doesn't return a PolicyList list")
+		return nil, fmt.Errorf("it doesn't return a MeshPolicyList list")
 	}
 
 	policies := make([]IstioObject, 0)
@@ -555,8 +577,10 @@ func (in *IstioClient) GetMeshPolicies(namespace string) ([]IstioObject, error) 
 	return policies, nil
 }
 
-func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (IstioObject, error) {
-	result, err := in.istioAuthenticationApi.Get().Namespace(namespace).Resource(meshPolicies).SubResource(policyName).Do().Get()
+func (in *IstioClient) GetMeshPolicy(policyName string) (IstioObject, error) {
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	result, err := in.istioAuthenticationApi.Get().Resource(meshPolicies).SubResource(policyName).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -566,7 +590,7 @@ func (in *IstioClient) GetMeshPolicy(namespace string, policyName string) (Istio
 	}
 	mp, ok := result.(*GenericIstioObject)
 	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a MeshPolicy object", namespace)
+		return nil, fmt.Errorf("%s doesn't return a MeshPolicy object", policyName)
 	}
 	p := mp.DeepCopyIstioObject()
 	p.SetTypeMeta(typeMeta)
@@ -615,13 +639,15 @@ func (in *IstioClient) GetServiceMeshPolicy(namespace string, name string) (Isti
 	return p, nil
 }
 
-func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, error) {
+func (in *IstioClient) GetClusterRbacConfigs() ([]IstioObject, error) {
 	// In case ClusterRbacConfigs aren't present on Istio, return empty array.
 	if !in.hasRbacResource(clusterrbacconfigs) {
 		return []IstioObject{}, nil
 	}
 
-	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).Do().Get()
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	result, err := in.istioRbacApi.Get().Resource(clusterrbacconfigs).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -631,7 +657,7 @@ func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, e
 	}
 	clusterRbacConfigList, ok := result.(*GenericIstioObjectList)
 	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a RbacConfigList list", namespace)
+		return nil, fmt.Errorf("it doesn't return a ClusterRbacConfigList list")
 	}
 
 	clusterRbacConfigs := make([]IstioObject, 0)
@@ -643,8 +669,10 @@ func (in *IstioClient) GetClusterRbacConfigs(namespace string) ([]IstioObject, e
 	return clusterRbacConfigs, nil
 }
 
-func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (IstioObject, error) {
-	result, err := in.istioRbacApi.Get().Namespace(namespace).Resource(clusterrbacconfigs).SubResource(name).Do().Get()
+func (in *IstioClient) GetClusterRbacConfig(name string) (IstioObject, error) {
+	// Update: Removed the namespace filter as it doesn't work well in all platforms
+	// https://issues.jboss.org/browse/KIALI-3223
+	result, err := in.istioRbacApi.Get().Resource(clusterrbacconfigs).SubResource(name).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -654,7 +682,7 @@ func (in *IstioClient) GetClusterRbacConfig(namespace string, name string) (Isti
 	}
 	clusterRbacConfig, ok := result.(*GenericIstioObject)
 	if !ok {
-		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", namespace)
+		return nil, fmt.Errorf("%s doesn't return a ClusterRbacConfig object", name)
 	}
 	c := clusterRbacConfig.DeepCopyIstioObject()
 	c.SetTypeMeta(typeMeta)
@@ -870,7 +898,7 @@ func (in *IstioClient) GetAuthorizationDetails(namespace string) (*RBACDetails, 
 		defer wg.Done()
 		// Maistra has migrated ClusterRbacConfigs to ServiceMeshRbacConfigs resources
 		if !in.IsMaistraApi() {
-			if crc, err := in.GetClusterRbacConfigs(namespace); err == nil {
+			if crc, err := in.GetClusterRbacConfigs(); err == nil {
 				rb.ClusterRbacConfigs = crc
 			} else {
 				errChan <- err
