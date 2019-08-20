@@ -56,4 +56,11 @@
     kiali_port: "{{ kiali_service | json_query('resources[0].spec.ports[?name==`tcp`].nodePort') | join() }}"
 - set_fact:
     kiali_base_url: "https://{{ cluster_node_ip }}:{{ kiali_port }}"
+  when:
+  - kiali_service.resources[0].spec.type == 'NodePort'
+- debug:
+    msg: "This test does not have kiali_base_url set because the kiali service is not of type NodePort"
+  when:
+  - kiali_service.resources[0].spec.type != 'NodePort'
+
 

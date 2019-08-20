@@ -1,0 +1,32 @@
+- name: Tests
+  hosts: localhost
+  connection: local
+  vars:
+    custom_resource: "{{ lookup('template', cr_file_path) | from_yaml }}"
+  tasks:
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../asserts/pod_asserts.yml
+
+  # Try to access Kiali api endpoint that requires authentication (should return 401)
+  # This means our auth-strategy is not anonymous and we need to login.
+  - name: Attempt unauthorized access to api endpoint
+    uri:
+      url: "{{ kiali_base_url }}/api/namespaces"
+      status_code: 401
+      validate_certs: false
+
+  # now change auth-strategy to anonymous - this change should force the pod to restart
+  - import_tasks: ../common/set_auth_strategy.yml
+    vars:
+      new_auth_strategy: anonymous
+
+  # see that we are not required to log in - this means the pod restarted and picked up the change
+  - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/tasks.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
+
+  - name: Attempt authorized anonymous access to api endpoint
+    uri:
+      url: "{{ kiali_base_url }}/api/namespaces"
+      status_code: 200
+      validate_certs: false
