@@ -3,21 +3,21 @@ import { Button, FormControl, FormGroup, Icon, InputGroup, OverlayTrigger, Toolt
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
-
 import { KialiAppState } from '../../store/Store';
 import { findValueSelector, hideValueSelector } from '../../store/Selectors';
-
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
-
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import GraphHelpFind from '../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
+import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData } from '../../types/Graph';
+import { Layout } from 'types/GraphFilter';
 
 type ReduxProps = {
   cyData: CyData | null;
   findValue: string;
   hideValue: string;
+  layout: Layout;
   showFindHelp: boolean;
 
   setFindValue: (val: string) => void;
@@ -28,6 +28,7 @@ type ReduxProps = {
 type GraphFindProps = ReduxProps;
 
 type GraphFindState = {
+  compressOnHide: boolean;
   errorMessage: string;
   findInputValue: string;
   hideInputValue: string;
@@ -56,12 +57,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   private findInputRef;
   private hiddenElements: any | undefined;
   private hideInputRef;
+  private removedElements: any | undefined;
 
   constructor(props: GraphFindProps) {
     super(props);
     const findValue = props.findValue ? props.findValue : '';
     const hideValue = props.hideValue ? props.hideValue : '';
-    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue };
+    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue, compressOnHide: false };
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -71,12 +73,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   // the graph loading, we can't perform this graph "post-processing" until we have a valid cy graph.  We can assume
   // that applying the find/hide on update is sufficient because  we will be updated after the cy is loaded
   // due to a change notification for this.props.cyData.
-  componentDidUpdate(prevProps: GraphFindProps) {
+  componentDidUpdate(prevProps: GraphFindProps, prevState: GraphFindState) {
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
+    const compressOnHideChanged = this.state.compressOnHide !== prevState.compressOnHide;
+    const hadCyData = prevProps.cyData != null;
+    const hasCyData = this.props.cyData != null;
     const graphChanged =
-      (!prevProps.cyData && this.props.cyData) ||
-      (this.props.cyData && prevProps.cyData && this.props.cyData.updateTimestamp !== prevProps.cyData.updateTimestamp);
+      (!hadCyData && hasCyData) ||
+      (hadCyData && hasCyData && this.props.cyData!.updateTimestamp !== prevProps.cyData!.updateTimestamp);
 
     // make sure the value is updated if there was a change
     if (findChanged) {
@@ -89,8 +94,8 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     if (findChanged || (graphChanged && this.props.findValue)) {
       this.handleFind();
     }
-    if (hideChanged || (graphChanged && this.props.hideValue)) {
-      this.handleHide();
+    if (hideChanged || compressOnHideChanged || (graphChanged && this.props.hideValue)) {
+      this.handleHide(graphChanged, hideChanged || compressOnHideChanged);
     }
   }
 
@@ -158,6 +163,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                   </InputGroup.Button>
                 </OverlayTrigger>
               )}
+              <OverlayTrigger
+                key="ot_compress_on_hide"
+                placement="top"
+                trigger={['hover', 'focus']}
+                delayShow={1000}
+                overlay={<Tooltip id="tt_compress_on_hide">Compress Graph on Hide...</Tooltip>}
+              >
+                <InputGroup.Button>
+                  <Button onClick={this.toggleCompressOnHide}>
+                    <Icon name={this.state.compressOnHide ? 'compress' : 'expand'} type="fa" />
+                  </Button>
+                </InputGroup.Button>
+              </OverlayTrigger>
             </InputGroup>
             <OverlayTrigger
               key={'ot_graph_find_help'}
@@ -242,7 +260,11 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.props.setHideValue('');
   };
 
-  private handleHide = () => {
+  private toggleCompressOnHide = () => {
+    this.setState({ compressOnHide: !this.state.compressOnHide });
+  };
+
+  private handleHide = (graphChanged: boolean, hideChanged) => {
     if (!this.props.cyData) {
       console.debug('Skip Hide: cy not set.');
       return;
@@ -250,33 +272,59 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     const cy = this.props.cyData.cyRef;
     const selector = this.parseValue(this.props.hideValue);
     cy.startBatch();
-    // this could also be done using cy remove/restore but we had better results
-    // using visible/hidden.  The latter worked better when hiding animation, and
-    // also prevents the need for running layout because visible/hidden maintains
-    // the space of the hidden elements.
     if (this.hiddenElements) {
       // make visible old hide-hits
       this.hiddenElements.style({ visibility: 'visible' });
       this.hiddenElements = undefined;
     }
+    if (this.removedElements) {
+      // Only restore the removed nodes if we are working with the same graph.  If the graph has changed
+      // (i.e. refresh) then we have new nodes, and therefore a potential ID conflict. don't restore the
+      // removed nodes, instead, just remove our reference and they should get garbage collected.
+      if (!graphChanged) {
+        this.removedElements.restore();
+      }
+      this.removedElements = undefined;
+    }
     if (selector) {
       // select the new hide-hits
-      this.hiddenElements = cy.$(selector);
+      let hiddenElements = cy.$(selector);
       // add the edges connected to hidden nodes
-      this.hiddenElements = this.hiddenElements.add(this.hiddenElements.connectedEdges());
+      hiddenElements = hiddenElements.add(hiddenElements.connectedEdges());
       // add nodes with only hidden edges (keep unused nodes as that is an explicit option)
-      const visibleElements = this.hiddenElements.absoluteComplement();
+      const visibleElements = hiddenElements.absoluteComplement();
       const nodesWithVisibleEdges = visibleElements.edges().connectedNodes();
       const nodesWithOnlyHiddenEdges = visibleElements.nodes(`[^${CyNode.isUnused}]`).subtract(nodesWithVisibleEdges);
-      this.hiddenElements = this.hiddenElements.add(nodesWithOnlyHiddenEdges);
-      // remove any appbox hits, we only hide empty appboxes
-      this.hiddenElements = this.hiddenElements.subtract(this.hiddenElements.filter('$node[isGroup]'));
-      // set the remaining hide-hits hidden
-      this.hiddenElements.style({ visibility: 'hidden' });
-      // now hide any appboxes that don't have any visible children
-      const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :visible'));
-      hiddenAppBoxes.style({ visibility: 'hidden' });
-      this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
+      hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
+      // subtract any appbox hits, we only hide empty appboxes
+      hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isGroup]'));
+      if (this.state.compressOnHide) {
+        this.removedElements = cy.remove(hiddenElements);
+        // now subtract any appboxes that don't have any visible children
+        const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :inside'));
+        this.removedElements = this.removedElements.add(cy.remove(hiddenAppBoxes));
+      } else {
+        // set the remaining hide-hits hidden
+        this.hiddenElements = hiddenElements;
+        this.hiddenElements.style({ visibility: 'hidden' });
+        // now subtract any appboxes that don't have any visible children
+        const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :visible'));
+        hiddenAppBoxes.style({ visibility: 'hidden' });
+        this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
+      }
+    }
+    if ((hideChanged && selector) || (this.removedElements && this.removedElements.size() > 0)) {
+      const zoom = cy.zoom();
+      const pan = cy.pan();
+      CytoscapeGraphUtils.runLayout(cy, this.props.layout);
+      if (!hideChanged) {
+        if (zoom !== cy.zoom()) {
+          cy.zoom(zoom);
+        }
+        if (pan.x !== cy.pan().x || pan.y !== cy.pan().y) {
+          cy.pan(pan);
+        }
+      }
     }
     cy.endBatch();
   };
@@ -613,6 +661,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   cyData: state.graph.cyData,
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
+  layout: state.graph.layout,
   showFindHelp: state.graph.filterState.showFindHelp
 });
 

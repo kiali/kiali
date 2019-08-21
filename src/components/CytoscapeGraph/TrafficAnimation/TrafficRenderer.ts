@@ -324,8 +324,9 @@ export default class TrafficRenderer {
       this.layer.setTransform(this.context);
       Object.keys(this.trafficEdges).forEach(edgeId => {
         const trafficEdge = this.trafficEdges[edgeId];
-        // Skip if edge is currently hidden
-        if (trafficEdge.getEdge().visible()) {
+        const edge = trafficEdge.getEdge();
+        // Skip if edge is currently hidden or removed
+        if (edge.visible() && edge.inside()) {
           trafficEdge.processStep(step);
           trafficEdge.removeFinishedPoints();
           this.render(trafficEdge);
