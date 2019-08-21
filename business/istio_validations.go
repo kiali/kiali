@@ -328,13 +328,14 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 	go func(details *kubernetes.MTLSDetails) {
 		defer wg.Done()
 
-		var err error
 		// In Maistra MeshPolicy resource is renamed to ServiceMeshPolicy and it's a namespaced resource
 		if !in.k8s.IsMaistraApi() {
 			if meshPolicies, iErr := in.k8s.GetMeshPolicies(); iErr == nil {
 				details.MeshPolicies = meshPolicies
 			} else {
-				err = iErr
+				// This query can return false if user doesn't have cluster permissions
+				// On this case we log internally the error but we return an empty list
+				log.Warningf("GetMeshPolicies failed during a TLS validation. Probably Kiali doesn't have cluster permissions. Error: %s", iErr)
 			}
 		} else {
 			// ServiceMeshPolicies are namespace scoped.
@@ -348,12 +349,9 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 				details.ServiceMeshPolicies = serviceMeshPolicies
 			} else {
 				// This query can return false if user can't access to controlPlaneNs
-				// On this case we log internally the error but we return a false with nil
-				log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to this. Error: %s", iErr)
+				// On this case we log internally the error but we return an empty list
+				log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, iErr)
 			}
-		}
-		if err != nil {
-			errChan <- err
 		}
 	}(mtlsDetails)
 
