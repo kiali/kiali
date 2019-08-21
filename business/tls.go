@@ -50,9 +50,11 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 	if !in.k8s.IsMaistraApi() {
 		// MeshPolicies are not namespaced.
 		// See KIALI-3223: Query MeshPolicies without namespace as this API doesn't work in the same way in AWS EKS
-		mps, err = in.k8s.GetMeshPolicies()
-		if err != nil {
-			return false, err
+		if mps, err = in.k8s.GetMeshPolicies(); err != nil {
+			// This query can return false if Kiali doesn't have cluster permissions
+			// On this case we log internally the error but we return a false with nil
+			log.Warningf("GetMeshPolicies failed during a TLS validation. Probably Kiali doesn't have cluster permissions. Error: %s", err)
+			return false, nil
 		}
 	} else {
 		// ServiceMeshPolicies are namespace scoped.
@@ -65,7 +67,7 @@ func (in *TLSService) hasMeshPolicyEnabled() (bool, error) {
 		if mps, err = in.k8s.GetServiceMeshPolicies(controlPlaneNs); err != nil {
 			// This query can return false if user can't access to controlPlaneNs
 			// On this case we log internally the error but we return a false with nil
-			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to this. Error: %s", err)
+			log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, err)
 			return false, nil
 		}
 	}

@@ -240,7 +240,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		}
 	}(errChan)
 
-	go func(errChan chan error) {
+	go func() {
 		defer wg.Done()
 		// MeshPolicies are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
@@ -248,12 +248,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			if mp, mpErr := in.k8s.GetMeshPolicies(); mpErr == nil {
 				(&istioConfigList.MeshPolicies).Parse(mp)
 			} else {
-				errChan <- mpErr
+				// This query can return false if user doesn't have cluster permissions
+				// On this case we log internally the error but we return an empty list
+				log.Warningf("GetMeshPolicies failed during a GetIstioConfigList. Probably Kiali doesn't have cluster permissions. Error: %s", mpErr)
 			}
 		}
-	}(errChan)
+	}()
 
-	go func(errChan chan error) {
+	go func() {
 		defer wg.Done()
 		// ClusterRbacConfigs are not namespaced. They will be only listed for an Istio namespace.
 		// Only listed in non Maistra environments.
@@ -261,10 +263,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			if crc, crcErr := in.k8s.GetClusterRbacConfigs(); crcErr == nil {
 				(&istioConfigList.ClusterRbacConfigs).Parse(crc)
 			} else {
-				errChan <- crcErr
+				// This query can return false if user doesn't have cluster permissions
+				// On this case we log internally the error but we return an empty list
+				log.Warningf("GetClusterRbacConfigs failed during a GetIstioConfigList. Probably Kiali doesn't have cluster permissions. Error: %s", crcErr)
 			}
 		}
-	}(errChan)
+	}()
 
 	go func(errChan chan error) {
 		defer wg.Done()
