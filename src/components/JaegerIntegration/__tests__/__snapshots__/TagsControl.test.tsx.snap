@@ -37,14 +37,27 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
               </code>
             </React.Fragment>
           }
+          boundary="window"
           className="f6vm0mb"
           closeBtnAriaLabel="Close"
+          distance={25}
           enableFlip={true}
+          flipBehavior={
+            Array [
+              "top",
+              "right",
+              "bottom",
+              "left",
+              "top",
+              "right",
+              "bottom",
+            ]
+          }
           footerContent={null}
           headerContent={null}
           hideOnOutsideClick={true}
           isVisible={null}
-          maxWidth="calc(1.5rem + 18.75rem)"
+          maxWidth="calc(2rem + 18.75rem)"
           onHidden={[Function]}
           onHide={[Function]}
           onMount={[Function]}

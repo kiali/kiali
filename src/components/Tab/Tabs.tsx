@@ -100,8 +100,8 @@ export default class ParameterizedTabs extends React.Component<TabsProps, TabsSt
         id={this.props.id}
         activeKey={this.activeIndex()}
         onSelect={(_, ek) => {
-          if (!this.isLinkTab(ek)) {
-            this.tabTransitionHandler(ek);
+          if (!this.isLinkTab(ek as number)) {
+            this.tabTransitionHandler(ek as number);
           }
         }}
       >
