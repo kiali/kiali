@@ -1,16 +1,6 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import {
-  Col,
-  Icon,
-  Nav,
-  NavItem,
-  Row,
-  TabContainer,
-  TabContent,
-  ToastNotification,
-  ToastNotificationList
-} from 'patternfly-react';
+import { Col, Icon, Row, ToastNotification, ToastNotificationList } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
@@ -19,19 +9,19 @@ import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
-import { TabPaneWithErrorBoundary } from '../../components/ErrorBoundary/WithErrorBoundary';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
+import { Tab } from '@patternfly/react-core';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
   gateways: string[];
   validations: Validations;
   onRefresh: () => void;
-  onSelectTab: (tabName: string, postHandler?: (tabName: string) => void) => void;
-  activeTab: (tabName: string, whenEmpty: string) => string;
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
 }
@@ -39,6 +29,7 @@ interface ServiceDetails extends ServiceId {
 type ServiceInfoState = {
   error: boolean;
   errorMessage: string;
+  currentTab: string;
 };
 
 interface ValidationChecks {
@@ -46,17 +37,25 @@ interface ValidationChecks {
   hasDestinationRuleChecks: boolean;
 }
 
-const tabName = 'list';
 const tabIconStyle = style({
   fontSize: '0.9em'
 });
+
+const tabName = 'list';
+const defaultTab = 'workloads';
+const paramToTab: { [key: string]: number } = {
+  workloads: 0,
+  virtualservices: 1,
+  destinationrules: 2
+};
 
 class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
     super(props);
     this.state = {
       error: false,
-      errorMessage: ''
+      errorMessage: '',
+      currentTab: activeTab(tabName, defaultTab)
     };
   }
 
@@ -121,6 +120,30 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       return getSeverityIcon(severity);
     };
 
+    const vsTabTitle: any = (
+      <>
+        Virtual Services ({virtualServices.items.length})
+        {validationChecks.hasVirtualServiceChecks
+          ? getValidationIcon(
+              (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
+              'virtualservice'
+            )
+          : undefined}
+      </>
+    );
+
+    const drTabTitle: any = (
+      <>
+        Destination Rules ({destinationRules.items.length})
+        {validationChecks.hasDestinationRuleChecks
+          ? getValidationIcon(
+              (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
+              'destinationrule'
+            )
+          : undefined}
+      </>
+    );
+
     return (
       <div>
         {this.state.error ? (
@@ -179,64 +202,43 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <TabContainer
+              <ParameterizedTabs
                 id="service-tabs"
-                activeKey={this.props.activeTab(tabName, 'workloads')}
-                onSelect={this.props.onSelectTab(tabName)}
+                onSelect={tabValue => {
+                  this.setState({ currentTab: tabValue });
+                }}
+                tabMap={paramToTab}
+                tabName={tabName}
+                defaultTab={defaultTab}
               >
-                <div>
-                  <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                    <NavItem eventKey={'workloads'}>{'Workloads (' + Object.keys(workloads).length + ')'}</NavItem>
-                    <NavItem eventKey={'virtualservices'}>
-                      {'Virtual Services (' + virtualServices.items.length + ')'}
-                      {validationChecks.hasVirtualServiceChecks
-                        ? getValidationIcon(
-                            (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
-                            'virtualservice'
-                          )
-                        : undefined}
-                    </NavItem>
-                    <NavItem eventKey={'destinationrules'}>
-                      {'Destination Rules (' + destinationRules.items.length + ')'}
-                      {validationChecks.hasDestinationRuleChecks
-                        ? getValidationIcon(
-                            (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
-                            'destinationrule'
-                          )
-                        : undefined}
-                    </NavItem>
-                  </Nav>
-                  <TabContent>
-                    <TabPaneWithErrorBoundary eventKey={'workloads'} message={this.errorBoundaryMessage('Workloads')}>
-                      {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
-                      )}
-                    </TabPaneWithErrorBoundary>
-                    <TabPaneWithErrorBoundary
-                      eventKey={'virtualservices'}
-                      message={this.errorBoundaryMessage('Virtual Services')}
-                    >
-                      {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoVirtualServices
-                          virtualServices={virtualServices.items}
-                          validations={validations!.virtualservice}
-                        />
-                      )}
-                    </TabPaneWithErrorBoundary>
-                    <TabPaneWithErrorBoundary
-                      eventKey={'destinationrules'}
-                      message={this.errorBoundaryMessage('Destination Rules')}
-                    >
-                      {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                        <ServiceInfoDestinationRules
-                          destinationRules={destinationRules.items}
-                          validations={validations!.destinationrule}
-                        />
-                      )}
-                    </TabPaneWithErrorBoundary>
-                  </TabContent>
-                </div>
-              </TabContainer>
+                <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
+                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>
+                    {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
+                      <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
+                    )}
+                  </ErrorBoundaryWithMessage>
+                </Tab>
+                <Tab eventKey={1} title={vsTabTitle}>
+                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
+                    {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                      <ServiceInfoVirtualServices
+                        virtualServices={virtualServices.items}
+                        validations={validations!.virtualservice}
+                      />
+                    )}
+                  </ErrorBoundaryWithMessage>
+                </Tab>
+                <Tab eventKey={2} title={drTabTitle}>
+                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
+                    {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                      <ServiceInfoDestinationRules
+                        destinationRules={destinationRules.items}
+                        validations={validations!.destinationrule}
+                      />
+                    )}
+                  </ErrorBoundaryWithMessage>
+                </Tab>
+              </ParameterizedTabs>
             </Col>
           </Row>
         </div>

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { Nav, NavItem, TabContainer, TabContent, TabPane, Icon } from 'patternfly-react';
+import { Icon } from 'patternfly-react';
+import { Tab } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -27,6 +28,7 @@ import { durationSelector } from '../../store/Selectors';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import Namespace from '../../types/Namespace';
 import { MessageType } from '../../types/MessageCenter';
+import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 
 type ServiceDetailsState = {
   serviceDetailsInfo: ServiceDetailsInfo;
@@ -35,6 +37,7 @@ type ServiceDetailsState = {
   validations: Validations;
   threeScaleInfo: ThreeScaleInfo;
   threeScaleServiceRule?: ThreeScaleServiceRule;
+  currentTab: string;
 };
 
 interface ServiceDetailsProps extends RouteComponentProps<ServiceId> {
@@ -81,12 +84,23 @@ const emptyService = {
   }
 };
 
+const tabName = 'tab';
+const defaultTab = 'info';
+const trafficTabName = 'traffic';
+const tabIndex: { [tab: string]: number } = {
+  info: 0,
+  traffic: 1,
+  metrics: 2,
+  traces: 3
+};
+
 class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
   private promises = new PromisesRegistry();
 
   constructor(props: ServiceDetailsProps) {
     super(props);
     this.state = {
+      currentTab: activeTab(tabName, defaultTab),
       serviceDetailsInfo: emptyService,
       gateways: [],
       trafficData: null,
@@ -168,15 +182,21 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     }
   }
 
+  fetchTrafficDataOnTabChange = (tabValue: string): void => {
+    if (tabValue === trafficTabName && this.state.trafficData == null) {
+      this.fetchTrafficData();
+    }
+  };
+
   doRefresh = () => {
-    const currentTab = this.activeTab('tab', 'info');
+    const currentTab = this.state.currentTab;
 
     if (this.state.serviceDetailsInfo === emptyService || currentTab === 'info') {
       this.setState({ trafficData: null });
       this.fetchBackend();
     }
 
-    if (currentTab === 'traffic') {
+    if (currentTab === trafficTabName) {
       this.fetchTrafficData();
     }
   };
@@ -309,151 +329,125 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     return validations ? validations : ({} as Validations);
   }
 
-  navigateToJaeger = () => {
-    window.open(
-      this.props.jaegerUrl + `/search?service=${this.props.match.params.service}.${this.props.match.params.namespace}`,
-      '_blank'
-    );
-  };
-
   render() {
+    const currentTab = this.state.currentTab;
     const errorTraces = this.state.serviceDetailsInfo.errorTraces;
+    const overviewTab = (
+      <Tab eventKey={0} title="Overview" key="Overview">
+        {currentTab === 'info' && (
+          <ServiceInfo
+            namespace={this.props.match.params.namespace}
+            service={this.props.match.params.service}
+            serviceDetails={this.state.serviceDetailsInfo}
+            gateways={this.state.gateways}
+            validations={this.state.validations}
+            onRefresh={this.doRefresh}
+            threeScaleInfo={this.state.threeScaleInfo}
+            threeScaleServiceRule={this.state.threeScaleServiceRule}
+          />
+        )}
+      </Tab>
+    );
+    const trafficTab = (
+      <Tab eventKey={1} title="Traffic" key="Traffic">
+        {currentTab === 'traffic' && (
+          <TrafficDetails
+            trafficData={this.state.trafficData}
+            itemType={MetricsObjectTypes.SERVICE}
+            namespace={this.props.match.params.namespace}
+            serviceName={this.props.match.params.service}
+            onDurationChanged={this.fetchTrafficData}
+            onRefresh={this.doRefresh}
+          />
+        )}
+      </Tab>
+    );
+    const inboundMetricsTab = (
+      <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
+        {currentTab === 'metrics' && (
+          <IstioMetricsContainer
+            namespace={this.props.match.params.namespace}
+            object={this.props.match.params.service}
+            objectType={MetricsObjectTypes.SERVICE}
+            direction={'inbound'}
+          />
+        )}
+      </Tab>
+    );
+
+    // Default tabs
+    const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
+
+    // Conditional Traces tab
+    if (errorTraces !== undefined && this.props.jaegerUrl !== '') {
+      let jaegerTag: any = undefined;
+      if (this.props.jaegerIntegration) {
+        const jaegerTitle: string = errorTraces > 0 ? 'Error Traces (' + errorTraces + ')' : 'Traces';
+        jaegerTag = (
+          <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key="traces">
+            {currentTab === 'traces' && (
+              <ServiceTraces
+                namespace={this.props.match.params.namespace}
+                service={this.props.match.params.service}
+                errorTags={errorTraces ? errorTraces > -1 : false}
+              />
+            )}
+          </Tab>
+        );
+      } else {
+        const jaegerTitle: any = (
+          <>
+            Traces <Icon type={'fa'} name={'external-link'} />
+          </>
+        );
+        jaegerTag = (
+          <Tab
+            eventKey={3}
+            href={
+              this.props.jaegerUrl +
+              `/search?service=${this.props.match.params.service}.${this.props.match.params.namespace}`
+            }
+            target="_blank"
+            title={jaegerTitle}
+          />
+        );
+      }
+      tabsArray.push(jaegerTag);
+    }
+
+    if (this.state.serviceDetailsInfo.apiDocumentation && this.state.serviceDetailsInfo.apiDocumentation.hasSpec) {
+      const docTabIndex = tabsArray.length;
+      const docTab: any = (
+        <Tab eventKey={docTabIndex} title={'API Doc'} key="API Doc">
+          <ApiDocumentation
+            apiType={this.state.serviceDetailsInfo.apiDocumentation.type}
+            namespace={this.props.match.params.namespace}
+            service={this.props.match.params.service}
+          />
+        </Tab>
+      );
+      tabsArray.push(docTab);
+    }
+
     return (
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
-        <TabContainer
+        <ParameterizedTabs
           id="basic-tabs"
-          activeKey={this.activeTab('tab', 'info')}
-          onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+          }}
+          tabMap={tabIndex}
+          tabName={tabName}
+          defaultTab={defaultTab}
+          postHandler={this.fetchTrafficDataOnTabChange}
         >
-          <div>
-            <Nav bsClass="nav nav-tabs nav-tabs-pf">
-              <NavItem eventKey="info">Overview</NavItem>
-              <NavItem eventKey="traffic">Traffic</NavItem>
-              <NavItem eventKey="metrics">Inbound Metrics</NavItem>
-              {errorTraces !== undefined &&
-                this.props.jaegerUrl !== '' &&
-                (this.props.jaegerIntegration ? (
-                  <NavItem eventKey="traces">
-                    {errorTraces > 0 ? (
-                      <>
-                        Error Traces{' '}
-                        <span>
-                          ({errorTraces}
-                          {errorTraces > 0 && (
-                            <Icon type={'fa'} name={'exclamation-circle'} style={{ color: 'red', marginLeft: '2px' }} />
-                          )}
-                          )
-                        </span>
-                      </>
-                    ) : (
-                      'Traces'
-                    )}
-                  </NavItem>
-                ) : (
-                  <NavItem onClick={this.navigateToJaeger}>
-                    <>
-                      Traces <Icon type={'fa'} name={'external-link'} />
-                    </>
-                  </NavItem>
-                ))}
-              {this.state.serviceDetailsInfo.apiDocumentation &&
-                this.state.serviceDetailsInfo.apiDocumentation.hasSpec && <NavItem eventKey="api">API Doc</NavItem>}
-            </Nav>
-            <TabContent>
-              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
-                <ServiceInfo
-                  namespace={this.props.match.params.namespace}
-                  service={this.props.match.params.service}
-                  serviceDetails={this.state.serviceDetailsInfo}
-                  gateways={this.state.gateways}
-                  validations={this.state.validations}
-                  onRefresh={this.doRefresh}
-                  activeTab={this.activeTab}
-                  onSelectTab={this.tabSelectHandler}
-                  threeScaleInfo={this.state.threeScaleInfo}
-                  threeScaleServiceRule={this.state.threeScaleServiceRule}
-                />
-              </TabPane>
-              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
-                <TrafficDetails
-                  trafficData={this.state.trafficData}
-                  itemType={MetricsObjectTypes.SERVICE}
-                  namespace={this.props.match.params.namespace}
-                  serviceName={this.props.match.params.service}
-                  onDurationChanged={this.handleTrafficDurationChange}
-                  onRefresh={this.doRefresh}
-                />
-              </TabPane>
-              <TabPane eventKey="metrics" mountOnEnter={true} unmountOnExit={true}>
-                <IstioMetricsContainer
-                  namespace={this.props.match.params.namespace}
-                  object={this.props.match.params.service}
-                  objectType={MetricsObjectTypes.SERVICE}
-                  direction={'inbound'}
-                />
-              </TabPane>
-              {this.props.jaegerIntegration && (
-                <TabPane eventKey="traces" mountOnEnter={true} unmountOnExit={true}>
-                  <ServiceTraces
-                    namespace={this.props.match.params.namespace}
-                    service={this.props.match.params.service}
-                    errorTags={errorTraces ? errorTraces > -1 : false}
-                  />
-                </TabPane>
-              )}
-              {this.state.serviceDetailsInfo.apiDocumentation &&
-                this.state.serviceDetailsInfo.apiDocumentation.hasSpec && (
-                  <TabPane eventKey="api" mountOnEnter={true} unmountOnExit={true}>
-                    <ApiDocumentation
-                      apiType={this.state.serviceDetailsInfo.apiDocumentation.type}
-                      namespace={this.props.match.params.namespace}
-                      service={this.props.match.params.service}
-                    />
-                  </TabPane>
-                )}
-            </TabContent>
-          </div>
-        </TabContainer>
+          {tabsArray}
+        </ParameterizedTabs>
       </>
     );
   }
-
-  private activeTab = (tabName: string, whenEmpty: string) => {
-    return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
-  };
-
-  private handleTrafficDurationChange = () => {
-    this.fetchTrafficData();
-  };
-
-  private tabChangeHandler = (tabName: string) => {
-    if (tabName === 'traffic' && this.state.trafficData === null) {
-      this.fetchTrafficData();
-    }
-  };
-
-  private tabSelectHandler = (tabName: string, postHandler?: (tabName: string) => void) => {
-    return (tabKey?: string) => {
-      if (!tabKey) {
-        return;
-      }
-
-      const urlParams = new URLSearchParams('');
-      const parsedSearch = this.parseSearch();
-      if (parsedSearch.type && parsedSearch.name) {
-        urlParams.set(parsedSearch.type, parsedSearch.name);
-      }
-      urlParams.set(tabName, tabKey);
-
-      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
-
-      if (postHandler) {
-        postHandler(tabKey);
-      }
-    };
-  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

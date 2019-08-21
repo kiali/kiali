@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
-import { AppId, App } from '../../types/App';
-import { TabContainer, Nav, NavItem, TabContent, TabPane } from 'patternfly-react';
+import { App, AppId } from '../../types/App';
+import { Tab } from '@patternfly/react-core';
 import AppInfo from './AppInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
@@ -19,11 +19,15 @@ import { DurationInSeconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
+import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 
 type AppDetailsState = {
   app: App;
   health?: AppHealth;
   trafficData: GraphDefinition | null;
+  // currentTab is needed to (un)mount tab components
+  // when the tab is not rendered.
+  currentTab: string;
 };
 
 type ReduxProps = {
@@ -40,12 +44,23 @@ const emptyApp = {
   runtimes: []
 };
 
+const tabName = 'tab';
+const defaultTab = 'info';
+const trafficTabName = 'traffic';
+const paramToTab: { [key: string]: number } = {
+  info: 0,
+  traffic: 1,
+  in_metrics: 2,
+  out_metrics: 3
+};
+
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
     super(props);
     this.state = {
       app: emptyApp,
-      trafficData: null
+      trafficData: null,
+      currentTab: activeTab(tabName, defaultTab)
     };
   }
 
@@ -69,15 +84,21 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
   }
 
-  doRefresh = () => {
-    const currentTab = this.activeTab('tab', 'info');
+  fetchTrafficDataOnTabChange = (tabValue: string): void => {
+    if (tabValue === trafficTabName && this.state.trafficData == null) {
+      this.fetchTrafficData();
+    }
+  };
 
-    if (this.state.app === emptyApp || currentTab === 'info') {
+  doRefresh = () => {
+    const currentTab = this.state.currentTab;
+
+    if (this.state.app === emptyApp || currentTab === defaultTab) {
       this.setState({ trafficData: null });
       this.fetchApp();
     }
 
-    if (currentTab === 'traffic') {
+    if (currentTab === trafficTabName) {
       this.fetchTrafficData();
     }
   };
@@ -133,6 +154,104 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return istioSidecar;
   }
 
+  runtimeTabs() {
+    const staticTabsCount = 4;
+    let dynamicTabsCount: number = 0;
+
+    const tabs: JSX.Element[] = [];
+    this.state.app.runtimes.forEach(runtime => {
+      runtime.dashboardRefs.forEach(dashboard => {
+        const tabKey = dynamicTabsCount + staticTabsCount;
+        paramToTab[dashboard.template] = tabKey;
+
+        const tab = (
+          <Tab title={dashboard.title} key={dashboard.template} eventKey={tabKey}>
+            <CustomMetricsContainer
+              namespace={this.props.match.params.namespace}
+              app={this.props.match.params.app}
+              template={dashboard.template}
+            />
+          </Tab>
+        );
+        tabs.push(tab);
+        dynamicTabsCount = dynamicTabsCount + 1;
+      });
+    });
+
+    return tabs;
+  }
+
+  staticTabs() {
+    const overTab = (
+      <Tab title="Overview" eventKey={0}>
+        {this.state.currentTab === 'info' ? (
+          <AppInfo
+            app={this.state.app}
+            namespace={this.props.match.params.namespace}
+            onRefresh={this.doRefresh}
+            health={this.state.health}
+          />
+        ) : (
+          undefined
+        )}
+      </Tab>
+    );
+
+    const trafficTab = (
+      <Tab title="Traffic" eventKey={1}>
+        {this.state.currentTab === 'traffic' ? (
+          <TrafficDetails
+            trafficData={this.state.trafficData}
+            itemType={MetricsObjectTypes.APP}
+            namespace={this.state.app.namespace.name}
+            appName={this.state.app.name}
+            onDurationChanged={this.fetchTrafficData}
+            onRefresh={this.doRefresh}
+          />
+        ) : (
+          undefined
+        )}
+      </Tab>
+    );
+
+    const inTab = (
+      <Tab title="Inbound metrics" eventKey={2}>
+        {this.state.currentTab === 'in_metrics' ? (
+          <IstioMetricsContainer
+            namespace={this.props.match.params.namespace}
+            object={this.props.match.params.app}
+            objectType={MetricsObjectTypes.APP}
+            direction={'inbound'}
+          />
+        ) : (
+          undefined
+        )}
+      </Tab>
+    );
+
+    const outTab = (
+      <Tab title="Outbound metrics" eventKey={3}>
+        {this.state.currentTab === 'out_metrics' ? (
+          <IstioMetricsContainer
+            namespace={this.props.match.params.namespace}
+            object={this.props.match.params.app}
+            objectType={MetricsObjectTypes.APP}
+            direction={'outbound'}
+          />
+        ) : (
+          undefined
+        )}
+      </Tab>
+    );
+
+    return [overTab, trafficTab, inTab, outTab];
+  }
+
+  renderTabs() {
+    // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
+    return this.staticTabs().concat(this.runtimeTabs());
+  }
+
   render() {
     const istioSidecar = this.istioSidecar();
 
@@ -140,119 +259,21 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={istioSidecar} />
-        <TabContainer
+        <ParameterizedTabs
           id="basic-tabs"
-          activeKey={this.activeTab('tab', 'info')}
-          onSelect={this.tabSelectHandler('tab', this.tabChangeHandler)}
+          onSelect={tabValue => {
+            this.setState({ currentTab: tabValue });
+          }}
+          tabMap={paramToTab}
+          tabName={tabName}
+          defaultTab={defaultTab}
+          postHandler={this.fetchTrafficDataOnTabChange}
         >
-          <div>
-            <Nav bsClass="nav nav-tabs nav-tabs-pf">
-              <NavItem eventKey="info">Overview</NavItem>
-              <NavItem eventKey="traffic">Traffic</NavItem>
-              <NavItem eventKey="in_metrics">Inbound Metrics</NavItem>
-              <NavItem eventKey="out_metrics">Outbound Metrics</NavItem>
-              {this.state.app.runtimes.map(runtime => {
-                return runtime.dashboardRefs.map(dashboard => {
-                  return (
-                    <NavItem key={dashboard.template} eventKey={dashboard.template}>
-                      {dashboard.title}
-                    </NavItem>
-                  );
-                });
-              })}
-            </Nav>
-            <TabContent>
-              <TabPane eventKey="info" mountOnEnter={true} unmountOnExit={true}>
-                <AppInfo
-                  app={this.state.app}
-                  namespace={this.props.match.params.namespace}
-                  onRefresh={this.doRefresh}
-                  activeTab={this.activeTab}
-                  onSelectTab={this.tabSelectHandler}
-                  health={this.state.health}
-                />
-              </TabPane>
-              <TabPane eventKey="traffic" mountOnEnter={true} unmountOnExit={true}>
-                <TrafficDetails
-                  trafficData={this.state.trafficData}
-                  itemType={MetricsObjectTypes.APP}
-                  namespace={this.state.app.namespace.name}
-                  appName={this.state.app.name}
-                  onDurationChanged={this.handleTrafficDurationChange}
-                  onRefresh={this.doRefresh}
-                />
-              </TabPane>
-              <TabPane eventKey="in_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <IstioMetricsContainer
-                  namespace={this.props.match.params.namespace}
-                  object={this.props.match.params.app}
-                  objectType={MetricsObjectTypes.APP}
-                  direction={'inbound'}
-                />
-              </TabPane>
-              <TabPane eventKey="out_metrics" mountOnEnter={true} unmountOnExit={true}>
-                <IstioMetricsContainer
-                  namespace={this.props.match.params.namespace}
-                  object={this.props.match.params.app}
-                  objectType={MetricsObjectTypes.APP}
-                  direction={'outbound'}
-                />
-              </TabPane>
-              {this.state.app.runtimes.map(runtime => {
-                return runtime.dashboardRefs.map(dashboard => {
-                  return (
-                    <TabPane
-                      key={dashboard.template}
-                      eventKey={dashboard.template}
-                      mountOnEnter={true}
-                      unmountOnExit={true}
-                    >
-                      <CustomMetricsContainer
-                        namespace={this.props.match.params.namespace}
-                        app={this.props.match.params.app}
-                        template={dashboard.template}
-                      />
-                    </TabPane>
-                  );
-                });
-              })}
-            </TabContent>
-          </div>
-        </TabContainer>
+          {this.renderTabs()}
+        </ParameterizedTabs>
       </>
     );
   }
-
-  private activeTab = (tabName: string, whenEmpty: string) => {
-    return new URLSearchParams(this.props.location.search).get(tabName) || whenEmpty;
-  };
-
-  private handleTrafficDurationChange = () => {
-    this.fetchTrafficData();
-  };
-
-  private tabChangeHandler = (tabName: string) => {
-    if (tabName === 'traffic' && this.state.trafficData === null) {
-      this.fetchTrafficData();
-    }
-  };
-
-  private tabSelectHandler = (tabName: string, postHandler?: (tabName: string) => void) => {
-    return (tabKey?: string) => {
-      if (!tabKey) {
-        return;
-      }
-
-      const urlParams = new URLSearchParams('');
-      urlParams.set(tabName, tabKey);
-
-      this.props.history.push(this.props.location.pathname + '?' + urlParams.toString());
-
-      if (postHandler) {
-        postHandler(tabKey);
-      }
-    };
-  };
 }
 
 const mapStateToProps = (state: KialiAppState) => ({

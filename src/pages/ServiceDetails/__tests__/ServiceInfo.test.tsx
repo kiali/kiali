@@ -20,8 +20,6 @@ describe('#ServiceInfo render correctly with data', () => {
           gateways={[]}
           validations={data.validations}
           onRefresh={jest.fn()}
-          onSelectTab={jest.fn()}
-          activeTab={jest.fn()}
           threeScaleInfo={{
             enabled: false,
             permissions: {

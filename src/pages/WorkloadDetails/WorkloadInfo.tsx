@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { Validations } from '../../types/IstioObjects';
-import { Col, Icon, Nav, NavItem, Row, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Col, Icon, Row } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
@@ -10,14 +10,14 @@ import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
+import { Tab } from '@patternfly/react-core';
+import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 
 type WorkloadInfoProps = {
   workload: Workload;
   validations: Validations;
   namespace: string;
   onRefresh: () => void;
-  onSelectTab: (tabName: string, postHandler?: (k: string) => void) => (tabKey: string) => void;
-  activeTab: (tabName: string, whenEmpty: string) => string;
   istioEnabled: boolean;
   health?: WorkloadHealth;
 };
@@ -26,9 +26,10 @@ interface ValidationChecks {
   hasPodsChecks: boolean;
 }
 
-type WorkloadInfoState = {};
+type WorkloadInfoState = {
+  currentTab: string;
+};
 
-const tabName = 'list';
 const tabIconStyle = style({
   fontSize: '0.9em'
 });
@@ -36,10 +37,19 @@ const floatRightStyle = style({
   float: 'right'
 });
 
+const tabName = 'list';
+const defaultTab = 'pods';
+const paramToTab: { [key: string]: number } = {
+  pods: 0,
+  services: 1
+};
+
 class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   constructor(props: WorkloadInfoProps) {
     super(props);
-    this.state = {};
+    this.state = {
+      currentTab: activeTab(tabName, defaultTab)
+    };
   }
 
   validationChecks(): ValidationChecks {
@@ -83,6 +93,15 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
       return getSeverityIcon(severity);
     };
 
+    const podTabTitle: any = (
+      <>
+        Pods ({pods.length}){' '}
+        {validationChecks.hasPodsChecks
+          ? getValidationIcon((this.props.workload.pods || []).map(a => a.name), 'pod')
+          : undefined}
+      </>
+    );
+
     return (
       <div>
         <div className="container-fluid container-cards-pf">
@@ -106,37 +125,28 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
           </Row>
           <Row className="row-cards-pf">
             <Col xs={12} sm={12} md={12} lg={12}>
-              <TabContainer
+              <ParameterizedTabs
                 id="service-tabs"
-                activeKey={this.props.activeTab(tabName, 'pods')}
-                onSelect={this.props.onSelectTab(tabName)}
+                onSelect={tabValue => {
+                  this.setState({ currentTab: tabValue });
+                }}
+                tabMap={paramToTab}
+                tabName={tabName}
+                defaultTab={defaultTab}
               >
-                <div>
-                  <Nav bsClass="nav nav-tabs nav-tabs-pf">
-                    <NavItem eventKey={'pods'}>
-                      {'Pods (' + pods.length + ')'}
-                      {validationChecks.hasPodsChecks
-                        ? getValidationIcon((this.props.workload.pods || []).map(a => a.name), 'pod')
-                        : undefined}
-                    </NavItem>
-                    <NavItem eventKey={'services'}>{'Services (' + services.length + ')'}</NavItem>
-                  </Nav>
-                  <TabContent>
-                    <TabPane eventKey={'pods'}>
-                      {pods.length > 0 && (
-                        <WorkloadPods
-                          namespace={this.props.namespace}
-                          pods={pods}
-                          validations={this.props.validations!.pod}
-                        />
-                      )}
-                    </TabPane>
-                    <TabPane eventKey={'services'}>
-                      {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
-                    </TabPane>
-                  </TabContent>
-                </div>
-              </TabContainer>
+                <Tab title={podTabTitle} eventKey={0}>
+                  {pods.length > 0 && (
+                    <WorkloadPods
+                      namespace={this.props.namespace}
+                      pods={pods}
+                      validations={this.props.validations!.pod}
+                    />
+                  )}
+                </Tab>
+                <Tab title={'Services (' + services.length + ')'} eventKey={1}>
+                  {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
+                </Tab>
+              </ParameterizedTabs>
             </Col>
           </Row>
         </div>
