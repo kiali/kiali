@@ -95,7 +95,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       this.handleFind();
     }
     if (hideChanged || compressOnHideChanged || (graphChanged && this.props.hideValue)) {
-      this.handleHide(graphChanged, hideChanged || compressOnHideChanged);
+      this.handleHide(graphChanged, hideChanged, compressOnHideChanged);
     }
   }
 
@@ -264,13 +264,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.setState({ compressOnHide: !this.state.compressOnHide });
   };
 
-  private handleHide = (graphChanged: boolean, hideChanged) => {
+  private handleHide = (graphChanged: boolean, hideChanged: boolean, compressOnHideChanged: boolean) => {
     if (!this.props.cyData) {
       console.debug('Skip Hide: cy not set.');
       return;
     }
+
     const cy = this.props.cyData.cyRef;
     const selector = this.parseValue(this.props.hideValue);
+
     cy.startBatch();
     if (this.hiddenElements) {
       // make visible old hide-hits
@@ -313,11 +315,13 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         this.hiddenElements = this.hiddenElements.add(hiddenAppBoxes);
       }
     }
-    if ((hideChanged && selector) || (this.removedElements && this.removedElements.size() > 0)) {
+
+    const removedElements: boolean = this.removedElements && this.removedElements.size() > 0;
+    if (hideChanged || (compressOnHideChanged && selector) || removedElements) {
       const zoom = cy.zoom();
       const pan = cy.pan();
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      if (!hideChanged) {
+      if (!hideChanged && !compressOnHideChanged) {
         if (zoom !== cy.zoom()) {
           cy.zoom(zoom);
         }
