@@ -11,4 +11,5 @@ spec:
     image_pull_policy: {{ kiali.image_pull_policy }}
     image_version: {{ kiali.image_version }}
     accessible_namespaces: {{ kiali.accessible_namespaces }}
+    service_type: NodePort
 

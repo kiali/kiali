@@ -16,3 +16,4 @@ spec:
     # while we are here, make sure the additional service yaml retains camelCase
     additional_service_yaml:
       externalName: my.kiali.example.com
+    service_type: NodePort

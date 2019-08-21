@@ -22,6 +22,7 @@
       namespace: "{{ kiali.operator_namespace }}"
       definition: "{{ lookup('template', cr_file_path) }}"
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
 
   # test Kiali access to secure LDAP
   - import_tasks: ../asserts/ldap-test/assert-ldap-access.yml
