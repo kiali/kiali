@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Button, Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -16,6 +15,7 @@ import { config } from '../../config/Config';
 import { HistoryManager, URLParam } from '../../app/History';
 import ToolbarDropdown from '../ToolbarDropdown/ToolbarDropdown';
 import { DurationDropdownContainer } from '../DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../Refresh/RefreshButton';
 
 //
 // GraphRefresh actually handles the Duration dropdown, the RefreshInterval dropdown and the Refresh button.
@@ -75,9 +75,11 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
           tooltip={'Refresh interval for graph'}
         />
         <span className={GraphRefresh.refreshButtonStyle}>
-          <Button id="refresh_button" onClick={this.props.handleRefresh} disabled={this.props.disabled}>
-            <Icon name="refresh" />
-          </Button>
+          <RefreshButtonContainer
+            id={'refresh_button'}
+            handleRefresh={this.props.handleRefresh}
+            disabled={this.props.disabled}
+          />
         </span>
       </>
     );
