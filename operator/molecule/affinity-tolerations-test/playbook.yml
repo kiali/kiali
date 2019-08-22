@@ -51,6 +51,7 @@
         operator: Exists
         tolerationSeconds: 777
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/pod_asserts.yml
 

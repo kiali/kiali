@@ -1,3 +1,15 @@
+- name: Asserting that Kiali Pod exists and there is only one
+  k8s_facts:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ istio.control_plane_namespace }}"
+    label_selectors:
+    - app = kiali
+  register: kiali_pod
+  until: kiali_pod.resources | length == 1 and kiali_pod.resources[0].status.phase is defined and kiali_pod.resources[0].status.phase == "Running"
+  retries: 60
+  delay: 5
+
 - name: Wait for Kiali to be running and accepting requests
   uri:
     url: "{{ kiali_base_url }}/api"

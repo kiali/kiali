@@ -1,3 +1,10 @@
+# This will assume the pod is already running and there is only one.
+# Use common/wait_for_kiali_running.yml if you want to wait for this condition to occur.
+- name: Assert Kiali Pod is Running and there is only one
+  assert:
+    that:
+    - kiali_pod.resources | length == 1 and kiali_pod.resources[0].status.phase is defined and kiali_pod.resources[0].status.phase == "Running"
+
 - name: Assert Kiali Pod is Running on the correct Namespace
   assert:
     that:

@@ -436,7 +436,8 @@
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
-- name: Delete Kiali deployment if image is changing since image is immutable
+# TODO: do we want to remove the label selector "version" so the Deployment only tracks by app=kiali label?
+- name: Delete Kiali deployment if image is changing since label selectors are immutable and we have version in a label
   k8s:
     state: absent
     api_version: apps/v1
@@ -448,15 +449,44 @@
   - current_image_name is defined and current_image_version is defined
   - (current_image_name != kiali_vars.deployment.image_name) or (current_image_version != kiali_vars.deployment.image_version)
 
+# Get the deployment's custom annotation we set that tells us when we last updated the Deployment.
+# We need this to ensure the Deployment we update retains this same timestamp unless changes are made
+# that requires a pod restart - in which case we update this timestamp.
+- name: Find current deployment, if it exists
+  set_fact:
+    current_deployment: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='apps/v1', kind='Deployment') }}"
+
+- name: Get current deployment last-updated annotation timestamp from existing deployment
+  set_fact:
+    current_deployment_last_updated: "{{ current_deployment.spec.template.metadata.annotations['operator.kiali.io/last-updated'] if current_deployment.spec.template.metadata.annotations['operator.kiali.io/last-updated'] is defined else lookup('pipe','date') }}"
+    deployment_is_new: false
+  when:
+  - current_deployment is defined
+  - current_deployment.spec is defined
+  - current_deployment.spec.template is defined
+  - current_deployment.spec.template.metadata is defined
+  - current_deployment.spec.template.metadata.annotations is defined
+
+- name: Set current deployment last-updated annotation timestamp for new deployments
+  set_fact:
+    current_deployment_last_updated: "{{ lookup('pipe','date') }}"
+    deployment_is_new: true
+  when:
+  - current_deployment_last_updated is not defined
+
 # Now deploy all resources for the specific cluster environment
 
 - name: Execute for OpenShift environment
   include: openshift/os-main.yml
+  vars:
+    deployment_last_updated: "{{ current_deployment_last_updated }}"
   when:
   - is_openshift == True
 
 - name: Execute for Kubernetes environment
   include: kubernetes/k8s-main.yml
+  vars:
+    deployment_last_updated: "{{ current_deployment_last_updated }}"
   when:
   - is_k8s == True
 
@@ -496,17 +526,13 @@
   - monitoringdashboards_crd | default({}) | json_query('resources[*].status.conditions[?type==`Established`].status') | flatten | join == 'True'
 
 - name: Force the Kiali pod to restart if necessary
-  k8s:
-    state: "absent"
-    api_version: "v1"
-    kind: "Pod"
-    namespace: "{{ item.metadata.namespace }}"
-    name: "{{ item.metadata.name }}"
   vars:
-    pods: "{{ query('k8s', kind='Pod', namespace=kiali_vars.deployment.namespace, label_selector='app=kiali') }}"
-  loop: "{{ pods }}"
+    updated_deployment: "{{ lookup('k8s', resource_name='kiali', namespace=kiali_vars.deployment.namespace, api_version='apps/v1', kind='Deployment') | combine({'spec': {'template': {'metadata': {'annotations': {'operator.kiali.io/last-updated': lookup('pipe','date') }}}}}, recursive=True) }}"
+  k8s:
+    state: "present"
+    definition: "{{ updated_deployment }}"
   when:
-  - pods is defined
+  - deployment_is_new == False
   - processed_resources.configmap is defined
   - processed_resources.configmap.changed == True
   - processed_resources.configmap.method == "patch"

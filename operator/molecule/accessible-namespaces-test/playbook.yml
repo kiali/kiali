@@ -23,6 +23,7 @@
     vars:
       namespace_list: [ 'istio-system', 'foo' ]
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/pod_asserts.yml
   - import_tasks: ../asserts/accessible_namespaces_equals.yml
@@ -40,6 +41,7 @@
   # change to accessible_namespaces back to **
   - import_tasks: ../common/set_accessible_namespaces_to_all.yml
   - import_tasks: ../common/wait_for_kiali_cr_changes.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/pod_asserts.yml
   - import_tasks: ../asserts/accessible_namespaces_contains.yml

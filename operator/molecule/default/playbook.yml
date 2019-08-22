@@ -6,4 +6,5 @@
   tasks:
   - import_tasks: ../common/tasks.yml
   - import_tasks: ../asserts/configmap_asserts.yml
+  - import_tasks: ../common/wait_for_kiali_running.yml
   - import_tasks: ../asserts/pod_asserts.yml
