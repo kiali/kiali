@@ -358,7 +358,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvc, destSvcOk := m["destination_service_name"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
@@ -367,7 +367,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		lCode, codeOk := m["response_code"]
 		lFlags, flagsOk := m["response_flags"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk || !codeOk || !flagsOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk || !codeOk || !flagsOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
 			continue
 		}
@@ -377,7 +377,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
-		destSvc := string(lDestSvc)
+		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
@@ -390,25 +390,25 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcOk = graph.IsOK(destSvc)
-			_, destNodeType := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcOk && destNodeType != graph.NodeTypeService {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, "", "", "", "", o)
-				addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvc, "", "", "", destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+			destSvcNameOk = graph.IsOK(destSvcName)
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
+				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+				addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 			} else {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 			}
 		} else {
-			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
+func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
-	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+	dest, destFound := addNode(trafficMap, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 
-	addToDestServices(dest.Metadata, destSvcNs, destSvc)
+	addToDestServices(dest.Metadata, destSvcNs, destSvcName)
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
@@ -444,14 +444,14 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvc, destSvcOk := m["destination_service_name"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
 		lFlags, flagsOk := m["response_flags"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
 			continue
 		}
@@ -461,7 +461,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
-		destSvc := string(lDestSvc)
+		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
@@ -472,25 +472,25 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcOk = graph.IsOK(destSvc)
-			_, destNodeType := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcOk && destNodeType != graph.NodeTypeService {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, "", "", "", "", o)
-				addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvc, "", "", "", destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+			destSvcNameOk = graph.IsOK(destSvcName)
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
+				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+				addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 			} else {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 			}
 		} else {
-			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
 	}
 }
 
-func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
+func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
-	dest, destFound := addNode(trafficMap, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, o)
+	dest, destFound := addNode(trafficMap, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 
-	addToDestServices(dest.Metadata, destSvcNs, destSvc)
+	addToDestServices(dest.Metadata, destSvcNs, destSvcName)
 
 	var edge *graph.Edge
 	for _, e := range source.Edges {
