@@ -1,16 +1,16 @@
 import * as React from 'react';
 import {
   Breadcrumb,
+  BreadcrumbItem,
   Card,
+  CardHeader,
   CardBody,
-  CardGrid,
-  CardTitle,
-  Col,
   EmptyState,
-  EmptyStateInfo,
-  EmptyStateTitle,
-  Row
-} from 'patternfly-react';
+  EmptyStateBody,
+  Grid,
+  GridItem,
+  Title
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { AxiosError } from 'axios';
 import _ from 'lodash';
@@ -46,10 +46,11 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 
-const cardGridStyle = style({ width: '100%' });
+const gridStyle = style({ backgroundColor: '#f5f5f5', paddingBottom: '20px', marginTop: '20px' });
+const cardGridStyle = style({ borderTop: '2px solid #39a5dc', textAlign: 'center', marginTop: '20px' });
 
 const emptyStateStyle = style({
-  height: '98%',
+  height: '300px',
   marginRight: 5,
   marginBottom: 10,
   marginTop: 10
@@ -300,12 +301,13 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
   };
 
   render() {
-    const [xs, sm, md] = this.state.displayMode === OverviewDisplayMode.COMPACT ? [6, 3, 3] : [12, 6, 4];
+    const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
+    const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
     const filteredNamespaces = Filters.filterBy(this.state.namespaces, FilterSelected.getSelected());
     return (
       <>
-        <Breadcrumb title={true}>
-          <Breadcrumb.Item active={true}>Namespaces</Breadcrumb.Item>
+        <Breadcrumb style={{ marginTop: '10px' }}>
+          <BreadcrumbItem isActive={true}>Namespaces</BreadcrumbItem>
         </Breadcrumb>
         <OverviewToolbarContainer
           onRefresh={this.load}
@@ -315,35 +317,33 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
           setDisplayMode={this.setDisplayMode}
         />
         {filteredNamespaces.length > 0 ? (
-          <div className="cards-pf">
-            <CardGrid matchHeight={true} className={cardGridStyle}>
-              <Row style={{ marginBottom: '20px', marginTop: '20px' }}>
-                {filteredNamespaces.map(ns => {
-                  return (
-                    <Col xs={xs} sm={sm} md={md} key={ns.name}>
-                      <Card matchHeight={true} accented={true} aggregated={true}>
-                        <CardTitle>
-                          {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
-                          {ns.name}
-                        </CardTitle>
-                        <CardBody>
-                          {this.renderStatuses(ns)}
-                          <OverviewCardLinks name={ns.name} />
-                        </CardBody>
-                      </Card>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </CardGrid>
-          </div>
+          <Grid className={gridStyle}>
+            {filteredNamespaces.map(ns => (
+              <GridItem sm={sm} md={md} style={{ margin: '0px 10px 0 10px' }}>
+                <Card isCompact={true} className={cardGridStyle}>
+                  <CardHeader>
+                    {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}
+                    {ns.name}
+                  </CardHeader>
+                  <CardBody>
+                    {this.renderStatuses(ns)}
+                    <OverviewCardLinks name={ns.name} />
+                  </CardBody>
+                </Card>
+              </GridItem>
+            ))}
+          </Grid>
         ) : (
-          <EmptyState className={emptyStateStyle}>
-            <EmptyStateTitle>No unfiltered namespaces</EmptyStateTitle>
-            <EmptyStateInfo>
-              Either all namespaces are being filtered or the user has no permission to access namespaces.
-            </EmptyStateInfo>
-          </EmptyState>
+          <div style={{ backgroundColor: '#f5f5f5' }}>
+            <EmptyState className={emptyStateStyle}>
+              <Title headingLevel="h5" size="lg" style={{ marginTop: '50px' }}>
+                No unfiltered namespaces
+              </Title>
+              <EmptyStateBody>
+                Either all namespaces are being filtered or the user has no permission to access namespaces.
+              </EmptyStateBody>
+            </EmptyState>
+          </div>
         )}
       </>
     );

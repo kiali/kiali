@@ -3,10 +3,14 @@
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
   <Breadcrumb
-    title={true}
+    style={
+      Object {
+        "marginTop": "10px",
+      }
+    }
   >
     <BreadcrumbItem
-      active={true}
+      isActive={true}
     >
       Namespaces
     </BreadcrumbItem>
@@ -18,19 +22,31 @@ exports[`Overview page renders initial layout 1`] = `
     setDisplayMode={[Function]}
     sort={[Function]}
   />
-  <EmptyState
-    className="f1txr8of"
+  <div
+    style={
+      Object {
+        "backgroundColor": "#f5f5f5",
+      }
+    }
   >
-    <EmptyStateTitle
-      className=""
+    <EmptyState
+      className="fu1tihc"
     >
-      No unfiltered namespaces
-    </EmptyStateTitle>
-    <EmptyStateInfo
-      className=""
-    >
-      Either all namespaces are being filtered or the user has no permission to access namespaces.
-    </EmptyStateInfo>
-  </EmptyState>
+      <Title
+        headingLevel="h5"
+        size="lg"
+        style={
+          Object {
+            "marginTop": "50px",
+          }
+        }
+      >
+        No unfiltered namespaces
+      </Title>
+      <EmptyStateBody>
+        Either all namespaces are being filtered or the user has no permission to access namespaces.
+      </EmptyStateBody>
+    </EmptyState>
+  </div>
 </Fragment>
 `;

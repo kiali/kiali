@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Paths } from '../../config';
+import { ApplicationsIcon, BundleIcon, TopologyIcon, ServiceIcon, PficonTemplateIcon } from '@patternfly/react-icons';
 
 type Props = {
   name: string;
@@ -15,37 +16,34 @@ const iconStyle = style({
 
 class OverviewCardLinks extends React.Component<Props> {
   render() {
+    const tooltipProps = { distance: 10, entryDelay: 100, exitDelay: 100 };
     return (
       <div style={{ marginTop: '10px' }}>
-        <OverlayTrigger key="ot_graph" placement="top" overlay={<Tooltip id="tt_graph">Go to graph</Tooltip>}>
-          <Link to={`/graph/namespaces?namespaces=` + this.props.name}>
-            <Icon type="pf" name="topology" className={iconStyle} />
+        <Tooltip key="ot_graph" content={<>Go to graph</>} {...tooltipProps}>
+          <Link to={`/graph/namespaces?namespaces=` + this.props.name} className={iconStyle}>
+            <TopologyIcon />
           </Link>
-        </OverlayTrigger>
-        <OverlayTrigger key="ot_apps" placement="top" overlay={<Tooltip id="tt_apps">Go to applications</Tooltip>}>
-          <Link to={`/${Paths.APPLICATIONS}?namespaces=` + this.props.name}>
-            <Icon type="pf" name="applications" className={iconStyle} />
+        </Tooltip>
+        <Tooltip key="ot_apps" content={<>Go to applications</>} {...tooltipProps}>
+          <Link to={`/${Paths.APPLICATIONS}?namespaces=` + this.props.name} className={iconStyle}>
+            <ApplicationsIcon />
           </Link>
-        </OverlayTrigger>
-        <OverlayTrigger
-          key="ot_workloads"
-          placement="top"
-          overlay={<Tooltip id="tt_workloads">Go to workloads</Tooltip>}
-        >
-          <Link to={`/${Paths.WORKLOADS}?namespaces=` + this.props.name}>
-            <Icon type="pf" name="bundle" className={iconStyle} />
+        </Tooltip>
+        <Tooltip key="ot_workloads" content={<>Go to workloads</>} {...tooltipProps}>
+          <Link to={`/${Paths.WORKLOADS}?namespaces=` + this.props.name} className={iconStyle}>
+            <BundleIcon />
           </Link>
-        </OverlayTrigger>
-        <OverlayTrigger key="ot_services" placement="top" overlay={<Tooltip id="tt_services">Go to services</Tooltip>}>
-          <Link to={`/${Paths.SERVICES}?namespaces=` + this.props.name}>
-            <Icon type="pf" name="service" className={iconStyle} />
+        </Tooltip>
+        <Tooltip key="ot_services" content={<>Go to services</>} {...tooltipProps}>
+          <Link to={`/${Paths.SERVICES}?namespaces=` + this.props.name} className={iconStyle}>
+            <ServiceIcon />
           </Link>
-        </OverlayTrigger>
-        <OverlayTrigger key="ot_istio" placement="top" overlay={<Tooltip id="tt_istio">Go to Istio config</Tooltip>}>
-          <Link to={`/${Paths.ISTIO}?namespaces=` + this.props.name}>
-            <Icon type="pf" name="template" className={iconStyle} />
+        </Tooltip>
+        <Tooltip key="ot_istio" content={<>Go to Istio config</>} {...tooltipProps}>
+          <Link to={`/${Paths.ISTIO}?namespaces=` + this.props.name} className={iconStyle}>
+            <PficonTemplateIcon />
           </Link>
-        </OverlayTrigger>
+        </Tooltip>
       </div>
     );
   }
