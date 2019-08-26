@@ -44,8 +44,9 @@ export default class ParameterizedTabs extends React.Component<TabsProps, TabsSt
 
   buildTabLinks() {
     const tabLinks: { [key: number]: string } = {};
-    React.Children.forEach(this.props.children, (child: React.ReactChild) => {
+    React.Children.forEach(this.props.children, child => {
       const childComp = child as React.ReactElement<TabProps>;
+
       if (childComp.props.href) {
         tabLinks[childComp.props.eventKey] = childComp.props.href;
       }

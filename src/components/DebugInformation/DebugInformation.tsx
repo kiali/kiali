@@ -154,7 +154,7 @@ const DebugInformationContainer = connect(
   mapStateToProps,
   null,
   null,
-  { withRef: true }
+  { forwardRef: true }
 )(DebugInformation);
 
 export default DebugInformationContainer;

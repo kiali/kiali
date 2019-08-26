@@ -4,11 +4,22 @@ import { Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { icons } from 'config';
 
-const MissingSidecar = props => {
-  const { style, text, textTooltip, type, name, namespace, color, tooltip, ...otherProps } = props;
+type MissingSidecarProps = {
+  text: string;
+  textTooltip: string;
+  tooltip: boolean;
+  type: string;
+  name: string;
+  color: string;
+  namespace: string;
+  style?: any;
+};
+
+const MissingSidecar = (props: MissingSidecarProps) => {
+  const { text, textTooltip, type, name, namespace, color, tooltip, ...otherProps } = props;
 
   const iconComponent = (
-    <span style={style} {...otherProps}>
+    <span {...otherProps}>
       <Icon type={type} name={name} style={{ color: color }} />
       {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
     </span>

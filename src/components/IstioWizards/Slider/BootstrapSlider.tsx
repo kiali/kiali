@@ -59,7 +59,7 @@ class BootstrapSlider extends React.Component<Props> {
   // Instead of rendering the slider element again and again,
   // we took advantage of the bootstrap-slider library
   // and only update the new value or format when new props arrive.
-  componentWillReceiveProps(nextProps: Props) {
+  componentDidUpdate(nextProps: Props) {
     if (nextProps.locked) {
       this.slider.disable();
     } else {

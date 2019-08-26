@@ -43,7 +43,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
 ) => {
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
-      {hasMissingSidecar(item) && <MissingSidecar />}{' '}
+      {hasMissingSidecar(item) && <MissingSidecar namespace={item.namespace} />}{' '}
       {(item as ServiceListItem).apiType && <ApiTypeIndicator apiType={(item as ServiceListItem).apiType} />}
     </td>
   );

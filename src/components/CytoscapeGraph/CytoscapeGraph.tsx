@@ -789,6 +789,6 @@ const CytoscapeGraphContainer = connect(
   mapStateToProps,
   mapDispatchToProps,
   null,
-  { withRef: true } // Allows to use getWrappedInstance to get the ref
+  { forwardRef: true } // Allows to use getWrappedInstance to get the ref
 )(CytoscapeGraph);
 export default CytoscapeGraphContainer;
