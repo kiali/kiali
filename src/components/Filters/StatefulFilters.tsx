@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Filter, FormControl, Toolbar } from 'patternfly-react';
-import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType, FilterValue } from '../../types/Filters';
+import { Toolbar } from 'patternfly-react';
+import { Chip, ChipGroup, ChipGroupToolbarItem, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 
@@ -35,11 +36,6 @@ export class FilterSelected {
 // align with separator start
 const alignLeftStyle = {
   marginLeft: '-20px'
-};
-
-// reduce toolbar padding from 20px to 10px. save horiz space at border lines and match OS console
-const thinBorderStyle = {
-  paddingRight: '10px'
 };
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
@@ -127,8 +123,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.updateActiveFilters(activeFilters);
   };
 
-  selectFilterType = (filterType: FilterType) => {
+  selectFilterType = (value: string) => {
     const { currentFilterType } = this.state;
+    const filterType = this.state.filterTypes.filter(filter => filter.id === value)[0];
+
     if (currentFilterType !== filterType) {
       this.setState({
         currentValue: '',
@@ -137,8 +135,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  filterValueSelected = (filterValue: FilterValue) => {
+  filterValueSelected = (value: string) => {
     const { currentFilterType, currentValue } = this.state;
+    const filterValue = currentFilterType.filterValues.filter(filter => filter.id === value)[0];
 
     if (
       filterValue &&
@@ -149,8 +148,8 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  updateCurrentValue = (event: any) => {
-    this.setState({ currentValue: event.target.value });
+  updateCurrentValue = value => {
+    this.setState({ currentValue: value });
   };
 
   onValueKeyPress = (keyEvent: any) => {
@@ -175,10 +174,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return !!filter;
   };
 
-  removeFilter = (filter: ActiveFilter) => {
+  removeFilter = (category: string, value: string) => {
     const { activeFilters } = this.state;
+    const index = activeFilters.findIndex(x => x.category === category && x.value === value);
 
-    const index = activeFilters.indexOf(filter);
     if (index > -1) {
       const updated = [...activeFilters.slice(0, index), ...activeFilters.slice(index + 1)];
       this.updateActiveFilters(updated);
@@ -197,25 +196,41 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
     if (currentFilterType.filterType === 'select') {
       return (
-        <Filter.ValueSelector
-          filterValues={currentFilterType.filterValues}
-          placeholder={currentFilterType.placeholder}
-          currentValue={currentValue}
-          onFilterValueSelected={this.filterValueSelected}
-        />
+        <FormSelect
+          value={'default'}
+          onChange={this.filterValueSelected}
+          aria-label="filter_select_value"
+          style={{ width: 'auto' }}
+        >
+          <FormSelectOption key={'filter_default'} value={'default'} label={currentFilterType.placeholder} />
+          {currentFilterType.filterValues.map((filter, index) => (
+            <FormSelectOption key={'filter_' + index} value={filter.id} label={filter.title} />
+          ))}
+        </FormSelect>
       );
     } else {
       return (
-        <FormControl
+        <TextInput
           type={currentFilterType.filterType}
           value={currentValue}
+          aria-label={'filter_imput_value'}
           placeholder={currentFilterType.placeholder}
-          onChange={e => this.updateCurrentValue(e)}
+          onChange={this.updateCurrentValue}
           onKeyPress={e => this.onValueKeyPress(e)}
+          style={{ width: 'auto' }}
         />
       );
     }
   }
+
+  groupBy = (items, key) =>
+    items.reduce(
+      (result, item) => ({
+        ...result,
+        [item[key]]: [...(result[item[key]] || []), item]
+      }),
+      {}
+    );
 
   render() {
     const { currentFilterType, activeFilters } = this.state;
@@ -223,33 +238,44 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     return (
       <div>
         <Toolbar>
-          <Filter style={{ ...alignLeftStyle, ...thinBorderStyle }}>
-            <Filter.TypeSelector
-              filterTypes={this.state.filterTypes}
-              currentFilterType={currentFilterType}
-              onFilterTypeSelected={this.selectFilterType}
-            />
-            {this.renderInput()}
-          </Filter>
+          <FormSelect
+            value={currentFilterType.id}
+            aria-label={'filter_select_type'}
+            onChange={this.selectFilterType}
+            style={{ ...alignLeftStyle, width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
+          >
+            {this.state.filterTypes.map(option => (
+              <FormSelectOption key={option.id} value={option.id} label={option.title} />
+            ))}
+          </FormSelect>
+          {this.renderInput()}
           {this.props.children}
           {activeFilters && activeFilters.length > 0 && (
             <Toolbar.Results>
-              <Filter.ActiveLabel>{'Active Filters:'}</Filter.ActiveLabel>
-              <Filter.List>
-                {activeFilters.map((item, index) => {
-                  return (
-                    <Filter.Item key={index} onRemove={this.removeFilter} filterData={item}>
-                      {item.category + ': ' + item.value}
-                    </Filter.Item>
-                  );
-                })}
-              </Filter.List>
+              <>{'Active Filters:'}</>
+              <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
+                <ChipGroup defaultIsOpen={true} withToolbar={true}>
+                  {Object.entries(this.groupBy(activeFilters, 'category')).map(([category, item]) => (
+                    <ChipGroupToolbarItem key={category} categoryName={category}>
+                      {(item as Array<ActiveFilter>).map(subItem => (
+                        <Chip
+                          key={'filter_' + category + '_' + subItem.value}
+                          onClick={() => this.removeFilter(category, subItem.value)}
+                        >
+                          {subItem.value}
+                        </Chip>
+                      ))}
+                    </ChipGroupToolbarItem>
+                  ))}
+                </ChipGroup>
+              </div>
               <a
                 href="#"
                 onClick={e => {
                   e.preventDefault();
                   this.clearFilters();
                 }}
+                style={{ marginLeft: '5px' }}
               >
                 Clear All Filters
               </a>

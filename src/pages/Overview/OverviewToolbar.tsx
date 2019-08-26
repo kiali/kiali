@@ -125,49 +125,51 @@ export class OverviewToolbar extends React.Component<Props, State> {
   render() {
     return (
       <StatefulFilters initialFilters={Filters.availableFilters} onFilterChange={this.props.onRefresh}>
-        <Sort style={{ ...ThinStyle }}>
-          <Sort.TypeSelector
-            // style={{ ...thinGroupStyle }}
-            sortTypes={Sorts.sortFields}
-            currentSortType={this.state.sortField}
-            onSortTypeSelected={this.updateSortField}
-          />
-          <Sort.DirectionSelector
-            // style={{ ...thinGroupStyle }}
-            isNumeric={false}
-            isAscending={this.state.isSortAscending}
-            onClick={this.updateSortDirection}
-          />
-        </Sort>
-        <FormGroup style={{ ...ThinStyle }}>
-          <ToolbarDropdown
-            id="overview-type"
-            disabled={false}
-            handleSelect={this.updateOverviewType}
-            nameDropdown="Show health for"
-            value={this.state.overviewType}
-            label={overviewTypes[this.state.overviewType]}
-            options={overviewTypes}
-          />
-        </FormGroup>
-        <FormGroup>
-          <ButtonGroup id="toolbar_layout_group">
-            <Button
-              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-              title="Compact mode"
-              active={this.props.displayMode === OverviewDisplayMode.COMPACT}
-            >
-              Compact
-            </Button>
-            <Button
-              onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-              title="Expanded mode"
-              active={this.props.displayMode === OverviewDisplayMode.EXPAND}
-            >
-              Expand
-            </Button>
-          </ButtonGroup>
-        </FormGroup>
+        <div style={{ display: 'inline-flex' }}>
+          <Sort style={{ ...ThinStyle }}>
+            <Sort.TypeSelector
+              // style={{ ...thinGroupStyle }}
+              sortTypes={Sorts.sortFields}
+              currentSortType={this.state.sortField}
+              onSortTypeSelected={this.updateSortField}
+            />
+            <Sort.DirectionSelector
+              // style={{ ...thinGroupStyle }}
+              isNumeric={false}
+              isAscending={this.state.isSortAscending}
+              onClick={this.updateSortDirection}
+            />
+          </Sort>
+          <FormGroup style={{ ...ThinStyle }}>
+            <ToolbarDropdown
+              id="overview-type"
+              disabled={false}
+              handleSelect={this.updateOverviewType}
+              nameDropdown="Show health for"
+              value={this.state.overviewType}
+              label={overviewTypes[this.state.overviewType]}
+              options={overviewTypes}
+            />
+          </FormGroup>
+          <FormGroup>
+            <ButtonGroup id="toolbar_layout_group">
+              <Button
+                onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
+                title="Compact mode"
+                active={this.props.displayMode === OverviewDisplayMode.COMPACT}
+              >
+                Compact
+              </Button>
+              <Button
+                onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
+                title="Expanded mode"
+                active={this.props.displayMode === OverviewDisplayMode.EXPAND}
+              >
+                Expand
+              </Button>
+            </ButtonGroup>
+          </FormGroup>
+        </div>
         <ToolbarRightContent style={{ ...AlignRightStyle }}>
           <DurationDropdownContainer id="overview-duration" disabled={false} tooltip={'Time range for overview data'} />
           <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />

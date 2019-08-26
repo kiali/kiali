@@ -11,6 +11,7 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
+import { TextInputTypes } from '@patternfly/react-core';
 
 export const sortFields: GenericSortField<WorkloadListItem>[] = [
   {
@@ -138,7 +139,7 @@ const workloadNameFilter: FilterType = {
   id: 'workloadname',
   title: 'Workload Name',
   placeholder: 'Filter by Workload Name',
-  filterType: 'text',
+  filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };

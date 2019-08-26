@@ -5,6 +5,7 @@ exports[`NamespaceDropdown renders ServiceDropdown correctly without custom 1`] 
   aria-label="FormSelect Input"
   className="f6vm0mb"
   isDisabled={true}
+  isRequired={false}
   isValid={true}
   onBlur={[Function]}
   onChange={[MockFunction]}

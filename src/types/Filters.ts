@@ -1,3 +1,5 @@
+import { TextInputTypes } from '@patternfly/react-core';
+
 // FilterValue maps a Patternfly property. Modify with care.
 export interface FilterValue {
   id: string;
@@ -9,7 +11,7 @@ export interface FilterType {
   id: string;
   title: string;
   placeholder: string;
-  filterType: string;
+  filterType: TextInputTypes | 'select';
   action: string;
   filterValues: FilterValue[];
   loader?: () => Promise<FilterValue[]>;

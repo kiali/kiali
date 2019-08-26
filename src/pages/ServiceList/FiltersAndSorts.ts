@@ -10,6 +10,7 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
+import { TextInputTypes } from '@patternfly/react-core';
 
 export const sortFields: GenericSortField<ServiceListItem>[] = [
   {
@@ -106,7 +107,7 @@ const serviceNameFilter: FilterType = {
   id: 'servicename',
   title: 'Service Name',
   placeholder: 'Filter by Service Name',
-  filterType: 'text',
+  filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };

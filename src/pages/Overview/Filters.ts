@@ -2,12 +2,13 @@ import { ActiveFilter, FILTER_ACTION_APPEND, FilterTypeWithFilter, FilterValue }
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import { NamespaceInfo } from './NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
+import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: FilterTypeWithFilter<NamespaceInfo> = {
   id: 'namespace_search',
   title: 'Name',
   placeholder: 'Filter by Name',
-  filterType: 'text',
+  filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
   filter: (namespaces: NamespaceInfo[], filters: ActiveFilter[]) => {

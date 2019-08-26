@@ -10,6 +10,7 @@ import {
   filterByHealth
 } from '../../components/Filters/CommonFilters';
 import { hasMissingSidecar } from '../../components/VirtualList/Config';
+import { TextInputTypes } from '@patternfly/react-core';
 
 export const sortFields: GenericSortField<AppListItem>[] = [
   {
@@ -73,7 +74,7 @@ const appNameFilter: FilterType = {
   id: 'appname',
   title: 'App Name',
   placeholder: 'Filter by App Name',
-  filterType: 'text',
+  filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: []
 };
