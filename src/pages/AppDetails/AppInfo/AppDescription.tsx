@@ -1,11 +1,25 @@
 import * as React from 'react';
-import { Row, Col, ListView, ListViewItem, ListViewIcon, Icon } from 'patternfly-react';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import MissingSidecar from '../../../components/MissingSidecar/MissingSidecar';
 import { AppHealth } from '../../../types/Health';
 import { App, AppWorkload } from '../../../types/App';
-import { WorkloadIcon } from '../../../types/Workload';
 import { Link } from 'react-router-dom';
+import {
+  Badge,
+  Card,
+  CardBody,
+  DataList,
+  DataListCell,
+  DataListItem,
+  DataListItemCells,
+  DataListItemRow,
+  Grid,
+  GridItem,
+  List,
+  ListItem,
+  Text,
+  TextVariants
+} from '@patternfly/react-core';
 
 type AppDescriptionProps = {
   app: App;
@@ -36,103 +50,94 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
     return '/namespaces/' + namespace + '/workloads/' + workload;
   }
 
-  renderServices(namespace: string, workload: string, serviceNames: string[]) {
-    const iconType = 'pf';
-    const iconName = 'service';
-    return serviceNames.map(service => (
-      <div key={'workload_' + workload + '_service_' + service} className="ServiceList-Title">
-        <Icon type={iconType} name={iconName} className="service-icon" />
-        <Link to={this.serviceLink(namespace, service)}>{service}</Link>
-      </div>
-    ));
-  }
-
   renderWorkloadItem(namespace: string, workload: AppWorkload) {
-    /*
-      Not sure if we need a common icon per Workload instead of an icon per type of Workload
-     */
-    const iconName = WorkloadIcon;
-    const iconType = 'pf';
-    const heading = (
-      <div className="ServiceList-Heading">
-        <div className="ServiceList-Title">
-          <div className="component-label">
-            Workload{' '}
-            {!workload.istioSidecar && (
-              <MissingSidecar namespace={namespace} style={{ marginLeft: '10px' }} tooltip={true} text={''} />
-            )}
-          </div>
-          <Link to={this.workloadLink(namespace, workload.workloadName)}>{workload.workloadName}</Link>
-        </div>
-      </div>
+    return (
+      <ListItem key={`AppWorkload_${workload.workloadName}`}>
+        <Link to={this.workloadLink(namespace, workload.workloadName)}>{workload.workloadName}</Link>
+        {!workload.istioSidecar && (
+          <MissingSidecar namespace={namespace} style={{ marginLeft: '10px' }} tooltip={true} text={''} />
+        )}
+      </ListItem>
     );
-    const content = (
-      <ListViewItem
-        leftContent={<ListViewIcon type={iconType} name={iconName} />}
-        key={`AppWorkload_${workload.workloadName}`}
-        heading={heading}
-      />
-    );
-    return content;
   }
 
   renderServiceItem(namespace: string, _appName: string, serviceName: string) {
-    const iconName = 'service';
-    const iconType = 'pf';
-    const heading = (
-      <div className="ServiceList-Heading">
-        <div className="ServiceList-Title">
-          <div className="component-label">Service</div>
-          <Link to={this.serviceLink(namespace, serviceName)}>{serviceName}</Link>
-        </div>
-      </div>
+    return (
+      <ListItem key={`AppService_${serviceName}`}>
+        <Link to={this.serviceLink(namespace, serviceName)}>{serviceName}</Link>
+      </ListItem>
     );
-    const content = (
-      <ListViewItem
-        leftContent={<ListViewIcon type={iconType} name={iconName} />}
-        key={`AppService_${serviceName}`}
-        heading={heading}
-      />
-    );
-    return content;
   }
 
   renderEmptyItem(type: string) {
     const message = 'No ' + type + ' found for this app.';
-    return <ListViewItem description={message} />;
+    return <DataListCell> {message} </DataListCell>;
   }
 
   workloadList() {
     const ns = this.props.app.namespace.name;
     const workloads = this.props.app.workloads;
-    return workloads.length > 0
-      ? workloads.map(wkd => this.renderWorkloadItem(ns, wkd))
-      : this.renderEmptyItem('workloads');
+    const workloadList =
+      workloads.length > 0 ? workloads.map(wkd => this.renderWorkloadItem(ns, wkd)) : this.renderEmptyItem('workloads');
+
+    return [
+      <DataListCell key="workload-icon" isIcon={true}>
+        <Badge>W</Badge>
+      </DataListCell>,
+      <DataListCell key="workload-list" className="resourceList">
+        <Text component={TextVariants.h3}>Workloads</Text>
+        <List>{workloadList}</List>
+      </DataListCell>
+    ];
   }
 
   serviceList() {
     const ns = this.props.app.namespace.name;
     const services = this.props.app.serviceNames;
-    return services.length > 0
-      ? services.map(sn => this.renderServiceItem(ns, this.props.app.name, sn))
-      : this.renderEmptyItem('services');
+    const serviceList =
+      services.length > 0
+        ? services.map(sn => this.renderServiceItem(ns, this.props.app.name, sn))
+        : this.renderEmptyItem('services');
+
+    return [
+      <DataListCell key="service-icon" isIcon={true}>
+        <Badge>S</Badge>
+      </DataListCell>,
+      <DataListCell key="service-list" className="resourceList">
+        <Text component={TextVariants.h3}>Services</Text>
+        <List>{serviceList}</List>
+      </DataListCell>
+    ];
   }
 
   render() {
     const app = this.props.app;
     return app ? (
-      <div className="card-pf">
-        <div className="card-pf-body">
-          <Row>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ListView>{this.workloadList()}</ListView>
-            </Col>
-            <Col xs={12} sm={6} md={4} lg={4}>
-              <ListView>{this.serviceList()}</ListView>
-            </Col>
-            <Col xs={0} sm={0} md={1} lg={1} />
-            <Col xs={12} sm={6} md={3} lg={3}>
-              <div className="progress-description">
+      <Grid gutter="md">
+        <GridItem span={6}>
+          <Card>
+            <CardBody className="noPadding">
+              <h2>Application Overview</h2>
+              <DataList aria-label="workloads and services">
+                <DataListItem aria-labelledby="Workloads">
+                  <DataListItemRow>
+                    <DataListItemCells dataListCells={this.workloadList()} />
+                  </DataListItemRow>
+                </DataListItem>
+                <DataListItem aria-labelledby="Services">
+                  <DataListItemRow>
+                    <DataListItemCells dataListCells={this.serviceList()} />
+                  </DataListItemRow>
+                </DataListItem>
+              </DataList>
+            </CardBody>
+          </Card>
+        </GridItem>
+        <GridItem span={6}>
+          <Card>
+            <CardBody>
+              <div>
+                <Text component={TextVariants.h2}>Health Overview</Text>
                 <strong>Health</strong>
               </div>
               <HealthIndicator
@@ -141,10 +146,10 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
                 mode={DisplayMode.LARGE}
                 tooltipPlacement="left"
               />
-            </Col>
-          </Row>
-        </div>
-      </div>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     ) : (
       'Loading'
     );
