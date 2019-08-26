@@ -71,6 +71,13 @@ get_installer() {
   debug "Installer command to be used: ${INSTALLER}"
 }
 
+get_console_url() {
+  CONSOLE_URL="$(oc get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
+  if [ "$?" != "0" -o "$CONSOLE_URL" == "" ]; then
+    CONSOLE_URL="console-not-available"
+  fi
+}
+
 get_status() {
   check_crc_running
   check_insecure_registry
@@ -84,13 +91,14 @@ get_status() {
 
   if [ "${_CRC_RUNNING}" == "true" ]; then
     get_registry_names
+    get_console_url
     echo "Version from oc command [${CRC_OC}]"
     ${CRC_OC} version
     echo "====================================================================="
     echo "Status from oc command [${CRC_OC}]"
     ${CRC_OC} status
     echo "====================================================================="
-    echo "Console:    https://console-openshift-console.apps-crc.testing"
+    echo "Console:    ${CONSOLE_URL}"
     echo "API URL:    https://api.crc.testing:6443/"
     echo "IP address: $(${CRC_COMMAND} ip)"
     echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
@@ -805,11 +813,13 @@ if [ "$_CMD" = "start" ]; then
       infomsg "ERROR: failed to restart the VM."
       exit 1
     fi
-    echo -n "Waiting for OpenShift console at https://console-openshift-console.apps-crc.testing ..."
+    get_console_url
+    echo -n "Waiting for OpenShift console at ${CONSOLE_URL} ..."
     sleep 5
-    while ! curl --head -s -k https://console-openshift-console.apps-crc.testing | head -n 1 | grep -q "200[[:space:]]*OK"
+    while ! curl --head -s -k ${CONSOLE_URL} | head -n 1 | grep -q "200[[:space:]]*OK"
     do
       sleep 5
+      get_console_url
       echo -n "."
     done
     echo "Done."
