@@ -89,6 +89,16 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	validation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
+
+	secValidation, ok := validations[models.IstioValidationKey{ObjectType: "gateway", Name: "validgateway"}]
+	assert.True(ok)
+	assert.True(secValidation.Valid)
+
+	// Check references
+	// assert.Equal(1, len(validation.References))
+	// assert.Equal(1, len(secValidation.References))
+	// _, ok = validation.References[models.IstioValidationKey{ObjectType: "gateway", Name: "validgateway"}]
+	// assert.True(ok)
 }
 
 func TestWildCardMatchingHost(t *testing.T) {
@@ -126,6 +136,16 @@ func TestWildCardMatchingHost(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid)
 
+	// valid should have "*" as ref
+	// "*" should have valid and *.just as ref
+	// *.just should have "*" as ref
+	for _, v := range validations {
+		if v.Name == "stillvalid" {
+			assert.Equal(2, len(v.References))
+		} else {
+			assert.Equal(1, len(v.References))
+		}
+	}
 }
 
 func TestAnotherSubdomainWildcardCombination(t *testing.T) {

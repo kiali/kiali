@@ -47,10 +47,18 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 								host.GatewayRuleName = gatewayRuleName
 								duplicate, dhosts := m.findMatch(host)
 								if duplicate {
-									validations = addError(validations, gatewayRuleName, i, hi)
-									for _, dh := range dhosts {
-										validations = addError(validations, dh.GatewayRuleName, dh.ServerIndex, dh.HostIndex)
+									// The above is referenced by each one below..
+									currentHostValidation := addError(host.GatewayRuleName, host.ServerIndex, host.HostIndex)
+
+									// CurrentHostValidation is always the first one, so we skip it
+									for i := 1; i < len(dhosts); i++ {
+										dh := dhosts[i]
+										refValidation := addError(dh.GatewayRuleName, dh.ServerIndex, dh.HostIndex)
+										refValidation = refValidation.MergeReferences(currentHostValidation)
+										currentHostValidation = currentHostValidation.MergeReferences(refValidation)
+										validations = validations.MergeValidations(refValidation)
 									}
+									validations = validations.MergeValidations(currentHostValidation)
 								}
 								m.existingList = append(m.existingList, host)
 							}
@@ -60,10 +68,12 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			}
 		}
 	}
+
 	return validations
 }
 
-func addError(validations models.IstioValidations, gatewayRuleName string, serverIndex, hostIndex int) models.IstioValidations {
+// TODO Rename to createError
+func addError(gatewayRuleName string, serverIndex, hostIndex int) models.IstioValidations {
 	key := models.IstioValidationKey{Name: gatewayRuleName, ObjectType: GatewayCheckerType}
 	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
@@ -76,7 +86,7 @@ func addError(validations models.IstioValidations, gatewayRuleName string, serve
 		},
 	}
 
-	return validations.MergeValidations(models.IstioValidations{key: rrValidation})
+	return models.IstioValidations{key: rrValidation}
 }
 
 func parsePortAndHostnames(serverDef map[string]interface{}) []Host {
@@ -115,8 +125,9 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 		if h.Port == host.Port {
 			// wildcardMatches will always match
 			if host.Hostname == wildCardMatch || h.Hostname == wildCardMatch {
+				duplicates = append(duplicates, host)
 				duplicates = append(duplicates, h)
-				break
+				continue
 			}
 
 			// Either one could include wildcards, so we need to check both ways and fix "*" -> ".*" for regexp engine
@@ -132,9 +143,9 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 
 			if regexp.MustCompile(currentRegexp).MatchString(previous) ||
 				regexp.MustCompile(previousRegexp).MatchString(current) {
-				duplicates = append(duplicates, h)
 				duplicates = append(duplicates, host)
-				break
+				duplicates = append(duplicates, h)
+				continue
 			}
 		}
 	}

@@ -36,6 +36,9 @@ type IstioValidation struct {
 
 	// Array of checks. It might be empty.
 	Checks []*IstioCheck `json:"checks"`
+
+	// Related objects (only validation errors)
+	References []IstioValidationKey
 }
 
 // IstioCheck represents an individual check.
@@ -283,8 +286,22 @@ func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioV
 				v.Checks = append(v.Checks, toAdd)
 			}
 			v.Valid = v.Valid && validation.Valid
+			v.References = append(v.References, validation.References...)
 		}
 	}
+	return iv
+}
+
+func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioValidations {
+	for _, currentValidations := range iv {
+		if currentValidations.References == nil {
+			currentValidations.References = make([]IstioValidationKey, 0, len(validations))
+		}
+		for k := range validations {
+			currentValidations.References = append(currentValidations.References, k)
+		}
+	}
+
 	return iv
 }
 
