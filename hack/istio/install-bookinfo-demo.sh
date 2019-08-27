@@ -124,11 +124,13 @@ if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-details -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-productpage -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-ratings -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-ratings-v2 -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-reviews -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user privileged -z default -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-details -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-productpage -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-ratings -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-ratings-v2 -n ${NAMESPACE}
   $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-reviews -n ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
