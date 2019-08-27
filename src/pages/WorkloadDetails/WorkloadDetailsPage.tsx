@@ -218,7 +218,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     const hasPods = this.state.workload.pods && this.state.workload.pods.length > 0;
 
     const overTab = (
-      <Tab title="Overview" eventKey={0}>
+      <Tab title="Overview" eventKey={0} key={'Overview'}>
         {this.state.currentTab === 'info' ? (
           <WorkloadInfo
             workload={this.state.workload}
@@ -235,7 +235,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
 
     const trafficTab = (
-      <Tab title="Traffic" eventKey={1}>
+      <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         {this.state.currentTab === 'traffic' ? (
           <TrafficDetails
             trafficData={this.state.trafficData}
@@ -252,7 +252,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
 
     const logTab = (
-      <Tab title="Logs" eventKey={2}>
+      <Tab title="Logs" eventKey={2} key={'Logs'}>
         {this.state.currentTab === 'logs' && hasPods ? (
           <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
         ) : (
@@ -263,7 +263,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
 
     const inTab = (
-      <Tab title="Inbound Metrics" eventKey={3}>
+      <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
         {this.state.currentTab === 'in_metrics' ? (
           <IstioMetricsContainer
             namespace={this.props.match.params.namespace}
@@ -278,7 +278,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     );
 
     const outTab = (
-      <Tab title="Outbound Metrics" eventKey={4}>
+      <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
         {this.state.currentTab === 'out_metrics' ? (
           <IstioMetricsContainer
             namespace={this.props.match.params.namespace}

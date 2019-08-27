@@ -183,7 +183,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   staticTabs() {
     const overTab = (
-      <Tab title="Overview" eventKey={0}>
+      <Tab title="Overview" eventKey={0} key={'Overview'}>
         {this.state.currentTab === 'info' ? (
           <AppInfo
             app={this.state.app}
@@ -198,7 +198,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const trafficTab = (
-      <Tab title="Traffic" eventKey={1}>
+      <Tab title="Traffic" eventKey={1} key={'Traffic'}>
         {this.state.currentTab === 'traffic' ? (
           <TrafficDetails
             trafficData={this.state.trafficData}
@@ -215,7 +215,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const inTab = (
-      <Tab title="Inbound metrics" eventKey={2}>
+      <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
         {this.state.currentTab === 'in_metrics' ? (
           <IstioMetricsContainer
             namespace={this.props.match.params.namespace}
@@ -230,7 +230,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const outTab = (
-      <Tab title="Outbound metrics" eventKey={3}>
+      <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
         {this.state.currentTab === 'out_metrics' ? (
           <IstioMetricsContainer
             namespace={this.props.match.params.namespace}
