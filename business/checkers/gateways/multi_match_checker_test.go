@@ -95,10 +95,8 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	assert.True(secValidation.Valid)
 
 	// Check references
-	// assert.Equal(1, len(validation.References))
-	// assert.Equal(1, len(secValidation.References))
-	// _, ok = validation.References[models.IstioValidationKey{ObjectType: "gateway", Name: "validgateway"}]
-	// assert.True(ok)
+	assert.Equal(1, len(validation.References))
+	assert.Equal(1, len(secValidation.References))
 }
 
 func TestWildCardMatchingHost(t *testing.T) {

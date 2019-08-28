@@ -9,8 +9,8 @@ type NamespaceValidations map[string]IstioValidations
 
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
 type IstioValidationKey struct {
-	ObjectType string
-	Name       string
+	ObjectType string `json:"objectType"`
+	Name       string `json:"name"`
 }
 
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
@@ -38,7 +38,7 @@ type IstioValidation struct {
 	Checks []*IstioCheck `json:"checks"`
 
 	// Related objects (only validation errors)
-	References []IstioValidationKey
+	References []IstioValidationKey `json:"references"`
 }
 
 // IstioCheck represents an individual check.
