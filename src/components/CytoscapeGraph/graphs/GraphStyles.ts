@@ -3,10 +3,10 @@ import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
 import { icons } from '../../../config';
-
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
 import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
+import _ from 'lodash';
 
 export const DimClass = 'mousedim';
 
@@ -157,6 +157,22 @@ export class GraphStyles {
           content = `${EdgeIconMTLS} ${content}`;
         } else if (mtlsPercentage < 100 && cyGlobal.mtlsEnabled) {
           content = `${EdgeIconDisabledMTLS} ${content}`;
+        }
+      }
+
+      if (edgeData.hasTraffic && edgeData.responses) {
+        const dest = decoratedNodeData(ele.target());
+        if (dest.hasCB) {
+          const responses = edgeData.responses;
+          for (let code of _.keys(responses)) {
+            // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
+            // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
+            // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
+            if (responses[code]['UO'] || responses[code]['UH']) {
+              content = `${NodeIconCB} ${content}`;
+              break;
+            }
+          }
         }
       }
 
