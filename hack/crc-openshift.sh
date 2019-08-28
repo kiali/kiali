@@ -236,10 +236,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="0.90.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.0.0-beta.3"
 
-# The default version of the crc bundle to be downloaded
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.9"
+# The default version of the crc bundle - this is typically the version included with the CRC download
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.11"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -588,7 +588,7 @@ if [ "${KIALI_ENABLED}" == "true" -a "${KIALI_VERSION}" == "lastrelease" ]; then
 fi
 
 # Determine where to get the binaries and their full paths and how to execute them.
-CRC_DOWNLOAD_LOCATION="https://github.com/code-ready/crc/releases/download/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_VERSION}-alpha-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
+CRC_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
@@ -596,8 +596,7 @@ if [ "${_VERBOSE}" == "true" ]; then
   CRC_COMMAND="${CRC_COMMAND} --log-level debug"
 fi
 
-# TODO: crc folks are probably going to rename the "/linux/" part of the path to "/libvirt/" in the next version
-CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/${CRC_LIBVIRT_DOWNLOAD_VERSION}/linux/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
+CRC_LIBVIRT_DOWNLOAD_LOCATION="http://cdk-builds.usersys.redhat.com/builds/crc/bundles/${CRC_LIBVIRT_DOWNLOAD_VERSION}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 CRC_LIBVIRT_PATH="${OPENSHIFT_BIN_PATH}/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}.crcbundle"
 
 # If Kiali is to be installed, set up some things that may be needed
@@ -657,7 +656,8 @@ fi
 # Download the crc tool if we do not have it yet
 if [[ -f "${CRC_EXE_PATH}" ]]; then
   _existingVersion=$(${CRC_EXE_PATH} version | tail -n 1 | sed ${SEDOPTIONS} "s/^version: \([A-Za-z0-9.]*\)-[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
-  if [ "$_existingVersion" != "${CRC_DOWNLOAD_VERSION}" ]; then
+  _crc_major_minor_patch_version="$(echo -n ${CRC_DOWNLOAD_VERSION} | sed -E 's/([0-9]+.[0-9]+.[0-9]+).*/\1/')"
+  if [ "${_existingVersion}" != "${CRC_DOWNLOAD_VERSION}" -a "${_existingVersion}" != "${_crc_major_minor_patch_version}" ]; then
     infomsg "===== WARNING ====="
     infomsg "You already have the crc tool but it does not match the version you want."
     infomsg "Either delete your existing binary and let this script download another one,"
@@ -690,8 +690,12 @@ debug "crc command that will be used: ${CRC_COMMAND}"
 debug "$(${CRC_COMMAND} version)"
 
 # Download the crc libvirt image if we do not have it yet
-if [[ -f "${CRC_LIBVIRT_PATH}" ]]; then
+CRC_BUNDLE_ARG="-b ${CRC_LIBVIRT_PATH}"
+if [ -f "${CRC_LIBVIRT_PATH}" ]; then
   debug "crc libvirt bundle that will be used: ${CRC_LIBVIRT_PATH}"
+elif [ "$(stat -c '%s' ${CRC_EXE_PATH})" -gt "1000000000" ]; then
+  debug "crc appears to have the bundle already included. It will be used: $(stat -c '%n (%s bytes)' ${CRC_EXE_PATH})"
+  CRC_BUNDLE_ARG=""
 else
   infomsg "Downloading crc libvirt bundle to ${CRC_LIBVIRT_PATH}"
 
@@ -723,8 +727,8 @@ if [ "$_CMD" = "start" ]; then
 
   infomsg "Starting the OpenShift cluster..."
   # if you change the command line here, also change it below during the restart
-  debug "${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
-  ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
+  debug "${CRC_COMMAND} start ${PULL_SECRET_ARG} ${CRC_BUNDLE_ARG} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}"
+  ${CRC_COMMAND} start ${PULL_SECRET_ARG} ${CRC_BUNDLE_ARG} -m $(expr ${CRC_MEMORY} '*' 1024) -c ${CRC_CPUS}
 
   if [ "$?" != "0" ]; then
     infomsg "ERROR: failed to start the VM."
@@ -808,7 +812,7 @@ if [ "$_CMD" = "start" ]; then
 
   if [ "${_NEED_VM_START}" == "true" ]; then
     infomsg "Restarting the VM to pick up the new configuration."
-    ${CRC_COMMAND} start ${PULL_SECRET_ARG} -b ${CRC_LIBVIRT_PATH} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
+    ${CRC_COMMAND} start ${PULL_SECRET_ARG} ${CRC_BUNDLE_ARG} -m ${CRC_MEMORY}000 -c ${CRC_CPUS}
     if [ "$?" != "0" ]; then
       infomsg "ERROR: failed to restart the VM."
       exit 1
