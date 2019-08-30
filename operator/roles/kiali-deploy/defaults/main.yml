@@ -80,6 +80,7 @@ kiali_defaults:
       namespace: ""
       service: ""
       port: 16686
+      in_cluster_url: ""
       url: ""
 
   identity: {}
