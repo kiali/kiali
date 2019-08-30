@@ -388,6 +388,24 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 
 		val := float64(s.Value)
 
+		destSvcNameEntries := strings.Split(destSvcName, ".")
+		if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown &&
+			len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
+			// For multi-cluster setup, if "we are" the DESTINATION cluster of traffic,
+			// the destination_service_name label will contain the
+			// hostname that the source cluster requested. Since we know that the requested hostname
+			// has the form "svc_name.ns_name.global", we can truncate the destSvcName to the
+			// prefix to correctly unify svc nodes. This way, the graph will show only one "svc_name" node
+			// instead of duplicating and having one "svc_name" and one "svc_name.ns_name.global" node which,
+			// in practice, are same.
+			//
+			// This is done only if source workload is "unknown" which is what is recorded in telemetry
+			// when traffic is coming from a remote cluster. If source workload IS known,
+			// then, traffic is most-likely going to a ServiceEntry and being routed out of the cluster (i.e.
+			// the "source cluster" case). That case is handled in the service_entry.go file.
+			destSvcName = destSvcNameEntries[0]
+		}
+
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
 			destSvcNameOk = graph.IsOK(destSvcName)
@@ -469,6 +487,24 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		flags := string(lFlags)
 
 		val := float64(s.Value)
+
+		destSvcNameEntries := strings.Split(destSvcName, ".")
+		if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown &&
+			len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
+			// For multi-cluster setup, if "we are" the DESTINATION cluster of traffic,
+			// the destination_service_name label will contain the
+			// hostname that the source cluster requested. Since we know that the requested hostname
+			// has the form "svc_name.ns_name.global", we can truncate the destSvcName to the
+			// prefix to correctly unify svc nodes. This way, the graph will show only one "svc_name" node
+			// instead of duplicating and having one "svc_name" and one "svc_name.ns_name.global" node which,
+			// in practice, are same.
+			//
+			// This is done only if source workload is "unknown" which is what is recorded in telemetry
+			// when traffic is coming from a remote cluster. If source workload IS known,
+			// then, traffic is most-likely going to a ServiceEntry and being routed out of the cluster (i.e.
+			// the "source cluster" case). That case is handled in the service_entry.go file.
+			destSvcName = destSvcNameEntries[0]
+		}
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
