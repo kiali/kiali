@@ -77,10 +77,10 @@ kiali_defaults:
         use_kiali_token: false
         username: ""
       enabled: true
+      in_cluster_url: ""
       namespace: ""
       service: ""
       port: 16686
-      in_cluster_url: ""
       url: ""
 
   identity: {}
