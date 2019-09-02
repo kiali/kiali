@@ -1305,6 +1305,11 @@
     exenv "^1.2.2"
     lodash "^4.2.1"
 
+"@patternfly/react-tokens@2.6.21":
+  version "2.6.21"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-2.6.21.tgz#6216d17aaedc0bcd56c421ef33082e49ab981c77"
+  integrity sha512-WFPluB3mpkpT+6GtNHQTfLpLb30QaqmfWucAbDtIxFUliX/tjkC5F9jcTC7JVfvddJKvRztu/dCTkCmqy9hpeg==
+
 "@patternfly/react-tokens@^2.6.13":
   version "2.6.13"
   resolved "https://registry.yarnpkg.com/@patternfly/react-tokens/-/react-tokens-2.6.13.tgz#68c4c7ba2cde6b5a99ea3a9a85a8cbffce118695"
