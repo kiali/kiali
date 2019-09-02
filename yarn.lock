@@ -1179,12 +1179,12 @@
   resolved "https://registry.yarnpkg.com/@patternfly/patternfly/-/patternfly-2.4.1.tgz#2b82e946ec2cdf5a78535ba2b9d514151688dc2d"
   integrity sha512-VoL6Fsid7scdsf1w8TZ9JckTjVIHzWQBMHptOv2jHjrLlxTwMGPmyh8AnvRYhqWa5nUSA//jZaR8vMyliJl9TQ==
 
-"@patternfly/react-charts@4.4.7":
-  version "4.4.7"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-4.4.7.tgz#3f1047b81a1c586919de2d9b4b605a26717fadd7"
-  integrity sha512-uTo+NLJtdGRRwKvy8w5nalISce05fuapzVQbHzex53yKeRizLl7DA6xCyUIj87FiT8uO6wUMF7mUAlW78UnzIw==
+"@patternfly/react-charts@4.9.2":
+  version "4.9.2"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-charts/-/react-charts-4.9.2.tgz#597be561652cca662b77d3ecb5433c503153be58"
+  integrity sha512-axZDEKuHdhf0BpBkG4J/4Nn+MUNa9HaTloyS37NfHzchvUdNmNavl1xRN9v8fI34GuNkA9I3qtQn1qP7hb8Yyg==
   dependencies:
-    "@patternfly/react-styles" "^3.4.6"
+    "@patternfly/react-styles" "^3.5.17"
   optionalDependencies:
     "@types/lodash" "^4.14.132"
     "@types/victory" "^31.0.18"
@@ -1234,10 +1234,10 @@
   dependencies:
     "@fortawesome/free-brands-svg-icons" "^5.8.1"
 
-"@patternfly/react-styles@^3.4.6":
-  version "3.4.6"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.4.6.tgz#03c645adfa3f6b8b7113232e90326547a39c6322"
-  integrity sha512-m9ynr85EMmBAxGhCguwRiGgpLDA9+YKtwF83ORK7ylHHsrK9JC/RFPvTj8d/80oUMmlzcL765ZwG7sT9qR3ybA==
+"@patternfly/react-styles@^3.5.14":
+  version "3.5.14"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.5.14.tgz#c9de99338f146e93fe808dedd65c7f9b3e817d1d"
+  integrity sha512-PT+ob7a+Ek2cA701CVzVPrTD5yohCyI9CzjZPrX8xJOnHAIhCYIKlzi5Q42lILIzCreTF2vx4OfXn4F44JRHGw==
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0-beta.48"
     camel-case "^3.0.0"
@@ -1253,10 +1253,10 @@
     resolve-from "^4.0.0"
     typescript "3.4.5"
 
-"@patternfly/react-styles@^3.5.14":
-  version "3.5.14"
-  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.5.14.tgz#c9de99338f146e93fe808dedd65c7f9b3e817d1d"
-  integrity sha512-PT+ob7a+Ek2cA701CVzVPrTD5yohCyI9CzjZPrX8xJOnHAIhCYIKlzi5Q42lILIzCreTF2vx4OfXn4F44JRHGw==
+"@patternfly/react-styles@^3.5.17":
+  version "3.5.17"
+  resolved "https://registry.yarnpkg.com/@patternfly/react-styles/-/react-styles-3.5.17.tgz#52178d72d09134d3b9c5619a457b090813a9dc44"
+  integrity sha512-LMWduKWePmwRFM1ZqpKSCIVU0n4WIp0+sUmd5HVDObIHf3feXv5IXWKDIChKEF2sqZU6afssGhbJvCpvc2PiOQ==
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0-beta.48"
     camel-case "^3.0.0"
