@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Toolbar } from 'patternfly-react';
+import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Pod, PodLogs } from '../../../types/IstioObjects';
 import { getPodLogs, Response } from '../../../services/Api';
@@ -52,6 +52,19 @@ const logsTextarea = style({
   backgroundColor: '#003145',
   fontFamily: 'monospace',
   fontSize: '11pt'
+});
+
+const toolbarRight = style({
+  right: '20px',
+  position: 'absolute'
+});
+
+const displayFlex = style({
+  display: 'flex'
+});
+
+const toolbarMargin = style({
+  margin: '10px'
 });
 
 export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
@@ -116,49 +129,63 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
     }
   }
 
+  renderItem = object => {
+    return <ToolbarItem className={displayFlex}>{object}</ToolbarItem>;
+  };
+
   render() {
     return (
       <>
         {this.state.containerInfo && (
           <>
-            <Toolbar>
-              <ToolbarDropdown
-                id={'wpl_pods'}
-                nameDropdown="Pod"
-                tooltip="Display logs for the selected pod"
-                handleSelect={key => this.setPod(key)}
-                value={this.state.podValue}
-                label={this.props.pods[this.state.podValue!].name}
-                options={this.podOptions!}
-              />
-              <ToolbarDropdown
-                id={'wpl_containers'}
-                nameDropdown="&nbsp;&nbsp;&nbsp;Container"
-                tooltip="Display logs for the selected pod container"
-                handleSelect={key => this.setContainer(key)}
-                value={this.state.containerInfo.container}
-                label={this.state.containerInfo.container}
-                options={this.state.containerInfo.containerOptions!}
-              />
-              <Toolbar.RightContent>
-                <ToolbarDropdown
-                  id={'wpl_tailLines'}
-                  nameDropdown="Tail"
-                  handleSelect={key => this.setTailLines(Number(key))}
-                  value={this.state.tailLines}
-                  label={TailLinesOptions[this.state.tailLines]}
-                  options={TailLinesOptions}
-                  tooltip={'Show up to last N log lines'}
-                />
-                {'   '}
-                <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
-                {'  '}
-                <RefreshButtonContainer
-                  id={'wpl_refresh'}
-                  disabled={!this.state.podLogs}
-                  handleRefresh={this.handleRefresh}
-                />
-              </Toolbar.RightContent>
+            <Toolbar className={toolbarMargin}>
+              <ToolbarGroup>
+                <ToolbarItem className={displayFlex}>
+                  <ToolbarDropdown
+                    id={'wpl_pods'}
+                    nameDropdown="Pod"
+                    tooltip="Display logs for the selected pod"
+                    handleSelect={key => this.setPod(key)}
+                    value={this.state.podValue}
+                    label={this.props.pods[this.state.podValue!].name}
+                    options={this.podOptions!}
+                  />
+                </ToolbarItem>
+                <ToolbarItem className={displayFlex}>
+                  <ToolbarDropdown
+                    id={'wpl_containers'}
+                    nameDropdown="&nbsp;&nbsp;&nbsp;Container"
+                    tooltip="Display logs for the selected pod container"
+                    handleSelect={key => this.setContainer(key)}
+                    value={this.state.containerInfo.container}
+                    label={this.state.containerInfo.container}
+                    options={this.state.containerInfo.containerOptions!}
+                  />
+                </ToolbarItem>
+              </ToolbarGroup>
+              <ToolbarGroup className={toolbarRight}>
+                <ToolbarItem className={displayFlex}>
+                  <ToolbarDropdown
+                    id={'wpl_tailLines'}
+                    nameDropdown="Tail"
+                    handleSelect={key => this.setTailLines(Number(key))}
+                    value={this.state.tailLines}
+                    label={TailLinesOptions[this.state.tailLines]}
+                    options={TailLinesOptions}
+                    tooltip={'Show up to last N log lines'}
+                  />
+                </ToolbarItem>
+                <ToolbarItem>
+                  <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
+                </ToolbarItem>
+                <ToolbarItem>
+                  <RefreshButtonContainer
+                    id={'wpl_refresh'}
+                    disabled={!this.state.podLogs}
+                    handleRefresh={this.handleRefresh}
+                  />
+                </ToolbarItem>
+              </ToolbarGroup>
             </Toolbar>
             <textarea
               className={logsTextarea}

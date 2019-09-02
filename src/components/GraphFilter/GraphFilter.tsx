@@ -53,6 +53,10 @@ const alignLeftStyle = style({
   marginLeft: '-30px'
 });
 
+const marginLeftRight = style({
+  margin: '0 10px 0 10px'
+});
+
 export class GraphFilter extends React.PureComponent<GraphFilterProps> {
   /**
    *  Key-value pair object representation of GraphType enum.  Values are human-readable versions of enum keys.
@@ -145,7 +149,7 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
     return (
       <>
         <Toolbar>
-          <FormGroup className={alignLeftStyle} style={{ ...ThinStyle }}>
+          <FormGroup className={alignLeftStyle} style={{ ...ThinStyle, display: 'flex' }}>
             {this.props.node ? (
               <Button onClick={this.handleNamespaceReturn}>Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}</Button>
             ) : (
@@ -158,18 +162,20 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
                 options={GraphFilter.GRAPH_TYPES}
               />
             )}
-            <ToolbarDropdown
-              id={'graph_filter_edge_labels'}
-              disabled={false}
-              handleSelect={this.setEdgeLabelMode}
-              value={edgeLabelModeKey}
-              label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
-              options={GraphFilter.EDGE_LABEL_MODES}
-            />
+            <div className={marginLeftRight}>
+              <ToolbarDropdown
+                id={'graph_filter_edge_labels'}
+                disabled={false}
+                handleSelect={this.setEdgeLabelMode}
+                value={edgeLabelModeKey}
+                label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
+                options={GraphFilter.EDGE_LABEL_MODES}
+              />
+            </div>
             <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
           </FormGroup>
           <GraphFindContainer />
-          <Toolbar.RightContent style={{ ...AlignRightStyle }}>
+          <Toolbar.RightContent style={{ ...AlignRightStyle, display: 'flex' }}>
             <GraphRefreshContainer
               id="graph_refresh_container"
               disabled={this.props.disabled}

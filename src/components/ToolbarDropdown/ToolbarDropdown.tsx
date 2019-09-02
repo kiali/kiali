@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { DropdownButton, MenuItem, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Select, SelectOption, Text, TextVariants, Tooltip } from '@patternfly/react-core';
+import { style } from 'typestyle';
+
+const widthAuto = style({
+  width: 'auto'
+});
+
+const spacingRight = style({
+  marginRight: '10px'
+});
 
 type ToolbarDropdownProps = {
   disabled?: boolean;
@@ -20,6 +29,7 @@ type ToolbarDropdownProps = {
 type ToolbarDropdownState = {
   currentValue?: number | string;
   currentName?: string;
+  isExpanded: boolean;
 };
 
 export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, ToolbarDropdownState> {
@@ -27,45 +37,64 @@ export class ToolbarDropdown extends React.Component<ToolbarDropdownProps, Toolb
     super(props);
     this.state = {
       currentValue: props.value || props.initialValue,
-      currentName: props.label || props.initialLabel
+      currentName: props.label || props.initialLabel,
+      isExpanded: false
     };
   }
 
-  onKeyChanged = (key: any) => {
-    this.setState({ currentValue: key, currentName: this.props.options[key] });
-    const nameOrKey = this.props.useName ? this.props.options[key] : key;
-    this.props.handleSelect(nameOrKey);
+  onKeyChanged = (_, selection, isPlaceholder) => {
+    if (!isPlaceholder) {
+      this.setState({ currentValue: selection, currentName: this.props.options[selection] });
+      const nameOrKey = this.props.useName ? this.props.options[selection] : selection;
+      this.props.handleSelect(nameOrKey);
+    }
+    this.setState({ isExpanded: false });
+  };
+
+  onToggle = (isExpanded: boolean) => {
+    this.setState({ isExpanded });
+    this.props.onToggle && this.props.onToggle(isExpanded);
   };
 
   render() {
+    const { isExpanded, currentName, currentValue } = this.state;
     const dropdownButton = (
-      <DropdownButton
-        disabled={this.props.disabled}
-        title={this.props.label || this.state.currentName}
+      <Select
         onSelect={this.onKeyChanged}
+        aria-label={this.props.id}
+        selections={this.props.value || currentValue}
+        placeholderText={this.props.label || currentName}
         id={this.props.id}
-        onToggle={(isOpen: boolean) => this.props.onToggle && this.props.onToggle(isOpen)}
+        onToggle={this.onToggle}
+        isExpanded={isExpanded}
+        ariaLabelledBy={this.props.id}
+        isDisabled={this.props.disabled}
+        className={widthAuto}
       >
-        {Object.keys(this.props.options).map(key => (
-          <MenuItem key={key} active={key === (this.props.value || this.state.currentValue)} eventKey={key}>
-            {this.props.options[key]}
-          </MenuItem>
-        ))}
-      </DropdownButton>
+        {Object.keys(this.props.options).map(key => {
+          return (
+            <SelectOption
+              key={key}
+              isSelected={key === String(this.props.value || this.state.currentValue)}
+              value={`${key}`}
+            >
+              {this.props.options[key]}
+            </SelectOption>
+          );
+        })}
+      </Select>
     );
     return (
       <>
-        {this.props.nameDropdown && <label style={{ paddingRight: '0.5em' }}>{this.props.nameDropdown}</label>}
+        {this.props.nameDropdown && (
+          <Text component={TextVariants.h5} className={spacingRight}>
+            {this.props.nameDropdown}
+          </Text>
+        )}
         {this.props.tooltip ? (
-          <OverlayTrigger
-            key={'ot-' + this.props.id}
-            placement="top"
-            trigger={['hover', 'focus']}
-            delayShow={1000}
-            overlay={<Tooltip id={'tt-' + this.props.id}>{this.props.tooltip}</Tooltip>}
-          >
+          <Tooltip key={'ot-' + this.props.id} entryDelay={1000} content={<>{this.props.tooltip}</>}>
             {dropdownButton}
-          </OverlayTrigger>
+          </Tooltip>
         ) : (
           dropdownButton
         )}

@@ -268,9 +268,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   renderRightToolbar = () => {
     return (
-      <ToolbarGroup style={{ position: 'absolute', right: '20px' }}>
+      <ToolbarGroup className={rightToolbar}>
         {this.props.rightToolbar ||
-          [].map((elem, index) => <ToolbarItem key={'Item_rightToolbar_' + index}>{elem}</ToolbarItem>)}
+        [].map((elem, index) => <ToolbarItem key={'Item_rightToolbar_' + index}>{elem}</ToolbarItem>)}
       </ToolbarGroup>
     );
   };
@@ -300,7 +300,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           {this.props.rightToolbar && this.renderRightToolbar()}
         </ToolbarSection>
         {activeFilters && activeFilters.length > 0 && (
-          <ToolbarSection aria-label="FiltersSection" className={rightToolbar}>
+          <ToolbarSection aria-label="FiltersSection">
             <>{'Active Filters:'}</>
             <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
               <ChipGroup defaultIsOpen={true} withToolbar={true}>

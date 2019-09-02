@@ -2,506 +2,754 @@
 
 exports[`ToolbarDropdown Render correctly all dropdowns 1`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     graph_filter_interval_duration
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="graph_filter_interval_duration"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="graph_filter_interval_duration"
+    className="fhxf3qu"
+    direction="down"
     id="graph_filter_interval_duration"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Last 1m"
+    placeholderText="Last 1m"
+    selections={60}
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="60"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="60"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="60"
     >
       Last 1m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="300"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="300"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="300"
     >
       Last 5m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="600"
     >
       Last 10m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="1800"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="1800"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="1800"
     >
       Last 30m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="3600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="3600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="3600"
     >
       Last 1h
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="10800"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="10800"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="10800"
     >
       Last 3h
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="21600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="21600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="21600"
     >
       Last 6h
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;
 
 exports[`ToolbarDropdown Render correctly all dropdowns 2`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     metrics_filter_poll_interval
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="metrics_filter_poll_interval"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="metrics_filter_poll_interval"
+    className="fhxf3qu"
+    direction="down"
     id="metrics_filter_poll_interval"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Every 15s"
+    placeholderText="Every 15s"
+    selections={15000}
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="0"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="0"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="0"
     >
       Pause
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="10000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="10000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="10000"
     >
       Every 10s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="15000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="15000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="15000"
     >
       Every 15s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="30000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="30000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="30000"
     >
       Every 30s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="60000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="60000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="60000"
     >
       Every 1m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="300000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="300000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="300000"
     >
       Every 5m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="900000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="900000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="900000"
     >
       Every 15m
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;
 
 exports[`ToolbarDropdown Render correctly all dropdowns 3`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     graph_filter_layouts
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="graph_filter_layouts"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="graph_filter_layouts"
+    className="fhxf3qu"
+    direction="down"
     id="graph_filter_layouts"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Cola"
+    placeholderText="Cola"
+    selections="cola"
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={true}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="cola"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="cola"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="cola"
     >
       Cola
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="cose-bilkent"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="cose-bilkent"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="cose-bilkent"
     >
       Cose
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="dagre"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="dagre"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="dagre"
     >
       Dagre
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 1`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     graph_filter_interval_duration
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="graph_filter_interval_duration"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="graph_filter_interval_duration"
+    className="fhxf3qu"
+    direction="down"
     id="graph_filter_interval_duration"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Last 1m"
+    placeholderText="Last 1m"
+    selections={60}
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="60"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="60"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="60"
     >
       Last 1m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="300"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="300"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="300"
     >
       Last 5m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="600"
     >
       Last 10m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="1800"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="1800"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="1800"
     >
       Last 30m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="3600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="3600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="3600"
     >
       Last 1h
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="10800"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="10800"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="10800"
     >
       Last 3h
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="21600"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="21600"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="21600"
     >
       Last 6h
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 2`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     metrics_filter_poll_interval
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="metrics_filter_poll_interval"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="metrics_filter_poll_interval"
+    className="fhxf3qu"
+    direction="down"
     id="metrics_filter_poll_interval"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Every 15s"
+    placeholderText="Every 15s"
+    selections={15000}
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="0"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="0"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="0"
     >
       Pause
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="10000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="10000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="10000"
     >
       Every 10s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="15000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="15000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="15000"
     >
       Every 15s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="30000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="30000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="30000"
     >
       Every 30s
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="60000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="60000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="60000"
     >
       Every 1m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="300000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="300000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="300000"
     >
       Every 5m
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="900000"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="900000"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="900000"
     >
       Every 15m
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;
 
 exports[`ToolbarDropdown Render dropdowns correctly with controlled values and labels 3`] = `
 <Fragment>
-  <label
-    style={
-      Object {
-        "paddingRight": "0.5em",
-      }
-    }
+  <Text
+    className="ff3k5ad"
+    component="h5"
   >
     graph_filter_layouts
-  </label>
-  <DropdownButton
-    disabled={false}
+  </Text>
+  <Select
+    aria-label="graph_filter_layouts"
+    ariaLabelClear="Clear all"
+    ariaLabelRemove="Remove"
+    ariaLabelToggle="Options menu"
+    ariaLabelTypeAhead=""
+    ariaLabelledBy="graph_filter_layouts"
+    className="fhxf3qu"
+    direction="down"
     id="graph_filter_layouts"
+    isDisabled={false}
+    isExpanded={false}
+    isGrouped={false}
+    isPlain={false}
+    onClear={[Function]}
     onSelect={[Function]}
     onToggle={[Function]}
-    title="Cola"
+    placeholderText="Cola"
+    selections="cola"
+    toggleId={null}
+    variant="single"
+    width=""
   >
-    <MenuItem
-      active={true}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="cola"
-      header={false}
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={true}
       key="cola"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="cola"
     >
       Cola
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="cose-bilkent"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="cose-bilkent"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="cose-bilkent"
     >
       Cose
-    </MenuItem>
-    <MenuItem
-      active={false}
-      bsClass="dropdown"
-      disabled={false}
-      divider={false}
-      eventKey="dagre"
-      header={false}
+    </SelectOption>
+    <SelectOption
+      className=""
+      index={0}
+      isChecked={false}
+      isDisabled={false}
+      isFocused={false}
+      isPlaceholder={false}
+      isSelected={false}
       key="dagre"
+      keyHandler={[Function]}
+      onClick={[Function]}
+      sendRef={[Function]}
+      value="dagre"
     >
       Dagre
-    </MenuItem>
-  </DropdownButton>
+    </SelectOption>
+  </Select>
 </Fragment>
 `;

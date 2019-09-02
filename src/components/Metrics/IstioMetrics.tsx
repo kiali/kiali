@@ -19,6 +19,7 @@ import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import history from '../../app/History';
 import { MetricsObjectTypes } from '../../types/Metrics';
+import { style } from 'typestyle';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -36,6 +37,10 @@ type IstioMetricsProps = ObjectId &
     objectType: MetricsObjectTypes;
     direction: Direction;
   };
+
+const displayFlex = style({
+  display: 'flex'
+});
 
 class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   options: IstioMetricsOptions;
@@ -168,7 +173,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          <ToolbarItem>
+          <ToolbarItem className={displayFlex}>
             <MetricsReporter onChanged={this.onReporterChanged} direction={this.props.direction} />
           </ToolbarItem>
         </ToolbarGroup>
