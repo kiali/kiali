@@ -6,12 +6,10 @@ import { AppListItem } from '../../types/AppList';
 import * as AppListFilters from './FiltersAndSorts';
 import * as AppListClass from './AppListClass';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { SortField } from '../../types/SortFilters';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
 import { namespaceEquals } from '../../utils/Common';
@@ -136,12 +134,14 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
-        <StatefulFilters initialFilters={AppListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer id="app-list-dropdown" />
-            <RefreshButtonContainer id="overview-refresh" handleRefresh={this.updateListItems} />
-          </ToolbarRightContent>
-        </StatefulFilters>
+        <StatefulFilters
+          initialFilters={AppListFilters.availableFilters}
+          onFilterChange={this.onFilterChange}
+          rightToolbar={[
+            <DurationDropdownContainer key={'DurationDropdown'} id="app-list-dropdown" />,
+            <RefreshButtonContainer key={'Refresh'} id="overview-refresh" handleRefresh={this.updateListItems} />
+          ]}
+        />
       </VirtualList>
     );
   }

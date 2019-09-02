@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ToolbarRightContent } from 'patternfly-react';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as API from '../../services/Api';
 import Namespace from '../../types/Namespace';
@@ -11,7 +10,6 @@ import * as ServiceListFilters from './FiltersAndSorts';
 import './ServiceListComponent.css';
 import { SortField } from '../../types/SortFilters';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
@@ -163,12 +161,14 @@ class ServiceListComponent extends FilterComponent.Component<
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
-        <StatefulFilters initialFilters={ServiceListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer id="service-list-duration-dropdown" />
-            <RefreshButtonContainer handleRefresh={this.updateListItems} />
-          </ToolbarRightContent>
-        </StatefulFilters>
+        <StatefulFilters
+          initialFilters={ServiceListFilters.availableFilters}
+          onFilterChange={this.onFilterChange}
+          rightToolbar={[
+            <DurationDropdownContainer key={'DurationDropdown'} id="service-list-duration-dropdown" />,
+            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
+          ]}
+        />
       </VirtualList>
     );
   }

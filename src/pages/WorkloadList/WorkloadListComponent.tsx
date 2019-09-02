@@ -5,12 +5,10 @@ import Namespace from '../../types/Namespace';
 import { WorkloadListItem, WorkloadNamespaceResponse } from '../../types/Workload';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
-import { ToolbarRightContent } from 'patternfly-react';
 import { ActiveFilter } from '../../types/Filters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { SortField } from '../../types/SortFilters';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
-import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector } from '../../store/Selectors';
@@ -160,12 +158,14 @@ class WorkloadListComponent extends FilterComponent.Component<
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
-        <StatefulFilters initialFilters={WorkloadListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <DurationDropdownContainer id="workload-list-duration-dropdown" />
-            <RefreshButtonContainer handleRefresh={this.updateListItems} />
-          </ToolbarRightContent>
-        </StatefulFilters>
+        <StatefulFilters
+          initialFilters={WorkloadListFilters.availableFilters}
+          onFilterChange={this.onFilterChange}
+          rightToolbar={[
+            <DurationDropdownContainer key={'DurationDropdown'} id="workload-list-duration-dropdown" />,
+            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
+          ]}
+        />
       </VirtualList>
     );
   }

@@ -1,13 +1,25 @@
 import * as React from 'react';
-import { Toolbar } from 'patternfly-react';
-import { Chip, ChipGroup, ChipGroupToolbarItem, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import {
+  Chip,
+  ChipGroup,
+  ChipGroupToolbarItem,
+  FormSelect,
+  FormSelectOption,
+  TextInput,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  ToolbarSection
+} from '@patternfly/react-core';
 import { ActiveFilter, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
+import { style } from 'typestyle';
 
 export interface StatefulFiltersProps {
   onFilterChange: () => void;
   initialFilters: FilterType[];
+  rightToolbar?: JSX.Element[];
 }
 
 export interface StatefulFiltersState {
@@ -33,10 +45,13 @@ export class FilterSelected {
   };
 }
 
-// align with separator start
-const alignLeftStyle = {
-  marginLeft: '-20px'
-};
+const rightToolbar = style({
+  right: '20px',
+  position: 'absolute'
+});
+
+const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
+const paddingStyle = style({ padding: '10px' });
 
 export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();
@@ -232,57 +247,90 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
       {}
     );
 
+  renderChildren = () => {
+    return (
+      <ToolbarGroup>
+        {Array.isArray(this.props.children) ? (
+          (this.props.children as Array<any>).map((child, index) => (
+            <ToolbarItem
+              key={'toolbar_statefulFilters_' + index}
+              className={index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle}
+            >
+              {child}
+            </ToolbarItem>
+          ))
+        ) : (
+          <ToolbarItem>{this.props.children}</ToolbarItem>
+        )}
+      </ToolbarGroup>
+    );
+  };
+
+  renderRightToolbar = () => {
+    return (
+      <ToolbarGroup style={{ position: 'absolute', right: '20px' }}>
+        {this.props.rightToolbar ||
+          [].map((elem, index) => <ToolbarItem key={'Item_rightToolbar_' + index}>{elem}</ToolbarItem>)}
+      </ToolbarGroup>
+    );
+  };
+
   render() {
     const { currentFilterType, activeFilters } = this.state;
 
     return (
-      <div>
-        <Toolbar>
-          <FormSelect
-            value={currentFilterType.id}
-            aria-label={'filter_select_type'}
-            onChange={this.selectFilterType}
-            style={{ ...alignLeftStyle, width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
-          >
-            {this.state.filterTypes.map(option => (
-              <FormSelectOption key={option.id} value={option.id} label={option.title} />
-            ))}
-          </FormSelect>
-          {this.renderInput()}
-          {this.props.children}
-          {activeFilters && activeFilters.length > 0 && (
-            <Toolbar.Results>
-              <>{'Active Filters:'}</>
-              <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
-                <ChipGroup defaultIsOpen={true} withToolbar={true}>
-                  {Object.entries(this.groupBy(activeFilters, 'category')).map(([category, item]) => (
-                    <ChipGroupToolbarItem key={category} categoryName={category}>
-                      {(item as Array<ActiveFilter>).map(subItem => (
-                        <Chip
-                          key={'filter_' + category + '_' + subItem.value}
-                          onClick={() => this.removeFilter(category, subItem.value)}
-                        >
-                          {subItem.value}
-                        </Chip>
-                      ))}
-                    </ChipGroupToolbarItem>
-                  ))}
-                </ChipGroup>
-              </div>
-              <a
-                href="#"
-                onClick={e => {
-                  e.preventDefault();
-                  this.clearFilters();
-                }}
-                style={{ marginLeft: '5px' }}
+      <Toolbar>
+        <ToolbarSection aria-label="ToolbarSection">
+          <ToolbarGroup style={{ marginRight: '0px' }}>
+            <ToolbarItem className={this.props.children ? dividerStyle : ''}>
+              <FormSelect
+                value={currentFilterType.id}
+                aria-label={'filter_select_type'}
+                onChange={this.selectFilterType}
+                style={{ width: 'auto', backgroundColor: '#ededed', borderColor: '#bbb' }}
               >
-                Clear All Filters
-              </a>
-            </Toolbar.Results>
-          )}
-        </Toolbar>
-      </div>
+                {this.state.filterTypes.map(option => (
+                  <FormSelectOption key={option.id} value={option.id} label={option.title} />
+                ))}
+              </FormSelect>
+              {this.renderInput()}
+            </ToolbarItem>
+          </ToolbarGroup>
+          {this.renderChildren()}
+          {this.props.rightToolbar && this.renderRightToolbar()}
+        </ToolbarSection>
+        {activeFilters && activeFilters.length > 0 && (
+          <ToolbarSection aria-label="FiltersSection" className={rightToolbar}>
+            <>{'Active Filters:'}</>
+            <div style={{ marginLeft: '5px', display: 'inline-flex', height: '80%' }}>
+              <ChipGroup defaultIsOpen={true} withToolbar={true}>
+                {Object.entries(this.groupBy(activeFilters, 'category')).map(([category, item]) => (
+                  <ChipGroupToolbarItem key={category} categoryName={category}>
+                    {(item as Array<ActiveFilter>).map(subItem => (
+                      <Chip
+                        key={'filter_' + category + '_' + subItem.value}
+                        onClick={() => this.removeFilter(category, subItem.value)}
+                      >
+                        {subItem.value}
+                      </Chip>
+                    ))}
+                  </ChipGroupToolbarItem>
+                ))}
+              </ChipGroup>
+            </div>
+            <a
+              href="#"
+              onClick={e => {
+                e.preventDefault();
+                this.clearFilters();
+              }}
+              style={{ marginLeft: '5px' }}
+            >
+              Clear All Filters
+            </a>
+          </ToolbarSection>
+        )}
+      </Toolbar>
     );
   }
 }

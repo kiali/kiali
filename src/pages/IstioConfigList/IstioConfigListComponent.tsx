@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ToolbarRightContent } from 'patternfly-react';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { ActiveFilter } from '../../types/Filters';
 import * as API from '../../services/Api';
@@ -17,7 +16,6 @@ import * as IstioConfigListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { SortField } from '../../types/SortFilters';
 import { getFilterSelectedValues } from '../../components/Filters/CommonFilters';
-import { AlignRightStyle } from '../../components/Filters/FilterStyles';
 import { namespaceEquals } from '../../utils/Common';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
@@ -161,11 +159,11 @@ class IstioConfigListComponent extends FilterComponent.Component<
   render() {
     return (
       <VirtualList rows={this.state.listItems} scrollFilters={false} updateItems={this.updateListItems}>
-        <StatefulFilters initialFilters={IstioConfigListFilters.availableFilters} onFilterChange={this.onFilterChange}>
-          <ToolbarRightContent style={{ ...AlignRightStyle }}>
-            <RefreshButtonContainer handleRefresh={this.updateListItems} />
-          </ToolbarRightContent>
-        </StatefulFilters>
+        <StatefulFilters
+          initialFilters={IstioConfigListFilters.availableFilters}
+          onFilterChange={this.onFilterChange}
+          rightToolbar={[<RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />]}
+        />
       </VirtualList>
     );
   }

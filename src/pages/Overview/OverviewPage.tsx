@@ -319,7 +319,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
         {filteredNamespaces.length > 0 ? (
           <Grid className={gridStyle}>
             {filteredNamespaces.map(ns => (
-              <GridItem sm={sm} md={md} style={{ margin: '0px 10px 0 10px' }}>
+              <GridItem sm={sm} md={md} key={'CardItem_' + ns.name} style={{ margin: '0px 10px 0 10px' }}>
                 <Card isCompact={true} className={cardGridStyle}>
                   <CardHeader>
                     {ns.tlsStatus ? <NamespaceMTLSStatusContainer status={ns.tlsStatus.status} /> : undefined}

@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { Button, ButtonGroup, FormGroup, Sort, ToolbarRightContent } from 'patternfly-react';
+import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core';
+import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
+
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 
@@ -16,7 +18,7 @@ import { PollIntervalInMs, DurationInSeconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 
 import NamespaceInfo from './NamespaceInfo';
-import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { ThinStyle } from '../../components/Filters/FilterStyles';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
@@ -122,58 +124,76 @@ export class OverviewToolbar extends React.Component<Props, State> {
     }
   };
 
+  changeSortField = value => {
+    const sortField: SortField<NamespaceInfo> = Sorts.sortFields.filter(sort => sort.id === value)[0];
+    this.props.sort(sortField, this.state.isSortAscending);
+    HistoryManager.setParam(URLParam.SORT, sortField.param);
+    this.setState({ sortField: sortField });
+  };
+
   render() {
     return (
-      <StatefulFilters initialFilters={Filters.availableFilters} onFilterChange={this.props.onRefresh}>
-        <div style={{ display: 'inline-flex' }}>
-          <Sort style={{ ...ThinStyle }}>
-            <Sort.TypeSelector
-              // style={{ ...thinGroupStyle }}
-              sortTypes={Sorts.sortFields}
-              currentSortType={this.state.sortField}
-              onSortTypeSelected={this.updateSortField}
-            />
-            <Sort.DirectionSelector
-              // style={{ ...thinGroupStyle }}
-              isNumeric={false}
-              isAscending={this.state.isSortAscending}
-              onClick={this.updateSortDirection}
-            />
-          </Sort>
-          <FormGroup style={{ ...ThinStyle }}>
-            <ToolbarDropdown
-              id="overview-type"
-              disabled={false}
-              handleSelect={this.updateOverviewType}
-              nameDropdown="Show health for"
-              value={this.state.overviewType}
-              label={overviewTypes[this.state.overviewType]}
-              options={overviewTypes}
-            />
-          </FormGroup>
-          <FormGroup>
-            <ButtonGroup id="toolbar_layout_group">
-              <Button
-                onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
-                title="Compact mode"
-                active={this.props.displayMode === OverviewDisplayMode.COMPACT}
-              >
-                Compact
-              </Button>
-              <Button
-                onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
-                title="Expanded mode"
-                active={this.props.displayMode === OverviewDisplayMode.EXPAND}
-              >
-                Expand
-              </Button>
-            </ButtonGroup>
-          </FormGroup>
-        </div>
-        <ToolbarRightContent style={{ ...AlignRightStyle }}>
-          <DurationDropdownContainer id="overview-duration" disabled={false} tooltip={'Time range for overview data'} />
-          <RefreshContainer id="overview-refresh" handleRefresh={this.props.onRefresh} hideLabel={true} />
-        </ToolbarRightContent>
+      <StatefulFilters
+        initialFilters={Filters.availableFilters}
+        onFilterChange={this.props.onRefresh}
+        rightToolbar={[
+          <DurationDropdownContainer
+            id="overview-duration"
+            key={'DurationDropdown'}
+            disabled={false}
+            tooltip={'Time range for overview data'}
+          />,
+          <RefreshContainer
+            id="overview-refresh"
+            key={'Refresh'}
+            handleRefresh={this.props.onRefresh}
+            hideLabel={true}
+          />
+        ]}
+      >
+        <>
+          <FormSelect
+            aria-label={'Sort_Selector'}
+            value={this.state.sortField.id}
+            onChange={this.changeSortField}
+            style={{ width: 'auto' }}
+          >
+            {Sorts.sortFields.map(sortType => (
+              <FormSelectOption key={sortType.id} value={sortType.id} label={sortType.title} />
+            ))}
+          </FormSelect>
+          <Button variant="plain" onClick={this.updateSortDirection} style={{ ...ThinStyle }}>
+            {this.state.isSortAscending ? <SortAlphaDownIcon /> : <SortAlphaUpIcon />}
+          </Button>
+        </>
+        <ToolbarDropdown
+          id="overview-type"
+          disabled={false}
+          handleSelect={this.updateOverviewType}
+          nameDropdown="Show health for"
+          value={this.state.overviewType}
+          label={overviewTypes[this.state.overviewType]}
+          options={overviewTypes}
+        />
+        <>
+          <Button
+            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
+            title="Compact mode"
+            variant="tertiary"
+            isActive={this.props.displayMode === OverviewDisplayMode.COMPACT}
+          >
+            Compact
+          </Button>
+          <Button
+            onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
+            title="Expanded mode"
+            variant="tertiary"
+            isActive={this.props.displayMode === OverviewDisplayMode.EXPAND}
+            style={{ marginLeft: '5px' }}
+          >
+            Expand
+          </Button>
+        </>
       </StatefulFilters>
     );
   }
