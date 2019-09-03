@@ -64,9 +64,10 @@
   "dependencies": {
     "@kiali/k-charted-pf4": "0.2.2",
     "@patternfly/patternfly": "2.4.1",
-    "@patternfly/react-charts": "4.4.7",
+    "@patternfly/react-charts": "4.9.2",
     "@patternfly/react-core": "3.89.2",
     "@patternfly/react-table": "2.16.4",
+    "@patternfly/react-tokens": "2.6.21",
     "@patternfly/react-virtualized-extension": "1.1.97",
     "axios": "0.18.1",
     "csstips": "0.3.0",
