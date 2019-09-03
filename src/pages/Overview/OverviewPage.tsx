@@ -327,7 +327,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
                   </CardHeader>
                   <CardBody>
                     {this.renderStatuses(ns)}
-                    <OverviewCardLinks name={ns.name} />
+                    <OverviewCardLinks name={ns.name} overviewType={OverviewToolbar.currentOverviewType()} />
                   </CardBody>
                 </Card>
               </GridItem>

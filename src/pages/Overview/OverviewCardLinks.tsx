@@ -4,9 +4,12 @@ import { Tooltip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import { Paths } from '../../config';
 import { ApplicationsIcon, BundleIcon, TopologyIcon, ServiceIcon, PficonTemplateIcon } from '@patternfly/react-icons';
+import { OverviewType } from './OverviewToolbar';
+import { GraphType } from 'types/Graph';
 
 type Props = {
   name: string;
+  overviewType: OverviewType;
 };
 
 const iconStyle = style({
@@ -20,7 +23,12 @@ class OverviewCardLinks extends React.Component<Props> {
     return (
       <div style={{ marginTop: '10px' }}>
         <Tooltip key="ot_graph" content={<>Go to graph</>} {...tooltipProps}>
-          <Link to={`/graph/namespaces?namespaces=` + this.props.name} className={iconStyle}>
+          <Link
+            to={`/graph/namespaces?namespaces=${this.props.name}&graphType=${this.toGraphType(
+              this.props.overviewType
+            )}`}
+            className={iconStyle}
+          >
             <TopologyIcon />
           </Link>
         </Tooltip>
@@ -47,6 +55,18 @@ class OverviewCardLinks extends React.Component<Props> {
       </div>
     );
   }
+
+  private toGraphType = (overviewType: OverviewType): string => {
+    switch (overviewType) {
+      case 'app':
+        return GraphType.APP;
+      case 'service':
+        return GraphType.SERVICE;
+
+      default:
+        return GraphType.WORKLOAD;
+    }
+  };
 }
 
 export default OverviewCardLinks;
