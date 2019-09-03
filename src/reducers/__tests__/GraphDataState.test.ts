@@ -14,6 +14,7 @@ describe('GraphDataState', () => {
       isLoading: false,
       isError: false,
       filterState: {
+        compressOnHide: true,
         edgeLabelMode: EdgeLabelMode.NONE,
         findValue: '',
         graphType: GraphType.VERSIONED_APP,

@@ -205,16 +205,16 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
     });
     const prefaceStyle = style({
       width: '100%',
-      height: '75px',
+      height: '77px',
       padding: '10px',
       resize: 'none',
       color: '#fff',
       backgroundColor: '#003145'
     });
     const preface =
-      'You can use the Find and Hide fields to highlight or hide edges and nodes from the graph. Each field ' +
-      'accepts text expressions using the language described below. Hide takes precedence when using Find and ' +
-      'Hide together. Hide maintains the layout, it does not reposition the remaining graph elements.';
+      'You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts ' +
+      'expressions using the language described below. Hide takes precedence when using Find and Hide ' +
+      'together. Uncheck the "Compress Hidden" display option for hidden elements to retain their space.';
 
     return (
       <Draggable handle="#helpheader" bounds="#root">

@@ -21,6 +21,7 @@ export const INITIAL_GRAPH_STATE: GraphState = {
   node: undefined,
   summaryData: null,
   filterState: {
+    compressOnHide: true,
     edgeLabelMode: EdgeLabelMode.NONE,
     findValue: '',
     graphType: GraphType.VERSIONED_APP,
@@ -134,6 +135,12 @@ const graphDataState = (state: GraphState = INITIAL_GRAPH_STATE, action: KialiAp
       return updateState(state, {
         filterState: updateState(state.filterState, {
           showUnusedNodes: action.payload
+        })
+      });
+    case getType(GraphFilterActions.toggleCompressOnHide):
+      return updateState(state, {
+        filterState: updateState(state.filterState, {
+          compressOnHide: !state.filterState.compressOnHide
         })
       });
     case getType(GraphFilterActions.toggleFindHelp):

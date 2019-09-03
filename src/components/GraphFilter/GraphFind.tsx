@@ -14,6 +14,7 @@ import { CyData } from '../../types/Graph';
 import { Layout } from 'types/GraphFilter';
 
 type ReduxProps = {
+  compressOnHide: boolean;
   cyData: CyData | null;
   findValue: string;
   hideValue: string;
@@ -28,7 +29,6 @@ type ReduxProps = {
 type GraphFindProps = ReduxProps;
 
 type GraphFindState = {
-  compressOnHide: boolean;
   errorMessage: string;
   findInputValue: string;
   hideInputValue: string;
@@ -63,7 +63,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     super(props);
     const findValue = props.findValue ? props.findValue : '';
     const hideValue = props.hideValue ? props.hideValue : '';
-    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue, compressOnHide: false };
+    this.state = { errorMessage: '', findInputValue: findValue, hideInputValue: hideValue };
     if (props.showFindHelp) {
       props.toggleFindHelp();
     }
@@ -73,10 +73,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
   // the graph loading, we can't perform this graph "post-processing" until we have a valid cy graph.  We can assume
   // that applying the find/hide on update is sufficient because  we will be updated after the cy is loaded
   // due to a change notification for this.props.cyData.
-  componentDidUpdate(prevProps: GraphFindProps, prevState: GraphFindState) {
+  componentDidUpdate(prevProps: GraphFindProps) {
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
-    const compressOnHideChanged = this.state.compressOnHide !== prevState.compressOnHide;
+    const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
     const hadCyData = prevProps.cyData != null;
     const hasCyData = this.props.cyData != null;
     const graphChanged =
@@ -163,19 +163,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                   </InputGroup.Button>
                 </OverlayTrigger>
               )}
-              <OverlayTrigger
-                key="ot_compress_on_hide"
-                placement="top"
-                trigger={['hover', 'focus']}
-                delayShow={1000}
-                overlay={<Tooltip id="tt_compress_on_hide">Compress Graph on Hide...</Tooltip>}
-              >
-                <InputGroup.Button>
-                  <Button onClick={this.toggleCompressOnHide}>
-                    <Icon name={this.state.compressOnHide ? 'compress' : 'expand'} type="fa" />
-                  </Button>
-                </InputGroup.Button>
-              </OverlayTrigger>
             </InputGroup>
             <OverlayTrigger
               key={'ot_graph_find_help'}
@@ -260,10 +247,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.props.setHideValue('');
   };
 
-  private toggleCompressOnHide = () => {
-    this.setState({ compressOnHide: !this.state.compressOnHide });
-  };
-
   private handleHide = (graphChanged: boolean, hideChanged: boolean, compressOnHideChanged: boolean) => {
     if (!this.props.cyData) {
       console.debug('Skip Hide: cy not set.');
@@ -300,7 +283,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       hiddenElements = hiddenElements.add(nodesWithOnlyHiddenEdges);
       // subtract any appbox hits, we only hide empty appboxes
       hiddenElements = hiddenElements.subtract(hiddenElements.filter('$node[isGroup]'));
-      if (this.state.compressOnHide) {
+      if (this.props.compressOnHide) {
         this.removedElements = cy.remove(hiddenElements);
         // now subtract any appboxes that don't have any visible children
         const hiddenAppBoxes = cy.$('$node[isGroup]').subtract(cy.$('$node[isGroup] > :inside'));
@@ -662,6 +645,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
+  compressOnHide: state.graph.filterState.compressOnHide,
   cyData: state.graph.cyData,
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),

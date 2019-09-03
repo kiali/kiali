@@ -39,6 +39,7 @@ export interface GraphFilterState {
   hideValue: string;
   showFindHelp: boolean;
   // Toggle props
+  compressOnHide: boolean;
   showCircuitBreakers: boolean;
   showLegend: boolean;
   showMissingSidecars: boolean;

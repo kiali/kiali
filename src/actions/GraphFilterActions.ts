@@ -12,6 +12,7 @@ export const GraphFilterActions = {
   setShowUnusedNodes: createStandardAction(ActionKeys.GRAPH_FILTER_SET_SHOW_UNUSED_NODES)<boolean>(),
   // Toggle actions
   showGraphFilters: createStandardAction(ActionKeys.ENABLE_GRAPH_FILTERS)<boolean>(),
+  toggleCompressOnHide: createAction(ActionKeys.GRAPH_FILTER_TOGGLE_COMPRESS_ON_HIDE),
   toggleGraphNodeLabel: createAction(ActionKeys.GRAPH_FILTER_TOGGLE_GRAPH_NODE_LABEL),
   toggleLegend: createAction(ActionKeys.GRAPH_FILTER_TOGGLE_LEGEND),
   toggleGraphVirtualServices: createAction(ActionKeys.GRAPH_FILTER_TOGGLE_GRAPH_VIRTUAL_SERVICES),

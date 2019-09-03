@@ -14,6 +14,7 @@ import { Omit } from 'lodash';
 
 type ReduxProps = Omit<GraphFilterState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
   // Dispatch methods
+  toggleCompressOnHide(): void;
   toggleGraphCircuitBreakers(): void;
   toggleGraphMissingSidecars(): void;
   toggleGraphNodeLabels(): void;
@@ -61,6 +62,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
   render() {
     // map our attributes from redux
     const {
+      compressOnHide,
       showCircuitBreakers,
       showMissingSidecars,
       showNodeLabels,
@@ -73,6 +75,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
     // map our dispatchers for redux
     const {
+      toggleCompressOnHide,
       toggleGraphCircuitBreakers,
       toggleGraphMissingSidecars,
       toggleGraphNodeLabels,
@@ -84,6 +87,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     } = this.props;
 
     const visibilityLayers: VisibilityLayersType[] = [
+      {
+        id: 'filterHide',
+        labelText: 'Compress Hidden',
+        value: compressOnHide,
+        onChange: toggleCompressOnHide
+      },
       {
         id: 'filterNodes',
         labelText: 'Node Names',
@@ -119,16 +128,16 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
         onChange: toggleGraphCircuitBreakers
       },
       {
-        id: 'filterVS',
-        labelText: 'Virtual Services',
-        value: showVirtualServices,
-        onChange: toggleGraphVirtualServices
-      },
-      {
         id: 'filterSidecars',
         labelText: 'Missing Sidecars',
         value: showMissingSidecars,
         onChange: toggleGraphMissingSidecars
+      },
+      {
+        id: 'filterVS',
+        labelText: 'Virtual Services',
+        value: showVirtualServices,
+        onChange: toggleGraphVirtualServices
       },
       {
         id: 'filterSecurity',
@@ -186,6 +195,7 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState) => ({
+  compressOnHide: state.graph.filterState.compressOnHide,
   showCircuitBreakers: state.graph.filterState.showCircuitBreakers,
   showMissingSidecars: state.graph.filterState.showMissingSidecars,
   showNodeLabels: state.graph.filterState.showNodeLabels,
@@ -199,6 +209,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 // Map our actions to Redux
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
+    toggleCompressOnHide: bindActionCreators(GraphFilterActions.toggleCompressOnHide, dispatch),
     toggleGraphCircuitBreakers: bindActionCreators(GraphFilterActions.toggleGraphCircuitBreakers, dispatch),
     toggleGraphMissingSidecars: bindActionCreators(GraphFilterActions.toggleGraphMissingSidecars, dispatch),
     toggleGraphNodeLabels: bindActionCreators(GraphFilterActions.toggleGraphNodeLabel, dispatch),
