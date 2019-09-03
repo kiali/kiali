@@ -167,7 +167,18 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 		}
 		// handle serviceName prefix (e.g. host = serviceName.namespace.svc.cluster.local)
 		if se.location == "MESH_INTERNAL" {
-			if strings.Split(host, ".")[0] == serviceName {
+			hostSplitted := strings.Split(host, ".")
+
+			if len(hostSplitted) == 3 && hostSplitted[2] == "global" {
+				// If suffix is "global", this node should be a service entry
+				// related to multi-cluster configs. Only exact match should be done, so
+				// skip prefix matching.
+				//
+				// Number of entries == 3 in the host is checked because the host
+				// must be of the form svc.namespace.global for Istio to
+				// work correctly in the multi-cluster/multiple-control-plane scenario.
+				continue
+			} else if hostSplitted[0] == serviceName {
 				return se, true
 			}
 		}

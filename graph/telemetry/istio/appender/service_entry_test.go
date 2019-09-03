@@ -225,3 +225,79 @@ func TestServiceEntry(t *testing.T) {
 	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry])
 	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
 }
+
+// TestDisjoingGlobalEntries checks that a service node representing traffic to a remote cluster
+// is correctly identified as a ServiceEntry. Also checks that a service node representing traffic
+// to an internal service is not mixed with the node for the remote cluster.
+func TestDisjointMulticlusterEntries(t *testing.T) {
+	assert := assert.New(t)
+
+	// Mock the k8s client with a "global" ServiceEntry
+	k8s := kubetest.NewK8SClientMock()
+
+	remoteSE := kubernetes.GenericIstioObject{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "externalSE",
+		},
+		Spec: map[string]interface{}{
+			"hosts": []interface{}{
+				"svc1.namespace.global"},
+			"location": "MESH_INTERNAL",
+		},
+	}
+
+	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
+		&remoteSE},
+		nil)
+	config.Set(config.NewConfig())
+
+	businessLayer := business.NewWithBackends(k8s, nil)
+
+	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
+	trafficMap := make(map[string]*graph.Node)
+
+	n0 := graph.NewNode("namespace", "source", "namespace", "wk0", "source", "v0", graph.GraphTypeVersionedApp)
+	n1 := graph.NewNode("namespace", "svc1.namespace.global", "unknown", "unknown", "unknown", "unknown", graph.GraphTypeVersionedApp)
+	n2 := graph.NewNode("namespace", "svc1", "unknown", "unknown", "unknown", "unknown", graph.GraphTypeVersionedApp)
+
+	trafficMap[n0.ID] = &n0
+	trafficMap[n1.ID] = &n1
+	trafficMap[n2.ID] = &n2
+
+	n0.AddEdge(&n1)
+	n0.AddEdge(&n2)
+
+	// Run the appender
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
+
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: map[string]time.Time{"namespace": time.Now()},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	// Assertions
+	assert.Len(n0.Edges, 2)   // Check that source node still has two edges
+	assert.Len(trafficMap, 3) // Check that traffic map still has three nodes
+
+	// Check that there is a node for the local svc1.
+	numMatches := 0
+	for _, n := range trafficMap {
+		if n.Service == "svc1" {
+			numMatches++
+			assert.Equal(n, &n2)
+		}
+	}
+	assert.Equal(1, numMatches)
+
+	// Check that there is a node for the remote svc1 and is was matched against the remote SE.
+	numMatches = 0
+	for _, n := range trafficMap {
+		if n.Service == "externalSE" {
+			numMatches++
+			assert.Equal("MESH_INTERNAL", n.Metadata[graph.IsServiceEntry])
+		}
+	}
+	assert.Equal(1, numMatches)
+}
