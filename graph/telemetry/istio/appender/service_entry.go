@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 )
 
@@ -169,7 +170,7 @@ func (a ServiceEntryAppender) getServiceEntry(serviceName string, globalInfo *gr
 		if se.location == "MESH_INTERNAL" {
 			hostSplitted := strings.Split(host, ".")
 
-			if len(hostSplitted) == 3 && hostSplitted[2] == "global" {
+			if len(hostSplitted) == 3 && hostSplitted[2] == config.IstioMultiClusterHostSuffix {
 				// If suffix is "global", this node should be a service entry
 				// related to multi-cluster configs. Only exact match should be done, so
 				// skip prefix matching.
