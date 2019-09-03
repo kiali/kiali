@@ -114,6 +114,10 @@ const (
 	LoginSecretPassphrase = "/kiali-secret/passphrase"
 )
 
+const (
+	IstioMultiClusterHostSuffix = "global"
+)
+
 // Global configuration for the application.
 var configuration Config
 var rwMutex sync.RWMutex
