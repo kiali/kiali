@@ -91,8 +91,6 @@ class OpenshiftLogin implements LoginStrategy<unknown> {
     if (window.location.hash.startsWith('#access_token')) {
       return AuthResult.CONTINUE;
     } else {
-      window.location.href = info.authorizationEndpoint!;
-
       return AuthResult.HOLD;
     }
   }
