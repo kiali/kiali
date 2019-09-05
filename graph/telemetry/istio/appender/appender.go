@@ -110,8 +110,9 @@ func ParseAppenders(o graph.TelemetryOptions) []graph.Appender {
 }
 
 const (
-	serviceEntryHostsKey = "serviceEntryHosts" // global vendor info
-	workloadListKey      = "workloadList"      // namespace vendor info
+	serviceDefinitionListKey = "serviceDefinitionListKey" // namespace vendor info
+	serviceEntryHostsKey     = "serviceEntryHosts"        // global vendor info
+	workloadListKey          = "workloadList"             // namespace vendor info
 )
 
 type serviceEntry struct {
@@ -130,6 +131,13 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 		log.Warningf("Same host [%s] found in ServiceEntry [%s] and [%s]", host, existingSe.name, se.name)
 	}
 	seh[host] = se
+}
+
+func getServiceDefinitionList(ni *graph.AppenderNamespaceInfo) *models.ServiceDefinitionList {
+	if sdl, ok := ni.Vendor[serviceDefinitionListKey]; ok {
+		return sdl.(*models.ServiceDefinitionList)
+	}
+	return nil
 }
 
 func getServiceEntryHosts(gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {

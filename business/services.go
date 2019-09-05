@@ -119,7 +119,7 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 	conf := config.Get()
 	svc, err := in.k8s.GetService(namespace, service)
 	if err != nil {
-		log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err)
+		log.Errorf("Error fetching API documentation for service [%s:%s]: %s", namespace, service, err)
 		return "", errors.NewInternalError(err)
 	}
 	apiSpecPath := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
@@ -328,7 +328,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 		var err2 error
 		svc, err2 = in.k8s.GetService(namespace, service)
 		if err2 != nil {
-			log.Errorf("Error fetching Service per namespace %s and service %s: %s", namespace, service, err2)
+			log.Errorf("Error fetching definition for service [%s:%s]: %s", namespace, service, err2)
 			errChan <- err2
 		}
 	}()
@@ -338,7 +338,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 		var err2 error
 		eps, err2 = in.k8s.GetEndpoints(namespace, service)
 		if err2 != nil && !errors.IsNotFound(err2) {
-			log.Errorf("Error fetching Endpoints per namespace %s and service %s: %s", namespace, service, err2)
+			log.Errorf("Error fetching Endpoints  namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
 		}
 	}()
@@ -350,6 +350,31 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 	}
 
 	return svc, eps, nil
+}
+
+// GetServiceDefinitionList returns service definitions for the namespace (the service object only), no istio or runtime information
+func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.ServiceDefinitionList, error) {
+	var err error
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceList")
+	defer promtimer.ObserveNow(&err)
+
+	var svcs []core_v1.Service
+	svcs, err = in.k8s.GetServices(namespace, nil)
+	if err != nil {
+		log.Errorf("Error fetching Service definitions for namespace %s: %s", namespace, err)
+	}
+
+	// Convert to Kiali model
+	sdl := models.ServiceDefinitionList{
+		Namespace:          models.Namespace{Name: namespace},
+		ServiceDefinitions: []models.ServiceDetails{},
+	}
+	for _, svc := range svcs {
+		s := models.ServiceDetails{}
+		s.SetService(&svc)
+		sdl.ServiceDefinitions = append(sdl.ServiceDefinitions, s)
+	}
+	return &sdl, nil
 }
 
 func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment) models.IstioValidations {

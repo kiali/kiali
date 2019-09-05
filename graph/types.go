@@ -18,6 +18,8 @@ const (
 	NodeTypeWorkload      string = "workload"
 	TF                    string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
 	Unknown               string = "unknown"             // Istio unknown label value
+	// private
+	passthroughCluster string = "PassthroughCluster"
 )
 
 type Node struct {
@@ -88,6 +90,8 @@ func NewNode(serviceNamespace, service, workloadNamespace, workload, app, versio
 }
 
 func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, graphType string) Node {
+	metadata := make(Metadata)
+
 	// trim unnecessary fields
 	switch nodeType {
 	case NodeTypeWorkload:
@@ -113,6 +117,10 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 		app = ""
 		workload = ""
 		version = ""
+
+		if service == passthroughCluster {
+			metadata[IsPassthroughCluster] = true
+		}
 	}
 
 	return Node{
@@ -124,7 +132,7 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 		Version:   version,
 		Service:   service,
 		Edges:     []*Edge{},
-		Metadata:  make(Metadata),
+		Metadata:  metadata,
 	}
 }
 
