@@ -1,18 +1,13 @@
 import * as React from 'react';
-import * as resolve from 'table-resolver';
 import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../types/ServiceInfo';
-import {
-  Destination,
-  DestinationWeight,
-  HTTPRoute,
-  ObjectCheck,
-  ObjectValidation,
-  TCPRoute
-} from '../../../types/IstioObjects';
-import { BulletChart, Col, Icon, OverlayTrigger, Popover, Row, Table, Tooltip } from 'patternfly-react';
+import { DestinationWeight, HTTPRoute, ObjectCheck, ObjectValidation, TCPRoute } from '../../../types/IstioObjects';
+import { Icon } from 'patternfly-react';
 import DetailObject from '../../../components/Details/DetailObject';
-import { PfColors } from '../../../components/Pf/PfColors';
 import { Link } from 'react-router-dom';
+import { ServiceIcon } from '@patternfly/react-icons';
+import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import { Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { ChartBullet } from '@patternfly/react-charts/dist/js/components/ChartBullet';
 
 interface VirtualServiceRouteProps {
   name: string;
@@ -22,138 +17,84 @@ interface VirtualServiceRouteProps {
   validation?: ObjectValidation;
 }
 
-const PFBlueColors = [
-  PfColors.Blue,
-  PfColors.Blue500,
-  PfColors.Blue600,
-  PfColors.Blue300,
-  PfColors.Blue200,
-  PfColors.Blue100
-];
-
 class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
-  cellFormat = value => <Table.Cell>{value}</Table.Cell>;
-  headerFormat = (label, { column }) => {
-    const className = column.property || column.header.label.toLowerCase();
-    const colSpan = column.header && column.header.props ? column.header.props.colSpan || '' : '';
-
-    return (
-      <Table.Heading colSpan={colSpan} className={className}>
-        {label}
-      </Table.Heading>
-    );
-  };
-
   columns() {
-    return {
-      columns: [
-        {
-          header: {
-            label: 'Status',
-            formatters: [this.headerFormat],
-            props: {
-              colSpan: 1
-            }
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          },
-          children: [
-            {
-              property: 'status.value',
-              header: {
-                label: '',
-                formatters: [this.headerFormat]
-              },
-              cell: {
-                formatters: [this.cellFormat]
-              }
-            }
-          ]
-        },
-        {
-          header: {
-            label: 'Destination',
-            formatters: [this.headerFormat],
-            props: {
-              colSpan: 3
-            }
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          },
-          children: [
-            {
-              property: 'destination.host',
-              header: {
-                label: 'Host',
-                formatters: [this.headerFormat]
-              },
-              cell: {
-                formatters: [this.cellFormat]
-              }
-            },
-            {
-              property: 'destination.subset',
-              header: {
-                label: 'Subset',
-                formatters: [this.headerFormat]
-              },
-              cell: {
-                formatters: [this.cellFormat]
-              }
-            },
-            {
-              property: 'destination.port',
-              header: {
-                label: 'Port',
-                formatters: [this.headerFormat]
-              },
-              cell: {
-                formatters: [this.cellFormat]
-              }
-            }
-          ]
-        },
-        {
-          header: {
-            label: 'Weights',
-            formatters: [this.headerFormat],
-            props: {
-              colSpan: 1
-            }
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          },
-          children: [
-            {
-              property: 'weight.value',
-              header: {
-                label: '',
-                formatters: [this.headerFormat]
-              },
-              cell: {
-                formatters: [this.cellFormat]
-              }
-            }
-          ]
-        }
-      ]
-    };
+    return [
+      {
+        title: 'Status',
+        props: {}
+      },
+      {
+        title: 'Destination',
+        props: {}
+      },
+      {
+        title: '',
+        props: {}
+      },
+      {
+        title: '',
+        props: {}
+      },
+      {
+        title: 'Weight',
+        props: {}
+      }
+    ];
   }
 
   rows(route: any, routeIndex: number) {
-    return (route.route || []).map((routeItem, destinationIndex) => {
-      const statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
-      const isValid = statusFrom === '' ? true : false;
-      return {
-        id: destinationIndex,
-        status: { value: statusFrom },
-        weight: { value: routeItem.weight ? routeItem.weight : '-' },
-        destination: this.destinationFrom(routeItem, destinationIndex, isValid)
-      };
-    });
+    let rows = [
+      {
+        cells: [
+          { title: '' },
+          { title: <strong>Host</strong> },
+          { title: <strong>Subset</strong> },
+          { title: <strong>Port</strong> },
+          { title: '' }
+        ]
+      }
+    ];
+
+    rows = rows.concat(
+      (route.route || []).map((routeItem, destinationIndex) => {
+        const statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
+        const isValid = statusFrom === '' ? true : false;
+        let cells = [{ title: statusFrom }];
+
+        if (routeItem.destination) {
+          const destination = routeItem.destination;
+          cells = cells.concat([
+            { title: this.serviceLink(this.props.namespace, destination.host, isValid) },
+            { title: destination.subset || '-' },
+            { title: destination.port ? destination.port.number || '-' : '-' }
+          ]);
+        } else {
+          cells = cells.concat([{ title: '-' }, { title: '-' }, { title: '-' }]);
+        }
+
+        return cells.concat([{ title: routeItem.weight ? routeItem.weight : '-' }]);
+      })
+    );
+
+    return rows;
+  }
+
+  serviceLink(namespace: string, host: string, isValid: boolean): any {
+    if (!host) {
+      return '-';
+    }
+    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
+    if (host.indexOf('.') > -1 || !isValid) {
+      return host;
+    } else {
+      return (
+        <Link to={'/namespaces/' + namespace + '/services/' + host}>
+          {host + ' '}
+          <ServiceIcon />
+        </Link>
+      );
+    }
   }
 
   validation(): ObjectValidation {
@@ -183,129 +124,87 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     const iconName = severity ? severityToIconName(severity) : 'ok';
     if (iconName !== 'ok') {
       return (
-        <OverlayTrigger
-          placement={'left'}
-          overlay={this.infotipContent(checks)}
-          trigger={['hover', 'focus']}
-          rootClose={false}
+        <Tooltip
+          aria-label={'Validations for route ' + routeIndex + ' and destination ' + destinationIndex}
+          position={TooltipPosition.left}
+          enableFlip={true}
+          content={this.infotipContent(checks)}
         >
           <Icon type="pf" name={iconName} />
-        </OverlayTrigger>
+        </Tooltip>
       );
     } else {
       return '';
     }
   }
 
-  serviceLink(namespace: string, host: string, isValid: boolean): any {
-    if (!host) {
-      return '-';
-    }
-    // TODO Full FQDN are not linked yet, it needs more checks in crossnamespace scenarios + validation of target
-    if (host.indexOf('.') > -1 || !isValid) {
-      return host;
-    } else {
-      return (
-        <Link to={'/namespaces/' + namespace + '/services/' + host}>
-          {host + ' '}
-          <Icon type="pf" name="service" />
-        </Link>
-      );
-    }
-  }
-
-  destinationFrom(destinationWeight: DestinationWeight, _i: number, isValid: boolean) {
-    const destination = destinationWeight.destination;
-    if (destination) {
-      return {
-        host: this.serviceLink(this.props.namespace, destination.host, isValid),
-        subset: destination.subset || '-',
-        port: destination.port ? destination.port.number || '-' : '-'
-      };
-    } else {
-      return { host: '-', subset: '-', port: '-' };
-    }
-  }
-
   infotipContent(checks: ObjectCheck[]) {
-    return (
-      <Popover id={this.props.name + '-weight-tooltip'}>
-        {checks.map((check, index) => {
-          return this.objectCheckToHtml(check, index);
-        })}
-      </Popover>
-    );
+    return checks.map((check, index) => {
+      return this.objectCheckToHtml(check, index);
+    });
   }
 
   objectCheckToHtml(object: ObjectCheck, i: number) {
     return (
-      <Row key={'objectCheck-' + i}>
-        <Col xs={1}>
-          <Icon type="pf" name={severityToIconName(object.severity)} />
-        </Col>
-        <Col xs={10} style={{ marginLeft: '-20px' }}>
-          {object.message}
-        </Col>
-      </Row>
+      <div key={'validation-check-' + i}>
+        <Icon type="pf" name={severityToIconName(object.severity)} />
+        {'  '}
+        {object.message}
+      </div>
     );
   }
 
   bulletChartValues(routes: TCPRoute | HTTPRoute) {
-    return (routes.route || []).map((destinationWeight, u) => ({
-      value: routes.route && routes.route.length === 1 ? 100 : destinationWeight.weight,
-      title: `${u}_${destinationWeight.weight}`,
-      color: PFBlueColors[u % PFBlueColors.length],
-      tooltipFunction: () => {
-        const badges = this.renderDestination(destinationWeight.destination);
-        return (
-          <Tooltip id={`${u}_${destinationWeight.weight}`} key={`${u}_${destinationWeight.weight}`}>
-            <div className="label-collection">{badges}</div>
-          </Tooltip>
-        );
-      }
-    }));
+    let weightSum: number = 0;
+    return (routes.route || []).map(destinationWeight => {
+      const destination = destinationWeight.destination;
+      const destRepresentation = `${destination.host || '-'}_${destination.subset || '-'}_${destination.port || '-'}`;
+
+      const routeSum = routes.route && routes.route.length === 1 ? 100 : destinationWeight.weight || 0;
+      weightSum += routeSum;
+
+      return {
+        y: weightSum,
+        name: `${destinationWeight.weight}_${destRepresentation}`
+      };
+    });
   }
 
-  renderDestination(destination: Destination) {
-    if (destination) {
-      return (
-        <ul style={{ listStyleType: 'none', paddingLeft: '15px' }}>
-          <li>Host: {destination.host || '-'} </li>
-          <li>Subset: {destination.subset || '-'} </li>
-          <li>Port: {destination.port ? destination.port.number : '-'} </li>
-        </ul>
-      );
-    } else {
-      return undefined;
+  bulletChartLabels(datum: any) {
+    const [percent, host, subset, port] = datum.name.split('_');
+    let label = 'Max weight: 100';
+    if (host) {
+      label = `Weight: ${percent}\n Host: ${host}\n Subset: ${subset}\n Port: ${port}`;
     }
+    return label;
   }
 
   renderTable(route: any, i: number) {
-    const resolvedColumns = resolve.columnChildren(this.columns());
-    const resolvedRows = resolve.resolve({
-      columns: resolvedColumns,
-      method: resolve.nested
-    })(this.rows(route, i));
-
     return (
-      <div key={'bulletchart-wrapper-' + i} style={{ marginTop: '30px' }}>
+      <div key={'bulletchart-wrapper-' + i}>
         {(route.route || []).length > 1 && (
-          <div>
-            <BulletChart
+          <div style={{ margin: '0 20%' }}>
+            <ChartBullet
               key={'bullet-chart-' + i}
-              label="Weight sum"
-              stacked={true}
-              thresholdWarning={-1}
-              thresholdError={-1}
-              values={this.bulletChartValues(route)}
-              ranges={[{ value: 100 }]}
+              title={'Weight sum'}
+              ariaDesc={'Routing percentage representation'}
+              ariaTitle={'Traffic routing distribution'}
+              maxDomain={{ y: 100 }}
+              qualitativeRangeData={[{ name: 'Range', y: 100 }]}
+              primarySegmentedMeasureData={this.bulletChartValues(route)}
+              labels={this.bulletChartLabels}
+              padding={{
+                left: 150,
+                right: 150
+              }}
+              width={600}
             />
           </div>
         )}
-        <Table.PfProvider columns={resolvedColumns} striped={true} bordered={true} hover={true} dataTable={true}>
-          <Table.Header headerRows={resolve.headerRows(this.columns())} />
-          <Table.Body rows={resolvedRows} rowKey="id" />
-        </Table.PfProvider>
+        <Table variant={TableVariant.compact} cells={this.columns()} rows={this.rows(route, i)}>
+          <TableHeader />
+          <TableBody />
+        </Table>
       </div>
     );
   }
@@ -325,28 +224,21 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
   }
 
   render() {
-    return (
-      <div>
-        {(this.props.routes || []).map((route, i) => (
-          <div key={'virtualservice-rule' + i} className="row-cards-pf">
-            <Row>
-              <Col xs={12} sm={12} md={3} lg={3}>
-                <DetailObject
-                  name={this.props.kind + ' Route'}
-                  detail={route}
-                  exclude={['route']}
-                  validation={this.routeStatusMessage(route, i)}
-                />
-              </Col>
-              <Col xs={12} sm={12} md={5} lg={5}>
-                {this.renderTable(route, i)}
-              </Col>
-            </Row>
-            <hr />
-          </div>
-        ))}
-      </div>
-    );
+    return (this.props.routes || []).map((route, i) => (
+      <Grid key={'virtualservice-rule' + i}>
+        <GridItem sm={12} md={12} lg={4}>
+          <DetailObject
+            name={this.props.kind + ' Route'}
+            detail={route}
+            exclude={['route']}
+            validation={this.routeStatusMessage(route, i)}
+          />
+        </GridItem>
+        <GridItem sm={12} md={12} lg={8}>
+          {this.renderTable(route, i)}
+        </GridItem>
+      </Grid>
+    ));
   }
 }
 

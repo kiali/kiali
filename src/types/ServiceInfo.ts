@@ -1,13 +1,13 @@
 import { ServiceHealth } from './Health';
 import { PfColors } from '../components/Pf/PfColors';
 import {
-  Pod,
-  Port,
+  DestinationRules,
   ObjectCheck,
   ObjectValidation,
-  DestinationRules,
-  VirtualServices,
-  Validations
+  Pod,
+  Port,
+  Validations,
+  VirtualServices
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
 

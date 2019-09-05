@@ -1,18 +1,12 @@
 import * as React from 'react';
-import { Col, Icon, Row } from 'patternfly-react';
-import {
-  checkForPath,
-  globalChecks,
-  highestSeverity,
-  severityToColor,
-  severityToIconName,
-  validationToSeverity
-} from '../../../types/ServiceInfo';
-import { ObjectValidation, VirtualService, Host } from '../../../types/IstioObjects';
+import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../types/ServiceInfo';
+import { Host, ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
 import { Link } from 'react-router-dom';
+import { Card, CardBody, Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
+import Validation from '../../../components/Validations/Validation';
 
 interface VirtualServiceProps {
   namespace: string;
@@ -21,43 +15,21 @@ interface VirtualServiceProps {
 }
 
 class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
-  validation(_virtualService: VirtualService): ObjectValidation | undefined {
+  validation(): ObjectValidation | undefined {
     return this.props.validation;
   }
 
-  globalStatus(rule: VirtualService) {
-    const validation = this.validation(rule);
-    if (!validation) {
-      return '';
-    }
-
-    const checks = globalChecks(validation);
-    const severity = validationToSeverity(validation);
-    const iconName = severityToIconName(severity);
-    const color = severityToColor(severity);
-    let message = checks.map(check => check.message).join(',');
-
-    if (!message.length) {
-      if (validation && !validation.valid) {
-        message = 'Not all checks passed!';
-      }
-    }
-
-    if (message.length) {
-      return (
-        <div>
-          <p style={{ color: color }}>
-            <Icon type="pf" name={iconName} /> {message}
-          </p>
-        </div>
-      );
+  globalStatus() {
+    const validation = this.props.validation;
+    if (validation && !validation.valid) {
+      return <Validation validation={validation} />;
     } else {
-      return '';
+      return undefined;
     }
   }
 
-  hostStatusMessage(virtualService: VirtualService) {
-    const checks = checkForPath(this.validation(virtualService), 'spec/hosts');
+  hostStatusMessage() {
+    const checks = checkForPath(this.validation(), 'spec/hosts');
     const severity = highestSeverity(checks);
 
     return {
@@ -105,98 +77,85 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     });
 
     return (
-      <div>
-        <strong className="text-capitalize">Gateways</strong>
+      <>
+        <Text component={TextVariants.h3}>Gateways</Text>
         <ul className={'details'}>{childrenList}</ul>
-      </div>
+      </>
     );
   }
 
-  rawConfig(virtualService: VirtualService) {
+  rawConfig() {
+    const virtualService: VirtualService = this.props.virtualService;
+
     return (
-      <div className="card-pf-body" key={'virtualServiceConfig'}>
-        <h4>VirtualService: {virtualService.metadata.name}</h4>
-        <div>{this.globalStatus(virtualService)}</div>
-        <div>
-          <strong>Created at</strong>: <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
-        </div>
-        <div>
-          <strong>Resource Version</strong>: {virtualService.metadata.resourceVersion}
-        </div>
-        {virtualService.spec.hosts && virtualService.spec.hosts.length > 0 ? (
-          <DetailObject
-            name="Hosts"
-            detail={virtualService.spec.hosts}
-            validation={this.hostStatusMessage(virtualService)}
-          />
-        ) : (
-          undefined
-        )}
-        {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
-          ? this.generateGatewaysList(virtualService.spec.gateways)
-          : undefined}
-      </div>
+      <GridItem>
+        <Card key={'virtualServiceConfig'}>
+          <CardBody>
+            <Text component={TextVariants.h2}>Virtual Service Overview</Text>
+            {this.globalStatus()}
+            <Text component={TextVariants.h3}>Created at</Text>
+            <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
+
+            <Text component={TextVariants.h3}>Resource Version</Text>
+            {virtualService.metadata.resourceVersion}
+
+            {virtualService.spec.hosts && virtualService.spec.hosts.length > 0 ? (
+              <>
+                <Text component={TextVariants.h3}>Hosts</Text>
+                <DetailObject name="" detail={virtualService.spec.hosts} validation={this.hostStatusMessage()} />
+              </>
+            ) : (
+              undefined
+            )}
+            {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
+              ? this.generateGatewaysList(virtualService.spec.gateways)
+              : undefined}
+          </CardBody>
+        </Card>
+      </GridItem>
     );
   }
 
-  weights(virtualService: VirtualService) {
-    return (
-      <Row className="card-pf-body" key={'virtualServiceWeights'}>
-        <Col>
-          {virtualService.spec.http && virtualService.spec.http.length > 0 ? (
-            <>
-              <VirtualServiceRoute
-                name={virtualService.metadata.name}
-                namespace={virtualService.metadata.namespace || ''}
-                kind="HTTP"
-                routes={virtualService.spec.http}
-                validation={this.props.validation}
-              />
-            </>
-          ) : (
-            undefined
-          )}
-          {virtualService.spec.tcp && virtualService.spec.tcp.length > 0 ? (
-            <>
-              <VirtualServiceRoute
-                name={virtualService.metadata.name}
-                namespace={virtualService.metadata.namespace || ''}
-                kind="TCP"
-                routes={virtualService.spec.tcp}
-                validation={this.props.validation}
-              />
-            </>
-          ) : (
-            undefined
-          )}
-          {virtualService.spec.tls && virtualService.spec.tls.length > 0 ? (
-            <>
-              <VirtualServiceRoute
-                name={virtualService.metadata.name}
-                namespace={virtualService.metadata.namespace || ''}
-                kind="TLS"
-                routes={virtualService.spec.tls}
-                validation={this.props.validation}
-              />
-            </>
-          ) : (
-            undefined
-          )}
-        </Col>
-      </Row>
-    );
+  weights() {
+    const virtualService: VirtualService = this.props.virtualService;
+    const protocols = [
+      { name: 'HTTP', object: virtualService.spec.http },
+      { name: 'TCP', object: virtualService.spec.tcp },
+      { name: 'TLS', object: virtualService.spec.tls }
+    ];
+
+    return protocols.map((protocol, i) => {
+      const { name, object } = protocol;
+      if (object && object.length > 0) {
+        return (
+          <GridItem key={'virtualserviceroute-grid' + i}>
+            <Card>
+              <CardBody>
+                <VirtualServiceRoute
+                  name={virtualService.metadata.name}
+                  namespace={virtualService.metadata.namespace || ''}
+                  kind={name}
+                  routes={object}
+                  validation={this.props.validation}
+                />
+              </CardBody>
+            </Card>
+          </GridItem>
+        );
+      } else {
+        return undefined;
+      }
+    });
   }
 
   render() {
     return (
-      <Row className="row-cards-pf">
-        <Col xs={12} sm={12} md={3} lg={3}>
-          {this.rawConfig(this.props.virtualService)}
-        </Col>
-        <Col xs={12} sm={12} md={9} lg={9}>
-          {this.weights(this.props.virtualService)}
-        </Col>
-      </Row>
+      <div className="container-fluid container-cards-pf">
+        <Grid gutter={'md'}>
+          {this.rawConfig()}
+          {this.weights()}
+        </Grid>
+      </div>
     );
   }
 }
