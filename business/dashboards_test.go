@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 
+	kmodel "github.com/kiali/k-charted/model"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -41,8 +42,8 @@ func TestGetIstioDashboard(t *testing.T) {
 	assert.Equal("Request volume", dashboard.Charts[0].Name)
 	assert.Equal("Request duration", dashboard.Charts[1].Name)
 	assert.Equal("TCP sent", dashboard.Charts[5].Name)
-	assert.Nil(dashboard.Charts[0].Histogram)
-	assert.Nil(dashboard.Charts[1].Metric)
+	assert.Equal(map[string][]*kmodel.SampleStream{}, dashboard.Charts[0].Histogram)
+	assert.Equal([]*kmodel.SampleStream{}, dashboard.Charts[1].Metric)
 	assert.Equal(float64(10), dashboard.Charts[0].Metric[0].Values[0].Value)
 	assert.Equal(float64(20), dashboard.Charts[1].Histogram["avg"][0].Values[0].Value)
 	assert.Equal(float64(13), dashboard.Charts[5].Metric[0].Values[0].Value)

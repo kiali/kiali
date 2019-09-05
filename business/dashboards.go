@@ -126,9 +126,13 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 		newChart := chartTpl.Chart
 		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
 			newChart.Metric = models.ConvertMatrix(metric.Matrix)
+		} else {
+			newChart.Metric = []*kmodel.SampleStream{}
 		}
 		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
 			newChart.Histogram = models.ConvertHistogram(histo)
+		} else {
+			newChart.Histogram = map[string][]*kmodel.SampleStream{}
 		}
 		dashboard.Charts = append(dashboard.Charts, newChart)
 	}
