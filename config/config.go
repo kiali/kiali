@@ -311,6 +311,7 @@ type Config struct {
 	Auth                     AuthConfig               `yaml:"auth,omitempty"`
 	Deployment               DeploymentConfig         `yaml:"deployment,omitempty"`
 	ApiDocumentation         ApiDocumentation         `yaml:"apidocs,omitempty"`
+	CacheConfig              CacheConfig              `yaml:"cache_config,omitempty"`
 }
 
 // NewConfig creates a default Config struct

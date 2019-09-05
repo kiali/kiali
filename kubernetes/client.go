@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -114,8 +113,8 @@ type IstioClientInterface interface {
 type IstioClient struct {
 	IstioClientInterface
 	k8s                      *kube.Clientset
-	projectApi             *osproject_v1_client.ProjectV1Client
-	okd                    *rest.RESTClient
+	projectApi               *osproject_v1_client.ProjectV1Client
+	okd                      *rest.RESTClient
 	istioConfigApi           *rest.RESTClient
 	istioNetworkingApi       *rest.RESTClient
 	istioAuthenticationApi   *rest.RESTClient
@@ -209,7 +208,6 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		}
 		client.projectApi = projectAPI
 	}
-	client.projectApi = projectApi
 
 	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
 	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
