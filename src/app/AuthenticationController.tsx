@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { GrafanaInfo, JaegerState, KialiAppState, LoginStatus } from '../store/Store';
+import { JaegerState, KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { JaegerActions } from '../actions/JaegerActions';
@@ -9,7 +9,6 @@ import { MessageCenterActions } from '../actions/MessageCenterActions';
 import { MessageType } from '../types/MessageCenter';
 import { KialiDispatch } from '../types/Redux';
 import { ServerStatus } from '../types/ServerStatus';
-import { GrafanaActions } from '../actions/GrafanaActions';
 import InitializingScreen from './InitializingScreen';
 import { isKioskMode } from '../utils/SearchParamUtils';
 import * as MessageCenter from '../utils/MessageCenter';
@@ -20,7 +19,6 @@ import JaegerInfo from '../types/JaegerInfo';
 
 interface AuthenticationControllerReduxProps {
   authenticated: boolean;
-  setGrafanaInfo: (grafanaInfo: GrafanaInfo | null) => void;
   setJaegerInfo: (jaegerInfo: JaegerState | null) => void;
   setServerStatus: (serverStatus: ServerStatus) => void;
   setMeshTlsStatus: (meshStatus: TLSStatus) => void;
@@ -103,17 +101,6 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
         .catch(error => {
           MessageCenter.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
-      const getGrafanaInfoPromise = API.getGrafanaInfo()
-        .then(response => this.props.setGrafanaInfo(response.data))
-        .catch(error => {
-          this.props.setGrafanaInfo(null);
-          MessageCenter.addError(
-            'Could not fetch Grafana info. Turning off links to Grafana.',
-            error,
-            'default',
-            MessageType.INFO
-          );
-        });
       const getJaegerInfoPromise = API.getJaegerInfo()
         .then(response => this.setJaegerInfo(response.data))
         .catch(error => {
@@ -126,12 +113,7 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
           );
         });
 
-      const configs = await Promise.all([
-        API.getServerConfig(),
-        getStatusPromise,
-        getGrafanaInfoPromise,
-        getJaegerInfoPromise
-      ]);
+      const configs = await Promise.all([API.getServerConfig(), getStatusPromise, getJaegerInfoPromise]);
       setServerConfig(configs[0].data);
 
       this.setState({ stage: LoginStage.LOGGED_IN });
@@ -178,7 +160,6 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => {
   return {
-    setGrafanaInfo: bindActionCreators(GrafanaActions.setinfo, dispatch),
     setJaegerInfo: bindActionCreators(JaegerActions.setinfo, dispatch),
     setServerStatus: (serverStatus: ServerStatus) => processServerStatus(dispatch, serverStatus),
     setMeshTlsStatus: bindActionCreators(MeshTlsActions.setinfo, dispatch)

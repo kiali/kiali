@@ -8,7 +8,6 @@ import graphDataState from './GraphDataState';
 import globalState from './GlobalState';
 import namespaceState from './NamespaceState';
 import UserSettingsState from './UserSettingsState';
-import GrafanaState from './GrafanaState';
 import JaegerState from './JaegerState';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import MeshTlsState from './MeshTlsState';
@@ -16,7 +15,6 @@ import MeshTlsState from './MeshTlsState';
 const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   authentication: loginState,
   globalState: globalState,
-  grafanaInfo: GrafanaState,
   graph: graphDataState,
   messageCenter,
   namespaces: namespaceState,

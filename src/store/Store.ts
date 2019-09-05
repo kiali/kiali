@@ -103,12 +103,6 @@ export interface UserSettings {
   duration: DurationInSeconds;
 }
 
-export interface GrafanaInfo {
-  url: string;
-  serviceDashboardPath: string;
-  workloadDashboardPath: string;
-}
-
 export interface JaegerState {
   jaegerURL: string;
   enableIntegration: boolean;
@@ -119,7 +113,6 @@ export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
   globalState: GlobalState;
-  grafanaInfo: GrafanaInfo | null;
   statusState: StatusState;
   meshTLSStatus: TLSStatus;
   /** Page Settings */

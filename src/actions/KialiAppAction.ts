@@ -1,5 +1,4 @@
 import { GlobalAction } from './GlobalActions';
-import { GrafanaAction } from './GrafanaActions';
 import { GraphAction } from './GraphActions';
 import { GraphDataAction } from './GraphDataActions';
 import { GraphFilterAction } from './GraphFilterActions';
@@ -13,7 +12,6 @@ import { MeshTlsAction } from './MeshTlsActions';
 
 export type KialiAppAction =
   | GlobalAction
-  | GrafanaAction
   | GraphAction
   | GraphDataAction
   | GraphFilterAction
