@@ -165,13 +165,13 @@ func (c *controllerImpl) initIstioControllersNamespace(namespace string) {
 	controllers[serviceentryType] = createIstioIndexInformer(c.istioClient.istioNetworkingApi, serviceentries, c.refreshDuration, namespace)
 
 	// Authentication API
-	controllers[meshPolicyType] = createIstioIndexInformer(c.istioClient.istioAuthenticationApi, meshPolicies, c.refreshDuration, namespace)
+	// controllers[meshPolicyType] = createIstioIndexInformer(c.istioClient.istioAuthenticationApi, meshPolicies, c.refreshDuration, namespace)
 	controllers[policyType] = createIstioIndexInformer(c.istioClient.istioAuthenticationApi, policies, c.refreshDuration, namespace)
 
 	// RBAC API
 	controllers[serviceroleType] = createIstioIndexInformer(c.istioClient.istioRbacApi, serviceroles, c.refreshDuration, namespace)
 	controllers[servicerolebindingType] = createIstioIndexInformer(c.istioClient.istioRbacApi, servicerolebindings, c.refreshDuration, namespace)
-	controllers[clusterrbacconfigType] = createIstioIndexInformer(c.istioClient.istioRbacApi, clusterrbacconfigs, c.refreshDuration, namespace)
+	// controllers[clusterrbacconfigType] = createIstioIndexInformer(c.istioClient.istioRbacApi, clusterrbacconfigs, c.refreshDuration, namespace)
 
 	// Enable
 	c.istioControllers[namespace] = controllers
@@ -228,10 +228,12 @@ func (c *controllerImpl) controllerInitializer(namespace string) {
 
 	c.syncLock.Lock()
 	defer c.syncLock.Unlock()
+	// Maybe this should wait for the actual controllers to start before
+	// creating more?
 
 	stopChan := make(chan struct{})
 	c.stopChans[namespace] = stopChan
-	log.Debugf("Starting controllers for namespace: %s\n", namespace) // TODO Debugf
+	log.Debugf("Starting controllers for namespace: %s\n", namespace)
 	if c.kubernetesEnabled {
 		c.initKubernetesControllersNamespace(namespace)
 		run(c.controllers[namespace], stopChan)
@@ -240,6 +242,10 @@ func (c *controllerImpl) controllerInitializer(namespace string) {
 		c.initIstioControllersNamespace(namespace)
 		run(c.istioControllers[namespace], stopChan)
 	}
+
+	// TODO Previous istioEnabled && kubernetesEnabled are allowing isEnabled too soon, before the
+	// caches are synced
+
 	c.WaitForSync()
 }
 
@@ -252,7 +258,7 @@ func (c *controllerImpl) Start() {
 
 	if c.controlStopChan == nil {
 		c.controlStopChan = make(chan struct{})
-		go c.projectInformer.Run(c.controlStopChan)
+		c.projectInformer.Run(c.controlStopChan)
 		log.Infof("K8S cache started")
 	} else {
 		log.Warningf("K8S cache is already running")
@@ -270,7 +276,7 @@ func (c *controllerImpl) stopNamespace(namespace string) {
 
 func run(controllers map[string]cache.SharedIndexInformer, stopChan chan struct{}) {
 	for _, cn := range controllers {
-		go cn.Run(stopChan)
+		cn.Run(stopChan)
 	}
 }
 
@@ -729,7 +735,7 @@ func (c *controllerImpl) getGenericIstioObjectList(namespace, istioType string) 
 	vss := c.istioControllers[namespace][istioType].GetIndexer().List()
 	log.Infof("Len of vss: %d for %s\n", len(vss), namespace)
 	if len(vss) > 0 {
-		log.Errorf("Received object of type: %s\n", reflect.TypeOf(vss[0]))
+		log.Debugf("Received object of type: %s\n", reflect.TypeOf(vss[0]))
 		itemList := &GenericIstioObjectList{}
 		obj, ok := vss[0].(*GenericIstioObject)
 		if ok {
@@ -742,10 +748,8 @@ func (c *controllerImpl) getGenericIstioObjectList(namespace, istioType string) 
 				}
 			}
 			itemList.Items = objects
-			log.Infof("Returning items size: %d\n", len(itemList.Items))
+			log.Debugf("Returning items size: %d\n", len(itemList.Items))
 			return itemList, nil
-		} else {
-			log.Errorf("Received object of type: %s\n", reflect.TypeOf(vss[0]))
 		}
 		log.Infof("Got %d %s items back from cache", len(vss), istioType) // Debugf
 	}

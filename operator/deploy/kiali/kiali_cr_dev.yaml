@@ -12,3 +12,9 @@ spec:
     namespace: $NAMESPACE
     service_type: $SERVICE_TYPE
     verbose_mode: $VERBOSE_MODE
+  kubernetes_config:
+    qps: 1750
+    burst: 2000
+  cache_config:
+    cache_enabled: true
+    istio_objects: true

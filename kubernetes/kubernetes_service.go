@@ -132,12 +132,13 @@ func (in *IstioClient) GetProjects(labelSelector string) ([]osproject_v1.Project
 				if err != nil {
 					return nil, err
 				}
-				for i, ns := range nss {
-					if !selector.Matches(labels.Set(ns.GetLabels())) {
-						nss = append(nss[:i], nss[i+1:]...)
-						i--
+				rnss := nss[:0] // Keep same allocation
+				for _, ns := range nss {
+					if selector.Matches(labels.Set(ns.GetLabels())) {
+						rnss = append(rnss, ns)
 					}
 				}
+				return rnss, nil
 			}
 
 			return nss, nil
