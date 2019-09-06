@@ -59,7 +59,7 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	config.Set(conf)
 	_, code, err := getGrafanaInfo("", buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t))
 	assert.Equal(t, "error from Grafana (401): unauthorized", err.Error())
-	assert.Equal(t, 500, code)
+	assert.Equal(t, 503, code)
 }
 
 func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
@@ -69,7 +69,7 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	_, code, err := getGrafanaInfo("", buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t))
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "json: cannot unmarshal")
-	assert.Equal(t, 500, code)
+	assert.Equal(t, 503, code)
 }
 
 func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) dashboardSupplier {

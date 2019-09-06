@@ -58,9 +58,8 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 			q.Set("tags", "{\"error\":\"true\"}")
 
 			u.RawQuery = q.Encode()
-			timeout := time.Duration(1000 * time.Millisecond)
 
-			body, code, reqError := httputil.HttpGet(u.String(), &auth, timeout)
+			body, code, reqError := httputil.HttpGet(u.String(), &auth, time.Second)
 			if reqError != nil {
 				log.Errorf("Error fetching Jaeger Error Traces (%d): %s", code, reqError)
 				return -1, reqError

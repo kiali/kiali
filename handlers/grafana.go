@@ -74,11 +74,11 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 	// Call Grafana REST API to get dashboard urls
 	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, &auth, dashboardSupplier)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, http.StatusServiceUnavailable, err
 	}
 	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, &auth, dashboardSupplier)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, http.StatusServiceUnavailable, err
 	}
 
 	grafanaInfo := models.GrafanaInfo{
@@ -129,5 +129,5 @@ func getDashboardPath(url, searchPattern string, auth *config.Auth, dashboardSup
 }
 
 func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*30)
+	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*10)
 }
