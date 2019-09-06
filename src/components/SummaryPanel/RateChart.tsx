@@ -136,10 +136,10 @@ export class RateChartHttp extends React.Component<RateChartHttpPropType> {
         data={{
           groups: [['OK', '3xx', '4xx', '5xx']],
           columns: [
-            ['OK', this.props.percent2xx],
-            ['3xx', this.props.percent3xx],
-            ['4xx', this.props.percent4xx],
-            ['5xx', this.props.percent5xx]
+            ['OK', this.props.percent2xx.toFixed(2)],
+            ['3xx', this.props.percent3xx.toFixed(2)],
+            ['4xx', this.props.percent4xx.toFixed(2)],
+            ['5xx', this.props.percent5xx.toFixed(2)]
           ],
           // order: 'asc',
           colors: {

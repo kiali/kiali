@@ -3,7 +3,14 @@ import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfl
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
-import { GraphType, NodeType, Protocol, SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
+import {
+  GraphType,
+  NodeType,
+  Protocol,
+  SummaryPanelPropType,
+  DecoratedGraphNodeData,
+  UNKNOWN
+} from '../../types/Graph';
 import { renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
@@ -12,7 +19,9 @@ import {
   getNodeMetricType,
   renderNoTraffic,
   NodeMetricType,
-  renderLabels
+  renderLabels,
+  summaryBodyTabs,
+  summaryNavTabs
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
 import { Response } from '../../services/Api';
@@ -124,13 +133,10 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         <HeadingBlock prefix="To" node={dest} />
         {isMtls && <MTLSBlock />}
         {(isGrpc || isHttp) && (
-          <div
-            className="panel-body"
-            style={{ padding: '0px', paddingLeft: '15px', paddingRight: '15px', paddingBottom: '15px' }}
-          >
+          <div className={`"panel-body ${summaryBodyTabs}`}>
             <TabContainer id="basic-tabs" defaultActiveKey="traffic">
               <div>
-                <Nav bsClass="nav nav-tabs nav-tabs-pf" style={{ paddingLeft: '20px' }}>
+                <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
                   <NavItem eventKey="traffic">
                     <div>Traffic</div>
                   </NavItem>
@@ -229,7 +235,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     }
     const comparator = (metric: Metric) => {
       if (this.isSpecialServiceDest(destMetricType)) {
-        return metric[sourceLabel] === sourceValue && metric.destination_workload === 'unknown';
+        return metric[sourceLabel] === sourceValue && metric.destination_workload === UNKNOWN;
       }
       return metric[sourceLabel] === sourceValue;
     };

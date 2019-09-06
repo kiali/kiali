@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Icon } from 'patternfly-react';
+import { style } from 'typestyle';
 import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
@@ -17,6 +18,15 @@ export enum NodeMetricType {
   WORKLOAD = 2,
   SERVICE = 3
 }
+
+export const summaryBodyTabs = style({
+  padding: '0 15px 15px'
+});
+
+export const summaryNavTabs = style({
+  fontSize: '13px',
+  paddingLeft: '1.5em'
+});
 
 export const shouldRefreshData = (prevProps: SummaryPanelPropType, nextProps: SummaryPanelPropType) => {
   return (

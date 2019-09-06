@@ -9,7 +9,14 @@ import {
 } from '../../utils/TrafficRate';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import { GraphType, NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
+import {
+  GraphType,
+  NodeType,
+  SummaryPanelPropType,
+  Protocol,
+  DecoratedGraphNodeData,
+  UNKNOWN
+} from '../../types/Graph';
 import { Metrics, Metric } from '../../types/Metrics';
 import {
   shouldRefreshData,
@@ -228,7 +235,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     };
     if (this.isServiceDestCornerCase(nodeMetricType)) {
       comparator = (metric: Metric, protocol?: Protocol) => {
-        return (protocol ? metric.request_protocol === protocol : true) && metric.destination_workload === 'unknown';
+        return (protocol ? metric.request_protocol === protocol : true) && metric.destination_workload === UNKNOWN;
       };
     } else if (data.isRoot) {
       comparator = (metric: Metric, protocol?: Protocol) => {

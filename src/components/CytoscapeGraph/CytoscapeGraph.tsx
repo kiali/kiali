@@ -35,7 +35,8 @@ import {
   DecoratedGraphElements,
   GraphType,
   NodeParamsType,
-  NodeType
+  NodeType,
+  UNKNOWN
 } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import * as H from '../../types/Health';
@@ -185,7 +186,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       switch (node.nodeType) {
         case NodeType.APP:
           selector = selector + "[app = '" + node.app + "']";
-          if (node.version && node.version !== 'unknown') {
+          if (node.version && node.version !== UNKNOWN) {
             selector = selector + "[version = '" + node.version + "']";
           }
           break;
@@ -685,11 +686,11 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         return;
       }
       const namespace = ele.data(CyNode.namespace);
-      const namespaceOk = namespace && namespace !== '' && namespace !== 'unknown';
+      const namespaceOk = namespace && namespace !== '' && namespace !== UNKNOWN;
       // incomplete telemetry can result in an unknown namespace, if so set nodeType UNKNOWN
       const nodeType = namespaceOk ? ele.data(CyNode.nodeType) : NodeType.UNKNOWN;
       const workload = ele.data(CyNode.workload);
-      const workloadOk = workload && workload !== '' && workload !== 'unknown';
+      const workloadOk = workload && workload !== '' && workload !== UNKNOWN;
       // use workload health when workload is set and valid (workload nodes or versionApp nodes)
       const useWorkloadHealth = nodeType === NodeType.WORKLOAD || (nodeType === NodeType.APP && workloadOk);
 

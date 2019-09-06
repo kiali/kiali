@@ -6,6 +6,7 @@ import { style } from 'typestyle';
 import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { NodeType } from 'types/Graph';
 
 type ReduxProps = {
   jaegerIntegration: boolean;
@@ -111,7 +112,7 @@ export class NodeContextMenu extends React.PureComponent<Props> {
 
   render() {
     // Disable context menu if we are dealing with a unknown or an inaccessible node
-    if (this.props.nodeType === 'unknown' || this.props.isInaccessible) {
+    if (this.props.nodeType === NodeType.UNKNOWN || this.props.isInaccessible) {
       this.props.contextMenu.disable();
       return null;
     }

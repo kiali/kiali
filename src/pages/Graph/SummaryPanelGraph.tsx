@@ -1,17 +1,24 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType, NodeType } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
-import { Icon } from 'patternfly-react';
-import { shouldRefreshData, getDatapoints, mergeMetricsResponses } from './SummaryPanelCommon';
+import {
+  shouldRefreshData,
+  getDatapoints,
+  mergeMetricsResponses,
+  summaryBodyTabs,
+  summaryNavTabs
+} from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Paths } from '../../config';
+import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -85,8 +92,17 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     const numEdges = cy.edges().size();
     // when getting accumulated traffic rates don't count requests from injected service nodes
     const nonServiceEdges = cy.$(`node[nodeType != "${NodeType.SERVICE}"][!isGroup]`).edgesTo('*');
-    const trafficRateGrpc = getAccumulatedTrafficRateGrpc(nonServiceEdges);
-    const trafficRateHttp = getAccumulatedTrafficRateHttp(nonServiceEdges);
+    const totalRateGrpc = getAccumulatedTrafficRateGrpc(nonServiceEdges);
+    const totalRateHttp = getAccumulatedTrafficRateHttp(nonServiceEdges);
+    const incomingEdges = cy.$(`node[?${CyNode.isRoot}]`).edgesTo('*');
+    const incomingRateGrpc = getAccumulatedTrafficRateGrpc(incomingEdges);
+    const incomingRateHttp = getAccumulatedTrafficRateHttp(incomingEdges);
+    const outgoingEdges = cy
+      .nodes()
+      .leaves(`node[?${CyNode.isOutside}],[?${CyNode.isServiceEntry}]`)
+      .connectedEdges();
+    const outgoingRateGrpc = getAccumulatedTrafficRateGrpc(outgoingEdges);
+    const outgoingRateHttp = getAccumulatedTrafficRateHttp(outgoingEdges);
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
@@ -95,31 +111,113 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
           {this.props.namespaces.map(namespace => namespace.name).join(', ')}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
         </div>
-        <div className="panel-body">
-          <div>
-            {trafficRateGrpc.rate > 0 && (
-              <RateTableGrpc
-                title="GRPC Traffic (requests per second):"
-                rate={trafficRateGrpc.rate}
-                rateErr={trafficRateGrpc.rateErr}
-              />
-            )}
-            {trafficRateHttp.rate > 0 && (
-              <RateTableHttp
-                title="HTTP Traffic (requests per second):"
-                rate={trafficRateHttp.rate}
-                rate3xx={trafficRateHttp.rate3xx}
-                rate4xx={trafficRateHttp.rate4xx}
-                rate5xx={trafficRateHttp.rate5xx}
-              />
-            )}
-            {this.shouldShowRPSChart() && (
-              <div>
-                <hr />
-                {this.renderRpsChart()}
-              </div>
-            )}
-          </div>
+        <div className={`"panel-body ${summaryBodyTabs}`}>
+          <TabContainer id="basic-tabs" defaultActiveKey="incoming">
+            <div>
+              <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
+                <NavItem eventKey="incoming">
+                  <div>Incoming </div>
+                </NavItem>
+                <NavItem eventKey="outgoing">
+                  <div>Outgoing </div>
+                </NavItem>
+                <NavItem eventKey="total">
+                  <div>Total</div>
+                </NavItem>
+              </Nav>
+              <TabContent style={{ paddingTop: '10px' }}>
+                <TabPane eventKey="incoming" mountOnEnter={true} unmountOnExit={true}>
+                  <>
+                    {incomingRateGrpc.rate === 0 && incomingRateHttp.rate === 0 && (
+                      <>
+                        <Icon type="pf" name="info" /> No incoming traffic.
+                      </>
+                    )}
+                    {incomingRateGrpc.rate > 0 && (
+                      <RateTableGrpc
+                        title="GRPC Traffic (requests per second):"
+                        rate={incomingRateGrpc.rate}
+                        rateErr={incomingRateGrpc.rateErr}
+                      />
+                    )}
+                    {incomingRateHttp.rate > 0 && (
+                      <RateTableHttp
+                        title="HTTP Traffic (requests per second):"
+                        rate={incomingRateHttp.rate}
+                        rate3xx={incomingRateHttp.rate3xx}
+                        rate4xx={incomingRateHttp.rate4xx}
+                        rate5xx={incomingRateHttp.rate5xx}
+                      />
+                    )}
+                    {
+                      // We don't show a sparkline here because we need to aggregate the traffic of an
+                      // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
+                    }
+                  </>
+                </TabPane>
+                <TabPane eventKey="outgoing" mountOnEnter={true} unmountOnExit={true}>
+                  <>
+                    {outgoingRateGrpc.rate === 0 && outgoingRateHttp.rate === 0 && (
+                      <>
+                        <Icon type="pf" name="info" /> No outgoing traffic.
+                      </>
+                    )}
+                    {outgoingRateGrpc.rate > 0 && (
+                      <RateTableGrpc
+                        title="GRPC Traffic (requests per second):"
+                        rate={outgoingRateGrpc.rate}
+                        rateErr={outgoingRateGrpc.rateErr}
+                      />
+                    )}
+                    {outgoingRateHttp.rate > 0 && (
+                      <RateTableHttp
+                        title="HTTP Traffic (requests per second):"
+                        rate={outgoingRateHttp.rate}
+                        rate3xx={outgoingRateHttp.rate3xx}
+                        rate4xx={outgoingRateHttp.rate4xx}
+                        rate5xx={outgoingRateHttp.rate5xx}
+                      />
+                    )}
+                    {
+                      // We don't show a sparkline here because we need to aggregate the traffic of an
+                      // ad hoc set of [root] nodes. We don't have backend support for that aggregation.
+                    }
+                  </>
+                </TabPane>
+                <TabPane eventKey="total" mountOnEnter={true} unmountOnExit={true}>
+                  <>
+                    {totalRateGrpc.rate === 0 && totalRateHttp.rate === 0 && (
+                      <>
+                        <Icon type="pf" name="info" /> No traffic.
+                      </>
+                    )}
+                    {totalRateGrpc.rate > 0 && (
+                      <RateTableGrpc
+                        title="GRPC Traffic (requests per second):"
+                        rate={totalRateGrpc.rate}
+                        rateErr={totalRateGrpc.rateErr}
+                      />
+                    )}
+                    {totalRateHttp.rate > 0 && (
+                      <RateTableHttp
+                        title="HTTP Traffic (requests per second):"
+                        rate={totalRateHttp.rate}
+                        rate3xx={totalRateHttp.rate3xx}
+                        rate4xx={totalRateHttp.rate4xx}
+                        rate5xx={totalRateHttp.rate5xx}
+                      />
+                    )}
+                    {this.shouldShowRPSChart() && (
+                      <div>
+                        <hr />
+                        {this.renderRpsChart()}
+                      </div>
+                    )}
+                  </>
+                </TabPane>
+              </TabContent>
+            </div>
+          </TabContainer>
         </div>
       </div>
     );

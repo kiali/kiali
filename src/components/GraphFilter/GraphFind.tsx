@@ -10,7 +10,7 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import GraphHelpFind from '../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
-import { CyData } from '../../types/Graph';
+import { CyData, NodeType } from '../../types/Graph';
 import { Layout } from 'types/GraphFilter';
 
 type ReduxProps = {
@@ -483,19 +483,19 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         let nodeType = val.toLowerCase();
         switch (nodeType) {
           case 'svc':
-            nodeType = 'service';
+            nodeType = NodeType.SERVICE;
             break;
           case 'wl':
-            nodeType = 'workload';
+            nodeType = NodeType.WORKLOAD;
             break;
           default:
             break; // no-op
         }
         switch (nodeType) {
-          case 'app':
-          case 'service':
-          case 'workload':
-          case 'unknown':
+          case NodeType.APP:
+          case NodeType.SERVICE:
+          case NodeType.WORKLOAD:
+          case NodeType.UNKNOWN:
             return { target: 'node', selector: `[${CyNode.nodeType} ${op} "${nodeType}"]` };
           default:
             this.setErrorMsg(`Invalid node type [${nodeType}]. Expected app | service | unknown | workload`);

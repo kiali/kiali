@@ -52,6 +52,8 @@ export enum NodeType {
   WORKLOAD = 'workload'
 }
 
+export const UNKNOWN = 'unknown';
+
 export interface NodeParamsType {
   app: string;
   namespace: Namespace;

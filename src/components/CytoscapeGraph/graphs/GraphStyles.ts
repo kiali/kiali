@@ -1,7 +1,13 @@
 import { PfColors } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
-import { GraphType, NodeType, CytoscapeGlobalScratchNamespace, CytoscapeGlobalScratchData } from '../../../types/Graph';
+import {
+  GraphType,
+  NodeType,
+  CytoscapeGlobalScratchNamespace,
+  CytoscapeGlobalScratchData,
+  UNKNOWN
+} from '../../../types/Graph';
 import { icons } from '../../../config';
 import NodeImageTopology from '../../../assets/img/node-background-topology.png';
 import NodeImageKey from '../../../assets/img/node-background-key.png';
@@ -227,7 +233,7 @@ export class GraphStyles {
             case NodeType.APP:
               if (cyGlobal.graphType === GraphType.APP) {
                 content = app;
-              } else if (version && version !== 'unknown') {
+              } else if (version && version !== UNKNOWN) {
                 content = version;
               } else {
                 content = workload ? `${workload}` : `${app}`;
@@ -249,7 +255,7 @@ export class GraphStyles {
           }
           switch (nodeType) {
             case NodeType.APP:
-              if (cyGlobal.graphType === GraphType.APP || isGroup || version === 'unknown') {
+              if (cyGlobal.graphType === GraphType.APP || isGroup || version === UNKNOWN) {
                 contentArray.unshift(app);
               } else {
                 contentArray.unshift(version);
@@ -260,7 +266,7 @@ export class GraphStyles {
               contentArray.unshift(service);
               break;
             case NodeType.UNKNOWN:
-              contentArray.unshift('unknown');
+              contentArray.unshift(UNKNOWN);
               break;
             case NodeType.WORKLOAD:
               contentArray.unshift(workload);

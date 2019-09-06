@@ -9,7 +9,7 @@ import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, PollIntervalInMs, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import Namespace from '../../types/Namespace';
-import { GraphType, NodeParamsType, NodeType, SummaryData } from '../../types/Graph';
+import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../../types/Graph';
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
@@ -150,13 +150,13 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
 
   static getNodeParamsFromProps(props: RouteComponentProps<Partial<GraphURLPathProps>>): NodeParamsType | undefined {
     const app = props.match.params.app;
-    const appOk = app && app !== 'unknown' && app !== 'undefined';
+    const appOk = app && app !== UNKNOWN && app !== 'undefined';
     const namespace = props.match.params.namespace;
-    const namespaceOk = namespace && namespace !== 'unknown' && namespace !== 'undefined';
+    const namespaceOk = namespace && namespace !== UNKNOWN && namespace !== 'undefined';
     const service = props.match.params.service;
-    const serviceOk = service && service !== 'unknown' && service !== 'undefined';
+    const serviceOk = service && service !== UNKNOWN && service !== 'undefined';
     const workload = props.match.params.workload;
-    const workloadOk = workload && workload !== 'unknown' && workload !== 'undefined';
+    const workloadOk = workload && workload !== UNKNOWN && workload !== 'undefined';
     if (!appOk && !namespaceOk && !serviceOk && !workloadOk) {
       return;
     }
@@ -379,7 +379,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   private getTitle(node: NodeParamsType) {
     if (node.nodeType === NodeType.APP) {
       let title = node.app;
-      if (node.version && node.version !== 'unknown') {
+      if (node.version && node.version !== UNKNOWN) {
         title += ' - ' + node.version;
       }
 
