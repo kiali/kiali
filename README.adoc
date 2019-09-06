@@ -481,10 +481,7 @@ In the provided Kubernetes templates, SSL is turned on by default. If you want t
 
 == Contributing
 
-All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches.
-To setup your environment, check instructions in the link:#building[Building] and link:#running[Running] sections.
-
-Get involved by submitting pull requests on GitHub. Before you do, please talk to us.
+See the link:./CONTRIBUTING.md[Contribution Guide].
 
 === Talk to us
 
