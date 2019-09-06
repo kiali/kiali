@@ -28,6 +28,8 @@ const rightToolbarStyle = style({ float: 'right', marginTop: '8px' });
 interface IstioConfigDetailsState {
   istioObjectDetails?: IstioConfigDetails;
   istioValidations?: ObjectValidation;
+  originalIstioObjectDetails?: IstioConfigDetails;
+  originalIstioValidations?: ObjectValidation;
   isModified: boolean;
   yamlModified?: string;
   yamlValidations?: AceValidations;
@@ -83,7 +85,9 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
       .then(resultConfigDetails => {
         this.setState({
           istioObjectDetails: resultConfigDetails.data,
+          originalIstioObjectDetails: resultConfigDetails.data,
           istioValidations: resultConfigDetails.data.validation,
+          originalIstioValidations: resultConfigDetails.data.validation,
           isModified: false,
           yamlModified: '',
           currentTab: activeTab(tabName, this.defaultTab())
@@ -154,7 +158,20 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   onCancel = () => {
     if (this.hasOverview()) {
-      this.props.history.push(this.props.location.pathname + '?list=overview');
+      this.setState(
+        prevState => {
+          return {
+            isModified: false,
+            yamlModified: '',
+            currentTab: 'overview',
+            istioObjectDetails: prevState.originalIstioObjectDetails,
+            istioValidations: prevState.originalIstioValidations
+          };
+        },
+        () => {
+          this.props.history.push(this.props.location.pathname + '?list=overview');
+        }
+      );
     } else {
       this.backToList();
     }
