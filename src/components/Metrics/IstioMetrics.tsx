@@ -4,10 +4,11 @@ import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Dashboard, DashboardModel } from '@kiali/k-charted-pf4';
+import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
-import { GrafanaInfo, KialiAppState } from '../../store/Store';
+import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOptions';
 import * as MessageCenter from '../../utils/MessageCenter';
@@ -19,11 +20,13 @@ import MetricsReporter from '../MetricsOptions/MetricsReporter';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
 import history from '../../app/History';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import { style } from 'typestyle';
+import { GrafanaInfo } from '../../types/GrafanaInfo';
+import { MessageType } from '../../types/MessageCenter';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
+  grafanaLink?: string;
 };
 
 type ObjectId = {
@@ -33,7 +36,6 @@ type ObjectId = {
 
 type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
-    grafanaInfo?: GrafanaInfo;
     objectType: MetricsObjectTypes;
     direction: Direction;
   };
@@ -44,12 +46,11 @@ const displayFlex = style({
 
 class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   options: IstioMetricsOptions;
-  grafanaLink: string | undefined;
+  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
 
   constructor(props: IstioMetricsProps) {
     super(props);
 
-    this.grafanaLink = this.getGrafanaLink();
     const settings = MetricsHelper.readMetricsSettingsFromURL();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
@@ -67,6 +68,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   }
 
   componentDidMount() {
+    this.fetchGrafanaInfo();
     this.fetchMetrics();
   }
 
@@ -100,15 +102,38 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
       });
   };
 
-  getGrafanaLink(): string | undefined {
-    if (this.props.grafanaInfo) {
+  fetchGrafanaInfo() {
+    if (!IstioMetrics.grafanaInfoPromise) {
+      IstioMetrics.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+        if (response.status === 204) {
+          return undefined;
+        }
+        return response.data;
+      });
+    }
+    IstioMetrics.grafanaInfoPromise
+      .then(grafanaInfo => {
+        this.setState({ grafanaLink: this.buildGrafanaLink(grafanaInfo) });
+      })
+      .catch(err => {
+        MessageCenter.addError(
+          'Could not fetch Grafana info. Turning off links to Grafana.',
+          err,
+          'default',
+          MessageType.INFO
+        );
+      });
+  }
+
+  buildGrafanaLink(grafanaInfo) {
+    if (grafanaInfo) {
       switch (this.props.objectType) {
         case MetricsObjectTypes.SERVICE:
-          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.serviceDashboardPath}?var-service=${
-            this.props.object
-          }.${this.props.namespace}.svc.cluster.local`;
+          return `${grafanaInfo.url}${grafanaInfo.serviceDashboardPath}?var-service=${this.props.object}.${
+            this.props.namespace
+          }.svc.cluster.local`;
         case MetricsObjectTypes.WORKLOAD:
-          return `${this.props.grafanaInfo.url}${this.props.grafanaInfo.workloadDashboardPath}?var-namespace=${
+          return `${grafanaInfo.url}${grafanaInfo.workloadDashboardPath}?var-namespace=${
             this.props.namespace
           }&var-workload=${this.props.object}`;
         default:
@@ -178,9 +203,9 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          {this.grafanaLink && (
+          {this.state.grafanaLink && (
             <ToolbarItem style={{ borderRight: 'none' }}>
-              <a id={'grafana_link'} href={this.grafanaLink} target="_blank" rel="noopener noreferrer">
+              <a id={'grafana_link'} href={this.state.grafanaLink} target="_blank" rel="noopener noreferrer">
                 View in Grafana <ExternalLinkAltIcon />
               </a>
             </ToolbarItem>
@@ -208,9 +233,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
-  grafanaInfo: state.grafanaInfo || undefined
-});
+const mapStateToProps = (_: KialiAppState) => ({});
 
 const IstioMetricsContainer = withRouter<RouteComponentProps<{}> & IstioMetricsProps>(
   connect(mapStateToProps)(IstioMetrics)

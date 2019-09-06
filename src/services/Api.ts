@@ -9,7 +9,7 @@ import { IstioConfigList } from '../types/IstioConfigList';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import JaegerInfo from '../types/JaegerInfo';
-import { GrafanaInfo, LoginSession } from '../store/Store';
+import { LoginSession } from '../store/Store';
 import {
   AppHealth,
   ServiceHealth,
@@ -30,6 +30,7 @@ import { ServerConfig } from '../types/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
 import { Pod, PodLogs } from '../types/IstioObjects';
 import { ThreeScaleHandler, ThreeScaleInfo, ThreeScaleServiceRule } from '../types/ThreeScale';
+import { GrafanaInfo } from '../types/GrafanaInfo';
 
 export const ANONYMOUS_USER = 'anonymous';
 

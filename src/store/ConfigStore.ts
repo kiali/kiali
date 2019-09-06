@@ -16,7 +16,6 @@ import { INITIAL_USER_SETTINGS_STATE } from '../reducers/UserSettingsState';
 import { INITIAL_MESSAGE_CENTER_STATE } from '../reducers/MessageCenter';
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
-import { INITIAL_GRAFANA_STATE } from '../reducers/GrafanaState';
 import { INITIAL_JAEGER_STATE } from '../reducers/JaegerState';
 import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 
@@ -79,7 +78,6 @@ const initialStore: KialiAppState = {
   messageCenter: INITIAL_MESSAGE_CENTER_STATE,
   graph: INITIAL_GRAPH_STATE,
   userSettings: INITIAL_USER_SETTINGS_STATE,
-  grafanaInfo: INITIAL_GRAFANA_STATE,
   jaegerState: INITIAL_JAEGER_STATE,
   meshTLSStatus: INITIAL_MESH_TLS_STATE
 };
