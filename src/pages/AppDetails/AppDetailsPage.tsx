@@ -72,12 +72,14 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.app !== prevProps.match.params.app ||
+      this.state.currentTab !== activeTab(tabName, defaultTab) ||
       this.props.duration !== prevProps.duration
     ) {
       this.setState(
         {
           app: emptyApp,
-          health: undefined
+          health: undefined,
+          currentTab: activeTab(tabName, defaultTab)
         },
         () => this.doRefresh()
       );
@@ -268,6 +270,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           tabName={tabName}
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
+          activeTab={this.state.currentTab}
         >
           {this.renderTabs()}
         </ParameterizedTabs>

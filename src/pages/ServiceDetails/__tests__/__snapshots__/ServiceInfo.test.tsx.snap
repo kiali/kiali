@@ -217,6 +217,7 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
         xs={12}
       >
         <ParameterizedTabs
+          activeTab="workloads"
           defaultTab="workloads"
           id="service-tabs"
           onSelect={[Function]}

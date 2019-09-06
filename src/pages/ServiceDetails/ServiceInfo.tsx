@@ -59,6 +59,16 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     };
   }
 
+  componentDidUpdate() {
+    const aTab = activeTab(tabName, defaultTab);
+
+    if (this.state.currentTab !== aTab) {
+      this.setState({
+        currentTab: aTab
+      });
+    }
+  }
+
   validationChecks(): ValidationChecks {
     const validationChecks = {
       hasVirtualServiceChecks: false,
@@ -210,6 +220,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 tabMap={paramToTab}
                 tabName={tabName}
                 defaultTab={defaultTab}
+                activeTab={this.state.currentTab}
               >
                 <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>

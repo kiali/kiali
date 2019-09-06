@@ -169,12 +169,14 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     if (
       prevProps.match.params.namespace !== this.props.match.params.namespace ||
       prevProps.match.params.service !== this.props.match.params.service ||
+      this.state.currentTab !== activeTab(tabName, defaultTab) ||
       prevProps.duration !== this.props.duration
     ) {
       this.setState(
         {
           serviceDetailsInfo: emptyService,
           trafficData: null,
+          currentTab: activeTab(tabName, defaultTab),
           validations: {}
         },
         () => this.doRefresh()
@@ -442,6 +444,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           tabName={tabName}
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
+          activeTab={this.state.currentTab}
         >
           {tabsArray}
         </ParameterizedTabs>

@@ -52,6 +52,16 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     };
   }
 
+  componentDidUpdate() {
+    const aTab = activeTab(tabName, defaultTab);
+
+    if (this.state.currentTab !== aTab) {
+      this.setState({
+        currentTab: aTab
+      });
+    }
+  }
+
   validationChecks(): ValidationChecks {
     const validationChecks = {
       hasPodsChecks: false
@@ -133,6 +143,7 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
                 tabMap={paramToTab}
                 tabName={tabName}
                 defaultTab={defaultTab}
+                activeTab={this.state.currentTab}
               >
                 <Tab title={podTabTitle} eventKey={0}>
                   {pods.length > 0 && (

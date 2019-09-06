@@ -69,6 +69,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     if (
       this.props.match.params.namespace !== prevProps.match.params.namespace ||
       this.props.match.params.workload !== prevProps.match.params.workload ||
+      this.state.currentTab !== activeTab(tabName, defaultTab) ||
       this.props.duration !== prevProps.duration
     ) {
       this.setState(
@@ -76,6 +77,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           workload: emptyWorkload,
           validations: {},
           istioEnabled: true, // true until proven otherwise
+          currentTab: activeTab(tabName, defaultTab),
           health: undefined
         },
         () => this.doRefresh()
@@ -350,6 +352,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           tabName={tabName}
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
+          activeTab={this.state.currentTab}
         >
           {this.renderTabs()}
         </ParameterizedTabs>

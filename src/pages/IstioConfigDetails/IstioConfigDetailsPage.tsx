@@ -85,7 +85,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           istioObjectDetails: resultConfigDetails.data,
           istioValidations: resultConfigDetails.data.validation,
           isModified: false,
-          yamlModified: ''
+          yamlModified: '',
+          currentTab: activeTab(tabName, this.defaultTab())
         });
       })
       .catch(error => {
@@ -111,6 +112,12 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (this.aceEditorRef.current) {
       // tslint:disable-next-line
       this.aceEditorRef.current!['editor'].onChangeAnnotation();
+    }
+
+    if (this.state.currentTab !== activeTab(tabName, this.defaultTab())) {
+      this.setState({
+        currentTab: activeTab(tabName, this.defaultTab())
+      });
     }
 
     if (!this.propsMatch(prevProps)) {
@@ -364,6 +371,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         tabMap={paramToTab}
         tabName={tabName}
         defaultTab={this.defaultTab()}
+        activeTab={this.state.currentTab}
       >
         {tabs}
       </ParameterizedTabs>
