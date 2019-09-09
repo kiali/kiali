@@ -20,6 +20,9 @@ yarn
 yarn start
 ----
 
+[NOTE]
+On some platforms, `yarn start` may fail with an error like `Error: ENOSPC: System limit for number of file watchers reached`. To fix this, you need to increase the limit of file watchers on your system. The command may vary depending on the platform, please refer to link:https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers[these instructions].
+
 A new browser window should automatically open.
 But, if it doesn't then use:
 `http://localhost:3000`
