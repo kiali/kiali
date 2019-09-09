@@ -13,6 +13,7 @@
     - "{{ operators.maistra.namespace }}"
     - "{{ operators.jaeger.namespace }}"
     - "{{ operators.kiali.namespace }}"
+    - "{{ operators.elasticsearch.namespace }}"
     - "{{ kiali.test_mesh.operator.namespace }}"
     - "{{ maistra.cr.control_planes }}"
 

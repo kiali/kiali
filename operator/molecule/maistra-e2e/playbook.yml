@@ -60,7 +60,6 @@
     assert:
       that:
       - "'{{ item.0.external_services.grafana.in_cluster_url }}' == 'https://grafana.{{ item.1.resources[0].metadata.namespace }}.svc:3000'" 
-      - "{{ item.1.resources[0].spec.istio.grafana.enabled }} == true "
     with_together:
     - "{{ kiali_configurations }}"
     - "{{ smcps.results }}"
