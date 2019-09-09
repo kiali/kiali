@@ -7,7 +7,7 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-// constanst usable by any protocol
+// constants usable by any protocol
 const (
 	requestsPerSecond = "requests per second"
 	rps               = "rps"

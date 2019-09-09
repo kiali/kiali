@@ -50,6 +50,11 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 				continue
 			}
 
+			// A service node that is the PassthroughCluster is never considered dead
+			if _, ok := n.Metadata[graph.IsPassthroughCluster]; ok {
+				continue
+			}
+
 			// a service node with no incoming error traffic and no outgoing edges, is dead.
 			// Incoming non-error traffic can not raise the dead because it is caused by an
 			// edge case (pod life-cycle change) that we don't want to see.
