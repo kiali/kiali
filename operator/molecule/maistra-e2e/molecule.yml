@@ -31,6 +31,7 @@ provisioner:
             name: "{{ secret.metadata.name }}"
           elasticsearch:
             namespace: openshift-logging
+            image: quay.io/openshift/origin-elasticsearch-operator:latest
           jaeger:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
