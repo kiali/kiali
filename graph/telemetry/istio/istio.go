@@ -258,9 +258,13 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	isIstioNamespace := o.Namespaces[namespace].IsIstio
 
 	// query prometheus for request traffic in three queries:
-	// 1) query for traffic originating from "unknown" (i.e. the internet).
+	// 1) query for traffic originating from "unknown" (i.e. the internet). Unknown sources have no istio sidecar so
+	//    it is destination telemetry. Here we use destination_workload_namespace because destination telemetry
+	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
+	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
+	//    defined, on the other cluster.
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
-	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
+	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
@@ -268,7 +272,8 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	unkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 	populateTrafficMap(trafficMap, &unkVector, o)
 
-	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
+	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner
+	//	  case resulting from pod lifecycle changes).  Here use destination_service_workload to capture failed requests never reaching a dest workload.
 	reporter := "source"
 	sourceWorkloadNamespaceQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
 	if isIstioNamespace {
@@ -389,7 +394,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		flags := string(lFlags)
 
 		val := float64(s.Value)
-		destSvcName = handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName)
+		destSvcNs, destSvcName = handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
@@ -472,7 +477,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		flags := string(lFlags)
 
 		val := float64(s.Value)
-		destSvcName = handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName)
+		destSvcNs, destSvcName = handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
 		if o.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
@@ -658,18 +663,20 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	case graph.NodeTypeService:
 		// for service requests we want source reporting to capture source-reported errors.  But unknown only generates destination telemetry.  So
 		// perform a special query just to capture [successful] request telemetry from unknown.
-		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s",destination_service_name=~"%s|%s\..+\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
+			n.Service,
 			n.Service,
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMap(trafficMap, &vector, o)
 
-		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\..+\.global} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
+			n.Service,
 			n.Service,
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
@@ -871,29 +878,40 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 	return nil
 }
 
-// handleMultiClusterServiceName resolves the right name for the destination svc
-// given a multi-cluster setup.
+// handleMultiClusterRequest ensures the proper destination service workload and name
+// for requests forwarded from another cluster (via a ServiceEntry).
 //
-// For multi-cluster setup, if "we are" the DESTINATION cluster of traffic,
-// the destination_service_name label will contain the
-// hostname that the source cluster requested. Since we know that the requested hostname
-// has the form "svc_name.ns_name.global", we can truncate the destSvcName to the
-// prefix to correctly unify svc nodes. This way, the graph will show only one "svc_name" node
-// instead of duplicating and having one "svc_name" and one "svc_name.ns_name.global" node which,
-// in practice, are same.
+// Given a request from clusterA to clusterB, clusterA will generate source telemetry
+// (from the source workload to the service entry) and clusterB will generate destination
+// telemetry (from unknown to the destination workload). If this is the destination
+// telemetry the destination_service_name label will be set to the service entry host,
+// which is required to have the form <name>.<namespace>.global where name and namespace
+// correspond to the remote service’s name and namespace respectively. In this situation
+// we massage the request in two ways:
 //
-// This is done only if source workload is "unknown" which is what is recorded in telemetry
-// when traffic is coming from a remote cluster. If source workload IS known,
-// then, traffic is most-likely going to a ServiceEntry and being routed out of the cluster (i.e.
-// the "source cluster" case). That case is handled in the service_entry.go file.
-func handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName string) string {
+// First, we reset destSvcName to <name> in order to unify remote and local requests to the
+// service. By doing this the graph will show only one <service> node instead of having a
+// node for both <service> and <name>.<namespace>.global which in practice, are the same.
+//
+// Second, we reset destSvcNs to <namespace>. We want destSvcNs to be set to the namespace
+// of the remote service's namespace.  But in practice it will be set to the namespace
+// (on clusterA) where the servieEntry is defined. This is not useful for the visualization,
+// and so we replace it here. Note that <namespace> should be equivalent to the value set for
+// destination_workload_namespace, we just use <namespace> for convenience, we have it here.
+//
+// All of this is only done if source workload is "unknown", which is what indicates that
+// this represents the destination telemetry on clusterB, and if the destSvcName is in
+// the MC format. When the source workload IS known the traffic it should be representing
+// the clusterA traffic to the ServiceEntry and being routed out of the cluster. That use
+// case is handled in the service_entry.go file.
+func handleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName string) (string, string) {
 	if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown {
 		destSvcNameEntries := strings.Split(destSvcName, ".")
 
 		if len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
-			destSvcName = destSvcNameEntries[0]
+			return destSvcNameEntries[1], destSvcNameEntries[0]
 		}
 	}
 
-	return destSvcName
+	return destSvcNs, destSvcName
 }
