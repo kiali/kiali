@@ -36,7 +36,7 @@ provisioner:
             image: docker.io/jaegertracing/jaeger-operator:1.13.1
             namespace: observability
           maistra:
-            image: docker.io/maistra/istio-operator-ubi8:1.0.0
+            image: docker.io/maistra/istio-ubi8-operator:1.0.0
             namespace: istio-operator
             cni:
               image: docker.io/maistra/istio-cni-ubi8:1.0.0
@@ -62,7 +62,7 @@ provisioner:
               image: ose-oauth-proxy
               hub: registry.redhat.io/openshift4
             kiali:
-              hub: docker.io/maistra
+              hub: quay.io/kiali
               tag: 1.0.5
             threescale:
               hub: quay.io/3scale
