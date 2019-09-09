@@ -42,7 +42,7 @@ spec:
             memory: 4G
     kiali:
       hub: {{ maistra.cr.kiali.hub }}
-      image: kiali
+      image: {{ maistra.cr.kiali.image }}
       tag: {{ maistra.cr.kiali.tag }}
   threeScale:
     enabled: true
