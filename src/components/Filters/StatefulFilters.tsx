@@ -16,6 +16,8 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { style } from 'typestyle';
 
+var classNames = require('classnames');
+
 export interface StatefulFiltersProps {
   onFilterChange: () => void;
   initialFilters: FilterType[];
@@ -44,10 +46,8 @@ export class FilterSelected {
     return FilterSelected.selectedFilters !== undefined;
   };
 }
-
 const rightToolbar = style({
-  right: '20px',
-  position: 'absolute'
+  marginLeft: 'auto'
 });
 
 const dividerStyle = style({ borderRight: '1px solid #d1d1d1;', padding: '10px', display: 'inherit' });
@@ -254,7 +254,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           (this.props.children as Array<any>).map((child, index) => (
             <ToolbarItem
               key={'toolbar_statefulFilters_' + index}
-              className={index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle}
+              className={classNames(
+                'pf-u-mr-md',
+                index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle
+              )}
             >
               {child}
             </ToolbarItem>
@@ -268,10 +271,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
 
   renderRightToolbar = () => {
     return (
-      <ToolbarGroup className={rightToolbar}>
+      <Toolbar className={rightToolbar}>
         {this.props.rightToolbar ||
-        [].map((elem, index) => <ToolbarItem key={'Item_rightToolbar_' + index}>{elem}</ToolbarItem>)}
-      </ToolbarGroup>
+          [].map((elem, index) => <ToolbarItem key={'Item_rightToolbar_' + index}>{elem}</ToolbarItem>)}
+      </Toolbar>
     );
   };
 
@@ -279,10 +282,10 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     const { currentFilterType, activeFilters } = this.state;
 
     return (
-      <Toolbar>
+      <Toolbar className="pf-l-toolbar pf-u-justify-content-space-between pf-u-mx-xl pf-u-my-md">
         <ToolbarSection aria-label="ToolbarSection">
           <ToolbarGroup style={{ marginRight: '0px' }}>
-            <ToolbarItem className={this.props.children ? dividerStyle : ''}>
+            <ToolbarItem className={classNames(this.props.children ? dividerStyle : '', 'pf-u-mr-xl')}>
               <FormSelect
                 value={currentFilterType.id}
                 aria-label={'filter_select_type'}
