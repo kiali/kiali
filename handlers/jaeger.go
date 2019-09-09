@@ -43,20 +43,15 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 		return nil, http.StatusServiceUnavailable, errors.New("wrong config for Jaeger URL: not found in Kiali configuration")
 	}
 
-	apiURL := jaegerConfig.URL
-
-	// If user doesn't have Jaeger url setup, use the Jaeger information auto-discovered
-	if jaegerConfig.URL == "" {
-		internalURL, err := business.GetJaegerInternalURL("/api/services")
-		if err != nil {
-			return nil, http.StatusServiceUnavailable, errors.New("wrong format for Jaeger URL: " + err.Error())
-		}
-		apiURL = internalURL.String()
+	if jaegerConfig.InClusterURL == "" {
+		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL in cluster is not set in Kiali configuration")
 	}
 
-	if apiURL == "" {
-		return nil, http.StatusServiceUnavailable, errors.New("Jaeger URL is not set in Kiali configuration")
+	internalURL, err := business.GetJaegerInternalURL("/api/services")
+	if err != nil {
+		return nil, http.StatusServiceUnavailable, errors.New("wrong format for Jaeger URL: " + err.Error())
 	}
+	apiURL := internalURL.String()
 
 	// Be sure to copy config.Auth and not modify the existing
 	auth := jaegerConfig.Auth
