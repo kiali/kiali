@@ -111,6 +111,13 @@
       state: absent
       definition: "{{ lookup('template', elasticsearch_operator_file_path) }}"
 
+  - name: Remove Elasticsearch Operator Namespace
+    k8s:
+      name: "{{ operators.elasticsearch.namespace }}"
+      api_version: v1
+      kind: Namespace
+      state: absent
+
   - name: Remove Jaeger Operator
     k8s:
       state: absent

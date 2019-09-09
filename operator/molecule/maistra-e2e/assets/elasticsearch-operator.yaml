@@ -121,7 +121,7 @@ spec:
       serviceAccountName: elasticsearch-operator
       containers:
         - name: elasticsearch-operator
-          image: {{ operators.elasticsearch.image }}
+          image: "{{ operators.elasticsearch.image }}"
           imagePullPolicy: IfNotPresent
           command:
           - elasticsearch-operator
