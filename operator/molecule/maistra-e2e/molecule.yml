@@ -63,6 +63,7 @@ provisioner:
               hub: registry.redhat.io/openshift4
             kiali:
               hub: quay.io/kiali
+              image: kiali
               tag: 1.0.5
             threescale:
               hub: quay.io/3scale
