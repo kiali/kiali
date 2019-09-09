@@ -355,7 +355,7 @@ func (in *SvcService) getServiceDefinition(namespace, service string) (svc *core
 // GetServiceDefinitionList returns service definitions for the namespace (the service object only), no istio or runtime information
 func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.ServiceDefinitionList, error) {
 	var err error
-	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceList")
+	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceDefinitionList")
 	defer promtimer.ObserveNow(&err)
 
 	var svcs []core_v1.Service
