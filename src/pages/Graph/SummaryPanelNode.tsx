@@ -25,7 +25,7 @@ import {
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
-  renderLabels,
+  renderNodeInfo,
   renderNoTraffic,
   mergeMetricsResponses
 } from './SummaryPanelCommon';
@@ -310,7 +310,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
             )
           )}
           <span> {renderTitle(nodeData)}</span>
-          {renderLabels(nodeData)}
+          {renderNodeInfo(nodeData)}
           {this.renderBadgeSummary(nodeData.hasCB, nodeData.hasVS, nodeData.hasMissingSC, nodeData.isDead)}
         </div>
         <div className="panel-body">

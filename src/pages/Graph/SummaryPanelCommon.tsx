@@ -9,9 +9,9 @@ import * as M from '../../types/Metrics';
 import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
-import Label from '../../components/Label/Label';
 import { serverConfig } from '../../config/ServerConfig';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { Badge } from '@patternfly/react-core';
 
 export enum NodeMetricType {
   APP = 1,
@@ -149,15 +149,19 @@ export const getDatapoints = (
   return graphUtils.toC3Columns(series, title);
 };
 
-export const renderLabels = (nodeData: DecoratedGraphNodeData) => {
+export const renderNodeInfo = (nodeData: DecoratedGraphNodeData) => {
   const hasNamespace =
     nodeData.nodeType !== NodeType.UNKNOWN && !(nodeData.nodeType === NodeType.SERVICE && nodeData.isServiceEntry);
   const hasVersion = hasNamespace && nodeData.version;
   return (
     <>
-      <div className="label-collection" style={{ paddingTop: '3px' }}>
-        {hasNamespace && <Label name="namespace" value={nodeData.namespace} />}
-        {hasVersion && <Label name={serverConfig.istioLabels.versionLabelName} value={nodeData.version!} />}
+      <div style={{ paddingBottom: '3px', paddingTop: '3px' }}>
+        {hasNamespace && <Badge>Namespace: {nodeData.namespace}</Badge>}
+        {hasVersion && (
+          <Badge>
+            {serverConfig.istioLabels.versionLabelName}: {nodeData.version!}
+          </Badge>
+        )}
       </div>
     </>
   );
