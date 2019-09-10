@@ -673,7 +673,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMap(trafficMap, &vector, o)
 
-		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\..+\.global} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\..+\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
 			n.Service,
