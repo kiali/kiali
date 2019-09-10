@@ -88,7 +88,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     }
     return promise
       .then(response => {
-        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data);
+        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings

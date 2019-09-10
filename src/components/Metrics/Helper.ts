@@ -15,6 +15,30 @@ import { computePrometheusRateParams } from '../../services/Prometheus';
 import history, { URLParam } from '../../app/History';
 import responseFlags from 'utils/ResponseFlags';
 
+export const combineLabelsSettings = (newSettings: LabelsSettings, stateSettings: LabelsSettings): LabelsSettings => {
+  // Labels: keep existing on/off flag
+  // This is allowed because the labels filters state is managed only from this component,
+  // so we can override them in props from state
+  // LabelsSettings received from props contains the names of the filters with only a default on/off flag.
+  newSettings.forEach((lblObj, promLabel) => {
+    const stateObj = stateSettings.get(promLabel);
+    if (stateObj) {
+      lblObj.checked = stateObj.checked;
+      if (stateObj.defaultValue === false) {
+        // 1st pass: override default filters (this case only happens when filters are defined from URL)
+        Object.keys(lblObj.values).forEach(k => {
+          lblObj.values[k] = false;
+        });
+      }
+      // 2nd pass: retrieve previous filters
+      Object.keys(stateObj.values).forEach(k => {
+        lblObj.values[k] = stateObj.values[k];
+      });
+    }
+  });
+  return newSettings;
+};
+
 export const extractLabelsSettingsOnSeries = (
   series: TimeSeries[],
   aggregations: AggregationModel[],
@@ -43,7 +67,7 @@ export const extractLabelsSettingsOnSeries = (
   });
 };
 
-export const extractLabelsSettings = (dashboard: DashboardModel): LabelsSettings => {
+export const extractLabelsSettings = (dashboard: DashboardModel, stateSettings: LabelsSettings): LabelsSettings => {
   // Find all labels on all series
   const newSettings: LabelsSettings = new Map();
   dashboard.aggregations.forEach(agg =>
@@ -64,7 +88,7 @@ export const extractLabelsSettings = (dashboard: DashboardModel): LabelsSettings
       });
     }
   });
-  return newSettings;
+  return combineLabelsSettings(newSettings, stateSettings);
 };
 
 export const mergeLabelFilter = (
@@ -133,6 +157,7 @@ export const readMetricsSettingsFromURL = (): MetricsSettings => {
     }
   }
   const byLabels = urlParams.getAll(URLParam.BY_LABELS);
+  // E.g.: bylbl=version=v1,v2,v4
   if (byLabels.length !== 0) {
     byLabels.forEach(val => {
       const kvpair = val.split('=', 2);

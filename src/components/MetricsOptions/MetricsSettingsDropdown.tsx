@@ -6,7 +6,12 @@ import { PromLabel } from '@kiali/k-charted-pf4';
 
 import history, { URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
-import { readMetricsSettingsFromURL, mergeLabelFilter, prettyLabelValues } from 'components/Metrics/Helper';
+import {
+  readMetricsSettingsFromURL,
+  mergeLabelFilter,
+  prettyLabelValues,
+  combineLabelsSettings
+} from 'components/Metrics/Helper';
 
 interface Props {
   onChanged: (state: MetricsSettings) => void;
@@ -23,39 +28,15 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
   constructor(props: Props) {
     super(props);
     const settings = readMetricsSettingsFromURL();
-    settings.labelsSettings = this.combineLabelsSettings(props.labelsSettings, settings.labelsSettings);
+    settings.labelsSettings = combineLabelsSettings(props.labelsSettings, settings.labelsSettings);
     this.state = settings;
   }
 
   componentDidUpdate() {
-    const labelsSettings = this.combineLabelsSettings(this.props.labelsSettings, this.state.labelsSettings);
+    const labelsSettings = combineLabelsSettings(this.props.labelsSettings, this.state.labelsSettings);
     if (!isEqual(this.state.labelsSettings, labelsSettings)) {
       this.setState({ labelsSettings: labelsSettings });
     }
-  }
-
-  combineLabelsSettings(newSettings: LabelsSettings, stateSettings: LabelsSettings): LabelsSettings {
-    // Labels: keep existing on/off flag
-    // This is allowed because the labels filters state is managed only from this component,
-    // so we can override them in props from state
-    // LabelsSettings received from props contains the names of the filters with only a default on/off flag.
-    newSettings.forEach((lblObj, promLabel) => {
-      const stateObj = stateSettings.get(promLabel);
-      if (stateObj) {
-        lblObj.checked = stateObj.checked;
-        if (stateObj.defaultValue === false) {
-          // 1st pass: override default filters (this case only happens when filters are defined from URL)
-          Object.keys(lblObj.values).forEach(k => {
-            lblObj.values[k] = false;
-          });
-        }
-        // 2nd pass: retrieve previous filters
-        Object.keys(stateObj.values).forEach(k => {
-          lblObj.values[k] = stateObj.values[k];
-        });
-      }
-    });
-    return newSettings;
   }
 
   onGroupingChanged = (label: PromLabel, checked: boolean) => {
@@ -64,14 +45,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
       objLbl.checked = checked;
     }
 
-    const urlParams = new URLSearchParams(history.location.search);
-    urlParams.delete(URLParam.BY_LABELS);
-    this.state.labelsSettings.forEach((lbl, name) => {
-      if (lbl.checked) {
-        urlParams.append(URLParam.BY_LABELS, name);
-      }
-    });
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+    this.updateLabelsSettingsURL(this.state.labelsSettings);
 
     this.setState(
       {
@@ -83,7 +57,27 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
 
   onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean) => {
     const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked);
+    this.updateLabelsSettingsURL(newValues);
     this.setState({ labelsSettings: newValues }, () => this.props.onLabelsFiltersChanged(newValues));
+  };
+
+  updateLabelsSettingsURL = (labelsSettings: LabelsSettings) => {
+    // E.g.: bylbl=version=v1,v2,v4
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.delete(URLParam.BY_LABELS);
+    labelsSettings.forEach((lbl, name) => {
+      if (lbl.checked) {
+        const filters = Object.keys(lbl.values)
+          .filter(k => lbl.values[k])
+          .join(',');
+        if (filters) {
+          urlParams.append(URLParam.BY_LABELS, name + '=' + filters);
+        } else {
+          urlParams.append(URLParam.BY_LABELS, name);
+        }
+      }
+    });
+    history.replace(history.location.pathname + '?' + urlParams.toString());
   };
 
   onHistogramAverageChanged = (checked: boolean) => {

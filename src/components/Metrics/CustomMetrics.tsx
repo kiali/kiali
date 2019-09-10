@@ -64,7 +64,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
   fetchMetrics = () => {
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options)
       .then(response => {
-        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data);
+        const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings
