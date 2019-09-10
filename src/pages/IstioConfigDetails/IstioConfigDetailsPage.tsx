@@ -367,14 +367,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     const tabs: JSX.Element[] = [];
     if (this.hasOverview()) {
       tabs.push(
-        <Tab title="Overview" eventKey={0}>
+        <Tab key="istio-overview" title="Overview" eventKey={0}>
           {this.state.currentTab === 'overview' ? this.renderOverview() : undefined}
         </Tab>
       );
     }
 
     tabs.push(
-      <Tab title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={1}>
+      <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={1}>
         {this.state.currentTab === 'yaml' ? this.renderEditor() : undefined}
       </Tab>
     );
