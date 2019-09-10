@@ -82,6 +82,9 @@ spec:
       - name: kiali-cert
         secret:
           secretName: istio.kiali-service-account
+{% if kiali_vars.identity.cert_file == "" %}
+          optional: true
+{% endif %}
       - name: kiali-secret
         secret:
           secretName: {{ kiali_vars.deployment.secret_name }}
