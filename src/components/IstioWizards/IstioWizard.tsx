@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, ExpandCollapse, Wizard } from 'patternfly-react';
+import { Button, Expandable, Modal } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
@@ -35,23 +35,15 @@ import {
 import { MessageType } from '../../types/MessageCenter';
 import ThreeScaleIntegration from './ThreeScaleIntegration';
 import { ThreeScaleServiceRule } from '../../types/ThreeScale';
-import { style } from 'typestyle';
 import GatewaySelector, { GatewaySelectorState } from './GatewaySelector';
 import VirtualServiceHosts from './VirtualServiceHosts';
-
-const expandStyle = style({
-  $nest: {
-    '.btn': {
-      fontSize: '14px'
-    }
-  }
-});
 
 class IstioWizard extends React.Component<WizardProps, WizardState> {
   constructor(props: WizardProps) {
     super(props);
     this.state = {
       showWizard: false,
+      showAdvanced: false,
       workloads: [],
       rules: [],
       suspendedRoutes: [],
@@ -311,101 +303,102 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
   render() {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     return (
-      <Wizard
-        show={this.state.showWizard}
-        onHide={this.onClose}
+      <Modal
+        width={'50%'}
+        title={
+          this.props.type.length > 0
+            ? this.props.update
+              ? WIZARD_UPDATE_TITLES[this.props.type]
+              : WIZARD_TITLES[this.props.type]
+            : ''
+        }
+        isOpen={this.state.showWizard}
+        onClose={this.onClose}
         onKeyPress={e => {
           if (e.key === 'Enter' && this.isValid(this.state)) {
             this.onCreateUpdate();
           }
         }}
-      >
-        <Wizard.Header
-          onClose={this.onClose}
-          title={this.props.update ? WIZARD_UPDATE_TITLES[this.props.type] : WIZARD_TITLES[this.props.type]}
-        />
-        <Wizard.Body>
-          <Wizard.Row>
-            <Wizard.Main>
-              <Wizard.Contents stepIndex={0} activeStepIndex={0}>
-                {this.props.type === WIZARD_WEIGHTED_ROUTING && (
-                  <WeightedRouting
-                    serviceName={this.props.serviceName}
-                    workloads={this.props.workloads}
-                    initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
-                    onChange={this.onWeightsChange}
-                  />
-                )}
-                {this.props.type === WIZARD_MATCHING_ROUTING && (
-                  <MatchingRouting
-                    serviceName={this.props.serviceName}
-                    workloads={this.props.workloads}
-                    initRules={getInitRules(this.props.workloads, this.props.virtualServices)}
-                    onChange={this.onRulesChange}
-                  />
-                )}
-                {this.props.type === WIZARD_SUSPEND_TRAFFIC && (
-                  <SuspendTraffic
-                    serviceName={this.props.serviceName}
-                    workloads={this.props.workloads}
-                    initSuspendedRoutes={getInitSuspendedRoutes(this.props.workloads, this.props.virtualServices)}
-                    onChange={this.onSuspendedChange}
-                  />
-                )}
-                {this.props.type === WIZARD_THREESCALE_INTEGRATION && (
-                  <ThreeScaleIntegration
-                    serviceName={this.props.serviceName}
-                    serviceNamespace={this.props.namespace}
-                    threeScaleServiceRule={
-                      this.props.threeScaleServiceRule || {
-                        serviceName: this.props.serviceName,
-                        serviceNamespace: this.props.namespace,
-                        threeScaleHandlerName: ''
-                      }
-                    }
-                    onChange={this.onThreeScaleChange}
-                  />
-                )}
-                {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
-                  this.props.type === WIZARD_MATCHING_ROUTING ||
-                  this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
-                  <ExpandCollapse
-                    className={expandStyle}
-                    textCollapsed="Show Advanced Options"
-                    textExpanded="Hide Advanced Options"
-                    expanded={false}
-                  >
-                    <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
-                    <TrafficPolicyContainer
-                      mtlsMode={this.state.trafficPolicy.mtlsMode}
-                      hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
-                      loadBalancer={this.state.trafficPolicy.loadBalancer}
-                      nsWideStatus={this.props.tlsStatus}
-                      onTrafficPolicyChange={this.onTrafficPolicy}
-                    />
-                    <GatewaySelector
-                      serviceName={this.props.serviceName}
-                      hasGateway={hasGateway(this.props.virtualServices)}
-                      gateway={gatewaySelected}
-                      isMesh={isMesh}
-                      gateways={this.props.gateways}
-                      onGatewayChange={this.onGateway}
-                    />
-                  </ExpandCollapse>
-                )}
-              </Wizard.Contents>
-            </Wizard.Main>
-          </Wizard.Row>
-        </Wizard.Body>
-        <Wizard.Footer>
-          <Button bsStyle="default" className="btn-cancel" onClick={this.onClose}>
+        actions={[
+          <Button key="cancel" variant="secondary" onClick={this.onClose}>
             Cancel
-          </Button>
-          <Button disabled={!this.isValid(this.state)} bsStyle="primary" onClick={this.onCreateUpdate}>
+          </Button>,
+          <Button isDisabled={!this.isValid(this.state)} key="confirm" variant="primary" onClick={this.onCreateUpdate}>
             {this.props.update ? 'Update' : 'Create'}
           </Button>
-        </Wizard.Footer>
-      </Wizard>
+        ]}
+      >
+        {this.props.type === WIZARD_WEIGHTED_ROUTING && (
+          <WeightedRouting
+            serviceName={this.props.serviceName}
+            workloads={this.props.workloads}
+            initWeights={getInitWeights(this.props.workloads, this.props.virtualServices)}
+            onChange={this.onWeightsChange}
+          />
+        )}
+        {this.props.type === WIZARD_MATCHING_ROUTING && (
+          <MatchingRouting
+            serviceName={this.props.serviceName}
+            workloads={this.props.workloads}
+            initRules={getInitRules(this.props.workloads, this.props.virtualServices)}
+            onChange={this.onRulesChange}
+          />
+        )}
+        {this.props.type === WIZARD_SUSPEND_TRAFFIC && (
+          <SuspendTraffic
+            serviceName={this.props.serviceName}
+            workloads={this.props.workloads}
+            initSuspendedRoutes={getInitSuspendedRoutes(this.props.workloads, this.props.virtualServices)}
+            onChange={this.onSuspendedChange}
+          />
+        )}
+        {this.props.type === WIZARD_THREESCALE_INTEGRATION && (
+          <ThreeScaleIntegration
+            serviceName={this.props.serviceName}
+            serviceNamespace={this.props.namespace}
+            threeScaleServiceRule={
+              this.props.threeScaleServiceRule || {
+                serviceName: this.props.serviceName,
+                serviceNamespace: this.props.namespace,
+                threeScaleHandlerName: ''
+              }
+            }
+            onChange={this.onThreeScaleChange}
+          />
+        )}
+        {(this.props.type === WIZARD_WEIGHTED_ROUTING ||
+          this.props.type === WIZARD_MATCHING_ROUTING ||
+          this.props.type === WIZARD_SUSPEND_TRAFFIC) && (
+          <Expandable
+            isExpanded={this.state.showAdvanced}
+            toggleText={(this.state.showAdvanced ? 'Hide' : 'Show') + ' Advanced Options'}
+            onToggle={() => {
+              this.setState({
+                showAdvanced: !this.state.showAdvanced
+              });
+            }}
+          >
+            <VirtualServiceHosts vsHosts={this.state.vsHosts} onVsHostsChange={this.onVsHosts} />
+            <TrafficPolicyContainer
+              mtlsMode={this.state.trafficPolicy.mtlsMode}
+              hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
+              loadBalancer={this.state.trafficPolicy.loadBalancer}
+              nsWideStatus={this.props.tlsStatus}
+              onTrafficPolicyChange={this.onTrafficPolicy}
+            />
+            <br />
+            <GatewaySelector
+              serviceName={this.props.serviceName}
+              hasGateway={hasGateway(this.props.virtualServices)}
+              gateway={gatewaySelected}
+              isMesh={isMesh}
+              gateways={this.props.gateways}
+              onGatewayChange={this.onGateway}
+            />
+            <br />
+          </Expandable>
+        )}
+      </Modal>
     );
   }
 }

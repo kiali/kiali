@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Col, ControlLabel, Form, FormControl, FormGroup, HelpBlock } from 'patternfly-react';
+import { Form, FormGroup, TextInput } from '@patternfly/react-core';
 type Props = {
   vsHosts: string[];
   onVsHostsChange: (valid: boolean, vsHosts: string[]) => void;
@@ -9,21 +9,18 @@ class VirtualServiceHosts extends React.Component<Props> {
   render() {
     const vsHosts = this.props.vsHosts.length > 0 ? this.props.vsHosts.join(',') : '';
     return (
-      <Form horizontal={true} onSubmit={e => e.preventDefault()}>
-        <FormGroup controlId="vsHosts">
-          <Col componentClass={ControlLabel} sm={3}>
-            VirtualService Hosts
-          </Col>
-          <Col sm={9}>
-            <FormControl
-              type="text"
-              value={vsHosts}
-              onChange={e => this.props.onVsHostsChange(true, e.target.value.split(','))}
-            />
-            <HelpBlock>
-              The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.
-            </HelpBlock>
-          </Col>
+      <Form isHorizontal={true}>
+        <FormGroup
+          label="VirtualService Hosts"
+          fieldId="advanced-vshosts"
+          helperText="The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma."
+        >
+          <TextInput
+            value={vsHosts}
+            id="advanced-vshosts"
+            name="advanced-vshosts"
+            onChange={value => this.props.onVsHostsChange(true, value.split(','))}
+          />
         </FormGroup>
       </Form>
     );

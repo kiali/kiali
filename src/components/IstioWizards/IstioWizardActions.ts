@@ -66,6 +66,7 @@ export type WizardValid = {
 
 export type WizardState = {
   showWizard: boolean;
+  showAdvanced: boolean;
   workloads: WorkloadWeight[];
   rules: Rule[];
   suspendedRoutes: SuspendedRoute[];

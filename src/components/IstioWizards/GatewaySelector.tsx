@@ -1,18 +1,14 @@
 import * as React from 'react';
 import {
   Checkbox,
-  Col,
-  ControlLabel,
-  DropdownButton,
   Form,
-  FormControl,
   FormGroup,
-  HelpBlock,
-  MenuItem,
+  FormSelect,
+  FormSelectOption,
   Radio,
-  Switch
-} from 'patternfly-react';
-import { style } from 'typestyle';
+  Switch,
+  TextInput
+} from '@patternfly/react-core';
 
 type Props = {
   serviceName: string;
@@ -41,10 +37,6 @@ enum GatewayForm {
   GATEWAY_SELECTED,
   PORT
 }
-
-const labelStyle = style({
-  marginTop: 20
-});
 
 class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
   constructor(props: Props) {
@@ -134,125 +126,94 @@ class GatewaySelector extends React.Component<Props, GatewaySelectorState> {
   };
 
   render() {
-    const gatewayItems: any[] = this.props.gateways.map(gw => (
-      <MenuItem key={gw} eventKey={gw} active={gw === this.state.selectedGateway}>
-        {gw}
-      </MenuItem>
-    ));
     return (
-      <Form horizontal={true} onSubmit={e => e.preventDefault()}>
-        <FormGroup controlId="gatewaySwitch" disabled={false}>
-          <Col componentClass={ControlLabel} sm={3}>
-            Add Gateway
-          </Col>
-          <Col sm={9}>
-            <Switch
-              bsSize="normal"
-              title="normal"
-              id="gateway-form"
-              animate={false}
-              onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
-              defaultValue={this.props.hasGateway}
-            />
-          </Col>
+      <Form isHorizontal={true}>
+        <FormGroup label="Add Gateway" fieldId="gatewaySwitch">
+          <Switch
+            id="advanced-gwSwitch"
+            label={' '}
+            labelOff={' '}
+            isChecked={this.state.addGateway}
+            onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
+          />
         </FormGroup>
         {this.state.addGateway && (
           <>
-            <FormGroup controlId="checkbox" disabled={false}>
-              <Col sm={3} />
-              <Col sm={9}>
-                <Checkbox
-                  disabled={!this.state.addGateway}
-                  checked={this.state.addMesh}
-                  onChange={() => this.onFormChange(GatewayForm.MESH, '')}
-                >
-                  Include <b>mesh</b> gateway
-                </Checkbox>
-              </Col>
+            <FormGroup fieldId="includeMesh">
+              <Checkbox
+                id="includeMesh"
+                label={
+                  <>
+                    Include <b>mesh</b> gateway
+                  </>
+                }
+                isDisabled={!this.state.addGateway}
+                isChecked={this.state.addMesh}
+                onChange={() => this.onFormChange(GatewayForm.MESH, '')}
+              />
             </FormGroup>
-            <FormGroup>
-              <Col sm={3} />
-              <Col sm={9}>
-                <Radio
-                  name="selectGateway"
-                  className={labelStyle}
-                  disabled={!this.state.addGateway || this.props.gateways.length === 0}
-                  checked={!this.state.newGateway}
-                  onChange={() => this.onFormChange(GatewayForm.SELECT, 'false')}
-                  inline={true}
-                >
-                  Select Gateway
-                </Radio>
-                <Radio
-                  name="selectGateway"
-                  className={labelStyle}
-                  disabled={!this.state.addGateway}
-                  checked={this.state.newGateway}
-                  onChange={() => this.onFormChange(GatewayForm.SELECT, 'true')}
-                  inline={true}
-                >
-                  Create Gateway
-                </Radio>
-              </Col>
+            <FormGroup fieldId="selectGateway">
+              <Radio
+                id="existingGateway"
+                name="selectGateway"
+                label="Select Gateway"
+                isDisabled={!this.state.addGateway || this.props.gateways.length === 0}
+                isChecked={!this.state.newGateway}
+                onChange={() => this.onFormChange(GatewayForm.SELECT, 'false')}
+              />
+              <Radio
+                id="createGateway"
+                name="selectGateway"
+                label="Create Gateway"
+                isDisabled={!this.state.addGateway}
+                isChecked={this.state.newGateway}
+                onChange={() => this.onFormChange(GatewayForm.SELECT, 'true')}
+              />
             </FormGroup>
             {!this.state.newGateway && (
-              <FormGroup>
-                <Col componentClass={ControlLabel} sm={3}>
-                  Gateway
-                </Col>
-                <Col sm={9}>
-                  {this.props.gateways.length > 0 && (
-                    <DropdownButton
-                      id="trafficPolicy-tls"
-                      bsStyle="default"
-                      title={this.state.selectedGateway}
-                      disabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
-                      onSelect={(gw: string) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw)}
-                    >
-                      {gatewayItems}
-                    </DropdownButton>
-                  )}
-                  {this.props.gateways.length === 0 && <HelpBlock>There are no gateways to select.</HelpBlock>}
-                </Col>
+              <FormGroup fieldId="selectGateway" label="Gateway">
+                {this.props.gateways.length > 0 && (
+                  <FormSelect
+                    id="selectGateway"
+                    value={this.state.selectedGateway}
+                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
+                    onChange={(gw: string) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw)}
+                  >
+                    {this.props.gateways.map(gw => (
+                      <FormSelectOption key={gw} value={gw} label={gw} />
+                    ))}
+                  </FormSelect>
+                )}
+                {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
               </FormGroup>
             )}
             {this.state.newGateway && (
               <>
-                <FormGroup>
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Port
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="number"
-                      disabled={!this.state.addGateway || !this.state.newGateway}
-                      value={this.state.port}
-                      onChange={e => this.onFormChange(GatewayForm.PORT, e.target.value)}
-                    />
-                  </Col>
+                <FormGroup fieldId="gwPort" label="Port">
+                  <TextInput
+                    id="gwPort"
+                    name="gwPort"
+                    type="number"
+                    isDisabled={!this.state.addGateway || !this.state.newGateway}
+                    value={this.state.port}
+                    onChange={value => this.onFormChange(GatewayForm.PORT, value)}
+                  />
                 </FormGroup>
                 <FormGroup
-                  controlId="gwHosts"
-                  disabled={!this.state.addGateway}
-                  validationState={this.state.gwHostsValid ? null : 'error'}
+                  fieldId="gwHosts"
+                  label="Gateway Hosts"
+                  helperText="One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma."
+                  helperTextInvalid="Gateway hosts should be specified using FQDN format or '*' wildcard."
+                  isValid={this.state.gwHostsValid}
                 >
-                  <Col componentClass={ControlLabel} sm={3}>
-                    Gateway Hosts
-                  </Col>
-                  <Col sm={9}>
-                    <FormControl
-                      type="text"
-                      disabled={!this.state.addGateway || !this.state.newGateway}
-                      value={this.state.gwHosts}
-                      onChange={e => this.onFormChange(GatewayForm.GW_HOSTS, e.target.value)}
-                    />
-                    <HelpBlock>
-                      One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.
-                      {!this.state.gwHostsValid && (
-                        <p>Gateway hosts should be specified using FQDN format or '*' wildcard.</p>
-                      )}
-                    </HelpBlock>
-                  </Col>
+                  <TextInput
+                    id="gwHosts"
+                    name="gwHosts"
+                    isDisabled={!this.state.addGateway || !this.state.newGateway}
+                    value={this.state.gwHosts}
+                    onChange={value => this.onFormChange(GatewayForm.GW_HOSTS, value)}
+                    isValid={this.state.gwHostsValid}
+                  />
                 </FormGroup>
               </>
             )}

@@ -1,23 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import {
-  Col,
-  ControlLabel,
-  DropdownButton,
-  Form,
-  FormControl,
-  FormGroup,
-  HelpBlock,
-  Icon,
-  MenuItem,
-  Radio,
-  Switch
-} from 'patternfly-react';
+import { Form, FormGroup, FormSelect, FormSelectOption, Radio, Switch, TextInput } from '@patternfly/react-core';
 import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 import { KialiAppState } from '../../store/Store';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
 import { HTTPCookie, LoadBalancerSettings } from '../../types/IstioObjects';
-import { style } from 'typestyle';
 
 export const DISABLE = 'DISABLE';
 export const ISTIO_MUTUAL = 'ISTIO_MUTUAL';
@@ -54,9 +41,6 @@ export type TrafficPolicyState = {
   loadBalancer: LoadBalancerSettings;
 };
 
-const tlsIconType = 'pf';
-const tlsIconName = 'locked';
-
 const durationRegex = /^[0-9]*(\.[0-9]+)?s?$/;
 
 enum TrafficPolicyForm {
@@ -69,10 +53,6 @@ enum TrafficPolicyForm {
   LB_HTTP_COOKIE_NAME,
   LB_HTTP_COOKIE_TTL
 }
-
-const labelStyle = style({
-  marginTop: 20
-});
 
 class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
   constructor(props: Props) {
@@ -301,212 +281,159 @@ class TrafficPolicy extends React.Component<Props, TrafficPolicyState> {
   };
 
   render() {
-    const tlsMenuItems: any[] = mTLSMode.map(mode => (
-      <MenuItem key={mode} eventKey={mode} active={mode === this.props.mtlsMode}>
-        {mode}
-      </MenuItem>
-    ));
-    const lbMenuItems: any[] = loadBalancerSimple.map(simple => {
-      const simpleLoadBalancer =
-        this.state.loadBalancer && this.state.loadBalancer.simple ? this.state.loadBalancer.simple : '';
-      return (
-        <MenuItem key={simple} eventKey={simple} active={simple === simpleLoadBalancer}>
-          {simple}
-        </MenuItem>
-      );
-    });
     const isValidLB = this.isValidLB(this.state);
     return (
-      <Form horizontal={true} onSubmit={e => e.preventDefault()}>
-        <FormGroup controlId="tls" disabled={false}>
-          <Col componentClass={ControlLabel} sm={3}>
-            <Icon type={tlsIconType} name={tlsIconName} /> TLS
-          </Col>
-          <Col sm={9}>
-            <DropdownButton
-              bsStyle="default"
-              title={this.state.mtlsMode}
-              id="trafficPolicy-tls"
-              onSelect={(mtlsMode: string) => this.onFormChange(TrafficPolicyForm.TLS, mtlsMode)}
-            >
-              {tlsMenuItems}
-            </DropdownButton>
-          </Col>
+      <Form isHorizontal={true}>
+        <FormGroup label="TLS" fieldId="advanced-tls">
+          <FormSelect
+            value={this.state.mtlsMode}
+            onChange={(mtlsMode: string) => this.onFormChange(TrafficPolicyForm.TLS, mtlsMode)}
+            id="advanced-tls"
+            name="advanced-tls"
+          >
+            {mTLSMode.map(mode => (
+              <FormSelectOption key={mode} value={mode} label={mode} />
+            ))}
+          </FormSelect>
         </FormGroup>
-        <FormGroup controlId="loadBalancerSwitch" disabled={false}>
-          <Col componentClass={ControlLabel} sm={3}>
-            Add LoadBalancer
-          </Col>
-          <Col sm={9}>
-            <Switch
-              bsSize="normal"
-              title="normal"
-              id="loadbalanacer-form"
-              animate={false}
-              onChange={() => this.onFormChange(TrafficPolicyForm.LB_SWITCH, '')}
-              defaultValue={this.state.addLoadBalancer}
-            />
-          </Col>
+        <FormGroup label="Add LoadBalancer" fieldId="advanced-lbSwitch">
+          <Switch
+            id="advanced-lbSwitch"
+            label={' '}
+            labelOff={' '}
+            isChecked={this.state.addLoadBalancer}
+            onChange={() => this.onFormChange(TrafficPolicyForm.LB_SWITCH, '')}
+          />
         </FormGroup>
         {this.state.addLoadBalancer && (
           <>
-            <FormGroup>
-              <Col sm={3} />
-              <Col sm={9}>
-                <Radio
-                  name="selectLBType"
-                  className={labelStyle}
-                  disabled={!this.state.addLoadBalancer}
-                  checked={this.state.simpleLB}
-                  onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'true')}
-                  inline={true}
-                >
-                  Simple
-                </Radio>
-                <Radio
-                  name="selectLBType"
-                  className={labelStyle}
-                  disabled={!this.state.addLoadBalancer}
-                  checked={!this.state.simpleLB}
-                  onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'false')}
-                  inline={true}
-                >
-                  Consistent Hash
-                </Radio>
-              </Col>
+            <FormGroup fieldId="selectLBType">
+              <Radio
+                id="selectLBTypeSimple"
+                name="selectLBType"
+                label="Simple"
+                isDisabled={!this.state.addLoadBalancer}
+                isChecked={this.state.simpleLB}
+                onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'true')}
+              />
+              <Radio
+                id="selectLBTypeConsistentHash"
+                name="selectLBType"
+                label="Consistent Hash"
+                isDisabled={!this.state.addLoadBalancer}
+                isChecked={!this.state.simpleLB}
+                onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'false')}
+              />
             </FormGroup>
             {this.state.simpleLB && (
-              <FormGroup controlId="loadBalancer" disabled={false}>
-                <Col componentClass={ControlLabel} sm={3}>
-                  LoadBalancer
-                </Col>
-                <Col sm={9}>
-                  <DropdownButton
-                    bsStyle="default"
-                    title={this.state.loadBalancer.simple}
-                    id="trafficPolicy-lb"
-                    onSelect={(simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
-                  >
-                    {lbMenuItems}
-                  </DropdownButton>
-                </Col>
+              <FormGroup fieldId="advanced-loadbalancer" label="LoadBalancer">
+                <FormSelect
+                  value={this.state.loadBalancer.simple}
+                  onChange={(simple: string) => this.onFormChange(TrafficPolicyForm.LB_SIMPLE, simple)}
+                  id="trafficPolicy-lb"
+                  name="trafficPolicy-lb"
+                >
+                  {loadBalancerSimple.map(simple => (
+                    <FormSelectOption key={simple} value={simple} label={simple} />
+                  ))}
+                </FormSelect>
               </FormGroup>
             )}
             {!this.state.simpleLB && (
+              <FormGroup fieldId="selectConsistentHashType">
+                <Radio
+                  id="httpHeaderName"
+                  name="selectConsistentHashType"
+                  label="HTTP Header Name"
+                  isDisabled={!this.state.addLoadBalancer}
+                  isChecked={this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME}
+                  onChange={() =>
+                    this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.HTTP_HEADER_NAME)
+                  }
+                />
+                <Radio
+                  id="httpCookie"
+                  name="selectConsistentHashType"
+                  label="HTTP Cookie"
+                  isDisabled={!this.state.addLoadBalancer}
+                  checked={this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE}
+                  onChange={() =>
+                    this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.HTTP_COOKIE)
+                  }
+                />
+                <Radio
+                  id="sourceIp"
+                  name="selectConsistentHashType"
+                  label="Source IP"
+                  isDisabled={!this.state.addLoadBalancer}
+                  isChecked={this.state.consistentHashType === ConsistentHashType.USE_SOURCE_IP}
+                  onChange={() =>
+                    this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.USE_SOURCE_IP)
+                  }
+                />
+              </FormGroup>
+            )}
+            {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
+              <FormGroup
+                label="HTTP Header Name"
+                fieldId="httpHeaderName"
+                isValid={isValidLB}
+                disabled={!this.state.addLoadBalancer}
+                helperTextInvalid="HTTP Header Name must be non empty"
+              >
+                <TextInput
+                  value={
+                    this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpHeaderName
+                      ? this.state.loadBalancer.consistentHash.httpHeaderName
+                      : ''
+                  }
+                  id="httpHeaderName"
+                  name="httpHeaderName"
+                  onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_HEADER_NAME, value)}
+                  isValid={isValidLB}
+                />
+              </FormGroup>
+            )}
+            {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
-                <FormGroup>
-                  <Col sm={3} />
-                  <Col sm={9}>
-                    <Radio
-                      name="selectConsistentHashType"
-                      className={labelStyle}
-                      disabled={!this.state.addLoadBalancer}
-                      checked={this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME}
-                      onChange={() =>
-                        this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.HTTP_HEADER_NAME)
-                      }
-                      inline={true}
-                    >
-                      HTTP Header Name
-                    </Radio>
-                    <Radio
-                      name="selectConsistentHashType"
-                      className={labelStyle}
-                      disabled={!this.state.addLoadBalancer}
-                      checked={this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE}
-                      onChange={() =>
-                        this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.HTTP_COOKIE)
-                      }
-                      inline={true}
-                    >
-                      HTTP Cookie
-                    </Radio>
-                    <Radio
-                      name="selectConsistentHashType"
-                      className={labelStyle}
-                      disabled={!this.state.addLoadBalancer}
-                      checked={this.state.consistentHashType === ConsistentHashType.USE_SOURCE_IP}
-                      onChange={() =>
-                        this.onFormChange(TrafficPolicyForm.LB_CONSISTENT_HASH, ConsistentHashType.USE_SOURCE_IP)
-                      }
-                      inline={true}
-                    >
-                      Source IP
-                    </Radio>
-                  </Col>
+                <FormGroup
+                  label="HTTP Cookie Name"
+                  fieldId="httpCookieName"
+                  isValid={isValidLB}
+                  disabled={!this.state.addLoadBalancer}
+                >
+                  <TextInput
+                    value={
+                      this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
+                        ? this.state.loadBalancer.consistentHash.httpCookie.name
+                        : ''
+                    }
+                    id="httpCookieName"
+                    name="httpCookieName"
+                    onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_NAME, value)}
+                    isValid={isValidLB}
+                  />
                 </FormGroup>
-                {this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
-                  <FormGroup
-                    controlId="httpHeaderName"
-                    disabled={!this.state.addLoadBalancer}
-                    validationState={isValidLB ? null : 'error'}
-                  >
-                    <Col componentClass={ControlLabel} sm={3}>
-                      HTTP Header Name
-                    </Col>
-                    <Col sm={9}>
-                      <FormControl
-                        type="text"
-                        disabled={!this.state.addLoadBalancer}
-                        value={
-                          this.state.loadBalancer.consistentHash
-                            ? this.state.loadBalancer.consistentHash.httpHeaderName
-                            : ''
-                        }
-                        onChange={e => this.onFormChange(TrafficPolicyForm.LB_HTTP_HEADER_NAME, e.target.value)}
-                      />
-                    </Col>
-                  </FormGroup>
-                )}
-                {this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
-                  <>
-                    <FormGroup
-                      controlId="httpCookieName"
-                      disabled={!this.state.addLoadBalancer}
-                      validationState={isValidLB ? null : 'error'}
-                    >
-                      <Col componentClass={ControlLabel} sm={3}>
-                        HTTP Cookie Name
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          disabled={!this.state.addLoadBalancer}
-                          value={
-                            this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
-                              ? this.state.loadBalancer.consistentHash.httpCookie.name
-                              : ''
-                          }
-                          onChange={e => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_NAME, e.target.value)}
-                        />
-                      </Col>
-                    </FormGroup>
-                    <FormGroup
-                      controlId="httpCookieTtl"
-                      disabled={!this.state.addLoadBalancer}
-                      validationState={isValidLB ? null : 'error'}
-                    >
-                      <Col componentClass={ControlLabel} sm={3}>
-                        HTTP Cookie TTL
-                      </Col>
-                      <Col sm={9}>
-                        <FormControl
-                          type="text"
-                          disabled={!this.state.addLoadBalancer}
-                          value={
-                            this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
-                              ? this.state.loadBalancer.consistentHash.httpCookie.ttl
-                              : ''
-                          }
-                          onChange={e => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_TTL, e.target.value)}
-                        />
-                        <HelpBlock>
-                          TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).
-                        </HelpBlock>
-                      </Col>
-                    </FormGroup>
-                  </>
-                )}
+                <FormGroup
+                  label="HTTP Cookie TTL"
+                  fieldId="httpCookieTtl"
+                  isValid={isValidLB}
+                  disabled={!this.state.addLoadBalancer}
+                  helperText="TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
+                  helperTextInvalid="HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc)."
+                >
+                  <TextInput
+                    value={
+                      this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
+                        ? this.state.loadBalancer.consistentHash.httpCookie.ttl
+                        : ''
+                    }
+                    id="httpCookieTtl"
+                    name="httpCookieTtl"
+                    onChange={value => this.onFormChange(TrafficPolicyForm.LB_HTTP_COOKIE_TTL, value)}
+                    isValid={isValidLB}
+                  />
+                </FormGroup>
               </>
             )}
           </>
