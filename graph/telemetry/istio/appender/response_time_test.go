@@ -13,7 +13,7 @@ import (
 func TestResponseTime(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
 	v0 := model.Vector{}
 
 	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
