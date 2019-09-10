@@ -168,11 +168,15 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
         const tab = (
           <Tab title={dashboard.title} key={dashboard.template} eventKey={tabKey}>
-            <CustomMetricsContainer
-              namespace={this.props.match.params.namespace}
-              app={this.props.match.params.app}
-              template={dashboard.template}
-            />
+            {this.state.currentTab === dashboard.template ? (
+              <CustomMetricsContainer
+                namespace={this.props.match.params.namespace}
+                app={this.props.match.params.app}
+                template={dashboard.template}
+              />
+            ) : (
+              undefined
+            )}
           </Tab>
         );
         tabs.push(tab);
