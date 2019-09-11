@@ -319,13 +319,18 @@ func (c *controllerImpl) WaitForSync() bool {
 }
 
 func (c *controllerImpl) Stop() {
+	c.syncLock.Lock()
+	defer c.syncLock.Unlock()
+
 	c.kubernetesEnabled = false
 	c.istioEnabled = false
 
-	for _, ch := range c.stopChans {
+	for ns, ch := range c.stopChans {
 		close(ch)
+		delete(c.stopChans, ns)
 	}
 	close(c.controlStopChan)
+	c.controlStopChan = make(chan struct{})
 }
 
 func (c *controllerImpl) ErrorCallback(err error) {

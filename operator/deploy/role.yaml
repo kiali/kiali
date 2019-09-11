@@ -73,6 +73,8 @@ rules:
   resources:
   ${OPERATOR_ROLE_CLUSTERROLEBINDINGS}
   ${OPERATOR_ROLE_CLUSTERROLES}
+  - clusterroles
+  - clusterrolebindings
   - rolebindings
   - roles
   verbs:
