@@ -664,7 +664,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	case graph.NodeTypeService:
 		// for service requests we want source reporting to capture source-reported errors.  But unknown only generates destination telemetry.  So
 		// perform a special query just to capture [successful] request telemetry from unknown.
-		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s",destination_service_name=~"%s|%s\..+\.global"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s",destination_service_name=~"%s|%s\\..+\\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
 			n.Service,
@@ -674,7 +674,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMap(trafficMap, &vector, o)
 
-		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\..+\.global"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\\..+\\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
 			n.Service,
