@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -231,25 +232,29 @@ func checkOpenshiftSession(w http.ResponseWriter, r *http.Request) (int, string)
 	return http.StatusUnauthorized, ""
 }
 
-func performOpenshiftLogout(w http.ResponseWriter, r *http.Request) error {
+func performOpenshiftLogout(r *http.Request) (int, error) {
 	tokenString := getTokenStringFromRequest(r)
+	if tokenString == "" {
+		// No token on logout, so we assume we're already logged out
+		return http.StatusUnauthorized, errors.New("Already logged out")
+	}
 	if claims, err := config.GetTokenClaimsIfValid(tokenString); err != nil {
 		log.Warningf("Token is invalid: %s", err.Error())
-		return err
+		return http.StatusInternalServerError, err
 	} else {
 		business, err := business.Get(claims.SessionId)
 		if err != nil {
 			log.Warning("Could not get the business layer : ", err)
-			return err
+			return http.StatusInternalServerError, err
 		}
 
 		err = business.OpenshiftOAuth.Logout(claims.SessionId)
 		if err != nil {
 			log.Warning("Could not log out of OpenShift: ", err)
-			return err
+			return http.StatusInternalServerError, err
 		}
 
-		return nil
+		return http.StatusNoContent, nil
 	}
 }
 
@@ -491,10 +496,13 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	// We need to perform an extra step to invalidate the user token when using OpenShift OAuth
 	conf := config.Get()
 	if conf.Auth.Strategy == config.AuthStrategyOpenshift {
-		err := performOpenshiftLogout(w, r)
+		code, err := performOpenshiftLogout(r)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, code, err.Error())
+		} else {
+			RespondWithCode(w, code)
 		}
+	} else {
+		RespondWithCode(w, http.StatusNoContent)
 	}
-	RespondWithCode(w, http.StatusNoContent)
 }
