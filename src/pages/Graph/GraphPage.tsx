@@ -114,7 +114,7 @@ const cytoscapeToolbarWrapperDivStyle = style({
   bottom: '10px',
   left: '-13px',
   zIndex: 2,
-  boxShadow: '2px 2px 6px 0 grey'
+  borderStyle: 'hidden'
 });
 
 const graphToolbarStyle = style({

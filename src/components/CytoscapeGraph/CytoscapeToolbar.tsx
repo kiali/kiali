@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { ButtonGroup, Button, Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Button, Toolbar, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import { ExpandArrowsAltIcon, SearchMinusIcon, SearchPlusIcon, TopologyIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -32,9 +33,6 @@ type CytoscapeToolbarProps = ReduxProps & {
 
 const cytoscapeToolbarStyle = style({
   padding: '7px 10px',
-  borderWidth: '1px',
-  borderStyle: 'solid',
-  borderColor: PfColors.Black500,
   backgroundColor: PfColors.White
 });
 const cytoscapeToolbarPadStyle = style({ marginLeft: '10px' });
@@ -62,82 +60,85 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
 
   render() {
     return (
-      <div className={cytoscapeToolbarStyle}>
-        <ButtonGroup>
-          <OverlayTrigger key={'ot_ct_zi'} placement="top" overlay={<Tooltip id={'tt_ct_zi'}>Zoom in</Tooltip>}>
-            <Button onClick={this.zoomIn}>
-              <Icon type="fa" name="plus" />
+      <Toolbar className={cytoscapeToolbarStyle}>
+        <ToolbarItem>
+          <Tooltip content="Zoom In">
+            <Button id="toolbar_zoom_in" variant="tertiary" onClick={this.zoomIn}>
+              <SearchPlusIcon />
             </Button>
-          </OverlayTrigger>
-          <OverlayTrigger key={'ot_ct_zo'} placement="top" overlay={<Tooltip id={'tt_ct_zo'}>Zoom out</Tooltip>}>
-            <Button onClick={this.zoomOut}>
-              <Icon type="fa" name="minus" />
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
+          <Tooltip content="Zoom Out">
+            <Button id="toolbar_zoom_out" variant="tertiary" onClick={this.zoomOut}>
+              <SearchMinusIcon />
             </Button>
-          </OverlayTrigger>
-        </ButtonGroup>
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
+          <Tooltip content="Zoom to Fit">
+            <Button id="toolbar_graph_fit" variant="tertiary" onClick={this.fit} className={cytoscapeToolbarPadStyle}>
+              <ExpandArrowsAltIcon />
+            </Button>
+          </Tooltip>
+        </ToolbarItem>
 
-        <OverlayTrigger key={'ot_ct_ztf'} placement="top" overlay={<Tooltip id={'tt_ct_ztf'}>Zoom to fit</Tooltip>}>
-          <Button onClick={this.fit} className={cytoscapeToolbarPadStyle}>
-            <div className="glyphicon glyphicon-fullscreen" />
-          </Button>
-        </OverlayTrigger>
-
-        <ButtonGroup id="toolbar_layout_group" className={cytoscapeToolbarPadStyle}>
-          <OverlayTrigger
-            key={'ot_ct_l0'}
-            placement="top"
-            overlay={<Tooltip id={'tt_ct_l0'}>Layout default ({DagreGraph.getLayout().name})</Tooltip>}
-          >
+        <ToolbarItem className={cytoscapeToolbarPadStyle}>
+          <Tooltip content={'Layout default ' + DagreGraph.getLayout().name}>
             <Button
+              id="toolbar_layout_default"
+              variant="tertiary"
               onClick={() => {
                 this.props.setLayout(DagreGraph.getLayout());
               }}
-              active={this.props.layout.name === DagreGraph.getLayout().name}
+              isActive={this.props.layout.name === DagreGraph.getLayout().name}
             >
-              <div className="fa pficon-infrastructure fa-rotate-270" />
+              <TopologyIcon />
             </Button>
-          </OverlayTrigger>
+          </Tooltip>
+        </ToolbarItem>
 
-          <OverlayTrigger
-            key={'ot_ct_l1'}
-            placement="top"
-            overlay={<Tooltip id={'tt_ct_l1'}>Layout 1 ({CoseGraph.getLayout().name})</Tooltip>}
-          >
+        <ToolbarItem>
+          <Tooltip content={'Layout 1 ' + CoseGraph.getLayout().name}>
             <Button
+              id="toolbar_layout1"
+              variant="tertiary"
               onClick={() => {
                 this.props.setLayout(CoseGraph.getLayout());
               }}
-              active={this.props.layout.name === CoseGraph.getLayout().name}
+              isActive={this.props.layout.name === CoseGraph.getLayout().name}
             >
-              <div className="fa pficon-topology" /> 1
+              <TopologyIcon /> 1
             </Button>
-          </OverlayTrigger>
+          </Tooltip>
+        </ToolbarItem>
 
-          <OverlayTrigger
-            key={'ot_ct_l2'}
-            placement="top"
-            overlay={<Tooltip id={'tt_ct_l2'}>Layout 2 ({ColaGraph.getLayout().name})</Tooltip>}
-          >
+        <ToolbarItem>
+          <Tooltip content={'Layout 2 ' + ColaGraph.getLayout().name}>
             <Button
+              id="toolbar_layout2"
+              variant="tertiary"
               onClick={() => {
                 this.props.setLayout(ColaGraph.getLayout());
               }}
-              active={this.props.layout.name === ColaGraph.getLayout().name}
+              isActive={this.props.layout.name === ColaGraph.getLayout().name}
             >
-              <div className="fa pficon-topology" /> 2
+              <TopologyIcon /> 2
             </Button>
-          </OverlayTrigger>
-        </ButtonGroup>
-
-        <Button
-          id="toolbar_toggle_legend"
-          onClick={this.props.toggleLegend}
-          active={this.props.showLegend}
-          className={cytoscapeToolbarPadStyle}
-        >
-          Legend
-        </Button>
-      </div>
+          </Tooltip>
+        </ToolbarItem>
+        <ToolbarItem>
+          <Button
+            variant="primary"
+            id="toolbar_toggle_legend"
+            onClick={this.props.toggleLegend}
+            isActive={this.props.showLegend}
+            className={cytoscapeToolbarPadStyle}
+          >
+            Legend
+          </Button>
+        </ToolbarItem>
+      </Toolbar>
     );
   }
 
