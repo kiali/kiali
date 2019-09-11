@@ -5,6 +5,10 @@ metadata:
 spec:
   auth:
     strategy: $AUTH_STRATEGY
+  cache_config:
+    cache_enabled: true
+    kubernetes_objects: true
+    istio_objects: true
   deployment:
     image_name: $KIALI_IMAGE_NAME
     image_pull_policy: $KIALI_IMAGE_PULL_POLICY
@@ -15,6 +19,3 @@ spec:
   kubernetes_config:
     qps: 1750
     burst: 2000
-  cache_config:
-    cache_enabled: true
-    istio_objects: true

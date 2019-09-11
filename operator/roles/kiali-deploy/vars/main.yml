@@ -38,6 +38,13 @@ kiali_vars:
     {{ kiali_defaults.auth }}
     {%- endif -%}
 
+  cache_config: |
+    {%- if cache_config is defined and cache_config is iterable -%}
+    {{ kiali_defaults.cache_config | combine(cache_config, recursive=True) }}
+    {%- else -%}
+    {{ kiali_defaults.cache_config }}
+    {%- endif -%}
+
   deployment: |
     {%- if deployment is defined and deployment is iterable -%}
     {{ kiali_defaults.deployment | combine(deployment, recursive=True) }}
@@ -85,11 +92,4 @@ kiali_vars:
     {{ kiali_defaults.server | combine(server, recursive=True) }}
     {%- else -%}
     {{ kiali_defaults.server }}
-    {%- endif -%}
-
-  cache_config: |
-    {%- if cache_config is defined and cache_config is iterable -%}
-    {{ kiali_defaults.cache_config | combine(cache_config, recursive=True) }}
-    {%- else -%}
-    {{ kiali_defaults.cache_config }}
     {%- endif -%}
