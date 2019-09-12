@@ -51,7 +51,7 @@ kiali_defaults:
       node: {}
       pod: {}
       pod_anti: {}
-    image_name: "kiali/kiali"
+    image_name: "quay.io/kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_pull_secrets: []
     image_version: "lastrelease"

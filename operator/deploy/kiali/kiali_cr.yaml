@@ -161,7 +161,7 @@ spec:
 #
 # Determines which Kiali image to download and install.
 #    ---
-#    image_name: "kiali/kiali"
+#    image_name: "quay.io/kiali/kiali"
 #
 # The Kubernetes pull policy for the Kiali deployment.
 # This is overridden to be "Always" if image_version is set to "latest".
