@@ -16,7 +16,7 @@ import (
 // telemetry the destination_service_name label will be set to the service entry host,
 // which is required to have the form <name>.<namespace>.global where name and namespace
 // correspond to the remote service’s name and namespace respectively. In this situation
-// we massage the request in two ways:
+// we alter the request in two ways:
 //
 // First, we reset destSvcName to <name> in order to unify remote and local requests to the
 // service. By doing this the graph will show only one <service> node instead of having a
