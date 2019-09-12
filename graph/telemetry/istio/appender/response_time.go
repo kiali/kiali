@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
@@ -71,7 +72,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	// query prometheus for the responseTime info in three queries:
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
 	groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version"
-	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		namespace,
@@ -158,12 +159,12 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvc, destSvcOk := m["destination_service_name"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
@@ -173,7 +174,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
-		destSvc := string(lDestSvc)
+		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
@@ -182,6 +183,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// to best preserve precision convert from secs to millis now, otherwise the
 		// thousandths place is dropped downstream.
 		val := float64(s.Value) * 1000.0
+		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
 		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it
 		if math.IsNaN(val) {
@@ -190,15 +192,15 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 
 		if a.InjectServiceNodes {
 			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			_, destNodeType := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
-			if destSvcOk && destNodeType != graph.NodeTypeService {
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			if destSvcNameOk && destNodeType != graph.NodeTypeService {
 				// Do not set response time on the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
-				a.addResponseTime(responseTimeMap, val, destSvcNs, destSvc, "", "", "", destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
+				a.addResponseTime(responseTimeMap, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 			} else {
-				a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
+				a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 			}
 		} else {
-			a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
+			a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }

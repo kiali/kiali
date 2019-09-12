@@ -166,7 +166,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 
 // mockNamespaceGraph provides the same single-namespace mocks to be used for different graph types
 func mockNamespaceGraph(t *testing.T) (*prometheus.Client, error) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1493,10 +1493,10 @@ func TestWorkloadNodeGraph(t *testing.T) {
 }
 
 func TestServiceNodeGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	v0 := model.Vector{}
 
-	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name="productpage"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q1 := `round(sum(rate(istio_requests_total{reporter="source",destination_service_namespace="bookinfo",destination_service_name=~"productpage|productpage\\..+\\.global"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -1580,7 +1580,7 @@ func TestServiceNodeGraph(t *testing.T) {
 // - a "shared" node (internal in ns-1, outsider in ns-2)
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
-	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	q0m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1615,7 +1615,7 @@ func TestComplexGraph(t *testing.T) {
 	q5 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v5 := model.Vector{}
 
-	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q6 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	q6m0 := model.Metric{
 		"source_workload_namespace":      "unknown",
 		"source_workload":                "unknown",
@@ -1667,7 +1667,7 @@ func TestComplexGraph(t *testing.T) {
 	q11 := `round(sum(rate(istio_tcp_sent_bytes_total{reporter="source",source_workload_namespace="tutorial"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags),0.001)`
 	v11 := model.Vector{}
 
-	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
+	q12 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
 	v12 := model.Vector{}
 
 	q13 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!~"istio-system|istio-telemetry",source_workload!="unknown",destination_service_namespace="istio-system"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags),0.001)`
