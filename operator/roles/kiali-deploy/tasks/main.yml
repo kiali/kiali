@@ -181,6 +181,16 @@
   when:
   - kiali_vars.identity.private_key_file is not defined
 
+- name: Default the image name to a known supported image.
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_name': supported_image.name}}, recursive=True) }}"
+  when:
+  - kiali_vars.deployment.image_name == ""
+- name: Default the image version to a known supported image.
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': supported_image.version}}, recursive=True) }}"
+  when:
+  - kiali_vars.deployment.image_version == ""
 - name: If image version is latest then we will want to always pull
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_pull_policy': 'Always'}}, recursive=True) }}"

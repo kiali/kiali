@@ -11,7 +11,6 @@ spec:
   selector:
     matchLabels:
       app: kiali
-      version: {{ kiali_vars.deployment.version_label }}
   strategy:
     rollingUpdate:
       maxSurge: 1
