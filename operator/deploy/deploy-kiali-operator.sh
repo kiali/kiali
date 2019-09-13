@@ -643,14 +643,16 @@ fi
 
 # If asking for the last release of Kiali (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
-if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
-  resolve_latest_kiali_release
-  echo "Will use the last Kiali release: ${kiali_version_we_want}"
-  KIALI_IMAGE_VERSION=${kiali_version_we_want}
-else
-  if [ "${KIALI_IMAGE_VERSION}" == "latest" ]; then
-    echo "Will use the latest Kiali image from master branch"
-    KIALI_IMAGE_PULL_POLICY="Always"
+if [ "${OPERATOR_INSTALL_KIALI}" == "true" ]; then
+  if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
+    resolve_latest_kiali_release
+    echo "Will use the last Kiali release: ${kiali_version_we_want}"
+    KIALI_IMAGE_VERSION=${kiali_version_we_want}
+  else
+    if [ "${KIALI_IMAGE_VERSION}" == "latest" ]; then
+      echo "Will use the latest Kiali image from master branch"
+      KIALI_IMAGE_PULL_POLICY="Always"
+    fi
   fi
 fi
 
