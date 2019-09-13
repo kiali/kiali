@@ -2,6 +2,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import { GraphFind } from '../GraphFind';
+import { EdgeLabelMode } from 'types/GraphFilter';
 
 const testHandler = () => {
   console.log('handled');
@@ -17,12 +18,18 @@ describe('Parse find value test', () => {
     const wrapper = shallow(
       <GraphFind
         cyData={{ updateTimestamp: 123, cyRef: 'dummyRef' }}
+        edgeLabelMode={EdgeLabelMode.NONE}
         findValue="testFind"
         hideValue="testHide"
         showFindHelp={false}
+        showSecurity={false}
+        showUnusedNodes={false}
+        setEdgeLabelMode={testSetter}
         setFindValue={testSetter}
         setHideValue={testSetter}
         toggleFindHelp={testHandler}
+        toggleGraphSecurity={testHandler}
+        toggleUnusedNodes={testHandler}
       />
     );
 

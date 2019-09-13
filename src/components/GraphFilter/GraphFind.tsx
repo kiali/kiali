@@ -4,26 +4,33 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../store/Store';
-import { findValueSelector, hideValueSelector } from '../../store/Selectors';
+import { findValueSelector, hideValueSelector, edgeLabelModeSelector } from '../../store/Selectors';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import GraphHelpFind from '../../pages/Graph/GraphHelpFind';
 import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData, NodeType } from '../../types/Graph';
-import { Layout } from 'types/GraphFilter';
+import { Layout, EdgeLabelMode } from 'types/GraphFilter';
+import * as MessageCenter from '../../utils/MessageCenter';
 
 type ReduxProps = {
   compressOnHide: boolean;
   cyData: CyData | null;
+  edgeLabelMode: EdgeLabelMode;
   findValue: string;
   hideValue: string;
   layout: Layout;
   showFindHelp: boolean;
+  showSecurity: boolean;
+  showUnusedNodes: boolean;
 
+  setEdgeLabelMode: (val: EdgeLabelMode) => void;
   setFindValue: (val: string) => void;
   setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
+  toggleGraphSecurity: () => void;
+  toggleUnusedNodes: () => void;
 };
 
 type GraphFindProps = ReduxProps;
@@ -554,6 +561,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       }
       case 'rt':
       case 'responsetime': {
+        if (this.props.edgeLabelMode !== EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) {
+          MessageCenter.addSuccess('Enabling "response time" edge labels for graph find/hide expression');
+          this.props.setEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
+        }
         const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression);
         return s ? { target: 'edge', selector: s } : undefined;
       }
@@ -612,6 +623,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       case 'root':
         return { target: 'node', selector: isNegation ? `[^${CyNode.isRoot}]` : `[?${CyNode.isRoot}]` };
       case 'unused':
+        if (!this.props.showUnusedNodes) {
+          MessageCenter.addSuccess('Enabling "unused nodes" display option for graph find/hide expression');
+          this.props.toggleUnusedNodes();
+        }
         return { target: 'node', selector: isNegation ? `[^${CyNode.isUnused}]` : `[?${CyNode.isUnused}]` };
       case 'vs':
       case 'virtualservice':
@@ -620,6 +635,10 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       // edges...
       //
       case 'mtls':
+        if (!this.props.showSecurity) {
+          MessageCenter.addSuccess('Enabling "security" display option for graph find/hide expression');
+          this.props.toggleGraphSecurity();
+        }
         return { target: 'edge', selector: isNegation ? `[${CyEdge.isMTLS} <= 0]` : `[${CyEdge.isMTLS} > 0]` };
       case 'traffic': {
         return { target: 'edge', selector: isNegation ? `[^${CyEdge.hasTraffic}]` : `[?${CyEdge.hasTraffic}]` };
@@ -647,17 +666,23 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 const mapStateToProps = (state: KialiAppState) => ({
   compressOnHide: state.graph.filterState.compressOnHide,
   cyData: state.graph.cyData,
+  edgeLabelMode: edgeLabelModeSelector(state),
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   layout: state.graph.layout,
-  showFindHelp: state.graph.filterState.showFindHelp
+  showFindHelp: state.graph.filterState.showFindHelp,
+  showSecurity: state.graph.filterState.showSecurity,
+  showUnusedNodes: state.graph.filterState.showUnusedNodes
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
+    setEdgeLabelMode: bindActionCreators(GraphFilterActions.setEdgelLabelMode, dispatch),
     setFindValue: bindActionCreators(GraphFilterActions.setFindValue, dispatch),
+    toggleGraphSecurity: bindActionCreators(GraphFilterActions.toggleGraphSecurity, dispatch),
     setHideValue: bindActionCreators(GraphFilterActions.setHideValue, dispatch),
-    toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch)
+    toggleFindHelp: bindActionCreators(GraphFilterActions.toggleFindHelp, dispatch),
+    toggleUnusedNodes: bindActionCreators(GraphFilterActions.toggleUnusedNodes, dispatch)
   };
 };
 

@@ -364,7 +364,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                           { id: 'nc110', c: 'sidecar' },
                           { id: 'nc130', c: 'serviceentry' },
                           { id: 'nc135', c: 'trafficsource', n: `has only outgoing edges` },
-                          { id: 'nc150', c: 'unused', n: `'Show Unused' option must be enabled` },
+                          { id: 'nc150', c: 'unused', n: `will auto-enable 'unused nodes' display option` },
                           { id: 'nc160', c: 'virtualservice' }
                         ]}
                       />
@@ -392,10 +392,10 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                           {
                             id: 'ec40',
                             c: 'responsetime <op> <number>',
-                            n: `unit: millis, 'Response Time' edge labels required`
+                            n: `unit: millis, will auto-enable 'response time' edge labels`
                           },
                           { id: 'ec50', c: 'tcp <op> <number>', n: 'unit: requests per second' },
-                          { id: 'ec60', c: 'mtls' },
+                          { id: 'ec60', c: 'mtls', n: `will auto-enable 'security' display option` },
                           { id: 'ec70', c: 'traffic', n: 'any traffic for any protocol' }
                         ]}
                       />
