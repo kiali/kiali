@@ -88,7 +88,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     const numSvc = cy.$(`node[nodeType = "${NodeType.SERVICE}"]`).size();
     const numWorkloads = cy.$(`node[nodeType = "${NodeType.WORKLOAD}"]`).size();
-    const numApps = cy.$(`node[nodeType = "${NodeType.APP}"][!isGroup]`).size();
+    const { numApps, numVersions } = this.countApps(cy);
     const numEdges = cy.edges().size();
     // when getting accumulated traffic rates don't count requests from injected service nodes
     const nonServiceEdges = cy.$(`node[nodeType != "${NodeType.SERVICE}"][!isGroup]`).edgesTo('*');
@@ -109,7 +109,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
         <div className="panel-heading">
           <strong>Namespace{this.props.namespaces.length > 1 ? 's' : ''}: </strong>
           {this.props.namespaces.map(namespace => namespace.name).join(', ')}
-          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numEdges)}
+          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
         <div className={`"panel-body ${summaryBodyTabs}`}>
           <TabContainer id="basic-tabs" defaultActiveKey="incoming">
@@ -223,6 +223,25 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     );
   }
 
+  private countApps = (cy): { numApps: number; numVersions: number } => {
+    const appVersions: { [key: string]: Set<string> } = {};
+
+    cy.$(`node[nodeType = "${NodeType.APP}"][!isGroup]`).forEach(node => {
+      const app = node.data(CyNode.app);
+      if (appVersions[app] === undefined) {
+        appVersions[app] = new Set();
+      }
+      appVersions[app].add(node.data(CyNode.version));
+    });
+
+    return {
+      numApps: Object.getOwnPropertyNames(appVersions).length,
+      numVersions: Object.getOwnPropertyNames(appVersions).reduce((totalCount: number, version: string) => {
+        return totalCount + appVersions[version].size;
+      }, 0)
+    };
+  };
+
   private shouldShowRPSChart() {
     // TODO we omit the rps chart when dealing with multiple namespaces. There is no backend
     // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
@@ -284,7 +303,13 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     this.setState({ loading: true, metricsLoadError: null });
   };
 
-  private renderTopologySummary = (numSvc: number, numWorkloads: number, numApps: number, numEdges: number) => (
+  private renderTopologySummary = (
+    numSvc: number,
+    numWorkloads: number,
+    numApps: number,
+    numVersions: number,
+    numEdges: number
+  ) => (
     <div>
       <Link
         key="appsLink"
@@ -311,7 +336,8 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       {numApps > 0 && (
         <>
           <Icon name="applications" type="pf" style={{ padding: '0 1em' }} />
-          {numApps.toString()} {numApps === 1 ? 'app' : 'apps'}
+          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
+          {numVersions > 0 && `(${numVersions} versions)`}
           <br />
         </>
       )}
