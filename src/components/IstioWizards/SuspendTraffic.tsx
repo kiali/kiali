@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { Button, Col, Icon, ListView, ListViewIcon, ListViewItem, Row } from 'patternfly-react';
+import { Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
+import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { PluggedIcon, UnpluggedIcon } from '@patternfly/react-icons';
 
 type Props = {
   serviceName: string;
@@ -20,43 +22,11 @@ type State = {
   suspendedRoutes: SuspendedRoute[];
 };
 
-const wkIconType = 'pf';
-const wkIconName = 'bundle';
-
 const SERVICE_UNAVAILABLE = 503;
-
-const listStyle = style({
-  marginTop: 10
-});
-
-const listHeaderStyle = style({
-  textTransform: 'uppercase',
-  fontSize: '12px',
-  fontWeight: 300,
-  color: '#72767b',
-  borderTop: '0px !important',
-  $nest: {
-    '.list-view-pf-main-info': {
-      padding: 5
-    },
-    '.list-group-item-heading': {
-      fontWeight: 300,
-      textAlign: 'center'
-    },
-    '.list-group-item-text': {
-      textAlign: 'center'
-    }
-  }
-});
 
 const evenlyButtonStyle = style({
   width: '100%',
   textAlign: 'right'
-});
-
-const allButtonStyle = style({
-  marginBottom: 20,
-  marginLeft: 5
 });
 
 class SuspendTraffic extends React.Component<Props, State> {
@@ -129,40 +99,50 @@ class SuspendTraffic extends React.Component<Props, State> {
   };
 
   render() {
+    const headerCells = [
+      {
+        title: 'Workload',
+        props: {}
+      },
+      {
+        title: 'Suspended Status',
+        props: {}
+      }
+    ];
+    const workloadsRows = this.state.suspendedRoutes.map(route => {
+      return {
+        cells: [
+          <>
+            <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
+              <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+            </Tooltip>
+            {route.workload}
+          </>,
+          // Note that <Button> here needs to be wrapped by an external <>, otherwise Icon is not properly rendered.
+          <>
+            <Button
+              variant="link"
+              icon={route.suspended ? <UnpluggedIcon /> : <PluggedIcon />}
+              onClick={() => this.updateRoute(route.workload, !route.suspended)}
+            >
+              {route.suspended ? 'Suspended' : 'Connected'}
+            </Button>
+          </>
+        ]
+      };
+    });
     return (
       <>
-        <ListView className={listStyle}>
-          <ListViewItem className={listHeaderStyle} heading={'Workload'} description={'Suspended Status'} />
-          {this.state.suspendedRoutes.map((route, id) => {
-            return (
-              <ListViewItem
-                key={'workload-' + id}
-                leftContent={<ListViewIcon type={wkIconType} name={wkIconName} />}
-                heading={route.workload}
-                description={
-                  <Row>
-                    <Col xs={12} sm={12} md={4} lg={4} />
-                    <Col xs={12} sm={12} md={2} lg={2}>
-                      {route.suspended ? 'Suspended' : 'Connected'}
-                    </Col>
-                    <Col xs={12} sm={12} md={2} lg={2}>
-                      <Button bsSize="xsmall" onClick={() => this.updateRoute(route.workload, !route.suspended)}>
-                        <Icon type="pf" name={route.suspended ? 'unplugged' : 'plugged'} />
-                      </Button>
-                    </Col>
-                    <Col xs={12} sm={12} md={4} lg={4} />
-                  </Row>
-                }
-              />
-            );
-          })}
-        </ListView>
+        <Table cells={headerCells} rows={workloadsRows}>
+          <TableHeader />
+          <TableBody />
+        </Table>
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button className={allButtonStyle} onClick={() => this.resetState()}>
+            <Button variant="link" icon={<PluggedIcon />} onClick={() => this.resetState()}>
               Connect All
-            </Button>
-            <Button className={allButtonStyle} onClick={() => this.suspendAll()}>
+            </Button>{' '}
+            <Button variant="link" icon={<UnpluggedIcon />} onClick={() => this.suspendAll()}>
               Suspend All
             </Button>
           </div>
