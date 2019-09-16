@@ -243,6 +243,13 @@ spec:
 #   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
+# dashboards: A list of Grafana dashboards that Kiali can link to. Each item contains:
+#   name: The name of the dashboard in Grafana
+#   variables:
+#     app: The name of a variable that holds the app name, if used in that dashboard (else it must be omitted)
+#     namespace: The name of a variable that holds the namespace, if used in that dashboard (else it must be omitted)
+#     service: The name of a variable that holds the service name, if used in that dashboard (else it must be omitted)
+#     workload: The name of a variable that holds the workload name, if used in that dashboard (else it must be omitted)
 # enabled: When true, Grafana support will be enabled in Kiali.
 # in_cluster_url: Set URL for in-cluster access. Example: "http://grafana.istio-system:3000".
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
@@ -257,6 +264,15 @@ spec:
 #        type: "none"
 #        use_kiali_token: false
 #        username: ""
+#      dashboards:
+#      - name: "Istio Service Dashboard"
+#        variables:
+#          namespace: "var-namespace"
+#          service: "var-service"
+#      - name: "Istio Workload Dashboard"
+#        variables:
+#          namespace: "var-namespace"
+#          workload: "var-workload"
 #      enabled: true
 #      in_cluster_url: "http://grafana.istio-system:3000"
 #      url: ""
