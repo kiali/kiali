@@ -11,10 +11,6 @@ spec:
       oauthproxy:
         image: {{ maistra.cr.oauthproxy.image }}
         hub:  {{ maistra.cr.oauthproxy.hub }}
-{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
-      imagePullSecrets:
-       - {{ operators.pull_secret.name }}
-{% endif %}
     tracing:
       enabled: true
       jaeger:
@@ -41,6 +37,7 @@ spec:
             cpu: 500m
             memory: 4G
     kiali:
+      enabled: true
       hub: {{ maistra.cr.kiali.hub }}
       image: {{ maistra.cr.kiali.image }}
       tag: {{ maistra.cr.kiali.tag }}

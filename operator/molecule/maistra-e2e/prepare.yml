@@ -21,16 +21,6 @@
     with_items:
     - "{{ kiali.test_mesh.installations }}"
 
-
-  - name: Deploy Secrets on Meshes Namespaces
-    k8s:
-      namespace: "{{ item.namespace }}"
-      definition: "{{ lookup('template', secret_file_path) }}"
-    when: operators.pull_secret.enabled
-    with_items:
-      - "{{ kiali.test_mesh.installations }}"
-
-
   - name: Deploying Kiali Test Mesh Operator
     k8s:
       namespace: "{{ kiali.test_mesh.operator.namespace }}"
@@ -71,19 +61,6 @@
     with_items:
     - "{{ kiali.test_mesh.installations }}"
     
-
-  - name: Adding Secret to Deployer Account
-    shell: "oc secrets link deployer {{ operators.pull_secret.name }} --for=pull -n {{ item.namespace }} "
-    when: operators.pull_secret.enabled
-    with_items:
-    - "{{ kiali.test_mesh.installations }}"
-
-  - name: Adding Secret to Default Account
-    shell: "oc secrets link default {{ operators.pull_secret.name }} --for=pull -n {{ item.namespace }} "
-    when: operators.pull_secret.enabled
-    with_items:
-    - "{{ kiali.test_mesh.installations }}"
-
   - name: Create Bookinfo CR
     k8s:
       namespace: "{{ item.namespace }}"

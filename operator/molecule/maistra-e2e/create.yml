@@ -16,19 +16,6 @@
     - "{{ operators.elasticsearch.namespace }}"
     - "{{ maistra.cr.control_planes }}"
 
-
-      
-  - name: Deploy Secrets on Operators and Control Planes Namespaces
-    k8s:
-      namespace: "{{ item }}"
-      definition: "{{ lookup('template', secret_file_path) }}"
-    when: operators.pull_secret.enabled
-    with_items:
-    - "{{ operators.maistra.namespace }}"
-    - "{{ operators.jaeger.namespace }}"
-    - "{{ maistra.cr.control_planes }}"
-    - "{{ operators.kiali.namespace }}"
-
   - name: Deploy Elasticsearch Operator
     k8s:
       namespace: "{{ operators.elasticsearch.namespace }}"
@@ -64,14 +51,7 @@
       service_account: "{{ service_account | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
       role_binding: "{{ role_binding | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
       role: "{{ role | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-      operator: "{{ operator | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-
-
-  - name: Combine Secret on Kiali Operator
-    set_fact:
-      operator: "{{ operator | combine({'spec':{'template': {'spec': {'imagePullSecrets': [{'name': operators.pull_secret.name }]}}}}, recursive=True) }}" 
-    when: operators.pull_secret.enabled
-   
+      operator: "{{ operator | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"   
 
   - name: Deploying Kiali Operator
     k8s:

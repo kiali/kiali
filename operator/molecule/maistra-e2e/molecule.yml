@@ -20,15 +20,8 @@ provisioner:
         maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
         jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
         kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
-        # Uncomment the following parameters for the secret
-        secret_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/secret.yaml"
-        secret: "{{ lookup('template', secret_file_path) | from_yaml }}"
 
         operators:
-          pull_secret:
-            enabled: false
-            # Uncomment the following parameters for the secret
-            name: "{{ secret.metadata.name }}"
           elasticsearch:
             namespace: openshift-logging
             image: quay.io/openshift/origin-elasticsearch-operator:latest
@@ -43,7 +36,7 @@ provisioner:
           kiali:
             namespace: kiali-operator
             hub: quay.io/kiali/kiali-operator
-            tag: 1.0.5
+            tag: v1.0.5
             watch_namespace: ""
             clusterrolebindings: ""
             clusterroles: ""
@@ -64,7 +57,7 @@ provisioner:
             kiali:
               hub: quay.io/kiali
               image: kiali
-              tag: 1.0.5
+              tag: v1.0.5
             threescale:
               hub: quay.io/3scale
               tag: v1.0.0
@@ -101,6 +94,7 @@ provisioner:
 scenario:
   name: maistra-e2e
   test_sequence:
+  - create
   - prepare
   - converge
   - destroy

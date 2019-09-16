@@ -417,14 +417,6 @@ spec:
               value: istio-operator
             - name: ISTIO_CNI_IMAGE
               value: {{ operators.maistra.cni.image }}
-{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
-            - name: ISTIO_CNI_IMAGE_PULL_SECRET
-              value: {{ operators.pull_secret.name }}
-{% endif %}
           volumeMounts:
           - name: discovery-cache
             mountPath: /home/istio-operator/.kube/cache/discovery
-{% if operators.pull_secret.enabled and operators.pull_secret.name is defined %}
-      imagePullSecrets:
-      - name: {{ operators.pull_secret.name }}
-{% endif %}
