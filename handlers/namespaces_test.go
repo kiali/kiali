@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +17,11 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -152,4 +157,56 @@ func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 
 	ts := httptest.NewServer(mr)
 	return ts, api, k8s
+}
+
+// Setup mock
+
+func setupMocked() (*prometheus.Client, *prometheustest.PromAPIMock, *kubetest.K8SClientMock, error) {
+	config.Set(config.NewConfig())
+	k8s := new(kubetest.K8SClientMock)
+
+	k8s.On("GetNamespaces").Return(
+		&core_v1.NamespaceList{
+			Items: []core_v1.Namespace{
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "bookinfo",
+					},
+				},
+				core_v1.Namespace{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name: "tutorial",
+					},
+				},
+			},
+		}, nil)
+
+	fmt.Println("!!! Set up standard mock")
+	k8s.On("GetProjects").Return(
+		[]osproject_v1.Project{
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "bookinfo",
+				},
+			},
+			osproject_v1.Project{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name: "tutorial",
+				},
+			},
+		}, nil)
+
+	k8s.On("IsOpenShift").Return(true)
+
+	api := new(prometheustest.PromAPIMock)
+	client, err := prometheus.NewClient()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	client.Inject(api)
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
+
+	return client, api, k8s, nil
 }
