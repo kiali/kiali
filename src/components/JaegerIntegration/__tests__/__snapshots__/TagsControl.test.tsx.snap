@@ -10,7 +10,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
       <React.Fragment>
         <Popover
           appendTo={[Function]}
-          aria-label=""
+          aria-label="Tags_Information"
           bodyContent={
             <React.Fragment>
               Values should be in the

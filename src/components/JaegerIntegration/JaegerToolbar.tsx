@@ -231,7 +231,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               <Form isHorizontal={true}>
                 <FormGroup label="Max Duration" fieldId="form-maxDurationSpanJaegerTraces" helperText="e.g. 1.1s">
                   <TextInput
-                    value={this.state.minDuration}
+                    value={this.state.maxDuration}
                     type="text"
                     onChange={value => this.setState({ maxDuration: value })}
                     aria-label="maxDurationSpanJaegerTraces"
