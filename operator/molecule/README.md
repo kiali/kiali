@@ -11,11 +11,12 @@ In order to deploy the depencencies run the following command `pip install -r re
 
 Molecule ships a `default` test scenario which allows to run using `molecule test`. That will run the following stages
 
-   - prepare (install stage) 
+   - create (install operators stage) 
+   - prepare (install the kiali mesh stages)
    - converge (test stage)
    - destroy stage (uinstall stage)
 
-If you want to run just the prepare stage you can use `molecule prepare` and if you want to run the destroy stage run `molecule destroy`.
+If you want to run just the create stage you can use `molecule create` and if you want to run the destroy stage run `molecule destroy`.
 
 If you want to run without the destroy, you can run with `molecule test --destroy never`.
 

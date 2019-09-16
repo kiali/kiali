@@ -1,23 +1,17 @@
-- name: Prepare
+- name: Installing Meshes
   hosts: localhost
   gather_facts: false
   connection: local
   tasks:
-  - name: Create Namespaces for Control Planes and Operators
+  - name: Create Namespaces for Kiali Test Mesh
     k8s:
       name: "{{ item }}"
       api_version: v1
       kind: Namespace
       state: present
     with_items:
-    - "{{ operators.maistra.namespace }}"
-    - "{{ operators.jaeger.namespace }}"
-    - "{{ operators.kiali.namespace }}"
-    - "{{ operators.elasticsearch.namespace }}"
     - "{{ kiali.test_mesh.operator.namespace }}"
-    - "{{ maistra.cr.control_planes }}"
-
-
+ 
   - name: Create namespace for Meshes
     k8s:
       name: "{{ item.namespace }}"
@@ -27,17 +21,6 @@
     with_items:
     - "{{ kiali.test_mesh.installations }}"
 
-      
-  - name: Deploy Secrets on Operators and Control Planes Namespaces
-    k8s:
-      namespace: "{{ item }}"
-      definition: "{{ lookup('template', secret_file_path) }}"
-    when: operators.pull_secret.enabled
-    with_items:
-    - "{{ operators.maistra.namespace }}"
-    - "{{ operators.jaeger.namespace }}"
-    - "{{ maistra.cr.control_planes }}"
-    - "{{ operators.kiali.namespace }}"
 
   - name: Deploy Secrets on Meshes Namespaces
     k8s:
@@ -46,104 +29,6 @@
     when: operators.pull_secret.enabled
     with_items:
       - "{{ kiali.test_mesh.installations }}"
-
-  - name: Deploy Elasticsearch Operator
-    k8s:
-      namespace: "{{ operators.elasticsearch.namespace }}"
-      definition: "{{ lookup('template', elasticsearch_operator_file_path) }}"
-
-  - name: Deploy Jaeger Operator
-    k8s:
-      namespace: "{{ operators.jaeger.namespace }}"
-      definition: "{{ lookup('template', jaeger_operator_file_path) }}"
-
-
-  - name: Produce Files with Correct Parameters for Kiali Operator
-    shell: " {{ item }}"
-    with_items:
-    - cat {{ kiali_operator_assets_path }}/crd.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role_binding.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_NAMESPACE={{ operators.kiali.namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/service_account.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} envsubst
-    - cat {{ kiali_operator_assets_path }}/operator_without_ao.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_IMAGE_NAME={{ operators.kiali.hub }} OPERATOR_IMAGE_VERSION={{ operators.kiali.tag }} OPERATOR_IMAGE_PULL_POLICY={{ operators.kiali.image_pull_policy}} OPERATOR_WATCH_NAMESPACE={{ operators.kiali.watch_namespace }} envsubst
-    - cat {{ kiali_operator_assets_path }}/role.yaml | OPERATOR_VERSION_LABEL={{ operators.kiali.tag }} OPERATOR_ROLE_CLUSTERROLEBINDINGS="{{ operators.kiali.clusterrolebindings}}" OPERATOR_ROLE_CLUSTERROLES="{{ operators.kiali.clusterroles }}" envsubst
-    register: template
-
-  - name: Parse Template Yaml Files
-    set_fact:
-      crd0: "{{ (template.results[0].stdout | from_yaml_all | list)[0] }}"
-      crd1: "{{ (template.results[0].stdout | from_yaml_all | list)[1] }}"
-      role_binding: "{{ (template.results[1].stdout | from_yaml_all | list)[0] }}"
-      service_account: "{{ (template.results[2].stdout | from_yaml_all | list)[0] }}"
-      operator: "{{ (template.results[3].stdout | from_yaml_all | list)[0] }}"
-      role: "{{ (template.results[4].stdout | from_yaml_all | list)[0] }}"
-
-  - name: Combine Namespace on the Files that need it
-    set_fact:
-      service_account: "{{ service_account | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-      role_binding: "{{ role_binding | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-      role: "{{ role | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-      operator: "{{ operator | combine({'metadata':{'namespace': operators.kiali.namespace }}, recursive=True)   }}"
-
-
-  - name: Combine Secret on Kiali Operator
-    set_fact:
-      operator: "{{ operator | combine({'spec':{'template': {'spec': {'imagePullSecrets': [{'name': operators.pull_secret.name }]}}}}, recursive=True) }}" 
-    when: operators.pull_secret.enabled
-   
-
-  - name: Deploying Kiali Operator
-    k8s:
-      definition: "{{ item }}"
-    with_items:
-    -  "{{ crd0 }}"
-    -  "{{ crd1 }}"
-    -  "{{ role }}"
-    -  "{{ role_binding }}"
-    -  "{{ service_account }}"
-    -  "{{ operator }}"
-
-
-  - name: Deploy Maistra Operator
-    k8s:
-      state: present
-      namespace: "{{ operators.maistra.namespace }}"
-      definition: "{{ lookup('template', maistra_operator_file_path) }}"
-
-  - name: Asserting that Maistra Operator is deployed
-    k8s_facts:
-      api_version: v1
-      kind: Deployment
-      namespace: "{{ operators.maistra.namespace }}"
-    register: operator_deployment
-    until: operator_deployment.resources |length == 1 and operator_deployment.resources[0].status.availableReplicas is defined and operator_deployment.resources[0].status.availableReplicas == 1
-    retries: 2000
-    delay: 10
-
-  - name: Pause for 2 minute to wait Maistra to create Admission Controller
-    pause:
-      minutes: 2
-    
-  
-  - name: Deploy Control Planes
-    k8s:
-      namespace: "{{ item }}"
-      definition: "{{ lookup('template', maistra_cr_file_path) }}"
-    with_items:
-    - "{{ maistra.cr.control_planes }}"
-
-  - name: Asserting that Kialis are Deployed
-    k8s_facts:
-      api_version: v1
-      kind: Deployment
-      namespace: "{{ item }}"
-      label_selectors:
-      - app = kiali
-    register: kiali_deployment
-    until: kiali_deployment.resources |length == 1 and kiali_deployment.resources[0].status.availableReplicas is defined and kiali_deployment.resources[0].status.availableReplicas == 1
-    retries: 2000
-    delay: 10
-    with_items:
-    - "{{ maistra.cr.control_planes }}"
 
 
   - name: Deploying Kiali Test Mesh Operator
