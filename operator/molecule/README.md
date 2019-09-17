@@ -11,18 +11,19 @@ In order to deploy the depencencies run the following command `pip install -r re
 
 Molecule ships a `default` test scenario which allows to run using `molecule test`. That will run the following stages
 
-   - prepare (install stage) 
+   - create (install operators stage) 
+   - prepare (install the kiali mesh stages)
    - converge (test stage)
    - destroy stage (uinstall stage)
 
-If you want to run just the prepare stage you can use `molecule prepare` and if you want to run the destroy stage run `molecule destroy`.
+If you want to run just the create stage you can use `molecule create` and if you want to run the destroy stage run `molecule destroy`.
 
 If you want to run without the destroy, you can run with `molecule test --destroy never`.
 
 
 For other scenarios than default, you can run `molecule test -s scenario_name` where scenario name is configured on molecule.yml of scenario_name folder under the molecule folder.
 
-Eg: `molecule test -s multi-tenancy` will run the multi-tenancy scenario.
+Eg: `molecule test -s maistra-e2e` will run the multi-tenancy scenario.
 
 
 For all the scenarios use `molecule test --all`.
