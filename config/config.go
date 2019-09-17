@@ -157,10 +157,23 @@ type PrometheusConfig struct {
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
 	// Enable or disable Grafana support in Kiali
-	Enabled      bool   `yaml:"enabled"`
-	InClusterURL string `yaml:"in_cluster_url"`
-	URL          string `yaml:"url"`
-	Auth         Auth   `yaml:"auth"`
+	Enabled      bool                     `yaml:"enabled"`
+	InClusterURL string                   `yaml:"in_cluster_url"`
+	URL          string                   `yaml:"url"`
+	Auth         Auth                     `yaml:"auth"`
+	Dashboards   []GrafanaDashboardConfig `yaml:"dashboards"`
+}
+
+type GrafanaDashboardConfig struct {
+	Name      string                 `yaml:"name"`
+	Variables GrafanaVariablesConfig `yaml:"variables"`
+}
+
+type GrafanaVariablesConfig struct {
+	Namespace string `yaml:"namespace" json:"namespace,omitempty"`
+	App       string `yaml:"app" json:"app,omitempty"`
+	Service   string `yaml:"service" json:"service,omitempty"`
+	Workload  string `yaml:"workload" json:"workload,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links

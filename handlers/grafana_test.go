@@ -12,7 +12,13 @@ import (
 
 var dashboard = []map[string]interface{}{
 	map[string]interface{}{
-		"url": "the_path",
+		"url": "/the_path",
+	},
+}
+
+var dashboardsConfig = []config.GrafanaDashboardConfig{
+	config.GrafanaDashboardConfig{
+		Name: "My Dashboard",
 	},
 }
 
@@ -33,29 +39,31 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(dashboard, 200, "http://grafana-external:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://grafana-external:3001", info.URL)
-	assert.Equal(t, "the_path", info.WorkloadDashboardPath)
+	assert.Len(t, info.Dashboards, 1)
+	assert.Equal(t, "http://grafana-external:3001/the_path", info.Dashboards[0].URL)
 }
 
 func TestGetGrafanaInfoInCluster(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
 	config.Set(conf)
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(dashboard, 200, "http://grafana.istio-system:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://grafana-external:3001", info.URL)
-	assert.Equal(t, "the_path", info.WorkloadDashboardPath)
+	assert.Equal(t, "http://grafana-external:3001/the_path", info.Dashboards[0].URL)
 }
 
 func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
 	_, code, err := getGrafanaInfo("", buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t))
 	assert.Equal(t, "error from Grafana (401): unauthorized", err.Error())
@@ -65,6 +73,7 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	config.Set(conf)
 	_, code, err := getGrafanaInfo("", buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t))
 	assert.NotNil(t, err)

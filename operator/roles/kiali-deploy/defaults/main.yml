@@ -74,6 +74,15 @@ kiali_defaults:
         type: "none"
         use_kiali_token: false
         username: ""
+      dashboards:
+      - name: "Istio Service Dashboard"
+        variables:
+          namespace: "var-namespace"
+          service: "var-service"
+      - name: "Istio Workload Dashboard"
+        variables:
+          namespace: "var-namespace"
+          workload: "var-workload"
       enabled: true
       in_cluster_url: ""
       url: ""
