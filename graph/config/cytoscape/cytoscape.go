@@ -22,15 +22,31 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
-// ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
+// ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
 // "200" : {
 //    "-"     : "80.0",
 //    "DC"    : "10.0",
 //    "FI,FD" : "10.0"
 // }, ...
 type ResponseFlags map[string]string
-type Responses map[string]ResponseFlags
 
+// ResponseHosts is a map of maps. Each response host is broken down by responseFlags:percentageOfTraffic, e.g.:
+// "200" : {
+//    "www.google.com" : "80.0",
+//    "www.yahoo.com"  : "20.0"
+// }, ...
+type ResponseHosts map[string]string
+
+// ResponseDetail holds information broken down by response code.
+type ResponseDetail struct {
+	Flags ResponseFlags `json:"flags,omitempty"`
+	Hosts ResponseHosts `json:"hosts,omitempty"`
+}
+
+// Responses maps responseCodes to detailed information for that code
+type Responses map[string]*ResponseDetail
+
+// ProtocolTraffic supplies all of the traffic information for a single protocol
 type ProtocolTraffic struct {
 	Protocol  string            `json:"protocol,omitempty"`  // protocol
 	Rates     map[string]string `json:"rates,omitempty"`     // map[rate]value
@@ -351,15 +367,20 @@ func addEdgeTelemetry(e *graph.Edge, ed *EdgeData) {
 					}
 				}
 				mdResponses := e.Metadata[p.EdgeResponses].(graph.Responses)
-				for code, flagsValueMap := range mdResponses {
+				for code, detail := range mdResponses {
 					responseFlags := make(ResponseFlags)
-					for flags, value := range flagsValueMap {
+					responseHosts := make(ResponseHosts)
+					for flags, value := range detail.Flags {
 						responseFlags[flags] = fmt.Sprintf("%.*f", 1, value/total*100.0)
 					}
+					for host, value := range detail.Hosts {
+						responseHosts[host] = fmt.Sprintf("%.*f", 1, value/total*100.0)
+					}
+					responseDetail := &ResponseDetail{Flags: responseFlags, Hosts: responseHosts}
 					if protocolTraffic.Responses == nil {
-						protocolTraffic.Responses = Responses{code: responseFlags}
+						protocolTraffic.Responses = Responses{code: responseDetail}
 					} else {
-						protocolTraffic.Responses[code] = responseFlags
+						protocolTraffic.Responses[code] = responseDetail
 					}
 				}
 				ed.Traffic = protocolTraffic
