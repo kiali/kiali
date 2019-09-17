@@ -36,7 +36,7 @@ class HelpDropdownContainer extends React.Component<HelpDropdownProps, HelpDropd
 
   openDebugInformation = () => {
     // Using wrapped component, so we have to get the wrappedInstance
-    this.debugInformation.current!.getWrappedInstance().open();
+    this.debugInformation.current!.open();
   };
 
   onDropdownToggle = isDropdownOpen => {

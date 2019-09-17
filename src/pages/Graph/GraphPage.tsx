@@ -394,8 +394,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   }
 
   private setCytoscapeGraph(cytoscapeGraph: any) {
-    this.cytoscapeGraphRef.current =
-      cytoscapeGraph && cytoscapeGraph.getWrappedInstance ? cytoscapeGraph.getWrappedInstance() : null;
+    this.cytoscapeGraphRef.current = cytoscapeGraph;
   }
 
   private loadGraphDataFromBackend = () => {
