@@ -37,26 +37,18 @@ import (
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/api"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/prometheus"
 )
 
 // GraphNamespaces is a REST http.HandlerFunc handling graph generation for 1 or more namespaces
 func GraphNamespaces(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
-	client, err := prometheus.NewClient()
-	graph.CheckError(err)
 
-	graphNamespaces(w, r, client)
-}
-
-// graphNamespaces provides a testing hook that can supply a mock client
-func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := graph.NewOptions(r)
 
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := api.GraphNamespaces(business, client, o)
+	code, payload := api.GraphNamespaces(business, o)
 	respond(w, code, payload)
 }
 
@@ -64,20 +56,12 @@ func graphNamespaces(w http.ResponseWriter, r *http.Request, client *prometheus.
 func GraphNode(w http.ResponseWriter, r *http.Request) {
 	defer handlePanic(w)
 
-	client, err := prometheus.NewClient()
-	graph.CheckError(err)
-
-	graphNode(w, r, client)
-}
-
-// graphNode provides a testing hook that can supply a mock client
-func graphNode(w http.ResponseWriter, r *http.Request, client *prometheus.Client) {
 	o := graph.NewOptions(r)
 
 	business, err := getBusiness(r)
 	graph.CheckError(err)
 
-	code, payload := api.GraphNode(business, client, o)
+	code, payload := api.GraphNode(business, o)
 	respond(w, code, payload)
 }
 
