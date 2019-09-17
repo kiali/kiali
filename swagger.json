@@ -3591,24 +3591,58 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
-    "GrafanaInfo": {
-      "description": "GrafanaInfo provides information to access Grafana dashboards",
+    "GrafanaDashboardInfo": {
       "type": "object",
       "properties": {
-        "serviceDashboardPath": {
+        "name": {
           "type": "string",
-          "x-go-name": "ServiceDashboardPath"
+          "x-go-name": "Name"
         },
         "url": {
           "type": "string",
           "x-go-name": "URL"
         },
-        "workloadDashboardPath": {
-          "type": "string",
-          "x-go-name": "WorkloadDashboardPath"
+        "variables": {
+          "$ref": "#/definitions/GrafanaVariablesConfig"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "GrafanaInfo": {
+      "description": "GrafanaInfo provides information to access Grafana dashboards",
+      "type": "object",
+      "properties": {
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GrafanaDashboardInfo"
+          },
+          "x-go-name": "Dashboards"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "GrafanaVariablesConfig": {
+      "type": "object",
+      "properties": {
+        "app": {
+          "type": "string",
+          "x-go-name": "App"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "service": {
+          "type": "string",
+          "x-go-name": "Service"
+        },
+        "workload": {
+          "type": "string",
+          "x-go-name": "Workload"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/config"
     },
     "Histogram": {
       "description": "Histogram contains Metric objects for several histogram-kind statistics",
