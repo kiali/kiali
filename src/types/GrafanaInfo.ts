@@ -1,5 +1,16 @@
 export interface GrafanaInfo {
+  dashboards: GrafanaDashboardInfo[];
+}
+
+interface GrafanaDashboardInfo {
   url: string;
-  serviceDashboardPath: string;
-  workloadDashboardPath: string;
+  name: string;
+  variables: GrafanaVariablesConfig;
+}
+
+interface GrafanaVariablesConfig {
+  app?: string;
+  namespace?: string;
+  service?: string;
+  workload?: string;
 }
