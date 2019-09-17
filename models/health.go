@@ -4,6 +4,9 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// NamespacesHealth is an alias of map of namespace x NamespaceHealth
+type NamespacesHealth map[string]*NamespaceHealth
+
 // NamespaceAppHealth is an alias of map of app name x health
 type NamespaceAppHealth map[string]*AppHealth
 
@@ -16,6 +19,13 @@ type NamespaceWorkloadHealth map[string]*WorkloadHealth
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
 	Requests RequestHealth `json:"requests"`
+}
+
+// NamespaceHealth contains aggregated health from various sources, for a given namespace
+type NamespaceHealth struct {
+	NamespaceAppHealth      *NamespaceAppHealth      `json:"namespaceAppHealth"`
+	NamespaceServiceHealth  *NamespaceServiceHealth  `json:"namespaceServiceHealth"`
+	NamespaceWorkloadHealth *NamespaceWorkloadHealth `json:"namespaceWorkloadHealth"`
 }
 
 // AppHealth contains aggregated health from various sources, for a given app

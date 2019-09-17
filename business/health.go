@@ -1,6 +1,7 @@
 package business
 
 import (
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -19,6 +20,21 @@ import (
 type HealthService struct {
 	prom prometheus.ClientInterface
 	k8s  kubernetes.IstioClientInterface
+}
+
+type NamespaceHealthRequest map[string]*NamespaceHealthRequestEntry
+
+func (in *NamespaceHealthRequest) CreateNamespaceEntry(namespace string) {
+	if _, ok := (*in)[namespace]; !ok {
+		(*in)[namespace] = &NamespaceHealthRequestEntry{}
+	}
+}
+
+type NamespaceHealthRequestEntry struct {
+	AppHealth      bool
+	ServiceHealth  bool
+	WorkloadHealth bool
+	RateInterval   string
 }
 
 // GetServiceHealth returns a service health (service request error rate)
@@ -108,6 +124,55 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 		WorkloadStatus: status,
 		Requests:       rate,
 	}, err
+}
+
+func (in *HealthService) GetNamespacesHealth(namespaceHealthRequest NamespaceHealthRequest, queryTime time.Time) (models.NamespacesHealth, error) {
+	ret := make(models.NamespacesHealth)
+	var w sync.WaitGroup
+	for namespace, e := range namespaceHealthRequest {
+		namespaceHealth := models.NamespaceHealth{}
+		if e.AppHealth {
+			w.Add(1)
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				appHealth, _ := in.GetNamespaceAppHealth(namespace, e.RateInterval, queryTime)
+				// Ignore erorrs for the time being
+				/*if err != nil {
+					return nil, err
+				}*/
+				namespaceHealth.NamespaceAppHealth = &appHealth
+			}(&w)
+		}
+
+		if e.ServiceHealth {
+			w.Add(1)
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				serviceHealth, _ := in.GetNamespaceServiceHealth(namespace, e.RateInterval, queryTime)
+				/*
+				if err != nil {
+					return nil, err
+				}*/
+				namespaceHealth.NamespaceServiceHealth = &serviceHealth
+			}(&w)
+		}
+
+		if e.WorkloadHealth {
+			w.Add(1)
+			go func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				workloadHealth, _ := in.GetNamespaceWorkloadHealth(namespace, e.RateInterval, queryTime)
+				/*if err != nil {
+					return nil, err
+				}*/
+				namespaceHealth.NamespaceWorkloadHealth = &workloadHealth
+			}(&w)
+		}
+
+		ret[namespace] = &namespaceHealth
+	}
+	w.Wait()
+	return ret, nil
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)

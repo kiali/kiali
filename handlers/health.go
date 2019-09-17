@@ -62,6 +62,32 @@ func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func MultiNamespaceHealth(w http.ResponseWriter, r *http.Request) {
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	p := multiNamespaceHealthParams{}
+	if ok, err := p.extract(r); !ok {
+		RespondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	for namespace, val := range p.namespacesHealth {
+		rateInterval, err := adjustRateInterval(business, namespace, p.RateInterval, p.QueryTime)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+			return
+		}
+		val.RateInterval = rateInterval
+	}
+
+	health, err := business.Health.GetNamespacesHealth(p.namespacesHealth, p.QueryTime)
+	handleHealthResponse(w, health, err)
+}
+
 // AppHealth is the API handler to get health of a single app
 func AppHealth(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
@@ -138,10 +164,6 @@ func handleHealthResponse(w http.ResponseWriter, health interface{}, err error) 
 }
 
 type baseHealthParams struct {
-	// The namespace scope
-	//
-	// in: path
-	Namespace string `json:"namespace"`
 	// The rate interval used for fetching error rate
 	//
 	// in: query
@@ -159,6 +181,16 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 	if rateIntervals, ok := queryParams["rateInterval"]; ok && len(rateIntervals) > 0 {
 		p.RateInterval = rateIntervals[0]
 	}
+}
+
+type namespaceScopedHealthParams struct {
+	// The namespace scope
+	//
+	// in: path
+	Namespace string `json:"namespace"`
+}
+
+func (p *namespaceScopedHealthParams) namespaceExtract(r *http.Request, vars map[string]string) {
 	p.Namespace = vars["namespace"]
 }
 
@@ -167,6 +199,7 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 // swagger:parameters namespaceHealth
 type namespaceHealthParams struct {
 	baseHealthParams
+	namespaceScopedHealthParams
 	// The type of health, "app", "service" or "workload".
 	//
 	// in: query
@@ -178,6 +211,7 @@ type namespaceHealthParams struct {
 func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
+	p.namespaceExtract(r, vars)
 	p.Type = "app"
 	queryParams := r.URL.Query()
 	if healthTypes, ok := queryParams["type"]; ok && len(healthTypes) > 0 {
@@ -190,11 +224,60 @@ func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
 	return true, ""
 }
 
+// multiNamespaceHealthParams holds the path and query parameters for MultiNamespaceHealth
+//
+// swagger:parameters multiNamespaceHealthParams
+type multiNamespaceHealthParams struct {
+	baseHealthParams
+	namespacesHealth business.NamespaceHealthRequest
+}
+
+func (p *multiNamespaceHealthParams) extract(r *http.Request) (bool, string) {
+	vars := mux.Vars(r)
+	p.baseExtract(r, vars)
+	queryParams := r.URL.Query()
+
+	types := queryParams["type[]"]
+	namespaces := queryParams["namespace[]"]
+
+	if len(types) != len(namespaces) {
+		return false, "Bad request, query parameter 'type' and 'namespace' must match"
+	}
+
+	p.namespacesHealth = make(business.NamespaceHealthRequest)
+
+	for i, t := range types {
+		if t != "app" && t != "service" && t != "workload" {
+			// Bad request
+			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload']"
+		}
+
+		namespace := namespaces[i]
+		p.namespacesHealth.CreateNamespaceEntry(namespace)
+
+		switch t {
+		case "app":
+			p.namespacesHealth[namespace].AppHealth = true
+			break
+		case "service":
+			p.namespacesHealth[namespace].ServiceHealth = true
+			break
+		case "workload":
+			p.namespacesHealth[namespace].WorkloadHealth = true
+			break
+		}
+
+	}
+
+	return true, ""
+}
+
 // appHealthParams holds the path and query parameters for AppHealth
 //
-// swagger:parameters appHealth
+// swagger:parameters AppHealth
 type appHealthParams struct {
 	baseHealthParams
+	namespaceScopedHealthParams
 	// The target app
 	//
 	// in: path
@@ -204,14 +287,16 @@ type appHealthParams struct {
 func (p *appHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
+	p.namespaceExtract(r, vars)
 	p.App = vars["app"]
 }
 
 // serviceHealthParams holds the path and query parameters for ServiceHealth
 //
-// swagger:parameters serviceHealth
+// swagger:parameters ServiceHealth
 type serviceHealthParams struct {
 	baseHealthParams
+	namespaceScopedHealthParams
 	// The target service
 	//
 	// in: path
@@ -221,14 +306,16 @@ type serviceHealthParams struct {
 func (p *serviceHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
+	p.namespaceExtract(r, vars)
 	p.Service = vars["service"]
 }
 
 // workloadHealthParams holds the path and query parameters for WorkloadHealth
 //
-// swagger:parameters workloadHealth
+// swagger:parameters WorkloadHealth
 type workloadHealthParams struct {
 	baseHealthParams
+	namespaceScopedHealthParams
 	// The target workload
 	//
 	// in: path
@@ -238,6 +325,7 @@ type workloadHealthParams struct {
 func (p *workloadHealthParams) extract(r *http.Request) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
+	p.namespaceExtract(r, vars)
 	p.Workload = vars["workload"]
 }
 

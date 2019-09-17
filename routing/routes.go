@@ -793,6 +793,26 @@ func NewRoutes() (r *Routes) {
 			handlers.NamespaceHealth,
 			true,
 		},
+		// swagger:route GET /namespaces/health services serviceHealth
+		// ---
+		// Get health associated to resources specified in body request
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: batchHealthResponse
+		//      500: internalError
+		//
+		{
+			"Health",
+			"GET",
+			"/api/namespaces/health",
+			handlers.MultiNamespaceHealth,
+			true,
+		},
 		// swagger:route GET /mesh/tls tls meshTls
 		// ---
 		// Get TLS status for the whole mesh
