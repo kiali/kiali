@@ -20,7 +20,9 @@ describe('MessageCenter', () => {
           type: MessageType.ERROR,
           count: 0,
           show_notification: true,
-          created: new Date()
+          created: new Date(),
+          detail: '',
+          showDetail: false
         },
         {
           id: 2,
@@ -28,7 +30,9 @@ describe('MessageCenter', () => {
           content: 'hide me',
           type: MessageType.ERROR,
           count: 0,
-          created: new Date()
+          created: new Date(),
+          detail: '',
+          showDetail: false
         }
       ]
     },
@@ -45,7 +49,9 @@ describe('MessageCenter', () => {
           type: MessageType.SUCCESS,
           count: 0,
           show_notification: true,
-          created: new Date()
+          created: new Date(),
+          detail: '',
+          showDetail: false
         }
       ]
     }
@@ -62,6 +68,7 @@ describe('MessageCenter', () => {
         onClearGroup={() => console.log('onClearGroup')}
         onNotificationClick={() => console.log('onNotificationClick')}
         onDismissNotification={() => console.log('onDismissNotification')}
+        onNotificationToggleDetail={() => console.log('onNotificationToggleDetail')}
         groups={groupMessages}
       />
     );

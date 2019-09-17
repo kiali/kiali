@@ -59,6 +59,7 @@
     "analyze": "source-map-explorer build/static/js/main.*",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\"",
     "snyk-protect": "snyk protect",
+    "tsc": "tsc -p .",
     "postinstall": "sed -i -E 's#\\[.*eslint-config-react-app.*\\]#['\\'$PWD/.eslintrc\\'']#g' node_modules/react-scripts/config/webpack*.js"
   },
   "dependencies": {

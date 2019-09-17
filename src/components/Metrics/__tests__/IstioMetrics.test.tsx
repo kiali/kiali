@@ -117,11 +117,6 @@ describe('Metrics for a service', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
-                }}
               />
             )}
           />
@@ -152,11 +147,6 @@ describe('Metrics for a service', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
-                }}
               />
             )}
           />
@@ -195,11 +185,6 @@ describe('Metrics for a service', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
-                }}
               />
             )}
           />
@@ -230,11 +215,6 @@ describe('Inbound Metrics for a workload', () => {
               object="svc"
               objectType={MetricsObjectTypes.WORKLOAD}
               direction={'inbound'}
-              grafanaInfo={{
-                url: 'http://172.30.139.113:3000',
-                serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                workloadDashboardPath: '/dashboard/db/istio-dashboard'
-              }}
             />
           )}
         />
@@ -264,11 +244,6 @@ describe('Inbound Metrics for a workload', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
-                }}
               />
             )}
           />
@@ -307,11 +282,6 @@ describe('Inbound Metrics for a workload', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.WORKLOAD}
                 direction={'inbound'}
-                grafanaInfo={{
-                  url: 'http://172.30.139.113:3000',
-                  serviceDashboardPath: '/dashboard/db/istio-dashboard',
-                  workloadDashboardPath: '/dashboard/db/istio-dashboard'
-                }}
               />
             )}
           />

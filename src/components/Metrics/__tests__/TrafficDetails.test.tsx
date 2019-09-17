@@ -37,7 +37,7 @@ describe('TrafficDetails', () => {
               source: tuple[0].id,
               target: tuple[1].id,
               traffic: {
-                protocol: ''
+                protocol: 'http'
               }
             }
           })
@@ -60,7 +60,7 @@ describe('TrafficDetails', () => {
     workload: name,
     traffic: [
       {
-        protocol: ''
+        protocol: 'http'
       }
     ]
   });
@@ -72,7 +72,7 @@ describe('TrafficDetails', () => {
     service: name,
     traffic: [
       {
-        protocol: ''
+        protocol: 'http'
       }
     ]
   });
