@@ -13,13 +13,13 @@ provisioner:
   inventory:
     group_vars:
       all:
-        catalog_sources_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/catalog-sources.yaml"
-        elasticsearch_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/elasticsearch-subscription.yaml"
-        jaeger_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/jaeger-subscription.yaml"
-        servicemesh_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/servicemesh-subscription.yaml"
-        kiali_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/kiali-subscription.yaml"
-        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/maistra-cr.yaml"
-        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm/assets/bookinfo"
+        catalog_sources_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/catalog-sources.yaml"
+        elasticsearch_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/elasticsearch-subscription.yaml"
+        jaeger_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/jaeger-subscription.yaml"
+        servicemesh_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/servicemesh-subscription.yaml"
+        kiali_subscription_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/kiali-subscription.yaml"
+        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/maistra-cr.yaml"
+        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/olm-test/assets/bookinfo"
         
         maistra:
           cr:
