@@ -1599,8 +1599,9 @@ func TestServiceNodeGraph(t *testing.T) {
 
 // TestComplexGraph aims to provide test coverage for a more robust graph and specific corner cases. Listed below are coverage cases
 // - multi-namespace graph
-// - istio component namesaces
+// - istio component namespaces
 // - a "shared" node (internal in ns-1, outsider in ns-2)
+// - request_host
 // note: appenders still tested in separate unit tests given that they create their own new business/kube clients
 func TestComplexGraph(t *testing.T) {
 	q0 := `round(sum(rate(istio_requests_total{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo"} [600s])) by (source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_host,request_protocol,response_code,response_flags),0.001)`
@@ -1615,6 +1616,7 @@ func TestComplexGraph(t *testing.T) {
 		"destination_workload":           "productpage-v1",
 		"destination_app":                "productpage",
 		"destination_version":            "v1",
+		"request_host":                   "productpage:9080",
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
@@ -1650,6 +1652,7 @@ func TestComplexGraph(t *testing.T) {
 		"destination_workload":           "customer-v1",
 		"destination_app":                "customer",
 		"destination_version":            "v1",
+		"request_host":                   "customer:9080",
 		"request_protocol":               "grpc",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
@@ -1673,6 +1676,7 @@ func TestComplexGraph(t *testing.T) {
 		"destination_workload":           "productpage-v1",
 		"destination_app":                "productpage",
 		"destination_version":            "v1",
+		"request_host":                   "productpage:9080",
 		"request_protocol":               "http",
 		"response_code":                  "200",
 		"response_flags":                 "-"}
