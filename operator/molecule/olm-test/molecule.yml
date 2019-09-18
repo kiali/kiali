@@ -52,7 +52,7 @@ provisioner:
                 control_plane: istio-system
                 kind: RedHatTutorial
 scenario:
-  name: olm
+  name: olm-test
   test_sequence:
   - create
   - prepare
