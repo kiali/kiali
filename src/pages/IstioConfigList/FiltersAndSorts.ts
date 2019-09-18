@@ -1,6 +1,6 @@
 import { SortField } from '../../types/SortFilters';
 import { IstioConfigItem } from '../../types/IstioConfigList';
-import { FILTER_ACTION_APPEND, FILTER_ACTION_UPDATE, FilterType } from '../../types/Filters';
+import { FILTER_ACTION_APPEND, FilterType } from '../../types/Filters';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const getType = (item: IstioConfigItem): string => {
@@ -79,7 +79,7 @@ export const istioNameFilter: FilterType = {
   title: 'Istio Name',
   placeholder: 'Filter by Istio Name',
   filterType: TextInputTypes.text,
-  action: FILTER_ACTION_UPDATE,
+  action: FILTER_ACTION_APPEND,
   filterValues: []
 };
 
