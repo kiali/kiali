@@ -213,7 +213,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
-		host := "unknown"
+		host := ""
 		if hostOk {
 			host = string(lHost)
 		}
