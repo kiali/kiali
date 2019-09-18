@@ -64,25 +64,43 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
           <Title size="xl" style={{ padding: '20px 0px 20px' }}>
             Components
           </Title>
-          <TextList component="dl">
-            {this.props.components &&
-              this.props.components.map(component => (
-                <React.Fragment key={`${component.name}_${component.version}`}>
-                  <TextListItem key={component.name} component="dt">
-                    {component.version ? component.name : `${component.name}URL`}
-                  </TextListItem>
-                  <TextListItem key={component.version} component="dd">{`${
-                    component.version ? component.version : ''
-                  } ${component.version ? (component.url ? `(${component.url})` : '') : component.url}`}</TextListItem>
-                </React.Fragment>
-              ))}
-          </TextList>
+          <TextList component="dl">{this.props.components && this.props.components.map(this.renderComponent)}</TextList>
           {this.renderWebsiteLink()}
           {this.renderProjectLink()}
         </TextContent>
       </AboutModal>
     );
   }
+
+  private renderComponent = (component: Component) => {
+    const name = component.version ? component.name : `${component.name} URL`;
+    const additionalInfo = this.additionalComponentInfoContent(component);
+    return (
+      <>
+        <TextListItem component="dt">{name}</TextListItem>
+        <TextListItem component="dd">{additionalInfo}</TextListItem>
+      </>
+    );
+  };
+
+  private additionalComponentInfoContent = (component: Component) => {
+    if (!component.version && !component.url) {
+      return 'N/A';
+    }
+    const version = component.version ? component.version : '';
+    const url = component.url ? (
+      <a href={component.url} target="_blank" rel="noopener noreferrer">
+        {component.url}
+      </a>
+    ) : (
+      ''
+    );
+    return (
+      <>
+        {version} {url}
+      </>
+    );
+  };
 
   private renderWebsiteLink = () => {
     if (config.about && config.about.website) {
