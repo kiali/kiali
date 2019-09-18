@@ -92,7 +92,7 @@ provisioner:
                 control_plane: istio-system
                 kind: RedHatTutorial
 scenario:
-  name: maistra-e2e
+  name: maistra-e2e-test
   test_sequence:
   - create
   - prepare
