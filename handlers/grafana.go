@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	kmodel "github.com/kiali/k-charted/model"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -69,24 +72,30 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	dashboards := []models.GrafanaDashboardInfo{}
+	links := []kmodel.ExternalLink{}
 	for _, dashboardConfig := range grafanaConfig.Dashboards {
 		dashboardPath, err := getDashboardPath(apiURL, dashboardConfig.Name, &auth, dashboardSupplier)
 		if err != nil {
 			return nil, http.StatusServiceUnavailable, err
 		}
 		if dashboardPath != "" {
-			dashboard := models.GrafanaDashboardInfo{
-				URL:       strings.TrimSuffix(externalURL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
-				Name:      dashboardConfig.Name,
-				Variables: dashboardConfig.Variables,
+			externalLink := kmodel.ExternalLink{
+				URL:  strings.TrimSuffix(externalURL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
+				Name: dashboardConfig.Name,
+				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
+					App:       dashboardConfig.Variables.App,
+					Namespace: dashboardConfig.Variables.Namespace,
+					Service:   dashboardConfig.Variables.Service,
+					Version:   dashboardConfig.Variables.Version,
+					Workload:  dashboardConfig.Variables.Workload,
+				},
 			}
-			dashboards = append(dashboards, dashboard)
+			links = append(links, externalLink)
 		}
 	}
 
 	grafanaInfo := models.GrafanaInfo{
-		Dashboards: dashboards,
+		ExternalLinks: links,
 	}
 
 	return &grafanaInfo, http.StatusOK, nil

@@ -173,6 +173,7 @@ type GrafanaVariablesConfig struct {
 	Namespace string `yaml:"namespace" json:"namespace,omitempty"`
 	App       string `yaml:"app" json:"app,omitempty"`
 	Service   string `yaml:"service" json:"service,omitempty"`
+	Version   string `yaml:"version" json:"version,omitempty"`
 	Workload  string `yaml:"workload" json:"workload,omitempty"`
 }
 

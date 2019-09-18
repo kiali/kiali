@@ -1,9 +1,10 @@
 package business
 
 import (
-	dlg "github.com/kiali/k-charted/business"
-	dlgconfig "github.com/kiali/k-charted/config"
-	"github.com/kiali/k-charted/config/promconfig"
+	kbus "github.com/kiali/k-charted/business"
+	kconf "github.com/kiali/k-charted/config"
+	kxconf "github.com/kiali/k-charted/config/extconfig"
+	klog "github.com/kiali/k-charted/log"
 	kmodel "github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/config"
@@ -12,46 +13,72 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/status"
 )
 
 // DashboardsService deals with fetching dashboards from k8s client
 type DashboardsService struct {
-	delegate dlg.DashboardsService
+	delegate kbus.DashboardsService
 	prom     prometheus.ClientInterface
 }
 
 // NewDashboardsService initializes this business service
 func NewDashboardsService(prom prometheus.ClientInterface) DashboardsService {
-	delegate := dlg.NewDashboardsService(DashboardsConfig())
+	delegate := kbus.NewDashboardsService(DashboardsConfig())
 	return DashboardsService{delegate: delegate, prom: prom}
 }
 
-func DashboardsConfig() dlgconfig.Config {
+func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 	cfg := config.Get()
-	auth := cfg.ExternalServices.Prometheus.Auth
-	if auth.UseKialiToken {
-		token, err := kubernetes.GetKialiToken()
+	pauth := cfg.ExternalServices.Prometheus.Auth
+	gauth := cfg.ExternalServices.Grafana.Auth
+	if pauth.UseKialiToken || (cfg.ExternalServices.Grafana.Enabled && gauth.UseKialiToken) {
+		kialiToken, err := kubernetes.GetKialiToken()
 		if err != nil {
 			log.Errorf("Could not read the Kiali Service Account token: %v", err)
 		}
-		auth.Token = token
+		if pauth.UseKialiToken {
+			pauth.Token = kialiToken
+		}
+		if gauth.UseKialiToken {
+			gauth.Token = kialiToken
+		}
 	}
-	return dlgconfig.Config{
-		GlobalNamespace: cfg.Deployment.Namespace,
-		Prometheus: promconfig.PrometheusConfig{
-			URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
-			Auth: promconfig.Auth{
-				Type:               auth.Type,
-				Username:           auth.Username,
-				Password:           auth.Password,
-				Token:              auth.Token,
-				InsecureSkipVerify: auth.InsecureSkipVerify,
-				CAFile:             auth.CAFile,
+	var grafanaConfig kxconf.GrafanaConfig
+	if cfg.ExternalServices.Grafana.Enabled {
+		grafanaConfig = kxconf.GrafanaConfig{
+			URL:          status.DiscoverGrafana(),
+			InClusterURL: cfg.ExternalServices.Grafana.InClusterURL,
+			Auth: kxconf.Auth{
+				Type:               gauth.Type,
+				Username:           gauth.Username,
+				Password:           gauth.Password,
+				Token:              gauth.Token,
+				InsecureSkipVerify: gauth.InsecureSkipVerify,
+				CAFile:             gauth.CAFile,
 			},
-		},
-		Errorf: log.Errorf,
-		Tracef: log.Tracef,
+		}
 	}
+	return kconf.Config{
+			GlobalNamespace: cfg.Deployment.Namespace,
+			Prometheus: kxconf.PrometheusConfig{
+				URL: cfg.ExternalServices.Prometheus.CustomMetricsURL,
+				Auth: kxconf.Auth{
+					Type:               pauth.Type,
+					Username:           pauth.Username,
+					Password:           pauth.Password,
+					Token:              pauth.Token,
+					InsecureSkipVerify: pauth.InsecureSkipVerify,
+					CAFile:             pauth.CAFile,
+				},
+			},
+			Grafana: grafanaConfig,
+		}, klog.LogAdapter{
+			Errorf:   log.Errorf,
+			Warningf: log.Warningf,
+			Infof:    log.Warningf,
+			Tracef:   log.Warningf,
+		}
 }
 
 type istioChart struct {
