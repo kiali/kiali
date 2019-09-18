@@ -1,16 +1,5 @@
+import { ExternalLink } from '@kiali/k-charted-pf4';
+
 export interface GrafanaInfo {
-  dashboards: GrafanaDashboardInfo[];
-}
-
-interface GrafanaDashboardInfo {
-  url: string;
-  name: string;
-  variables: GrafanaVariablesConfig;
-}
-
-interface GrafanaVariablesConfig {
-  app?: string;
-  namespace?: string;
-  service?: string;
-  workload?: string;
+  externalLinks: ExternalLink[];
 }

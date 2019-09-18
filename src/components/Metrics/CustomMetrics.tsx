@@ -17,10 +17,13 @@ import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettin
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
+import { GrafanaLinks, Link } from './GrafanaLinks';
+import { MetricsObjectTypes } from 'types/Metrics';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
+  grafanaLinks: Link[];
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -39,7 +42,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
     const settings = MetricsHelper.readMetricsSettingsFromURL();
     this.options = this.initOptions(settings);
     // Initialize active filters from URL
-    this.state = { labelsSettings: settings.labelsSettings };
+    this.state = { labelsSettings: settings.labelsSettings, grafanaLinks: [] };
   }
 
   initOptions(settings: MetricsSettings): DashboardQuery {
@@ -67,13 +70,12 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
         this.setState({
           dashboard: response.data,
-          labelsSettings: labelsSettings
+          labelsSettings: labelsSettings,
+          grafanaLinks: GrafanaLinks.buildGrafanaLinks(response.data.externalLinks, this.props.namespace, this.props.app, MetricsObjectTypes.APP, this.props.version)
         });
       })
       .catch(error => {
         MessageCenter.addError('Could not fetch custom dashboard.', error);
-        // TODO: is this console logging necessary?
-        console.error(error);
       });
   };
 
@@ -142,6 +144,9 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           <ToolbarItem>
             <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
           </ToolbarItem>
+        </ToolbarGroup>
+        <ToolbarGroup>
+          <GrafanaLinks links={this.state.grafanaLinks}/>
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>

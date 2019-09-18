@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Dashboard, DashboardModel } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
@@ -22,11 +21,12 @@ import history from '../../app/History';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
+import { GrafanaLinks, Link } from './GrafanaLinks';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
-  grafanaLinks: [string, string][];
+  grafanaLinks: Link[];
 };
 
 type ObjectId = {
@@ -96,8 +96,6 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
       })
       .catch(error => {
         MessageCenter.addError('Could not fetch metrics.', error);
-        // TODO: Is this console logging necessary?
-        console.error(error);
         throw error;
       });
   };
@@ -113,7 +111,12 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     }
     IstioMetrics.grafanaInfoPromise
       .then(grafanaInfo => {
-        this.setState({ grafanaLinks: this.buildGrafanaLinks(grafanaInfo) });
+        if (grafanaInfo) {
+          const links = GrafanaLinks.buildGrafanaLinks(grafanaInfo.externalLinks, this.props.namespace, this.props.object, this.props.objectType);
+          this.setState({ grafanaLinks: links });
+        } else {
+          this.setState({ grafanaLinks: [] });
+        }
       })
       .catch(err => {
         MessageCenter.addError(
@@ -123,39 +126,6 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           MessageType.INFO
         );
       });
-  }
-
-  buildGrafanaLinks(grafanaInfo?: GrafanaInfo): [string, string][] {
-    const links: [string, string][] = [];
-    if (grafanaInfo) {
-      grafanaInfo.dashboards.forEach(d => {
-        const nsvar = d.variables.namespace ? `&${d.variables.namespace}=${this.props.namespace}` : '';
-        switch (this.props.objectType) {
-          case MetricsObjectTypes.SERVICE:
-            const fullServiceName = `${this.props.object}.${this.props.namespace}.svc.cluster.local`;
-            if (d.variables.service) {
-              const url = `${d.url}?${d.variables.service}=${fullServiceName}${nsvar}`;
-              links.push([d.name, url]);
-            }
-            break;
-          case MetricsObjectTypes.WORKLOAD:
-            if (d.variables.workload) {
-              const url = `${d.url}?${d.variables.workload}=${this.props.object}${nsvar}`;
-              links.push([d.name, url]);
-            }
-            break;
-          case MetricsObjectTypes.APP:
-            if (d.variables.app) {
-              const url = `${d.url}?${d.variables.app}=${this.props.object}${nsvar}`;
-              links.push([d.name, url]);
-            }
-            break;
-          default:
-            break;
-        }
-      });
-    }
-    return links;
   }
 
   onMetricsSettingsChanged = (settings: MetricsSettings) => {
@@ -218,37 +188,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          {this.state.grafanaLinks.length === 1 && (
-            <ToolbarItem style={{ borderRight: 'none' }}>
-              <a
-                id={'grafana_link_0'}
-                title={this.state.grafanaLinks[0][0]}
-                href={this.state.grafanaLinks[0][1]}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View in Grafana <ExternalLinkAltIcon />
-              </a>
-            </ToolbarItem>
-          )}
-          {this.state.grafanaLinks.length > 1 && (
-            <ToolbarItem style={{ borderRight: 'none' }}>
-              View in Grafana:&nbsp;
-              {this.state.grafanaLinks
-                .map((link, idx) => (
-                  <a
-                    id={'grafana_link_' + idx}
-                    title={link[0]}
-                    href={link[1]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {link[0]} <ExternalLinkAltIcon />
-                  </a>
-                ))
-                .reduce((prev, curr) => [prev, ', ', curr] as any)}
-            </ToolbarItem>
-          )}
+          <GrafanaLinks links={this.state.grafanaLinks}/>
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>
