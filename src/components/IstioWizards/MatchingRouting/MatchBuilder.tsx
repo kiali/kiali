@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Button, DropdownButton, Form, FormControl, FormGroup, MenuItem } from 'patternfly-react';
-import { style } from 'typestyle';
+import { Button, Dropdown, DropdownToggle, DropdownItem, InputGroup, TextInput } from '@patternfly/react-core';
 
 type Props = {
   category: string;
@@ -13,6 +12,11 @@ type Props = {
   onSelectOperator: (operator: string) => void;
   onMatchValueChange: (matchValue: string) => void;
   onAddMatch: () => void;
+};
+
+type State = {
+  isMatchDropdown: boolean;
+  isOperatorDropdown: boolean;
 };
 
 export const HEADERS = 'headers';
@@ -37,67 +41,82 @@ const placeholderText = {
   [AUTHORITY]: 'Authority value...'
 };
 
-const matchStyle = style({
-  marginLeft: 20
-});
+class MatchBuilder extends React.Component<Props, State> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isMatchDropdown: false,
+      isOperatorDropdown: false
+    };
+  }
 
-class MatchBuilder extends React.Component<Props> {
+  onMathOptionsToggle = () => {
+    this.setState({
+      isMatchDropdown: !this.state.isMatchDropdown
+    });
+  };
+
+  onOperatorToggle = () => {
+    this.setState({
+      isOperatorDropdown: !this.state.isOperatorDropdown
+    });
+  };
+
   render() {
-    const matchItems: any[] = matchOptions.map((mode, index) => (
-      <MenuItem key={mode + '-' + index} eventKey={mode} active={mode === this.props.category}>
-        {mode}
-      </MenuItem>
-    ));
-    const opItems: any[] = opOptions.map((op, index) => (
-      <MenuItem key={op + '-' + index} eventKey={op} active={op === this.props.operator}>
-        {op}
-      </MenuItem>
-    ));
     return (
-      <Form inline={true}>
-        <FormGroup validationState={this.props.isValid ? 'success' : 'error'}>
-          <DropdownButton
-            bsStyle="default"
-            title={this.props.category}
-            id="match-dropdown"
-            onSelect={this.props.onSelectCategory}
-          >
-            {matchItems}
-          </DropdownButton>
-          {this.props.category === HEADERS && (
-            <FormControl
-              type="text"
-              id="header-name-text"
-              placeholder={'Header name...'}
-              value={this.props.headerName}
-              onChange={this.props.onHeaderNameChange}
-            />
-          )}
-          <DropdownButton
-            bsStyle="default"
-            title={this.props.operator}
-            id="operator-dropdown"
-            onSelect={this.props.onSelectOperator}
-          >
-            {opItems}
-          </DropdownButton>
-          <FormControl
-            type="text"
-            id="header-value-text"
-            placeholder={placeholderText[this.props.category]}
-            value={this.props.matchValue}
-            onChange={this.props.onMatchValueChange}
+      <InputGroup>
+        <Dropdown
+          toggle={<DropdownToggle onToggle={this.onMathOptionsToggle}>{this.props.category}</DropdownToggle>}
+          isOpen={this.state.isMatchDropdown}
+          dropdownItems={matchOptions.map((mode, index) => (
+            <DropdownItem
+              key={mode + '_' + index}
+              value={mode}
+              component="button"
+              onClick={() => {
+                this.props.onSelectCategory(mode);
+                this.onMathOptionsToggle();
+              }}
+            >
+              {mode}
+            </DropdownItem>
+          ))}
+        />
+        {this.props.category === HEADERS && (
+          <TextInput
+            id="header-name-id"
+            value={this.props.headerName}
+            onChange={this.props.onHeaderNameChange}
+            placeholder="Header name..."
           />
-          <Button
-            bsStyle="default"
-            className={matchStyle}
-            disabled={!this.props.isValid}
-            onClick={this.props.onAddMatch}
-          >
-            Add Match
-          </Button>
-        </FormGroup>
-      </Form>
+        )}
+        <Dropdown
+          toggle={<DropdownToggle onToggle={this.onOperatorToggle}>{this.props.operator}</DropdownToggle>}
+          isOpen={this.state.isOperatorDropdown}
+          dropdownItems={opOptions.map((op, index) => (
+            <DropdownItem
+              key={op + '_' + index}
+              value={op}
+              component="button"
+              onClick={() => {
+                this.props.onSelectOperator(op);
+                this.onOperatorToggle();
+              }}
+            >
+              {op}
+            </DropdownItem>
+          ))}
+        />
+        <TextInput
+          id="match-value-id"
+          value={this.props.matchValue}
+          onChange={this.props.onMatchValueChange}
+          placeholder={placeholderText[this.props.category]}
+        />
+        <Button disabled={!this.props.isValid} onClick={this.props.onAddMatch}>
+          Add Match
+        </Button>
+      </InputGroup>
     );
   }
 }

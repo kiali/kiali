@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Label } from 'patternfly-react';
+import { Chip } from '@patternfly/react-core';
 import { style } from 'typestyle';
 
 type Props = {
@@ -11,15 +11,11 @@ const labelContainerStyle = style({
   marginTop: 5
 });
 
-const labelMatchStyle = style({});
-
 class Matches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
       <span key={match + '-' + index}>
-        <Label className={labelMatchStyle} type="primary" onRemoveClick={() => this.props.onRemoveMatch(match)}>
-          {match}
-        </Label>{' '}
+        <Chip onClick={() => this.props.onRemoveMatch(match)}>{match}</Chip>{' '}
       </span>
     ));
     return (

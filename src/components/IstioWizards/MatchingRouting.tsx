@@ -145,42 +145,43 @@ class MatchingRouting extends React.Component<Props, State> {
       prevState => {
         prevState.rules.splice(index, 1);
         return {
-          rules: prevState.rules
+          rules: prevState.rules,
+          validationMsg: ''
         };
       },
       () => this.props.onChange(this.isValid(this.state.rules), this.state.rules)
     );
   };
 
-  onHeaderNameChange = (event: any) => {
+  onHeaderNameChange = (headerName: string) => {
     let validationMsg = '';
-    if (this.state.matchValue !== '' && event.target.value === '') {
+    if (this.state.matchValue !== '' && headerName === '') {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && event.target.value !== '') {
+    if (this.state.matchValue === '' && headerName !== '') {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
-      headerName: event.target.value,
+      headerName: headerName,
       validationMsg: validationMsg
     });
   };
 
-  onMatchValueChange = (event: any) => {
+  onMatchValueChange = (matchValue: string) => {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
-      if (this.state.headerName === '' && event.target.value !== '') {
+      if (this.state.headerName === '' && matchValue !== '') {
         validationMsg = MSG_HEADER_NAME_NON_EMPTY;
       }
-      if (this.state.headerName !== '' && event.target.value === '') {
+      if (this.state.headerName !== '' && matchValue === '') {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
       }
     }
-    if (event.target.value === '') {
+    if (matchValue === '') {
       validationMsg = '';
     }
     this.setState({
-      matchValue: event.target.value,
+      matchValue: matchValue,
       validationMsg: validationMsg
     });
   };
@@ -257,7 +258,9 @@ class MatchingRouting extends React.Component<Props, State> {
           validationMsg={this.state.validationMsg}
           onAddRule={this.onAddRule}
         />
+        <br />
         <Rules rules={this.state.rules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
+        <br />
       </>
     );
   }

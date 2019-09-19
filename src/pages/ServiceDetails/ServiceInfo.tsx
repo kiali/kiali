@@ -130,9 +130,14 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
       return getSeverityIcon(severity);
     };
 
+    // @ts-ignore
+    const vsItems = virtualServices.items;
+    // @ts-ignore
+    const drItems = destinationRules.items;
+
     const vsTabTitle: any = (
       <>
-        Virtual Services ({virtualServices.items.length})
+        Virtual Services ({vsItems.length})
         {validationChecks.hasVirtualServiceChecks
           ? getValidationIcon(
               (this.props.serviceDetails.virtualServices.items || []).map(a => a.metadata.name),
@@ -144,7 +149,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
     const drTabTitle: any = (
       <>
-        Destination Rules ({destinationRules.items.length})
+        Destination Rules ({drItems.length})
         {validationChecks.hasDestinationRuleChecks
           ? getValidationIcon(
               (this.props.serviceDetails.destinationRules.items || []).map(a => a.metadata.name),
@@ -178,7 +183,9 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                   serviceName={this.props.serviceDetails.service.name}
                   show={false}
                   workloads={workloads}
+                  // @ts-ignore
                   virtualServices={virtualServices}
+                  // @ts-ignore
                   destinationRules={destinationRules}
                   gateways={this.props.gateways}
                   tlsStatus={this.props.serviceDetails.namespaceMTLS}
@@ -231,19 +238,16 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
                 </Tab>
                 <Tab eventKey={1} title={vsTabTitle}>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
-                    {(virtualServices.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                      <ServiceInfoVirtualServices
-                        virtualServices={virtualServices.items}
-                        validations={validations!.virtualservice}
-                      />
+                    {(vsItems.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                      <ServiceInfoVirtualServices virtualServices={vsItems} validations={validations!.virtualservice} />
                     )}
                   </ErrorBoundaryWithMessage>
                 </Tab>
                 <Tab eventKey={2} title={drTabTitle}>
                   <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
-                    {(destinationRules.items.length > 0 || this.props.serviceDetails.istioSidecar) && (
+                    {(drItems.length > 0 || this.props.serviceDetails.istioSidecar) && (
                       <ServiceInfoDestinationRules
-                        destinationRules={destinationRules.items}
+                        destinationRules={drItems}
                         validations={validations!.destinationrule}
                       />
                     )}

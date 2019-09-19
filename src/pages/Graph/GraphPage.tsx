@@ -158,6 +158,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
     const workload = props.match.params.workload;
     const workloadOk = workload && workload !== UNKNOWN && workload !== 'undefined';
     if (!appOk && !namespaceOk && !serviceOk && !workloadOk) {
+      // @ts-ignore
       return;
     }
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Form, FormGroup, ListView, ListViewItem, TypeAheadSelect } from 'patternfly-react';
+import { Button, InputGroup, Select, SelectVariant, SelectOption } from '@patternfly/react-core';
 import MatchBuilder from './MatchBuilder';
 import Matches from './Matches';
 import { style } from 'typestyle';
@@ -32,72 +32,74 @@ type Props = {
   onAddRule: () => void;
 };
 
-const routeStyle = style({
-  marginTop: 15,
-  // Yes, you are right, this is a CSS trick to adjust style on combined components
-  $nest: {
-    '.rbt-token .rbt-token-remove-button': {
-      right: 5
-    }
-  }
-});
+type State = {
+  isWorkloadSelector: boolean;
+};
 
 const validationStyle = style({
   marginTop: 15,
   color: PfColors.Red100
 });
 
-const createStyle = style({
-  marginTop: 105,
-  marginLeft: 20
-});
+class RuleBuilder extends React.Component<Props, State> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isWorkloadSelector: false
+    };
+  }
 
-class RuleBuilder extends React.Component<Props> {
+  onWorkloadsToggle = () => {
+    this.setState({
+      isWorkloadSelector: !this.state.isWorkloadSelector
+    });
+  };
+
   render() {
     return (
-      <ListView className={'match-routing-wizard'}>
-        <ListViewItem
-          key={'match-builder'}
-          description={
-            <>
-              <>
-                Matches:
-                <MatchBuilder {...this.props} />
-                <Matches {...this.props} />
-              </>
-              <div className={routeStyle}>
-                Routes:
-                <Form>
-                  <FormGroup validationState={this.props.isValid ? 'success' : 'error'}>
-                    <TypeAheadSelect
-                      id="workloads-selector"
-                      multiple={true}
-                      clearButton={true}
-                      placeholder="Select workloads"
-                      labelKey="workloadName"
-                      defaultSelected={this.props.routes}
-                      options={this.props.workloads.map(wk => wk.name)}
-                      onChange={(r: string[]) => this.props.onSelectRoutes(r)}
-                    />
-                  </FormGroup>
-                </Form>
-              </div>
-              {!this.props.isValid && <div className={validationStyle}>{this.props.validationMsg}</div>}
-            </>
-          }
-          // tslint:disable
-          actions={
-            <Button
-              bsStyle="primary"
-              className={createStyle}
-              disabled={!this.props.isValid}
-              onClick={this.props.onAddRule}
+      <>
+        <>
+          Select Matching:
+          <MatchBuilder {...this.props} />
+          <Matches {...this.props} />
+        </>
+        <br />
+        <>
+          Select Routes:
+          <InputGroup>
+            <span id="select-workloads-id" hidden>
+              Checkbox Title
+            </span>
+            <Select
+              aria-label="Select Input"
+              variant={SelectVariant.checkbox}
+              onToggle={this.onWorkloadsToggle}
+              onSelect={(_, selection) => {
+                if (this.props.routes.includes(selection as string)) {
+                  this.props.onSelectRoutes(this.props.routes.filter(item => item !== selection));
+                } else {
+                  this.props.onSelectRoutes([...this.props.routes, selection as string]);
+                }
+              }}
+              onClear={() => {
+                this.props.onSelectRoutes([]);
+              }}
+              selections={this.props.routes}
+              isExpanded={this.state.isWorkloadSelector}
+              placeholderText="Select workloads"
+              ariaLabelledBy="select-workloads-id"
             >
+              {this.props.workloads.map(wk => (
+                <SelectOption key={wk.name} value={wk.name} />
+              ))}
+            </Select>
+            <Button isDisabled={!this.props.isValid} onClick={this.props.onAddRule}>
               Add Rule
             </Button>
-          }
-        />
-      </ListView>
+          </InputGroup>
+          {!this.props.isValid && <div className={validationStyle}>{this.props.validationMsg}</div>}
+        </>
+      </>
     );
   }
 }
