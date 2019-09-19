@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/k-charted/config"
 	kmock "github.com/kiali/k-charted/kubernetes/mock"
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	"github.com/kiali/k-charted/log"
 	"github.com/kiali/k-charted/model"
 	"github.com/kiali/k-charted/prometheus"
 	pmock "github.com/kiali/k-charted/prometheus/mock"
@@ -20,8 +21,7 @@ import (
 func setupService() (*DashboardsService, *kmock.ClientMock, *pmock.PromClientMock) {
 	k8s := new(kmock.ClientMock)
 	prom := new(pmock.PromClientMock)
-	service := NewDashboardsService(config.Config{
-		GlobalNamespace: "istio-system",
+	service := NewDashboardsService(config.Config{GlobalNamespace: "istio-system"}, log.LogAdapter{
 		Errorf: func(s string, args ...interface{}) {
 			fmt.Printf(s+"\n", args...)
 		},
@@ -256,7 +256,7 @@ func fakeDashboard(id string) *v1alpha1.MonitoringDashboard {
 
 func TestConvertEmptyMetric(t *testing.T) {
 	assert := assert.New(t)
-	in := NewDashboardsService(config.Config{})
+	in := NewDashboardsService(config.Config{}, log.LogAdapter{})
 	var metric prometheus.Metric
 
 	// Make sure metric is never nil, but empty slice
@@ -274,7 +274,7 @@ func TestConvertEmptyMetric(t *testing.T) {
 
 func TestConvertEmptyHistogram(t *testing.T) {
 	assert := assert.New(t)
-	in := NewDashboardsService(config.Config{})
+	in := NewDashboardsService(config.Config{}, log.LogAdapter{})
 	var histo prometheus.Histogram
 
 	// An empty histogram gives an empty map

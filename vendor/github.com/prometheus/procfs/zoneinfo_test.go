@@ -21,9 +21,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func newPInt64(i int64) *int64 {
-	return &i
-}
 func TestZoneinfo(t *testing.T) {
 	fs := getProcFixtures(t)
 	protection1 := []*int64{newPInt64(0), newPInt64(2877), newPInt64(7826), newPInt64(7826), newPInt64(7826)}

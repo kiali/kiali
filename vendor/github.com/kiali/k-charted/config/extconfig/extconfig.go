@@ -1,4 +1,4 @@
-package promconfig
+package extconfig
 
 // The valid auth strategies and values for cookie handling
 const (
@@ -12,6 +12,13 @@ const (
 type PrometheusConfig struct {
 	URL  string `yaml:"url"`
 	Auth Auth   `yaml:"auth"`
+}
+
+// GrafanaConfig describes configuration of the Grafana component
+type GrafanaConfig struct {
+	URL          string `yaml:"url"`
+	InClusterURL string `yaml:"in_cluster_url"`
+	Auth         Auth   `yaml:"auth"`
 }
 
 // Auth provides authentication data for external services

@@ -1,6 +1,5 @@
 import { TimeSeries, Histogram } from '../../../common/types/Metrics';
-import { AllPromLabelsValues } from '../../../common/types/Labels';
-import { filterAndNameMetric, filterAndNameHistogram } from '../../../common/utils/timeSeriesUtils';
+import { filterAndNameMetric, filterAndNameHistogram, LabelsInfo } from '../../../common/utils/timeSeriesUtils';
 import { ChartModel } from '../../../common/types/Dashboards';
 
 type C3Series = (string | number)[];
@@ -109,9 +108,9 @@ const toC3Columns = (matrix?: TimeSeries[], title?: string): C3Series[] => {
   return [x, ...ys];
 };
 
-const metricsDataSupplier = (chartName: string, metrics: TimeSeries[], labelValues: AllPromLabelsValues): () => C3ChartData => {
+const metricsDataSupplier = (chartName: string, metrics: TimeSeries[], labels: LabelsInfo): () => C3ChartData => {
   return () => {
-    const filtered = filterAndNameMetric(chartName, metrics, labelValues);
+    const filtered = filterAndNameMetric(chartName, metrics, labels);
     return {
       x: 'x',
       columns: toC3Columns(filtered)
@@ -119,9 +118,9 @@ const metricsDataSupplier = (chartName: string, metrics: TimeSeries[], labelValu
   };
 };
 
-const histogramDataSupplier = (histogram: Histogram, labelValues: AllPromLabelsValues): () => C3ChartData => {
+const histogramDataSupplier = (histogram: Histogram, labels: LabelsInfo): () => C3ChartData => {
   return () => {
-    const filtered = filterAndNameHistogram(histogram, labelValues);
+    const filtered = filterAndNameHistogram(histogram, labels);
     return {
       x: 'x',
       columns: histogramToC3Columns(filtered)
@@ -129,11 +128,11 @@ const histogramDataSupplier = (histogram: Histogram, labelValues: AllPromLabelsV
   };
 };
 
-export const getDataSupplier = (chart: ChartModel, labelValues: AllPromLabelsValues): (() => C3ChartData) | undefined => {
+export const getDataSupplier = (chart: ChartModel, labels: LabelsInfo): (() => C3ChartData) | undefined => {
   if (chart.metric) {
-    return metricsDataSupplier(chart.name, chart.metric, labelValues);
+    return metricsDataSupplier(chart.name, chart.metric, labels);
   } else if (chart.histogram) {
-    return histogramDataSupplier(chart.histogram, labelValues);
+    return histogramDataSupplier(chart.histogram, labels);
   }
   return undefined;
 };
