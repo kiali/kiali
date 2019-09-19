@@ -101,6 +101,15 @@ func TestRepeatingSimpleHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestRepeatingSimpleHostWithGateway(t *testing.T) {
@@ -155,7 +164,17 @@ func TestRepeatingFQDNHost(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestRepeatingFQDNWildcardHost(t *testing.T) {
@@ -170,6 +189,15 @@ func TestRepeatingFQDNWildcardHost(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestIncludedIntoWildCard(t *testing.T) {
@@ -185,6 +213,15 @@ func TestIncludedIntoWildCard(t *testing.T) {
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
 
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
+
 	// Same test, with different order of appearance
 	vss = []kubernetes.IstioObject{
 		buildVirtualService("virtual-1", "reviews.bookinfo.svc.cluster.local"),
@@ -195,7 +232,17 @@ func TestIncludedIntoWildCard(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
+	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
@@ -210,6 +257,38 @@ func TestShortHostNameIncludedIntoWildCard(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
+}
+
+func TestWildcardisMarkedInvalid(t *testing.T) {
+	vss := []kubernetes.IstioObject{
+		buildVirtualService("virtual-1", "*"),
+		buildVirtualService("virtual-2", "reviews"),
+	}
+	validations := SingleHostChecker{
+		Namespace:       "bookinfo",
+		VirtualServices: vss,
+	}.Check()
+
+	presentValidationTest(t, validations, "virtual-1")
+	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestMultipleHostsFailing(t *testing.T) {
@@ -225,6 +304,15 @@ func TestMultipleHostsFailing(t *testing.T) {
 
 	presentValidationTest(t, validations, "virtual-1")
 	presentValidationTest(t, validations, "virtual-2")
+
+	for _, validation := range validations {
+		switch validation.Name {
+		case "virtual-1":
+			presentReference(t, *validation, "virtual-2")
+		case "virtual-2":
+			presentReference(t, *validation, "virtual-1")
+		}
+	}
 }
 
 func TestMultipleHostsPassing(t *testing.T) {
@@ -287,4 +375,12 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(models.CheckMessage("virtualservices.singlehost"), validation.Checks[0].Message)
 	assert.Equal("spec/hosts", validation.Checks[0].Path)
+}
+
+func presentReference(t *testing.T, validation models.IstioValidation, serviceName string) {
+	assert := assert.New(t)
+	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Name: serviceName}
+
+	assert.True(len(validation.References) > 0)
+	assert.Contains(validation.References, refKey)
 }
