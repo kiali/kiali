@@ -3881,11 +3881,34 @@
           "x-go-name": "ObjectType",
           "example": "virtualservice"
         },
+        "references": {
+          "description": "Related objects (only validation errors)",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IstioValidationKey"
+          },
+          "x-go-name": "References"
+        },
         "valid": {
           "description": "Represents validity of the object: in case of warning, validity remains as true",
           "type": "boolean",
           "x-go-name": "Valid",
           "example": false
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/models"
+    },
+    "IstioValidationKey": {
+      "type": "object",
+      "title": "IstioValidationKey is the key value composed of an Istio ObjectType and Name.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "objectType": {
+          "type": "string",
+          "x-go-name": "ObjectType"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
