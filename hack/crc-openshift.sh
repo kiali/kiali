@@ -92,9 +92,12 @@ get_console_url() {
   fi
 }
 
+get_api_server_url() {
+  OPENSHIFT_API_SERVER_URL="$(${CRC_OC} whoami --show-server)"
+}
+
 get_status() {
   check_crc_running
-  check_insecure_registry
   echo "====================================================================="
   echo "Status from crc command [${CRC_COMMAND}]"
   ${CRC_COMMAND} status
@@ -105,7 +108,9 @@ get_status() {
 
   if [ "${_CRC_RUNNING}" == "true" ]; then
     get_registry_names
+    check_insecure_registry
     get_console_url
+    get_api_server_url
     echo "Version from oc command [${CRC_OC}]"
     ${CRC_OC} version
     echo "====================================================================="
@@ -113,7 +118,7 @@ get_status() {
     ${CRC_OC} status
     echo "====================================================================="
     echo "Console:    ${CONSOLE_URL}"
-    echo "API URL:    https://api.crc.testing:6443/"
+    echo "API URL:    ${OPENSHIFT_API_SERVER_URL}"
     echo "IP address: $(${CRC_COMMAND} ip)"
     echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
     echo "====================================================================="
@@ -126,10 +131,10 @@ get_status() {
     echo "====================================================================="
     echo "To push images to the image repo you need to log in."
     echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) api.crc.testing:6443"
+    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) ${OPENSHIFT_API_SERVER_URL}"
     echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
     echo "or"
-    echo "  oc login -u kiali -p kiali api.crc.testing:6443"
+    echo "  oc login -u kiali -p kiali ${OPENSHIFT_API_SERVER_URL}"
     echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
     echo "====================================================================="
   fi

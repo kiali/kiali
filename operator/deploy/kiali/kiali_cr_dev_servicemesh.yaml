@@ -1,0 +1,48 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+spec:
+  auth:
+    strategy: "${AUTH_STRATEGY}"
+  deployment:
+    accessible_namespaces: [ ${ACCESSIBLE_NAMESPACES} ]
+    image_name: "${KIALI_IMAGE_NAME}"
+    image_pull_policy: "${KIALI_IMAGE_PULL_POLICY}"
+    image_version: "${KIALI_IMAGE_VERSION}"
+    ingress_enabled: true
+    namespace: "${NAMESPACE}"
+    service_type: "${SERVICE_TYPE}"
+    verbose_mode: "${VERBOSE_MODE}"
+  external_services:
+    grafana:
+      auth:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+        password: ${KIALI_EXTERNAL_SERVICES_PASSWORD}
+        type: basic
+        use_kiali_token: false
+        username: internal
+      enabled: true
+      in_cluster_url: https://grafana.${NAMESPACE}.svc:3000
+      url: https://grafana-${NAMESPACE}.${ROUTER_HOSTNAME}
+    prometheus:
+      auth:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+        password: ${KIALI_EXTERNAL_SERVICES_PASSWORD}
+        type: basic
+        use_kiali_token: false
+        username: internal
+      url: https://prometheus.${NAMESPACE}.svc:9090
+    tracing:
+      auth:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+        password: ${KIALI_EXTERNAL_SERVICES_PASSWORD}
+        type: basic
+        use_kiali_token: false
+        username: internal
+      enabled: true
+      namespace: ${NAMESPACE}
+      service: ""
+      url: https://jaeger-${NAMESPACE}.${ROUTER_HOSTNAME}
+  installation_tag: Kiali [${NAMESPACE}]
+  istio_namespace: ${NAMESPACE}
