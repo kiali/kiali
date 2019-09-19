@@ -7,13 +7,16 @@
 # This can also optionally install Maistra/Istio.
 #
 # This script takes one command whose value is one of the following:
-#    start: starts the OpenShift environment
-#     stop: stops the OpenShift environment
-#   delete: deletes the OpenShift environment removing persisted data
-#   status: outputs the current status of the OpenShift environment
-#      ssh: logs into the CRC VM via ssh so you can probe in the VM
-#   routes: outputs all known route URLs
-# services: outputs all known service endpoints (excluding internal openshift services)
+#        start: starts the OpenShift environment
+#         stop: stops the OpenShift environment
+#       delete: deletes the OpenShift environment removing persisted data
+#       status: outputs the current status of the OpenShift environment
+#          ssh: logs into the CRC VM via ssh so you can probe in the VM
+#       routes: outputs all known route URLs
+#     services: outputs all known service endpoints (excluding internal openshift services)
+#   sm-install: installs service mesh into the cluster
+# sm-uninstall: removes all service mesh components
+#   bi-install: installs bookinfo demo into the cluster
 #
 # This script accepts several options - see --help for details.
 #
@@ -71,8 +74,19 @@ get_installer() {
   debug "Installer command to be used: ${INSTALLER}"
 }
 
+check_crc_running() {
+  if [ -z ${_CRC_RUNNING} ]; then
+    if crc status | grep "CRC VM:.*Running" > /dev/null 2>&1; then
+      _CRC_RUNNING="true"
+    else
+      _CRC_RUNNING="false"
+    fi
+    debug "CRC running status: ${_CRC_RUNNING}"
+  fi
+}
+
 get_console_url() {
-  CONSOLE_URL="$(oc get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
+  CONSOLE_URL="$(${CRC_OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
   if [ "$?" != "0" -o "$CONSOLE_URL" == "" ]; then
     CONSOLE_URL="console-not-available"
   fi
@@ -121,27 +135,16 @@ get_status() {
   fi
 }
 
-check_app() {
+check_istio_app() {
   local expected="$1"
   apps=$(${CRC_OC} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
   for app in ${apps[@]}
   do
-	 if [[ "$expected" == "$app" ]]; then
-	   return 0
-	 fi
+    if [[ "$expected" == "$app" ]]; then
+      return 0
+    fi
   done
   return 1
-}
-
-check_crc_running() {
-  if [ -z ${_CRC_RUNNING} ]; then
-    if crc status | grep "CRC VM:.*Running" > /dev/null 2>&1; then
-      _CRC_RUNNING="true"
-    else
-      _CRC_RUNNING="false"
-    fi
-    debug "CRC running status: ${_CRC_RUNNING}"
-  fi
 }
 
 get_registry_names() {
@@ -231,6 +234,115 @@ print_all_service_endpoints() {
   done
 }
 
+install_service_mesh() {
+  local create_smcp="$1"
+  infomsg "Installing the operators..."
+  cat <<EOM | ${CRC_OC} apply -f -
+---
+apiVersion: operators.coreos.com/v1
+kind: CatalogSourceConfig
+metadata:
+  name: hack-redhat-openshift-operators
+  namespace: openshift-marketplace
+spec:
+  csDisplayName: Hack Red Hat Operators
+  csPublisher: Hack Red Hat
+  packages: 'elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator'
+  targetNamespace: openshift-operators
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: elasticsearch-operator
+  namespace: openshift-operators
+spec:
+  channel: preview
+  installPlanApproval: Automatic
+  name: elasticsearch-operator
+  source: hack-redhat-openshift-operators
+  sourceNamespace: openshift-operators
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: jaeger-product
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: jaeger-product
+  source: hack-redhat-openshift-operators
+  sourceNamespace: openshift-operators
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: hack-redhat-openshift-operators
+  sourceNamespace: openshift-operators
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: servicemeshoperator
+  namespace: openshift-operators
+spec:
+  channel: '1.0'
+  installPlanApproval: Automatic
+  name: servicemeshoperator
+  source: hack-redhat-openshift-operators
+  sourceNamespace: openshift-operators
+EOM
+  if [ "${create_smcp}" == "true" ] ; then
+
+    infomsg "Waiting for the operator CRDs to come online"
+    for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io elasticsearches.logging.openshift.io
+    do
+      echo -n "Waiting for $crd ..."
+      while ! ${CRC_OC} get crd $crd > /dev/null 2>&1
+      do
+        sleep 2
+        echo -n '.'
+      done
+      echo "done."
+    done
+
+    infomsg "Waiting for operator Deployments to start..."
+    for op in elasticsearch-operator jaeger-operator kiali-operator istio-operator
+    do
+      echo -n "Waiting for ${op} to be ready..."
+      readyReplicas="0"
+      while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+      do
+        sleep 1
+        echo -n '.'
+        readyReplicas="$(${CRC_OC} get deployment ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+      done
+      echo "done."
+    done
+
+    infomsg "Creating istio-system namespace."
+    ${CRC_OC} create namespace istio-system
+    infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
+    if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
+      ${CRC_OC} create -n istio-system -f ${MAISTRA_SMCP_YAML}
+    else
+      debug "Using example SMCP/SMMR"
+      rm -f /tmp/maistra-smcp.yaml
+      get_downloader
+      eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.0/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_minimal.yaml"
+      ${CRC_OC} create -n istio-system -f /tmp/maistra-smcp.yaml
+    fi
+  else
+    infomsg "The operators should be available but the Maistra SMCP CR will not be created."
+  fi
+}
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
@@ -291,6 +403,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     services)
       _CMD="services"
+      shift
+      ;;
+    sm-install)
+      _CMD="sm-install"
+      shift
+      ;;
+    sm-uninstall)
+      _CMD="sm-uninstall"
+      shift
+      ;;
+    bi-install)
+      _CMD="bi-install"
       shift
       ;;
     -a|--address)
@@ -424,7 +548,7 @@ Valid options:
   -v|--verbose
       Enable logging of debug messages from this script.
 
-The command must be either: start, stop, delete, status, ssh, routes, services:
+The command must be one of:
 
   * start: Starts the CRC VM with OpenShift and optionally installs Maistra/Istio.
   * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
@@ -433,6 +557,9 @@ The command must be either: start, stop, delete, status, ssh, routes, services:
   * ssh: Provides a command line prompt with root access inside the CRC VM.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
+  * sm-install: Installs Service Mesh into the cluster.
+  * sm-uninstall: Removes Service Mesh from the cluster.
+  * bi-install: Installs Bookinfo demo into the cluster.
 
 HELPMSG
       exit 1
@@ -738,8 +865,8 @@ if [ "$_CMD" = "start" ]; then
   fi
 
   # see https://docs.openshift.com/container-platform/4.1/authentication/identity_providers/configuring-htpasswd-identity-provider.html
-  infomsg "Creating users 'kiali' and 'johndoe'"
   # we need to be admin in order to create the htpasswd oauth and users
+  infomsg "Creating users 'kiali' and 'johndoe'"
   ${CRC_OC} login -u system:admin
   cat <<EOM | ${CRC_OC} apply -f -
 ---
@@ -805,119 +932,13 @@ EOM
   ${CRC_OC} get -n istio-system ServiceMeshControlPlane > /dev/null 2>&1
   if [ "$?" != "0" ]; then
     if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      infomsg "Installing the operators..."
-      cat <<EOM | ${CRC_OC} apply -f -
----
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: hack-redhat-openshift-operators
-  namespace: openshift-marketplace
-spec:
-  csDisplayName: Hack Red Hat Operators
-  csPublisher: Hack Red Hat
-  packages: 'elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator'
-  targetNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: elasticsearch-operator
-  namespace: openshift-operators
-spec:
-  channel: preview
-  installPlanApproval: Automatic
-  name: elasticsearch-operator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: jaeger-product
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: jaeger-product
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: kiali-ossm
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: kiali-ossm
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: servicemeshoperator
-  namespace: openshift-operators
-spec:
-  channel: '1.0'
-  installPlanApproval: Automatic
-  name: servicemeshoperator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
-EOM
-      if [ "${_CREATE_SMCP_RESOURCE}" == "true" ] ; then
-
-         infomsg "Waiting for the operator CRDs to come online"
-         for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io elasticsearches.logging.openshift.io
-         do
-           echo -n "Waiting for $crd ..."
-           while ! ${CRC_OC} get crd $crd > /dev/null 2>&1
-           do
-             sleep 2
-             echo -n '.'
-           done
-           echo "done."
-         done
-
-         infomsg "Waiting for operator Deployments to start..."
-         for op in istio-operator kiali-operator jaeger-operator elasticsearch-operator
-         do
-           echo -n "Waiting for ${op} to be ready..."
-           readyReplicas="0"
-           while [ "$?" != "0" -o "$readyReplicas" == "0" ]
-           do
-             sleep 1
-             echo -n '.'
-             readyReplicas="$(${CRC_OC} get deployment ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
-           done
-           echo "done."
-         done
-
-         infomsg "Creating istio-system namespace."
-         ${CRC_OC} create namespace istio-system
-         infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
-         if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
-          ${CRC_OC} create -n istio-system -f ${MAISTRA_SMCP_YAML}
-        else
-          debug "Using example SMCP/SMMR with bookinfo namespace"
-          rm -f /tmp/maistra-smcp.yaml
-          get_downloader
-          eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.0/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_minimal.yaml"
-          echo "  - bookinfo" >> /tmp/maistra-smcp.yaml
-          ${CRC_OC} create -n istio-system -f /tmp/maistra-smcp.yaml
-        fi
-      else
-        infomsg "It appears Maistra has not yet been installed - after you have ensured that your OpenShift user has the proper"
-        infomsg "permissions, you will need to install the Maistra operator manually."
-      fi
+      install_service_mesh "${_CREATE_SMCP_RESOURCE}"
     else
-      infomsg "You asked that Maistra not be enabled - will not create the ServiceMeshControlPlane Custom Resource."
+      infomsg "You asked that Maistra not be enabled - neither the operators nor a SMCP CR will be created."
     fi
   else
     if [ "${ISTIO_ENABLED}" == "true" ] ; then
-      infomsg "It appears Maistra has already been installed - will not create the ServiceMeshControlPlane Custom Resource again."
+      infomsg "It appears Maistra has already been installed - will not attempt to do so again."
     else
       infomsg "You asked that Maistra not be enabled, but it appears to have already been installed. You might want to uninstall it."
     fi
@@ -926,14 +947,14 @@ EOM
   # If Maistra/Istio is enabled, it should be installing now - if we need to, wait for it to finish
   if [ "${ISTIO_ENABLED}" == "true" ] ; then
     if [ "${WAIT_FOR_ISTIO}" == "true" ]; then
-      infomsg "Wait for Maistra/Istio to fully start (this is going to take a while)..."
+      infomsg "Wait for Maistra/Istio to fully start this is going to take a while..."
 
       infomsg "Waiting for Maistra/Istio Deployments to be created."
       _EXPECTED_APPS=(istio-citadel prometheus istio-galley istio-policy istio-telemetry istio-pilot istio-egressgateway istio-ingressgateway istio-sidecar-injector)
       for expected in ${_EXPECTED_APPS[@]}
       do
         echo -n "Waiting for $expected ..."
-        while ! check_app $expected
+        while ! check_istio_app $expected
         do
              sleep 5
              echo -n '.'
@@ -960,34 +981,125 @@ EOM
   # show the status message
   get_status
 
-elif [ "$_CMD" = "stop" ];then
+elif [ "$_CMD" = "stop" ]; then
 
   infomsg "Will shutdown the OpenShift cluster."
   ${CRC_COMMAND} stop
 
-elif [ "$_CMD" = "delete" ];then
+elif [ "$_CMD" = "delete" ]; then
 
   infomsg "Will delete the OpenShift cluster - this removes all persisted data."
   ${CRC_COMMAND} delete
 
-elif [ "$_CMD" = "status" ];then
+elif [ "$_CMD" = "status" ]; then
 
   get_status
 
-elif [ "$_CMD" = "ssh" ];then
+elif [ "$_CMD" = "ssh" ]; then
 
   infomsg "Logging into the CRC VM..."
   ssh -i ${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION}/id_rsa_crc core@$(${CRC_COMMAND} ip)
 
-elif [ "$_CMD" = "routes" ];then
+elif [ "$_CMD" = "routes" ]; then
 
   print_all_route_urls
 
-elif [ "$_CMD" = "services" ];then
+elif [ "$_CMD" = "services" ]; then
 
   print_all_service_endpoints
 
+elif [ "$_CMD" = "sm-install" ]; then
+
+  install_service_mesh "true"
+
+elif [ "$_CMD" = "sm-uninstall" ]; then
+
+  # remove the SMCP and SMMR CRs which uninstalls all the Service Mesh components
+  ${CRC_OC} delete -n istio-system $(${CRC_OC} get smcp -n istio-system -o name)
+  ${CRC_OC} delete -n istio-system $(${CRC_OC} get smmr -n istio-system -o name)
+
+  # clean up the control plane namespace
+  ${CRC_OC} delete namespace istio-system
+
+  # clean up OLM Subscriptions
+  for sub in servicemeshoperator kiali-ossm jaeger-product elasticsearch-operator
+  do
+    ${CRC_OC} delete subscription -n openshift-operators ${sub}
+  done
+
+  # clean up OLM CatalogSourceConfig
+  ${CRC_OC} delete catalogsourceconfig -n openshift-marketplace hack-redhat-openshift-operators
+
+  # clean up OLM CSVs for all the different operators
+  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep servicemesh)
+  do
+    ${CRC_OC} delete -n openshift-operators ${csv}
+  done
+  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep kiali)
+  do
+    ${CRC_OC} delete -n openshift-operators ${csv}
+  done
+  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep jaeger)
+  do
+    ${CRC_OC} delete -n openshift-operators ${csv}
+  done
+  for csv in $(${CRC_OC} get csv -n openshift-operators -o name | grep elasticsearch)
+  do
+    ${CRC_OC} delete -n openshift-operators ${csv}
+  done
+
+  # These should have been deleted when the CSV was removed but for some reason are not. Purge them now
+  for r in $(${CRC_OC} get clusterrolebindings -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete ${r}
+  done
+  for r in $(${CRC_OC} get clusterroles -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete ${r}
+  done
+  for r in $(${CRC_OC} get rolebindings -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${CRC_OC} get roles -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${CRC_OC} get sa -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${CRC_OC} get configmaps -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${CRC_OC} get secrets -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  do
+    ${CRC_OC} delete -n openshift-operators ${r}
+  done
+
+  # clean up additional leftover items
+  # see: https://docs.openshift.com/container-platform/4.1/service_mesh/service_mesh_install/removing-ossm.html#ossm-remove-cleanup_removing-ossm
+  ${CRC_OC} delete validatingwebhookconfiguration/openshift-operators.servicemesh-resources.maistra.io
+  ${CRC_OC} delete -n openshift-operators daemonset/istio-node
+  ${CRC_OC} delete clusterrole/istio-admin
+  ${CRC_OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${CRC_OC} delete
+  ${CRC_OC} get crds -o name | grep '.*\.maistra\.io' | xargs -r -n 1 ${CRC_OC} delete
+  ${CRC_OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${CRC_OC} delete
+  ${CRC_OC} get crds -o name | grep '.*\.jaegertracing\.io' | xargs -r -n 1 ${CRC_OC} delete
+  ${CRC_OC} get crds -o name | grep '.*\.logging\.openshift\.io' | xargs -r -n 1 ${CRC_OC} delete
+
+elif [ "$_CMD" = "bi-install" ]; then
+
+  # see: https://maistra.io/docs/examples/bookinfo/
+  BOOKINFO_NAMESPACE="bookinfo"
+  ${CRC_OC} new-project ${BOOKINFO_NAMESPACE}
+  ${CRC_OC} patch -n istio-system --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
+  ${CRC_OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
+  ${CRC_OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
+  infomsg "Bookinfo URL: http://$(${CRC_OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
+
 else
-  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, routes, services"
+  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, routes, services, sm-install, sm-uninstall, bi-install"
   exit 1
 fi
