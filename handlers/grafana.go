@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/kiali/kiali/config"
@@ -76,7 +77,7 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 		}
 		if dashboardPath != "" {
 			dashboard := models.GrafanaDashboardInfo{
-				URL:       externalURL + dashboardPath,
+				URL:       strings.TrimSuffix(externalURL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
 				Name:      dashboardConfig.Name,
 				Variables: dashboardConfig.Variables,
 			}
@@ -132,5 +133,5 @@ func getDashboardPath(basePath, name string, auth *config.Auth, dashboardSupplie
 }
 
 func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*10)
+	return httputil.HttpGet(strings.TrimSuffix(url, "/")+"/api/search?query="+searchPattern, auth, time.Second*10)
 }
