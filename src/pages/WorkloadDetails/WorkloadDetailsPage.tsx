@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as API from '../../services/Api';
 import { RouteComponentProps } from 'react-router-dom';
 import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
-import { ObjectCheck, Validations } from '../../types/IstioObjects';
+import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import WorkloadInfo from './WorkloadInfo';
 import * as MessageCenter from '../../utils/MessageCenter';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
@@ -93,12 +93,20 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
   // All information for validations is fetched in the workload, no need to add another call
   workloadValidations(workload: Workload): Validations {
-    const noIstiosidecar: ObjectCheck = { message: 'Pod has no Istio sidecar', severity: 'warning', path: '' };
-    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: 'warning', path: '' };
-    const noVersionLabel: ObjectCheck = { message: 'Pod has no version label', severity: 'warning', path: '' };
-    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: 'warning', path: '' };
-    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: 'warning', path: '' };
-    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: 'error', path: '' };
+    const noIstiosidecar: ObjectCheck = {
+      message: 'Pod has no Istio sidecar',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
+    const noVersionLabel: ObjectCheck = {
+      message: 'Pod has no version label',
+      severity: ValidationTypes.Warning,
+      path: ''
+    };
+    const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
+    const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
+    const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
 
     const validations: Validations = {};
     if (workload.pods.length > 0) {

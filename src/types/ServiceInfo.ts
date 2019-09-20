@@ -1,5 +1,4 @@
 import { ServiceHealth } from './Health';
-import { PfColors } from '../components/Pf/PfColors';
 import {
   DestinationRules,
   ObjectCheck,
@@ -7,6 +6,7 @@ import {
   Pod,
   Port,
   Validations,
+  ValidationTypes,
   VirtualServices
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
@@ -87,13 +87,6 @@ const IconSeverityMap = new Map<string, string>([
   ['correct', 'ok']
 ]);
 
-const ColorSeverityMap = new Map<string, string>([
-  ['error', PfColors.Red100],
-  ['warning', PfColors.Orange400],
-  ['improvement', PfColors.Blue400],
-  ['correct', PfColors.Green400]
-]);
-
 export const severityToIconName = (severity: string): string => {
   let iconName = IconSeverityMap.get(severity);
   if (!iconName) {
@@ -103,21 +96,12 @@ export const severityToIconName = (severity: string): string => {
   return iconName;
 };
 
-export const severityToColor = (severity: string): string => {
-  let color = ColorSeverityMap.get(severity);
-  if (!color) {
-    color = 'black';
-  }
-
-  return color;
-};
-
-export const higherSeverity = (a: string, b: string): boolean => {
+export const higherSeverity = (a: ValidationTypes, b: ValidationTypes): boolean => {
   return higherThan.includes(a + '-' + b);
 };
 
-export const highestSeverity = (checks: ObjectCheck[]): string => {
-  let severity = 'correct';
+export const highestSeverity = (checks: ObjectCheck[]): ValidationTypes => {
+  let severity: ValidationTypes = ValidationTypes.Correct;
 
   checks.forEach(check => {
     if (higherSeverity(check.severity, severity)) {

@@ -4,10 +4,12 @@ import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import Label from '../../../components/Label/Label';
 import { Link } from 'react-router-dom';
-import { Card, CardBody, Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Text, TextVariants, TooltipPosition } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
-import Validation from '../../../components/Validations/Validation';
+import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { ServiceIcon } from '@patternfly/react-icons';
+import { checkForPath } from '../../../types/ServiceInfo';
+import TooltipValidation from '../../../components/Validations/TooltipValidation';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -19,14 +21,23 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   globalStatus() {
     const validation = this.props.validation;
     if (validation && !validation.valid) {
-      return <Validation validation={validation} />;
+      return <GlobalValidation validation={validation} />;
     } else {
       return undefined;
     }
   }
 
+  subsetValidation(subsetIndex: number) {
+    const checks = checkForPath(this.props.validation, 'spec/subsets[' + subsetIndex + ']');
+    return <TooltipValidation checks={checks} tooltipPosition={TooltipPosition.right} />;
+  }
+
   columnsSubsets() {
     return [
+      {
+        title: 'Status',
+        props: {}
+      },
       {
         title: 'Name',
         props: {}
@@ -44,9 +55,10 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
 
   rowsSubset() {
     const subsets = this.props.destinationRule.spec.subsets || [];
-    return subsets.map(subset => ({
+    return subsets.map((subset, index) => ({
       cells: [
-        subset.name,
+        { title: this.subsetValidation(index) },
+        { title: subset.name },
         {
           title: subset.labels
             ? Object.keys(subset.labels).map(key => <Label key={key} name={key} value={subset.labels[key]} />)
@@ -102,7 +114,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
   rawConfig() {
     const destinationRule = this.props.destinationRule;
     const globalStatus = this.globalStatus();
-    const isValid = globalStatus ? true : false;
+    const isValid = !globalStatus;
     return (
       <GridItem span={6}>
         <Card>

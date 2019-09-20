@@ -1,20 +1,14 @@
 import * as React from 'react';
 import Label from '../Label/Label';
-import { Icon } from 'patternfly-react';
 import './DetailObject.css';
+import Validation, { ValidationDescription } from '../Validations/Validation';
 
 interface DetailObjectProps {
   name: string;
   detail: any;
   labels?: string[];
   exclude?: string[];
-  validation?: Validation;
-}
-
-interface Validation {
-  message: string;
-  icon: string;
-  color: string;
+  validation?: ValidationDescription;
 }
 
 class DetailObject extends React.Component<DetailObjectProps> {
@@ -93,11 +87,11 @@ class DetailObject extends React.Component<DetailObjectProps> {
       <div>
         <strong className="text-capitalize">{name}</strong>
         {depth === 0 && !!this.props.validation && this.props.validation.message ? (
-          <div>
-            <p style={{ color: this.props.validation.color }}>
-              <Icon type="pf" name={this.props.validation.icon} /> {this.props.validation.message}
-            </p>
-          </div>
+          <Validation
+            severity={this.props.validation.severity}
+            message={this.props.validation.message}
+            messageColor={true}
+          />
         ) : (
           undefined
         )}

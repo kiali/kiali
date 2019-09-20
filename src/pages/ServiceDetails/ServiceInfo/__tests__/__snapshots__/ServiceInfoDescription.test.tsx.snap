@@ -110,7 +110,13 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
               ]
             }
           />
-          <strong>
+          <strong
+            style={
+              Object {
+                "margin": "0.1em 0 0 0.5em",
+              }
+            }
+          >
             Ports
           </strong>
         </div>

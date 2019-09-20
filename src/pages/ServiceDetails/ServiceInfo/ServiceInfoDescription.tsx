@@ -1,21 +1,16 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
+import { Col, OverlayTrigger, Popover, Row, Tooltip } from 'patternfly-react';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
-import { Port, ObjectValidation } from '../../../types/IstioObjects';
+import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
 import { style } from 'typestyle';
-import {
-  ConfigIndicator,
-  NOT_VALID,
-  SMALL_SIZE,
-  MEDIUM_SIZE
-} from '../../../components/ConfigValidation/ConfigIndicator';
-import { Popover, OverlayTrigger, Icon, Tooltip } from 'patternfly-react';
+import { ConfigIndicator, MEDIUM_SIZE } from '../../../components/ConfigValidation/ConfigIndicator';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
+import TooltipValidation from '../../../components/Validations/TooltipValidation';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -57,25 +52,18 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
 
   getPortOver(portId: number): Popover {
     return (
-      <Popover id={portId + '-config-validation'} title={NOT_VALID.name} style={{ maxWidth: '80%', minWidth: '200px' }}>
-        <div>{this.getPortIssue(portId)}</div>
-      </Popover>
+      <div style={{ float: 'left', fontSize: '12px', padding: '3px 0.6em 0 0' }}>
+        <TooltipValidation checks={this.getPortChecks(portId)} />
+      </div>
     );
   }
 
-  getPortIssue(portId: number): string {
-    let message = '';
-    if (this.props.validations && this.props.validations.checks) {
-      message = this.props.validations.checks
-        .filter(c => c.path === 'spec/ports[' + portId + ']')
-        .map(c => c.message)
-        .join(',');
-    }
-    return message;
+  getPortChecks(portId: number): ObjectCheck[] {
+    return this.getValidations().checks.filter(c => c.path === 'spec/ports[' + portId + ']');
   }
 
   hasIssue(portId: number): boolean {
-    return this.getPortIssue(portId) !== '';
+    return this.getPortChecks(portId).length > 0;
   }
 
   render() {
@@ -131,31 +119,12 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   validations={[this.getValidations()]}
                   size={MEDIUM_SIZE}
                 />
-                <strong>Ports</strong>
+                <strong style={{ margin: '0.1em 0 0 0.5em' }}>Ports</strong>
               </div>
               <ul className={listStyle}>
                 {(this.props.ports || []).map((port, i) => (
                   <li key={'port_' + i}>
-                    {this.hasIssue(i) ? (
-                      <OverlayTrigger
-                        placement={'right'}
-                        overlay={this.getPortOver(i)}
-                        trigger={['hover', 'focus']}
-                        rootClose={false}
-                      >
-                        <span style={{ color: NOT_VALID.color }}>
-                          <Icon
-                            type="pf"
-                            name="error-circle-o"
-                            style={{ fontSize: SMALL_SIZE }}
-                            className="health-icon"
-                            tabIndex="0"
-                          />
-                        </span>
-                      </OverlayTrigger>
-                    ) : (
-                      undefined
-                    )}
+                    {this.hasIssue(i) ? this.getPortOver(i) : undefined}
                     {port.protocol} {port.name} ({port.port})
                   </li>
                 ))}

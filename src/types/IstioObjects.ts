@@ -46,6 +46,12 @@ export interface IstioObject {
 // validations are grouped per 'objectType' first in the first map and 'name' in the inner map
 export type Validations = { [key1: string]: { [key2: string]: ObjectValidation } };
 
+export enum ValidationTypes {
+  Error = 'error',
+  Warning = 'warning',
+  Correct = 'correct'
+}
+
 export interface ObjectValidation {
   name: string;
   objectType: string;
@@ -55,7 +61,7 @@ export interface ObjectValidation {
 
 export interface ObjectCheck {
   message: string;
-  severity: string;
+  severity: ValidationTypes;
   path: string;
 }
 

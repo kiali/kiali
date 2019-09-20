@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
-import { Icon } from 'patternfly-react';
 import { default as DetailObject } from '../DetailObject';
-import { PfColors } from '../../Pf/PfColors';
-import { DestinationWeight } from '../../../types/IstioObjects';
+import { DestinationWeight, ValidationTypes } from '../../../types/IstioObjects';
 import { shallowToJson } from 'enzyme-to-json';
+import Validation from '../../Validations/Validation';
 
 describe('DetailObject test', () => {
   const detail: DestinationWeight = {
@@ -62,8 +61,7 @@ describe('DetailObject test', () => {
   it('prints an alert message', () => {
     const validation = {
       message: 'Not all checks passed',
-      icon: 'error-circle-o',
-      color: PfColors.Red400
+      severity: ValidationTypes.Error
     };
 
     mockRandom();
@@ -73,17 +71,16 @@ describe('DetailObject test', () => {
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
 
-    const iconWrapper = wrapper.find(Icon);
-    expect(iconWrapper.prop('type')).toEqual('pf');
-    expect(iconWrapper.prop('name')).toEqual(validation.icon);
-    expect(iconWrapper.parent().html()).toContain(validation.message);
+    const iconWrapper = wrapper.find(Validation);
+    expect(iconWrapper.prop('severity')).toEqual(validation.severity);
+    expect(iconWrapper.prop('message')).toEqual(validation.message);
+    expect(iconWrapper.prop('messageColor')).toEqual(true);
   });
 
   it("doesn't print any alert message", () => {
     const validation = {
       message: '',
-      icon: 'error-circle-o',
-      color: PfColors.Red400
+      severity: ValidationTypes.Error
     };
 
     mockRandom();
@@ -93,7 +90,7 @@ describe('DetailObject test', () => {
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
 
-    const iconWrapper = wrapper.find(Icon);
+    const iconWrapper = wrapper.find(Validation);
     expect(iconWrapper.length).toEqual(0);
   });
 });

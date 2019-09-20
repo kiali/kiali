@@ -355,22 +355,11 @@ exports[`DetailObject test prints an alert message 1`] = `
     >
       nodejs
     </strong>
-    <div>
-      <p
-        style={
-          Object {
-            "color": "#470000",
-          }
-        }
-      >
-        <Icon
-          name="error-circle-o"
-          type="pf"
-        />
-         
-        Not all checks passed
-      </p>
-    </div>
+    <Validation
+      message="Not all checks passed"
+      messageColor={true}
+      severity="error"
+    />
     <ul
       className="details"
     >

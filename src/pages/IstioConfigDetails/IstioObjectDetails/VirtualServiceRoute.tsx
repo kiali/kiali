@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../types/ServiceInfo';
-import { DestinationWeight, HTTPRoute, ObjectCheck, ObjectValidation, TCPRoute } from '../../../types/IstioObjects';
-import { Icon } from 'patternfly-react';
+import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
+import { DestinationWeight, HTTPRoute, ObjectValidation, TCPRoute, ValidationTypes } from '../../../types/IstioObjects';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
 import { ServiceIcon } from '@patternfly/react-icons';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
-import { Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
 import { ChartBullet } from '@patternfly/react-charts/dist/js/components/ChartBullet';
+import TooltipValidation from '../../../components/Validations/TooltipValidation';
 
 interface VirtualServiceRouteProps {
   name: string;
@@ -58,22 +58,32 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
     rows = rows.concat(
       (route.route || []).map((routeItem, destinationIndex) => {
-        const statusFrom = this.statusFrom(this.validation(), routeItem, routeIndex, destinationIndex);
-        const isValid = statusFrom === '' ? true : false;
-        let cells = [{ title: statusFrom }];
+        const checks = this.checksFrom(this.validation(), routeItem, routeIndex, destinationIndex);
+        const validation = <TooltipValidation checks={checks} />;
+        const severity = highestSeverity(checks);
+        const isValid = severity === ValidationTypes.Correct;
+        let cells;
 
         if (routeItem.destination) {
           const destination = routeItem.destination;
-          cells = cells.concat([
+          cells = [
+            { title: validation },
             { title: this.serviceLink(this.props.namespace, destination.host, isValid) },
             { title: destination.subset || '-' },
-            { title: destination.port ? destination.port.number || '-' : '-' }
-          ]);
+            { title: destination.port ? destination.port.number || '-' : '-' },
+            { title: routeItem.weight ? routeItem.weight : '-' }
+          ];
         } else {
-          cells = cells.concat([{ title: '-' }, { title: '-' }, { title: '-' }]);
+          cells = [
+            { title: validation },
+            { title: '-' },
+            { title: '-' },
+            { title: '-' },
+            { title: routeItem.weight ? routeItem.weight : '-' }
+          ];
         }
 
-        return cells.concat([{ title: routeItem.weight ? routeItem.weight : '-' }]);
+        return cells;
       })
     );
 
@@ -101,7 +111,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     return this.props.validation ? this.props.validation : ({} as ObjectValidation);
   }
 
-  statusFrom(validation: ObjectValidation, routeItem: DestinationWeight, routeIndex: number, destinationIndex: number) {
+  checksFrom(validation: ObjectValidation, routeItem: DestinationWeight, routeIndex: number, destinationIndex: number) {
     const checks = checkForPath(
       validation,
       'spec/' +
@@ -113,6 +123,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
         ']/weight/' +
         routeItem.weight
     );
+
     checks.push(
       ...checkForPath(
         validation,
@@ -120,38 +131,20 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
       )
     );
 
-    const severity = highestSeverity(checks);
-    const iconName = severity ? severityToIconName(severity) : 'ok';
-    if (iconName !== 'ok') {
-      return (
-        <Tooltip
-          aria-label={'Validations for route ' + routeIndex + ' and destination ' + destinationIndex}
-          position={TooltipPosition.left}
-          enableFlip={true}
-          content={this.infotipContent(checks)}
-        >
-          <Icon type="pf" name={iconName} />
-        </Tooltip>
-      );
-    } else {
-      return '';
-    }
-  }
-
-  infotipContent(checks: ObjectCheck[]) {
-    return checks.map((check, index) => {
-      return this.objectCheckToHtml(check, index);
-    });
-  }
-
-  objectCheckToHtml(object: ObjectCheck, i: number) {
-    return (
-      <div key={'validation-check-' + i}>
-        <Icon type="pf" name={severityToIconName(object.severity)} />
-        {'  '}
-        {object.message}
-      </div>
+    checks.push(
+      ...checkForPath(
+        validation,
+        'spec/' +
+          this.props.kind.toLowerCase() +
+          '[' +
+          routeIndex +
+          ']/route[' +
+          destinationIndex +
+          ']/destination/host'
+      )
     );
+
+    return checks;
   }
 
   bulletChartValues(routes: TCPRoute | HTTPRoute) {
@@ -218,8 +211,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
 
     return {
       message: checks.map(check => check.message).join(','),
-      icon: severityToIconName(severity),
-      color: severityToColor(severity)
+      severity
     };
   }
 
@@ -227,12 +219,8 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     return (this.props.routes || []).map((route, i) => (
       <Grid key={'virtualservice-rule' + i}>
         <GridItem sm={12} md={12} lg={4}>
-          <DetailObject
-            name={this.props.kind + ' Route'}
-            detail={route}
-            exclude={['route']}
-            validation={this.routeStatusMessage(route, i)}
-          />
+          <Text component={TextVariants.h3}>{this.props.kind + ' Route'}</Text>
+          <DetailObject name={''} detail={route} exclude={['route']} validation={this.routeStatusMessage(route, i)} />
         </GridItem>
         <GridItem sm={12} md={12} lg={8}>
           {this.renderTable(route, i)}

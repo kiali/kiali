@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { checkForPath, highestSeverity, severityToColor, severityToIconName } from '../../../types/ServiceInfo';
+import { checkForPath, highestSeverity } from '../../../types/ServiceInfo';
 import { Host, ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
-import Validation from '../../../components/Validations/Validation';
+import GlobalValidation from '../../../components/Validations/GlobalValidation';
 
 interface VirtualServiceProps {
   namespace: string;
@@ -22,7 +22,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
   globalStatus() {
     const validation = this.props.validation;
     if (validation && !validation.valid) {
-      return <Validation validation={validation} />;
+      return <GlobalValidation validation={validation} />;
     } else {
       return undefined;
     }
@@ -34,8 +34,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
 
     return {
       message: checks.map(check => check.message).join(','),
-      icon: severityToIconName(severity),
-      color: severityToColor(severity)
+      severity
     };
   }
 

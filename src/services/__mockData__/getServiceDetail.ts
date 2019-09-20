@@ -1,4 +1,5 @@
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { ValidationTypes } from '../../types/IstioObjects';
 
 export const SERVICE_DETAILS: ServiceDetailsInfo = {
   service: {
@@ -136,12 +137,12 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
         checks: [
           {
             message: 'This subset is not found from the host',
-            severity: 'error',
+            severity: ValidationTypes.Error,
             path: 'spec/subsets[0]/version'
           },
           {
             message: 'This subset is not found from the host',
-            severity: 'error',
+            severity: ValidationTypes.Error,
             path: 'spec/subsets[1]/version'
           }
         ]

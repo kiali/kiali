@@ -1,20 +1,21 @@
 import React from 'react';
-import { ObjectCheck, ObjectValidation } from '../../types/IstioObjects';
 import { ErrorCircleOIcon, OkIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { PfColors } from '../Pf/PfColors';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
+import { ValidationTypes } from '../../types/IstioObjects';
+import { Text, TextVariants } from '@patternfly/react-core';
+import './Validation.css';
 
-type Props = {
-  validation?: ObjectValidation;
+type Props = ValidationDescription & {
+  messageColor?: boolean;
 };
 
-enum ValidationTypes {
-  Error = 'error',
-  Warning = 'warning',
-  Correct = 'correct'
-}
+export type ValidationDescription = {
+  severity: ValidationTypes;
+  message?: string;
+};
 
-type ValidationType = {
+export type ValidationType = {
   color: string;
   icon: IconType;
 };
@@ -34,83 +35,37 @@ const CorrectValidation: ValidationType = {
   icon: OkIcon
 };
 
+const severityToValidation: { [severity: string]: ValidationType } = {
+  error: ErrorValidation,
+  warning: WarningValidation,
+  correct: CorrectValidation
+};
+
 class Validation extends React.Component<Props> {
-  isValid(): boolean {
-    return !!this.props.validation && this.props.validation.valid;
-  }
-
-  numberOfChecks(type: string): number {
-    const object = this.props.validation;
-    let count = 0;
-
-    if (object) {
-      count = (object && object.checks ? object.checks : []).filter(i => i.severity === type).length;
-    }
-
-    return count;
-  }
-
-  validation(): ValidationType {
-    if (!this.props.validation) {
-      return ErrorValidation;
-    }
-
-    const object = this.props.validation;
-    const warnChecks = this.numberOfChecks(ValidationTypes.Warning);
-    const errChecks = this.numberOfChecks(ValidationTypes.Error);
-
-    let validation: ValidationType = CorrectValidation;
-    if (!object.valid) {
-      if (errChecks > 0) {
-        validation = ErrorValidation;
-      } else if (warnChecks > 0) {
-        validation = WarningValidation;
-      }
-    }
-
-    return validation;
-  }
-
-  checkForPath(path: string): ObjectCheck[] {
-    const object = this.props.validation;
-
-    if (!object || !object.checks) {
-      return [];
-    }
-
-    const check = object.checks.filter(item => {
-      return item.path === path;
-    });
-
-    return check;
-  }
-
-  globalChecks(): ObjectCheck[] {
-    return this.checkForPath('');
-  }
-
-  message(): string {
-    const checks = this.globalChecks();
-    let message = checks.map(check => check.message).join(',');
-
-    if (!message.length && !this.isValid()) {
-      message = 'Not all checks passed!';
-    }
-
-    return message;
+  validation() {
+    return severityToValidation[this.props.severity];
   }
 
   render() {
     const validation = this.validation();
-    const ValidationIcon = validation.icon;
-
-    return (
-      <>
-        <p style={{ color: validation.color }}>
-          <ValidationIcon /> {this.message()}
-        </p>
-      </>
-    );
+    const IconComponent = validation.icon;
+    const colorMessage = this.props.messageColor || false;
+    const colorStyle = { color: validation.color };
+    const hasMessage = this.props.message;
+    if (hasMessage) {
+      return (
+        <div className="validation">
+          <div style={{ float: 'left', margin: '2px 0.6em 0 0' }}>
+            <IconComponent style={colorStyle} />
+          </div>
+          <Text component={TextVariants.p} style={colorMessage ? colorStyle : {}}>
+            {this.props.message}
+          </Text>
+        </div>
+      );
+    } else {
+      return <IconComponent style={colorStyle} />;
+    }
   }
 }
 

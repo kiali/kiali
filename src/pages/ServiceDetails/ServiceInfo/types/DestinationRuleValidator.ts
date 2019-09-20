@@ -1,4 +1,4 @@
-import { DestinationRule } from '../../../../types/IstioObjects';
+import { DestinationRule, ValidationTypes } from '../../../../types/IstioObjects';
 import SubsetValidator from './SubsetValidator';
 
 export default class DestinationRuleValidator {
@@ -56,7 +56,7 @@ export default class DestinationRuleValidator {
     if (!this.isValid()) {
       return {
         message: 'This destination rule has format problems in field ' + this.unformattedField,
-        severity: 'error',
+        severity: ValidationTypes.Error,
         path: ''
       };
     }
