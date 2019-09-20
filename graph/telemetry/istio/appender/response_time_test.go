@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,10 +14,14 @@ import (
 func TestResponseTime(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
+	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
+	q0Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q0 := fmt.Sprintf(`round((((%s > 0) / 1000) OR (%s > 0)),0.001)`, fmt.Sprintf(q0Temp, "milliseconds"), fmt.Sprintf(q0Temp, "seconds"))
 	v0 := model.Vector{}
 
-	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	q1Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q1 := fmt.Sprintf(`round((((%s > 0) / 1000) OR (%s > 0)),0.001)`, fmt.Sprintf(q1Temp, "milliseconds"), fmt.Sprintf(q1Temp, "seconds"))
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -33,7 +38,9 @@ func TestResponseTime(t *testing.T) {
 			Metric: q1m0,
 			Value:  0.010}}
 
-	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	q2Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q2 := fmt.Sprintf(`round((((%s > 0) / 1000) OR (%s > 0)),0.001)`, fmt.Sprintf(q2Temp, "milliseconds"), fmt.Sprintf(q2Temp, "seconds"))
+	fmt.Printf("QUERY:\n%s", q2)
 	q2m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
