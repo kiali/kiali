@@ -190,7 +190,7 @@ func DiscoverGrafana() string {
 		return ""
 	}
 	if grafanaConf.URL != "" || grafanaConf.InClusterURL == "" {
-		return strings.TrimSuffix(grafanaConf.URL, "/")
+		return grafanaConf.URL
 	}
 	if appstate.GrafanaDiscoveredURL != "" {
 		return appstate.GrafanaDiscoveredURL
@@ -205,7 +205,7 @@ func DiscoverGrafana() string {
 				if err != nil {
 					log.Debugf("[GRAFANA] URL discovery failed: %v", err)
 				}
-				appstate.GrafanaDiscoveredURL = strings.TrimSuffix(routeURL, "/")
+				appstate.GrafanaDiscoveredURL = routeURL
 			}
 		}
 	}
