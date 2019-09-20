@@ -71,8 +71,12 @@ def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
 
-def __test_jaeger_info(kiali_client):
-    evaluate_response(kiali_client, method_name='jaegerInfo')
+def test_jaeger_info(kiali_client):
+    response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
+    if response.status_code == 503:
+        pytest.skip()
+
+    assert response.status_code == 200
 
 def test_authentication_info(kiali_client):
     evaluate_response(kiali_client, method_name='AuthenticationInfo')
