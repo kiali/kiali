@@ -211,6 +211,8 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal("spec/trafficPolicy", validation.Checks[0].Path)
 	assert.Equal(models.CheckMessage("destinationrules.trafficpolicy.notlssettings"), validation.Checks[0].Message)
+
+	assert.True(len(validation.References) > 0)
 }
 
 func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
