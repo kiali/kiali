@@ -54,6 +54,9 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
+
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule1", validation.References[0].Name)
 }
 
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {
@@ -78,6 +81,9 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule1", validation.References[0].Name)
+
 	destinationRules = []kubernetes.IstioObject{
 		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
 		data.CreateTestDestinationRule("test", "rule1", "host1"),
@@ -94,6 +100,8 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule2", validation.References[0].Name)
 }
 
 func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
@@ -198,12 +206,15 @@ func TestReviewsExample(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
+	assert.Equal(3, len(validations))
 	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "reviews3"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(1, len(validation.Checks))
+
+	assert.Equal(2, len(validation.References)) // Both reviews and reviews2 is faulty
 }
 
 func TestMultiServiceEntry(t *testing.T) {

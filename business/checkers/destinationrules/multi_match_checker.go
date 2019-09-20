@@ -140,14 +140,17 @@ func checkCollisions(validations models.IstioValidations, destinationRulesName s
 	}
 }
 
+// addError links new validation errors to the validations. destinationRuleNames must always be a pair
 func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
-	for _, destinationRuleName := range destinationRuleNames {
-		key, rrValidation := createError("destinationrules.multimatch", destinationRuleName, true)
+	key0, rrValidation0 := createError("destinationrules.multimatch", destinationRuleNames[0], true)
+	key1, rrValidation1 := createError("destinationrules.multimatch", destinationRuleNames[1], true)
 
-		if _, exists := validations[key]; !exists {
-			validations.MergeValidations(models.IstioValidations{key: rrValidation})
-		}
-	}
+	rrValidation0.References[0] = key1
+	rrValidation1.References[0] = key0
+
+	validations.MergeValidations(models.IstioValidations{key0: rrValidation0})
+	validations.MergeValidations(models.IstioValidations{key1: rrValidation1})
+
 	return validations
 }
 
@@ -161,6 +164,7 @@ func createError(errorText, destinationRuleName string, valid bool) (models.Isti
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
+		References: make([]models.IstioValidationKey, 1),
 	}
 
 	return key, rrValidation

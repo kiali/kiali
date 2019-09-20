@@ -286,7 +286,15 @@ func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioV
 				v.Checks = append(v.Checks, toAdd)
 			}
 			v.Valid = v.Valid && validation.Valid
-			v.References = append(v.References, validation.References...)
+		AddUniqueReference:
+			for _, toAdd := range validation.References {
+				for _, existing := range v.References {
+					if toAdd == existing {
+						continue AddUniqueReference
+					}
+				}
+				v.References = append(v.References, toAdd)
+			}
 		}
 	}
 	return iv
