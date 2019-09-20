@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel, DashboardQuery, Aggregator } from '@kiali/k-charted-pf4';
+import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink } from '@kiali/k-charted-pf4';
 
 import { serverConfig } from '../../config/ServerConfig';
 import history from '../../app/History';
@@ -17,13 +17,13 @@ import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettin
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import MetricsRawAggregation from '../MetricsOptions/MetricsRawAggregation';
 import MetricsDuration from '../MetricsOptions/MetricsDuration';
-import { GrafanaLinks, Link } from './GrafanaLinks';
+import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
-  grafanaLinks: Link[];
+  grafanaLinks: ExternalLink[];
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
@@ -71,7 +71,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings,
-          grafanaLinks: GrafanaLinks.buildGrafanaLinks(response.data.externalLinks, this.props.namespace, this.props.app, MetricsObjectTypes.APP, this.props.version)
+          grafanaLinks: response.data.externalLinks
         });
       })
       .catch(error => {
@@ -146,7 +146,13 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          <GrafanaLinks links={this.state.grafanaLinks}/>
+          <GrafanaLinks
+            links={this.state.grafanaLinks}
+            namespace={this.props.namespace}
+            object={this.props.app}
+            objectType={MetricsObjectTypes.APP}
+            version={this.props.version}
+          />
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>

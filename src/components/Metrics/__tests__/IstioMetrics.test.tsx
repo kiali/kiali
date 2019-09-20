@@ -9,6 +9,7 @@ import IstioMetrics from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
+import { GrafanaInfo } from 'types/GrafanaInfo';
 
 let mounted: ReactWrapper<any, any> | null;
 
@@ -37,7 +38,7 @@ const mockWorkloadDashboard = (dashboard: DashboardModel): Promise<void> => {
   return mockAPIToPromise('getWorkloadDashboard', dashboard);
 };
 
-const mockGrafanaInfo = (info: any): Promise<any> => {
+const mockGrafanaInfo = (info: GrafanaInfo): Promise<any> => {
   return mockAPIToPromise('getGrafanaInfo', info);
 };
 
@@ -105,7 +106,7 @@ describe('Metrics for a service', () => {
   });
 
   it('renders initial layout', () => {
-    mockGrafanaInfo({});
+    mockGrafanaInfo({ externalLinks: [] });
     const wrapper = shallow(
       <Provider store={store}>
         <MemoryRouter>
@@ -128,7 +129,7 @@ describe('Metrics for a service', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
-      mockServiceDashboard({ title: 'foo', aggregations: [], charts: [] })
+      mockServiceDashboard({ title: 'foo', aggregations: [], charts: [], externalLinks: [] })
         .then(() => {
           mounted!.update();
           expect(mounted!.find('GridItem')).toHaveLength(0);
@@ -165,7 +166,8 @@ describe('Metrics for a service', () => {
           createHistogramChart('m3'),
           createHistogramChart('m5'),
           createHistogramChart('m7')
-        ]
+        ],
+        externalLinks: []
       })
         .then(() => {
           mounted!.update();
@@ -225,7 +227,7 @@ describe('Inbound Metrics for a workload', () => {
 
   it('mounts and loads empty metrics', done => {
     const allMocksDone = [
-      mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [] })
+      mockWorkloadDashboard({ title: 'foo', aggregations: [], charts: [], externalLinks: [] })
         .then(() => {
           mounted!.update();
           expect(mounted!.find('GridItem')).toHaveLength(0);
@@ -262,7 +264,8 @@ describe('Inbound Metrics for a workload', () => {
           createHistogramChart('m3'),
           createHistogramChart('m5'),
           createHistogramChart('m7')
-        ]
+        ],
+        externalLinks: []
       })
         .then(() => {
           mounted!.update();

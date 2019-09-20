@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
-import { Dashboard, DashboardModel } from '@kiali/k-charted-pf4';
+import { Dashboard, DashboardModel, ExternalLink } from '@kiali/k-charted-pf4';
 import { style } from 'typestyle';
 
 import RefreshContainer from '../../components/Refresh/Refresh';
@@ -21,12 +21,12 @@ import history from '../../app/History';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 import { MessageType } from '../../types/MessageCenter';
-import { GrafanaLinks, Link } from './GrafanaLinks';
+import { GrafanaLinks } from './GrafanaLinks';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   labelsSettings: LabelsSettings;
-  grafanaLinks: Link[];
+  grafanaLinks: ExternalLink[];
 };
 
 type ObjectId = {
@@ -112,8 +112,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
     IstioMetrics.grafanaInfoPromise
       .then(grafanaInfo => {
         if (grafanaInfo) {
-          const links = GrafanaLinks.buildGrafanaLinks(grafanaInfo.externalLinks, this.props.namespace, this.props.object, this.props.objectType);
-          this.setState({ grafanaLinks: links });
+          this.setState({ grafanaLinks: grafanaInfo.externalLinks });
         } else {
           this.setState({ grafanaLinks: [] });
         }
@@ -188,7 +187,12 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          <GrafanaLinks links={this.state.grafanaLinks}/>
+          <GrafanaLinks
+            links={this.state.grafanaLinks}
+            namespace={this.props.namespace}
+            object={this.props.object}
+            objectType={this.props.objectType}
+          />
         </ToolbarGroup>
         <ToolbarGroup style={{ marginLeft: 'auto', marginRight: 0 }}>
           <ToolbarItem>

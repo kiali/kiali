@@ -42,7 +42,7 @@ describe('Custom metrics', () => {
   });
 
   it('mounts and loads empty metrics', done => {
-    mockCustomDashboard({ title: 'foo', aggregations: [], charts: [] })
+    mockCustomDashboard({ title: 'foo', aggregations: [], charts: [], externalLinks: [] })
       .then(() => {
         mounted!.update();
         expect(mounted!.find('GridItem')).toHaveLength(0);
