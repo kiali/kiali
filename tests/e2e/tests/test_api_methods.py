@@ -54,7 +54,7 @@ def evaluate_response(kiali_client, method_name, path=None, params=None, status_
 
     return response
 
-def test_swagger_coverage():
+def __test_swagger_coverage():
     difference_set = set(swagger_method_list) - set(tested_method_list)
     if len(difference_set) > 0:
         pytest.fail('Missing {0} Api Methods to Validate:'.format(str(len(difference_set))) + str(difference_set))
@@ -71,12 +71,8 @@ def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
 
-def test_jaeger_info(kiali_client):
-    response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
-    if response.status_code == 503:
-        pytest.skip()
-
-    assert response.status_code == 200
+def __test_jaeger_info(kiali_client):
+    evaluate_response(kiali_client, method_name='jaegerInfo')
 
 def test_authentication_info(kiali_client):
     evaluate_response(kiali_client, method_name='AuthenticationInfo')
