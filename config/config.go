@@ -78,6 +78,7 @@ const (
 	EnvThreeScaleServiceName            = "THREESCALE_SERVICE_NAME"
 	EnvThreeScaleServicePort            = "THREESCALE_SERVICE_PORT"
 	EnvTracingEnabled                   = "TRACING_ENABLED"
+	EnvTracingInClusterURL              = "TRACING_IN_CLUSTER_URL"
 	EnvTracingServiceNamespace          = "TRACING_SERVICE_NAMESPACE"
 	EnvTracingServicePort               = "TRACING_SERVICE_PORT"
 	EnvTracingURL                       = "TRACING_URL"
@@ -179,12 +180,13 @@ type GrafanaVariablesConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	// Enable autodiscover and Jaeger in Kiali
-	Enabled   bool   `yaml:"enabled"`
-	Namespace string `yaml:"namespace"`
-	Service   string `yaml:"service"`
-	Port      int32  `yaml:"port"`
-	URL       string `yaml:"url"`
-	Auth      Auth   `yaml:"auth"`
+	Enabled      bool   `yaml:"enabled"`
+	Namespace    string `yaml:"namespace"`
+	Service      string `yaml:"service"`
+	Port         int32  `yaml:"port"`
+	URL          string `yaml:"url"`
+	Auth         Auth   `yaml:"auth"`
+	InClusterURL string `yaml:"in_cluster_url"`
 	// Path store the value of QUERY_BASE_PATH
 	Path string `yaml:"-"`
 }
@@ -360,6 +362,7 @@ func NewConfig() (c *Config) {
 	// Tracing Configuration
 	c.ExternalServices.Tracing.Enabled = getDefaultBool(EnvTracingEnabled, true)
 	c.ExternalServices.Tracing.Path = ""
+	c.ExternalServices.Tracing.InClusterURL = strings.TrimSpace(getDefaultString(EnvTracingInClusterURL, ""))
 	c.ExternalServices.Tracing.URL = strings.TrimSpace(getDefaultString(EnvTracingURL, ""))
 	c.ExternalServices.Tracing.Namespace = strings.TrimSpace(getDefaultString(EnvTracingServiceNamespace, getIstioComponentNamespace("tracing", c.IstioNamespace, c.IstioComponentNamespaces)))
 	c.ExternalServices.Tracing.Port = getDefaultInt32(EnvTracingServicePort, 16686)
