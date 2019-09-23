@@ -16,6 +16,7 @@
 #   sm-install: installs service mesh into the cluster
 # sm-uninstall: removes all service mesh components
 #   bi-install: installs bookinfo demo into the cluster
+#  k-uninstall: removes only kiali components
 #
 # This script accepts several options - see --help for details.
 #
@@ -128,6 +129,7 @@ get_status() {
       oc_login
     fi
     get_registry_names
+    check_insecure_registry
     get_console_url
     get_api_server_url
     echo "Version from oc command [${OC}]"
@@ -176,6 +178,26 @@ get_registry_names() {
   local int=$(${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
   EXTERNAL_IMAGE_REGISTRY=${ext:-<unknown>}
   INTERNAL_IMAGE_REGISTRY=${int:-<unknown>}
+}
+
+check_insecure_registry() {
+  # make sure docker insecure registry is defined
+  pgrep -a dockerd | grep "[-]-insecure-registry.*${EXTERNAL_IMAGE_REGISTRY}" > /dev/null 2>&1
+  if [ "$?" != "0" ]; then
+    grep "OPTIONS=.*--insecure-registry.*${EXTERNAL_IMAGE_REGISTRY}" /etc/sysconfig/docker > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+      grep "insecure-registries.*${EXTERNAL_IMAGE_REGISTRY}" /etc/docker/daemon.json > /dev/null 2>&1
+      if [ "$?" != "0" ]; then
+        infomsg "WARNING: You must tell Docker about the insecure image registry (e.g. --insecure-registry ${EXTERNAL_IMAGE_REGISTRY})."
+      else
+        debug "/etc/docker/daemon.json has the insecure-registry setting. This is good."
+      fi
+    else
+      debug "/etc/sysconfig/docker has defined the insecure-registry setting. This is good."
+    fi
+  else
+    debug "Docker daemon is running with --insecure-registry setting. This is good."
+  fi
 }
 
 get_route_url() {
@@ -400,6 +422,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="bi-install"
       shift
       ;;
+    k-uninstall)
+      _CMD="k-uninstall"
+      shift
+      ;;
     -ar|--aws-region)
       AWS_REGION="$2"
       shift;shift
@@ -509,6 +535,7 @@ The command must be one of:
   * sm-install: Installs Service Mesh into the cluster.
   * sm-uninstall: Removes Service Mesh from the cluster.
   * bi-install: Installs Bookinfo demo into the cluster.
+  * k-uninstall: Removes Kiali from the cluster.
 
 HELPMSG
       exit 1
@@ -975,6 +1002,36 @@ elif [ "$_CMD" = "bi-install" ]; then
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
   infomsg "Bookinfo URL: http://$(${OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
+
+elif [ "$_CMD" = "k-uninstall" ]; then
+
+  ${OC} delete subscription -n openshift-operators kiali-ossm
+  for csv in $(${OC} get csv -n openshift-operators -o name | grep kiali)
+  do
+    ${OC} delete -n openshift-operators ${csv}
+  done
+  for r in $(${OC} get clusterrolebindings -o name | grep -E 'kiali')
+  do
+    ${OC} delete ${r}
+  done
+  for r in $(${OC} get clusterroles -o name | grep -E 'kiali')
+  do
+    ${OC} delete ${r}
+  done
+  for r in $(${OC} get rolebindings -n openshift-operators -o name | grep -E 'kiali')
+  do
+    ${OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${OC} get roles -n openshift-operators -o name | grep -E 'kiali')
+  do
+    ${OC} delete -n openshift-operators ${r}
+  done
+  for r in $(${OC} get sa -n openshift-operators -o name | grep -E 'kiali')
+  do
+    ${OC} delete -n openshift-operators ${r}
+  done
+  ${OC} patch kiali kiali -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge ; true
+  ${OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${OC} delete
 
 else
   infomsg "ERROR: Required command must be either: create, destroy, status, routes, services, oc-env, sm-install, sm-uninstall, bi-install"

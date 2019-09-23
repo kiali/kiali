@@ -1,8 +1,12 @@
 SHELL := /bin/bash
 
+# The default organization where both operator and kiali images are in the repo
+IMAGE_ORG ?= kiali
+
 # Details about the Kiali operator image.
 OPERATOR_IMAGE_REPO ?= quay.io
-OPERATOR_IMAGE_NAME ?= ${OPERATOR_IMAGE_REPO}/kiali/kiali-operator
+OPERATOR_IMAGE_ORG ?= ${IMAGE_ORG}
+OPERATOR_IMAGE_NAME ?= ${OPERATOR_IMAGE_REPO}/${OPERATOR_IMAGE_ORG}/kiali-operator
 OPERATOR_IMAGE_PULL_POLICY ?= IfNotPresent
 OPERATOR_IMAGE_VERSION ?= dev
 OPERATOR_NAMESPACE ?= kiali-operator
@@ -12,22 +16,31 @@ OPERATOR_WATCH_NAMESPACE ?= kiali-operator
 OPERATOR_INSTALL_KIALI ?= false
 
 # When installing Kiali, here are some configuration settings for it.
+ACCESSIBLE_NAMESPACES ?= "bookinfo"
 AUTH_STRATEGY ?= openshift
 CREDENTIALS_USERNAME ?= admin
 CREDENTIALS_PASSPHRASE ?= admin
 KIALI_IMAGE_REPO ?= quay.io
-KIALI_IMAGE_NAME ?= ${KIALI_IMAGE_REPO}/kiali/kiali
+KIALI_IMAGE_ORG ?= ${IMAGE_ORG}
+KIALI_IMAGE_NAME ?= ${KIALI_IMAGE_REPO}/${KIALI_IMAGE_ORG}/kiali
 KIALI_IMAGE_PULL_POLICY ?= IfNotPresent
 KIALI_IMAGE_VERSION ?= ${OPERATOR_IMAGE_VERSION}
 NAMESPACE ?= istio-system
-VERBOSE_MODE ?= 3
 SERVICE_TYPE ?= ClusterIP
-
-# Path to CR file for any other parameter
-KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
+VERBOSE_MODE ?= 3
 
 # Find the client executable (either istiooc or oc or kubectl)
-OC ?= $(shell which istiooc 2>/dev/null || which oc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
+OC ?= $(shell which oc 2>/dev/null || which istiooc 2>/dev/null || which kubectl 2>/dev/null || echo "MISSING-OC/KUBECTL-FROM-PATH")
+
+# Determine if Maistra/Service Mesh is deployed. If not, assume we are working with upstream Istio implementation.
+IS_MAISTRA ?= $(shell if ${OC} get namespace ${NAMESPACE} -o jsonpath='{.metadata.labels}' 2>/dev/null | grep -q maistra ; then echo "true" ; else echo "false" ; fi)
+
+# Path to Kiali CR file which is different based on what Istio implementation is deployed (either Service Mesh/Maistra or upstream Istio)
+ifeq ($(IS_MAISTRA),true)
+KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev_servicemesh.yaml
+else
+KIALI_CR_FILE ?= deploy/kiali/kiali_cr_dev.yaml
+endif
 
 .PHONY: help
 all: help
@@ -45,7 +58,7 @@ help: Makefile
 	    echo "You do not have operator-sdk installed in your PATH. Will use the one found here: ../_output/operator-sdk-install/operator-sdk" ;\
 	  else \
 	    echo "You do not have operator-sdk installed in your PATH. The binary will be downloaded to ../_output/operator-sdk-install/operator-sdk" ;\
-	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.9.0/operator-sdk-v0.9.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
+	    curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.10.0/operator-sdk-v0.10.0-x86_64-linux-gnu > ../_output/operator-sdk-install/operator-sdk ;\
 	    chmod +x ../_output/operator-sdk-install/operator-sdk ;\
 	  fi ;\
 	fi
@@ -60,8 +73,8 @@ operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
 	"${OP_SDK}" build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
-## crc-operator-push: Push the Kiali operator container image to a CRC VM repo
-crc-operator-push:
+## ocp-operator-push: Push the Kiali operator container image to a OCP cluster
+ocp-operator-push:
 	# OpenShift 4 container registry stores images in the namespace as declared in the image name.
 	@echo Make sure the image namespace exists
 	@${OC} get namespace $(shell echo ${OPERATOR_IMAGE_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/') > /dev/null 2>&1 || \
@@ -94,20 +107,20 @@ operator-push:
 operator-create: operator-delete .ensure-operator-ns-does-not-exist
 	@echo Deploy Operator
 	deploy/deploy-kiali-operator.sh \
-    --operator-image-name      "${OPERATOR_IMAGE_NAME}" \
+    --operator-image-name        "${OPERATOR_IMAGE_NAME}" \
     --operator-image-pull-policy "${OPERATOR_IMAGE_PULL_POLICY}" \
-    --operator-image-version   "${OPERATOR_IMAGE_VERSION}" \
-    --operator-namespace       "${OPERATOR_NAMESPACE}" \
-    --operator-watch-namespace "${OPERATOR_WATCH_NAMESPACE}" \
-    --operator-install-kiali   "${OPERATOR_INSTALL_KIALI}" \
-    --accessible-namespaces    "${ACCESSIBLE_NAMESPACES}" \
-    --auth-strategy            "${AUTH_STRATEGY}" \
-    --credentials-username     "${CREDENTIALS_USERNAME}" \
-    --credentials-passphrase   "${CREDENTIALS_PASSPHRASE}" \
-    --kiali-image-name         "${KIALI_IMAGE_NAME}" \
-    --kiali-image-pull-policy  "${KIALI_IMAGE_PULL_POLICY}" \
-    --kiali-image-version      "${KIALI_IMAGE_VERSION}" \
-    --namespace                "${NAMESPACE}"
+    --operator-image-version     "${OPERATOR_IMAGE_VERSION}" \
+    --operator-namespace         "${OPERATOR_NAMESPACE}" \
+    --operator-watch-namespace   "${OPERATOR_WATCH_NAMESPACE}" \
+    --operator-install-kiali     "${OPERATOR_INSTALL_KIALI}" \
+    --accessible-namespaces      "${ACCESSIBLE_NAMESPACES}" \
+    --auth-strategy              "${AUTH_STRATEGY}" \
+    --credentials-username       "${CREDENTIALS_USERNAME}" \
+    --credentials-passphrase     "${CREDENTIALS_PASSPHRASE}" \
+    --kiali-image-name           "${KIALI_IMAGE_NAME}" \
+    --kiali-image-pull-policy    "${KIALI_IMAGE_PULL_POLICY}" \
+    --kiali-image-version        "${KIALI_IMAGE_VERSION}" \
+    --namespace                  "${NAMESPACE}"
 
 ## operator-delete: Remove the Kiali operator resources from the cluster along with Kiali itself
 operator-delete: purge-kiali
@@ -134,13 +147,16 @@ kiali-create:
 endif
 	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
 	cat ${KIALI_CR_FILE} | \
+ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
-KIALI_IMAGE_NAME=${KIALI_IMAGE_NAME} \
-KIALI_IMAGE_PULL_POLICY=${KIALI_IMAGE_PULL_POLICY} \
-KIALI_IMAGE_VERSION=${KIALI_IMAGE_VERSION} \
+KIALI_EXTERNAL_SERVICES_PASSWORD="$(shell ${OC} get secrets htpasswd -n ${NAMESPACE} -o jsonpath='{.data.rawPassword}' | base64 --decode)" \
+KIALI_IMAGE_NAME="${KIALI_IMAGE_NAME}" \
+KIALI_IMAGE_PULL_POLICY="${KIALI_IMAGE_PULL_POLICY}" \
+KIALI_IMAGE_VERSION="${KIALI_IMAGE_VERSION}" \
 NAMESPACE="${NAMESPACE}" \
-VERBOSE_MODE="${VERBOSE_MODE}" \
+ROUTER_HOSTNAME="$(shell ${OC} get $(shell ${OC} get routes -n ${NAMESPACE} -o name | head -n 1) -n ${NAMESPACE} -o jsonpath='{.status.ingress[0].routerCanonicalHostname}')" \
 SERVICE_TYPE="${SERVICE_TYPE}" \
+VERBOSE_MODE="${VERBOSE_MODE}" \
 envsubst | ${OC} apply -n "${OPERATOR_WATCH_NAMESPACE}" -f -
 
 ## kiali-delete: Remove a Kiali CR from the cluster, informing the Kiali operator to uninstall Kiali.
