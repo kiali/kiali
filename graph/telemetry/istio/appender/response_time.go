@@ -16,13 +16,14 @@ import (
 )
 
 const (
-	// ResponseTimeAppenderName uniquely identifies the appender
+	// ResponseTimeAppenderName uniquely identifies the appender: responseTime
 	ResponseTimeAppenderName = "responseTime"
 )
 
 // ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime
 // is represented as a percentile value. The default is 95th percentile, which means that
-// 95% of requests executed in no more than the resulting milliseconds.
+// 95% of requests executed in no more than the resulting milliseconds. ResponeTime values are
+// reported in milliseconds.
 // Name: responseTime
 type ResponseTimeAppender struct {
 	GraphType          string
@@ -88,7 +89,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	query := fmt.Sprintf(`(((%s > 0) / 1000) OR (%s > 0))`, millisQuery, secondsQuery)
+	query := fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 
@@ -122,7 +123,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	query = fmt.Sprintf(`(((%s > 0) / 1000) OR (%s > 0))`, millisQuery, secondsQuery)
+	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &outVector)
 
@@ -141,7 +142,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
-	query = fmt.Sprintf(`(((%s > 0) / 1000) OR (%s > 0))`, millisQuery, secondsQuery)
+	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &inVector)
 
@@ -167,7 +168,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			"2[0-9]{2}|^0$",         // must match success for all expected protocols
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-		query = fmt.Sprintf(`(((%s > 0) / 1000) OR (%s > 0))`, millisQuery, secondsQuery)
+		query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 		// fetch the internally originating request traffic time-series
 		inIstioVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 		a.populateResponseTimeMap(responseTimeMap, &inIstioVector)
@@ -216,9 +217,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		// to best preserve precision convert from secs to millis now, otherwise the
-		// thousandths place is dropped downstream.
-		val := float64(s.Value) * 1000.0
+		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
 		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it
