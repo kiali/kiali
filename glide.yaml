@@ -33,8 +33,8 @@ import:
 - package: k8s.io/kube-openapi
   version: 91cfa479c814065e420cee7ed227db0f63a5854e
 - package: github.com/kiali/k-charted
-  version: bec19868c87a68e7c576e04e9aef899c834f3975
-- package: github.com/nytimes/gziphandler
+  version: v0.2.0
+- package: github.com/NYTimes/gziphandler
   version: v1.1.1
 - package: github.com/jtblin/go-ldap-client
   version: v0.0.3
