@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { Dashboard, DashboardModel, DashboardQuery, Aggregator, ExternalLink } from '@kiali/k-charted-pf4';
+import { style } from 'typestyle';
 
 import { serverConfig } from '../../config/ServerConfig';
 import history from '../../app/History';
@@ -32,6 +33,10 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
   version?: string;
   template: string;
 };
+
+const displayFlex = style({
+  display: 'flex'
+});
 
 export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsState> {
   options: DashboardQuery;
@@ -141,7 +146,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
           </ToolbarItem>
         </ToolbarGroup>
         <ToolbarGroup>
-          <ToolbarItem>
+          <ToolbarItem className={displayFlex}>
             <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
           </ToolbarItem>
         </ToolbarGroup>
