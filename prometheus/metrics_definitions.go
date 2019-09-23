@@ -25,6 +25,11 @@ var istioMetrics = []istioMetric{
 		isHisto:   true,
 	},
 	istioMetric{
+		kialiName: "request_duration_millis",
+		istioName: "istio_request_duration_milliseconds",
+		isHisto:   true,
+	},
+	istioMetric{
 		kialiName: "request_size",
 		istioName: "istio_request_bytes",
 		isHisto:   true,
