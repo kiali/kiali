@@ -58,12 +58,19 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
 	//    traffic will be ignored because it won't map to the trafficMap.
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy"
-	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs]) > 0) by (%s)`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		namespace,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
 	// 2) query for requests originating from a workload inside of the namespace, exclude traffic to non-requested
@@ -74,12 +81,19 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
 		destinationWorkloadNamespaceQuery = fmt.Sprintf(`,destination_service_namespace!~"%s"`, excludedIstioRegex)
 	}
-	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
+	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		destinationWorkloadNamespaceQuery,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		destinationWorkloadNamespaceQuery,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
 	// create map to quickly look up securityPolicy
