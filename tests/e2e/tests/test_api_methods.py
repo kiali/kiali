@@ -19,7 +19,7 @@ def before_all_tests(kiali_client):
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
                           'AuthenticationInfo', 'OpenshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
                           'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
-                          'meshTls']
+                          'meshTls', 'serviceApiDocumentation']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -61,7 +61,7 @@ def evaluate_response(kiali_client, method_name, path=None, params=None, data=No
         pytest.fail(response.content)
     return response
 
-def __test_swagger_coverage():
+def test_swagger_coverage():
     difference_set = set(swagger_method_list) - set(tested_method_list)
     if len(difference_set) > 0:
         pytest.fail('Missing {0} Api Methods to Validate:'.format(str(len(difference_set))) + str(difference_set))
@@ -267,6 +267,10 @@ def __test_threescale_service(kiali_client):
 def test_mesh_tls(kiali_client):
     evaluate_response(kiali_client, method_name='meshTls')
 
+def test_service_api_documentation(kiali_client):
+    PARAMS_SERVICE_API_DOCUMENTATION = {'namespace': 'bookinfo', 'service': 'details'}
+    evaluate_response(kiali_client, method_name='serviceApiDocumentation', path=PARAMS_SERVICE_API_DOCUMENTATION)
+
 def test_negative_400(kiali_client):
 
     INVALID_PARAMS_ISTIOCONFIGDETAILS = {'namespace': 'invalid', 'object_type': 'invalid', 'object': 'promtcp'}
@@ -279,9 +283,13 @@ def test_negative_400(kiali_client):
 def test_negative_404(kiali_client):
     INVALID_PARAMS_SERVICEDETAILS = {'namespace': control_plane_namespace, 'service': 'invalid'}
     INVALID_PARAMS_WORKLOADHEALTH = {'namespace': 'bookinfo', 'workload': 'invalid'}
+    INVALID_PARAMS_SERVICE_API_DOCUMENTATION = {'namespace': 'bookinfo', 'service': 'invalid'}
+
 
     evaluate_response(kiali_client, method_name='serviceDetails', path=INVALID_PARAMS_SERVICEDETAILS, status_code_expected=404)
     evaluate_response(kiali_client, method_name='workloadHealth', path=INVALID_PARAMS_WORKLOADHEALTH, status_code_expected=404)
+    evaluate_response(kiali_client, method_name='serviceApiDocumentation', path=INVALID_PARAMS_SERVICE_API_DOCUMENTATION, status_code_expected=404)
+    
 
 def test_negative_403(kiali_client):
     if 'v1.0' in get_kiali_version(kiali_client).get('Kiali core version'):
