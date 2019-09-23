@@ -63,7 +63,7 @@
     "postinstall": "sed -i -E 's#\\[.*eslint-config-react-app.*\\]#['\\'$PWD/.eslintrc\\'']#g' node_modules/react-scripts/config/webpack*.js"
   },
   "dependencies": {
-    "@kiali/k-charted-pf4": "0.2.2",
+    "@kiali/k-charted-pf4": "0.2.3-rc0",
     "@patternfly/patternfly": "2.4.1",
     "@patternfly/react-charts": "4.9.2",
     "@patternfly/react-core": "3.89.2",
