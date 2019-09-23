@@ -1,5 +1,5 @@
-hash: 21e9fe4148fee60060d1a39369f82943094b3b0d921e5332b6c00d8cc1858319
-updated: 2019-08-08T16:56:29.284566625-04:00
+hash: dd56931b3ff54a02617be0944b793747fc691302898cf880bbce4078a24d2688
+updated: 2019-09-19T10:13:48.745919573+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -55,14 +55,16 @@ imports:
 - name: github.com/jtblin/go-ldap-client
   version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
-  version: e976df91ce3841eb68be124c6ca08dc517f7decb
+  version: bec19868c87a68e7c576e04e9aef899c834f3975
   subpackages:
   - business
   - config
-  - config/promconfig
+  - config/extconfig
   - http
+  - httputil
   - kubernetes
   - kubernetes/v1alpha1
+  - log
   - model
   - prometheus
 - name: github.com/matttproud/golang_protobuf_extensions
@@ -96,7 +98,7 @@ imports:
   - prometheus/internal
   - prometheus/promhttp
 - name: github.com/prometheus/client_model
-  version: fd36f4220a901265f90734c3183c5f0c91daa0b8
+  version: 14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016
   subpackages:
   - go
 - name: github.com/prometheus/common
@@ -106,7 +108,7 @@ imports:
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 5da962fa40f1c9b54ed78f10ba32429b396e712b
+  version: de25ac347ef9305868b04dc42425c973b863b18c
   subpackages:
   - internal/fs
   - internal/util

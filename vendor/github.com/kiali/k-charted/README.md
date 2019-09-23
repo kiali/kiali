@@ -135,12 +135,14 @@ make pf4
 
 One solution to easily work and test with Kiali is to setup Glide mirroring, and npm linking.
 
-Supposing your Kiali sources are in `/go/src/github.com/kiali/kiali`, and k-charted in `/go/src/github.com/kiali/k-charted`:
+First, commit your changes in k-charted and update `glide.yaml` in Kiali with the commit SHA.
+Then, assuming the repos are located within your $GOPATH, run:
 
 ```bash
-cd /go/src/github.com/kiali/kiali
-glide mirror set https://github.com/kiali/k-charted file:///go/src/github.com/kiali/k-charted
+cd ${GOPATH}/src/github.com/kiali/kiali
+glide mirror set https://github.com/kiali/k-charted file://${GOPATH}/src/github.com/kiali/k-charted
 
+# Edit Kiali glide.yaml to point k-charted to your commit SHA
 # Then, update your dependencies. In Kiali:
 make dep-update
 ```
@@ -150,21 +152,21 @@ make dep-update
 Similarly, you can use `yarn link` for the web UI side. Assuming your kiali-ui is in `/work/kiali-ui`:
 
 ```bash
-cd /go/src/github.com/kiali/k-charted/web/pf3
+cd ${GOPATH}/src/github.com/kiali/k-charted/web/pf4
 yarn link
 
 cd /work/kiali-ui
-yarn link @kiali/k-charted-pf3
+yarn link @kiali/k-charted-pf4
 ```
 
 After testing, you should remove the mirror and link:
 
 ```bash
-cd /go/src/github.com/kiali/kiali
+cd ${GOPATH}/src/github.com/kiali/kiali
 glide mirror remove https://github.com/kiali/k-charted
 
 cd /work/kiali-ui
-yarn unlink @kiali/k-charted-pf3
+yarn unlink @kiali/k-charted-pf4
 ```
 
 ## Contribute

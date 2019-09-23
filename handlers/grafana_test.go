@@ -46,8 +46,8 @@ func TestGetGrafanaInfoExternal(t *testing.T) {
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Len(t, info.Dashboards, 1)
-	assert.Equal(t, "http://grafana-external:3001/some_path", info.Dashboards[0].URL)
+	assert.Len(t, info.ExternalLinks, 1)
+	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
 }
 
 func TestGetGrafanaInfoInCluster(t *testing.T) {
@@ -59,7 +59,8 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana.istio-system:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "http://grafana-external:3001/some_path", info.Dashboards[0].URL)
+	assert.Len(t, info.ExternalLinks, 1)
+	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
 }
 
 func TestGetGrafanaInfoGetError(t *testing.T) {
@@ -91,8 +92,8 @@ func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(genDashboard("some_path"), 200, "http://grafana-external:3001", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Len(t, info.Dashboards, 1)
-	assert.Equal(t, "http://grafana-external:3001/some_path", info.Dashboards[0].URL)
+	assert.Len(t, info.ExternalLinks, 1)
+	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
 }
 
 func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
@@ -103,8 +104,8 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	info, code, err := getGrafanaInfo("", buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/", t))
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
-	assert.Len(t, info.Dashboards, 1)
-	assert.Equal(t, "http://grafana-external:3001/some_path", info.Dashboards[0].URL)
+	assert.Len(t, info.ExternalLinks, 1)
+	assert.Equal(t, "http://grafana-external:3001/some_path", info.ExternalLinks[0].URL)
 }
 
 func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) dashboardSupplier {

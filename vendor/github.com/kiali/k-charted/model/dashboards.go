@@ -10,9 +10,10 @@ import (
 
 // MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource
 type MonitoringDashboard struct {
-	Title        string        `json:"title"`
-	Charts       []Chart       `json:"charts"`
-	Aggregations []Aggregation `json:"aggregations"`
+	Title         string         `json:"title"`
+	Charts        []Chart        `json:"charts"`
+	Aggregations  []Aggregation  `json:"aggregations"`
+	ExternalLinks []ExternalLink `json:"externalLinks"`
 }
 
 // Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource
@@ -20,6 +21,9 @@ type Chart struct {
 	Name      string                     `json:"name"`
 	Unit      string                     `json:"unit"`
 	Spans     int                        `json:"spans"`
+	ChartType *string                    `json:"chartType,omitempty"`
+	Min       *int                       `json:"min,omitempty"`
+	Max       *int                       `json:"max,omitempty"`
 	Metric    []*SampleStream            `json:"metric"`
 	Histogram map[string][]*SampleStream `json:"histogram"`
 	Error     string                     `json:"error"`
@@ -76,9 +80,12 @@ func convertSamplePair(from *pmod.SamplePair) SamplePair {
 // ConvertChart converts a k8s chart (from MonitoringDashboard k8s resource) into this models chart
 func ConvertChart(from v1alpha1.MonitoringDashboardChart) Chart {
 	return Chart{
-		Name:  from.Name,
-		Unit:  from.Unit,
-		Spans: from.Spans,
+		Name:      from.Name,
+		Unit:      from.Unit,
+		Spans:     from.Spans,
+		ChartType: from.ChartType,
+		Min:       from.Min,
+		Max:       from.Max,
 	}
 }
 
@@ -105,6 +112,13 @@ func ConvertAggregations(from v1alpha1.MonitoringDashboardSpec) []Aggregation {
 		return aggs[i].DisplayName < aggs[j].DisplayName
 	})
 	return aggs
+}
+
+// ExternalLink provides links to external dashboards (e.g. to Grafana)
+type ExternalLink struct {
+	URL       string                                            `json:"url"`
+	Name      string                                            `json:"name"`
+	Variables v1alpha1.MonitoringDashboardExternalLinkVariables `json:"variables"`
 }
 
 // Runtime holds the runtime title and associated dashboard template(s)

@@ -1,6 +1,6 @@
 {
   "name": "@kiali/k-charted-pf3",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Dashboards and Charts library for Kubernetes, with React / PatternFly 3",
   "repository": "https://github.com/kiali/k-charted",
   "author": "Red Hat",

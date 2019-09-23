@@ -1,4 +1,4 @@
-package prometheus
+package httputil
 
 import (
 	"crypto/tls"
@@ -7,9 +7,30 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
-	"github.com/kiali/k-charted/config/promconfig"
+	"github.com/kiali/k-charted/config/extconfig"
 )
+
+func HttpGet(url string, auth *extconfig.Auth, timeout time.Duration) ([]byte, int, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	transport, err := AuthTransport(auth, &http.Transport{})
+	if err != nil {
+		return nil, 0, err
+	}
+	client := http.Client{Transport: transport, Timeout: timeout}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	return body, resp.StatusCode, err
+}
 
 type authRoundTripper struct {
 	auth       string
@@ -21,12 +42,12 @@ func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	return rt.originalRT.RoundTrip(req)
 }
 
-func newAuthRoundTripper(auth *promconfig.Auth, rt http.RoundTripper) http.RoundTripper {
+func newAuthRoundTripper(auth *extconfig.Auth, rt http.RoundTripper) http.RoundTripper {
 	switch auth.Type {
-	case promconfig.AuthTypeBearer:
+	case extconfig.AuthTypeBearer:
 		token := auth.Token
 		return &authRoundTripper{auth: "Bearer " + token, originalRT: rt}
-	case promconfig.AuthTypeBasic:
+	case extconfig.AuthTypeBasic:
 		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
 		return &authRoundTripper{auth: "Basic " + encoded, originalRT: rt}
 	default:
@@ -34,7 +55,7 @@ func newAuthRoundTripper(auth *promconfig.Auth, rt http.RoundTripper) http.Round
 	}
 }
 
-func authTransport(auth *promconfig.Auth, transportConfig *http.Transport) (http.RoundTripper, error) {
+func AuthTransport(auth *extconfig.Auth, transportConfig *http.Transport) (http.RoundTripper, error) {
 	if auth.InsecureSkipVerify || auth.CAFile != "" {
 		var certPool *x509.CertPool
 		if auth.CAFile != "" {
