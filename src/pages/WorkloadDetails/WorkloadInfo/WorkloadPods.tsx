@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ObjectValidation, Pod } from '../../../types/IstioObjects';
 import { Col, Row, Table } from 'patternfly-react';
 import * as resolve from 'table-resolver';
-import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
+import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 import Labels from '../../../components/Label/Labels';
 
 type WorkloadPodsProps = {
@@ -115,7 +115,7 @@ class WorkloadPods extends React.Component<WorkloadPodsProps> {
       }
       return {
         id: podIdx,
-        status: <ConfigIndicator id={podIdx + '-config-validation'} validations={validations} definition={true} />,
+        status: <ValidationSummary id={podIdx + '-config-validation'} validations={validations} definition={true} />,
         name: pod.name,
         createdAt: new Date(pod.createdAt).toLocaleString(),
         createdBy:

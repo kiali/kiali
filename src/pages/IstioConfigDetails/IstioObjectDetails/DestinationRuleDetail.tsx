@@ -9,7 +9,7 @@ import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-t
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { ServiceIcon } from '@patternfly/react-icons';
 import { checkForPath } from '../../../types/ServiceInfo';
-import TooltipValidation from '../../../components/Validations/TooltipValidation';
+import ValidationList from '../../../components/Validations/ValidationList';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -29,7 +29,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
 
   subsetValidation(subsetIndex: number) {
     const checks = checkForPath(this.props.validation, 'spec/subsets[' + subsetIndex + ']');
-    return <TooltipValidation checks={checks} tooltipPosition={TooltipPosition.right} />;
+    return <ValidationList checks={checks} tooltipPosition={TooltipPosition.right} />;
   }
 
   columnsSubsets() {

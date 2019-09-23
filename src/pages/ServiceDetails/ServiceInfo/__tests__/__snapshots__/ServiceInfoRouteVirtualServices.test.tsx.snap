@@ -215,7 +215,7 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
                 reviews-default
               </Link>,
               "resourceVersion": "1234",
-              "status": <ConfigIndicator
+              "status": <ValidationSummary
                 id="0-config-validation"
                 validations={Array []}
               />,

@@ -10,7 +10,7 @@ type Props = {
   tooltipPosition?: TooltipPosition;
 };
 
-class TooltipValidation extends React.Component<Props> {
+class ValidationList extends React.Component<Props> {
   content() {
     return (this.props.checks || []).map((check, index) => {
       return <Validation key={'validation-check-' + index} severity={check.severity} message={check.message} />;
@@ -39,4 +39,4 @@ class TooltipValidation extends React.Component<Props> {
   }
 }
 
-export default TooltipValidation;
+export default ValidationList;

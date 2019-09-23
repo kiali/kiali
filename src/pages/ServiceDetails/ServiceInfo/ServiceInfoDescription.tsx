@@ -6,11 +6,11 @@ import { ServiceHealth } from '../../../types/Health';
 import { Endpoints } from '../../../types/ServiceInfo';
 import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
 import { style } from 'typestyle';
-import { ConfigIndicator, MEDIUM_SIZE } from '../../../components/ConfigValidation/ConfigIndicator';
+import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
-import TooltipValidation from '../../../components/Validations/TooltipValidation';
+import ValidationList from '../../../components/Validations/ValidationList';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -53,7 +53,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
   getPortOver(portId: number): Popover {
     return (
       <div style={{ float: 'left', fontSize: '12px', padding: '3px 0.6em 0 0' }}>
-        <TooltipValidation checks={this.getPortChecks(portId)} />
+        <ValidationList checks={this.getPortChecks(portId)} />
       </div>
     );
   }
@@ -114,11 +114,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
             </Col>
             <Col xs={12} sm={4} md={2} lg={2}>
               <div className="progress-description">
-                <ConfigIndicator
-                  id={this.props.name + '-config-validation'}
-                  validations={[this.getValidations()]}
-                  size={MEDIUM_SIZE}
-                />
+                <ValidationSummary id={this.props.name + '-config-validation'} validations={[this.getValidations()]} />
                 <strong style={{ margin: '0.1em 0 0 0.5em' }}>Ports</strong>
               </div>
               <ul className={listStyle}>

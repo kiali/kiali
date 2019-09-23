@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
-import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
+import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 
 interface ServiceInfoVirtualServicesProps {
   virtualServices?: VirtualService[];
@@ -126,7 +126,7 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     return (this.props.virtualServices || []).map((virtualService, vsIdx) => ({
       id: vsIdx,
       status: (
-        <ConfigIndicator
+        <ValidationSummary
           id={vsIdx + '-config-validation'}
           validations={this.hasValidations(virtualService) ? [this.validation(virtualService)] : []}
         />

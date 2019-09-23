@@ -7,7 +7,7 @@ import { ServiceIcon } from '@patternfly/react-icons';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import { Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
 import { ChartBullet } from '@patternfly/react-charts/dist/js/components/ChartBullet';
-import TooltipValidation from '../../../components/Validations/TooltipValidation';
+import ValidationList from '../../../components/Validations/ValidationList';
 
 interface VirtualServiceRouteProps {
   name: string;
@@ -59,7 +59,7 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     rows = rows.concat(
       (route.route || []).map((routeItem, destinationIndex) => {
         const checks = this.checksFrom(this.validation(), routeItem, routeIndex, destinationIndex);
-        const validation = <TooltipValidation checks={checks} />;
+        const validation = <ValidationList checks={checks} />;
         const severity = highestSeverity(checks);
         const isValid = severity === ValidationTypes.Correct;
         let cells;

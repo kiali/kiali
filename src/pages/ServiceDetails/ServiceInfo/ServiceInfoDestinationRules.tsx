@@ -4,7 +4,7 @@ import * as resolve from 'table-resolver';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
-import { ConfigIndicator } from '../../../components/ConfigValidation/ConfigIndicator';
+import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
 import Labels from '../../../components/Label/Labels';
 import { safeRender } from '../../../utils/SafeRender';
@@ -159,7 +159,7 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
         id: vsIdx,
         name: this.overviewLink(destinationRule),
         status: (
-          <ConfigIndicator
+          <ValidationSummary
             id={vsIdx + '-config-validation'}
             validations={this.hasValidations(destinationRule) ? [this.validation(destinationRule)] : []}
           />

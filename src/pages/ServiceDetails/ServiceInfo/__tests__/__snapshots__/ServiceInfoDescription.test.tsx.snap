@@ -101,9 +101,8 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
         <div
           className="progress-description"
         >
-          <ConfigIndicator
+          <ValidationSummary
             id="reviews-config-validation"
-            size="18px"
             validations={
               Array [
                 Object {},
