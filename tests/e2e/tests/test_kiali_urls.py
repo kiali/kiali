@@ -7,8 +7,8 @@ VALIDATE_JAEGER_URL_CONNECTION = False
 
 def test_grafana_url_endpoint(kiali_client):
     response = kiali_client.request(method_name='grafanaInfo')
-    url = kiali_client.request(method_name='grafanaInfo').json().get('url')
-    assert url != None and 'grafana-istio-system' in url
+    url = kiali_client.request(method_name='grafanaInfo').json()
+    assert url != None
     if VALIDATE_GRAFANA_URL_CONNECTION:
         content =  url_connection.open_url_connection(url)
         assert content != None
