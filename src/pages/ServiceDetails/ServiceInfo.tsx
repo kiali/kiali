@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Col, Icon, Row, ToastNotification, ToastNotificationList } from 'patternfly-react';
+import { Col, Row, ToastNotification, ToastNotificationList } from 'patternfly-react';
 
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
-import { ServiceDetailsInfo, severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
+import { ServiceDetailsInfo, validationToSeverity } from '../../types/ServiceInfo';
 import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices';
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
-import { ObjectValidation, Validations } from '../../types/IstioObjects';
+import { ObjectValidation, Validations, ValidationTypes } from '../../types/IstioObjects';
 import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
@@ -16,6 +16,7 @@ import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import { Tab } from '@patternfly/react-core';
+import Validation from '../../components/Validations/Validation';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -112,19 +113,19 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     const destinationRules = this.props.serviceDetails.destinationRules || [];
     const validations = this.props.validations || {};
     const validationChecks = this.validationChecks();
-    const getSeverityIcon: any = (severity: string = 'error') => (
+    const getSeverityIcon: any = (severity: ValidationTypes = ValidationTypes.Error) => (
       <span className={tabIconStyle}>
         {' '}
-        <Icon type="pf" name={severityToIconName(severity)} />
+        <Validation severity={severity} />
       </span>
     );
 
     const getValidationIcon = (keys: string[], type: string) => {
-      let severity = 'warning';
+      let severity = ValidationTypes.Warning;
       keys.forEach(key => {
         const validationsForIcon = (this.props.validations || {})![type][key];
-        if (validationToSeverity(validationsForIcon) === 'error') {
-          severity = 'error';
+        if (validationToSeverity(validationsForIcon) === ValidationTypes.Error) {
+          severity = ValidationTypes.Error;
         }
       });
       return getSeverityIcon(severity);

@@ -112,20 +112,20 @@ export const highestSeverity = (checks: ObjectCheck[]): ValidationTypes => {
   return severity;
 };
 
-const numberOfChecks = (type: string, object: ObjectValidation) =>
+const numberOfChecks = (type: ValidationTypes, object: ObjectValidation) =>
   (object && object.checks ? object.checks : []).filter(i => i.severity === type).length;
 
-export const validationToSeverity = (object: ObjectValidation): string => {
-  const warnChecks = numberOfChecks('warning', object);
-  const errChecks = numberOfChecks('error', object);
+export const validationToSeverity = (object: ObjectValidation): ValidationTypes => {
+  const warnChecks = numberOfChecks(ValidationTypes.Warning, object);
+  const errChecks = numberOfChecks(ValidationTypes.Error, object);
 
   return object && object.valid
-    ? 'correct'
+    ? ValidationTypes.Correct
     : object && !object.valid && errChecks > 0
-    ? 'error'
+    ? ValidationTypes.Error
     : object && !object.valid && warnChecks > 0
-    ? 'warning'
-    : 'correct';
+    ? ValidationTypes.Warning
+    : ValidationTypes.Correct;
 };
 
 export const checkForPath = (object: ObjectValidation | undefined, path: string): ObjectCheck[] => {

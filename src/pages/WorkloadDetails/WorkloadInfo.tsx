@@ -1,17 +1,18 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Validations } from '../../types/IstioObjects';
-import { Col, Icon, Row } from 'patternfly-react';
+import { Validations, ValidationTypes } from '../../types/IstioObjects';
+import { Col, Row } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
-import { severityToIconName, validationToSeverity } from '../../types/ServiceInfo';
+import { validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { Tab } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import Validation from '../../components/Validations/Validation';
 
 type WorkloadInfoProps = {
   workload: Workload;
@@ -85,19 +86,19 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     const services = workload.services || [];
     const validationChecks = this.validationChecks();
 
-    const getSeverityIcon: any = (severity: string = 'error') => (
+    const getSeverityIcon: any = (severity: ValidationTypes = ValidationTypes.Error) => (
       <span className={tabIconStyle}>
         {' '}
-        <Icon type="pf" name={severityToIconName(severity)} />
+        <Validation severity={severity} />
       </span>
     );
 
     const getValidationIcon = (keys: string[], type: string) => {
-      let severity = 'warning';
+      let severity = ValidationTypes.Warning;
       keys.forEach(key => {
         const validations = this.props.validations![type][key];
-        if (validationToSeverity(validations) === 'error') {
-          severity = 'error';
+        if (validationToSeverity(validations) === ValidationTypes.Error) {
+          severity = ValidationTypes.Error;
         }
       });
       return getSeverityIcon(severity);

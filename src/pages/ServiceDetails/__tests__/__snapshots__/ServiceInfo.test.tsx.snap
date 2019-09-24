@@ -301,9 +301,8 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
                   className="f1uxujqj"
                 >
                    
-                  <Icon
-                    name="error-circle-o"
-                    type="pf"
+                  <Validation
+                    severity="error"
                   />
                 </span>
               </React.Fragment>
