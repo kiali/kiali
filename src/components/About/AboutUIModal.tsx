@@ -76,10 +76,10 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
     const name = component.version ? component.name : `${component.name} URL`;
     const additionalInfo = this.additionalComponentInfoContent(component);
     return (
-      <>
+      <React.Fragment key={name + additionalInfo}>
         <TextListItem component="dt">{name}</TextListItem>
         <TextListItem component="dd">{additionalInfo}</TextListItem>
-      </>
+      </React.Fragment>
     );
   };
 
