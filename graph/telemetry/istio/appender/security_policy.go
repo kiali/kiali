@@ -180,7 +180,9 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 						other += rate
 					}
 				}
-				e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
+				if mtls > 0 {
+					e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
+				}
 			}
 		}
 	}
