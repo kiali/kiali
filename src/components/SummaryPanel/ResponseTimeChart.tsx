@@ -3,24 +3,26 @@ import { AreaChart, Icon } from 'patternfly-react';
 import { PfColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 
+export type ResponseTimeUnit = 's' | 'ms';
 type ResponseTimeChartTypeProp = {
+  hide?: boolean;
   label: string;
   rtAvg: [string | number][];
   rtMed: [string | number][];
   rt95: [string | number][];
   rt99: [string | number][];
-  hide?: boolean;
+  unit: ResponseTimeUnit;
 };
 
-export default class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
+export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
   thereIsTrafficData = () => {
     return this.props.rtAvg && this.props.rtAvg.length > 1 && this.props.rtAvg[0].length > 1;
   };
 
-  // The prom data is in seconds but we want to report response times in millis when the user hovers
+  // The prom data may be in seconds but we want to report response times in millis when the user hovers
   // Convert the data points to millis.  The 'datums' is a bit complicated, it is a 2-dimensional array
   // that has 'x' arrays that hold timestamps of the datapoints for the x-axis.  And datapoint arrays that
-  // hold the data for the quantiles.  We need only convert the data poiints.  A datums array can look like:
+  // hold the data for the quantiles.  We need only convert the data points.  A datums array can look like:
   // [['x', 123, 456, 789],
   //  ['avg', 0.10, 0.20, 0.30]
   //  ...
@@ -52,12 +54,19 @@ export default class ResponseTimeChart extends React.Component<ResponseTimeChart
       y: { show: false }
     };
 
+    const columns =
+      this.props.unit === 's'
+        ? (this.toMillis(this.props.rtAvg) as [string | number][])
+            .concat(this.toMillis(this.props.rtMed) as [string | number][])
+            .concat(this.toMillis(this.props.rt95) as [string | number][])
+            .concat(this.toMillis(this.props.rt99) as [string | number][])
+        : (this.props.rtAvg as [string | number][])
+            .concat(this.props.rtMed as [string | number][])
+            .concat(this.props.rt95 as [string | number][])
+            .concat(this.props.rt99 as [string | number][]);
     const chartData = {
       x: 'x',
-      columns: (this.toMillis(this.props.rtAvg) as [string | number][])
-        .concat(this.toMillis(this.props.rtMed) as [string | number][])
-        .concat(this.toMillis(this.props.rt95) as [string | number][])
-        .concat(this.toMillis(this.props.rt99) as [string | number][]),
+      columns: columns,
       type: 'area-spline',
       hide: ['Average', 'Median', '99th']
     };

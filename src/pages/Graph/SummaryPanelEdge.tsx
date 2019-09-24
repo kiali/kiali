@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
-import ResponseTimeChart from '../../components/SummaryPanel/ResponseTimeChart';
+import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
 import {
   GraphType,
   NodeType,
@@ -32,6 +32,7 @@ import { ResponseTable } from '../../components/SummaryPanel/ResponseTable';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
+  metricsLoadError: string | null;
   reqRates: [string | number][] | null;
   errRates: [string | number][];
   rtAvg: [string | number][];
@@ -40,11 +41,12 @@ type SummaryPanelEdgeState = {
   rt99: [string | number][];
   tcpSent: [string | number][];
   tcpReceived: [string | number][];
-  metricsLoadError: string | null;
+  unit: ResponseTimeUnit;
 };
 
 const defaultSummaryPanelState: SummaryPanelEdgeState = {
   loading: true,
+  metricsLoadError: null,
   reqRates: null,
   errRates: [],
   rtAvg: [],
@@ -53,7 +55,7 @@ const defaultSummaryPanelState: SummaryPanelEdgeState = {
   rt99: [],
   tcpSent: [],
   tcpReceived: [],
-  metricsLoadError: null
+  unit: 'ms'
 };
 
 export default class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -285,7 +287,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         edge.target().isIstio
           ? 'destination'
           : 'source';
-      const filtersRps = ['request_count', 'request_duration', 'request_error_count'];
+      // see comment below about why we have both 'request_duration' and 'request_duration_millis'
+      const filtersRps = ['request_count', 'request_duration', 'request_duration_millis', 'request_error_count'];
       promiseRps = getNodeMetrics(
         destMetricType,
         edge.target(),
@@ -318,7 +321,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       .then(response => {
         const metrics = response.data.metrics;
         const histograms = response.data.histograms;
-        let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived } = defaultSummaryPanelState;
+        let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultSummaryPanelState;
         if (isGrpc || isHttp) {
           reqRates = this.getNodeDataPoints(metrics.request_count, 'RPS', sourceMetricType, destMetricType, sourceData);
           errRates = this.getNodeDataPoints(
@@ -328,34 +331,20 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             destMetricType,
             sourceData
           );
-          rtAvg = this.getNodeDataPoints(
-            histograms.request_duration.avg,
-            'avg',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
-          rtMed = this.getNodeDataPoints(
-            histograms.request_duration['0.5'],
-            'p50',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
-          rt95 = this.getNodeDataPoints(
-            histograms.request_duration['0.95'],
-            'p95',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
-          rt99 = this.getNodeDataPoints(
-            histograms.request_duration['0.99'],
-            'p99',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
+          // We query for both 'request_duration' and 'request_duration_millis' because the former is used
+          // with Istio mixer telemetry and the latter with Istio mixer-less (introduced as an experimental
+          // option in istion 1.3.0).  Until we can safely rely on the newer metric we must support both. So,
+          // prefer the newer but if it holds no valid data, revert to the older.
+          let histo = histograms.request_duration_millis;
+          rtAvg = this.getNodeDataPoints(histo.avg, 'avg', sourceMetricType, destMetricType, sourceData);
+          if (this.isEmpty(rtAvg)) {
+            histo = histograms.request_duration;
+            unit = 's';
+            rtAvg = this.getNodeDataPoints(histo.avg, 'avg', sourceMetricType, destMetricType, sourceData);
+          }
+          rtMed = this.getNodeDataPoints(histo['0.5'], 'p50', sourceMetricType, destMetricType, sourceData);
+          rt95 = this.getNodeDataPoints(histo['0.95'], 'p95', sourceMetricType, destMetricType, sourceData);
+          rt99 = this.getNodeDataPoints(histo['0.99'], 'p99', sourceMetricType, destMetricType, sourceData);
         } else {
           // TCP
           tcpSent = this.getNodeDataPoints(metrics.tcp_sent, 'Sent', sourceMetricType, destMetricType, sourceData);
@@ -377,7 +366,8 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           rt95: rt95,
           rt99: rt99,
           tcpSent: tcpSent,
-          tcpReceived: tcpReceived
+          tcpReceived: tcpReceived,
+          unit: unit
         });
       })
       .catch(error => {
@@ -395,6 +385,22 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
     this.setState({ loading: true, metricsLoadError: null });
   };
+
+  // Returns true if the histo datum values are all NaN
+  private isEmpty(datums: [string | number][]): boolean {
+    for (const datum of datums) {
+      if (datum[0] === 'x') {
+        continue;
+      }
+      for (let i = 1; i < datum.length; i++) {
+        if (!isNaN(Number(datum[i]))) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 
   private safeRate = (s: any) => {
     return isNaN(s) ? 0.0 : Number(s);
@@ -461,6 +467,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
             rtMed={this.state.rtMed}
             rt95={this.state.rt95}
             rt99={this.state.rt99}
+            unit={this.state.unit}
           />
           <hr />
         </>
