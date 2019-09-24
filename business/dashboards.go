@@ -1,6 +1,8 @@
 package business
 
 import (
+	"math"
+
 	kbus "github.com/kiali/k-charted/business"
 	kconf "github.com/kiali/k-charted/config"
 	kxconf "github.com/kiali/k-charted/config/extconfig"
@@ -95,6 +97,8 @@ var istioCharts = []istioChart{
 		},
 		refName: "request_count",
 	},
+	// TODO: Istio is transitioning from duration in seconds to duration in ms (a new metric). When
+	//       complete we should reduce the next two entries to just one entry.
 	{
 		Chart: kmodel.Chart{
 			Name:  "Request duration",
@@ -102,6 +106,14 @@ var istioCharts = []istioChart{
 			Spans: 6,
 		},
 		refName: "request_duration",
+	},
+	{
+		Chart: kmodel.Chart{
+			Name:  "Request duration",
+			Unit:  "ms",
+			Spans: 6,
+		},
+		refName: "request_duration_millis",
 	},
 	{
 		Chart: kmodel.Chart{
@@ -149,6 +161,31 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 
 	metrics := in.prom.GetMetrics(&params)
 
+	// TODO: remove this hacky code when Istio finishes migrating to the millis duration metric,
+	//       until then use the one that has data, preferring millis in the corner case that
+	//       both have data for the time range.
+	_, secondsOK := metrics.Histograms["request_duration"]
+	durationMillis, millisOK := metrics.Histograms["request_duration_millis"]
+	if secondsOK && millisOK {
+		durationMillisEmpty := true
+	MillisEmpty:
+		for _, samples := range models.ConvertHistogram(durationMillis) {
+			for _, sample := range samples {
+				for _, pair := range sample.Values {
+					if !math.IsNaN(pair.Value) {
+						durationMillisEmpty = false
+						break MillisEmpty
+					}
+				}
+			}
+		}
+		if !durationMillisEmpty {
+			delete(metrics.Histograms, "request_duration")
+		} else {
+			delete(metrics.Histograms, "request_duration_millis")
+		}
+	}
+
 	for _, chartTpl := range istioCharts {
 		newChart := chartTpl.Chart
 		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
@@ -157,7 +194,9 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
 			newChart.Histogram = models.ConvertHistogram(histo)
 		}
-		dashboard.Charts = append(dashboard.Charts, newChart)
+		if newChart.Metric != nil || newChart.Histogram != nil {
+			dashboard.Charts = append(dashboard.Charts, newChart)
+		}
 	}
 
 	return &dashboard, nil

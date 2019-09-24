@@ -16,13 +16,14 @@ import (
 )
 
 const (
-	// ResponseTimeAppenderName uniquely identifies the appender
+	// ResponseTimeAppenderName uniquely identifies the appender: responseTime
 	ResponseTimeAppenderName = "responseTime"
 )
 
 // ResponseTimeAppender is responsible for adding responseTime information to the graph. ResponseTime
 // is represented as a percentile value. The default is 95th percentile, which means that
-// 95% of requests executed in no more than the resulting milliseconds.
+// 95% of requests executed in no more than the resulting milliseconds. ResponeTime values are
+// reported in milliseconds.
 // Name: responseTime
 type ResponseTimeAppender struct {
 	GraphType          string
@@ -70,15 +71,25 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 	responseTimeMap := make(map[string]float64)
 
 	// query prometheus for the responseTime info in three queries:
+	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
+	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
 	// 1) query for responseTime originating from "unknown" (i.e. the internet)
 	groupBy := "le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version"
-	query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+	millisQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+		quantile,
+		"istio_request_duration_milliseconds_bucket",
+		namespace,
+		"2[0-9]{2}|^0$",         // must match success for all expected protocols
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	secondsQuery := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		namespace,
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	query := fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	unkVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &unkVector)
 
@@ -94,7 +105,16 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			sourceWorkloadQuery = fmt.Sprintf(`source_workload_namespace!~"%s|%s"`, namespace, excludedIstioRegex)
 		}
 	}
-	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+	millisQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+		quantile,
+		"istio_request_duration_milliseconds_bucket",
+		reporter,
+		sourceWorkloadQuery,
+		namespace,
+		"2[0-9]{2}|^0$",         // must match success for all expected protocols
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	secondsQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="%s",%s,source_workload!="unknown",destination_service_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		reporter,
@@ -103,17 +123,26 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &outVector)
 
 	// 3) query for responseTime originating from a workload inside of the namespace
-	query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+	millisQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
+		quantile,
+		"istio_request_duration_milliseconds_bucket",
+		namespace,
+		"2[0-9]{2}|^0$",         // must match success for all expected protocols
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	secondsQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%v",response_code=~"%s"}[%vs])) by (%s))`,
 		quantile,
 		"istio_request_duration_seconds_bucket",
 		namespace,
 		"2[0-9]{2}|^0$",         // must match success for all expected protocols
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 	a.populateResponseTimeMap(responseTimeMap, &inVector)
 
@@ -123,7 +152,15 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		istioNamespacesRegex := strings.Join(getIstioNamespaces(a.Namespaces), "|")
 
 		// 3a) supplemental query for istio-to-istio traffic
-		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload_namespace="%s",destination_service_namespace=~"%s",response_code=~"%s"}[%vs])) by (%s))`,
+		millisQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload_namespace="%s",destination_service_namespace=~"%s",response_code=~"%s"}[%vs])) by (%s))`,
+			quantile,
+			"istio_request_duration_milliseconds_bucket",
+			namespace,
+			istioNamespacesRegex,
+			"2[0-9]{2}|^0$",         // must match success for all expected protocols
+			int(duration.Seconds()), // range duration for the query
+			groupBy)
+		secondsQuery = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",source_workload_namespace="%s",destination_service_namespace=~"%s",response_code=~"%s"}[%vs])) by (%s))`,
 			quantile,
 			"istio_request_duration_seconds_bucket",
 			namespace,
@@ -131,7 +168,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 			"2[0-9]{2}|^0$",         // must match success for all expected protocols
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
-
+		query = fmt.Sprintf(`((%s > 0) OR ((%s > 0) * 1000.0))`, millisQuery, secondsQuery)
 		// fetch the internally originating request traffic time-series
 		inIstioVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 		a.populateResponseTimeMap(responseTimeMap, &inIstioVector)
@@ -180,9 +217,7 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
 
-		// to best preserve precision convert from secs to millis now, otherwise the
-		// thousandths place is dropped downstream.
-		val := float64(s.Value) * 1000.0
+		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
 		// It is possible to get a NaN if there is no traffic (or possibly other reasons). Just skip it

@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,10 +14,14 @@ import (
 func TestResponseTime(t *testing.T) {
 	assert := assert.New(t)
 
-	q0 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	// note - Istio is migrating their latency metric from seconds to milliseconds. We need to support both until
+	//        the 'seconds' variant is removed. That is why we have these complex queries with OR logic.
+	q0Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="destination",source_workload="unknown",destination_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q0 := fmt.Sprintf(`round(((%s > 0) OR ((%s > 0) * 1000.0)),0.001)`, fmt.Sprintf(q0Temp, "milliseconds"), fmt.Sprintf(q0Temp, "seconds"))
 	v0 := model.Vector{}
 
-	q1 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	q1Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="source",source_workload_namespace!="bookinfo",source_workload!="unknown",destination_service_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q1 := fmt.Sprintf(`round(((%s > 0) OR ((%s > 0) * 1000.0)),0.001)`, fmt.Sprintf(q1Temp, "milliseconds"), fmt.Sprintf(q1Temp, "seconds"))
 	q1m0 := model.Metric{
 		"source_workload_namespace":      "istio-system",
 		"source_workload":                "ingressgateway-unknown",
@@ -33,7 +38,9 @@ func TestResponseTime(t *testing.T) {
 			Metric: q1m0,
 			Value:  0.010}}
 
-	q2 := `round(histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version)),0.001)`
+	q2Temp := `histogram_quantile(0.95, sum(rate(istio_request_duration_%s_bucket{reporter="source",source_workload_namespace="bookinfo",response_code=~"2[0-9]{2}|^0$"}[60s])) by (le,source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version))`
+	q2 := fmt.Sprintf(`round(((%s > 0) OR ((%s > 0) * 1000.0)),0.001)`, fmt.Sprintf(q2Temp, "milliseconds"), fmt.Sprintf(q2Temp, "seconds"))
+	fmt.Printf("QUERY:\n%s", q2)
 	q2m0 := model.Metric{
 		"source_workload_namespace":      "bookinfo",
 		"source_workload":                "productpage-v1",
@@ -137,7 +144,7 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal("productpage", productpageService.Service)
 	assert.Equal(nil, productpageService.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(productpageService.Edges))
-	assert.Equal(10.0, productpageService.Edges[0].Metadata[graph.ResponseTime])
+	assert.Equal(0.01, productpageService.Edges[0].Metadata[graph.ResponseTime])
 
 	productpage := productpageService.Edges[0].Dest
 	assert.Equal("productpage", productpage.App)
@@ -152,8 +159,8 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal("reviews", reviewsService.Service)
 	assert.Equal(nil, reviewsService.Metadata[graph.ResponseTime])
 	assert.Equal(2, len(reviewsService.Edges))
-	assert.Equal(20.0, reviewsService.Edges[0].Metadata[graph.ResponseTime])
-	assert.Equal(20.0, reviewsService.Edges[1].Metadata[graph.ResponseTime])
+	assert.Equal(0.02, reviewsService.Edges[0].Metadata[graph.ResponseTime])
+	assert.Equal(0.02, reviewsService.Edges[1].Metadata[graph.ResponseTime])
 
 	reviews1 := reviewsService.Edges[0].Dest
 	assert.Equal("reviews", reviews1.App)
@@ -168,7 +175,7 @@ func TestResponseTime(t *testing.T) {
 	assert.Equal("ratings", ratingsService.Service)
 	assert.Equal(nil, ratingsService.Metadata[graph.ResponseTime])
 	assert.Equal(1, len(ratingsService.Edges))
-	assert.Equal(30.0, ratingsService.Edges[0].Metadata[graph.ResponseTime])
+	assert.Equal(0.03, ratingsService.Edges[0].Metadata[graph.ResponseTime])
 
 	reviews2 := reviewsService.Edges[1].Dest
 	assert.Equal("reviews", reviews2.App)
