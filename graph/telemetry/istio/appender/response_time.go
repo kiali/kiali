@@ -225,15 +225,15 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 			continue
 		}
 
-		if a.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
 			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
-			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				// Do not set response time on the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
-				a.addResponseTime(responseTimeMap, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
-			} else {
-				a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
-			}
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			// Do not set response time on the incoming edge, we can't validly aggregate response times of the outgoing edges (kiali-2297)
+			a.addResponseTime(responseTimeMap, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
 			a.addResponseTime(responseTimeMap, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}

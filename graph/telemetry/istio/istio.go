@@ -219,16 +219,15 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
-		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcNameOk = graph.IsOK(destSvcName)
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if o.InjectServiceNodes && graph.IsOK(destSvcName) {
 			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-				addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			} else {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			}
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
 			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
@@ -302,16 +301,15 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
-		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcNameOk = graph.IsOK(destSvcName)
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if o.InjectServiceNodes && graph.IsOK(destSvcName) {
 			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-				addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			} else {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			}
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
 			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
