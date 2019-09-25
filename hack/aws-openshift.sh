@@ -550,6 +550,9 @@ done
 ########################################
 # Environment setup section starts here.
 
+# This avoids some timeout problems during cluster create
+unset SSH_AUTH_SOCK
+
 #--------------------------------------------------------------
 # Variables below have values that can be overridden by
 # command line options (see above) or by environment variables.
