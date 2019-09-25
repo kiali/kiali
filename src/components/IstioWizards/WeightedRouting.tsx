@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { Button, ListView, ListViewIcon, ListViewItem } from 'patternfly-react';
+import { Table, TableHeader, TableBody, cellWidth } from '@patternfly/react-table';
 import Slider from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { PfColors } from '../Pf/PfColors';
+import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { EqualizerIcon } from '@patternfly/react-icons';
 
 type Props = {
   serviceName: string;
@@ -19,9 +21,6 @@ export type WorkloadWeight = {
   maxWeight: number;
 };
 
-const wkIconType = 'pf';
-const wkIconName = 'bundle';
-
 type State = {
   workloads: WorkloadWeight[];
 };
@@ -32,37 +31,9 @@ const validationStyle = style({
   textAlign: 'right'
 });
 
-const resetStyle = style({
-  marginBottom: 20
-});
-
-const listStyle = style({
-  marginTop: 10
-});
-
 const evenlyButtonStyle = style({
   width: '100%',
   textAlign: 'right'
-});
-
-const listHeaderStyle = style({
-  textTransform: 'uppercase',
-  fontSize: '12px',
-  fontWeight: 300,
-  color: '#72767b',
-  borderTop: '0px !important',
-  $nest: {
-    '.list-view-pf-main-info': {
-      padding: 5
-    },
-    '.list-group-item-heading': {
-      fontWeight: 300,
-      textAlign: 'center'
-    },
-    '.list-group-item-text': {
-      textAlign: 'center'
-    }
-  }
 });
 
 class WeightedRouting extends React.Component<Props, State> {
@@ -186,44 +157,61 @@ class WeightedRouting extends React.Component<Props, State> {
 
   render() {
     const isValid = this.checkTotalWeight();
+    const headerCells = [
+      {
+        title: 'Workload',
+        transforms: [cellWidth(30)],
+        props: {}
+      },
+      {
+        title: 'Traffic Weight',
+        transforms: [cellWidth(70)],
+        props: {}
+      }
+    ];
+    const workloadsRows = this.state.workloads.map(workload => {
+      return {
+        cells: [
+          <>
+            <Tooltip key={'tooltip_' + workload.name} position={TooltipPosition.top} content={<>Workload</>}>
+              <Badge className={'virtualitem_badge_definition'}>WS</Badge>
+            </Tooltip>
+            {workload.name}
+          </>,
+          // This <> wrapper is needed by Slider
+          <>
+            <Slider
+              id={'slider-' + workload.name}
+              key={'slider-' + workload.name}
+              tooltip={true}
+              input={true}
+              inputFormat="%"
+              value={workload.weight}
+              min={0}
+              max={workload.maxWeight}
+              maxLimit={100}
+              onSlide={value => {
+                this.onWeight(workload.name, value as number);
+              }}
+              locked={this.state.workloads.length > 1 ? workload.locked : true}
+              showLock={this.state.workloads.length > 2}
+              onLock={locked => this.onLock(workload.name, locked)}
+            />
+          </>
+        ]
+      };
+    });
     return (
       <>
-        <ListView className={listStyle}>
-          <ListViewItem className={listHeaderStyle} heading={'Workload'} description={'Traffic Weight'} />
-          {this.state.workloads.map((workload, id) => {
-            return (
-              <ListViewItem
-                key={'workload-' + id}
-                leftContent={<ListViewIcon type={wkIconType} name={wkIconName} />}
-                heading={workload.name}
-                description={
-                  <Slider
-                    id={'slider-' + workload.name}
-                    key={'slider-' + workload.name}
-                    tooltip={true}
-                    input={true}
-                    inputFormat="%"
-                    value={workload.weight}
-                    min={0}
-                    max={workload.maxWeight}
-                    maxLimit={100}
-                    onSlide={value => {
-                      this.onWeight(workload.name, value as number);
-                    }}
-                    locked={this.state.workloads.length > 1 ? workload.locked : true}
-                    showLock={this.state.workloads.length > 2}
-                    onLock={locked => this.onLock(workload.name, locked)}
-                  />
-                }
-              />
-            );
-          })}
-        </ListView>
+        <Table cells={headerCells} rows={workloadsRows} aria-label="weighted routing">
+          <TableHeader />
+          <TableBody />
+        </Table>
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
-            <Button className={resetStyle} onClick={() => this.resetState()}>
+            <Button variant="link" icon={<EqualizerIcon />} onClick={() => this.resetState()}>
               Evenly distribute traffic
-            </Button>
+            </Button>{' '}
           </div>
         )}
         {!isValid && <div className={validationStyle}>The sum of all weights must be 100 %</div>}

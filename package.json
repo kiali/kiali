@@ -73,6 +73,7 @@
     "@patternfly/react-virtualized-extension": "1.1.97",
     "@webcomponents/custom-elements": "1.2.4",
     "axios": "0.18.1",
+    "bootstrap-slider-without-jquery": "10.0.0",
     "csstips": "0.3.0",
     "csx": "9.0.0",
     "cytoscape": "3.7.1",

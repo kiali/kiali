@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, TableHeader, TableBody } from '@patternfly/react-table';
+import { Table, TableHeader, TableBody, cellWidth } from '@patternfly/react-table';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -102,10 +102,12 @@ class SuspendTraffic extends React.Component<Props, State> {
     const headerCells = [
       {
         title: 'Workload',
+        transforms: [cellWidth(30)],
         props: {}
       },
       {
         title: 'Suspended Status',
+        transforms: [cellWidth(70)],
         props: {}
       }
     ];
@@ -113,7 +115,7 @@ class SuspendTraffic extends React.Component<Props, State> {
       return {
         cells: [
           <>
-            <Tooltip position={TooltipPosition.top} content={<>Workload</>}>
+            <Tooltip key={'tooltip_' + route.workload} position={TooltipPosition.top} content={<>Workload</>}>
               <Badge className={'virtualitem_badge_definition'}>WS</Badge>
             </Tooltip>
             {route.workload}
@@ -121,6 +123,7 @@ class SuspendTraffic extends React.Component<Props, State> {
           // Note that <Button> here needs to be wrapped by an external <>, otherwise Icon is not properly rendered.
           <>
             <Button
+              key={'button_' + route.workload}
               variant="link"
               icon={route.suspended ? <UnpluggedIcon /> : <PluggedIcon />}
               onClick={() => this.updateRoute(route.workload, !route.suspended)}
@@ -133,7 +136,7 @@ class SuspendTraffic extends React.Component<Props, State> {
     });
     return (
       <>
-        <Table cells={headerCells} rows={workloadsRows}>
+        <Table cells={headerCells} rows={workloadsRows} aria-label="suspend traffic">
           <TableHeader />
           <TableBody />
         </Table>

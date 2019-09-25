@@ -1,12 +1,9 @@
-// Clone of Slider component to workaround issue https://github.com/patternfly/patternfly-react/issues/1221
-
 import React from 'react';
 import BootstrapSlider from './BootstrapSlider';
-import { Button, Icon, ControlLabel, FormControl } from 'patternfly-react';
+import { Button, ButtonVariant, InputGroupText, TextInput } from '@patternfly/react-core';
 import Boundaries from './Boundaries';
-import DropdownMenu from './DropdownMenu';
 import { style } from 'typestyle';
-import { hollowPinIcon, solidPinIcon } from '../../../config/Icons';
+import { MinusIcon, PlusIcon, ThumbTackIcon } from '@patternfly/react-icons';
 
 export const noop = Function.prototype;
 
@@ -17,15 +14,11 @@ type Props = {
   max: number;
   maxLimit: number;
   step: number;
-  value: number[] | number;
+  value: number;
   tooltip: boolean;
-  onSlide: (value: number[] | number) => void;
-  label: string;
-  labelClass: string;
-  icon: Icon;
+  onSlide: (value: number) => void;
   input: boolean;
   sliderClass: string;
-  dropdownList: string[];
   inputFormat: string;
   locked: boolean;
   showLock: boolean;
@@ -33,17 +26,9 @@ type Props = {
 };
 
 type State = {
-  value: number[] | number;
+  value: number;
   tooltipFormat: string;
 };
-
-const lockStyle = style({
-  display: 'block',
-  maxHeight: 18,
-  padding: 2,
-  width: '18px',
-  height: '18px'
-});
 
 class Slider extends React.Component<Props, State> {
   static defaultProps = {
@@ -60,8 +45,6 @@ class Slider extends React.Component<Props, State> {
     labelClass: null,
     input: false,
     sliderClass: null,
-    icon: null,
-    dropdownList: null,
     inputFormat: '',
     locked: false,
     showLock: true,
@@ -73,7 +56,7 @@ class Slider extends React.Component<Props, State> {
 
     this.state = {
       value: this.props.value,
-      tooltipFormat: (this.props.dropdownList && this.props.dropdownList[0]) || this.props.inputFormat
+      tooltipFormat: this.props.inputFormat
     };
   }
 
@@ -97,9 +80,9 @@ class Slider extends React.Component<Props, State> {
     this.updateNewValue(newValue - 1);
   };
 
-  onInputChange = event => {
-    const newValue = Number(event.target.value || 0);
-    this.updateNewValue(newValue);
+  onInputChange = value => {
+    const newValue: number = Number(value);
+    this.updateNewValue(Number.isNaN(newValue) ? 0 : newValue);
   };
 
   updateNewValue = (newValue: number) => {
@@ -119,75 +102,6 @@ class Slider extends React.Component<Props, State> {
   formatter = value => `${value} ${this.state.tooltipFormat}`;
 
   render() {
-    let label: any = null;
-    let sliderClass = 'col-xs-12 col-sm-12 col-md-12';
-    const labelClass = 'col-xs-2 col-sm-2 col-md-2';
-    if (this.props.label || this.props.icon) {
-      sliderClass = 'col-xs-10 col-sm-10 col-md-10';
-      label = this.props.icon ? (
-        <Icon className={labelClass} {...this.props.icon} />
-      ) : (
-        <ControlLabel htmlFor={this.props.id} bsClass={labelClass}>
-          {this.props.label}
-        </ControlLabel>
-      );
-    }
-
-    let formatElement;
-
-    if (this.props.inputFormat) {
-      formatElement = <span>{this.props.inputFormat}</span>;
-    }
-
-    if (this.props.dropdownList) {
-      formatElement = (
-        <DropdownMenu {...this.props} onFormatChange={this.onFormatChange} title={this.state.tooltipFormat} />
-      );
-    }
-
-    const leftButtonStyle = { marginLeft: 5, marginRight: 0 };
-    const leftButton = this.props.input && (
-      <Button bsSize="xsmall" style={leftButtonStyle} onClick={() => this.onMinus()} disabled={this.props.locked}>
-        <Icon type="fa" name="minus" />
-      </Button>
-    );
-
-    const inputStyle = {
-      width: '3.5em',
-      textAlign: 'center',
-      marginLeft: 0,
-      marginRight: 0
-    };
-    const inputElement = this.props.input && (
-      <FormControl
-        bsClass="slider-input-pf"
-        type="text"
-        value={this.state.value}
-        // Trick to fix InputText when slider is locked and refreshed/resized
-        style={inputStyle}
-        onChange={this.onInputChange}
-        disabled={this.props.locked}
-      />
-    );
-
-    const rightButtonStyle = { marginLeft: 0, marginRight: 5 };
-    const rightButton = this.props.input && (
-      <Button bsSize="xsmall" style={rightButtonStyle} onClick={() => this.onPlus()} disabled={this.props.locked}>
-        <Icon type="fa" name="plus" />
-      </Button>
-    );
-
-    const pinButtonStyle = { height: '23px' };
-    const lockElement = (
-      <Button bsSize="xsmall" style={pinButtonStyle} onClick={() => this.props.onLock(!this.props.locked)}>
-        {this.props.locked ? (
-          <img src={solidPinIcon} className={lockStyle} alt="solid-pin" />
-        ) : (
-          <img src={hollowPinIcon} className={lockStyle} alt="hollow-pin" />
-        )}
-      </Button>
-    );
-
     const BSSlider = (
       <BootstrapSlider
         {...this.props}
@@ -197,19 +111,71 @@ class Slider extends React.Component<Props, State> {
         onSlide={this.onSlide}
       />
     );
+
+    const leftButtonStyle = style({
+      width: '20px',
+      paddingLeft: 0,
+      paddingRight: 0,
+      marginLeft: 0,
+      marginRight: 5
+    });
+    const inputStyle = style({
+      width: '2.75em',
+      textAlign: 'center',
+      marginLeft: 0,
+      marginRight: 0
+    });
+    const rightButtonStyle = style({
+      width: '20px',
+      paddingLeft: 0,
+      paddingRight: 0,
+      marginLeft: 5,
+      marginRight: 5
+    });
+    const pinButtonStyle = style({
+      paddingLeft: 8,
+      paddingRight: 8
+    });
+
     return (
-      <div>
-        {label}
-        <div className={sliderClass}>
-          <Boundaries slider={BSSlider} {...this.props}>
-            {leftButton}
-            {inputElement}
-            {rightButton}
-            {formatElement}
-            {this.props.showLock && lockElement}
-          </Boundaries>
-        </div>
-      </div>
+      <>
+        <Boundaries slider={BSSlider} {...this.props}>
+          <Button
+            className={leftButtonStyle}
+            variant="link"
+            isDisabled={this.props.locked}
+            onClick={() => this.onMinus()}
+          >
+            <MinusIcon />
+          </Button>
+          <TextInput
+            className={inputStyle}
+            id="slider-text"
+            aria-label="slider-text"
+            value={this.state.value}
+            onChange={this.onInputChange}
+            isDisabled={this.props.locked}
+          />
+          <Button
+            className={rightButtonStyle}
+            variant="link"
+            isDisabled={this.props.locked}
+            onClick={() => this.onPlus()}
+          >
+            <PlusIcon />
+          </Button>
+          <InputGroupText>{this.props.inputFormat}</InputGroupText>
+          {this.props.showLock && (
+            <Button
+              className={pinButtonStyle}
+              variant={this.props.locked ? ButtonVariant.primary : ButtonVariant.secondary}
+              onClick={() => this.props.onLock(!this.props.locked)}
+            >
+              <ThumbTackIcon />
+            </Button>
+          )}
+        </Boundaries>
+      </>
     );
   }
 }

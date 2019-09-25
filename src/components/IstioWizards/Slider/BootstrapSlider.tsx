@@ -9,7 +9,7 @@ const orientation = {
 };
 
 type Props = {
-  value: number[] | number;
+  value: number;
   formatter: (value: any) => any;
   onSlide: (event: any) => any;
   orientation: string;
@@ -59,19 +59,15 @@ class BootstrapSlider extends React.Component<Props> {
   // Instead of rendering the slider element again and again,
   // we took advantage of the bootstrap-slider library
   // and only update the new value or format when new props arrive.
-  componentDidUpdate(nextProps: Props) {
-    if (nextProps.locked) {
-      this.slider.disable();
-    } else {
-      this.slider.enable();
-    }
+  componentDidUpdate(prevProps: Props) {
     if (
-      this.props.min !== nextProps.min ||
-      this.props.max !== nextProps.max ||
-      this.props.maxLimit !== nextProps.maxLimit
+      this.props.min !== prevProps.min ||
+      this.props.max !== prevProps.max ||
+      this.props.maxLimit !== prevProps.maxLimit ||
+      this.props.locked !== prevProps.locked
     ) {
-      this.slider.setAttribute('min', nextProps.min);
-      this.slider.setAttribute('max', nextProps.maxLimit);
+      this.slider.setAttribute('min', this.props.min);
+      this.slider.setAttribute('max', this.props.maxLimit);
       this.slider.refresh();
       const onSlide = value => {
         value = value >= this.props.max ? this.props.max : value;
@@ -80,11 +76,19 @@ class BootstrapSlider extends React.Component<Props> {
       };
       this.slider.on('slide', onSlide);
       this.slider.on('slideStop', onSlide);
+      this.slider.setAttribute('formatter', this.props.formatter);
+      if (this.props && this.props.orientation && orientation) {
+        console.log('TODELETE orientation check');
+      }
+      if (this.props.locked) {
+        this.slider.disable();
+      } else {
+        this.slider.enable();
+      }
     }
-    this.slider.setValue(nextProps.value);
-    this.slider.setAttribute('formatter', nextProps.formatter);
+
+    this.slider.setValue(this.props.value);
     // Adjust the tooltip to "sit" ontop of the slider's handle. #LibraryBug
-    // check
     if (this.props && this.props.orientation === orientation.horizontal) {
       this.slider.tooltip.style.marginLeft = `-${this.slider.tooltip.offsetWidth / 2}px`;
       if (this.props.ticks_labels && this.slider.tickLabelContainer) {
