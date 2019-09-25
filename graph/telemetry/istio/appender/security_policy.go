@@ -112,14 +112,14 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvc, destSvcOk := m["destination_service_name"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
 		lCsp, cspOk := m["connection_security_policy"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
@@ -129,7 +129,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
-		destSvc := string(lDestSvc)
+		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
@@ -138,17 +138,17 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 
 		val := float64(s.Value)
 
-		if a.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			_, destNodeType := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
-			if destSvcOk && destNodeType != graph.NodeTypeService {
-				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, "", "", "", "")
-				a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, destSvc, "", "", "", destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
-			} else {
-				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
-			}
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "")
+			a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
+			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
