@@ -21,6 +21,7 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
+import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 
 interface IstioConfigListComponentState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends FilterComponent.Props<IstioConfigItem> {
@@ -125,6 +126,10 @@ class IstioConfigListComponent extends FilterComponent.Component<
     const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters);
 
     configsPromises
+      .then(items => {
+        items.forEach(item => item.validation && showInMessageCenter(item.validation));
+        return items;
+      })
       .then(items =>
         IstioConfigListFilters.sortIstioItems(items, this.state.currentSortField, this.state.isSortAscending)
       )

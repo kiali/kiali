@@ -22,6 +22,7 @@ import { style } from 'typestyle';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import { Tab, Text, TextVariants } from '@patternfly/react-core';
 import { dicIstioType } from '../../types/IstioConfigList';
+import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 
 const rightToolbarStyle = style({ float: 'right', marginTop: '8px' });
 
@@ -102,7 +103,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.fetchIstioObjectDetails();
   }
 
-  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>) {
+  componentDidUpdate(prevProps: RouteComponentProps<IstioConfigId>, prevState: IstioConfigDetailsState) {
     // This will ask confirmation if we want to leave page on pending changes without save
     if (this.state.isModified) {
       window.onbeforeunload = () => true;
@@ -126,6 +127,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
     if (!this.propsMatch(prevProps)) {
       this.fetchIstioObjectDetailsFromProps(this.props.match.params);
+    }
+
+    if (this.state.istioValidations && this.state.istioValidations !== prevState.istioValidations) {
+      showInMessageCenter(this.state.istioValidations);
     }
   }
 
@@ -237,7 +242,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     this.setState({
       isModified: true,
       yamlModified: value,
-      istioValidations: {} as ObjectValidation,
+      istioValidations: undefined,
       yamlValidations: parseYamlValidations(value)
     });
   };

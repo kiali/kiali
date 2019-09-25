@@ -12,7 +12,11 @@ export const addDetail = (content: string, detail: string, group?: string, type?
   store.dispatch(MessageCenterActions.addMessage(content, detail, group, type));
 };
 
-export const addError = (message: string, error: AxiosError, group?: string, type?: MessageType) => {
+export const addError = (message: string, error?: AxiosError, group?: string, type?: MessageType) => {
+  if (!error) {
+    store.dispatch(MessageCenterActions.addMessage(message, '', group, MessageType.ERROR));
+    return;
+  }
   const errorString: string = API.getErrorString(error);
   const errorDetail: string = API.getErrorDetail(error);
   let finalMessage: string = message;
