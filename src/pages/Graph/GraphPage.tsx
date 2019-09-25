@@ -337,6 +337,13 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
               onError={this.notifyError}
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
+              {this.props.showLegend && (
+                <GraphLegend
+                  className={graphToolbarStyle}
+                  isMTLSEnabled={this.props.mtlsEnabled}
+                  closeLegend={this.props.toggleLegend}
+                />
+              )}
               <CytoscapeGraphContainer
                 refresh={this.handleRefreshClick}
                 containerClassName={cytoscapeGraphContainerStyle}
@@ -362,13 +369,6 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                 duration={this.props.graphDuration}
                 isPageVisible={this.props.isPageVisible}
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
-              />
-            )}
-            {this.props.showLegend && (
-              <GraphLegend
-                className={graphToolbarStyle}
-                isMTLSEnabled={this.props.mtlsEnabled}
-                closeLegend={this.props.toggleLegend}
               />
             )}
           </FlexView>

@@ -1,474 +1,477 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphLegend test should render correctly 1`] = `
-<Draggable
-  allowAnyClick={false}
-  axis="both"
-  bounds="#root"
-  cancel={null}
-  defaultClassName="react-draggable"
-  defaultClassNameDragged="react-draggable-dragged"
-  defaultClassNameDragging="react-draggable-dragging"
-  defaultPosition={
-    Object {
-      "x": 0,
-      "y": 0,
-    }
-  }
-  disabled={false}
-  enableUserSelectHack={true}
-  grid={null}
-  handle={null}
-  offsetParent={null}
-  onDrag={[Function]}
-  onMouseDown={[Function]}
-  onStart={[Function]}
-  onStop={[Function]}
-  position={null}
-  scale={1}
-  transform={null}
+<div
+  className="fwzhvy7"
 >
   <div
-    className="modal-content  fw1e7pk"
+    className="fiy3v8i"
+  >
+    <span
+      className="f13vslg"
+    >
+      Legend
+    </span>
+    <span
+      className="pull-right"
+    >
+      <Tooltip
+        appendTo={[Function]}
+        aria="describedby"
+        boundary="window"
+        className=""
+        content="Close Legend"
+        distance={15}
+        enableFlip={true}
+        entryDelay={500}
+        exitDelay={500}
+        flipBehavior={
+          Array [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "top",
+            "right",
+            "bottom",
+          ]
+        }
+        isAppLauncher={false}
+        maxWidth="18.75rem"
+        position="top"
+        trigger="mouseenter focus"
+        zIndex={9999}
+      >
+        <Button
+          id="legend_close"
+          onClick={[MockFunction]}
+          variant="plain"
+        >
+          <CloseIcon
+            color="currentColor"
+            noVerticalAlign={false}
+            size="sm"
+            title={null}
+          />
+        </Button>
+      </Tooltip>
+    </span>
+  </div>
+  <div
+    className="fxms5gz"
   >
     <div
-      className="modal-header fiy3v8i"
-    >
-      <Button
-        active={false}
-        block={false}
-        bsClass=""
-        bsStyle="default"
-        className="close"
-        disabled={false}
-        onClick={[MockFunction]}
-      >
-        <Icon
-          name="close"
-          title="Close"
-          type="pf"
-        />
-      </Button>
-      <span
-        className="modal-title"
-      >
-        Graph Legend
-      </span>
-    </div>
-    <div
-      className="modal-body fcv2ebm"
+      className="fkhz08q"
     >
       <div
-        className="fkhz08q"
+        className="fc9v04o"
       >
-        <div>
+        <div
+          className="fot2cu0"
+          key="Node Shapes"
+        >
+          Node Shapes
           <div
-            className="f16bk411"
-            key="Node Shapes"
+            className="f1n8a700"
+            key="node.svg"
           >
-            Node Shapes
-            <div
-              className="fdu14ne"
-              key="node.svg"
+            <span>
+              <img
+                alt="Workload"
+                src="node.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Workload"
-                  src="node.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Workload
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="app.svg"
-            >
-              <span>
-                <img
-                  alt="App"
-                  src="app.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                App
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="unknown.svg"
-            >
-              <span>
-                <img
-                  alt="Unknown Source"
-                  src="unknown.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Unknown Source
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="service.svg"
-            >
-              <span>
-                <img
-                  alt="Service"
-                  src="service.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Service
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="service-entry.svg"
-            >
-              <span>
-                <img
-                  alt="Service Entry"
-                  src="service-entry.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Service Entry
-              </span>
-            </div>
+              Workload
+            </span>
           </div>
           <div
-            className="f16bk411"
-            key="Node Colors"
+            className="f1n8a700"
+            key="app.svg"
           >
-            Node Colors
-            <div
-              className="fdu14ne"
-              key="node-color-normal.svg"
+            <span>
+              <img
+                alt="App"
+                src="app.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Normal"
-                  src="node-color-normal.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Normal
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="node-color-warning.svg"
-            >
-              <span>
-                <img
-                  alt="Warning"
-                  src="node-color-warning.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Warning
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="node-color-error.svg"
-            >
-              <span>
-                <img
-                  alt="Error"
-                  src="node-color-error.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Error
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="node-color-unused.svg"
-            >
-              <span>
-                <img
-                  alt="Unused"
-                  src="node-color-unused.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Unused
-              </span>
-            </div>
+              App
+            </span>
           </div>
           <div
-            className="f16bk411"
-            key="Node Background"
+            className="f1n8a700"
+            key="unknown.svg"
           >
-            Node Background
-            <div
-              className="fdu14ne"
-              key="external-namespace.svg"
+            <span>
+              <img
+                alt="Unknown Source"
+                src="unknown.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="External Namespace"
-                  src="external-namespace.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                External Namespace
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="restricted-namespace.svg"
-            >
-              <span>
-                <img
-                  alt="Restricted Namespace"
-                  src="restricted-namespace.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Restricted Namespace
-              </span>
-            </div>
+              Unknown Source
+            </span>
           </div>
           <div
-            className="f16bk411"
-            key="Edges"
+            className="f1n8a700"
+            key="service.svg"
           >
-            Edges
-            <div
-              className="fdu14ne"
-              key="edge-error.svg"
+            <span>
+              <img
+                alt="Service"
+                src="service.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="20% Error"
-                  src="edge-error.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                20% Error
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="edge-warn.svg"
-            >
-              <span>
-                <img
-                  alt="0.1 - 20% Error"
-                  src="edge-warn.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                0.1 - 20% Error
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="edge-normal.svg"
-            >
-              <span>
-                <img
-                  alt="0.1 Error"
-                  src="edge-normal.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                0.1 Error
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="edge-tcp.svg"
-            >
-              <span>
-                <img
-                  alt="TCP Connection"
-                  src="edge-tcp.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                TCP Connection
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="edge-idle.svg"
-            >
-              <span>
-                <img
-                  alt="Idle"
-                  src="edge-idle.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Idle
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="mtls-badge.svg"
-            >
-              <span>
-                <img
-                  alt="mTLS (badge)"
-                  src="mtls-badge.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                mTLS (badge)
-              </span>
-            </div>
+              Service
+            </span>
           </div>
           <div
-            className="f16bk411"
-            key="Traffic Animation"
+            className="f1n8a700"
+            key="service-entry.svg"
           >
-            Traffic Animation
-            <div
-              className="fdu14ne"
-              key="traffic-normal-request.svg"
+            <span>
+              <img
+                alt="Service Entry"
+                src="service-entry.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Normal Request"
-                  src="traffic-normal-request.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Normal Request
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="traffic-failed-request.svg"
+              Service Entry
+            </span>
+          </div>
+        </div>
+        <div
+          className="fot2cu0"
+          key="Node Colors"
+        >
+          Node Colors
+          <div
+            className="f1n8a700"
+            key="node-color-normal.svg"
+          >
+            <span>
+              <img
+                alt="Normal"
+                src="node-color-normal.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Failed Request"
-                  src="traffic-failed-request.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Failed Request
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="traffic-tcp.svg"
-            >
-              <span>
-                <img
-                  alt="TCP Traffic"
-                  src="traffic-tcp.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                TCP Traffic
-              </span>
-            </div>
+              Normal
+            </span>
           </div>
           <div
-            className="f16bk411"
-            key="Node Badges"
+            className="f1n8a700"
+            key="node-color-warning.svg"
           >
-            Node Badges
-            <div
-              className="fdu14ne"
-              key="node-badge-circuit-breaker.svg"
+            <span>
+              <img
+                alt="Warning"
+                src="node-color-warning.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Circuit Breaker"
-                  src="node-badge-circuit-breaker.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Circuit Breaker
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="node-badge-missing-sidecar.svg"
+              Warning
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-color-error.svg"
+          >
+            <span>
+              <img
+                alt="Error"
+                src="node-color-error.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Missing Sidecar"
-                  src="node-badge-missing-sidecar.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Missing Sidecar
-              </span>
-            </div>
-            <div
-              className="fdu14ne"
-              key="node-badge-virtual-services.svg"
+              Error
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-color-unused.svg"
+          >
+            <span>
+              <img
+                alt="Unused"
+                src="node-color-unused.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
             >
-              <span>
-                <img
-                  alt="Virtual Services"
-                  src="node-badge-virtual-services.svg"
-                />
-              </span>
-              <span
-                className="f10gr8bt"
-              >
-                Virtual Services
-              </span>
-            </div>
+              Unused
+            </span>
+          </div>
+        </div>
+        <div
+          className="fot2cu0"
+          key="Node Background"
+        >
+          Node Background
+          <div
+            className="f1n8a700"
+            key="external-namespace.svg"
+          >
+            <span>
+              <img
+                alt="External Namespace"
+                src="external-namespace.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              External Namespace
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="restricted-namespace.svg"
+          >
+            <span>
+              <img
+                alt="Restricted Namespace"
+                src="restricted-namespace.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Restricted Namespace
+            </span>
+          </div>
+        </div>
+        <div
+          className="fot2cu0"
+          key="Edges"
+        >
+          Edges
+          <div
+            className="f1n8a700"
+            key="edge-error.svg"
+          >
+            <span>
+              <img
+                alt="20% Error"
+                src="edge-error.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              20% Error
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="edge-warn.svg"
+          >
+            <span>
+              <img
+                alt="0.1 - 20% Error"
+                src="edge-warn.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              0.1 - 20% Error
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="edge-normal.svg"
+          >
+            <span>
+              <img
+                alt="0.1 Error"
+                src="edge-normal.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              0.1 Error
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="edge-tcp.svg"
+          >
+            <span>
+              <img
+                alt="TCP Connection"
+                src="edge-tcp.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              TCP Connection
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="edge-idle.svg"
+          >
+            <span>
+              <img
+                alt="Idle"
+                src="edge-idle.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Idle
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="mtls-badge.svg"
+          >
+            <span>
+              <img
+                alt="mTLS (badge)"
+                src="mtls-badge.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              mTLS (badge)
+            </span>
+          </div>
+        </div>
+        <div
+          className="fot2cu0"
+          key="Traffic Animation"
+        >
+          Traffic Animation
+          <div
+            className="f1n8a700"
+            key="traffic-normal-request.svg"
+          >
+            <span>
+              <img
+                alt="Normal Request"
+                src="traffic-normal-request.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Normal Request
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="traffic-failed-request.svg"
+          >
+            <span>
+              <img
+                alt="Failed Request"
+                src="traffic-failed-request.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Failed Request
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="traffic-tcp.svg"
+          >
+            <span>
+              <img
+                alt="TCP Traffic"
+                src="traffic-tcp.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              TCP Traffic
+            </span>
+          </div>
+        </div>
+        <div
+          className="fot2cu0"
+          key="Node Badges"
+        >
+          Node Badges
+          <div
+            className="f1n8a700"
+            key="node-badge-circuit-breaker.svg"
+          >
+            <span>
+              <img
+                alt="Circuit Breaker"
+                src="node-badge-circuit-breaker.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Circuit Breaker
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-badge-missing-sidecar.svg"
+          >
+            <span>
+              <img
+                alt="Missing Sidecar"
+                src="node-badge-missing-sidecar.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Missing Sidecar
+            </span>
+          </div>
+          <div
+            className="f1n8a700"
+            key="node-badge-virtual-services.svg"
+          >
+            <span>
+              <img
+                alt="Virtual Services"
+                src="node-badge-virtual-services.svg"
+              />
+            </span>
+            <span
+              className="f1643rh"
+            >
+              Virtual Services
+            </span>
           </div>
         </div>
       </div>
     </div>
   </div>
-</Draggable>
+</div>
 `;
