@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { Chart, ChartArea, ChartThemeColor, ChartAxis } from '@patternfly/react-charts';
+import {
+  Chart,
+  ChartArea,
+  ChartThemeColor,
+  ChartAxis,
+  ChartTooltip,
+  ChartVoronoiContainer
+} from '@patternfly/react-charts';
 
 import { DurationInSeconds } from '../../types/Common';
 import { TimeSeries } from '../../types/Metrics';
@@ -13,6 +20,22 @@ type Props = {
 
 type State = {
   width: number;
+};
+
+const createContainer = () => {
+  const props = {
+    constrainToVisibleArea: true
+  };
+  const tooltip = <ChartTooltip style={{ stroke: 'none', fill: 'white' }} renderInPortal={true} {...props} />;
+  return (
+    <ChartVoronoiContainer
+      labels={obj => `${obj.datum.x.toLocaleTimeString()}\n${obj.datum.y} RPS`}
+      labelComponent={tooltip}
+      // We blacklist "parent" as a workaround to avoid the VictoryVoronoiContainer crashing.
+      // See https://github.com/FormidableLabs/victory/issues/1355
+      voronoiBlacklist={['parent']}
+    />
+  );
 };
 
 class OverviewCardSparkline extends React.Component<Props, State> {
@@ -54,6 +77,7 @@ class OverviewCardSparkline extends React.Component<Props, State> {
               padding={0}
               themeColor={ChartThemeColor.multi}
               scale={{ x: 'time' }}
+              containerComponent={createContainer()}
             >
               {data.series.map((serie, idx) => (
                 <ChartArea key={'serie-' + idx} data={serie} />

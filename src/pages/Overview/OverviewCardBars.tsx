@@ -38,6 +38,11 @@ class OverviewCardBars extends React.Component<Props, State> {
   }
 
   render() {
+    const hiddenAxisStyle = {
+      axis: { stroke: 'none' },
+      ticks: { stroke: 'none' },
+      tickLabels: { stroke: 'none', fill: 'none' }
+    };
     return (
       <div ref={this.containerRef}>
         <Chart height={50} width={this.state.width} padding={{ top: 20, left: 5, right: 5, bottom: 0 }}>
@@ -46,8 +51,8 @@ class OverviewCardBars extends React.Component<Props, State> {
             <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inWarning.length }]} />
             <ChartBar horizontal={true} barWidth={16} data={[{ y: this.props.status.inSuccess.length }]} />
           </ChartStack>
-          <ChartAxis style={{ axis: { strokeWidth: 0 } }} />
-          <ChartAxis style={{ axis: { strokeWidth: 0 } }} dependentAxis={true} />
+          <ChartAxis style={hiddenAxisStyle} />
+          <ChartAxis style={hiddenAxisStyle} dependentAxis={true} />
         </Chart>
       </div>
     );
