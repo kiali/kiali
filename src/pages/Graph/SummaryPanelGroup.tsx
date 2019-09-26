@@ -1,6 +1,6 @@
 import * as React from 'react';
+import { Badge } from '@patternfly/react-core';
 import { Icon } from 'patternfly-react';
-
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -15,7 +15,6 @@ import {
   renderNoTraffic
 } from './SummaryPanelCommon';
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
-import Label from '../../components/Label/Label';
 import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
 import { Metrics } from '../../types/Metrics';
@@ -123,7 +122,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           )}
           <span> {renderTitle(nodeData)}</span>
           <div className="label-collection" style={{ paddingTop: '3px' }}>
-            <Label name="namespace" value={namespace} key={namespace} />
+            <Badge>namespace: {namespace}</Badge>
             {this.renderVersionBadges()}
           </div>
           {this.renderBadgeSummary(group)}
@@ -225,11 +224,9 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       .children(`node[${CyNode.version}]`)
       .toArray()
       .map((c, _i) => (
-        <Label
-          key={c.data(CyNode.version)}
-          name={serverConfig.istioLabels.versionLabelName}
-          value={c.data(CyNode.version)}
-        />
+        <Badge>
+          {serverConfig.istioLabels.versionLabelName}: value={c.data(CyNode.version)}
+        </Badge>
       ));
   };
 
