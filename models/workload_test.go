@@ -113,6 +113,18 @@ func TestParsePodsToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.AvailableReplicas)
 }
 
+func TestParsePodWithoutLabelsToWorkload(t *testing.T) {
+	assert := assert.New(t)
+	config.Set(config.NewConfig())
+
+	fakePod := fakePod()
+	fakePod.Labels = nil
+	w := Workload{}
+	w.ParsePod(fakePod)
+
+	assert.Equal(map[string]string{}, w.Labels)
+}
+
 func fakeDeployment() *apps_v1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	replicas := int32(1)
