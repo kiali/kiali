@@ -1,5 +1,5 @@
 import React from 'react';
-import { ErrorCircleOIcon, OkIcon, WarningTriangleIcon } from '@patternfly/react-icons';
+import { ErrorCircleOIcon, CheckCircleIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { PfColors } from '../Pf/PfColors';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
@@ -38,8 +38,8 @@ const WarningValidation: ValidationType = {
 
 const CorrectValidation: ValidationType = {
   name: 'Valid',
-  color: PfColors.Green400,
-  icon: OkIcon
+  color: PfColors.LightGreen400,
+  icon: CheckCircleIcon
 };
 
 export const severityToValidation: { [severity: string]: ValidationType } = {
