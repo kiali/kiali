@@ -23,6 +23,7 @@ const (
 type Host struct {
 	Port            int
 	Hostname        string
+	Namespace       string
 	ServerIndex     int
 	HostIndex       int
 	GatewayRuleName string
@@ -36,6 +37,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, nsG := range m.GatewaysPerNamespace {
 		for _, g := range nsG {
 			gatewayRuleName := g.GetObjectMeta().Name
+			gatewayNamespace := g.GetObjectMeta().Namespace
 			if specServers, found := g.GetSpec()["servers"]; found {
 				if servers, ok := specServers.([]interface{}); ok {
 					for i, def := range servers {
@@ -45,15 +47,16 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 								host.ServerIndex = i
 								host.HostIndex = hi
 								host.GatewayRuleName = gatewayRuleName
+								host.Namespace = gatewayNamespace
 								duplicate, dhosts := m.findMatch(host)
 								if duplicate {
 									// The above is referenced by each one below..
-									currentHostValidation := addError(host.GatewayRuleName, host.ServerIndex, host.HostIndex)
+									currentHostValidation := createError(host.GatewayRuleName, host.Namespace, host.ServerIndex, host.HostIndex)
 
 									// CurrentHostValidation is always the first one, so we skip it
 									for i := 1; i < len(dhosts); i++ {
 										dh := dhosts[i]
-										refValidation := addError(dh.GatewayRuleName, dh.ServerIndex, dh.HostIndex)
+										refValidation := createError(dh.GatewayRuleName, dh.Namespace, dh.ServerIndex, dh.HostIndex)
 										refValidation = refValidation.MergeReferences(currentHostValidation)
 										currentHostValidation = currentHostValidation.MergeReferences(refValidation)
 										validations = validations.MergeValidations(refValidation)
@@ -72,9 +75,8 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-// TODO Rename to createError
-func addError(gatewayRuleName string, serverIndex, hostIndex int) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, ObjectType: GatewayCheckerType}
+func createError(gatewayRuleName, namespace string, serverIndex, hostIndex int) models.IstioValidations {
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: GatewayCheckerType}
 	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{

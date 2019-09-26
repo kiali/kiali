@@ -26,7 +26,7 @@ func (m PolicyChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (m PolicyChecker) runChecks(policy kubernetes.IstioObject) models.IstioValidations {
 	policyName := policy.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(policyName, PolicyCheckerType)
+	key, rrValidation := EmptyValidValidation(policyName, policy.GetObjectMeta().Namespace, PolicyCheckerType)
 
 	enabledCheckers := []Checker{
 		policies.NamespaceMtlsChecker{Policy: policy, MTLSDetails: m.MTLSDetails},

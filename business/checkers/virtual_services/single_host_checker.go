@@ -68,7 +68,7 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 
 func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validations models.IstioValidations, references []*kubernetes.IstioObject) {
 	virtualServiceName := virtualService.GetObjectMeta().Name
-	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: "virtualservice"}
+	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.GetObjectMeta().Namespace, ObjectType: "virtualservice"}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
@@ -82,7 +82,7 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 
 	for _, ref := range references {
 		ref := *ref
-		refKey := models.IstioValidationKey{Name: ref.GetObjectMeta().Name, ObjectType: "virtualservice"}
+		refKey := models.IstioValidationKey{Name: ref.GetObjectMeta().Name, Namespace: ref.GetObjectMeta().Namespace, ObjectType: "virtualservice"}
 		if refKey != key {
 			rrValidation.References = append(rrValidation.References, refKey)
 		}

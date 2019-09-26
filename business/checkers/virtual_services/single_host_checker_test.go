@@ -346,11 +346,11 @@ func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
 	assert := assert.New(t)
 	assert.Empty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "virtual-1"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-1"}]
 	assert.False(ok)
 	assert.Nil(validation)
 
-	validation, ok = validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "virtual-2"}]
+	validation, ok = validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -358,7 +358,7 @@ func emptyValidationTest(t *testing.T, validations models.IstioValidations) {
 func noObjectValidationTest(t *testing.T, validations models.IstioValidations, name string) {
 	assert := assert.New(t)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: name}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: name}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -367,7 +367,7 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 	assert := assert.New(t)
 	assert.NotEmpty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: serviceName}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}]
 	assert.True(ok)
 
 	assert.True(validation.Valid)
@@ -379,7 +379,7 @@ func presentValidationTest(t *testing.T, validations models.IstioValidations, se
 
 func presentReference(t *testing.T, validation models.IstioValidation, serviceName string) {
 	assert := assert.New(t)
-	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Name: serviceName}
+	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}
 
 	assert.True(len(validation.References) > 0)
 	assert.Contains(validation.References, refKey)

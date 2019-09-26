@@ -50,10 +50,10 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}])
-	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}])
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}].Valid)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
+	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}])
+	assert.NotEmpty(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}])
+	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestDetectObjectWithoutService(t *testing.T) {
@@ -78,8 +78,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}].Valid)
-	customerDr := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}]
+	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+	customerDr := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}]
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
@@ -101,8 +101,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
-	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}]
+	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http[0]/route[0]/destination/host", productVs.Checks[0].Path)
@@ -126,7 +126,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
+	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 
 	validations = NoServiceChecker{
 		Namespace: "test",
@@ -144,7 +144,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "customer-dr"}].Valid)
+	assert.True(validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestObjectWithoutGateway(t *testing.T) {
@@ -166,7 +166,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	assert.NotEmpty(validations)
 
-	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Name: "product-vs"}]
+	productVs := validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal("VirtualService is pointing to a non-existent gateway", productVs.Checks[0].Message)
 }

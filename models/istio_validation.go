@@ -11,6 +11,7 @@ type NamespaceValidations map[string]IstioValidations
 type IstioValidationKey struct {
 	ObjectType string `json:"objectType"`
 	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
@@ -216,8 +217,8 @@ func Build(checkId string, path string) IstioCheck {
 	return check
 }
 
-func BuildKey(objectType, name string) IstioValidationKey {
-	return IstioValidationKey{ObjectType: objectType, Name: name}
+func BuildKey(objectType, name, namespace string) IstioValidationKey {
+	return IstioValidationKey{ObjectType: objectType, Namespace: namespace, Name: name}
 }
 
 func CheckMessage(checkId string) string {

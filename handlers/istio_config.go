@@ -218,7 +218,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	if includeValidations && err == nil {
 		wg.Wait()
 
-		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Name: object}]; found {
+		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
 			istioConfigDetails.IstioValidation = validation
 		}
 	}

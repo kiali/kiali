@@ -47,7 +47,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 }
 
 func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace string, serviceNames []string, serviceHosts map[string][]string) models.IstioValidations {
-	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, VirtualCheckerType)
+	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
 	result, valid := virtual_services.NoHostChecker{
 		Namespace:         namespace,
@@ -63,7 +63,7 @@ func runVirtualServiceCheck(virtualService kubernetes.IstioObject, namespace str
 }
 
 func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[string]struct{}) models.IstioValidations {
-	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, VirtualCheckerType)
+	key, validations := EmptyValidValidation(virtualService.GetObjectMeta().Name, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
 	result, valid := virtual_services.NoGatewayChecker{
 		VirtualService: virtualService,
@@ -77,7 +77,7 @@ func runGatewayCheck(virtualService kubernetes.IstioObject, gatewayNames map[str
 }
 
 func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace string, workloads models.WorkloadList, services []core_v1.Service, serviceHosts map[string][]string) models.IstioValidations {
-	key, validations := EmptyValidValidation(destinationRule.GetObjectMeta().Name, DestinationRuleCheckerType)
+	key, validations := EmptyValidValidation(destinationRule.GetObjectMeta().Name, destinationRule.GetObjectMeta().Namespace, DestinationRuleCheckerType)
 
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespace:       namespace,
@@ -94,7 +94,7 @@ func runDestinationRuleCheck(destinationRule kubernetes.IstioObject, namespace s
 }
 
 func runServiceRoleCheck(serviceRole kubernetes.IstioObject, services []core_v1.Service) models.IstioValidations {
-	key, validations := EmptyValidValidation(serviceRole.GetObjectMeta().Name, ServiceRoleCheckerType)
+	key, validations := EmptyValidValidation(serviceRole.GetObjectMeta().Name, serviceRole.GetObjectMeta().Namespace, ServiceRoleCheckerType)
 
 	result, valid := authorization.ServiceChecker{
 		ServiceRole: serviceRole,

@@ -56,7 +56,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
 func (in VirtualServiceChecker) runChecks(virtualService kubernetes.IstioObject) models.IstioValidations {
 	virtualServiceName := virtualService.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(virtualServiceName, VirtualCheckerType)
+	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.GetObjectMeta().Namespace, VirtualCheckerType)
 
 	enabledCheckers := []Checker{
 		virtual_services.RouteChecker{Route: virtualService},

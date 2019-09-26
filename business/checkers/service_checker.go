@@ -25,7 +25,7 @@ func (sc ServiceChecker) Check() models.IstioValidations {
 }
 
 func (sc ServiceChecker) runSingleChecks(service v1.Service) models.IstioValidations {
-	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), ServiceCheckerType)
+	key, validations := EmptyValidValidation(service.GetObjectMeta().GetName(), service.GetObjectMeta().GetNamespace(), ServiceCheckerType)
 
 	enabledCheckers := []Checker{
 		services.PortMappingChecker{Service: service, Deployments: sc.Deployments},

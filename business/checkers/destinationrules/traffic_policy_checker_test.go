@@ -203,7 +203,7 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.NotEmpty(validations)
 	assert.Equal(1, len(validations))
 
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews")]
+	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -224,7 +224,7 @@ func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioOb
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews")]
+	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 
 	assert.False(ok)
 	assert.Nil(validation)

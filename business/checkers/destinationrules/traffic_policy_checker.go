@@ -21,14 +21,14 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 
 	refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
 	for _, dr := range refdMtls {
-		refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name))
+		refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
 	}
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
-			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name)
+			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace)
 			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
 
 			if _, exists := validations[key]; !exists {

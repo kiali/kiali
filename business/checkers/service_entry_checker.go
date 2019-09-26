@@ -22,7 +22,7 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 }
 
 func (s ServiceEntryChecker) runSingleChecks(se kubernetes.IstioObject) models.IstioValidations {
-	key, validations := EmptyValidValidation(se.GetObjectMeta().Name, ServiceEntryCheckerType)
+	key, validations := EmptyValidValidation(se.GetObjectMeta().Name, se.GetObjectMeta().Namespace, ServiceEntryCheckerType)
 
 	enabledCheckers := []Checker{}
 
