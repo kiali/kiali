@@ -228,10 +228,7 @@ func TestError(t *testing.T) {
 func TestMarshalUnmarshalCredentials(t *testing.T) {
 	testConf := Config{
 		Server: Server{
-			Credentials: security.Credentials{
-				Username:   "foo",
-				Passphrase: "bar",
-			},
+			Credentials: security.CredentialList{security.Credentials{Username: "foo", Passphrase: "bar"}},
 		},
 	}
 
@@ -246,19 +243,19 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to unmarshal: %v", err)
 	}
-	if conf.Server.Credentials.Username != "foo" {
-		t.Errorf("Failed to unmarshal username credentials:\n%v", conf)
+
+	user := conf.Server.Credentials[0]
+
+	if user.Username != "foo" {
+		t.Errorf("Failed to unmarshal username credentials:\n%v", user)
 	}
-	if conf.Server.Credentials.Passphrase != "bar" {
-		t.Errorf("Failed to unmarshal password credentials:\n%v", conf)
+	if user.Passphrase != "bar" {
+		t.Errorf("Failed to unmarshal password credentials:\n%v", user)
 	}
 
 	testConf = Config{
 		Server: Server{
-			Credentials: security.Credentials{
-				Username:   "",
-				Passphrase: "",
-			},
+			Credentials: security.CredentialList{security.Credentials{Username: "", Passphrase: ""}},
 		},
 	}
 
@@ -270,10 +267,11 @@ func TestMarshalUnmarshalCredentials(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to unmarshal: %v", err)
 	}
-	if conf.Server.Credentials.Username != "" {
+	user = conf.Server.Credentials[0]
+	if user.Username != "" {
 		t.Errorf("Failed to unmarshal empty username credentials:\n%v", conf)
 	}
-	if conf.Server.Credentials.Passphrase != "" {
+	if user.Passphrase != "" {
 		t.Errorf("Failed to unmarshal empty password credentials:\n%v", conf)
 	}
 }

@@ -23,27 +23,29 @@ ISTIO_VERSION=
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
-    -iv|--istio-version)
-      ISTIO_VERSION="$2"
-      shift;shift
-      ;;
-    -o|--output)
-      OUTPUT_DIR="$2"
-      shift;shift
-      ;;
-    -h|--help)
-      cat <<HELPMSG
+  -iv | --istio-version)
+    ISTIO_VERSION="$2"
+    shift
+    shift
+    ;;
+  -o | --output)
+    OUTPUT_DIR="$2"
+    shift
+    shift
+    ;;
+  -h | --help)
+    cat <<HELPMSG
 Valid command line arguments:
   -iv|--istio-version <#.#.#>: Version of Istio to download. (default will be the latest version)
   -o|--output <dir> : Output directory where Istio is (or will be downloaded to if it doesn't exist).
   -h|--help : This message.
 HELPMSG
-      exit 1
-      ;;
-    *)
-      echo "Unknown argument [$key]. Aborting."
-      exit 1
-      ;;
+    exit 1
+    ;;
+  *)
+    echo "Unknown argument [$key]. Aborting."
+    exit 1
+    ;;
   esac
 done
 
@@ -56,21 +58,21 @@ OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
 if [ -z "${ISTIO_VERSION}" ]; then
-   VERSION_WE_WANT=$(curl https://api.github.com/repos/istio/istio/releases/latest 2> /dev/null |\
-         grep  "tag_name" | \
-         sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
-   echo "Will use the latest Istio version: $VERSION_WE_WANT"
+  VERSION_WE_WANT=$(curl https://api.github.com/repos/istio/istio/releases/latest 2>/dev/null |
+    grep "tag_name" |
+    sed -e 's/.*://' -e 's/ *"//' -e 's/",//')
+  echo "Will use the latest Istio version: $VERSION_WE_WANT"
 else
-   VERSION_WE_WANT="${ISTIO_VERSION}"
-   echo "Will use a specific Istio version: $VERSION_WE_WANT"
+  VERSION_WE_WANT="${ISTIO_VERSION}"
+  echo "Will use a specific Istio version: $VERSION_WE_WANT"
 fi
 
 # See if Istio is downloaded; if not, get it now.
 echo "Will look for Istio here: ${OUTPUT_DIR}/istio-${VERSION_WE_WANT}"
 if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
-   echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
-   export ISTIO_VERSION
-   curl -L https://git.io/getLatestIstio | sh -
+  echo "Cannot find Istio ${VERSION_WE_WANT} - will download it now..."
+  export ISTIO_VERSION
+  curl -L https://git.io/getLatestIstio | sh -
 fi
 
 cd "./istio-${VERSION_WE_WANT}/"
@@ -80,6 +82,8 @@ if [ -x "${ISTIO_DIR}/bin/istioctl" ]; then
   ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
   ${ISTIOCTL} version
   echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
+
+  exit 0
 else
   echo "WARNING: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
   exit 1

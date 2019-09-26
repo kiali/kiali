@@ -19,6 +19,55 @@ type Credentials struct {
 	Token      string `yaml:",omitempty"`
 }
 
+// In the YAML, a Credential list can be a single credential or an array of credentials,
+// so we use this type support both cases
+type CredentialList []Credentials
+
+func (c *CredentialList) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var multi []Credentials
+	multi = *c
+
+	if err := unmarshal(&multi); err != nil {
+		var single Credentials
+
+		if err := unmarshal(&single); err != nil {
+			return err
+		}
+
+		*c = CredentialList{single}
+	} else {
+		*c = multi
+	}
+
+	return nil
+}
+
+// Validate a password against all credentials
+func (c *CredentialList) Validate(u string, p string) bool {
+	for _, el := range *c {
+		if u == el.Username && el.Passphrase == p {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Verify if all credentials are valid
+func (c *CredentialList) ValidateCredentials() (*Credentials, error) {
+	var cur *Credentials
+
+	for _, el := range *c {
+		if err := el.ValidateCredentials(); err != nil {
+			return nil, err
+		}
+
+		cur = &el
+	}
+
+	return cur, nil
+}
+
 // TLS options - SkipCertificateValidation will disable server certificate verification - the client
 // will accept any certificate presented by the server and any host name in that certificate.
 type TLS struct {

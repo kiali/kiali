@@ -2,15 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/util"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/util"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestStrategyLoginAuthentication checks that a user with no active
@@ -18,8 +20,7 @@ import (
 func TestStrategyLoginAuthentication(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
+	cfg.Server.Credentials = security.CredentialList{security.Credentials{Username: "foo", Passphrase: "bar"}}
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -49,8 +50,7 @@ func TestStrategyLoginAuthentication(t *testing.T) {
 func TestStrategyLoginFails(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
+	cfg.Server.Credentials = security.CredentialList{security.Credentials{Username: "foo", Passphrase: "bar"}}
 	config.Set(cfg)
 
 	// Check wrong user
@@ -85,8 +85,7 @@ func TestStrategyLoginExtend(t *testing.T) {
 
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
+	cfg.Server.Credentials = security.CredentialList{security.Credentials{Username: "foo", Passphrase: "bar"}}
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -167,8 +166,7 @@ func TestLogout(t *testing.T) {
 func TestMissingSecretFlagPresent(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = ""
-	cfg.Server.Credentials.Passphrase = ""
+	cfg.Server.Credentials = security.CredentialList{}
 	config.Set(cfg)
 
 	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)
@@ -192,8 +190,7 @@ func TestMissingSecretFlagPresent(t *testing.T) {
 func TestMissingSecretFlagAbsent(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyLogin
-	cfg.Server.Credentials.Username = "foo"
-	cfg.Server.Credentials.Passphrase = "bar"
+	cfg.Server.Credentials = security.CredentialList{security.Credentials{Username: "foo", Passphrase: "bar"}}
 	config.Set(cfg)
 
 	request := httptest.NewRequest("GET", "http://kiali/api/auth/info", nil)

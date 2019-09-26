@@ -2,7 +2,38 @@ package security
 
 import (
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
+
+func TestValidateCollection(t *testing.T) {
+	list := CredentialList{Credentials{Username: "foo", Passphrase: "bar"}}
+	creds, err := list.ValidateCredentials()
+
+	if err != nil {
+		t.Errorf("Failed to validate credential list: %v", err)
+	} else {
+		if creds.Username != "foo" || creds.Passphrase != "bar" {
+			t.Errorf("Validated credentials has wrong data: %v", creds)
+		}
+	}
+}
+
+func TestUnmarshalCollection(t *testing.T) {
+	var res CredentialList
+
+	input := "- username: foo\n  password: foo"
+
+	if err := yaml.Unmarshal([]byte(input), &res); err != nil {
+		t.Errorf("Raised error %v when parsing credential list", err)
+	}
+
+	input = "username: foo\npassword: foo"
+
+	if err := yaml.Unmarshal([]byte(input), &res); err != nil {
+		t.Errorf("Raised error %v when parsing credential list", err)
+	}
+}
 
 func TestValidateCredentials(t *testing.T) {
 	creds := &Credentials{}

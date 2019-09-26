@@ -125,16 +125,16 @@ var rwMutex sync.RWMutex
 
 // Server configuration
 type Server struct {
-	Address                    string               `yaml:",omitempty"`
-	AuditLog                   bool                 `yaml:"audit_log,omitempty"`
-	CORSAllowAll               bool                 `yaml:"cors_allow_all,omitempty"`
-	Credentials                security.Credentials `yaml:",omitempty"`
-	GzipEnabled                bool                 `yaml:"gzip_enabled,omitempty"`
-	MetricsEnabled             bool                 `yaml:"metrics_enabled,omitempty"`
-	MetricsPort                int                  `yaml:"metrics_port,omitempty"`
-	Port                       int                  `yaml:",omitempty"`
-	StaticContentRootDirectory string               `yaml:"static_content_root_directory,omitempty"`
-	WebRoot                    string               `yaml:"web_root,omitempty"`
+	Address                    string                  `yaml:",omitempty"`
+	AuditLog                   bool                    `yaml:"audit_log,omitempty"`
+	CORSAllowAll               bool                    `yaml:"cors_allow_all,omitempty"`
+	Credentials                security.CredentialList `yaml:",omitempty"`
+	GzipEnabled                bool                    `yaml:"gzip_enabled,omitempty"`
+	MetricsEnabled             bool                    `yaml:"metrics_enabled,omitempty"`
+	MetricsPort                int                     `yaml:"metrics_port,omitempty"`
+	Port                       int                     `yaml:",omitempty"`
+	StaticContentRootDirectory string                  `yaml:"static_content_root_directory,omitempty"`
+	WebRoot                    string                  `yaml:"web_root,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -325,10 +325,10 @@ func NewConfig() (c *Config) {
 
 	c.Server.Address = strings.TrimSpace(getDefaultString(EnvServerAddress, ""))
 	c.Server.Port = getDefaultInt(EnvServerPort, 20000)
-	c.Server.Credentials = security.Credentials{
+	c.Server.Credentials = []security.Credentials{{
 		Username:   getDefaultStringFromFile(LoginSecretUsername, ""),
 		Passphrase: getDefaultStringFromFile(LoginSecretPassphrase, ""),
-	}
+	}}
 
 	c.Server.WebRoot = strings.TrimSpace(getDefaultString(EnvWebRoot, "/"))
 	c.Server.StaticContentRootDirectory = strings.TrimSpace(getDefaultString(EnvServerStaticContentRootDirectory, "/opt/kiali/console"))

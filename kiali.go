@@ -155,9 +155,10 @@ func waitForSecret() {
 		}
 	}()
 	secret := <-foundSecretChan
+
 	cfg := config.Get()
-	cfg.Server.Credentials.Username = secret.Username
-	cfg.Server.Credentials.Passphrase = secret.Passphrase
+	cfg.Server.Credentials = security.CredentialList{security.Credentials{Username: secret.Username, Passphrase: secret.Passphrase}}
+
 	config.Set(cfg)
 }
 
@@ -183,7 +184,7 @@ func validateConfig() error {
 		return fmt.Errorf("server port is negative: %v", config.Get().Server.Port)
 	}
 
-	if err := config.Get().Server.Credentials.ValidateCredentials(); err != nil {
+	if _, err := config.Get().Server.Credentials.ValidateCredentials(); err != nil {
 		return fmt.Errorf("server credentials are invalid: %v", err)
 	}
 	if strings.Contains(config.Get().Server.StaticContentRootDirectory, "..") {
@@ -210,7 +211,8 @@ func validateConfig() error {
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.Strategy == config.AuthStrategyLogin {
 		creds := config.Get().Server.Credentials
-		if creds.Username == "" && creds.Passphrase == "" {
+
+		if len(creds) == 0 {
 			// This won't cause Kiali to abort, but users won't be able to log in, so immediately log a warning
 			log.Warningf("Credentials are missing. Create a proper secret. Please refer to the documentation for more details.")
 		}

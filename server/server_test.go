@@ -49,8 +49,7 @@ func TestRootContextPath(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = "unused"
-	conf.Server.Credentials.Passphrase = "unused"
+	conf.Server.Credentials = security.CredentialList{security.Credentials{Username: "unused", Passphrase: "unused"}}
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -108,8 +107,7 @@ func TestAnonymousMode(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = "unused"
-	conf.Server.Credentials.Passphrase = "unused"
+	conf.Server.Credentials = security.CredentialList{security.Credentials{Username: "unused", Passphrase: "unused"}}
 	conf.Auth.Strategy = "anonymous"
 
 	serverURL := fmt.Sprintf("http://%v", testServerHostPort)
@@ -190,8 +188,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.StaticContentRootDirectory = tmpDir
-	conf.Server.Credentials.Username = authorizedUsername
-	conf.Server.Credentials.Passphrase = authorizedPassword
+	conf.Server.Credentials = security.CredentialList{security.Credentials{Username: authorizedUsername, Passphrase: authorizedPassword}}
 	conf.Server.MetricsEnabled = true
 	conf.Server.MetricsPort = testMetricsPort
 	conf.Auth.Strategy = "login"

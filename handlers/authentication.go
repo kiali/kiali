@@ -68,12 +68,8 @@ type TokenResponse struct {
 func checkKialiCredentials(r *http.Request) string {
 	conf := config.Get()
 
-	if conf.Server.Credentials.Username == "" || conf.Server.Credentials.Passphrase == "" {
-		return ""
-	}
-
 	u, p, ok := r.BasicAuth()
-	if ok && conf.Server.Credentials.Username == u && conf.Server.Credentials.Passphrase == p {
+	if ok && conf.Server.Credentials.Validate(u, p) {
 		return u
 	}
 
@@ -111,7 +107,8 @@ func performKialiAuthentication(w http.ResponseWriter, r *http.Request) bool {
 
 		if len(user) == 0 {
 			conf := config.Get()
-			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+
+			if len(conf.Server.Credentials) == 0 {
 				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
 				RespondWithCode(w, missingSecretStatusCode) // our specific error code that indicates to the client that we are missing the secret
 				return false
@@ -318,7 +315,7 @@ func checkKialiSession(w http.ResponseWriter, r *http.Request) int {
 		user := checkKialiCredentials(r)
 		if len(user) == 0 {
 			conf := config.Get()
-			if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+			if len(conf.Server.Credentials) == 0 {
 				log.Error("Credentials are missing. Create a secret. Please refer to the documentation for more details.")
 				return missingSecretStatusCode // our specific error code that indicates to the client that we are missing the secret
 			} else {
@@ -463,7 +460,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 		response.LogoutEndpoint = metadata.LogoutEndpoint
 		response.LogoutRedirect = metadata.LogoutRedirect
 	case config.AuthStrategyLogin:
-		if conf.Server.Credentials.Username == "" && conf.Server.Credentials.Passphrase == "" {
+		if len(conf.Server.Credentials) == 0 {
 			response.SecretMissing = true
 		}
 	}
