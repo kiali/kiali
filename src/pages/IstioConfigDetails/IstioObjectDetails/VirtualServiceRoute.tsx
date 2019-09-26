@@ -163,7 +163,8 @@ class VirtualServiceRoute extends React.Component<VirtualServiceRouteProps> {
     });
   }
 
-  bulletChartLabels(datum: any) {
+  bulletChartLabels(data: any) {
+    const datum = data.datum;
     const [percent, host, subset, port] = datum.name.split('_');
     let label = 'Max weight: 100';
     if (host) {
