@@ -2,18 +2,18 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="fwzhvy7"
+  className="fqvou5s"
 >
   <div
-    className="fiy3v8i"
+    className="f1xvjjtv"
   >
     <span
-      className="f13vslg"
+      className="f1i76bsh"
     >
       Legend
     </span>
     <span
-      className="pull-right"
+      className="f1vrdyv8"
     >
       <Tooltip
         appendTo={[Function]}
@@ -58,16 +58,16 @@ exports[`GraphLegend test should render correctly 1`] = `
     </span>
   </div>
   <div
-    className="fxms5gz"
+    className="f1hnvrw2"
   >
     <div
       className="fkhz08q"
     >
       <div
-        className="fc9v04o"
+        className="fls9dm1"
       >
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Node Shapes"
         >
           Node Shapes
@@ -82,7 +82,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Workload
             </span>
@@ -98,7 +98,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               App
             </span>
@@ -114,7 +114,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Unknown Source
             </span>
@@ -130,7 +130,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Service
             </span>
@@ -146,14 +146,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Service Entry
             </span>
           </div>
         </div>
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Node Colors"
         >
           Node Colors
@@ -168,7 +168,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Normal
             </span>
@@ -184,7 +184,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Warning
             </span>
@@ -200,7 +200,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Error
             </span>
@@ -216,14 +216,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Unused
             </span>
           </div>
         </div>
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Node Background"
         >
           Node Background
@@ -238,7 +238,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               External Namespace
             </span>
@@ -254,14 +254,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Restricted Namespace
             </span>
           </div>
         </div>
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Edges"
         >
           Edges
@@ -276,7 +276,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               20% Error
             </span>
@@ -292,7 +292,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               0.1 - 20% Error
             </span>
@@ -308,7 +308,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               0.1 Error
             </span>
@@ -324,7 +324,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               TCP Connection
             </span>
@@ -340,7 +340,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Idle
             </span>
@@ -356,14 +356,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               mTLS (badge)
             </span>
           </div>
         </div>
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Traffic Animation"
         >
           Traffic Animation
@@ -378,7 +378,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Normal Request
             </span>
@@ -394,7 +394,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Failed Request
             </span>
@@ -410,14 +410,14 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               TCP Traffic
             </span>
           </div>
         </div>
         <div
-          className="fot2cu0"
+          className="f1unvj7z"
           key="Node Badges"
         >
           Node Badges
@@ -432,7 +432,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Circuit Breaker
             </span>
@@ -448,7 +448,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Missing Sidecar
             </span>
@@ -464,7 +464,7 @@ exports[`GraphLegend test should render correctly 1`] = `
               />
             </span>
             <span
-              className="f1643rh"
+              className="f1hob5wc"
             >
               Virtual Services
             </span>

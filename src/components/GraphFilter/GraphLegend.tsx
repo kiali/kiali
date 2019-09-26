@@ -10,14 +10,14 @@ export interface GraphLegendProps {
   isMTLSEnabled: boolean;
 }
 
-const width = '300px';
+const width = '200px';
 
 export default class GraphLegend extends React.Component<GraphLegendProps> {
   render() {
     const legendBoxStyle = style({
       margin: '1em 0 4em 0',
       padding: '1em',
-      border: '1px solid gray',
+      border: '1px solid #EDEDED',
       overflow: 'hidden',
       overflowX: 'auto',
       overflowY: 'auto'
@@ -28,7 +28,8 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
     });
 
     const legendTextHeadingStyle = style({
-      fontWeight: 'bold'
+      fontWeight: 'bold',
+      fontSize: '16px'
     });
 
     const bodyStyle = style({
@@ -41,11 +42,16 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
       flexDirection: 'column'
     });
 
+    const closeBoxStyle = style({
+      float: 'right',
+      marginTop: '-7px'
+    });
+
     return (
       <div className={legendBoxStyle}>
         <div className={headerStyle}>
           <span className={legendTextHeadingStyle}>Legend</span>
-          <span className="pull-right">
+          <span className={closeBoxStyle}>
             <Tooltip content="Close Legend">
               <Button id="legend_close" variant="plain" onClick={this.props.closeLegend}>
                 <CloseIcon />
@@ -62,7 +68,8 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
 
   renderGraphLegendList(legendData: GraphLegendItem[]) {
     const legendColumnHeadingStyle = style({
-      paddingTop: '1.25em'
+      paddingTop: '1.25em',
+      fontSize: '14px'
     });
     const aStyle = style({
       height: '100%',
@@ -97,9 +104,10 @@ export default class GraphLegend extends React.Component<GraphLegendProps> {
     });
 
     const legendItemLabelStyle = style({
-      fontSize: '1em',
+      fontSize: '12px',
       fontWeight: 'normal',
-      width: '175px'
+      width: '130px',
+      marginTop: '3px'
     });
 
     return (
