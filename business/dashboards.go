@@ -78,14 +78,15 @@ func DashboardsConfig() (kconf.Config, klog.LogAdapter) {
 		}, klog.LogAdapter{
 			Errorf:   log.Errorf,
 			Warningf: log.Warningf,
-			Infof:    log.Warningf,
-			Tracef:   log.Warningf,
+			Infof:    log.Infof,
+			Tracef:   log.Tracef,
 		}
 }
 
 type istioChart struct {
 	kmodel.Chart
 	refName string
+	scale   float64
 }
 
 var istioCharts = []istioChart{
@@ -110,10 +111,11 @@ var istioCharts = []istioChart{
 	{
 		Chart: kmodel.Chart{
 			Name:  "Request duration",
-			Unit:  "ms",
+			Unit:  "seconds",
 			Spans: 6,
 		},
 		refName: "request_duration_millis",
+		scale:   0.001,
 	},
 	{
 		Chart: kmodel.Chart{
@@ -169,10 +171,10 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 	if secondsOK && millisOK {
 		durationMillisEmpty := true
 	MillisEmpty:
-		for _, samples := range models.ConvertHistogram(durationMillis) {
-			for _, sample := range samples {
+		for _, samples := range durationMillis {
+			for _, sample := range samples.Matrix {
 				for _, pair := range sample.Values {
-					if !math.IsNaN(pair.Value) {
+					if !math.IsNaN(float64(pair.Value)) {
 						durationMillisEmpty = false
 						break MillisEmpty
 					}
@@ -188,17 +190,23 @@ func (in *DashboardsService) GetIstioDashboard(params prometheus.IstioMetricsQue
 
 	for _, chartTpl := range istioCharts {
 		newChart := chartTpl.Chart
+		unitScale := 1.0
+		if chartTpl.scale != 0.0 {
+			unitScale = chartTpl.scale
+		}
 		if metric, ok := metrics.Metrics[chartTpl.refName]; ok {
-			newChart.Metric = models.ConvertMatrix(metric.Matrix)
+			newChart.Metric = kmodel.ConvertMatrix(metric.Matrix, unitScale)
 		}
 		if histo, ok := metrics.Histograms[chartTpl.refName]; ok {
-			newChart.Histogram = models.ConvertHistogram(histo)
+			newChart.Histogram = make(map[string][]*kmodel.SampleStream, len(histo))
+			for k, v := range histo {
+				newChart.Histogram[k] = kmodel.ConvertMatrix(v.Matrix, unitScale)
+			}
 		}
 		if newChart.Metric != nil || newChart.Histogram != nil {
 			dashboard.Charts = append(dashboard.Charts, newChart)
 		}
 	}
-
 	return &dashboard, nil
 }
 

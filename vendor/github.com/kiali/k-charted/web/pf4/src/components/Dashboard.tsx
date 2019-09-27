@@ -77,17 +77,14 @@ export class Dashboard extends React.Component<Props, State> {
 
   private renderChart(chart: ChartModel, expandHandler?: () => void) {
     const dataSupplier = getDataSupplier(chart, { values: this.props.labelValues, prettifier: this.props.labelPrettifier });
-    if (dataSupplier) {
-      return (
-        <KChart
-          key={chart.name}
-          chart={chart}
-          data={dataSupplier()}
-          expandHandler={expandHandler}
-        />
-      );
-    }
-    return undefined;
+    return (
+      <KChart
+        key={chart.name}
+        chart={chart}
+        data={dataSupplier()}
+        expandHandler={expandHandler}
+      />
+    );
   }
 
   private expandHandler = (chartKey: string): void => {

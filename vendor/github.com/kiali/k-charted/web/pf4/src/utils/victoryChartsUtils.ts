@@ -50,13 +50,13 @@ const histogramDataSupplier = (histogram: Histogram, labels: LabelsInfo, unit: s
   };
 };
 
-export const getDataSupplier = (chart: ChartModel, labels: LabelsInfo): (() => VictoryChartInfo) | undefined => {
+export const getDataSupplier = (chart: ChartModel, labels: LabelsInfo): (() => VictoryChartInfo) => {
   if (chart.metric) {
     return metricsDataSupplier(chart.name, chart.metric, labels, chart.unit);
   } else if (chart.histogram) {
     return histogramDataSupplier(chart.histogram, labels, chart.unit);
   }
-  return undefined;
+  return () => ({ rawLegend: [], series: [] });
 };
 
 export const buildLegend = (rawLegend: string[], chartWidth: number): LegendInfo => {

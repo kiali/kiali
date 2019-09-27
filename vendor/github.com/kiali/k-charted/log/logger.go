@@ -10,26 +10,25 @@ type LogAdapter struct {
 
 type SafeAdapter = LogAdapter
 
-func noop(string, ...interface{}) {}
-
 func NewSafeAdapter(from LogAdapter) SafeAdapter {
-	safe := SafeAdapter{
-		Errorf:   noop,
-		Warningf: noop,
-		Infof:    noop,
-		Tracef:   noop,
-	}
-	if from.Errorf != nil {
-		safe.Errorf = from.Errorf
-	}
-	if from.Warningf != nil {
-		safe.Warningf = from.Warningf
-	}
-	if from.Infof != nil {
-		safe.Infof = from.Infof
-	}
+	safe := SafeAdapter{}
+	// Default to noop
+	lastFunc := func(string, ...interface{}) {}
 	if from.Tracef != nil {
-		safe.Tracef = from.Tracef
+		lastFunc = from.Tracef
 	}
+	safe.Tracef = lastFunc
+	if from.Infof != nil {
+		lastFunc = from.Infof
+	}
+	safe.Infof = lastFunc
+	if from.Warningf != nil {
+		lastFunc = from.Warningf
+	}
+	safe.Warningf = lastFunc
+	if from.Errorf != nil {
+		lastFunc = from.Errorf
+	}
+	safe.Errorf = lastFunc
 	return safe
 }

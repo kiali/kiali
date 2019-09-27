@@ -1,5 +1,5 @@
-hash: 3fca4a3505b0305222b9c549532a1db1fac5bea7a185f5253250680965335bf4
-updated: 2019-09-26T13:09:32.26621606+02:00
+hash: dbbdd4f8ec3a4ca15e821956a6a4254517211ce9d782e646947a57063b7807b0
+updated: 2019-09-27T13:43:16.85464923+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -55,7 +55,7 @@ imports:
 - name: github.com/jtblin/go-ldap-client
   version: ad9f2ea47a83452873c01f1dc6960aedb9ff7e0e
 - name: github.com/kiali/k-charted
-  version: bec19868c87a68e7c576e04e9aef899c834f3975
+  version: 96114a911d3a36975dd74608691ee9fc2add9b72
   subpackages:
   - business
   - config

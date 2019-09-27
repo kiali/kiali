@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/kiali/k-charted/config/extconfig"
@@ -43,7 +44,7 @@ func getGrafanaLinks(logger log.SafeAdapter, cfg extconfig.GrafanaConfig, linksS
 			}
 			if dashboardPath != "" {
 				linkOut := model.ExternalLink{
-					URL:       cfg.URL + dashboardPath,
+					URL:       strings.TrimSuffix(cfg.URL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
 					Name:      linkSpec.Name,
 					Variables: linkSpec.Variables,
 				}
@@ -96,5 +97,5 @@ func getDashboardPath(logger log.SafeAdapter, basePath, name string, auth *extco
 }
 
 func findDashboard(url, searchPattern string, auth *extconfig.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*10)
+	return httputil.HttpGet(strings.TrimSuffix(url, "/")+"/api/search?query="+searchPattern, auth, time.Second*10)
 }

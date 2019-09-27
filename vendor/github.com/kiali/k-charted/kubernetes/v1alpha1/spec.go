@@ -51,7 +51,8 @@ type MonitoringDashboardItem struct {
 
 type MonitoringDashboardChart struct {
 	Name         string                           `json:"name"`
-	Unit         string                           `json:"unit"`
+	Unit         string                           `json:"unit"`      // Stands for the base unit (regardless its scale in datasource)
+	UnitScale    float64                          `json:"unitScale"` // Stands for the scale of the values in datasource, related to the base unit provided. E.g. unit: "seconds" and unitScale: 0.001 means that values in datasource are actually in milliseconds.
 	Spans        int                              `json:"spans"`
 	ChartType    *string                          `json:"chartType"`
 	Min          *int                             `json:"min"`

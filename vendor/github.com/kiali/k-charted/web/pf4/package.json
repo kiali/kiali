@@ -17,8 +17,8 @@
   },
   "devDependencies": {
     "@babel/core": "~7.4.3",
-    "@patternfly/react-charts": "~4.4.7",
-    "@patternfly/react-core": "~3.38.1",
+    "@patternfly/react-charts": "~5.0.4",
+    "@patternfly/react-core": "~3.89.2",
     "@patternfly/react-icons": "~3.9.5",
     "@storybook/addon-info": "~5.0.10",
     "@storybook/react": "~5.0.10",

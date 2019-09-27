@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"math"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	"github.com/kiali/k-charted/prometheus"
 )
 
 func TestConvertAggregations(t *testing.T) {
@@ -87,7 +89,62 @@ func TestConvertEmptyMatrix(t *testing.T) {
 	var matrix pmod.Matrix
 
 	// Make sure matrices are never nil, but empty slices
-	res := ConvertMatrix(matrix)
+	res := ConvertMatrix(matrix, 0.0)
 	assert.NotNil(res)
 	assert.Len(res, 0)
+}
+
+func TestConvertEmptyMetric(t *testing.T) {
+	assert := assert.New(t)
+	var metric prometheus.Metric
+	chart := Chart{}
+
+	// Make sure metric is never nil, but empty slice
+	FillMetric(metric, 0.0, "foo", &chart)
+	assert.Empty(chart.Error)
+	assert.Nil(chart.Histogram)
+	assert.NotNil(chart.Metric)
+	assert.Len(chart.Metric, 0)
+
+	chart = Chart{}
+	metric.Err = errors.New("Some error")
+	FillMetric(metric, 0.0, "foo", &chart)
+	assert.Equal("error in metric foo: Some error", chart.Error)
+	assert.Nil(chart.Histogram)
+	assert.Nil(chart.Metric)
+}
+
+func TestConvertEmptyHistogram(t *testing.T) {
+	assert := assert.New(t)
+	var histo prometheus.Histogram
+	chart := Chart{}
+
+	// An empty histogram gives an empty map
+	FillHistogram(histo, 0.0, "foo", &chart)
+	assert.Empty(chart.Error)
+	assert.NotNil(chart.Histogram)
+	assert.Len(chart.Histogram, 0)
+	assert.Nil(chart.Metric)
+
+	// ... But empty metrics within an histogram cannot be nil
+	chart = Chart{}
+	histo = make(prometheus.Histogram)
+	var metric prometheus.Metric
+	histo["0.99"] = metric
+	FillHistogram(histo, 0.0, "foo", &chart)
+	assert.Empty(chart.Error)
+	assert.NotNil(chart.Histogram)
+	assert.Len(chart.Histogram, 1)
+	assert.NotNil(chart.Histogram["0.99"])
+	assert.Len(chart.Histogram["0.99"], 0)
+	assert.Nil(chart.Metric)
+
+	// Check with error (here, histogram is nil)
+	chart = Chart{}
+	metric.Err = errors.New("Some error")
+	histo["0.99"] = metric
+	FillHistogram(histo, 0.0, "foo", &chart)
+	assert.Equal("error in metric foo/0.99: Some error", chart.Error)
+	assert.Nil(chart.Histogram)
+	assert.Nil(chart.Metric)
 }

@@ -1,11 +1,13 @@
 package model
 
 import (
+	"fmt"
 	"sort"
 
 	pmod "github.com/prometheus/common/model"
 
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	"github.com/kiali/k-charted/prometheus"
 )
 
 // MonitoringDashboard is the model representing custom monitoring dashboard, transformed from MonitoringDashboard k8s resource
@@ -29,10 +31,30 @@ type Chart struct {
 	Error     string                     `json:"error"`
 }
 
-func ConvertMatrix(from pmod.Matrix) []*SampleStream {
+func FillHistogram(from prometheus.Histogram, scale float64, name string, chart *Chart) {
+	stats := make(map[string][]*SampleStream, len(from))
+	for stat, metric := range from {
+		if metric.Err != nil {
+			chart.Error = fmt.Sprintf("error in metric %s/%s: %v", name, stat, metric.Err)
+			return
+		}
+		stats[stat] = ConvertMatrix(metric.Matrix, scale)
+	}
+	chart.Histogram = stats
+}
+
+func FillMetric(from prometheus.Metric, scale float64, name string, chart *Chart) {
+	if from.Err != nil {
+		chart.Error = fmt.Sprintf("error in metric %s: %v", name, from.Err)
+		return
+	}
+	chart.Metric = ConvertMatrix(from.Matrix, scale)
+}
+
+func ConvertMatrix(from pmod.Matrix, scale float64) []*SampleStream {
 	series := make([]*SampleStream, len(from))
 	for i, s := range from {
-		series[i] = convertSampleStream(s)
+		series[i] = convertSampleStream(s, scale)
 	}
 	return series
 }
@@ -42,14 +64,14 @@ type SampleStream struct {
 	Values   []SamplePair      `json:"values"`
 }
 
-func convertSampleStream(from *pmod.SampleStream) *SampleStream {
+func convertSampleStream(from *pmod.SampleStream, scale float64) *SampleStream {
 	labelSet := make(map[string]string, len(from.Metric))
 	for k, v := range from.Metric {
 		labelSet[string(k)] = string(v)
 	}
 	values := make([]SamplePair, len(from.Values))
 	for i, v := range from.Values {
-		values[i] = convertSamplePair(&v)
+		values[i] = convertSamplePair(&v, scale)
 	}
 	return &SampleStream{
 		LabelSet: labelSet,
@@ -70,10 +92,10 @@ func (s SamplePair) MarshalJSON() ([]byte, error) {
 	}.MarshalJSON()
 }
 
-func convertSamplePair(from *pmod.SamplePair) SamplePair {
+func convertSamplePair(from *pmod.SamplePair, scale float64) SamplePair {
 	return SamplePair{
 		Timestamp: int64(from.Timestamp),
-		Value:     float64(from.Value),
+		Value:     scale * float64(from.Value),
 	}
 }
 
