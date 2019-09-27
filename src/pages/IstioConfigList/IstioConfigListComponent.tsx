@@ -22,6 +22,7 @@ import { activeNamespacesSelector } from '../../store/Selectors';
 import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
+import { ObjectValidation } from '../../types/IstioObjects';
 
 interface IstioConfigListComponentState extends FilterComponent.State<IstioConfigItem> {}
 interface IstioConfigListComponentProps extends FilterComponent.Props<IstioConfigItem> {
@@ -126,10 +127,14 @@ class IstioConfigListComponent extends FilterComponent.Component<
     const configsPromises = this.fetchIstioConfigs(namespaces, istioTypeFilters, istioNameFilters);
 
     configsPromises
-      .then(items => {
-        items.forEach(item => item.validation && showInMessageCenter(item.validation));
-        return items;
-      })
+      .then(items =>
+        items
+          .map(item => item.validation)
+          .filter((validation): validation is ObjectValidation => validation !== undefined)
+      )
+      .then(validations => showInMessageCenter(validations));
+
+    configsPromises
       .then(items =>
         IstioConfigListFilters.sortIstioItems(items, this.state.currentSortField, this.state.isSortAscending)
       )
