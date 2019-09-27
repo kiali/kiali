@@ -36,6 +36,11 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
+  static istioType(rawType: string) {
+    const istioType = Object.keys(dicIstioType).find(key => dicIstioType[key] === rawType);
+    return istioType ? istioType : this.capitalize(rawType);
+  }
+
   constructor(props: BreadCumbViewProps) {
     super(props);
     this.state = this.updateItem();
@@ -94,16 +99,14 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   };
 
   render() {
-    const { namespace, itemName, item, istioType, pathItem } = this.state;
+    const { namespace, item, istioType, pathItem } = this.state;
     const isIstio = this.isIstio();
     const linkItem = isIstio ? (
-      <BreadcrumbItem isActive={true}>
-        {itemName}: {item}
-      </BreadcrumbItem>
+      <BreadcrumbItem isActive={true}>{item}</BreadcrumbItem>
     ) : (
       <BreadcrumbItem isActive={true}>
         <Link to={this.getItemPage()} onClick={this.cleanFilters}>
-          {itemName}: {item}
+          {item}
         </Link>
       </BreadcrumbItem>
     );
@@ -123,7 +126,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
           {isIstio && (
             <BreadcrumbItem>
               <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.updateTypeFilter}>
-                {itemName} Type: {istioType}
+                {istioType ? BreadcrumbView.istioType(istioType) : istioType}
               </Link>
             </BreadcrumbItem>
           )}
