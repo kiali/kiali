@@ -30,6 +30,7 @@ func FakeChart(id, dataType string) v1alpha1.MonitoringDashboardChart {
 	return v1alpha1.MonitoringDashboardChart{
 		Name:       "My chart " + id,
 		Unit:       "s",
+		UnitScale:  10.0,
 		Spans:      6,
 		MetricName: "my_metric_" + id,
 		DataType:   dataType,

@@ -6,9 +6,6 @@ import (
 
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
 	kmodel "github.com/kiali/k-charted/model"
-	pmod "github.com/prometheus/common/model"
-
-	"github.com/kiali/kiali/prometheus"
 )
 
 // ConvertAggregations converts a k8s aggregations (from MonitoringDashboard k8s resource) into this models aggregations
@@ -69,45 +66,5 @@ func PrepareIstioDashboard(direction, local, remote string) kmodel.MonitoringDas
 	return kmodel.MonitoringDashboard{
 		Title:        fmt.Sprintf("%s Metrics", direction),
 		Aggregations: buildIstioAggregations(local, remote),
-	}
-}
-
-// PROMETHEUS MODEL CONVERSION FUNCTIONS
-
-func ConvertHistogram(from prometheus.Histogram) map[string][]*kmodel.SampleStream {
-	stats := make(map[string][]*kmodel.SampleStream, len(from))
-	for k, v := range from {
-		stats[k] = ConvertMatrix(v.Matrix)
-	}
-	return stats
-}
-
-func ConvertMatrix(from pmod.Matrix) []*kmodel.SampleStream {
-	series := make([]*kmodel.SampleStream, len(from))
-	for i, s := range from {
-		series[i] = convertSampleStream(s)
-	}
-	return series
-}
-
-func convertSampleStream(from *pmod.SampleStream) *kmodel.SampleStream {
-	labelSet := make(map[string]string, len(from.Metric))
-	for k, v := range from.Metric {
-		labelSet[string(k)] = string(v)
-	}
-	values := make([]kmodel.SamplePair, len(from.Values))
-	for i, v := range from.Values {
-		values[i] = convertSamplePair(&v)
-	}
-	return &kmodel.SampleStream{
-		LabelSet: labelSet,
-		Values:   values,
-	}
-}
-
-func convertSamplePair(from *pmod.SamplePair) kmodel.SamplePair {
-	return kmodel.SamplePair{
-		Timestamp: int64(from.Timestamp),
-		Value:     float64(from.Value),
 	}
 }

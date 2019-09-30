@@ -28,20 +28,26 @@ Using the provided HTTP handler:
 
 ```go
 import (
-  "github.com/kiali/k-charted/config"
+  kconf "github.com/kiali/k-charted/config"
+	kxconf "github.com/kiali/k-charted/config/extconfig"
+	klog "github.com/kiali/k-charted/log"
   khttp "github.com/kiali/k-charted/http"
   // ...
 )
 
-var cfg = config.Config{
+var cfg = kconf.Config{
   GlobalNamespace:  "default",
-  PrometheusURL:    "http://prometheus",
-  Errorf:           log.Errorf,
-  Tracef:           log.Tracef,
+  Prometheus: kxconf.PrometheusConfig{
+    URL: "http://prometheus",
+  },
+}
+var logger = klog.LogAdapter{
+  Errorf: log.Errorf,
+  Tracef: log.Tracef,
 }
 
 func getDashboard(w http.ResponseWriter, r *http.Request) {
-	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg)
+	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg, logger)
 }
 
 func SetRoute() {
@@ -54,21 +60,26 @@ Or alternatively, calling the dashboards service instead:
 
 ```go
 import (
-  dashboards "github.com/kiali/k-charted/business"
-  "github.com/kiali/k-charted/config"
-  "github.com/kiali/k-charted/model"
+	kbus "github.com/kiali/k-charted/business"
+	kconf "github.com/kiali/k-charted/config"
+	kxconf "github.com/kiali/k-charted/config/extconfig"
+	klog "github.com/kiali/k-charted/log"
 )
+
+var cfg = kconf.Config{
+  GlobalNamespace:  "default",
+  Prometheus: kxconf.PrometheusConfig{
+    URL: "http://prometheus",
+  },
+}
+var logger = klog.LogAdapter{
+  Errorf: log.Errorf,
+  Tracef: log.Tracef,
+}
 
 // ...
 
-  cfg := config.Config{
-    GlobalNamespace:  "default",
-    PrometheusURL:    "http://prometheus",
-    Errorf:           log.Errorf,
-    Tracef:           log.Tracef,
-  }
-
-  dashboardsService := dashboards.NewDashboardsService(cfg)
+  dashboardsService := kbus.NewDashboardsService(cfg, logger)
   dashboard, err := dashboardsService.GetDashboard(model.DashboardQuery{Namespace: "my-namespace"}, "my-dashboard-name")
 ```
 
@@ -76,13 +87,25 @@ import (
 
 - **GlobalNamespace**: namespace that holds default dashboards. When a dashboard is looked for in a given namespace, when not found and if GlobalNamespace is defined, it will be searched then in that GlobalNamespace. Undefined by default.
 
-- **PrometheusURL**: URL where the Prometheus server can be reached.
+- **Prometheus**: Prometheus configuration.
+  - **URL**: URL of the Prometheus server, accessible from server-side.
+  - **Auth**: Authentication options, if any (see https://github.com/kiali/k-charted/blob/master/config/extconfig/extconfig.go).
 
-- **Errorf**: optional handler to an error logging function.
-
-- **Tracef**: optional handler to a tracing logging function.
+- **Grafana**: Grafana configuration. This is optional, only needed if external links to Grafana dashboards have been defined within the MonitoringDashboards custom resources in use.
+  - **URL**: URL of the Grafana server, accessible from client-side / browser.
+  - **InClusterURL**: URL of the Grafana server, accessible from server-side.
+  - **Auth**: Authentication options, if any (see https://github.com/kiali/k-charted/blob/master/config/extconfig/extconfig.go).
 
 - **PodsLoader**: optional pods supplier function, it enables reading dashboard names from pods annotations.
+
+#### LogAdapter
+
+It binds any logging function to be used in K-Charted. It can be omitted, in which case nothing will be logged.
+
+- **Errorf**
+- **Warningf**
+- **Infof**
+- **Tracef**
 
 ### React (Javascript / TypeScript)
 
