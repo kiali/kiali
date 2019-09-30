@@ -1,12 +1,13 @@
 import * as React from 'react';
 
 import { default as MTLSIcon } from './MTLSIcon';
+import { TooltipPosition } from '@patternfly/react-core';
 
 type Props = {
   status: string;
   statusDescriptors: Map<string, StatusDescriptor>;
   className?: string;
-  overlayPosition?: string;
+  overlayPosition?: TooltipPosition;
 };
 
 export type StatusDescriptor = {
@@ -39,7 +40,7 @@ class MTLSStatus extends React.Component<Props> {
   }
 
   overlayPosition() {
-    return this.props.overlayPosition || 'left';
+    return this.props.overlayPosition || TooltipPosition.left;
   }
 
   iconClassName() {
@@ -52,8 +53,8 @@ class MTLSStatus extends React.Component<Props> {
         <MTLSIcon
           icon={this.icon()}
           iconClassName={this.iconClassName()}
-          overlayText={this.message()}
-          overlayPosition={this.overlayPosition()}
+          tooltipText={this.message()}
+          tooltipPosition={this.overlayPosition()}
         />
       );
     }

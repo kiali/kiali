@@ -83,7 +83,7 @@ class MeshMTLSStatus extends React.Component<Props> {
   render() {
     return (
       <div className={this.iconStyle()}>
-        <MTLSStatus status={this.props.status} statusDescriptors={statusDescriptors} overlayPosition={'left'} />
+        <MTLSStatus status={this.props.status} statusDescriptors={statusDescriptors} />
       </div>
     );
   }

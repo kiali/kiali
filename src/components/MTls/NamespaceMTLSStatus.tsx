@@ -40,14 +40,7 @@ class NamespaceMTLSStatus extends React.Component<Props> {
   }
 
   render() {
-    return (
-      <MTLSStatus
-        status={this.props.status}
-        className={this.iconStyle()}
-        statusDescriptors={statusDescriptors}
-        overlayPosition={'left'}
-      />
-    );
+    return <MTLSStatus status={this.props.status} className={this.iconStyle()} statusDescriptors={statusDescriptors} />;
   }
 }
 

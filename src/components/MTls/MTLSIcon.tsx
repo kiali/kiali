@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { OverlayTrigger, Tooltip } from 'patternfly-react';
-
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import fullIcon from '../../assets/img/mtls-status-full.svg';
 import hollowIcon from '../../assets/img/mtls-status-partial.svg';
 import fullIconDark from '../../assets/img/mtls-status-full-dark.svg';
@@ -11,8 +10,8 @@ export { fullIcon, hollowIcon, fullIconDark, hollowIconDark };
 type Props = {
   icon: string;
   iconClassName: string;
-  overlayText: string;
-  overlayPosition: string;
+  tooltipText: string;
+  tooltipPosition: TooltipPosition;
 };
 
 export enum MTLSIconTypes {
@@ -30,24 +29,20 @@ const nameToSource = new Map<string, string>([
 ]);
 
 class MTLSIcon extends React.Component<Props> {
-  infotipContent() {
-    return <Tooltip id={'mtls-status-masthead'}>{this.props.overlayText}</Tooltip>;
-  }
-
   render() {
     return (
-      <OverlayTrigger
-        placement={this.props.overlayPosition}
-        overlay={this.infotipContent()}
-        trigger={['hover', 'focus']}
-        rootClose={false}
+      <Tooltip
+        aria-label={'mTLS status'}
+        position={this.props.tooltipPosition}
+        enableFlip={true}
+        content={this.props.tooltipText}
       >
         <img
           className={this.props.iconClassName}
           src={nameToSource.get(this.props.icon)}
-          alt={this.props.overlayPosition}
+          alt={this.props.tooltipPosition}
         />
-      </OverlayTrigger>
+      </Tooltip>
     );
   }
 }
