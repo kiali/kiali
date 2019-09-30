@@ -1,10 +1,10 @@
 import React from 'react';
-import { ErrorCircleOIcon, CheckCircleIcon, WarningTriangleIcon } from '@patternfly/react-icons';
-import { PfColors } from '../Pf/PfColors';
+import { CheckCircleIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { IconType } from '@patternfly/react-icons/dist/js/createIcon';
 import { ValidationTypes } from '../../types/IstioObjects';
 import { Text, TextVariants } from '@patternfly/react-core';
 import './Validation.css';
+import { PFColorVars } from '../Pf/PfColors';
 
 type Props = ValidationDescription & {
   messageColor?: boolean;
@@ -26,19 +26,19 @@ export type ValidationType = {
 
 const ErrorValidation: ValidationType = {
   name: 'Not Valid',
-  color: PfColors.Red100,
-  icon: ErrorCircleOIcon
+  color: PFColorVars.DangerColor,
+  icon: ExclamationCircleIcon
 };
 
 const WarningValidation: ValidationType = {
   name: 'Warning',
-  color: PfColors.Orange400,
-  icon: WarningTriangleIcon
+  color: PFColorVars.WarningColor,
+  icon: ExclamationTriangleIcon
 };
 
 const CorrectValidation: ValidationType = {
   name: 'Valid',
-  color: PfColors.LightGreen400,
+  color: PFColorVars.SuccessColor,
   icon: CheckCircleIcon
 };
 

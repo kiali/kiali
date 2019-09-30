@@ -4,6 +4,7 @@ import { shallowToJson } from 'enzyme-to-json';
 
 import { HealthIndicator, DisplayMode } from '../HealthIndicator';
 import { AppHealth } from '../../../types/Health';
+import { PFColorVars } from '../../Pf/PfColors';
 
 describe('HealthIndicator', () => {
   it('renders when empty', () => {
@@ -30,12 +31,12 @@ describe('HealthIndicator', () => {
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     expect(shallowToJson(wrapper)).toMatchSnapshot();
     let html = wrapper.html();
-    expect(html).toContain('#3f9c35');
+    expect(html).toContain(PFColorVars.SuccessColor);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('#3f9c35');
+    expect(html).toContain(PFColorVars.SuccessColor);
   });
 
   it('renders workloads degraded', () => {
@@ -51,12 +52,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('#ec7a08');
+    expect(html).toContain(PFColorVars.WarningColor);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('#ec7a08');
+    expect(html).toContain(PFColorVars.WarningColor);
     expect(html).toContain('1 / 10');
   });
 
@@ -73,12 +74,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('#3f9c35');
+    expect(html).toContain(PFColorVars.SuccessColor);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('#3f9c35');
+    expect(html).toContain(PFColorVars.SuccessColor);
     expect(html).toContain('0 / 0');
   });
 
@@ -95,12 +96,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('#cc0000');
+    expect(html).toContain(PFColorVars.DangerColor);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('#cc0000');
+    expect(html).toContain(PFColorVars.DangerColor);
   });
 
   it('renders error rate failure', () => {
@@ -113,12 +114,12 @@ describe('HealthIndicator', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.SMALL} />);
     let html = wrapper.html();
-    expect(html).toContain('#cc0000');
+    expect(html).toContain(PFColorVars.DangerColor);
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" health={health} mode={DisplayMode.LARGE} />);
     html = wrapper.html();
-    expect(html).toContain('#cc0000');
+    expect(html).toContain(PFColorVars.DangerColor);
     expect(html).toContain('Outbound: 20.00%');
     expect(html).toContain('Inbound: 10.00%');
   });
