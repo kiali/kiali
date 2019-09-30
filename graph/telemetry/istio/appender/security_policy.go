@@ -58,12 +58,19 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	//    but we don't want to miss ingressgateway traffic, even if it's not in a requested namespace.  The excess
 	//    traffic will be ignored because it won't map to the trafficMap.
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,connection_security_policy"
-	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs]) > 0) by (%s)`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	tcpQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		namespace,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	query := fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
 	// 2) query for requests originating from a workload inside of the namespace, exclude traffic to non-requested
@@ -74,12 +81,19 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		excludedIstioRegex := strings.Join(excludedIstioNamespaces, "|")
 		destinationWorkloadNamespaceQuery = fmt.Sprintf(`,destination_service_namespace!~"%s"`, excludedIstioRegex)
 	}
-	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs]) > 0) by (%s)`,
+	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
 		namespace,
 		destinationWorkloadNamespaceQuery,
 		int(duration.Seconds()), // range duration for the query
 		groupBy)
+	tcpQuery = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"%s}[%vs])) by (%s) > 0`,
+		"istio_tcp_sent_bytes_total",
+		namespace,
+		destinationWorkloadNamespaceQuery,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	query = fmt.Sprintf(`(%s) OR (%s)`, httpQuery, tcpQuery)
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.API(), a)
 
 	// create map to quickly look up securityPolicy
@@ -98,14 +112,14 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
-		lDestSvc, destSvcOk := m["destination_service_name"]
+		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
 		lCsp, cspOk := m["connection_security_policy"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !cspOk {
 			log.Warningf("Skipping %v, missing expected labels", m.String())
 			continue
 		}
@@ -115,7 +129,7 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
-		destSvc := string(lDestSvc)
+		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
@@ -124,17 +138,17 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 
 		val := float64(s.Value)
 
-		if a.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			_, destNodeType := graph.Id(destSvcNs, destSvc, destWlNs, destWl, destApp, destVer, a.GraphType)
-			if destSvcOk && destNodeType != graph.NodeTypeService {
-				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, "", "", "", "")
-				a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, destSvc, "", "", "", destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
-			} else {
-				a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
-			}
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if a.InjectServiceNodes && graph.IsOK(destSvcName) {
+			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "")
+			a.addSecurityPolicy(securityPolicyMap, csp, val, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		} else {
-			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvc, destWlNs, destWl, destApp, destVer)
+			a.addSecurityPolicy(securityPolicyMap, csp, val, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer)
 		}
 	}
 }
@@ -166,7 +180,9 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 						other += rate
 					}
 				}
-				e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
+				if mtls > 0 {
+					e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
+				}
 			}
 		}
 	}

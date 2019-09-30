@@ -58,9 +58,8 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 			q.Set("tags", "{\"error\":\"true\"}")
 
 			u.RawQuery = q.Encode()
-			timeout := time.Duration(1000 * time.Millisecond)
 
-			body, code, reqError := httputil.HttpGet(u.String(), &auth, timeout)
+			body, code, reqError := httputil.HttpGet(u.String(), &auth, time.Second)
 			if reqError != nil {
 				log.Errorf("Error fetching Jaeger Error Traces (%d): %s", code, reqError)
 				return -1, reqError
@@ -82,8 +81,7 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 }
 
 func GetJaegerInternalURL(path string) (*url.URL, error) {
-	return url.Parse(fmt.Sprintf("http://%s.%s:%d%s%s", appstate.JaegerConfig.Service,
-		appstate.JaegerConfig.Namespace, appstate.JaegerConfig.Port, appstate.JaegerConfig.Path, path))
+	return url.Parse(fmt.Sprintf("%s%s%s", appstate.JaegerConfig.InClusterURL, appstate.JaegerConfig.Path, path))
 }
 
 func GetJaegerServices() (services JaegerServices, err error) {

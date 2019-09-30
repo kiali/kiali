@@ -120,7 +120,10 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 	conf := config.Get()
 	workload.Name = d.Name
 	workload.Type = "Deployment"
-	workload.Labels = d.Spec.Template.Labels
+	workload.Labels = map[string]string{}
+	if d.Spec.Template.Labels != nil {
+		workload.Labels = d.Spec.Template.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -139,7 +142,10 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	conf := config.Get()
 	workload.Name = r.Name
 	workload.Type = "ReplicaSet"
-	workload.Labels = r.Spec.Template.Labels
+	workload.Labels = map[string]string{}
+	if r.Spec.Template.Labels != nil {
+		workload.Labels = r.Spec.Template.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -158,7 +164,10 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 	conf := config.Get()
 	workload.Name = r.Name
 	workload.Type = "ReplicationController"
-	workload.Labels = r.Spec.Template.Labels
+	workload.Labels = map[string]string{}
+	if r.Spec.Template.Labels != nil {
+		workload.Labels = r.Spec.Template.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -176,7 +185,10 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
 	workload.Name = dc.Name
 	workload.Type = "DeploymentConfig"
-	workload.Labels = dc.Spec.Template.Labels
+	workload.Labels = map[string]string{}
+	if dc.Spec.Template.Labels != nil {
+		workload.Labels = dc.Spec.Template.Labels
+	}
 	workload.CreatedAt = formatTime(dc.CreationTimestamp.Time)
 	workload.ResourceVersion = dc.ResourceVersion
 	workload.DesiredReplicas = dc.Spec.Replicas
@@ -188,7 +200,10 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 	conf := config.Get()
 	workload.Name = s.Name
 	workload.Type = "StatefulSet"
-	workload.Labels = s.Spec.Template.Labels
+	workload.Labels = map[string]string{}
+	if s.Spec.Template.Labels != nil {
+		workload.Labels = s.Spec.Template.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -207,7 +222,10 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 	conf := config.Get()
 	workload.Name = pod.Name
 	workload.Type = "Pod"
-	workload.Labels = pod.Labels
+	workload.Labels = map[string]string{}
+	if pod.Labels != nil {
+		workload.Labels = pod.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -240,7 +258,10 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 	conf := config.Get()
 	workload.Name = job.Name
 	workload.Type = "Job"
-	workload.Labels = job.Labels
+	workload.Labels = map[string]string{}
+	if job.Labels != nil {
+		workload.Labels = job.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -259,7 +280,10 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1beta1.CronJob) {
 	conf := config.Get()
 	workload.Name = cnjb.Name
 	workload.Type = "CronJob"
-	workload.Labels = cnjb.Labels
+	workload.Labels = map[string]string{}
+	if cnjb.Labels != nil {
+		workload.Labels = cnjb.Labels
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
@@ -313,7 +337,10 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 	// We fetch one pod as template for labels
 	// There could be corner cases not correct, then we should support more controllers
 	if len(pods) > 0 {
-		workload.Labels = pods[0].Labels
+		workload.Labels = map[string]string{}
+		if pods[0].Labels != nil {
+			workload.Labels = pods[0].Labels
+		}
 		workload.CreatedAt = formatTime(pods[0].CreationTimestamp.Time)
 		workload.ResourceVersion = pods[0].ResourceVersion
 	}

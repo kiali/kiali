@@ -1,29 +1,31 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Text, TextContent, TextVariants } from '@patternfly/react-core';
-import { Chart, ChartArea, ChartGroup, ChartLegend, ChartVoronoiContainer, ChartThemeColor, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
+import { Button, Text, TextContent, TextVariants } from '@patternfly/react-core';
+import { Chart, ChartArea, ChartBar, ChartLine, ChartGroup, ChartLegend, ChartThemeColor, ChartAxis } from '@patternfly/react-charts';
 import { ExpandArrowsAltIcon, InfoAltIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
 import { format as d3Format } from 'd3-format';
 
 import { ChartModel } from '../../../common/types/Dashboards';
 import { getFormatter } from '../../../common/utils/formatter';
 import { VictoryChartInfo } from '../types/VictoryChartInfo';
+import { buildLegend } from '../utils/victoryChartsUtils';
+import { createContainer } from './Container';
 
 const { VictoryPortal, VictoryLabel } = require('victory');
 
 type KChartProps = {
   chart: ChartModel;
-  expandHandler?: () => void;
-  dataSupplier: () => VictoryChartInfo;
+  data: VictoryChartInfo;
   chartHeight?: number;
+  expandHandler?: () => void;
 };
 
 type State = {
-  width: number
+  width: number;
 };
 
 const defaultChartHeight = 300;
-const legendHeight = 45;
+const defaultLegendHeight = 45;
 
 const expandBlockStyle: React.CSSProperties = {
   marginBottom: '-1.5em',
@@ -34,7 +36,7 @@ const expandBlockStyle: React.CSSProperties = {
 
 const emptyMetricsStyle = style({
   width: '100%',
-  height: defaultChartHeight + legendHeight,
+  height: defaultChartHeight + defaultLegendHeight,
   textAlign: 'center',
   $nest: {
     '& > p': {
@@ -78,46 +80,37 @@ class KChart extends React.Component<KChartProps, State> {
     window.removeEventListener('resize', this.handleResize);
   }
 
-  onExpandHandler = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
+  onExpandHandler = () => {
     this.props.expandHandler!();
   }
 
   renderExpand = () => {
     return (
       <div style={expandBlockStyle}>
-        <a href="#" onClick={this.onExpandHandler}>
+        <Button onClick={this.onExpandHandler}>
           Expand <ExpandArrowsAltIcon />
-        </a>
+        </Button>
       </div>
     );
   }
 
   render() {
-    const data = this.props.dataSupplier();
     if (this.props.chart.error) {
       return this.renderError();
-    } else if (this.isEmpty(data)) {
+    } else if (this.isEmpty(this.props.data)) {
       return this.renderEmpty();
     }
 
-    const formatter = getFormatter(d3Format, this.props.chart.unit);
+    const legend = buildLegend(this.props.data.rawLegend, this.state.width);
     const height = this.props.chartHeight || defaultChartHeight;
-    // rendering in portal doesn't seem to work
-    // would be useful to make tooltip displayed above everything
-    const tooltip = (
-      <ChartTooltip
-        renderInPortal={true}
-        style={{ stroke: 'none' }}
-      />
-    );
-    const container = (
-      <ChartVoronoiContainer
-        labels={dp => `${dp.name}: ${formatter(dp.y)}`}
-        labelComponent={tooltip}
-      />
-    );
-    const scaleInfo = this.scaledAxisInfo(data);
+    const scaleInfo = this.scaledAxisInfo(this.props.data);
+    const seriesBuilder =
+      (this.props.chart.chartType === 'area') ? (serie, idx) => (<ChartArea key={'serie-' + idx} data={serie} />) :
+      (this.props.chart.chartType === 'bar')  ? (serie, idx) => (<ChartBar key={'serie-' + idx} data={serie} />) :
+                                                (serie, idx) => (<ChartLine key={'serie-' + idx} data={serie} />);
+    const groupOffset = this.props.chart.chartType === 'bar' ? 7 : 0;
+    const minDomain = this.props.chart.min === undefined ? undefined : { y: this.props.chart.min };
+    const maxDomain = this.props.chart.max === undefined ? undefined : { y: this.props.chart.max };
 
     return (
       <div ref={this.containerRef}>
@@ -125,11 +118,15 @@ class KChart extends React.Component<KChartProps, State> {
           <Text component={TextVariants.h4} style={{textAlign: 'center'}}>{this.props.chart.name}</Text>
         </TextContent>
         <div className="area-chart-overflow">
-          <Chart containerComponent={container}
+          <Chart
             height={height}
             width={this.state.width}
+            containerComponent={createContainer()}
             themeColor={ChartThemeColor.multi}
-            scale={{x: 'time'}}>
+            scale={{x: 'time'}}
+            minDomain={minDomain}
+            maxDomain={maxDomain}>
+            <ChartGroup offset={groupOffset}>{this.props.data.series.map(seriesBuilder)}</ChartGroup>
             <ChartAxis
               tickCount={scaleInfo.count}
               style={{ tickLabels: {fontSize: 12, padding: 2} }}
@@ -137,22 +134,18 @@ class KChart extends React.Component<KChartProps, State> {
             <ChartAxis
               tickLabelComponent={<VictoryPortal><VictoryLabel/></VictoryPortal>}
               dependentAxis={true}
-              tickFormat={formatter}
+              tickFormat={getFormatter(d3Format, this.props.chart.unit)}
               style={{ tickLabels: {fontSize: 12, padding: 2} }}
             />
-            <ChartGroup>
-              {data.series.map((line, idx) => {
-                return (<ChartArea key={'line-' + idx} data={line} />);
-              })}
-            </ChartGroup>
           </Chart>
         </div>
         <ChartLegend
-          data={data.legend}
-          height={legendHeight}
-          responsive={false}
+          x={50}
+          data={legend.items}
+          height={legend.height}
           themeColor={ChartThemeColor.multi}
           width={this.state.width}
+          itemsPerRow={legend.itemsPerRow}
         />
       </div>
     );
@@ -194,12 +187,12 @@ class KChart extends React.Component<KChartProps, State> {
 
   private scaledAxisInfo(data: VictoryChartInfo) {
     const ticks = Math.max(...(data.series.map(s => s.length)));
-    if ((window.innerWidth * this.props.chart.spans) / 12 < 500) {
+    if (this.state.width < 500) {
       return {
         count: Math.min(5, ticks),
         format: '%H:%M'
       };
-    } else if ((window.innerWidth * this.props.chart.spans) / 12 < 700) {
+    } else if (this.state.width < 700) {
       return {
         count: Math.min(10, ticks),
         format: '%H:%M'

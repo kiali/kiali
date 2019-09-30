@@ -28,20 +28,26 @@ Using the provided HTTP handler:
 
 ```go
 import (
-  "github.com/kiali/k-charted/config"
+  kconf "github.com/kiali/k-charted/config"
+	kxconf "github.com/kiali/k-charted/config/extconfig"
+	klog "github.com/kiali/k-charted/log"
   khttp "github.com/kiali/k-charted/http"
   // ...
 )
 
-var cfg = config.Config{
+var cfg = kconf.Config{
   GlobalNamespace:  "default",
-  PrometheusURL:    "http://prometheus",
-  Errorf:           log.Errorf,
-  Tracef:           log.Tracef,
+  Prometheus: kxconf.PrometheusConfig{
+    URL: "http://prometheus",
+  },
+}
+var logger = klog.LogAdapter{
+  Errorf: log.Errorf,
+  Tracef: log.Tracef,
 }
 
 func getDashboard(w http.ResponseWriter, r *http.Request) {
-	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg)
+	khttp.DashboardHandler(r.URL.Query(), mux.Vars(r), w, cfg, logger)
 }
 
 func SetRoute() {
@@ -54,21 +60,26 @@ Or alternatively, calling the dashboards service instead:
 
 ```go
 import (
-  dashboards "github.com/kiali/k-charted/business"
-  "github.com/kiali/k-charted/config"
-  "github.com/kiali/k-charted/model"
+	kbus "github.com/kiali/k-charted/business"
+	kconf "github.com/kiali/k-charted/config"
+	kxconf "github.com/kiali/k-charted/config/extconfig"
+	klog "github.com/kiali/k-charted/log"
 )
+
+var cfg = kconf.Config{
+  GlobalNamespace:  "default",
+  Prometheus: kxconf.PrometheusConfig{
+    URL: "http://prometheus",
+  },
+}
+var logger = klog.LogAdapter{
+  Errorf: log.Errorf,
+  Tracef: log.Tracef,
+}
 
 // ...
 
-  cfg := config.Config{
-    GlobalNamespace:  "default",
-    PrometheusURL:    "http://prometheus",
-    Errorf:           log.Errorf,
-    Tracef:           log.Tracef,
-  }
-
-  dashboardsService := dashboards.NewDashboardsService(cfg)
+  dashboardsService := kbus.NewDashboardsService(cfg, logger)
   dashboard, err := dashboardsService.GetDashboard(model.DashboardQuery{Namespace: "my-namespace"}, "my-dashboard-name")
 ```
 
@@ -76,13 +87,25 @@ import (
 
 - **GlobalNamespace**: namespace that holds default dashboards. When a dashboard is looked for in a given namespace, when not found and if GlobalNamespace is defined, it will be searched then in that GlobalNamespace. Undefined by default.
 
-- **PrometheusURL**: URL where the Prometheus server can be reached.
+- **Prometheus**: Prometheus configuration.
+  - **URL**: URL of the Prometheus server, accessible from server-side.
+  - **Auth**: Authentication options, if any (see https://github.com/kiali/k-charted/blob/master/config/extconfig/extconfig.go).
 
-- **Errorf**: optional handler to an error logging function.
-
-- **Tracef**: optional handler to a tracing logging function.
+- **Grafana**: Grafana configuration. This is optional, only needed if external links to Grafana dashboards have been defined within the MonitoringDashboards custom resources in use.
+  - **URL**: URL of the Grafana server, accessible from client-side / browser.
+  - **InClusterURL**: URL of the Grafana server, accessible from server-side.
+  - **Auth**: Authentication options, if any (see https://github.com/kiali/k-charted/blob/master/config/extconfig/extconfig.go).
 
 - **PodsLoader**: optional pods supplier function, it enables reading dashboard names from pods annotations.
+
+#### LogAdapter
+
+It binds any logging function to be used in K-Charted. It can be omitted, in which case nothing will be logged.
+
+- **Errorf**
+- **Warningf**
+- **Infof**
+- **Tracef**
 
 ### React (Javascript / TypeScript)
 
@@ -135,12 +158,14 @@ make pf4
 
 One solution to easily work and test with Kiali is to setup Glide mirroring, and npm linking.
 
-Supposing your Kiali sources are in `/go/src/github.com/kiali/kiali`, and k-charted in `/go/src/github.com/kiali/k-charted`:
+First, commit your changes in k-charted and update `glide.yaml` in Kiali with the commit SHA.
+Then, assuming the repos are located within your $GOPATH, run:
 
 ```bash
-cd /go/src/github.com/kiali/kiali
-glide mirror set https://github.com/kiali/k-charted file:///go/src/github.com/kiali/k-charted
+cd ${GOPATH}/src/github.com/kiali/kiali
+glide mirror set https://github.com/kiali/k-charted file://${GOPATH}/src/github.com/kiali/k-charted
 
+# Edit Kiali glide.yaml to point k-charted to your commit SHA
 # Then, update your dependencies. In Kiali:
 make dep-update
 ```
@@ -150,21 +175,21 @@ make dep-update
 Similarly, you can use `yarn link` for the web UI side. Assuming your kiali-ui is in `/work/kiali-ui`:
 
 ```bash
-cd /go/src/github.com/kiali/k-charted/web/pf3
+cd ${GOPATH}/src/github.com/kiali/k-charted/web/pf4
 yarn link
 
 cd /work/kiali-ui
-yarn link @kiali/k-charted-pf3
+yarn link @kiali/k-charted-pf4
 ```
 
 After testing, you should remove the mirror and link:
 
 ```bash
-cd /go/src/github.com/kiali/kiali
+cd ${GOPATH}/src/github.com/kiali/kiali
 glide mirror remove https://github.com/kiali/k-charted
 
 cd /work/kiali-ui
-yarn unlink @kiali/k-charted-pf3
+yarn unlink @kiali/k-charted-pf4
 ```
 
 ## Contribute

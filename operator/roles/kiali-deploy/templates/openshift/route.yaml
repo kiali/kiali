@@ -9,6 +9,7 @@ metadata:
 spec:
   tls:
     termination: reencrypt
+    insecureEdgeTerminationPolicy: Redirect
   to:
     kind: Service
     targetPort: {{ kiali_vars.server.port }}

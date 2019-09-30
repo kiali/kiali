@@ -22,6 +22,7 @@ type Props = {
   labelValues: AllPromLabelsValues;
   expandedChart?: string;
   expandHandler: (expandedChart?: string) => void;
+  labelPrettifier?: (key: string, value: string) => string;
 };
 
 type State = {
@@ -75,18 +76,15 @@ export class Dashboard extends React.Component<Props, State> {
   }
 
   private renderChart(chart: ChartModel, expandHandler?: () => void) {
-    const dataSupplier = getDataSupplier(chart, this.props.labelValues);
-    if (dataSupplier) {
-      return (
-        <KChart
-          key={chart.name}
-          chart={chart}
-          dataSupplier={dataSupplier}
-          expandHandler={expandHandler}
-        />
-      );
-    }
-    return undefined;
+    const dataSupplier = getDataSupplier(chart, { values: this.props.labelValues, prettifier: this.props.labelPrettifier });
+    return (
+      <KChart
+        key={chart.name}
+        chart={chart}
+        data={dataSupplier()}
+        expandHandler={expandHandler}
+      />
+    );
   }
 
   private expandHandler = (chartKey: string): void => {

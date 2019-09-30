@@ -5,7 +5,6 @@
 image:https://travis-ci.org/kiali/kiali.svg["Build Status", link="https://travis-ci.org/kiali/kiali"]
 image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license", link="LICENSE"]
 
-
 == Introduction
 
 Kiali provides answers to the questions: _What microservices are part of my Istio service mesh and how are they connected?_
@@ -24,13 +23,42 @@ A service mesh can now provide these services on a platform level and frees the 
 
 Kiali works with Istio to visualise the service mesh topology, features like circuit breakers or request rates.
 
-Kiali also includes Jaeger Tracing to provide distributed tracing out of the box.
+Kiali also includes an integration with Jaeger Tracing to provide distributed tracing out of the box.
 
 === Getting Started
 
-This README is targeted mainly toward Kiali developers. If you are not a developer but want to learn more about Kiali, you will find https://www.kiali.io more helpful. For some instructions on running Kiali without having to git clone this repository or build anything, please see the link:https://www.kiali.io/gettingstarted[Getting Started] page.
+This README is targeted mainly toward Kiali developers. If you are not a developer but want to learn more about Kiali, you will find the link:https://www.kiali.io[Kiali documentation] more helpful. For some instructions on running Kiali without having to git clone this repository or build anything, please see the link:https://www.kiali.io/documentation/getting-started[Getting Started] page.
 
-If you have git cloned this repository, you can try to use our hack script to quickly install OpenShift, Maistra (Istio), and Kiali like this:
+==== Testing on a OpenShift 4.1 Cluster
+
+There are two hack scripts available to start a OpenShift 4.1 cluster - one to install in a local link:https://github.com/kiali/kiali/blob/master/hack/crc-openshift.sh[CRC VM] and one to install in an link:https://github.com/kiali/kiali/blob/master/hack/aws-openshift.sh[AWS environment].
+
+Run the hack script with `--help` for usage details. Here is a brief synopsis on how to use the AWS hack script:
+
+* `aws-openshift.sh -kuca true create` : Create an AWS cluster that includes Service Mesh, Kiali, Jaeger, ElasticSearch
+* `aws-openshift.sh status` : Provides details about your AWS cluster
+* `aws-openshift.sh oc-env` : Provides details about how to set up the `oc` client in your shell so it can access your AWS cluster
+* `aws-openshift.sh destroy` : Destroy the AWS cluster
+* `aws-openshift.sh bi-install` : Install BookInfo demo in the AWS cluster
+* `aws-openshift.sh sm-uninstall` : Uninstall the Service Mesh and all its components that were previously installed via `create` or `sm-install`
+* `aws-openshift.sh sm-install` : Re-install the Service Mesh and all its components
+* `aws-openshift.sh k-uninstall` : Uninstall the Kiali component that was installed via `create` or `sm-install`
+
+Here's a way you can work with AWS to do Kiali development:
+
+* `aws-openshift.sh -kuca true create` to create your cluster with Service Mesh. `-kuca true` tells the script to create a cluster admin user "kiali" with password "kiali". This takes roughly 30 minutes to complete.
+* `aws-openshift.sh status` to show you details about your cluster, including "oc login" details as well as the console URL among other things
+* If you want to build and deploy your own Kiali:
+** First must uninstall the one that was installed when you created the cluster. To do this, run `aws-openshift.sh k-uninstall`
+** Next build Kiali and the Kiali operator normally (see below for details on that)
+** Push the dev builds of your Kiali and Kiali operator into the AWS cluster's image registry via `make ocp-push`
+** Create the new Kiali Operator in your AWS cluster via `make ocp-operator-create`
+** Create the new Kiali in your AWS cluster via `make ocp-kiali-create`
+** At this point, your dev build of Kiali should be starting up. Wait for it to come up and then you can access the Kiali UI normally.
+
+==== Testing on a Local OpenShift 3.11 Cluster
+
+If you have git cloned this repository, you can try to use our hack script to quickly install OpenShift 3.11, Maistra (Istio), and Kiali like this:
 
 ```
 hack/cluster-openshift.sh --kiali-enabled true up
@@ -42,7 +70,7 @@ There are other demo applications to choose from as well: link:./DEMOS.adoc[see 
 
 === Container Image
 
-Kiali is published as a container image on https://hub.docker.com/r/kiali/kiali[Docker hub at kiali/kiali]
+The container images for Kiali and the Kiali Operator are published on https://quay.io/organization/kiali[Quay.io in the kiali organization].
 
 === License and Copyright
 
@@ -111,9 +139,7 @@ If you want to quickly get up and running to play with Kiali and do not wish to 
 
 ==== Setting up OpenShift
 
-The following section assumes that the user has link:https://github.com/openshift/origin[OpenShift Origin] installed.
-
-The link:https://docs.openshift.org/latest/welcome/index.html[OpenShift Origin Documentation] will outline all the steps required.
+The following section assumes that the user has link:https://github.com/openshift/origin[OpenShift] installed.
 
 ==== Building the Container Image
 
@@ -140,6 +166,9 @@ The Makefile used in these commands is the link:./operator/Makefile[Operator Mak
 
 ===== Deploying Kiali Operator to OpenShift
 
+[NOTE]
+This command only works if running with OpenShift 3.11. If you are using OpenShift 4.x in either CRC or AWS, see the earlier instructions above. But in short, you need to push the images first via `ocp-push` and then use the target `ocp-operator-create` rather than `operator-create`.
+
 You need to first install the Kiali operator. This needs to be done only one time. After the operator is deployed, you can deploy and remove Kiali any number of times using the steps described below.
 
 [source,shell]
@@ -151,6 +180,9 @@ make operator-create
 The main Makefile has the same target which delegates to the above.
 
 ===== Deploying Kiali to OpenShift
+
+[NOTE]
+This command only works if running with OpenShift 3.11. If you are using OpenShift 4.x in either CRC or AWS, see the earlier instructions above. But in short, you need to push the images first via `ocp-push` and then use the target `ocp-kiali-create` rather than `kiali-create`.
 
 Now you can deploy Kiali. This creates a Kiali custom resource (CR) which instructs the Kiali operator to install Kiali. A secret will be created also.
 
@@ -481,10 +513,7 @@ In the provided Kubernetes templates, SSL is turned on by default. If you want t
 
 == Contributing
 
-All contributions are welcome - Kiali uses the Apache 2 license and does not require any contributor agreement to submit patches.
-To setup your environment, check instructions in the link:#building[Building] and link:#running[Running] sections.
-
-Get involved by submitting pull requests on GitHub. Before you do, please talk to us.
+See the link:./CONTRIBUTING.md[Contribution Guide].
 
 === Talk to us
 

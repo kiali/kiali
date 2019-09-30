@@ -29,7 +29,7 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		return
 	}
 
-	services := []models.ServiceOverview{}
+	services := []models.ServiceDetails{}
 	workloads := []models.WorkloadListItem{}
 
 	if a.GraphType != graph.GraphTypeService {
@@ -42,15 +42,18 @@ func (a UnusedNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 	}
 
 	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
-		serviceList, err := globalInfo.Business.Svc.GetServiceList(namespaceInfo.Namespace)
-		graph.CheckError(err)
-		services = serviceList.Services
+		if getServiceDefinitionList(namespaceInfo) == nil {
+			sdl, err := globalInfo.Business.Svc.GetServiceDefinitionList(namespaceInfo.Namespace)
+			graph.CheckError(err)
+			namespaceInfo.Vendor[serviceDefinitionListKey] = sdl
+		}
+		services = getServiceDefinitionList(namespaceInfo).ServiceDefinitions
 	}
 
 	a.addUnusedNodes(trafficMap, namespaceInfo.Namespace, services, workloads)
 }
 
-func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, services []models.ServiceOverview, workloads []models.WorkloadListItem) {
+func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) {
 	unusedTrafficMap := a.buildUnusedTrafficMap(trafficMap, namespace, services, workloads)
 
 	// Integrate the unused nodes into the existing traffic map
@@ -59,15 +62,15 @@ func (a UnusedNodeAppender) addUnusedNodes(trafficMap graph.TrafficMap, namespac
 	}
 }
 
-func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, services []models.ServiceOverview, workloads []models.WorkloadListItem) graph.TrafficMap {
+func (a UnusedNodeAppender) buildUnusedTrafficMap(trafficMap graph.TrafficMap, namespace string, services []models.ServiceDetails, workloads []models.WorkloadListItem) graph.TrafficMap {
 	unusedTrafficMap := graph.NewTrafficMap()
 
 	for _, s := range services {
-		id, nodeType := graph.Id(namespace, s.Name, "", "", "", "", a.GraphType)
+		id, nodeType := graph.Id(namespace, s.Service.Name, "", "", "", "", a.GraphType)
 		if _, found := trafficMap[id]; !found {
 			if _, found = unusedTrafficMap[id]; !found {
-				log.Tracef("Adding unused node for service [%s]", s.Name)
-				node := graph.NewNodeExplicit(id, namespace, "", "", "", s.Name, nodeType, a.GraphType)
+				log.Tracef("Adding unused node for service [%s]", s.Service.Name)
+				node := graph.NewNodeExplicit(id, namespace, "", "", "", s.Service.Name, nodeType, a.GraphType)
 				// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
 				node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, "isUnused": true}
 				unusedTrafficMap[id] = &node

@@ -3336,6 +3336,10 @@
       "description": "Chart is the model representing a custom chart, transformed from charts in MonitoringDashboard k8s resource",
       "type": "object",
       "properties": {
+        "chartType": {
+          "type": "string",
+          "x-go-name": "ChartType"
+        },
         "error": {
           "type": "string",
           "x-go-name": "Error"
@@ -3350,12 +3354,22 @@
           },
           "x-go-name": "Histogram"
         },
+        "max": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Max"
+        },
         "metric": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/SampleStream"
           },
           "x-go-name": "Metric"
+        },
+        "min": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Min"
         },
         "name": {
           "type": "string",
@@ -3551,6 +3565,24 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ExternalLink": {
+      "description": "ExternalLink provides links to external dashboards (e.g. to Grafana)",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
+        },
+        "variables": {
+          "$ref": "#/definitions/MonitoringDashboardExternalLinkVariables"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+    },
     "Gateway": {
       "type": "object",
       "properties": {
@@ -3595,17 +3627,12 @@
       "description": "GrafanaInfo provides information to access Grafana dashboards",
       "type": "object",
       "properties": {
-        "serviceDashboardPath": {
-          "type": "string",
-          "x-go-name": "ServiceDashboardPath"
-        },
-        "url": {
-          "type": "string",
-          "x-go-name": "URL"
-        },
-        "workloadDashboardPath": {
-          "type": "string",
-          "x-go-name": "WorkloadDashboardPath"
+        "externalLinks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExternalLink"
+          },
+          "x-go-name": "ExternalLinks"
         }
       },
       "x-go-package": "github.com/kiali/kiali/models"
@@ -4003,12 +4030,45 @@
           },
           "x-go-name": "Charts"
         },
+        "externalLinks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExternalLink"
+          },
+          "x-go-name": "ExternalLinks"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/model"
+    },
+    "MonitoringDashboardExternalLinkVariables": {
+      "type": "object",
+      "properties": {
+        "app": {
+          "type": "string",
+          "x-go-name": "App"
+        },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
+        "service": {
+          "type": "string",
+          "x-go-name": "Service"
+        },
+        "version": {
+          "type": "string",
+          "x-go-name": "Version"
+        },
+        "workload": {
+          "type": "string",
+          "x-go-name": "Workload"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/vendor/github.com/kiali/k-charted/kubernetes/v1alpha1"
     },
     "NamespaceAppHealth": {
       "description": "NamespaceAppHealth is an alias of map of app name x health",

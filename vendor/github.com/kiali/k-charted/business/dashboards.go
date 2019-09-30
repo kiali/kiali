@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/k-charted/config"
 	"github.com/kiali/k-charted/kubernetes"
 	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	"github.com/kiali/k-charted/log"
 	"github.com/kiali/k-charted/model"
 	"github.com/kiali/k-charted/prometheus"
 )
@@ -18,22 +19,14 @@ type DashboardsService struct {
 	promClient prometheus.ClientInterface
 	k8sClient  kubernetes.ClientInterface
 	config     config.Config
+	Logger     log.SafeAdapter
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService(conf config.Config) DashboardsService {
-	return DashboardsService{config: conf}
-}
-
-func (in *DashboardsService) errorf(format string, args ...interface{}) {
-	if in.config.Errorf != nil {
-		in.config.Errorf(format, args...)
-	}
-}
-
-func (in *DashboardsService) tracef(format string, args ...interface{}) {
-	if in.config.Tracef != nil {
-		in.config.Tracef(format, args...)
+func NewDashboardsService(conf config.Config, logger log.LogAdapter) DashboardsService {
+	return DashboardsService{
+		config: conf,
+		Logger: log.NewSafeAdapter(logger),
 	}
 }
 
@@ -67,7 +60,7 @@ func (in *DashboardsService) k8sGetDashboard(namespace, template string) (*v1alp
 	if err != nil {
 		return nil, err
 	}
-	in.tracef("load k8s dashboard '%s' in namespace '%s'", template, namespace)
+	in.Logger.Tracef("load k8s dashboard '%s' in namespace '%s'", template, namespace)
 	return client.GetDashboard(namespace, template)
 }
 
@@ -77,7 +70,7 @@ func (in *DashboardsService) k8sGetDashboards(namespace string) ([]v1alpha1.Moni
 	if err != nil {
 		return nil, err
 	}
-	in.tracef("load all k8s dashboards in namespace '%s'", namespace)
+	in.Logger.Tracef("load all k8s dashboards in namespace '%s'", namespace)
 	return client.GetDashboards(namespace)
 }
 
@@ -191,12 +184,16 @@ func (in *DashboardsService) GetDashboard(params model.DashboardQuery, template 
 	grouping := strings.Join(params.ByLabels, ",")
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(dashboard.Spec.Items))
+	wg.Add(len(dashboard.Spec.Items) + 1)
 	filledCharts := make([]model.Chart, len(dashboard.Spec.Items))
 
 	for i, item := range dashboard.Spec.Items {
 		go func(idx int, chart v1alpha1.MonitoringDashboardChart) {
 			defer wg.Done()
+			unitScale := 1.0
+			if chart.UnitScale != 0.0 {
+				unitScale = chart.UnitScale
+			}
 			filledCharts[idx] = model.ConvertChart(chart)
 			if chart.DataType == v1alpha1.Raw {
 				aggregator := params.RawDataAggregator
@@ -204,43 +201,38 @@ func (in *DashboardsService) GetDashboard(params model.DashboardQuery, template 
 					aggregator = chart.Aggregator
 				}
 				metric := promClient.FetchRange(chart.MetricName, filters, grouping, aggregator, &params.MetricsQuery)
-				filledCharts[idx].Metric, filledCharts[idx].Error = in.convertMetric(metric, chart.MetricName)
+				model.FillMetric(metric, unitScale, chart.MetricName, &filledCharts[idx])
 			} else if chart.DataType == v1alpha1.Rate {
 				metric := promClient.FetchRateRange(chart.MetricName, filters, grouping, &params.MetricsQuery)
-				filledCharts[idx].Metric, filledCharts[idx].Error = in.convertMetric(metric, chart.MetricName)
+				model.FillMetric(metric, unitScale, chart.MetricName, &filledCharts[idx])
 			} else {
 				histo := promClient.FetchHistogramRange(chart.MetricName, filters, grouping, &params.MetricsQuery)
-				filledCharts[idx].Histogram, filledCharts[idx].Error = in.convertHistogram(histo, chart.MetricName)
+				model.FillHistogram(histo, unitScale, chart.MetricName, &filledCharts[idx])
 			}
 		}(i, item.Chart)
 	}
 
+	var externalLinks []model.ExternalLink
+	go func() {
+		defer wg.Done()
+		links, _, err := GetGrafanaLinks(in.Logger, in.config.Grafana, dashboard.Spec.ExternalLinks)
+		if err != nil {
+			in.Logger.Errorf("Error while getting Grafana links: %v", err)
+		}
+		if links != nil {
+			externalLinks = links
+		} else {
+			externalLinks = []model.ExternalLink{}
+		}
+	}()
+
 	wg.Wait()
 	return &model.MonitoringDashboard{
-		Title:        dashboard.Spec.Title,
-		Charts:       filledCharts,
-		Aggregations: aggLabels,
+		Title:         dashboard.Spec.Title,
+		Charts:        filledCharts,
+		Aggregations:  aggLabels,
+		ExternalLinks: externalLinks,
 	}, nil
-}
-
-func (in *DashboardsService) convertHistogram(from prometheus.Histogram, name string) (map[string][]*model.SampleStream, string) {
-	stats := make(map[string][]*model.SampleStream, len(from))
-	for k, v := range from {
-		s, err := in.convertMetric(v, name+"/"+k)
-		if err != "" {
-			return nil, err
-		}
-		stats[k] = s
-	}
-	return stats, ""
-}
-
-func (in *DashboardsService) convertMetric(from prometheus.Metric, name string) ([]*model.SampleStream, string) {
-	if from.Err != nil {
-		in.errorf("error in metric %s: %v", name, from.Err)
-		return []*model.SampleStream{}, from.Err.Error()
-	}
-	return model.ConvertMatrix(from.Matrix), ""
 }
 
 // SearchExplicitDashboards will check annotations of all supplied pods to extract a unique list of dashboards
@@ -248,7 +240,7 @@ func (in *DashboardsService) convertMetric(from prometheus.Metric, name string) 
 func (in *DashboardsService) SearchExplicitDashboards(namespace string, pods []model.Pod) []model.Runtime {
 	uniqueRefsList := extractUniqueDashboards(pods)
 	if len(uniqueRefsList) > 0 {
-		in.tracef("getting dashboards from refs list: %v", uniqueRefsList)
+		in.Logger.Tracef("getting dashboards from refs list: %v", uniqueRefsList)
 		return in.buildRuntimesList(namespace, uniqueRefsList)
 	}
 	return []model.Runtime{}
@@ -263,7 +255,7 @@ func (in *DashboardsService) buildRuntimesList(namespace string, templatesNames 
 			defer wg.Done()
 			dashboard, err := in.loadRawDashboardResource(namespace, tpl)
 			if err != nil {
-				in.errorf("cannot get dashboard %s in namespace %s. Error was: %v", tpl, namespace, err)
+				in.Logger.Errorf("cannot get dashboard %s in namespace %s. Error was: %v", tpl, namespace, err)
 			} else {
 				dashboards[i] = dashboard
 			}
@@ -291,14 +283,14 @@ func (in *DashboardsService) fetchMetricNames(namespace string, labelsFilters ma
 	labels := in.buildLabels(namespace, labelsFilters)
 	metrics, err := promClient.GetMetricsForLabels([]string{labels})
 	if err != nil {
-		in.errorf("runtimes discovery failed, cannot load metrics for labels: %s. Error was: %v", labels, err)
+		in.Logger.Errorf("runtimes discovery failed, cannot load metrics for labels: %s. Error was: %v", labels, err)
 	}
 	return metrics
 }
 
 // DiscoverDashboards tries to discover dashboards based on existing metrics
 func (in *DashboardsService) DiscoverDashboards(namespace string, labelsFilters map[string]string) []model.Runtime {
-	in.tracef("starting runtimes discovery on namespace %s with filters [%v]", namespace, labelsFilters)
+	in.Logger.Tracef("starting runtimes discovery on namespace %s with filters [%v]", namespace, labelsFilters)
 
 	var metrics []string
 	wg := sync.WaitGroup{}
@@ -310,7 +302,7 @@ func (in *DashboardsService) DiscoverDashboards(namespace string, labelsFilters 
 
 	allDashboards, err := in.loadRawDashboardResources(namespace)
 	if err != nil {
-		in.errorf("runtimes discovery failed, cannot load dashboards in namespace %s. Error was: %v", namespace, err)
+		in.Logger.Errorf("runtimes discovery failed, cannot load dashboards in namespace %s. Error was: %v", namespace, err)
 		return []model.Runtime{}
 	}
 

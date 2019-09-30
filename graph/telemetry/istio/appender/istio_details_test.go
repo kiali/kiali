@@ -61,7 +61,7 @@ func TestCBAll(t *testing.T) {
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
-	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{core_v1.Service{}}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil)
@@ -122,7 +122,7 @@ func TestCBSubset(t *testing.T) {
 		dRule.DeepCopyIstioObject(),
 	}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
-	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{core_v1.Service{}}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 
 	businessLayer := business.NewWithBackends(k8s, nil)
@@ -140,15 +140,12 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.AppenderGlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := graph.AppenderNamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 	assert.Equal(true, trafficMap[appNodeId].Metadata[graph.HasCB])
@@ -191,7 +188,7 @@ func TestVS(t *testing.T) {
 	}
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{}, nil)
 	k8s.On("GetEndpoints", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Endpoints{}, nil)
-	k8s.On("GetService", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&core_v1.Service{}, nil)
+	k8s.On("GetServices", mock.AnythingOfType("string"), mock.Anything).Return([]core_v1.Service{core_v1.Service{}}, nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), "").Return([]kubernetes.IstioObject{
 		vService.DeepCopyIstioObject(),
 	}, nil)
@@ -212,15 +209,12 @@ func TestVS(t *testing.T) {
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.AppenderGlobalInfo{
-		Business: businessLayer,
-	}
-	namespaceInfo := graph.AppenderNamespaceInfo{
-		Namespace: "testNamespace",
-	}
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := IstioAppender{}
-	a.AppendGraph(trafficMap, &globalInfo, &namespaceInfo)
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
 	assert.Equal(nil, trafficMap[appNodeId].Metadata[graph.HasCB])

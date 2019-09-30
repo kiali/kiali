@@ -4,5 +4,7 @@ molecule
 openshift
 jmespath
 junit-xml
+kubernetes
 pyasn1>=0.4.6
 python-ldap
+docker

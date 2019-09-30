@@ -10,7 +10,8 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/k-charted/config/promconfig"
+	"github.com/kiali/k-charted/config/extconfig"
+	"github.com/kiali/k-charted/httputil"
 )
 
 type ClientInterface interface {
@@ -30,9 +31,9 @@ type Client struct {
 
 // NewClient creates a new client to the Prometheus API.
 // It returns an error on any problem.
-func NewClient(cfg promconfig.PrometheusConfig) (*Client, error) {
+func NewClient(cfg extconfig.PrometheusConfig) (*Client, error) {
 	clientConfig := api.Config{Address: cfg.URL}
-	transportConfig, err := authTransport(&cfg.Auth, api.DefaultRoundTripper.(*http.Transport))
+	transportConfig, err := httputil.AuthTransport(&cfg.Auth, api.DefaultRoundTripper.(*http.Transport))
 	if err != nil {
 		return nil, err
 	}

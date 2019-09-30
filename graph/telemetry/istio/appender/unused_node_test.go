@@ -190,23 +190,31 @@ func TestVersionWithNoTrafficScenario(t *testing.T) {
 	assert.Equal(nil, recommendationV1.Metadata[graph.IsUnused])
 }
 
-func mockServices(a UnusedNodeAppender) []models.ServiceOverview {
+func mockServices(a UnusedNodeAppender) []models.ServiceDetails {
 	if !(a.GraphType == graph.GraphTypeService || a.InjectServiceNodes) {
-		return []models.ServiceOverview{}
+		return []models.ServiceDetails{}
 	}
 
-	return []models.ServiceOverview{
+	return []models.ServiceDetails{
 		{
-			Name: "customer",
+			Service: models.Service{
+				Name: "customer",
+			},
 		},
 		{
-			Name: "preference",
+			Service: models.Service{
+				Name: "preference",
+			},
 		},
 		{
-			Name: "recommendation",
+			Service: models.Service{
+				Name: "recommendation",
+			},
 		},
 		{
-			Name: "recommendation",
+			Service: models.Service{
+				Name: "recommendation",
+			},
 		},
 	}
 }

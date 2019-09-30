@@ -5,7 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
+
+	"github.com/kiali/k-charted/kubernetes/v1alpha1"
+	kmodel "github.com/kiali/k-charted/model"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -15,11 +20,6 @@ import (
 )
 
 type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
-
-const (
-	workloadDashboardPattern = "Istio%20Workload%20Dashboard"
-	serviceDashboardPattern  = "Istio%20Service%20Dashboard"
-)
 
 // GetGrafanaInfo provides the Grafana URL and other info, first by checking if a config exists
 // then (if not) by inspecting the Kubernetes Grafana service in Istio installation namespace
@@ -72,26 +72,37 @@ func getGrafanaInfo(requestToken string, dashboardSupplier dashboardSupplier) (*
 	}
 
 	// Call Grafana REST API to get dashboard urls
-	serviceDashboardPath, err := getDashboardPath(apiURL, serviceDashboardPattern, &auth, dashboardSupplier)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
-	workloadDashboardPath, err := getDashboardPath(apiURL, workloadDashboardPattern, &auth, dashboardSupplier)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
+	links := []kmodel.ExternalLink{}
+	for _, dashboardConfig := range grafanaConfig.Dashboards {
+		dashboardPath, err := getDashboardPath(apiURL, dashboardConfig.Name, &auth, dashboardSupplier)
+		if err != nil {
+			return nil, http.StatusServiceUnavailable, err
+		}
+		if dashboardPath != "" {
+			externalLink := kmodel.ExternalLink{
+				URL:  strings.TrimSuffix(externalURL, "/") + "/" + strings.TrimPrefix(dashboardPath, "/"),
+				Name: dashboardConfig.Name,
+				Variables: v1alpha1.MonitoringDashboardExternalLinkVariables{
+					App:       dashboardConfig.Variables.App,
+					Namespace: dashboardConfig.Variables.Namespace,
+					Service:   dashboardConfig.Variables.Service,
+					Version:   dashboardConfig.Variables.Version,
+					Workload:  dashboardConfig.Variables.Workload,
+				},
+			}
+			links = append(links, externalLink)
+		}
 	}
 
 	grafanaInfo := models.GrafanaInfo{
-		URL:                   externalURL,
-		ServiceDashboardPath:  serviceDashboardPath,
-		WorkloadDashboardPath: workloadDashboardPath,
+		ExternalLinks: links,
 	}
 
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-func getDashboardPath(url, searchPattern string, auth *config.Auth, dashboardSupplier dashboardSupplier) (string, error) {
-	body, code, err := dashboardSupplier(url, searchPattern, auth)
+func getDashboardPath(basePath, name string, auth *config.Auth, dashboardSupplier dashboardSupplier) (string, error) {
+	body, code, err := dashboardSupplier(basePath, url.PathEscape(name), auth)
 	if err != nil {
 		return "", err
 	}
@@ -116,18 +127,20 @@ func getDashboardPath(url, searchPattern string, auth *config.Auth, dashboardSup
 		return "", err
 	}
 	if len(dashboards) == 0 {
-		return "", fmt.Errorf("no Grafana dashboard found for search pattern '%s'", searchPattern)
+		log.Warningf("No Grafana dashboard found for pattern '%s'", name)
+		return "", nil
 	}
 	if len(dashboards) > 1 {
-		log.Infof("Several Grafana dashboards found for pattern '%s', picking the first one", searchPattern)
+		log.Infof("Several Grafana dashboards found for pattern '%s', picking the first one", name)
 	}
 	dashPath, ok := dashboards[0]["url"]
 	if !ok {
-		return "", fmt.Errorf("URL field not found in Grafana dashboard for search pattern '%s'", searchPattern)
+		log.Warningf("URL field not found in Grafana dashboard for search pattern '%s'", name)
+		return "", nil
 	}
 	return dashPath.(string), nil
 }
 
 func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	return httputil.HttpGet(url+"/api/search?query="+searchPattern, auth, time.Second*30)
+	return httputil.HttpGet(strings.TrimSuffix(url, "/")+"/api/search?query="+searchPattern, auth, time.Second*10)
 }

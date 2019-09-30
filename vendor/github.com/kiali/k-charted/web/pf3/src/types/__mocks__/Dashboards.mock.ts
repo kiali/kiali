@@ -14,12 +14,14 @@ export const generateRandomDashboard = (title: string, seed?: string): Dashboard
       generateRandomHistogramChart('Animal histogram'),
       generateRandomHistogramChart('Fruit histogram')
     ],
-    aggregations: []
+    aggregations: [],
+    externalLinks: []
   };
 };
 
 export const emptyDashboard: DashboardModel = {
   title: 'Empty dashboard',
   charts: [],
-  aggregations: []
+  aggregations: [],
+  externalLinks: []
 };

@@ -33,10 +33,11 @@ type MonitoringDashboardsList struct {
 }
 
 type MonitoringDashboardSpec struct {
-	Title      string                    `json:"title"`
-	Runtime    string                    `json:"runtime"`
-	DiscoverOn string                    `json:"discoverOn"`
-	Items      []MonitoringDashboardItem `json:"items"`
+	Title         string                            `json:"title"`
+	Runtime       string                            `json:"runtime"`
+	DiscoverOn    string                            `json:"discoverOn"`
+	Items         []MonitoringDashboardItem         `json:"items"`
+	ExternalLinks []MonitoringDashboardExternalLink `json:"externalLinks"`
 }
 
 type MonitoringDashboardItem struct {
@@ -50,8 +51,12 @@ type MonitoringDashboardItem struct {
 
 type MonitoringDashboardChart struct {
 	Name         string                           `json:"name"`
-	Unit         string                           `json:"unit"`
+	Unit         string                           `json:"unit"`      // Stands for the base unit (regardless its scale in datasource)
+	UnitScale    float64                          `json:"unitScale"` // Stands for the scale of the values in datasource, related to the base unit provided. E.g. unit: "seconds" and unitScale: 0.001 means that values in datasource are actually in milliseconds.
 	Spans        int                              `json:"spans"`
+	ChartType    *string                          `json:"chartType"`
+	Min          *int                             `json:"min"`
+	Max          *int                             `json:"max"`
 	MetricName   string                           `json:"metricName"`
 	DataType     string                           `json:"dataType"`   // DataType is either "raw", "rate" or "histogram"
 	Aggregator   string                           `json:"aggregator"` // Aggregator can be set for raw data. Ex: "sum", "avg". See https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
@@ -61,6 +66,20 @@ type MonitoringDashboardChart struct {
 type MonitoringDashboardAggregation struct {
 	Label       string `json:"label"`
 	DisplayName string `json:"displayName"`
+}
+
+type MonitoringDashboardExternalLink struct {
+	Type      string                                   `json:"type"`
+	Name      string                                   `json:"name"`
+	Variables MonitoringDashboardExternalLinkVariables `json:"variables"`
+}
+
+type MonitoringDashboardExternalLinkVariables struct {
+	Namespace string `json:"namespace,omitempty"`
+	App       string `json:"app,omitempty"`
+	Service   string `json:"service,omitempty"`
+	Version   string `json:"version,omitempty"`
+	Workload  string `json:"workload,omitempty"`
 }
 
 // TODO: auto-generate the following deepcopy methods!

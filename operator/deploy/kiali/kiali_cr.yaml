@@ -188,7 +188,7 @@ spec:
 #
 # Determines which Kiali image to download and install.
 #    ---
-#    image_name: "kiali/kiali"
+#    image_name: "quay.io/kiali/kiali"
 #
 # The Kubernetes pull policy for the Kiali deployment.
 # This is overridden to be "Always" if image_version is set to "latest".
@@ -270,6 +270,13 @@ spec:
 #   use_kiali_token: When true and if auth.type is "bearer", the same OAuth token used for authentication in Kiali will be used for the API calls to Grafana,
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
+# dashboards: A list of Grafana dashboards that Kiali can link to. Each item contains:
+#   name: The name of the dashboard in Grafana
+#   variables:
+#     app: The name of a variable that holds the app name, if used in that dashboard (else it must be omitted)
+#     namespace: The name of a variable that holds the namespace, if used in that dashboard (else it must be omitted)
+#     service: The name of a variable that holds the service name, if used in that dashboard (else it must be omitted)
+#     workload: The name of a variable that holds the workload name, if used in that dashboard (else it must be omitted)
 # enabled: When true, Grafana support will be enabled in Kiali.
 # in_cluster_url: Set URL for in-cluster access. Example: "http://grafana.istio-system:3000".
 # url: The URL that Kiali uses when integrating with Grafana. This URL must be accessible to clients external to
@@ -284,6 +291,15 @@ spec:
 #        type: "none"
 #        use_kiali_token: false
 #        username: ""
+#      dashboards:
+#      - name: "Istio Service Dashboard"
+#        variables:
+#          namespace: "var-namespace"
+#          service: "var-service"
+#      - name: "Istio Workload Dashboard"
+#        variables:
+#          namespace: "var-namespace"
+#          workload: "var-workload"
 #      enabled: true
 #      in_cluster_url: "http://grafana.istio-system:3000"
 #      url: ""
@@ -346,6 +362,7 @@ spec:
 #       and auth.token config is ignored then.
 #   username: Username to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
+# in_cluster_url: Set URL for in-cluster access. Example: "http://jaeger-query.istio-system:16686".
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
 # port: The kubernetes port where the tracing service is mount. Default port is Jaeger port, 16686. Autodiscovered when service is not specified.
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
@@ -363,6 +380,7 @@ spec:
 #        use_kiali_token: false
 #        username: ""
 #      enabled: true
+#      in_cluster_url: ""
 #      namespace: ""
 #      port: 16686
 #      service : ""

@@ -56,13 +56,14 @@ func TestGetServiceMetrics(t *testing.T) {
 	mockWithRange(api, expectedRange, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]))"), 13)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.7)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
+	mockHistogram(api, "istio_request_duration_milliseconds", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.8)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",destination_service_name=\"productpage\",destination_service_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.9)
 
 	// Test that range and rate interval are changed when needed (namespace bounds)
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
+	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -71,6 +72,8 @@ func TestGetServiceMetrics(t *testing.T) {
 	assert.NotNil(t, rqSizeIn)
 	rqDurationIn := metrics.Histograms["request_duration"]
 	assert.NotNil(t, rqDurationIn)
+	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
+	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
 	assert.NotNil(t, rsSizeIn)
 	tcpRecIn := metrics.Metrics["tcp_received"]
@@ -99,6 +102,7 @@ func TestGetAppMetrics(t *testing.T) {
 	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_request_duration_milliseconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\",source_app=\"productpage\"}[5m]", 0.35, 0.2, 0.3, 0.6)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
@@ -110,7 +114,7 @@ func TestGetAppMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
+	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
 	rqCountIn := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountIn)
 	rqErrorCountIn := metrics.Metrics["request_error_count"]
@@ -119,6 +123,8 @@ func TestGetAppMetrics(t *testing.T) {
 	assert.NotNil(t, rqSizeIn)
 	rqDurationIn := metrics.Histograms["request_duration"]
 	assert.NotNil(t, rqDurationIn)
+	rqDurationMillisIn := metrics.Histograms["request_duration_millis"]
+	assert.NotNil(t, rqDurationMillisIn)
 	rsSizeIn := metrics.Histograms["response_size"]
 	assert.NotNil(t, rsSizeIn)
 	tcpRecIn := metrics.Metrics["tcp_received"]
@@ -231,6 +237,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	mockRange(api, round("sum(rate(istio_tcp_sent_bytes_total{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]))"), 12)
 	mockHistogram(api, "istio_request_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.4)
 	mockHistogram(api, "istio_request_duration_seconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
+	mockHistogram(api, "istio_request_duration_milliseconds", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.5)
 	mockHistogram(api, "istio_response_bytes", "{reporter=\"source\",source_workload_namespace=\"bookinfo\"}[5m]", 0.35, 0.2, 0.3, 0.6)
 	q := prometheus.IstioMetricsQuery{
 		Namespace: "bookinfo",
@@ -241,7 +248,7 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	metrics := client.GetMetrics(&q)
 
 	assert.Equal(t, 4, len(metrics.Metrics), "Should have 4 simple metrics")
-	assert.Equal(t, 3, len(metrics.Histograms), "Should have 3 histograms")
+	assert.Equal(t, 4, len(metrics.Histograms), "Should have 4 histograms")
 	rqCountOut := metrics.Metrics["request_count"]
 	assert.NotNil(t, rqCountOut)
 	rqErrorCountOut := metrics.Metrics["request_error_count"]
@@ -250,6 +257,8 @@ func TestGetNamespaceMetrics(t *testing.T) {
 	assert.NotNil(t, rqSizeOut)
 	rqDurationOut := metrics.Histograms["request_duration"]
 	assert.NotNil(t, rqDurationOut)
+	rqDurationMillisOut := metrics.Histograms["request_duration_millis"]
+	assert.NotNil(t, rqDurationMillisOut)
 	rsSizeOut := metrics.Histograms["response_size"]
 	assert.NotNil(t, rsSizeOut)
 	tcpRecOut := metrics.Metrics["tcp_received"]

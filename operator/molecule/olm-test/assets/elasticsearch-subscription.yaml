@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: elastic-search
+  namespace: openshift-operators
+spec:
+  channel: preview
+  source: rhd-workshop-packages
+  name: elasticsearch-operator
+  sourceNamespace: openshift-operators

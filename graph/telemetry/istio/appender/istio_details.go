@@ -27,8 +27,15 @@ func (a IstioAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *grap
 		return
 	}
 
+	if getServiceDefinitionList(namespaceInfo) == nil {
+		sdl, err := globalInfo.Business.Svc.GetServiceDefinitionList(namespaceInfo.Namespace)
+		graph.CheckError(err)
+		namespaceInfo.Vendor[serviceDefinitionListKey] = sdl
+	}
+	sdl := getServiceDefinitionList(namespaceInfo)
+
 	addBadging(trafficMap, globalInfo, namespaceInfo)
-	addLabels(trafficMap, globalInfo)
+	addLabels(trafficMap, globalInfo, sdl)
 }
 
 func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
@@ -110,30 +117,32 @@ NODES:
 }
 
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
-// TODO: For efficiency we may want to consider pulling all namespace service definitions in one call (the call does not
-//       exist at this writing).  As written we pull each service individually, which can be a fair number of round
-//       trips when services are injected (as they are by default). Note also that currently we do query for
-//       outsider service nodes.  That may be a security problem f the outside namespace is inaccessible to the user. If
-//       that becomes an issue we can limit to accessible namespaces or only to the AppenderNamespaceInfo namespace.
-func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+// For example, service injection has this problem.
+func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, sdl *models.ServiceDefinitionList) {
+	// build map for quick lookup
+	svcMap := map[string]*models.Service{}
+	for _, sd := range sdl.ServiceDefinitions {
+		s := sd.Service
+		svcMap[sd.Service.Name] = &s
+	}
+
 	appLabelName := config.Get().IstioLabels.AppLabelName
 	for _, n := range trafficMap {
 		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-		if n.NodeType == graph.NodeTypeService && n.Namespace != graph.Unknown && n.App == "" {
+		if n.NodeType == graph.NodeTypeService && n.Namespace == sdl.Namespace.Name && n.App == "" {
 			// A service node that is a service entry will not have a service definition
 			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				continue
 			}
-
-			service, err := globalInfo.Business.Svc.GetServiceDefinition(n.Namespace, n.Service)
-			if err != nil {
-				log.Debugf("Error fetching service definition, may not apply app label correctly for namespace=%s svc=%s: %s", n.Namespace, n.Service, err.Error())
-				if service == nil {
-					continue
-				}
+			// A service node that is a PassthroughCluster will not have a service definition
+			if _, ok := n.Metadata[graph.IsPassthroughCluster]; ok {
+				continue
 			}
 
-			if app, ok := service.Service.Labels[appLabelName]; ok {
+			if svc, found := svcMap[n.Service]; !found {
+				log.Debugf("Service not found, may not apply app label correctly for [%s:%s]", n.Namespace, n.Service)
+				continue
+			} else if app, ok := svc.Labels[appLabelName]; ok {
 				n.App = app
 			}
 		}

@@ -1,8 +1,10 @@
 package models
 
+import (
+	kmodel "github.com/kiali/k-charted/model"
+)
+
 // GrafanaInfo provides information to access Grafana dashboards
 type GrafanaInfo struct {
-	URL                   string `json:"url"`
-	ServiceDashboardPath  string `json:"serviceDashboardPath"`
-	WorkloadDashboardPath string `json:"workloadDashboardPath"`
+	ExternalLinks []kmodel.ExternalLink `json:"externalLinks"`
 }

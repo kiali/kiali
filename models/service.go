@@ -31,6 +31,11 @@ type ServiceList struct {
 	Validations IstioValidations  `json:"validations"`
 }
 
+type ServiceDefinitionList struct {
+	Namespace          Namespace        `json:"namespace"`
+	ServiceDefinitions []ServiceDetails `json:"serviceDefinitions"`
+}
+
 type ServiceDetails struct {
 	Service          Service           `json:"service"`
 	IstioSidecar     bool              `json:"istioSidecar"`

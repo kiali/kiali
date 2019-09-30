@@ -2,7 +2,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import KChart from './KChart';
 import { getDataSupplier } from '../utils/c3ChartsUtils';
-import { empty, error, generateRandomMetricChart, generateRandomHistogramChart } from '../types/__mocks__/Charts.mock';
+import { empty, error, generateRandomMetricChart, generateRandomHistogramChart, emptyLabels } from '../types/__mocks__/Charts.mock';
 
 import 'patternfly/dist/css/patternfly.css';
 import 'patternfly/dist/css/patternfly-additions.css';
@@ -13,14 +13,14 @@ const histogram = generateRandomHistogramChart('Random histogram chart', 'kchart
 
 storiesOf('PF3 KChart', module)
 .add('with data', () => (
-  <KChart chart={metric} dataSupplier={getDataSupplier(metric, new Map())!} />
+  <KChart chart={metric} dataSupplier={getDataSupplier(metric, emptyLabels)!} />
 ))
 .add('histogram', () => (
-  <KChart chart={histogram} dataSupplier={getDataSupplier(histogram, new Map())!} />
+  <KChart chart={histogram} dataSupplier={getDataSupplier(histogram, emptyLabels)!} />
 ))
   .add('empty', () => (
-    <KChart chart={empty} dataSupplier={getDataSupplier(empty, new Map())!} />
+    <KChart chart={empty} dataSupplier={getDataSupplier(empty, emptyLabels)!} />
   ))
   .add('with error', () => (
-    <KChart chart={error} dataSupplier={getDataSupplier(empty, new Map())!} />
+    <KChart chart={error} dataSupplier={getDataSupplier(empty, emptyLabels)!} />
   ));

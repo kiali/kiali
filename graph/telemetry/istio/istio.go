@@ -25,7 +25,9 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
+	"github.com/kiali/kiali/graph/telemetry/istio/util"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -47,198 +49,21 @@ func BuildNamespacesTrafficMap(o graph.TelemetryOptions, client *prometheus.Clie
 			a.AppendGraph(namespaceTrafficMap, globalInfo, namespaceInfo)
 			appenderTimer.ObserveDuration()
 		}
-		mergeTrafficMaps(trafficMap, namespace.Name, namespaceTrafficMap)
+		telemetry.MergeTrafficMaps(trafficMap, namespace.Name, namespaceTrafficMap)
 	}
 
 	// The appenders can add/remove/alter nodes. After the manipulations are complete
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the insider traffic generators (i.e. inside the namespace and only outgoing edges)
-	markOutsideOrInaccessible(trafficMap, o)
-	markTrafficGenerators(trafficMap)
+	telemetry.MarkOutsideOrInaccessible(trafficMap, o)
+	telemetry.MarkTrafficGenerators(trafficMap)
 
 	if graph.GraphTypeService == o.GraphType {
-		trafficMap = reduceToServiceGraph(trafficMap)
+		trafficMap = telemetry.ReduceToServiceGraph(trafficMap)
 	}
 
 	return trafficMap
-}
-
-// mergeTrafficMaps ensures that we only have unique nodes by removing duplicate
-// nodes and merging their edges.  When removing a duplicate prefer an instance
-// from the namespace being merged-in because it is guaranteed to have all appender
-// information applied (i.e. not an outsider). We also need to avoid duplicate edges,
-// it can happen when a terminal node of one namespace is a root node of another:
-//   ns1 graph: unknown -> ns1:A -> ns2:B
-//   ns2 graph:   ns1:A -> ns2:B -> ns2:C
-func mergeTrafficMaps(trafficMap graph.TrafficMap, ns string, nsTrafficMap graph.TrafficMap) {
-	for nsID, nsNode := range nsTrafficMap {
-		if node, isDup := trafficMap[nsID]; isDup {
-			if nsNode.Namespace == ns {
-				// prefer nsNode (see above comment), so do a swap
-				trafficMap[nsID] = nsNode
-				temp := node
-				node = nsNode
-				nsNode = temp
-			}
-			for _, nsEdge := range nsNode.Edges {
-				isDupEdge := false
-				for _, e := range node.Edges {
-					if nsEdge.Dest.ID == e.Dest.ID && nsEdge.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
-						isDupEdge = true
-						break
-					}
-				}
-				if !isDupEdge {
-					node.Edges = append(node.Edges, nsEdge)
-					// add traffic for the new edge
-					graph.AddOutgoingEdgeToMetadata(node.Metadata, nsEdge.Metadata)
-				}
-			}
-		} else {
-			trafficMap[nsID] = nsNode
-		}
-	}
-}
-
-func markOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.TelemetryOptions) {
-	for _, n := range trafficMap {
-		switch n.NodeType {
-		case graph.NodeTypeUnknown:
-			n.Metadata[graph.IsInaccessible] = true
-		case graph.NodeTypeService:
-			if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
-				n.Metadata[graph.IsInaccessible] = true
-			} else {
-				if isOutside(n, o.Namespaces) {
-					n.Metadata[graph.IsOutside] = true
-				}
-			}
-		default:
-			if isOutside(n, o.Namespaces) {
-				n.Metadata[graph.IsOutside] = true
-			}
-		}
-		if isOutsider, ok := n.Metadata[graph.IsOutside]; ok && isOutsider.(bool) {
-			if _, ok2 := n.Metadata[graph.IsInaccessible]; !ok2 {
-				if isInaccessible(n, o.AccessibleNamespaces) {
-					n.Metadata[graph.IsInaccessible] = true
-				}
-			}
-		}
-	}
-}
-
-func isOutside(n *graph.Node, namespaces map[string]graph.NamespaceInfo) bool {
-	if n.Namespace == graph.Unknown {
-		return false
-	}
-	for _, ns := range namespaces {
-		if n.Namespace == ns.Name {
-			return false
-		}
-	}
-	return true
-}
-
-func isInaccessible(n *graph.Node, accessibleNamespaces map[string]time.Time) bool {
-	if _, found := accessibleNamespaces[n.Namespace]; !found {
-		return true
-	} else {
-		return false
-	}
-}
-
-func markTrafficGenerators(trafficMap graph.TrafficMap) {
-	destMap := make(map[string]*graph.Node)
-	for _, n := range trafficMap {
-		for _, e := range n.Edges {
-			destMap[e.Dest.ID] = e.Dest
-		}
-	}
-	for _, n := range trafficMap {
-		if len(n.Edges) == 0 {
-			continue
-		}
-		if _, isDest := destMap[n.ID]; !isDest {
-			n.Metadata[graph.IsRoot] = true
-		}
-	}
-}
-
-// reduceToServicGraph compresses a [service-injected workload] graph by removing
-// the workload nodes such that, with exception of non-service root nodes, the resulting
-// graph has edges only from and to service nodes.
-func reduceToServiceGraph(trafficMap graph.TrafficMap) graph.TrafficMap {
-	reducedTrafficMap := graph.NewTrafficMap()
-
-	for id, n := range trafficMap {
-		if n.NodeType != graph.NodeTypeService {
-			// if node isRoot then keep it to better understand traffic flow.
-			if val, ok := n.Metadata[graph.IsRoot]; ok && val.(bool) {
-				// Remove any edge to a non-service node.  The service graph only shows non-service root
-				// nodes, all other nodes are service nodes.  The use case is direct workload-to-workload
-				// traffic, which is unusual but possible.  This can lead to nodes with outgoing traffic
-				// not represented by an outgoing edge, but that is the nature of the graph type.
-				serviceEdges := []*graph.Edge{}
-				for _, e := range n.Edges {
-					if e.Dest.NodeType == graph.NodeTypeService {
-						serviceEdges = append(serviceEdges, e)
-					} else {
-						log.Tracef("Service graph ignoring non-service root destination [%s]", e.Dest.Workload)
-					}
-				}
-				n.Edges = serviceEdges
-				reducedTrafficMap[id] = n
-			}
-			continue
-		}
-
-		// handle service node, add to reduced traffic map and generate new edges
-		reducedTrafficMap[id] = n
-		workloadEdges := n.Edges
-		n.Edges = []*graph.Edge{}
-		for _, workloadEdge := range workloadEdges {
-			workload := workloadEdge.Dest
-			checkNodeType(graph.NodeTypeWorkload, workload)
-			for _, serviceEdge := range workload.Edges {
-				// As above, ignore edges to non-service destinations
-				if serviceEdge.Dest.NodeType != graph.NodeTypeService {
-					log.Tracef("Service graph ignoring non-service destination [%s]", serviceEdge.Dest.Workload)
-					continue
-				}
-				childService := serviceEdge.Dest
-				var edge *graph.Edge
-				for _, e := range n.Edges {
-					if childService.ID == e.Dest.ID && serviceEdge.Metadata[graph.ProtocolKey] == e.Metadata[graph.ProtocolKey] {
-						edge = e
-						break
-					}
-				}
-				if nil == edge {
-					n.Edges = append(n.Edges, serviceEdge)
-				} else {
-					addServiceGraphTraffic(edge, serviceEdge)
-				}
-			}
-		}
-	}
-
-	return reducedTrafficMap
-}
-
-func addServiceGraphTraffic(toEdge, fromEdge *graph.Edge) {
-	graph.AggregateEdgeTraffic(fromEdge, toEdge)
-
-	// handle any appender-based edge data (nothing currently)
-	// note: We used to average response times of the aggregated edges but realized that
-	// we can't average quantiles (kiali-2297).
-}
-
-func checkNodeType(expected string, n *graph.Node) {
-	if expected != n.NodeType {
-		graph.Error(fmt.Sprintf("Expected nodeType [%s] for node [%+v]", expected, n))
-	}
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All
@@ -256,9 +81,13 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	isIstioNamespace := o.Namespaces[namespace].IsIstio
 
 	// query prometheus for request traffic in three queries:
-	// 1) query for traffic originating from "unknown" (i.e. the internet).
+	// 1) query for traffic originating from "unknown" (i.e. the internet). Unknown sources have no istio sidecar so
+	//    it is destination telemetry. Here we use destination_workload_namespace because destination telemetry
+	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
+	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
+	//    defined, on the other cluster.
 	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
-	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
+	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
 		int(duration.Seconds()), // range duration for the query
@@ -266,7 +95,8 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	unkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 	populateTrafficMap(trafficMap, &unkVector, o)
 
-	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner case)
+	// 2) query for external traffic, originating from a workload outside of the namespace.  Exclude any "unknown" source telemetry (an unusual corner
+	//	  case resulting from pod lifecycle changes).  Here use destination_service_workload to capture failed requests never reaching a dest workload.
 	reporter := "source"
 	sourceWorkloadNamespaceQuery := fmt.Sprintf(`source_workload_namespace!="%s"`, namespace)
 	if isIstioNamespace {
@@ -387,18 +217,17 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		flags := string(lFlags)
 
 		val := float64(s.Value)
-		destSvcName = handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName)
+		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
-		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcNameOk = graph.IsOK(destSvcName)
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if o.InjectServiceNodes && graph.IsOK(destSvcName) {
 			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-				addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			} else {
-				addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			}
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTraffic(trafficMap, val, protocol, code, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
 			addTraffic(trafficMap, val, protocol, code, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
@@ -470,18 +299,17 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		flags := string(lFlags)
 
 		val := float64(s.Value)
-		destSvcName = handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName)
+		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
 
-		if o.InjectServiceNodes {
-			// don't inject a service node if the dest node is already a service node.  Also, we can't inject if destSvcName is not set.
-			destSvcNameOk = graph.IsOK(destSvcName)
+		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
+		inject := false
+		if o.InjectServiceNodes && graph.IsOK(destSvcName) {
 			_, destNodeType := graph.Id(destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
-			if destSvcNameOk && destNodeType != graph.NodeTypeService {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-				addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			} else {
-				addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
-			}
+			inject = (graph.NodeTypeService != destNodeType)
+		}
+		if inject {
+			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
 			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
@@ -592,8 +420,8 @@ func BuildNodeTrafficMap(o graph.TelemetryOptions, client *prometheus.Client, gl
 	// we can make some final adjustments:
 	// - mark the outsiders (i.e. nodes not in the requested namespaces)
 	// - mark the traffic generators
-	markOutsideOrInaccessible(trafficMap, o)
-	markTrafficGenerators(trafficMap)
+	telemetry.MarkOutsideOrInaccessible(trafficMap, o)
+	telemetry.MarkTrafficGenerators(trafficMap)
 
 	// Note that this is where we would call reduceToServiceGraph for graphTypeService but
 	// the current decision is to not reduce the node graph to provide more detail.  This may be
@@ -656,18 +484,20 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	case graph.NodeTypeService:
 		// for service requests we want source reporting to capture source-reported errors.  But unknown only generates destination telemetry.  So
 		// perform a special query just to capture [successful] request telemetry from unknown.
-		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s",destination_service_name=~"%s|%s\\..+\\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
+			n.Service,
 			n.Service,
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
 		vector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMap(trafficMap, &vector, o)
 
-		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name="%s"} [%vs])) by (%s)`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_service_namespace="%s",destination_service_name=~"%s|%s\\..+\\.global"} [%vs])) by (%s)`,
 			httpMetric,
 			namespace,
+			n.Service,
 			n.Service,
 			int(interval.Seconds()), // range duration for the query
 			groupBy)
@@ -867,31 +697,4 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 	}
 
 	return nil
-}
-
-// handleMultiClusterServiceName resolves the right name for the destination svc
-// given a multi-cluster setup.
-//
-// For multi-cluster setup, if "we are" the DESTINATION cluster of traffic,
-// the destination_service_name label will contain the
-// hostname that the source cluster requested. Since we know that the requested hostname
-// has the form "svc_name.ns_name.global", we can truncate the destSvcName to the
-// prefix to correctly unify svc nodes. This way, the graph will show only one "svc_name" node
-// instead of duplicating and having one "svc_name" and one "svc_name.ns_name.global" node which,
-// in practice, are same.
-//
-// This is done only if source workload is "unknown" which is what is recorded in telemetry
-// when traffic is coming from a remote cluster. If source workload IS known,
-// then, traffic is most-likely going to a ServiceEntry and being routed out of the cluster (i.e.
-// the "source cluster" case). That case is handled in the service_entry.go file.
-func handleMultiClusterServiceName(sourceWlNs, sourceWl, destSvcName string) string {
-	if sourceWlNs == graph.Unknown && sourceWl == graph.Unknown {
-		destSvcNameEntries := strings.Split(destSvcName, ".")
-
-		if len(destSvcNameEntries) == 3 && destSvcNameEntries[2] == config.IstioMultiClusterHostSuffix {
-			destSvcName = destSvcNameEntries[0]
-		}
-	}
-
-	return destSvcName
 }

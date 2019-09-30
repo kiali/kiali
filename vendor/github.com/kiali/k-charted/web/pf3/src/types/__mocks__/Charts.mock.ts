@@ -1,6 +1,7 @@
 import { ChartModel } from '../../../../common/types/Dashboards';
 import { TimeSeries } from '../../../../common/types/Metrics';
 import seedrandom from 'seedrandom';
+import { LabelsInfo } from '../../../../common/utils/timeSeriesUtils';
 
 const t0 = 1556802000;
 const increment = 60;
@@ -107,4 +108,45 @@ export const histogram: ChartModel = {
       labelSet: {}
     }]
   }
+};
+
+export const emptyLabels: LabelsInfo = {
+  values: new Map()
+};
+
+export const labelsWithPrettifier: LabelsInfo = {
+  values: new Map([['code', {
+    '200': true,
+    '204': true,
+    'foobar': true,
+    'foobaz': false
+  }]]),
+  prettifier: (k: string, v: string): string => {
+    if (k === 'code' && v === '200') {
+      return 'OK';
+    }
+    if (k === 'code' && v === '204') {
+      return 'No content';
+    }
+    return v;
+  }
+};
+
+export const metricWithLabels: ChartModel = {
+  name: 'Metric chart',
+  unit: 'bytes',
+  spans: 6,
+  metric: [{
+    values: [[0, 0]],
+    labelSet: {'code': '200'}
+  }, {
+    values: [[0, 0]],
+    labelSet: {'code': '204'}
+  }, {
+    values: [[0, 0]],
+    labelSet: {'code': 'foobar'}
+  }, {
+    values: [[0, 0]],
+    labelSet: {'code': 'foobaz'}
+  }]
 };

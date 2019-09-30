@@ -1,0 +1,98 @@
+- name: Installing Meshes
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+  - name: Create Namespaces for Kiali Test Mesh
+    k8s:
+      name: "{{ item }}"
+      api_version: v1
+      kind: Namespace
+      state: present
+    with_items:
+    - "{{ kiali.test_mesh.operator.namespace }}"
+ 
+  - name: Create namespace for Meshes
+    k8s:
+      name: "{{ item.namespace }}"
+      api_version: v1
+      kind: Namespace
+      state: present
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+  - name: Deploying Kiali Test Mesh Operator
+    k8s:
+      namespace: "{{ kiali.test_mesh.operator.namespace }}"
+      definition: "{{ lookup('template', item) }}"
+    with_items:
+    -  "{{ kiali_test_mesh_operator_path }}/bookinfo-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/complex_mesh-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/redhat_tutorial-crd.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/service_account.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/role_binding.yaml"
+    -  "{{ kiali_test_mesh_operator_path }}/operator.yaml"
+
+  - name: Create Service Mesh MemberRoll for each Control Plane
+    k8s:
+      namespace: "{{ item }}"
+      definition:
+       apiVersion: maistra.io/v1
+       kind: ServiceMeshMemberRoll
+       metadata:
+         name: default
+       spec:
+        members: "{{ kiali.test_mesh.installations | json_query(query) | map(attribute='namespace') | list }}"
+    with_items:
+    - "{{ maistra.cr.control_planes }}"
+    vars:
+      query: "[?(@.control_plane=='{{ item }}')]"
+
+  
+  - name: Add Privileged to Meshes
+    shell: "oc adm policy add-scc-to-user privileged -z default -n {{ item.namespace }}"
+    when: not (item.kind == "Bookinfo" and item.hub is defined and item.hub == "docker.io/maistra")
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+  - name: Add Anyuid to Meshes
+    shell: "oc adm policy add-scc-to-user anyuid -z default -n {{ item.namespace }}"
+    when: not (item.kind == "Bookinfo" and item.hub is defined and  item.hub == "docker.io/maistra")
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+    
+  - name: Create Bookinfo CR
+    k8s:
+      namespace: "{{ item.namespace }}"
+      definition:
+        apiVersion: bookinfo.kiali.io/v1
+        kind: Bookinfo
+        metadata:
+          name: bookinfo-installation
+        spec:
+          bookinfo:
+            version: "{{ item.version }}"
+            namespace: "{{ item.namespace }}"
+            hub: "{{ item.hub }}"
+            control_plane_namespace: "{{ item.control_plane }}"
+            mongodb: "{{ item.mongodb }}"
+            mysql: "{{ item.mysql }}"
+    when: item.kind == "Bookinfo" 
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"
+
+  - name: Create RedHatTutorial CR
+    k8s:
+      namespace: "{{ item.namespace }}"
+      definition:
+        apiVersion: redhattutorial.kiali.io/v1
+        kind: RedHatTutorial
+        metadata:
+          name: redhattutorial-installation
+        spec:
+          redhat_tutorial:
+            namespace: "{{ item.namespace }}"
+            control_plane_namespace: "{{ item.control_plane }}"
+    when: item.kind == "RedHatTutorial" 
+    with_items:
+    - "{{ kiali.test_mesh.installations }}"

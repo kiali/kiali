@@ -358,7 +358,7 @@ else
   ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} apply -f -
   _crd_count="0"
   echo -n "Waiting for the CRDs to be created"
-  while [ "$_crd_count" -lt "24" ]; do
+  while [ "$_crd_count" -lt "23" ]; do
     sleep 1
     echo -n "."
     _crd_count=$(${CLIENT_EXE} get crds | grep 'istio.io\|certmanager.k8s.io' | wc -l)

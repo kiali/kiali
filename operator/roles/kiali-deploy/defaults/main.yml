@@ -51,7 +51,7 @@ kiali_defaults:
       node: {}
       pod: {}
       pod_anti: {}
-    image_name: "kiali/kiali"
+    image_name: "quay.io/kiali/kiali"
     image_pull_policy: "IfNotPresent"
     image_pull_secrets: []
     image_version: "lastrelease"
@@ -74,6 +74,15 @@ kiali_defaults:
         type: "none"
         use_kiali_token: false
         username: ""
+      dashboards:
+      - name: "Istio Service Dashboard"
+        variables:
+          namespace: "var-namespace"
+          service: "var-service"
+      - name: "Istio Workload Dashboard"
+        variables:
+          namespace: "var-namespace"
+          workload: "var-workload"
       enabled: true
       in_cluster_url: ""
       url: ""
@@ -102,6 +111,7 @@ kiali_defaults:
         use_kiali_token: false
         username: ""
       enabled: true
+      in_cluster_url: ""
       namespace: ""
       port: 16686
       service: ""

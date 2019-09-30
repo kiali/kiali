@@ -2,8 +2,9 @@ package server
 
 import (
 	"fmt"
-	"github.com/nytimes/gziphandler"
 	"net/http"
+
+	"github.com/NYTimes/gziphandler"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"

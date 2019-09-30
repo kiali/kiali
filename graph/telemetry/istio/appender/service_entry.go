@@ -65,6 +65,10 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
+		// PassthroughCluster is not a service entry (nor a defined service)
+		if n.Metadata[graph.IsPassthroughCluster] == true {
+			continue
+		}
 		// a serviceEntry has at most one outgoing edge, to an egress gateway. (note: it may be that it
 		// can only lead to "istio-egressgateway" but at the time of writing we're not sure, and so don't
 		// want to hardcode that assumption.)

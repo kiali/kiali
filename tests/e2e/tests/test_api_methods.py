@@ -18,7 +18,8 @@ def before_all_tests(kiali_client):
                           'graphNamespaces', 'graphService', 'graphWorkload', 'graphApp', 'graphAppVersion',
                           'istioConfigDetailsSubtype', 'serviceDashboard', 'workloadDashboard', 'appDashboard',
                           'AuthenticationInfo', 'OpenshiftCheckToken', 'customDashboard', 'podDetails', 'podLogs',
-                          'namespaceTls']
+                          'namespaceTls', 'getThreeScaleInfo', 'getThreeScaleHandlers', 'getThreeScaleService',
+                          'meshTls']
 
     for key in swagger.operation:
         swagger_method_list.append(key)
@@ -70,8 +71,12 @@ def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
 
-def __test_jaeger_info(kiali_client):
-    evaluate_response(kiali_client, method_name='jaegerInfo')
+def test_jaeger_info(kiali_client):
+    response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
+    if response.status_code == 503:
+        pytest.skip()
+
+    assert response.status_code == 200
 
 def test_authentication_info(kiali_client):
     evaluate_response(kiali_client, method_name='AuthenticationInfo')
@@ -159,7 +164,6 @@ def test_app_details(kiali_client):
 def test_app_health(kiali_client):
     evaluate_response(kiali_client, method_name='appHealth', path={'namespace': control_plane_namespace, 'app': 'kiali'})
 
-
 def test_workload_list(kiali_client):
     evaluate_response(kiali_client, method_name='workloadList', path={'namespace': control_plane_namespace})
 
@@ -239,6 +243,18 @@ def test_workload_dashboard(kiali_client):
 def test_app_dashboard(kiali_client):
     APP_DASHBOARD_PATH = {'namespace': 'bookinfo', 'app':'ratings'}
     evaluate_response(kiali_client, method_name='appDashboard', path=APP_DASHBOARD_PATH)
+
+def test_threescale_info(kiali_client):
+    evaluate_response(kiali_client, method_name='getThreeScaleInfo')
+
+def test_threescale_handelers(kiali_client):
+    evaluate_response(kiali_client, method_name='getThreeScaleHandlers')
+
+def __test_threescale_service(kiali_client):
+    evaluate_response(kiali_client, method_name='getThreeScaleService')
+
+def test_mesh_tls(kiali_client):
+    evaluate_response(kiali_client, method_name='meshTls')
 
 def test_negative_400(kiali_client):
 
