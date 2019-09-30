@@ -2,7 +2,6 @@ import * as React from 'react';
 import { DestinationRule, ObjectValidation } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
-import Label from '../../../components/Label/Label';
 import { Link } from 'react-router-dom';
 import { Card, CardBody, Grid, GridItem, Text, TextVariants, TooltipPosition } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
@@ -10,6 +9,7 @@ import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { ServiceIcon } from '@patternfly/react-icons';
 import { checkForPath } from '../../../types/ServiceInfo';
 import ValidationList from '../../../components/Validations/ValidationList';
+import Labels from '../../../components/Label/Labels';
 
 interface DestinationRuleProps {
   namespace: string;
@@ -59,11 +59,7 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
       cells: [
         { title: this.subsetValidation(index) },
         { title: subset.name },
-        {
-          title: subset.labels
-            ? Object.keys(subset.labels).map(key => <Label key={key} name={key} value={subset.labels[key]} />)
-            : []
-        },
+        { title: <Labels key={'subset-labels-' + index} labels={subset.labels} /> },
         { title: <DetailObject name="" detail={subset.trafficPolicy} /> }
       ]
     }));

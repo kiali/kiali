@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Label as PfLabel } from 'patternfly-react';
+import { Label as PfLabel } from '@patternfly/react-core';
 import './Label.css';
 import { canRender } from '../../utils/SafeRender';
 
@@ -14,10 +14,10 @@ const Label = (props: Props) => {
   if (canRender(name) && canRender(value)) {
     return (
       <span className="label-pair">
-        <PfLabel bsStyle="primary" className="label-key">
+        <PfLabel className="label-key" isCompact={true}>
           {name}
         </PfLabel>
-        <PfLabel bsStyle="primary" className="label-value">
+        <PfLabel className="label-value" isCompact={true}>
           {value || ''}
         </PfLabel>
       </span>

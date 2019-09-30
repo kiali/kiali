@@ -23,7 +23,7 @@ Array [
     />
   </div>,
   <div
-    className=""
+    className="hide"
     key="label_2"
   >
     <Label
@@ -44,6 +44,7 @@ Array [
   </div>,
   <a
     className="fqiflux"
+    key="label_more"
     onClick={[Function]}
   >
      

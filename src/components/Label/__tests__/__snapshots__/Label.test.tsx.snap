@@ -5,16 +5,14 @@ exports[`#Badge render correctly with data should render badge 1`] = `
   className="label-pair"
 >
   <Label
-    bsStyle="primary"
     className="label-key"
-    type="default"
+    isCompact={true}
   >
     app
   </Label>
   <Label
-    bsStyle="primary"
     className="label-value"
-    type="default"
+    isCompact={true}
   >
     bookinfo
   </Label>

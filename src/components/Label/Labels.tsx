@@ -2,7 +2,7 @@ import * as React from 'react';
 import Label from './Label';
 import { style } from 'typestyle';
 
-const SHOW_MORE_TRESHOLD = 3;
+const SHOW_MORE_TRESHOLD = 2;
 
 interface Props {
   labels?: { [key: string]: string };
@@ -49,7 +49,7 @@ class Labels extends React.Component<Props, State> {
   renderMoreLabelsLink() {
     if (this.hasManyLabels() && !this.state.expanded) {
       return (
-        <a className={linkStyle} onClick={this.expandLabels}>
+        <a key="label_more" className={linkStyle} onClick={this.expandLabels}>
           {' '}
           More labels...
         </a>
