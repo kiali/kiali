@@ -47,7 +47,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadCum
   }
 
   updateItem = () => {
-    const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-]+))?(\/([a-z0-9-]+))?/;
+    const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([a-z0-9-]+)\/([a-z0-9-]+)(\/([a-z0-9-.]+))?(\/([a-z0-9-]+))?/;
     const match = this.props.location.pathname.match(namespaceRegex) || [];
     const ns = match[1];
     const page = Paths[match[2].toUpperCase()];
