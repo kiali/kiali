@@ -1,5 +1,5 @@
-hash: dbbdd4f8ec3a4ca15e821956a6a4254517211ce9d782e646947a57063b7807b0
-updated: 2019-09-27T13:43:16.85464923+02:00
+hash: 5b5977af2f77947921257bcb3360db07be8a8dac8be63533b21f5ea66e55ad66
+updated: 2019-09-30T14:39:42.860987158+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -83,6 +83,8 @@ imports:
   - apps/v1
   - project/v1
   - route/v1
+- name: github.com/openshift/client-go
+  version: 431ec9a26e5021f35fa41ee9a89842db9bfdb370
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib

@@ -30,6 +30,8 @@ import:
   version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
 - package: github.com/openshift/api
   version: release-3.11
+- package: github.com/openshift/client-go
+  version: release-3.11
 - package: k8s.io/kube-openapi
   version: 91cfa479c814065e420cee7ed227db0f63a5854e
 - package: github.com/kiali/k-charted
