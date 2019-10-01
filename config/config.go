@@ -48,6 +48,7 @@ const (
 	EnvKubernetesQPS                    = "KUBERNETES_QPS"
 	EnvKubernetesCacheEnabled           = "KUBERNETES_CACHE_ENABLED"
 	EnvKubernetesCacheDuration          = "KUBERNETES_CACHE_DURATION"
+	EnvKubernetesCacheNamespaces        = "KUBERNETES_CACHE_KUBERNETES"
 	EnvLdapBase                         = "LDAP_BASE"
 	EnvLdapBindDN                       = "LDAP_BIND_DN"
 	EnvLdapGroupFilter                  = "LDAP_GROUP_FILTER"
@@ -229,10 +230,12 @@ type IstioLabels struct {
 
 // KubernetesConfig holds the k8s client configuration
 type KubernetesConfig struct {
-	Burst         int     `yaml:"burst,omitempty"`
-	QPS           float32 `yaml:"qps,omitempty"`
-	CacheEnabled  bool    `yaml:"cache_enabled,omitempty"`
-	CacheDuration int64   `yaml:"cache_duration,omitempty"`
+	Burst         	int     `yaml:"burst,omitempty"`
+	QPS           	float32 `yaml:"qps,omitempty"`
+	CacheEnabled  	bool    `yaml:"cache_enabled,omitempty"`
+	CacheDuration 	int64   `yaml:"cache_duration,omitempty"`
+	// CacheNamespaces provides a list of namespaces or regex defining namespaces to include in a cache
+	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
@@ -387,6 +390,7 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
 	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
+	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, "*")
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.API.Namespaces.Exclude {
