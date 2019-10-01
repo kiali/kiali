@@ -149,9 +149,9 @@ func AddToMetadata(protocol string, val float64, code, flags, host string, sourc
 	case grpc:
 		addToMetadataGrpc(val, code, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	case http:
-		addToMetadataHttp(val, code, flags, host, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataHTTP(val, code, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	case tcp:
-		addToMetadataTcp(val, flags, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataTCP(val, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	default:
 		log.Tracef("Ignore unhandled metadata protocol [%s]", protocol)
 	}
@@ -164,9 +164,9 @@ func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, de
 	addToMetadataResponses(edgeMetadata, grpcResponses, code, flags, host, val)
 
 	// Istio telemetry may use HTTP codes for gRPC, so if it quacks like a duck...
-	isHttpCode := len(code) == 3
+	isHTTPCode := len(code) == 3
 	isErr := false
-	if isHttpCode {
+	if isHTTPCode {
 		isErr = strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5")
 	} else {
 		isErr = code != "0"
@@ -177,7 +177,7 @@ func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, de
 	}
 }
 
-func addToMetadataHttp(val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func addToMetadataHTTP(val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, httpOut, val)
 	addToMetadataValue(destMetadata, httpIn, val)
 	addToMetadataValue(edgeMetadata, http, val)
@@ -198,11 +198,11 @@ func addToMetadataHttp(val float64, code, flags, host string, sourceMetadata, de
 	}
 }
 
-func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func addToMetadataTCP(val float64, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, tcpOut, val)
 	addToMetadataValue(destMetadata, tcpIn, val)
 	addToMetadataValue(edgeMetadata, tcp, val)
-	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, "", val)
+	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, host, val)
 }
 
 // AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffic value
@@ -218,7 +218,7 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	}
 }
 
-// AggregateNodeMetadata adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
+// AggregateNodeTraffic adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
 func AggregateNodeTraffic(node, aggregateNode *Node) {
 	for _, protocol := range Protocols {
 		for _, rate := range protocol.NodeRates {

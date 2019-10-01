@@ -86,7 +86,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 	//    always provides the workload namespace, and because destination_service_namespace is provided from the source,
 	//    and for a request originating on a different cluster, will be set to the namespace where the service-entry is
 	//    defined, on the other cluster.
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_host,request_protocol,response_code,response_flags"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
 	query := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 		requestsMetric,
 		namespace,
@@ -148,14 +148,14 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 
 	if !isIstioNamespace {
 		// 1) query for traffic originating from "unknown" (i.e. the internet)
-		tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags"
+		tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags"
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload="unknown",destination_workload_namespace="%s"} [%vs])) by (%s)`,
 			tcpMetric,
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			tcpGroupBy)
 		tcpUnkVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMapTcp(trafficMap, &tcpUnkVector, o)
+		populateTrafficMapTCP(trafficMap, &tcpUnkVector, o)
 
 		// 2) query for traffic originating from a workload outside of the namespace. Exclude any "unknown" source telemetry (an unusual corner case)
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",source_workload!="unknown",destination_service_namespace="%s"} [%vs])) by (%s)`,
@@ -165,7 +165,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 			int(duration.Seconds()), // range duration for the query
 			tcpGroupBy)
 		tcpExtVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMapTcp(trafficMap, &tcpExtVector, o)
+		populateTrafficMapTCP(trafficMap, &tcpExtVector, o)
 
 		// 3) query for traffic originating from a workload inside of the namespace
 		query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s"} [%vs])) by (%s)`,
@@ -174,7 +174,7 @@ func buildNamespaceTrafficMap(namespace string, o graph.TelemetryOptions, client
 			int(duration.Seconds()), // range duration for the query
 			tcpGroupBy)
 		tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMapTcp(trafficMap, &tcpInVector, o)
+		populateTrafficMapTCP(trafficMap, &tcpInVector, o)
 	}
 
 	return trafficMap
@@ -188,17 +188,17 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_app"]
 		lDestVer, destVerOk := m["destination_version"]
-		lHost, hostOk := m["request_host"] // optionally configured, may not be present
 		lProtocol, protocolOk := m["request_protocol"]
 		lCode, codeOk := m["response_code"]
 		lFlags, flagsOk := m["response_flags"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk || !codeOk || !flagsOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !protocolOk || !codeOk || !flagsOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
 			continue
 		}
@@ -208,21 +208,20 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, o gra
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
+		destSvc := string(lDestSvc)
 		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
 		destApp := string(lDestApp)
 		destVer := string(lDestVer)
-		host := ""
-		if hostOk {
-			host = string(lHost)
-		}
 		protocol := string(lProtocol)
 		code := string(lCode)
 		flags := string(lFlags)
 
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
+		// make code more readable by setting "host" because "destSvc" holds destination.service.host | request.host | "unknown"
+		host := destSvc
 
 		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
 		inject := false
@@ -271,7 +270,7 @@ func addTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags,
 	return source, dest
 }
 
-func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
+func populateTrafficMapTCP(trafficMap graph.TrafficMap, vector *model.Vector, o graph.TelemetryOptions) {
 	for _, s := range *vector {
 		m := s.Metric
 		lSourceWlNs, sourceWlNsOk := m["source_workload_namespace"]
@@ -279,6 +278,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		lSourceApp, sourceAppOk := m["source_app"]
 		lSourceVer, sourceVerOk := m["source_version"]
 		lDestSvcNs, destSvcNsOk := m["destination_service_namespace"]
+		lDestSvc, destSvcOk := m["destination_service"]
 		lDestSvcName, destSvcNameOk := m["destination_service_name"]
 		lDestWlNs, destWlNsOk := m["destination_workload_namespace"]
 		lDestWl, destWlOk := m["destination_workload"]
@@ -286,7 +286,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		lDestVer, destVerOk := m["destination_version"]
 		lFlags, flagsOk := m["response_flags"]
 
-		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
+		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk || !flagsOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
 			continue
 		}
@@ -296,6 +296,7 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvcNs := string(lDestSvcNs)
+		destSvc := string(lDestSvc)
 		destSvcName := string(lDestSvcName)
 		destWlNs := string(lDestWlNs)
 		destWl := string(lDestWl)
@@ -305,6 +306,8 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 
 		val := float64(s.Value)
 		destSvcNs, destSvcName = util.HandleMultiClusterRequest(sourceWlNs, sourceWl, destSvcNs, destSvcName)
+		// make code more readable by setting "host" because "destSvc" holds destination.service.host | "unknown"
+		host := destSvc
 
 		// don't inject a service node if destSvcName is not set or the dest node is already a service node.
 		inject := false
@@ -313,15 +316,15 @@ func populateTrafficMapTcp(trafficMap graph.TrafficMap, vector *model.Vector, o 
 			inject = (graph.NodeTypeService != destNodeType)
 		}
 		if inject {
-			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
-			addTcpTraffic(trafficMap, val, flags, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+			addTCPTraffic(trafficMap, val, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, "", "", "", "", o)
+			addTCPTraffic(trafficMap, val, flags, host, destSvcNs, destSvcName, "", "", "", destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		} else {
-			addTcpTraffic(trafficMap, val, flags, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+			addTCPTraffic(trafficMap, val, flags, host, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 		}
 	}
 }
 
-func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
+func addTCPTraffic(trafficMap graph.TrafficMap, val float64, flags, host, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) (source, dest *graph.Node) {
 	source, sourceFound := addNode(trafficMap, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	dest, destFound := addNode(trafficMap, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 
@@ -348,7 +351,7 @@ func addTcpTraffic(trafficMap graph.TrafficMap, val float64, flags, sourceNs, so
 		handleMisconfiguredLabels(dest, destApp, destVer, val, o)
 	}
 
-	graph.AddToMetadata("tcp", val, "", flags, "", source.Metadata, dest.Metadata, edge.Metadata)
+	graph.AddToMetadata("tcp", val, "", flags, host, source.Metadata, dest.Metadata, edge.Metadata)
 
 	return source, dest
 }
@@ -457,7 +460,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			sourceWorkloadQuery = fmt.Sprintf(`,source_workload_namespace!~"%s"`, excludedIstioRegex)
 		}
 	}
-	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_host,request_protocol,response_code,response_flags"
+	groupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,request_protocol,response_code,response_flags"
 	switch n.NodeType {
 	case graph.NodeTypeWorkload:
 		query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -599,7 +602,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 	if !config.IsIstioNamespace(namespace) {
 		tcpMetric := "istio_tcp_sent_bytes_total"
 
-		tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags"
+		tcpGroupBy := "source_workload_namespace,source_workload,source_app,source_version,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_app,destination_version,response_flags"
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
 			query = fmt.Sprintf(`sum(rate(%s{reporter="source",destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s)`,
@@ -637,7 +640,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
 		tcpInVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMapTcp(trafficMap, &tcpInVector, o)
+		populateTrafficMapTCP(trafficMap, &tcpInVector, o)
 
 		// 2) query for outbound traffic
 		switch n.NodeType {
@@ -671,7 +674,7 @@ func buildNodeTrafficMap(namespace string, n graph.Node, o graph.TelemetryOption
 			graph.Error(fmt.Sprintf("NodeType [%s] not supported", n.NodeType))
 		}
 		tcpOutVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
-		populateTrafficMapTcp(trafficMap, &tcpOutVector, o)
+		populateTrafficMapTCP(trafficMap, &tcpOutVector, o)
 	}
 
 	return trafficMap

@@ -20,6 +20,7 @@ const (
 	Unknown               string = "unknown"             // Istio unknown label value
 	// private
 	passthroughCluster string = "PassthroughCluster"
+	blackHoleCluster   string = "BlackHoleCluster"
 )
 
 type Node struct {
@@ -118,8 +119,8 @@ func NewNodeExplicit(id, namespace, workload, app, version, service, nodeType, g
 		workload = ""
 		version = ""
 
-		if service == passthroughCluster {
-			metadata[IsPassthroughCluster] = true
+		if service == passthroughCluster || service == blackHoleCluster {
+			metadata[IsEgressCluster] = true
 		}
 	}
 

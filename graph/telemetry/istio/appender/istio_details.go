@@ -134,8 +134,8 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 			if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 				continue
 			}
-			// A service node that is a PassthroughCluster will not have a service definition
-			if _, ok := n.Metadata[graph.IsPassthroughCluster]; ok {
+			// A service node that is an Istio egress cluster will not have a service definition
+			if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
 				continue
 			}
 

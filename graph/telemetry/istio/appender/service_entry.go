@@ -65,8 +65,8 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 		if n.NodeType != graph.NodeTypeService {
 			continue
 		}
-		// PassthroughCluster is not a service entry (nor a defined service)
-		if n.Metadata[graph.IsPassthroughCluster] == true {
+		// PassthroughCluster or BlackHoleCluster is not a service entry (nor a defined service)
+		if n.Metadata[graph.IsEgressCluster] == true {
 			continue
 		}
 		// a serviceEntry has at most one outgoing edge, to an egress gateway. (note: it may be that it
