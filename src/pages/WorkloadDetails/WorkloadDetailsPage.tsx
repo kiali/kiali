@@ -181,7 +181,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       duration: `${MetricsDuration.initialDuration()}s`,
       graphType: GraphType.WORKLOAD,
       injectServiceNodes: true,
-      appenders: 'deadNode'
+      appenders: 'deadNode,serviceEntry'
     };
 
     fetchTrafficDetails(node, restParams).then(trafficData => {

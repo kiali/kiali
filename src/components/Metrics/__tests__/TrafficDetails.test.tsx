@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
 import TrafficDetails from '../TrafficDetails';
+import DetailedTrafficList from '../../Details/DetailedTrafficList';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import {
   GraphDefinition,
@@ -77,6 +78,19 @@ describe('TrafficDetails', () => {
     ]
   });
 
+  const buildServiceEntryNode = (name: string): GraphNodeData => ({
+    id: name,
+    nodeType: NodeType.SERVICE,
+    namespace: 'ns',
+    service: name,
+    isServiceEntry: 'MESH_INTERNAL',
+    traffic: [
+      {
+        protocol: 'http'
+      }
+    ]
+  });
+
   const resolveTrafficLists = (wrapper: ShallowWrapper): { inboundList: string[]; outboundList: string[] } => {
     const lists = wrapper.find('DetailedTrafficList');
     if (lists.length !== 2) {
@@ -109,7 +123,12 @@ describe('TrafficDetails', () => {
       }
 
       if (item.find('Link').length === 0) {
-        return '';
+        return item
+          .find('TableGridCol')
+          .at(DetailedTrafficList.WORKLOAD_COLUMN_IDX)
+          .children()
+          .last()
+          .text();
       }
 
       return item
@@ -169,9 +188,11 @@ describe('TrafficDetails', () => {
     const wk1 = buildWorkloadNode('wk1');
     const wk2 = buildWorkloadNode('wk2');
     const wk = buildWorkloadNode('wk');
+    const se = buildServiceEntryNode('seNode');
     const traffic = buildGraph([
       [wk1, wk], // traffic from wk1 to wk (inbound)
-      [wk, wk2] // traffic from wk to wk2 (outbound)
+      [wk, wk2], // traffic from wk to wk2 (outbound)
+      [wk, se] // traffic from wk to seNode (outbound)
     ]);
 
     const wrapper = shallow(<TrafficDetails {...trafficDetailProps} trafficData={traffic} />);
@@ -179,8 +200,8 @@ describe('TrafficDetails', () => {
 
     expect(inboundList).toHaveLength(1);
     expect(inboundList.join()).toEqual('wk1');
-    expect(outboundList).toHaveLength(1);
-    expect(outboundList.join()).toEqual('wk2');
+    expect(outboundList).toHaveLength(2);
+    expect(outboundList.join()).toEqual('seNode,wk2');
   });
 
   it('pass down traffic - simple in-out graph two levels', () => {
@@ -215,8 +236,8 @@ describe('TrafficDetails', () => {
     const traffic = buildGraph([
       [wk1, svc1], // traffic from wk1 to svc1
       [wk2, svc1], // traffic from wk2 to svc1
-      [wk2, svc2], // traffic from wk2 to svc1
-      [svc2, wk], // traffic from svc1 to wk
+      [wk2, svc2], // traffic from wk2 to svc2
+      [svc2, wk], // traffic from svc2 to wk
       [svc1, wk], // traffic from svc1 to wk
       [wk3, wk] // traffic from wk3 to wk (direct workload to workload traffic)
     ]);

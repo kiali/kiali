@@ -8,12 +8,6 @@ import { NodeType } from '../../../types/Graph';
 import { REQUESTS_THRESHOLDS } from '../../../types/Health';
 
 describe('DetailedTrafficList', () => {
-  const STATUS_COLUMN_IDX = 0;
-  const WORKLOAD_COLUMN_IDX = 1;
-  const PROTOCOL_COLUMN_IDX = 2;
-  const TRAFFIC_COLUMN_IDX = 3;
-  const METRICS_LINK_COLUMN_IDX = 4;
-
   const buildHttpItemWithError = (error: number): TrafficItem => ({
     node: {
       id: 'id1',
@@ -105,6 +99,21 @@ describe('DetailedTrafficList', () => {
     }
   });
 
+  const buildServiceEntryNode = (): TrafficItem => ({
+    node: {
+      id: 'id6',
+      namespace: 'ns',
+      name: 'svc1',
+      type: NodeType.SERVICE,
+      isInaccessible: false,
+      isServiceEntry: 'MESH_EXTERNAL',
+      destServices: [{ namespace: 'foo', name: 'foo.com' }, { namespace: 'foo', name: 'bar.com' }]
+    },
+    traffic: {
+      protocol: 'http'
+    }
+  });
+
   const buildAppNode = (): TrafficItem => ({
     node: {
       id: 'id7',
@@ -134,14 +143,14 @@ describe('DetailedTrafficList', () => {
   it('renders "source" header if direction is inbound', () => {
     const wrapper = shallow(<DetailedTrafficList direction={'inbound'} traffic={[]} />);
 
-    const header = wrapper.find('TableGridColumnHeader').at(WORKLOAD_COLUMN_IDX);
+    const header = wrapper.find('TableGridColumnHeader').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     expect(header.render().text()).toBe('Source');
   });
 
   it('renders "destination" header if direction is outbound', () => {
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[]} />);
 
-    const header = wrapper.find('TableGridColumnHeader').at(WORKLOAD_COLUMN_IDX);
+    const header = wrapper.find('TableGridColumnHeader').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     expect(header.render().text()).toBe('Destination');
   });
 
@@ -149,7 +158,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildHttpItemWithError(REQUESTS_THRESHOLDS.degraded / 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="ok" />)).toBeTruthy();
   });
 
@@ -157,7 +166,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildHttpItemWithError((REQUESTS_THRESHOLDS.degraded + REQUESTS_THRESHOLDS.failure) / 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="warning-triangle-o" />)).toBeTruthy();
   });
 
@@ -165,7 +174,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildHttpItemWithError(REQUESTS_THRESHOLDS.failure * 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="error-circle-o" />)).toBeTruthy();
   });
 
@@ -173,7 +182,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildGrpcItemWithError(REQUESTS_THRESHOLDS.degraded / 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="ok" />)).toBeTruthy();
   });
 
@@ -181,7 +190,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildGrpcItemWithError((REQUESTS_THRESHOLDS.degraded + REQUESTS_THRESHOLDS.failure) / 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="warning-triangle-o" />)).toBeTruthy();
   });
 
@@ -189,7 +198,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildGrpcItemWithError(REQUESTS_THRESHOLDS.failure * 2);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="error-circle-o" />)).toBeTruthy();
   });
 
@@ -198,14 +207,14 @@ describe('DetailedTrafficList', () => {
     let trafficItem = buildTcpItem();
     let wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    let cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    let cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="unknown" />)).toBeTruthy();
 
     // Unknown
     trafficItem = buildUnknownProtocolItem();
     wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    cell = wrapper.find('TableGridCol').at(STATUS_COLUMN_IDX);
+    cell = wrapper.find('TableGridCol').at(DetailedTrafficList.STATUS_COLUMN_IDX);
     expect(cell.contains(<Icon type="pf" name="unknown" />)).toBeTruthy();
   });
 
@@ -214,21 +223,21 @@ describe('DetailedTrafficList', () => {
     let trafficItem = buildHttpItemWithError(0);
     let wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    let cell = wrapper.find('TableGridCol').at(PROTOCOL_COLUMN_IDX);
+    let cell = wrapper.find('TableGridCol').at(DetailedTrafficList.PROTOCOL_COLUMN_IDX);
     expect(cell.render().text()).toBe('HTTP');
 
     // GRPC
     trafficItem = buildGrpcItemWithError(0);
     wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    cell = wrapper.find('TableGridCol').at(PROTOCOL_COLUMN_IDX);
+    cell = wrapper.find('TableGridCol').at(DetailedTrafficList.PROTOCOL_COLUMN_IDX);
     expect(cell.render().text()).toBe('GRPC');
 
     // TCP
     trafficItem = buildTcpItem();
     wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    cell = wrapper.find('TableGridCol').at(PROTOCOL_COLUMN_IDX);
+    cell = wrapper.find('TableGridCol').at(DetailedTrafficList.PROTOCOL_COLUMN_IDX);
     expect(cell.render().text()).toBe('TCP');
   });
 
@@ -236,7 +245,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildHttpItemWithError(10);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(TRAFFIC_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.TRAFFIC_COLUMN_IDX);
     expect(cell.render().text()).toBe('14.00rps | 90.0% success');
   });
 
@@ -244,7 +253,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildGrpcItemWithError(20);
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(TRAFFIC_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.TRAFFIC_COLUMN_IDX);
     expect(cell.render().text()).toBe('14.00rps | 80.0% success');
   });
 
@@ -252,7 +261,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildTcpItem();
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(TRAFFIC_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.TRAFFIC_COLUMN_IDX);
     expect(cell.render().text()).toBe('10000.00');
   });
 
@@ -260,7 +269,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildUnknownProtocolItem();
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(TRAFFIC_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.TRAFFIC_COLUMN_IDX);
     expect(cell.render().text()).toBe('N/A');
   });
 
@@ -268,7 +277,7 @@ describe('DetailedTrafficList', () => {
     const trafficItem = buildUnknownNode();
     const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-    const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     const icon = cell.find('Icon').first();
     const link = cell.find('Link');
 
@@ -290,7 +299,7 @@ describe('DetailedTrafficList', () => {
       </MemoryRouter>
     );
 
-    const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     const icon = cell.find('Icon').first();
     const link = cell.find('Link').first();
 
@@ -314,7 +323,7 @@ describe('DetailedTrafficList', () => {
       </MemoryRouter>
     );
 
-    const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     const icon = cell.find('Icon').first();
     const link = cell.find('Link').first();
 
@@ -336,7 +345,7 @@ describe('DetailedTrafficList', () => {
       </MemoryRouter>
     );
 
-    const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     const icon = cell.find('Icon').first();
     const link = cell.find('Link').first();
 
@@ -358,7 +367,7 @@ describe('DetailedTrafficList', () => {
       </MemoryRouter>
     );
 
-    const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+    const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
     const icon = cell.find('Icon').first();
     const link = cell.find('Link').first();
 
@@ -389,7 +398,7 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .first()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_app%3Dapp3');
 
@@ -397,7 +406,7 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .last()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=in_metrics&bylbl=source_app%3Dapp3');
   });
@@ -418,7 +427,7 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .first()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=in_metrics');
 
@@ -426,7 +435,7 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .last()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/workloads/workload?tab=out_metrics');
   });
@@ -448,7 +457,7 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .first()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     let link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/myPrefix/foo?tab=out_metrics&bylbl=destination_service_name%3Dsvc1');
 
@@ -456,9 +465,41 @@ describe('DetailedTrafficList', () => {
       .find('DetailedTrafficList')
       .last()
       .find('TableGridCol')
-      .at(METRICS_LINK_COLUMN_IDX);
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
     link = cell.find('Link');
     expect(link.first().prop('to')).toBe('/namespaces/ns/services/svc1?tab=metrics');
+  });
+
+  it('renders metrics link of a service entry node', () => {
+    const trafficItem = buildServiceEntryNode();
+
+    history.push('/myPrefix/foo?param=1');
+    const wrapper = mount(
+      <Router history={history}>
+        <>
+          <DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />
+          <DetailedTrafficList direction={'inbound'} traffic={[trafficItem]} />
+        </>
+      </Router>
+    );
+
+    let cell = wrapper
+      .find('DetailedTrafficList')
+      .first()
+      .find('TableGridCol')
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    let link = cell.find('Link');
+    expect(link.first().prop('to')).toBe(
+      '/myPrefix/foo?tab=out_metrics&bylbl=destination_service_name%3Dfoo.com%2Cbar.com'
+    );
+
+    cell = wrapper
+      .find('DetailedTrafficList')
+      .last()
+      .find('TableGridCol')
+      .at(DetailedTrafficList.METRICS_LINK_COLUMN_IDX);
+    link = cell.find('Link');
+    expect(link.length).toBe(0);
   });
 
   it("doesn't render link for inaccessible nodes", () => {
@@ -472,7 +513,7 @@ describe('DetailedTrafficList', () => {
       (trafficItem.node as AppNode | WorkloadNode | ServiceNode).isInaccessible = true;
       const wrapper = shallow(<DetailedTrafficList direction={'outbound'} traffic={[trafficItem]} />);
 
-      const cell = wrapper.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+      const cell = wrapper.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
       const link = cell.find('Link');
 
       expect(link.length).toBe(0);
@@ -509,7 +550,7 @@ describe('DetailedTrafficList', () => {
     const rows = wrapper.find('TableGridRow');
     const rowNames: string[] = [];
     rows.forEach(row => {
-      const cell = row.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+      const cell = row.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
       rowNames.push(
         cell
           .render()
@@ -555,7 +596,7 @@ describe('DetailedTrafficList', () => {
     const rows = wrapper.find('TableGridRow');
     const rowNames: string[] = [];
     rows.forEach(row => {
-      const cell = row.find('TableGridCol').at(WORKLOAD_COLUMN_IDX);
+      const cell = row.find('TableGridCol').at(DetailedTrafficList.WORKLOAD_COLUMN_IDX);
       rowNames.push(
         cell
           .render()

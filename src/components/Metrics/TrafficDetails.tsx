@@ -123,7 +123,8 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
           namespace: node.namespace,
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
-          isInaccessible: node.isInaccessible || false
+          isInaccessible: node.isInaccessible || false,
+          destServices: node.destServices
         };
       default:
         return {
