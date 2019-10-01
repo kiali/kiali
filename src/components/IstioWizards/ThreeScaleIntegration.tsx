@@ -1,26 +1,32 @@
 import * as React from 'react';
 import { ThreeScaleHandler, ThreeScaleServiceRule } from '../../types/ThreeScale';
 import {
+  ActionGroup,
+  Badge,
   Button,
-  Col,
-  ControlLabel,
-  DropdownKebab,
-  ExpandCollapse,
+  DataList,
+  DataListItem,
+  DataListItemRow,
+  DataListCell,
+  DataListAction,
+  DataListToggle,
+  DataListContent,
+  DataListItemCells,
+  Dropdown,
+  DropdownItem,
+  DropdownPosition,
+  Expandable,
   Form,
-  FormControl,
   FormGroup,
-  HelpBlock,
-  ListView,
-  ListViewIcon,
-  ListViewItem,
-  MenuItem,
-  OverlayTrigger,
+  KebabToggle,
+  TextInput,
   Tooltip,
-  Row
-} from 'patternfly-react';
+  TooltipPosition
+} from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
+import { PfColors } from '../Pf/PfColors';
 
 type Props = {
   serviceName: string;
@@ -37,29 +43,20 @@ type State = {
   threeScaleHandlers: ModifiedHandler[];
   threeScaleServiceRule: ThreeScaleServiceRule;
   newThreeScaleHandler: ThreeScaleHandler;
+  showCreateHandler: boolean;
+  handlersExpanded: string[];
+  actionsToggle: string[];
 };
 
-const expandStyle = style({
-  marginTop: 20,
-  $nest: {
-    '.btn': {
-      fontSize: '14px'
-    }
-  }
-});
-
-const createHandlerStyle = style({
-  marginTop: 20
-});
-
-const headingStyle = style({
-  fontWeight: 'normal',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis'
-});
-
 const k8sRegExpName = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
+
+const noHandlerStyle = style({
+  marginTop: 15,
+  color: PfColors.Red100,
+  textAlign: 'center',
+  width: '100%',
+  marginBottom: '10px'
+});
 
 class ThreeScaleIntegration extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -72,7 +69,10 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         serviceId: '',
         accessToken: '',
         systemUrl: ''
-      }
+      },
+      showCreateHandler: false,
+      handlersExpanded: [],
+      actionsToggle: []
     };
   }
 
@@ -290,140 +290,173 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
     );
   };
 
+  onHandlerToggle = id => {
+    const handlersExpanded = this.state.handlersExpanded;
+    const index = handlersExpanded.indexOf(id);
+    const newHandlersExpanded =
+      index >= 0
+        ? [...handlersExpanded.slice(0, index), ...handlersExpanded.slice(index + 1, handlersExpanded.length)]
+        : [...handlersExpanded, id];
+    this.setState(() => ({ handlersExpanded: newHandlersExpanded }));
+  };
+
+  onActionsToggle = id => {
+    const actionsToggle = this.state.actionsToggle;
+    const index = actionsToggle.indexOf(id);
+    const newActionsToggle =
+      index >= 0
+        ? [...actionsToggle.slice(0, index), ...actionsToggle.slice(index + 1, actionsToggle.length)]
+        : [...actionsToggle, id];
+    this.setState(() => ({ actionsToggle: newActionsToggle }));
+  };
+
   renderHandlers = () => {
     return (
-      <ListView>
+      <DataList aria-label="Select 3scale Handler">
         {this.state.threeScaleHandlers.map((handler, id) => {
           const isLinked =
             handler.name === this.state.threeScaleServiceRule.threeScaleHandlerName ||
             (this.state.threeScaleServiceRule.threeScaleHandlerName === '' && id === 0);
-          const handlerActions = (
-            <>
-              {!isLinked && <Button onClick={() => this.onSelectHandler(handler.name)}>Select</Button>}
-              <DropdownKebab key={'delete-handler-actions-' + id} id={'delete-handler-actions-' + id} pullRight={true}>
-                <MenuItem onClick={() => this.onDeleteHandler(handler.name)}>Delete Handler</MenuItem>
-              </DropdownKebab>
-            </>
-          );
-          const leftContent = isLinked ? <ListViewIcon type="pf" name="connected" /> : undefined;
-
           return (
-            <ListViewItem
-              key={id}
-              leftContent={leftContent}
-              heading={
-                <>
-                  <div>
-                    {handler.name} {handler.modified && '*'}
-                  </div>
-                  <div className={headingStyle}>3scale Handler</div>
-                </>
-              }
-              description={
-                <>
-                  {isLinked && (
-                    <>
-                      Service <b>{this.props.serviceName}</b> will be linked with 3scale API
-                    </>
+            <DataListItem aria-labelledby={'handler' + id} key={'handler' + id}>
+              <DataListItemRow>
+                <DataListToggle
+                  onClick={() => this.onHandlerToggle('handler' + id)}
+                  isExpanded={this.state.handlersExpanded.includes('handler' + id)}
+                  id={'handler' + id}
+                  aria-controls={'handler' + id}
+                />
+                <DataListItemCells
+                  dataListCells={[
+                    <DataListCell key={'handler' + id + 'icon'} isIcon={true}>
+                      {isLinked && (
+                        <Tooltip
+                          position={TooltipPosition.top}
+                          content={
+                            <>
+                              Service <b>{this.props.serviceName}</b> will be linked with 3scale API
+                            </>
+                          }
+                        >
+                          <Badge className={'virtualitem_badge_definition'}>3S</Badge>
+                        </Tooltip>
+                      )}
+                    </DataListCell>,
+                    <DataListCell key={'handler' + id + 'name'}>
+                      {isLinked && (
+                        <>
+                          Service <b>{this.props.serviceName}</b> will be linked with 3scale API using{' '}
+                          <b>{handler.name}</b> handler. {handler.modified && '*'}
+                          <br />
+                        </>
+                      )}
+                      {!isLinked && (
+                        <>
+                          Handler: <i>{handler.name}</i> {handler.modified && '*'}
+                        </>
+                      )}
+                    </DataListCell>
+                  ]}
+                />
+                <DataListAction
+                  id={'handler' + id + 'action'}
+                  aria-labelledby={'handler' + id + ' handler' + id + 'action'}
+                  aria-label="Actions"
+                >
+                  {!isLinked && (
+                    <Button variant="secondary" onClick={() => this.onSelectHandler(handler.name)}>
+                      Select
+                    </Button>
                   )}
-                  <br />
-                  Service Id: <i>{handler.serviceId}</i>
-                  <br />
-                  System Url: <i>{handler.systemUrl}</i>
-                </>
-              }
-              actions={handlerActions}
-            >
-              <Form horizontal={true}>
-                <FormGroup
-                  controlId="serviceId"
-                  disabled={false}
-                  validationState={handler.serviceId !== '' ? 'success' : 'error'}
-                >
-                  <Col componentClass={ControlLabel} sm={2}>
-                    Service Id:
-                  </Col>
-                  <Col sm={8}>
-                    <OverlayTrigger
-                      placement={'right'}
-                      overlay={<Tooltip id={'mtls-status-masthead'}>3scale ID for API calls</Tooltip>}
-                      trigger={['hover', 'focus']}
-                      rootClose={false}
-                    >
-                      <FormControl
-                        type="text"
-                        disabled={false}
-                        value={handler.serviceId}
-                        onChange={e => this.onChangeHandler(id, 'serviceId', e.target.value)}
-                      />
-                    </OverlayTrigger>
-                  </Col>
-                </FormGroup>
-                <FormGroup
-                  controlId="systemUrl"
-                  disabled={false}
-                  validationState={handler.systemUrl !== '' ? 'success' : 'error'}
-                >
-                  <Col componentClass={ControlLabel} sm={2}>
-                    System Url:
-                  </Col>
-                  <Col sm={8}>
-                    <OverlayTrigger
-                      placement={'right'}
-                      overlay={<Tooltip id={'mtls-status-masthead'}>3scale System Url for API</Tooltip>}
-                      trigger={['hover', 'focus']}
-                      rootClose={false}
-                    >
-                      <FormControl
-                        type="text"
-                        disabled={false}
-                        value={handler.systemUrl}
-                        onChange={e => this.onChangeHandler(id, 'systemUrl', e.target.value)}
-                      />
-                    </OverlayTrigger>
-                  </Col>
-                </FormGroup>
-                <FormGroup
-                  controlId="accessToken"
-                  disabled={false}
-                  validationState={handler.accessToken !== '' ? 'success' : 'error'}
-                >
-                  <Col componentClass={ControlLabel} sm={2}>
-                    Access Token:
-                  </Col>
-                  <Col sm={8}>
-                    <OverlayTrigger
-                      placement={'right'}
-                      overlay={<Tooltip id={'mtls-status-masthead'}>3scale access token</Tooltip>}
-                      trigger={['hover', 'focus']}
-                      rootClose={false}
-                    >
-                      <FormControl
-                        type="text"
-                        disabled={false}
-                        value={handler.accessToken}
-                        onChange={e => this.onChangeHandler(id, 'accessToken', e.target.value)}
-                      />
-                    </OverlayTrigger>
-                  </Col>
-                </FormGroup>
-                <Row style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-                  <Col smOffset={10} sm={2}>
+                  <Dropdown
+                    isPlain
+                    position={DropdownPosition.right}
+                    isOpen={this.state.actionsToggle.includes('handler' + id)}
+                    onSelect={() => {
+                      this.onActionsToggle('handler' + id);
+                      this.onDeleteHandler(handler.name);
+                    }}
+                    toggle={<KebabToggle onToggle={() => this.onActionsToggle('handler' + id)} />}
+                    dropdownItems={[<DropdownItem key="link">Remove</DropdownItem>]}
+                  />
+                </DataListAction>
+              </DataListItemRow>
+              <DataListContent
+                aria-label={'handler' + id}
+                id={'handler' + id + 'content'}
+                isHidden={!this.state.handlersExpanded.includes('handler' + id)}
+              >
+                <Form isHorizontal={true}>
+                  <FormGroup
+                    fieldId="serviceId"
+                    label="Service Id:"
+                    isValid={handler.serviceId !== ''}
+                    helperTextInvalid="Service Id cannot be empty"
+                  >
+                    <TextInput
+                      id="serviceId"
+                      value={handler.serviceId}
+                      placeholder="3scale ID for API calls"
+                      onChange={value => this.onChangeHandler(id, 'serviceId', value)}
+                    />
+                  </FormGroup>
+                  <FormGroup
+                    fieldId="systemUrl"
+                    label="System Url:"
+                    isValid={handler.systemUrl !== ''}
+                    helperTextInvalid="System Url cannot be empty"
+                  >
+                    <TextInput
+                      id="systemUrl"
+                      value={handler.systemUrl}
+                      placeholder="3scale System Url for API"
+                      onChange={value => this.onChangeHandler(id, 'systemUrl', value)}
+                    />
+                  </FormGroup>
+                  <FormGroup
+                    fieldId="accessToken"
+                    label="Access Token:"
+                    isValid={handler.accessToken !== ''}
+                    helperTextInvalid="Access Token cannot be empty"
+                  >
+                    <TextInput
+                      id="accessToken"
+                      value={handler.accessToken}
+                      placeholder="3scale access token"
+                      onChange={value => this.onChangeHandler(id, 'accessToken', value)}
+                    />
+                  </FormGroup>
+                  <ActionGroup>
                     <Button
-                      bsStyle="primary"
-                      style={{ marginLeft: '-10px' }}
+                      key="create_handler"
+                      variant="secondary"
                       onClick={() => this.onUpdateHandler(id)}
-                      disabled={handler.serviceId === '' || handler.systemUrl === '' || handler.accessToken === ''}
+                      isDisabled={
+                        handler.serviceId === '' ||
+                        handler.systemUrl === '' ||
+                        handler.accessToken === '' ||
+                        !handler.modified
+                      }
                     >
                       Update Handler
                     </Button>
-                  </Col>
-                </Row>
-              </Form>
-            </ListViewItem>
+                  </ActionGroup>
+                  <>
+                    Notes:
+                    <br />
+                    Changes in a 3scale handler will affect to all linked services.
+                  </>
+                </Form>
+              </DataListContent>
+            </DataListItem>
           );
         })}
-      </ListView>
+        {this.state.threeScaleHandlers.length === 0 && (
+          <div className={noHandlerStyle}>
+            No Handlers Defined. Create and Select a handler to link a Service with 3scale.
+          </div>
+        )}
+      </DataList>
     );
   };
 
@@ -443,113 +476,98 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
   renderCreateHandler = () => {
     const isValidName = this.isValidK8SName(this.state.newThreeScaleHandler.name);
     return (
-      <Form className={createHandlerStyle} horizontal={true}>
+      <Form isHorizontal={true}>
         <FormGroup
-          controlId="handlerName"
-          disabled={false}
-          value={this.state.newThreeScaleHandler.name}
-          onChange={e => this.onChangeHandler(-1, 'name', e.target.value)}
-          validationState={isValidName ? 'success' : 'error'}
+          fieldId="handlerName"
+          label="Handler Name:"
+          isValid={isValidName}
+          helperTextInvalid="Name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character."
         >
-          <Col componentClass={ControlLabel} sm={2}>
-            Handler Name:
-          </Col>
-          <Col sm={8}>
-            <FormControl type="text" disabled={false} />
-            {!isValidName && (
-              <HelpBlock>
-                Name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an
-                alphanumeric character.
-              </HelpBlock>
-            )}
-          </Col>
+          <TextInput
+            id="handlerName"
+            value={this.state.newThreeScaleHandler.name}
+            onChange={value => this.onChangeHandler(-1, 'name', value)}
+          />
         </FormGroup>
         <FormGroup
-          controlId="serviceId"
-          disabled={false}
-          value={this.state.newThreeScaleHandler.serviceId}
-          onChange={e => this.onChangeHandler(-1, 'serviceId', e.target.value)}
-          validationState={this.state.newThreeScaleHandler.serviceId !== '' ? 'success' : 'error'}
+          fieldId="serviceId"
+          label="Service Id:"
+          isValid={this.state.newThreeScaleHandler.serviceId !== ''}
+          helperTextInvalid="Service Id cannot be empty"
         >
-          <Col componentClass={ControlLabel} sm={2}>
-            Service Id:
-          </Col>
-          <Col sm={8}>
-            <OverlayTrigger
-              placement={'right'}
-              overlay={<Tooltip id={'mtls-status-masthead'}>3scale ID for API calls</Tooltip>}
-              trigger={['hover', 'focus']}
-              rootClose={false}
-            >
-              <FormControl type="text" disabled={false} />
-            </OverlayTrigger>
-          </Col>
+          <TextInput
+            id="serviceId"
+            value={this.state.newThreeScaleHandler.serviceId}
+            placeholder="3scale ID for API calls"
+            onChange={value => this.onChangeHandler(-1, 'serviceId', value)}
+          />
         </FormGroup>
         <FormGroup
-          controlId="systemUrl"
-          disabled={false}
-          value={this.state.newThreeScaleHandler.systemUrl}
-          onChange={e => this.onChangeHandler(-1, 'systemUrl', e.target.value)}
-          validationState={this.state.newThreeScaleHandler.systemUrl !== '' ? 'success' : 'error'}
+          fieldId="systemUrl"
+          label="System Url:"
+          isValid={this.state.newThreeScaleHandler.systemUrl !== ''}
+          helperTextInvalid="System Url cannot be empty"
         >
-          <Col componentClass={ControlLabel} sm={2}>
-            System Url:
-          </Col>
-          <Col sm={8}>
-            <OverlayTrigger
-              placement={'right'}
-              overlay={<Tooltip id={'mtls-status-masthead'}>3scale System Url for API</Tooltip>}
-              trigger={['hover', 'focus']}
-              rootClose={false}
-            >
-              <FormControl type="text" disabled={false} />
-            </OverlayTrigger>
-          </Col>
+          <TextInput
+            id="systemUrl"
+            value={this.state.newThreeScaleHandler.systemUrl}
+            placeholder="3scale System Url for API"
+            onChange={value => this.onChangeHandler(-1, 'systemUrl', value)}
+          />
         </FormGroup>
         <FormGroup
-          controlId="accessToken"
-          disabled={false}
-          value={this.state.newThreeScaleHandler.accessToken}
-          onChange={e => this.onChangeHandler(-1, 'accessToken', e.target.value)}
-          validationState={this.state.newThreeScaleHandler.accessToken !== '' ? 'success' : 'error'}
+          fieldId="accessToken"
+          label="Access Token:"
+          isValid={this.state.newThreeScaleHandler.accessToken !== ''}
+          helperTextInvalid="Access Token cannot be empty"
         >
-          <Col componentClass={ControlLabel} sm={2}>
-            Access Token:
-          </Col>
-          <Col sm={8}>
-            <OverlayTrigger
-              placement={'right'}
-              overlay={<Tooltip id={'mtls-status-masthead'}>3scale access token</Tooltip>}
-              trigger={['hover', 'focus']}
-              rootClose={false}
-            >
-              <FormControl type="text" disabled={false} />
-            </OverlayTrigger>
-          </Col>
+          <TextInput
+            id="accessToken"
+            value={this.state.newThreeScaleHandler.accessToken}
+            placeholder="3scale access token"
+            onChange={value => this.onChangeHandler(-1, 'accessToken', value)}
+          />
         </FormGroup>
-        <Row style={{ paddingTop: '10px', paddingBottom: '10px' }}>
-          <Col smOffset={10} sm={2}>
-            <Button bsStyle="primary" onClick={this.onCreateHandler} disabled={!this.isValidCreateHandler()}>
-              Create Handler
-            </Button>
-          </Col>
-        </Row>
+        <ActionGroup>
+          <Button
+            key="create_handler"
+            variant="secondary"
+            onClick={this.onCreateHandler}
+            isDisabled={!this.isValidCreateHandler()}
+          >
+            Create Handler
+          </Button>
+        </ActionGroup>
+        <>
+          Notes:
+          <br />A 3scale handler defines the 3scale parameters (Service Id, System Url and Access Token) to link a
+          Service with a 3scale API. A 3scale handler can be used link one to many Services with a 3scale API.
+        </>
       </Form>
     );
   };
 
   render() {
+    const isExpanded =
+      this.state.threeScaleHandlers.length === 0 ||
+      this.state.newThreeScaleHandler.name !== '' ||
+      this.state.showCreateHandler;
     return (
       <>
+        Select a 3scale handler:
         {this.renderHandlers()}
-        <ExpandCollapse
-          className={expandStyle}
-          textCollapsed="Show Advanced Options"
-          textExpanded="Hide Advanced Options"
-          expanded={this.state.threeScaleHandlers.length === 0 || this.state.newThreeScaleHandler.name !== ''}
+        <br />
+        <Expandable
+          isExpanded={isExpanded}
+          toggleText={(isExpanded ? 'Hide' : 'Show') + ' Create Handler'}
+          onToggle={() => {
+            this.setState({
+              showCreateHandler: !this.state.showCreateHandler
+            });
+          }}
         >
-          {this.renderCreateHandler()}
-        </ExpandCollapse>
+          {isExpanded && this.renderCreateHandler()}
+        </Expandable>
       </>
     );
   }
