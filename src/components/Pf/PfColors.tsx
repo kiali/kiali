@@ -90,7 +90,7 @@ export enum PfColors {
 }
 
 export enum PFColorVars {
-  DangerColor = 'var(--pf-global--danger-color--200)',
-  WarningColor = 'var(--pf-global--warning-color--200)',
-  SuccessColor = 'var(--pf-global--success-color--200)'
+  DangerColor = 'var(--pf-global--danger-color--100)',
+  WarningColor = 'var(--pf-global--warning-color--100)',
+  SuccessColor = 'var(--pf-global--success-color--100)'
 }
