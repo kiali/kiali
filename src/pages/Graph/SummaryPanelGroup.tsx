@@ -4,12 +4,12 @@ import { Icon } from 'patternfly-react';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
-import graphUtils from '../../utils/Graphing';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import { RenderLink, renderTitle } from './SummaryLink';
 import {
   shouldRefreshData,
   updateHealth,
+  getFirstDatapoints,
   getNodeMetrics,
   getNodeMetricType,
   renderNoTraffic
@@ -17,7 +17,7 @@ import {
 import { DisplayMode, HealthIndicator } from '../../components/Health/HealthIndicator';
 import { Health } from '../../types/Health';
 import { Response } from '../../services/Api';
-import { Metrics } from '../../types/Metrics';
+import { Metrics, Datapoint } from '../../types/Metrics';
 import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config/ServerConfig';
@@ -26,14 +26,14 @@ import { icons } from '../../config';
 
 type SummaryPanelGroupState = {
   loading: boolean;
-  requestCountIn: [string | number][] | null;
-  requestCountOut: [string | number][];
-  errorCountIn: [string | number][];
-  errorCountOut: [string | number][];
-  tcpSentIn: [string | number][];
-  tcpSentOut: [string | number][];
-  tcpReceivedIn: [string | number][];
-  tcpReceivedOut: [string | number][];
+  requestCountIn: Datapoint[] | null;
+  requestCountOut: Datapoint[];
+  errorCountIn: Datapoint[];
+  errorCountOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
+  tcpReceivedIn: Datapoint[];
+  tcpReceivedOut: Datapoint[];
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;
@@ -180,27 +180,19 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     this.metricsPromise = makeCancelablePromise(Promise.all([promiseOut, promiseIn]));
 
     this.metricsPromise.promise
-      .then(responses => {
+      .then((responses: Response<Metrics>[]) => {
         const metricsOut = responses[0].data.metrics;
         const metricsIn = responses[1].data.metrics;
-        const rcOut = metricsOut.request_count;
-        const ecOut = metricsOut.request_error_count;
-        const tcpSentOut = metricsOut.tcp_sent;
-        const tcpReceivedOut = metricsOut.tcp_received;
-        const rcIn = metricsIn.request_count;
-        const ecIn = metricsIn.request_error_count;
-        const tcpSentIn = metricsIn.tcp_sent;
-        const tcpReceivedIn = metricsIn.tcp_received;
         this.setState({
           loading: false,
-          requestCountIn: graphUtils.toC3Columns(rcIn.matrix, 'RPS'),
-          errorCountIn: graphUtils.toC3Columns(ecIn.matrix, 'Error'),
-          requestCountOut: graphUtils.toC3Columns(rcOut.matrix, 'RPS'),
-          errorCountOut: graphUtils.toC3Columns(ecOut.matrix, 'Error'),
-          tcpSentOut: graphUtils.toC3Columns(tcpSentOut.matrix, 'Sent'),
-          tcpReceivedOut: graphUtils.toC3Columns(tcpReceivedOut.matrix, 'Received'),
-          tcpSentIn: graphUtils.toC3Columns(tcpSentIn.matrix, 'Sent'),
-          tcpReceivedIn: graphUtils.toC3Columns(tcpReceivedIn.matrix, 'Received')
+          requestCountIn: getFirstDatapoints(metricsIn.request_count),
+          errorCountIn: getFirstDatapoints(metricsIn.request_error_count),
+          requestCountOut: getFirstDatapoints(metricsOut.request_count),
+          errorCountOut: getFirstDatapoints(metricsOut.request_error_count),
+          tcpSentOut: getFirstDatapoints(metricsOut.tcp_sent),
+          tcpReceivedOut: getFirstDatapoints(metricsOut.tcp_received),
+          tcpSentIn: getFirstDatapoints(metricsIn.tcp_sent),
+          tcpReceivedIn: getFirstDatapoints(metricsIn.tcp_received)
         });
       })
       .catch(error => {

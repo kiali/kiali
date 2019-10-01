@@ -1,20 +1,25 @@
 import * as React from 'react';
-import { AreaChart, Icon } from 'patternfly-react';
-import { PfColors } from '../../components/Pf/PfColors';
 import { style } from 'typestyle';
+import { Chart, ChartArea, ChartAxis } from '@patternfly/react-charts';
+import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
+
+import { PfColors } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import { createContainer } from '../Charts';
+import { Datapoint } from '../../types/Metrics';
+import Graphing, { VCLines, VCLine, VCDataPoint } from 'utils/Graphing';
 
 type RpsChartTypeProp = {
   label: string;
-  dataRps: [string | number][];
-  dataErrors: [string | number][];
+  dataRps: Datapoint[];
+  dataErrors: Datapoint[];
   hide?: boolean;
 };
 
 type TcpChartTypeProp = {
   label: string;
-  sentRates: [string | number][];
-  receivedRates: [string | number][];
+  sentRates: Datapoint[];
+  receivedRates: Datapoint[];
   hide?: boolean;
 };
 
@@ -26,22 +31,6 @@ type BytesAbbreviation = {
   format: (includeUnit: boolean) => string;
 };
 
-const sparklineAxisProps = (): any => {
-  return {
-    x: {
-      show: false,
-      type: 'timeseries',
-      tick: {
-        fit: true,
-        count: 15,
-        multiline: false,
-        format: '%H:%M:%S'
-      }
-    },
-    y: { show: false }
-  };
-};
-
 const blockStyle = style({
   marginTop: '0.5em',
   marginBottom: '0.5em'
@@ -50,43 +39,44 @@ const blockStyle = style({
 const renderNoTrafficLegend = () => {
   return (
     <div>
-      <Icon type="pf" name="info" /> Not enough traffic to generate chart.
+      <InfoAltIcon /> Not enough traffic to generate chart.
     </div>
   );
 };
 
-const thereIsTrafficData = seriesData => {
-  return (
-    seriesData &&
-    seriesData.length > 1 &&
-    seriesData[0].length > 1 &&
-    seriesData[1].slice(1).reduce((accum, val) => accum + Number(val), 0) > 0
-  );
+const thereIsTrafficData = (seriesData: VCLine) => {
+  return seriesData.datapoints.reduce((accum, val) => accum + val.y, 0) > 0;
 };
 
-const renderSparkline = (series: [string | number][], colors: PfColors[], yTickFormat?: (val: number) => string) => {
-  const chartData = {
-    x: 'x',
-    columns: series,
-    type: 'area-spline'
-  };
-
-  const axisProps = sparklineAxisProps();
-  if (yTickFormat) {
-    axisProps.y.tick = {
-      format: yTickFormat
-    };
-  }
-
+const renderSparklines = (series: VCLines, yTickFormat?: (val: number) => string) => {
+  const yFormat = yTickFormat ? yTickFormat : y => y;
   return (
-    <AreaChart
-      size={{ height: 45, width: SUMMARY_PANEL_CHART_WIDTH }}
-      color={{ pattern: colors }}
-      legend={{ show: false }}
-      grid={{ y: { show: false } }}
-      axis={axisProps}
-      data={chartData}
-    />
+    <div className="area-chart-overflow">
+      <Chart
+        height={41}
+        width={SUMMARY_PANEL_CHART_WIDTH}
+        padding={{ top: 5 }}
+        scale={{ x: 'time' }}
+        containerComponent={createContainer(dp => `${(dp.x as Date).toLocaleTimeString()}\n${yFormat(dp.y)} RPS`)}
+      >
+        {series.map((serie, idx) => (
+          <ChartArea
+            key={'serie-' + idx}
+            data={serie.datapoints}
+            style={{
+              data: {
+                fill: serie.color,
+                fillOpacity: 0.2,
+                stroke: serie.color,
+                strokeWidth: 2
+              }
+            }}
+          />
+        ))}
+        <ChartAxis tickCount={15} tickFormat={() => ''} />
+        <ChartAxis dependentAxis={true} tickFormat={() => ''} />
+      </Chart>
+    </div>
   );
 };
 
@@ -99,36 +89,40 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
             <div>
               <strong>{this.props.label} min / max:</strong>
             </div>
-            {thereIsTrafficData(this.props.dataRps) ? this.renderMinMaxStats() : renderNoTrafficLegend()}
-            {this.renderSparkline()}
+            {this.renderContent()}
           </div>
         )}
       </>
     );
   }
 
-  private renderMinMaxStats = () => {
-    let dataRps: any = [],
-      dataErrors: any = [];
-    if (this.props.dataRps.length > 0) {
-      dataRps = this.props.dataRps[1];
-      dataErrors = this.props.dataErrors[1];
+  private renderContent = () => {
+    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PfColors.Blue);
+    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PfColors.Red);
+    if (thereIsTrafficData(rpsLine)) {
+      return (
+        <>
+          {this.renderMinMaxStats(rpsLine.datapoints, errLine.datapoints)}
+          {renderSparklines([rpsLine, errLine])}
+        </>
+      );
+    } else {
+      return renderNoTrafficLegend();
     }
+  };
 
-    // NOTE: dataRps and dataErrors are arrays of data value points EXCEPT for the first array item.
-    // At index 0 of the array is the data label (dataRps[0] == "RPS" and dataErrors[0] == "Error").
-    // This is why we skip the first element in each array.
-    let minRps: number = dataRps.length > 1 ? +dataRps[1] : 0;
-    let maxRps: number = minRps;
-    let errSample: number = dataErrors.length > 1 ? +dataErrors[1] : 0;
-    let minPctErr: number = (100 * errSample) / minRps;
-    let maxPctErr: number = minPctErr;
-    for (let i = 2; i < dataRps.length; ++i) {
-      const sample: number = +dataRps[i];
+  private renderMinMaxStats = (dataRps: VCDataPoint[], dataErrors: VCDataPoint[]) => {
+    let minRps = dataRps.length > 0 ? dataRps[0].y : 0;
+    let maxRps = minRps;
+    let errSample = dataErrors.length > 0 ? dataErrors[0].y : 0;
+    let minPctErr = (100 * errSample) / minRps;
+    let maxPctErr = minPctErr;
+    for (let i = 1; i < dataRps.length; ++i) {
+      const sample = dataRps[i].y;
       minRps = sample < minRps ? sample : minRps;
       maxRps = sample > maxRps ? sample : maxRps;
       if (sample !== 0) {
-        errSample = dataErrors.length > i ? +dataErrors[i] : 0;
+        errSample = i <= dataErrors.length ? dataErrors[i].y : 0;
         const errPct = (100 * errSample) / sample;
         if (isNaN(minPctErr) || errPct < minPctErr) {
           minPctErr = errPct;
@@ -145,14 +139,6 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       </div>
     );
   };
-
-  private renderSparkline = () => {
-    if (!thereIsTrafficData(this.props.dataRps)) {
-      return null;
-    }
-
-    return renderSparkline(this.props.dataRps.concat(this.props.dataErrors), [PfColors.Blue, PfColors.Red]);
-  };
 }
 
 export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
@@ -164,29 +150,35 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
             <div>
               <strong>{this.props.label} - min / max:</strong>
             </div>
-            {this.thereIsTrafficData() ? this.renderMinMaxStats() : renderNoTrafficLegend()}
-            {this.renderSparkline()}
+            {this.renderContent()}
           </div>
         )}
       </>
     );
   }
 
-  private renderMinMaxStats = () => {
-    let dataSent: any = [],
-      dataReceived: any = [];
-    if (this.props.sentRates.length > 0) {
-      // NOTE: props.sentRates and props.receivedRates are arrays of data value points EXCEPT for the first array item.
-      // At index 0 of the array is the data label (sentRates[0] == "TCP Sent" and receivedRates[0] == "TCP Received").
-      // This is why we skip the first element in each array.
-      dataSent = this.props.sentRates[1].slice(1);
-      dataReceived = this.props.receivedRates[1].slice(1);
+  private renderContent = () => {
+    const sentLine = Graphing.toVCLine(this.props.sentRates, 'Sent', PfColors.Blue);
+    const receivedLine = Graphing.toVCLine(this.props.receivedRates, 'Received', PfColors.Green);
+    if (thereIsTrafficData(sentLine) || thereIsTrafficData(receivedLine)) {
+      return (
+        <>
+          {this.renderMinMaxStats(sentLine.datapoints.map(dp => dp.y), receivedLine.datapoints.map(dp => dp.y))}
+          {renderSparklines([sentLine, receivedLine], val => {
+            return this.abbreviateBytes(val).format(true) + '/s';
+          })}
+        </>
+      );
+    } else {
+      return renderNoTrafficLegend();
     }
+  };
 
-    let minSent: number = 0,
-      maxSent: number = 0,
-      minReceived: number = 0,
-      maxReceived: number = 0;
+  private renderMinMaxStats = (dataSent: number[], dataReceived: number[]) => {
+    let minSent = 0,
+      maxSent = 0,
+      minReceived = 0,
+      maxReceived = 0;
 
     if (dataSent.length > 0) {
       minSent = Math.min(...dataSent);
@@ -199,29 +191,11 @@ export class TcpChart extends React.Component<TcpChartTypeProp, {}> {
 
     return (
       <div>
-        <Icon name="square" style={{ color: PfColors.Blue }} /> Sent: {this.formatMinMaxStats(minSent, maxSent)}
+        <SquareFullIcon style={{ color: PfColors.Blue }} /> Sent: {this.formatMinMaxStats(minSent, maxSent)}
         <br />
-        <Icon name="square" style={{ color: PfColors.Green }} /> Received:{' '}
+        <SquareFullIcon style={{ color: PfColors.Green }} /> Received:{' '}
         {this.formatMinMaxStats(minReceived, maxReceived)}
       </div>
-    );
-  };
-
-  private thereIsTrafficData = () => {
-    return thereIsTrafficData(this.props.receivedRates) || thereIsTrafficData(this.props.sentRates);
-  };
-
-  private renderSparkline = () => {
-    if (!this.thereIsTrafficData()) {
-      return null;
-    }
-
-    return renderSparkline(
-      this.props.sentRates.concat(this.props.receivedRates),
-      [PfColors.Blue, PfColors.Green],
-      val => {
-        return this.abbreviateBytes(val).format(true) + '/s';
-      }
     );
   };
 

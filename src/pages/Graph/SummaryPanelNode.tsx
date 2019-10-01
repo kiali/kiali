@@ -17,7 +17,7 @@ import {
   DecoratedGraphNodeData,
   UNKNOWN
 } from '../../types/Graph';
-import { Metrics, Metric } from '../../types/Metrics';
+import { Metrics, Metric, Datapoint } from '../../types/Metrics';
 import {
   shouldRefreshData,
   updateHealth,
@@ -39,18 +39,18 @@ import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/Cytos
 
 type SummaryPanelStateType = {
   loading: boolean;
-  grpcRequestCountIn: [string | number][] | null;
-  grpcRequestCountOut: [string | number][];
-  grpcErrorCountIn: [string | number][];
-  grpcErrorCountOut: [string | number][];
-  httpRequestCountIn: [string | number][] | null;
-  httpRequestCountOut: [string | number][];
-  httpErrorCountIn: [string | number][];
-  httpErrorCountOut: [string | number][];
-  tcpSentIn: [string | number][];
-  tcpSentOut: [string | number][];
-  tcpReceivedIn: [string | number][];
-  tcpReceivedOut: [string | number][];
+  grpcRequestCountIn: Datapoint[] | null;
+  grpcRequestCountOut: Datapoint[];
+  grpcErrorCountIn: Datapoint[];
+  grpcErrorCountOut: Datapoint[];
+  httpRequestCountIn: Datapoint[] | null;
+  httpRequestCountOut: Datapoint[];
+  httpErrorCountIn: Datapoint[];
+  httpErrorCountOut: Datapoint[];
+  tcpSentIn: Datapoint[];
+  tcpSentOut: Datapoint[];
+  tcpReceivedIn: Datapoint[];
+  tcpReceivedOut: Datapoint[];
   healthLoading: boolean;
   health?: Health;
   metricsLoadError: string | null;
@@ -255,18 +255,18 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     const tcpReceivedIn = inbound.metrics.tcp_received;
     this.setState({
       loading: false,
-      grpcRequestCountOut: getDatapoints(rcOut, 'RPS', comparator, Protocol.GRPC),
-      grpcErrorCountOut: getDatapoints(ecOut, 'Error', comparator, Protocol.GRPC),
-      grpcRequestCountIn: getDatapoints(rcIn, 'RPS', comparator, Protocol.GRPC),
-      grpcErrorCountIn: getDatapoints(ecIn, 'Error', comparator, Protocol.GRPC),
-      httpRequestCountOut: getDatapoints(rcOut, 'RPS', comparator, Protocol.HTTP),
-      httpErrorCountOut: getDatapoints(ecOut, 'Error', comparator, Protocol.HTTP),
-      httpRequestCountIn: getDatapoints(rcIn, 'RPS', comparator, Protocol.HTTP),
-      httpErrorCountIn: getDatapoints(ecIn, 'Error', comparator, Protocol.HTTP),
-      tcpSentOut: getDatapoints(tcpSentOut, 'Sent', comparator),
-      tcpReceivedOut: getDatapoints(tcpReceivedOut, 'Received', comparator),
-      tcpSentIn: getDatapoints(tcpSentIn, 'Sent', comparator),
-      tcpReceivedIn: getDatapoints(tcpReceivedIn, 'Received', comparator)
+      grpcRequestCountOut: getDatapoints(rcOut, comparator, Protocol.GRPC),
+      grpcErrorCountOut: getDatapoints(ecOut, comparator, Protocol.GRPC),
+      grpcRequestCountIn: getDatapoints(rcIn, comparator, Protocol.GRPC),
+      grpcErrorCountIn: getDatapoints(ecIn, comparator, Protocol.GRPC),
+      httpRequestCountOut: getDatapoints(rcOut, comparator, Protocol.HTTP),
+      httpErrorCountOut: getDatapoints(ecOut, comparator, Protocol.HTTP),
+      httpRequestCountIn: getDatapoints(rcIn, comparator, Protocol.HTTP),
+      httpErrorCountIn: getDatapoints(ecIn, comparator, Protocol.HTTP),
+      tcpSentOut: getDatapoints(tcpSentOut, comparator),
+      tcpReceivedOut: getDatapoints(tcpReceivedOut, comparator),
+      tcpSentIn: getDatapoints(tcpSentIn, comparator),
+      tcpReceivedIn: getDatapoints(tcpReceivedIn, comparator)
     });
   }
 

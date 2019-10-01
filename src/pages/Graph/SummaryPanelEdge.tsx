@@ -23,7 +23,7 @@ import {
   summaryBodyTabs,
   summaryNavTabs
 } from './SummaryPanelCommon';
-import { MetricGroup, Metric, Metrics } from '../../types/Metrics';
+import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
@@ -34,14 +34,14 @@ import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 type SummaryPanelEdgeState = {
   loading: boolean;
   metricsLoadError: string | null;
-  reqRates: [string | number][] | null;
-  errRates: [string | number][];
-  rtAvg: [string | number][];
-  rtMed: [string | number][];
-  rt95: [string | number][];
-  rt99: [string | number][];
-  tcpSent: [string | number][];
-  tcpReceived: [string | number][];
+  reqRates: Datapoint[] | null;
+  errRates: Datapoint[];
+  rtAvg: Datapoint[];
+  rtMed: Datapoint[];
+  rt95: Datapoint[];
+  rt99: Datapoint[];
+  tcpSent: Datapoint[];
+  tcpReceived: Datapoint[];
   unit: ResponseTimeUnit;
 };
 
@@ -245,7 +245,6 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
 
   private getNodeDataPoints = (
     m: MetricGroup,
-    title: string,
     sourceMetricType: NodeMetricType,
     destMetricType: NodeMetricType,
     data: DecoratedGraphNodeData
@@ -273,7 +272,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       }
       return metric[sourceLabel] === sourceValue;
     };
-    return getDatapoints(m, title, comparator);
+    return getDatapoints(m, comparator);
   };
 
   private updateCharts = (props: SummaryPanelPropType) => {
@@ -355,38 +354,26 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
         const histograms = response.data.histograms;
         let { reqRates, errRates, rtAvg, rtMed, rt95, rt99, tcpSent, tcpReceived, unit } = defaultSummaryPanelState;
         if (isGrpc || isHttp) {
-          reqRates = this.getNodeDataPoints(metrics.request_count, 'RPS', sourceMetricType, destMetricType, sourceData);
-          errRates = this.getNodeDataPoints(
-            metrics.request_error_count,
-            'Error',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
+          reqRates = this.getNodeDataPoints(metrics.request_count, sourceMetricType, destMetricType, sourceData);
+          errRates = this.getNodeDataPoints(metrics.request_error_count, sourceMetricType, destMetricType, sourceData);
           // We query for both 'request_duration' and 'request_duration_millis' because the former is used
           // with Istio mixer telemetry and the latter with Istio mixer-less (introduced as an experimental
           // option in istion 1.3.0).  Until we can safely rely on the newer metric we must support both. So,
           // prefer the newer but if it holds no valid data, revert to the older.
           let histo = histograms.request_duration_millis;
-          rtAvg = this.getNodeDataPoints(histo.avg, 'avg', sourceMetricType, destMetricType, sourceData);
+          rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, sourceData);
           if (this.isEmpty(rtAvg)) {
             histo = histograms.request_duration;
             unit = 's';
-            rtAvg = this.getNodeDataPoints(histo.avg, 'avg', sourceMetricType, destMetricType, sourceData);
+            rtAvg = this.getNodeDataPoints(histo.avg, sourceMetricType, destMetricType, sourceData);
           }
-          rtMed = this.getNodeDataPoints(histo['0.5'], 'p50', sourceMetricType, destMetricType, sourceData);
-          rt95 = this.getNodeDataPoints(histo['0.95'], 'p95', sourceMetricType, destMetricType, sourceData);
-          rt99 = this.getNodeDataPoints(histo['0.99'], 'p99', sourceMetricType, destMetricType, sourceData);
+          rtMed = this.getNodeDataPoints(histo['0.5'], sourceMetricType, destMetricType, sourceData);
+          rt95 = this.getNodeDataPoints(histo['0.95'], sourceMetricType, destMetricType, sourceData);
+          rt99 = this.getNodeDataPoints(histo['0.99'], sourceMetricType, destMetricType, sourceData);
         } else {
           // TCP
-          tcpSent = this.getNodeDataPoints(metrics.tcp_sent, 'Sent', sourceMetricType, destMetricType, sourceData);
-          tcpReceived = this.getNodeDataPoints(
-            metrics.tcp_received,
-            'Received',
-            sourceMetricType,
-            destMetricType,
-            sourceData
-          );
+          tcpSent = this.getNodeDataPoints(metrics.tcp_sent, sourceMetricType, destMetricType, sourceData);
+          tcpReceived = this.getNodeDataPoints(metrics.tcp_received, sourceMetricType, destMetricType, sourceData);
         }
 
         this.setState({
@@ -419,18 +406,12 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
   };
 
   // Returns true if the histo datum values are all NaN
-  private isEmpty(datums: [string | number][]): boolean {
-    for (const datum of datums) {
-      if (datum[0] === 'x') {
-        continue;
-      }
-      for (let i = 1; i < datum.length; i++) {
-        if (!isNaN(Number(datum[i]))) {
-          return false;
-        }
+  private isEmpty(dps: Datapoint[]): boolean {
+    for (const dp of dps) {
+      if (!isNaN(dp[1])) {
+        return false;
       }
     }
-
     return true;
   }
 
