@@ -104,3 +104,9 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 
 	return temporaryLayer
 }
+
+func Stop() {
+	if kialiCache != nil {
+		kialiCache.Stop()
+	}
+}

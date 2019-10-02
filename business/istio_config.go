@@ -144,7 +144,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeVirtualServices {
-			if vs, vsErr := in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
+			var vs []kubernetes.IstioObject
+			var vsErr error
+			if kialiCache != nil && kialiCache.CheckNamespace(criteria.Namespace) && kialiCache.CheckIstioResource("VirtualService") {
+				vs, vsErr = kialiCache.GetIstioResources("VirtualService", criteria.Namespace)
+			} else {
+				vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, "")
+			}
+			if vsErr == nil {
 				(&istioConfigList.VirtualServices).Parse(vs)
 			} else {
 				errChan <- vsErr

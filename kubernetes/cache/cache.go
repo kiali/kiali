@@ -71,7 +71,6 @@ func NewKialiCache() (KialiCache, error) {
 	}
 	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig)
 
-
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration)
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	kialiCacheImpl := kialiCacheImpl{
@@ -132,10 +131,14 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 	if !c.isCached(namespace) {
 		return false
 	}
-	return c.createCache(namespace)
+	if _, exist := c.nsCache[namespace]; !exist {
+		return c.createCache(namespace)
+	}
+	return true
 }
 
 func (c *kialiCacheImpl) Stop() {
+	log.Infof("Stopping Kiali Cache")
 	if c.stopChan != nil {
 		close(c.stopChan)
 		c.stopChan = nil

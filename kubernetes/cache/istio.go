@@ -57,6 +57,7 @@ func (c* kialiCacheImpl) GetIstioResources(resource string, namespace string) ([
 				iResources[i] = (r.(*kubernetes.GenericIstioObject)).DeepCopyIstioObject()
 				// TODO iResource[i].SetTypeMeta(typeMeta) is missing/needed ??
 			}
+			return iResources, nil
 		}
 	}
 	return []kubernetes.IstioObject{}, nil
