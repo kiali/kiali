@@ -1,7 +1,12 @@
 package business
 
 import (
+	"sync"
+
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -23,6 +28,20 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var clientFactory kubernetes.ClientFactory
 var prometheusClient prometheus.ClientInterface
+var once sync.Once
+var kialiCache cache.KialiCache
+
+func initKialiCache() {
+	once.Do(func() {
+		if config.Get().KubernetesConfig.CacheEnabled {
+			if cache, err := cache.NewKialiCache(); err != nil {
+				log.Errorf("Error initializing Kiali Cache. Details: %s", err)
+			} else {
+				kialiCache = cache
+			}
+		}
+	})
+}
 
 func GetUnauthenticated() (*Layer, error) {
 	return Get("")
@@ -30,6 +49,10 @@ func GetUnauthenticated() (*Layer, error) {
 
 // Get the business.Layer
 func Get(token string) (*Layer, error) {
+	// Kiali Cache will be initialized once at first use of Business layer
+	if kialiCache == nil {
+		initKialiCache()
+	}
 	// Use an existing client factory if it exists, otherwise create and use in the future
 	if clientFactory == nil {
 		userClient, err := kubernetes.GetClientFactory()
@@ -80,10 +103,4 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	temporaryLayer.ThreeScale = ThreeScaleService{k8s: k8s}
 
 	return temporaryLayer
-}
-
-func (in *Layer) Stop() {
-	if in.k8s != nil {
-		in.k8s.Stop()
-	}
 }

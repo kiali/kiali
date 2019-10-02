@@ -47,7 +47,13 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err2 error
-		svcs, err2 = in.k8s.GetServices(namespace, nil)
+		// TODO we need to check if user can check the given namespace
+		// In openshift this is delegated to RBAC but using cache we need a previous step
+		if kialiCache.CheckNamespace(namespace) {
+			svcs, err2 = kialiCache.GetServices(namespace)
+		} else {
+			svcs, err2 = in.k8s.GetServices(namespace, nil)
+		}
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err2)
 			errChan <- err2

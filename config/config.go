@@ -230,10 +230,10 @@ type IstioLabels struct {
 
 // KubernetesConfig holds the k8s client configuration
 type KubernetesConfig struct {
-	Burst         	int     `yaml:"burst,omitempty"`
-	QPS           	float32 `yaml:"qps,omitempty"`
-	CacheEnabled  	bool    `yaml:"cache_enabled,omitempty"`
-	CacheDuration 	int64   `yaml:"cache_duration,omitempty"`
+	Burst         	int      `yaml:"burst,omitempty"`
+	QPS           	float32  `yaml:"qps,omitempty"`
+	CacheEnabled  	bool     `yaml:"cache_enabled,omitempty"`
+	CacheDuration 	int64    `yaml:"cache_duration,omitempty"`
 	// CacheNamespaces provides a list of namespaces or regex defining namespaces to include in a cache
 	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
 }
