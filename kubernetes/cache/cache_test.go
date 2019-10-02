@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 func TestFilterNamespaces(t *testing.T) {
 	assert := assert.New(t)
 
 	kialiCacheImpl := kialiCacheImpl{
-		clientset:       nil,
+		istioClient:       kubernetes.IstioClient{},
 		refreshDuration: 0,
 		cacheNamespaces: []string{"bookinfo", "a.*", "galicia"},
 		stopChan:        nil,

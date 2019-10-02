@@ -5,13 +5,10 @@ import (
 	"strings"
 	"time"
 
-	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
-	kube "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 // Istio uses caches for pods and controllers.
@@ -22,13 +19,12 @@ type (
 	KialiCache interface {
 		// Control methods
 		// Check if a namespace is listed to be cached; if yes, creates a cache for that namespace
-		Check(namespace string) bool
+		CheckNamespace(namespace string) bool
 		// Stop all caches
 		Stop()
 
-		// Business methods
-		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
-		GetServices(namespace string) ([]core_v1.Service, error)
+		KubernetesCache
+		IstioCache
 	}
 
 	// This map will store Informers per specific types
@@ -36,7 +32,7 @@ type (
 	typeCache map[string]cache.SharedIndexInformer
 
 	kialiCacheImpl struct {
-		clientset       kube.Interface
+		istioClient     kubernetes.IstioClient
 		refreshDuration time.Duration
 		cacheNamespaces []string
 		stopChan        chan struct{}
@@ -44,9 +40,9 @@ type (
 	}
 )
 
-func NewKialiCache(clientset kube.Interface, refreshDuration time.Duration, cacheNamespaces []string) KialiCache {
+func NewKialiCache(istioClient kubernetes.IstioClient, refreshDuration time.Duration, cacheNamespaces []string) KialiCache {
 	kialiCacheImpl := kialiCacheImpl{
-		clientset:       clientset,
+		istioClient:     istioClient,
 		refreshDuration: refreshDuration,
 		cacheNamespaces: cacheNamespaces,
 		stopChan:        make(chan struct{}),
@@ -67,10 +63,9 @@ func (c *kialiCacheImpl) isCached(namespace string) bool {
 }
 
 func (c *kialiCacheImpl) createCache(namespace string) bool {
-	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.clientset, c.refreshDuration, informers.WithNamespace(namespace))
 	informer := make(typeCache)
-	informer["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
-	informer["Service"] = sharedInformers.Core().V1().Services().Informer()
+	c.createKubernetesInformers(namespace, &informer)
+	c.createIstioInformers(namespace, &informer)
 	c.nsCache[namespace] = informer
 
 	go func() {
@@ -99,7 +94,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	return true
 }
 
-func (c *kialiCacheImpl) Check(namespace string) bool {
+func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 	if !c.isCached(namespace) {
 		return false
 	}

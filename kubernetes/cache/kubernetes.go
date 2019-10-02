@@ -5,7 +5,21 @@ import (
 
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/informers"
 )
+
+type (
+	KubernetesCache interface {
+		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+		GetServices(namespace string) ([]core_v1.Service, error)
+	}
+)
+
+func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
+	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.istioClient.GetK8sApi(), c.refreshDuration, informers.WithNamespace(namespace))
+	(*informer)["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
+	(*informer)["Service"] = sharedInformers.Core().V1().Services().Informer()
+}
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
