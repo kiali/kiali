@@ -108,13 +108,13 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 	trafficMap[n6.ID] = &n6
 	trafficMap[n7.ID] = &n7
 
-	n0.AddEdge(&n1)
-	n1.AddEdge(&n2)
-	n2.AddEdge(&n3)
-	n2.AddEdge(&n4)
-	n2.AddEdge(&n5)
-	n2.AddEdge(&n6)
-	n2.AddEdge(&n7)
+	n0.AddEdge(&n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n1.AddEdge(&n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(&n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(&n4).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(&n5).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(&n6).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(&n7).Metadata[graph.ProtocolKey] = graph.TCP.Name
 
 	return trafficMap
 }
@@ -202,7 +202,7 @@ func TestServiceEntry(t *testing.T) {
 	notSEAppID, _ = graph.Id("testNamespace", "NotSE", "testNamespace", "NotSE-v1", "NotSE", "v1", graph.GraphTypeVersionedApp)
 	notSEAppNode, found2 = trafficMap[notSEAppID]
 	assert.Equal(true, found2)
-	assert.Equal(5, len(notSEAppNode.Edges))
+	assert.Equal(4, len(notSEAppNode.Edges))
 	assert.Equal(nil, notSEAppNode.Metadata[graph.IsServiceEntry])
 
 	externalSEServiceEntryID, _ := graph.Id("testNamespace", "externalSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
