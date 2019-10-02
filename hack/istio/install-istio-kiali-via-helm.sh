@@ -40,6 +40,10 @@ while [[ $# -gt 0 ]]; do
       CLIENT_EXE_NAME="$2"
       shift;shift
       ;;
+    -cp|--client-exe-path)
+      CLIENT_EXE="$2"
+      shift;shift
+      ;;
     -di|--delete-istio)
       if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
         DELETE_ISTIO="$2"
@@ -138,6 +142,9 @@ Valid command line arguments:
   -c|--client-exe <name>:
        Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc".
        Default: oc
+  -cp|--client-exe-path <full path to client exec>:
+       Cluster client executable path - e.g. "/bin/kubectl" or "minikube kubectl --"
+       This value overrides any other value set with --client-exe
   -di|--delete-istio (true|false):
        Set to 'true' if you want to delete Istio, rather than install it.
        Default: false
@@ -207,12 +214,14 @@ if [ "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; th
   KIALI_CREATE_SECRET="false"
 fi
 
-CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
-if [ "$?" = "0" ]; then
-  echo "The cluster client executable is found here: ${CLIENT_EXE}"
-else
-  echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
-  exit 1
+if [ "${CLIENT_EXE}" = "" ]; then
+  CLIENT_EXE=`which "${CLIENT_EXE_NAME}"`
+  if [ "$?" = "0" ]; then
+    echo "The cluster client executable is found here: ${CLIENT_EXE}"
+  else
+    echo "ERROR: You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue."
+    exit 1
+  fi
 fi
 
 HELM_EXE=`which helm`
