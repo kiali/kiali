@@ -11,7 +11,7 @@ def before_all_tests(kiali_client):
     swagger_method_list= []
     tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'Authenticate',
                           'namespaceList', 'namespaceMetrics','namespaceHealth',
-                          'istioConfigList', 'istioConfigDetails', 'objectValidations', ''
+                          'istioConfigList', 'istioConfigDetails', 'istioConfigCreate', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
@@ -43,8 +43,8 @@ def get_pod_id(kiali_client, namespace, pod_name):
 
     return pod_id
 
-def evaluate_response(kiali_client, method_name, path=None, params=None, status_code_expected=200):
-    response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params)
+def evaluate_response(kiali_client, method_name, path=None, params=None, data=None, status_code_expected=200, http_method='GET'):
+    response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params, data=data, http_method=http_method)
     assert response is not None
     try:
         assert response.status_code == status_code_expected
@@ -70,6 +70,9 @@ def test_swagger_double_api(kiali_client):
 def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
+def test_istio_config_create(kiali_client):
+    data = {"metadata": {"namespace": "bookinfo", "name": "details", "labels": {"kiali_wizard": "suspend_traffic"}}, "spec": {"http": [{"route": [{"destination": {"host": "details"}}], "fault": {"abort": {"httpStatus": 503, "percentage": {"value": 100}}}}], "hosts": ["details"], "gateways": None}}
+    evaluate_response(kiali_client, method_name='istioConfigCreate', path={'namespace': 'istio-system', 'object_type': 'virtualservices'}, data=data, http_method='POST')
 
 def test_jaeger_info(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
