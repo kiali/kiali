@@ -107,8 +107,6 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	assert := assert.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
@@ -124,6 +122,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	setExcludedWorkloads(map[string]bool{})
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -163,6 +162,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	setExcludedWorkloads(map[string]bool{})
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -202,6 +202,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	setExcludedWorkloads(map[string]bool{})
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 

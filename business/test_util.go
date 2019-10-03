@@ -231,6 +231,8 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 
 func FakeReplicationControllers() []core_v1.ReplicationController {
 	conf := config.NewConfig()
+	// Enable ReplicationController, those are not fetched by default
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
@@ -304,6 +306,7 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 
 func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
@@ -377,6 +380,7 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 
 func FakeStatefulSets() []apps_v1.StatefulSet {
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
 	config.Set(conf)
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName

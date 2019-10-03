@@ -49,6 +49,7 @@ const (
 	EnvKubernetesCacheEnabled           = "KUBERNETES_CACHE_ENABLED"
 	EnvKubernetesCacheDuration          = "KUBERNETES_CACHE_DURATION"
 	EnvKubernetesCacheNamespaces        = "KUBERNETES_CACHE_KUBERNETES"
+	EnvKubernetesExcludeWorkloads       = "KUBERNETES_EXCLUDE_WORKLOADS"
 	EnvLdapBase                         = "LDAP_BASE"
 	EnvLdapBindDN                       = "LDAP_BIND_DN"
 	EnvLdapGroupFilter                  = "LDAP_GROUP_FILTER"
@@ -230,15 +231,19 @@ type IstioLabels struct {
 
 // KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
-	Burst         	int      `yaml:"burst,omitempty"`
-	QPS           	float32  `yaml:"qps,omitempty"`
+	Burst         		int      `yaml:"burst,omitempty"`
+	QPS           		float32  `yaml:"qps,omitempty"`
 	// Enable cache for kubernetes and istio resources
-	CacheEnabled  	bool     `yaml:"cache_enabled,omitempty"`
+	CacheEnabled  		bool     `yaml:"cache_enabled,omitempty"`
 	// Cache duration expressed in nanoseconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
-	CacheDuration 	int64    `yaml:"cache_duration,omitempty"`
-	// CacheNamespaces provides a list of namespaces or regex defining namespaces to include in a cache
-	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
+	CacheDuration 		int64    `yaml:"cache_duration,omitempty"`
+	// List of namespaces or regex defining namespaces to include in a cache
+	CacheNamespaces 	[]string `yaml:"cache_namespaces,omitempty"`
+	// List of controllers that won't be used for Workload calculation
+	// Kiali queries: Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
+	// If user has knowledge that some of them won't be used, Kiali can skip those queries.
+	ExcludeWorkloads 	[]string `yaml:"excluded_workloads,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
@@ -317,7 +322,6 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
-
 	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
 
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
@@ -393,7 +397,8 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
 	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
-	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, "*")
+	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, ".*")
+	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,Job,ReplicationController,StatefulSet")
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.API.Namespaces.Exclude {

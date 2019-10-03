@@ -28,6 +28,34 @@ type WorkloadService struct {
 	businessLayer *Layer
 }
 
+var (
+	ew sync.RWMutex
+	excludedWorkloads map[string]bool
+)
+
+func isExcludedWorkloadsEmpty() bool {
+	defer ew.RUnlock()
+	ew.RLock()
+	return excludedWorkloads == nil
+}
+
+func setExcludedWorkloads(m map[string]bool) {
+	defer ew.Unlock()
+	ew.Lock()
+	excludedWorkloads = m
+}
+
+func isWorkloadIncluded(workload string) bool {
+	if isExcludedWorkloadsEmpty() {
+		excludedWorkloads = make(map[string]bool)
+		for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
+			excludedWorkloads[w] = true
+		}
+		setExcludedWorkloads(excludedWorkloads)
+	}
+	return !excludedWorkloads[workload]
+}
+
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
 func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadList, error) {
 	var err error
@@ -171,17 +199,19 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		repcon, err = k8s.GetReplicationControllers(namespace)
-		if err != nil {
-			log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("ReplicationController") {
+			repcon, err = k8s.GetReplicationControllers(namespace)
+			if err != nil {
+				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		if k8s.IsOpenShift() {
+		if k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
 			depcon, err = k8s.GetDeploymentConfigs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
@@ -193,30 +223,36 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		fulset, err = k8s.GetStatefulSets(namespace)
-		if err != nil {
-			log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("StatefulSet") {
+			fulset, err = k8s.GetStatefulSets(namespace)
+			if err != nil {
+				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		conjbs, err = k8s.GetCronJobs(namespace)
-		if err != nil {
-			log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("CronJob") {
+			conjbs, err = k8s.GetCronJobs(namespace)
+			if err != nil {
+				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		jbs, err = k8s.GetJobs(namespace)
-		if err != nil {
-			log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("Job") {
+			jbs, err = k8s.GetJobs(namespace)
+			if err != nil {
+				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
@@ -622,17 +658,19 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		repcon, err = k8s.GetReplicationControllers(namespace)
-		if err != nil {
-			log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("ReplicationController") {
+			repcon, err = k8s.GetReplicationControllers(namespace)
+			if err != nil {
+				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		if k8s.IsOpenShift() {
+		if k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
 			depcon, err = k8s.GetDeploymentConfig(namespace, workloadName)
 			if err != nil {
 				depcon = nil
@@ -643,29 +681,35 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		fulset, err = k8s.GetStatefulSet(namespace, workloadName)
-		if err != nil {
-			fulset = nil
+		if isWorkloadIncluded("StatefulSet") {
+			fulset, err = k8s.GetStatefulSet(namespace, workloadName)
+			if err != nil {
+				fulset = nil
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		conjbs, err = k8s.GetCronJobs(namespace)
-		if err != nil {
-			log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("CronJob") {
+			conjbs, err = k8s.GetCronJobs(namespace)
+			if err != nil {
+				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		var err error
-		jbs, err = k8s.GetJobs(namespace)
-		if err != nil {
-			log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
-			errChan <- err
+		if isWorkloadIncluded("Job") {
+			jbs, err = k8s.GetJobs(namespace)
+			if err != nil {
+				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
