@@ -163,12 +163,15 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
 	defer promtimer.ObserveNow(&err)
-
-	services, err := in.k8s.GetServices(namespace, nil)
+	var services []core_v1.Service
+	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+		services, err = kialiCache.GetServices(namespace, nil)
+	} else {
+		services, err = in.k8s.GetServices(namespace, nil)
+	}
 	if err != nil {
 		return nil, err
 	}
-
 	return in.getNamespaceServiceHealth(namespace, services, rateInterval, queryTime), nil
 }
 

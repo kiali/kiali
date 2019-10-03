@@ -151,7 +151,11 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 	go func() {
 		defer wg.Done()
 		var err error
-		services, err = k8s.GetServices(namespace, nil)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			services, err = kialiCache.GetServices(namespace, nil)
+		} else {
+			services, err = k8s.GetServices(namespace, nil)
+		}
 		if appName != "" {
 			selector := labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName}).AsSelector()
 			services = kubernetes.FilterServicesForSelector(selector, services)

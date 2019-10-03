@@ -8,12 +8,13 @@ import (
 	"k8s.io/client-go/informers"
 
 	"github.com/kiali/kiali/log"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type (
 	KubernetesCache interface {
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
-		GetServices(namespace string) ([]core_v1.Service, error)
+		GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 	}
 )
 
@@ -36,14 +37,14 @@ func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment,
 			for i, dep := range deps {
 				nsDeps[i] = *(dep.(*apps_v1.Deployment))
 			}
-			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %s", namespace, lenDeps)
+			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, lenDeps)
 			return nsDeps, nil
 		}
 	}
 	return []apps_v1.Deployment{}, nil
 }
 
-func (c *kialiCacheImpl) GetServices(namespace string) ([]core_v1.Service, error) {
+func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		services := nsCache["Service"].GetStore().List()
 		lenServices := len(services)
@@ -57,7 +58,17 @@ func (c *kialiCacheImpl) GetServices(namespace string) ([]core_v1.Service, error
 				nsServices[i] = *(service.(*core_v1.Service))
 			}
 			log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, lenServices)
-			return nsServices, nil
+			if selectorLabels == nil {
+				return nsServices, nil
+			}
+			var filteredServices []core_v1.Service
+			for _, svc := range nsServices {
+				svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
+				if !svcSelector.Empty() && svcSelector.Matches(labels.Set(selectorLabels)) {
+					filteredServices = append(filteredServices, svc)
+				}
+			}
+			return filteredServices, nil
 		}
 	}
 	return []core_v1.Service{}, nil

@@ -260,7 +260,13 @@ func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher fu
 func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		services, err := in.k8s.GetServices(namespace, nil)
+		var services []core_v1.Service
+		var err error
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			services, err = kialiCache.GetServices(namespace, nil)
+		} else {
+			services, err = in.k8s.GetServices(namespace, nil)
+		}
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -275,7 +281,13 @@ func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, name
 func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		deployments, err := in.k8s.GetDeployments(namespace)
+		var deployments []apps_v1.Deployment
+		var err error
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			deployments, err = kialiCache.GetDeployments(namespace)
+		} else {
+			deployments, err = in.k8s.GetDeployments(namespace)
+		}
 		if err != nil {
 			select {
 			case errChan <- err:

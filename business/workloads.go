@@ -105,7 +105,13 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	}()
 
 	if includeServices {
-		services, err := in.k8s.GetServices(namespace, workload.Labels)
+		var services []core_v1.Service
+		var err error
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			services, err = kialiCache.GetServices(namespace, workload.Labels)
+		} else {
+			services, err = in.k8s.GetServices(namespace, workload.Labels)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +185,11 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		dep, err = k8s.GetDeployments(namespace)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			dep, err = kialiCache.GetDeployments(namespace)
+ 		} else {
+			dep, err = k8s.GetDeployments(namespace)
+		}
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
 			errChan <- err

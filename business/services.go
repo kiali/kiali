@@ -48,9 +48,10 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		defer wg.Done()
 		var err2 error
 		// TODO we need to check if user can check the given namespace
-		// In openshift this is delegated to RBAC but using cache we need a previous step
+		// In openshift this is delegated to RBAC and it's checked fetching the Projects a user can see
+		// But it may be an overkill
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			svcs, err2 = kialiCache.GetServices(namespace)
+			svcs, err2 = kialiCache.GetServices(namespace, nil)
 		} else {
 			svcs, err2 = in.k8s.GetServices(namespace, nil)
 		}
@@ -73,7 +74,11 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err error
-		deployments, err = in.k8s.GetDeployments(namespace)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			deployments, err = kialiCache.GetDeployments(namespace)
+		} else {
+			deployments, err = in.k8s.GetDeployments(namespace)
+		}
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -364,7 +369,11 @@ func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.Servic
 	defer promtimer.ObserveNow(&err)
 
 	var svcs []core_v1.Service
-	svcs, err = in.k8s.GetServices(namespace, nil)
+	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+		kialiCache.GetServices(namespace, nil)
+	} else {
+		svcs, err = in.k8s.GetServices(namespace, nil)
+	}
 	if err != nil {
 		log.Errorf("Error fetching Service definitions for namespace %s: %s", namespace, err)
 	}
