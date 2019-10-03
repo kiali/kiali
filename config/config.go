@@ -228,11 +228,14 @@ type IstioLabels struct {
 	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
-// KubernetesConfig holds the k8s client configuration
+// KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
 	Burst         	int      `yaml:"burst,omitempty"`
 	QPS           	float32  `yaml:"qps,omitempty"`
+	// Enable cache for kubernetes and istio resources
 	CacheEnabled  	bool     `yaml:"cache_enabled,omitempty"`
+	// Cache duration expressed in nanoseconds
+	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
 	CacheDuration 	int64    `yaml:"cache_duration,omitempty"`
 	// CacheNamespaces provides a list of namespaces or regex defining namespaces to include in a cache
 	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
@@ -376,7 +379,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
 
-	// ThreeScale Configuration
+	// ThreeScale ConfigEnvKubernetesCacheNamespacesuration
 	c.ExternalServices.ThreeScale.AdapterName = strings.TrimSpace(getDefaultString(EnvThreeScaleAdapterName, "threescale"))
 	c.ExternalServices.ThreeScale.AdapterService = strings.TrimSpace(getDefaultString(EnvThreeScaleServiceName, "threescale-istio-adapter"))
 	c.ExternalServices.ThreeScale.AdapterPort = strings.TrimSpace(getDefaultString(EnvThreeScaleServicePort, "3333"))

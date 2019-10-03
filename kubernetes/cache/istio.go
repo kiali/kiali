@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type (
@@ -47,16 +48,18 @@ func (c* kialiCacheImpl) GetIstioResources(resource string, namespace string) ([
 	}
 	if nsCache, nsOk := c.nsCache[namespace]; nsOk {
 		resources := nsCache[resource].GetStore().List()
-		if len(resources) > 0 {
+		lenResources := len(resources)
+		if lenResources > 0 {
 			_, ok := resources[0].(*kubernetes.GenericIstioObject)
 			if !ok {
 				return nil, fmt.Errorf("bad GenericIstioObject type found in cache for [resource: %s]", resource)
 			}
-			iResources := make([]kubernetes.IstioObject, len(resources))
+			iResources := make([]kubernetes.IstioObject, lenResources)
 			for i, r := range resources {
 				iResources[i] = (r.(*kubernetes.GenericIstioObject)).DeepCopyIstioObject()
 				// TODO iResource[i].SetTypeMeta(typeMeta) is missing/needed ??
 			}
+			log.Tracef("[Kiali Cache] Get [resource: %s] for [namespace: %s] =  %d", resource, namespace, lenResources)
 			return iResources, nil
 		}
 	}

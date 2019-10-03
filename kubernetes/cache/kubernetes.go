@@ -6,6 +6,8 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
+
+	"github.com/kiali/kiali/log"
 )
 
 type (
@@ -24,15 +26,17 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		deps := nsCache["Deployment"].GetStore().List()
-		if len(deps) > 0 {
+		lenDeps := len(deps)
+		if lenDeps > 0 {
 			_, ok := deps[0].(*apps_v1.Deployment)
 			if !ok {
 				return nil, errors.New("bad Deployment type found in cache")
 			}
-			nsDeps := make([]apps_v1.Deployment, len(deps))
+			nsDeps := make([]apps_v1.Deployment, lenDeps)
 			for i, dep := range deps {
 				nsDeps[i] = *(dep.(*apps_v1.Deployment))
 			}
+			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %s", namespace, lenDeps)
 			return nsDeps, nil
 		}
 	}
@@ -42,15 +46,17 @@ func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment,
 func (c *kialiCacheImpl) GetServices(namespace string) ([]core_v1.Service, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		services := nsCache["Service"].GetStore().List()
-		if len(services) > 0 {
+		lenServices := len(services)
+		if lenServices > 0 {
 			_, ok := services[0].(*core_v1.Service)
 			if !ok {
 				return []core_v1.Service{}, errors.New("bad Service type found in cache")
 			}
-			nsServices := make([]core_v1.Service, len(services))
+			nsServices := make([]core_v1.Service, lenServices)
 			for i, service := range services {
 				nsServices[i] = *(service.(*core_v1.Service))
 			}
+			log.Tracef("[Kiali Cache] Get [resource: Service] for [namespace: %s] = %d", namespace, lenServices)
 			return nsServices, nil
 		}
 	}

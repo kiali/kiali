@@ -110,7 +110,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 	}()
 
 	log.Infof("Waiting for Kiali cache for [namespace: %s] to sync", namespace)
-	isSynced := func () bool {
+	isSynced := func() bool {
 		hasSynced := true
 		for _, informer := range c.nsCache[namespace] {
 			hasSynced = hasSynced && informer.HasSynced()
