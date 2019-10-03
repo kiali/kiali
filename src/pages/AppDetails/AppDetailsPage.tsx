@@ -138,7 +138,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       duration: `${MetricsDuration.initialDuration()}s`,
       graphType: GraphType.APP,
       injectServiceNodes: true,
-      appenders: 'deadNode'
+      appenders: 'deadNode,serviceEntry'
     };
 
     fetchTrafficDetails(node, restParams).then(trafficData => {

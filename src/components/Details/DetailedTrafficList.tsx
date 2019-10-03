@@ -36,6 +36,7 @@ export interface ServiceNode {
   name: string;
   isServiceEntry?: string;
   isInaccessible: boolean;
+  destServices?: { namespace: string; name: string }[];
 }
 
 export interface UnknownNode {
@@ -68,6 +69,12 @@ const typeColumnSizes = statusColumnSizes;
 const trafficColumnSizes = workloadColumnSizes;
 
 class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
+  static STATUS_COLUMN_IDX = 0;
+  static WORKLOAD_COLUMN_IDX = 1;
+  static PROTOCOL_COLUMN_IDX = 2;
+  static TRAFFIC_COLUMN_IDX = 3;
+  static METRICS_LINK_COLUMN_IDX = 4;
+
   render() {
     const sortedTraffic = this.getSortedTraffic();
 
@@ -115,13 +122,27 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
       const side = this.props.direction === 'inbound' ? 'source' : 'destination';
       metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent(side + '_app=' + node.name);
     } else if (node.type === NodeType.SERVICE) {
-      // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
-      // switch context to the service details page.
-      if (this.props.direction === 'outbound') {
-        metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('destination_service_name=' + node.name);
+      if (node.isServiceEntry) {
+        // Service Entries should be only destination nodes. So, don't build a link if direction is inbound.
+        if (this.props.direction === 'inbound') {
+          return null;
+        }
+
+        if (node.destServices && node.destServices.length > 0) {
+          const svcHosts = node.destServices.map(item => item.name).join(',');
+          metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('destination_service_name=' + svcHosts);
+        } else {
+          return null;
+        }
       } else {
-        // Services have only one metrics tab.
-        metricsLink = `/namespaces/${node.namespace}/services/${node.name}?tab=metrics`;
+        // Filter by remote service only available in the Outbound Metrics tab. For inbound traffic,
+        // switch context to the service details page.
+        if (this.props.direction === 'outbound') {
+          metricsLink += '&' + URLParam.BY_LABELS + '=' + encodeURIComponent('destination_service_name=' + node.name);
+        } else {
+          // Services have only one metrics tab.
+          metricsLink = `/namespaces/${node.namespace}/services/${node.name}?tab=metrics`;
+        }
       }
     } else if (node.type === NodeType.WORKLOAD) {
       // No filters available for workloads. Context switch is mandatory.
