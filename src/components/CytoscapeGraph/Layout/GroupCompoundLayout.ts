@@ -38,7 +38,6 @@
 export const COMPOUND_PARENT_NODE_CLASS = '__compoundLayoutParentNodeClass';
 
 const NAMESPACE_KEY = 'group_compound_layout';
-const CHILDREN_KEY = NAMESPACE_KEY + 'children';
 const STYLES_KEY = NAMESPACE_KEY + 'styles';
 const RELATIVE_POSITION_KEY = NAMESPACE_KEY + 'relative_position';
 
@@ -176,8 +175,6 @@ export default class GroupCompoundLayout {
       parent.addClass(COMPOUND_PARENT_NODE_CLASS);
       // (1.b) Set the size
       parent.style(newStyles);
-      // Save the children in the parent scratchpad for later
-      parent.scratch(CHILDREN_KEY, parent.children());
     });
 
     //  Remove the children and its edges and add synthetic edges for every edge that touches a child node.
@@ -192,8 +189,8 @@ export default class GroupCompoundLayout {
         }
       });
     });
-    // (1.d) Detach all child nodes from parents.
-    children.move('null');
+    // (1.d) Remove all child nodes from parents (and their edges).
+    const removedElements = this.cy.remove(children);
 
     const layout = this.cy.layout({
       // Create a new layout
@@ -211,10 +208,10 @@ export default class GroupCompoundLayout {
       // (3) Remove synthetic edges
       this.cy.remove(syntheticEdges);
 
+      // (4.a) Add back the child nodes (with edges still attached)
+      removedElements.restore();
       // Add and position the children nodes according to the layout
       parents.each(parent => {
-        // (4.a) Add back the child nodes (with edges still attached)
-        parent.scratch(CHILDREN_KEY).move(parent);
         // (4.b) Layout the children using our compound layout.
         parent.children().each(child => {
           const relativePosition = child.data(RELATIVE_POSITION_KEY);
@@ -226,7 +223,6 @@ export default class GroupCompoundLayout {
         parent.removeClass(COMPOUND_PARENT_NODE_CLASS);
 
         // Discard the saved values
-        parent.removeScratch(CHILDREN_KEY);
         parent.removeScratch(STYLES_KEY);
       });
       this.cy.endBatch();

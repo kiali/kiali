@@ -421,8 +421,23 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       // Ensure we don't end with negative values in our bounds-expansion
       newBE = newBE.map(val => Math.max(val, 0));
 
+      const compareBoundsExpansion = (be1: number[], be2: number[]) => {
+        if (be1.length !== be2.length) {
+          return false;
+        }
+
+        const delta = 0.00001;
+
+        for (let i = 0; i < be1.length; ++i) {
+          if (Math.abs(be1[i] - be2[i]) > delta) {
+            return false;
+          }
+        }
+        return true;
+      };
+
       // Only trigger an update if it really changed, else just skip to avoid this function to call again
-      if (oldBE.join(' ') !== newBE.join(' ')) {
+      if (!compareBoundsExpansion(oldBE, newBE)) {
         target.style('bounds-expansion', newBE);
         // bounds-expansion changed. Make sure we tell our parent (if any) to update as well (so he can update the label position).
         if (target.isChild()) {
