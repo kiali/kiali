@@ -278,6 +278,7 @@ export default class TrafficRenderer {
   constructor(cy: any, edges: any) {
     this.layer = cy.cyCanvas();
     this.canvas = this.layer.getCanvas();
+    this.canvas.style['pointer-events'] = 'none';
     this.context = this.canvas.getContext('2d');
     this.setEdges(edges);
   }

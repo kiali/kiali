@@ -94,3 +94,7 @@ export enum PFColorVars {
   WarningColor = 'var(--pf-global--warning-color--100)',
   SuccessColor = 'var(--pf-global--success-color--100)'
 }
+
+export const withAlpha = (color: PfColors, hexAlpha: string) => {
+  return color + hexAlpha;
+};

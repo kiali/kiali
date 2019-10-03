@@ -1,4 +1,5 @@
-import { PfColors } from '../../../components/Pf/PfColors';
+import { style } from 'typestyle';
+import { PfColors, withAlpha } from '../../../components/Pf/PfColors';
 import { EdgeLabelMode } from '../../../types/GraphFilter';
 import { FAILURE, DEGRADED, REQUESTS_THRESHOLDS } from '../../../types/Health';
 import {
@@ -39,28 +40,209 @@ const NodeColorBorderFailure = PfColors.Red;
 const NodeColorBorderHover = PfColors.Blue300;
 const NodeColorBorderSelected = PfColors.Blue300;
 const NodeColorFill = PfColors.White;
-const NodeColorFillBox = PfColors.Black100;
+const NodeColorFillBox = PfColors.White;
 const NodeColorFillHover = PfColors.Blue50;
 const NodeColorFillHoverDegraded = '#fdf2e5';
 const NodeColorFillHoverFailure = '#ffe6e6';
-const NodeHeight = '10px';
-const NodeIconCB = icons.istio.circuitBreaker.ascii; // bolt
-const NodeIconMS = icons.istio.missingSidecar.ascii; // exclamation
-const NodeIconVS = icons.istio.virtualService.ascii; // code-branch
-const NodeTextOutlineColor = PfColors.White;
-const NodeTextOutlineWidth = '1px';
+const NodeHeight = '25px';
+const NodeIconCB = icons.istio.circuitBreaker.className; // bolt
+const NodeIconMS = icons.istio.missingSidecar.className; // exclamation
+const NodeIconVS = icons.istio.virtualService.className; // code-branch
 const NodeTextColor = PfColors.Black;
-const NodeTextColorBadged = PfColors.Purple600;
+const NodeTextBackgroundColor = PfColors.White;
+const NodeVersionParentTextColor = PfColors.White;
+const NodeVersionParentBackgroundColor = PfColors.Black800;
+const NodeBadgeBackgroundColor = PfColors.Purple400;
+const NodeBadgeColor = PfColors.White;
+const NodeBadgeFontSize = '12px';
 const NodeTextFont = EdgeTextFont;
-const NodeTextFontWeight = 'normal';
-const NodeTextFontWeightBadged = 'normal';
 const NodeTextFontSize = '8px';
 const NodeTextFontSizeHover = '11px';
 const NodeWidth = NodeHeight;
 
+type NodeShape = 'round-rectangle' | 'round-triangle' | 'round-tag' | 'round-diamond' | 'ellipse';
+
+const labelStyleDefault = style({
+  borderRadius: '3px',
+  boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
+  display: 'flex',
+  fontFamily: NodeTextFont,
+  fontSize: '0',
+  fontWeight: 'normal',
+  marginTop: '4px',
+  lineHeight: '11px',
+  textAlign: 'center'
+});
+
+const contentStyleDefault = style({
+  alignItems: 'center',
+  backgroundColor: withAlpha(NodeTextBackgroundColor, 'a'),
+  color: NodeTextColor,
+  display: 'flex',
+  fontSize: NodeTextFontSize,
+  padding: '3px 5px',
+  borderRadius: '3px',
+  borderWidth: '1px'
+});
+
+const contentStyleWithBadges = style({
+  borderBottomLeftRadius: 'unset',
+  borderColor: NodeBadgeBackgroundColor,
+  borderStyle: 'solid',
+  borderTopLeftRadius: 'unset',
+  borderLeft: '0'
+});
+
+const badgesDefaultStyle = style({
+  alignItems: 'center',
+  backgroundColor: NodeBadgeBackgroundColor,
+  borderTopLeftRadius: '3px',
+  borderBottomLeftRadius: '3px',
+  color: NodeBadgeColor,
+  display: 'flex',
+  fontSize: NodeBadgeFontSize,
+  padding: '3px 3px'
+});
+
+const badgeStyle = style({
+  marginLeft: '1px'
+});
+
 export class GraphStyles {
   static options() {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
+  }
+
+  static htmlLabelForNode(ele: any) {
+    const getCyGlobalData = (ele: any): CytoscapeGlobalScratchData => {
+      return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
+    };
+
+    let content = '';
+    const cyGlobal = getCyGlobalData(ele);
+    const data = decoratedNodeData(ele);
+    let labelRawStyle = '';
+
+    const isGroup = data.isGroup;
+
+    if (ele.hasClass('mousehighlight')) {
+      labelRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
+    }
+
+    if (ele.hasClass(DimClass)) {
+      labelRawStyle += 'opacity: 0.6;';
+    }
+
+    if (isGroup) {
+      labelRawStyle += 'margin-top: 13px;';
+    }
+
+    let badges = '';
+    if (cyGlobal.showMissingSidecars && data.hasMissingSC) {
+      badges = `<span class="${NodeIconMS} ${badgeStyle}"></span> ${badges}`;
+    }
+    if (cyGlobal.showCircuitBreakers && data.hasCB) {
+      badges = `<span class="${NodeIconCB} ${badgeStyle}"></span> ${badges}`;
+    }
+    if (cyGlobal.showVirtualServices && data.hasVS) {
+      badges = `<span class="${NodeIconVS} ${badgeStyle}"></span> ${badges}`;
+    }
+
+    if (badges.length > 0) {
+      badges = `<div class=${badgesDefaultStyle}>${badges}</div>`;
+    }
+
+    const hasBadge = badges.length > 0;
+
+    if (getCyGlobalData(ele).showNodeLabels) {
+      const app = data.app || '';
+      const isGroupMember = data.parent;
+      const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
+      const isOutside = data.isOutside;
+      const isServiceEntry = data.isServiceEntry !== undefined;
+      const namespace = data.namespace;
+      const nodeType = data.nodeType;
+      const service = data.service || '';
+      const version = data.version || '';
+      const workload = data.workload || '';
+
+      let contentRawStyle = '';
+
+      if (isGroup) {
+        contentRawStyle += `background-color: ${NodeVersionParentBackgroundColor};`;
+        contentRawStyle += `color: ${NodeVersionParentTextColor};`;
+      }
+      if (ele.hasClass('mousehighlight')) {
+        contentRawStyle += 'font-size: ' + NodeTextFontSizeHover + ';';
+      }
+
+      if (isGroupMember) {
+        switch (nodeType) {
+          case NodeType.APP:
+            if (cyGlobal.graphType === GraphType.APP) {
+              content = app;
+            } else if (version && version !== UNKNOWN) {
+              content = version;
+            } else {
+              content = workload ? `${workload}` : `${app}`;
+            }
+            break;
+          case NodeType.SERVICE:
+            content = service;
+            break;
+          case NodeType.WORKLOAD:
+            content = workload;
+            break;
+          default:
+            content = '';
+        }
+      } else {
+        const contentArray: string[] = [];
+        if ((isMultiNamespace || isOutside) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
+          contentArray.push('(' + namespace + ')');
+        }
+        switch (nodeType) {
+          case NodeType.APP:
+            if (cyGlobal.graphType === GraphType.APP || isGroup || version === UNKNOWN) {
+              contentArray.unshift(app);
+            } else {
+              contentArray.unshift(version);
+              contentArray.unshift(app);
+            }
+            break;
+          case NodeType.SERVICE:
+            contentArray.unshift(service);
+            break;
+          case NodeType.UNKNOWN:
+            contentArray.unshift(UNKNOWN);
+            break;
+          case NodeType.WORKLOAD:
+            contentArray.unshift(workload);
+            break;
+          default:
+            contentArray.unshift('error');
+        }
+        content = contentArray.join('<br/>');
+      }
+      content = `<div class="${contentStyleDefault} ${
+        hasBadge ? contentStyleWithBadges : ''
+      }" style="${contentRawStyle}">${content}</div>`;
+    }
+
+    return `<div class="${labelStyleDefault}" style="${labelRawStyle}">${badges}${content}</div>`;
+  }
+
+  static htmlNodeLabels(cy: any) {
+    return [
+      {
+        query: 'node:visible',
+        halign: 'center',
+        valign: 'bottom',
+        halignBox: 'center',
+        valignBox: 'bottom',
+        tpl: (data: any) => this.htmlLabelForNode(cy.$id(data.id))
+      }
+    ];
   }
 
   static styles() {
@@ -200,6 +382,20 @@ export class GraphStyles {
       return 'none';
     };
 
+    const getNodeBackgroundPositionX = (ele: any): string => {
+      if (getNodeShape(ele) === 'round-tag') {
+        return '0';
+      }
+      return '50%';
+    };
+
+    const getNodeBackgroundPositionY = (ele: any): string => {
+      if (getNodeShape(ele) === 'round-triangle') {
+        return '6px';
+      }
+      return '50%';
+    };
+
     const getNodeBorderColor = (ele: any): string => {
       if (ele.hasClass(DEGRADED.name)) {
         return NodeColorBorderDegraded;
@@ -210,117 +406,21 @@ export class GraphStyles {
       return NodeColorBorder;
     };
 
-    const getNodeLabel = (ele: any): string => {
-      let content = '';
-      const cyGlobal = getCyGlobalData(ele);
-      const nodeData = decoratedNodeData(ele);
-
-      if (getCyGlobalData(ele).showNodeLabels) {
-        const app = nodeData.app || '';
-        const isGroup = nodeData.isGroup;
-        const isGroupMember = nodeData.parent;
-        const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
-        const isOutside = nodeData.isOutside;
-        const isServiceEntry = nodeData.isServiceEntry !== undefined;
-        const namespace = nodeData.namespace;
-        const nodeType = nodeData.nodeType;
-        const service = nodeData.service || '';
-        const version = nodeData.version || '';
-        const workload = nodeData.workload || '';
-
-        if (isGroupMember) {
-          switch (nodeType) {
-            case NodeType.APP:
-              if (cyGlobal.graphType === GraphType.APP) {
-                content = app;
-              } else if (version && version !== UNKNOWN) {
-                content = version;
-              } else {
-                content = workload ? `${workload}` : `${app}`;
-              }
-              break;
-            case NodeType.SERVICE:
-              content = service;
-              break;
-            case NodeType.WORKLOAD:
-              content = workload;
-              break;
-            default:
-              content = '';
-          }
-        } else {
-          const contentArray: string[] = [];
-          if ((isMultiNamespace || isOutside) && !(isServiceEntry || nodeType === NodeType.UNKNOWN)) {
-            contentArray.push('(' + namespace + ')');
-          }
-          switch (nodeType) {
-            case NodeType.APP:
-              if (cyGlobal.graphType === GraphType.APP || isGroup || version === UNKNOWN) {
-                contentArray.unshift(app);
-              } else {
-                contentArray.unshift(version);
-                contentArray.unshift(app);
-              }
-              break;
-            case NodeType.SERVICE:
-              contentArray.unshift(service);
-              break;
-            case NodeType.UNKNOWN:
-              contentArray.unshift(UNKNOWN);
-              break;
-            case NodeType.WORKLOAD:
-              contentArray.unshift(workload);
-              break;
-            default:
-              contentArray.unshift('error');
-          }
-          content = contentArray.join('\n');
-        }
-      }
-
-      let badges = '';
-      if (cyGlobal.showMissingSidecars && nodeData.hasMissingSC) {
-        badges = NodeIconMS + badges;
-      }
-      if (cyGlobal.showCircuitBreakers && nodeData.hasCB) {
-        badges = NodeIconCB + badges;
-      }
-      if (cyGlobal.showVirtualServices && nodeData.hasVS) {
-        badges = NodeIconVS + badges;
-      }
-      return badges + content;
-    };
-
-    const getNodeShape = (ele: any): string => {
+    const getNodeShape = (ele: any): NodeShape => {
       const nodeData = decoratedNodeData(ele);
       const nodeType = nodeData.nodeType;
       switch (nodeType) {
         case NodeType.APP:
-          return 'square';
+          return 'round-rectangle';
         case NodeType.SERVICE:
-          return nodeData.isServiceEntry ? 'tag' : 'triangle';
+          return nodeData.isServiceEntry ? 'round-tag' : 'round-triangle';
         case NodeType.UNKNOWN:
-          return 'diamond';
+          return 'round-diamond';
         case NodeType.WORKLOAD:
           return 'ellipse';
         default:
           return 'ellipse';
       }
-    };
-
-    const isNodeBadged = (ele: any): boolean => {
-      const cyGlobal = getCyGlobalData(ele);
-      const nodeData = decoratedNodeData(ele);
-      if (cyGlobal.showMissingSidecars && nodeData.hasMissingSC) {
-        return true;
-      }
-      if (cyGlobal.showCircuitBreakers && nodeData.hasCB) {
-        return true;
-      }
-      if (cyGlobal.showVirtualServices && nodeData.hasVS) {
-        return true;
-      }
-      return false;
     };
 
     const nodeSelectedStyle = {
@@ -345,7 +445,10 @@ export class GraphStyles {
           'background-image': (ele: any) => {
             return getNodeBackgroundImage(ele);
           },
-          'background-fit': 'contain',
+          'background-width': '80%',
+          'background-height': '80%',
+          'background-position-x': getNodeBackgroundPositionX,
+          'background-position-y': getNodeBackgroundPositionY,
           'border-color': (ele: any) => {
             return getNodeBorderColor(ele);
           },
@@ -353,28 +456,14 @@ export class GraphStyles {
             return decoratedNodeData(ele).isUnused ? 'dotted' : 'solid';
           },
           'border-width': NodeBorderWidth,
-          color: (ele: any) => {
-            return isNodeBadged(ele) ? NodeTextColorBadged : NodeTextColor;
-          },
-          'font-family': NodeTextFont,
-          'font-size': NodeTextFontSize,
-          'font-weight': (ele: any) => {
-            return isNodeBadged(ele) ? NodeTextFontWeightBadged : NodeTextFontWeight;
-          },
+          ghost: 'yes',
+          'ghost-offset-x': '1',
+          'ghost-offset-y': '1',
+          'ghost-opacity': '0.4',
           height: NodeHeight,
-          label: (ele: any) => {
-            return getNodeLabel(ele);
-          },
           shape: (ele: any) => {
             return getNodeShape(ele);
           },
-          'text-events': 'yes',
-          'text-outline-color': NodeTextOutlineColor,
-          'text-outline-width': NodeTextOutlineWidth,
-          'text-halign': 'center',
-          'text-margin-y': '-1px',
-          'text-valign': 'top',
-          'text-wrap': 'wrap',
           width: NodeWidth,
           'z-index': '10'
         }
@@ -383,9 +472,7 @@ export class GraphStyles {
       {
         selector: `node[?isGroup]`,
         css: {
-          'background-color': NodeColorFillBox,
-          'text-margin-y': '4px',
-          'text-valign': 'bottom'
+          'background-color': NodeColorFillBox
         }
       },
       // Node is selected
@@ -443,7 +530,7 @@ export class GraphStyles {
           'line-color': (ele: any) => {
             return getEdgeColor(ele);
           },
-          'line-style': 'solid',
+          'line-style': 'dashed',
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: any) => {
             return getEdgeColor(ele);
@@ -465,7 +552,8 @@ export class GraphStyles {
       {
         selector: 'edge[protocol="tcp"]',
         css: {
-          'target-arrow-shape': 'triangle-cross'
+          'target-arrow-shape': 'triangle-cross',
+          'line-style': 'solid'
         }
       },
       {

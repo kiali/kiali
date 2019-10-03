@@ -7,11 +7,11 @@ export { solidPinIcon, hollowPinIcon };
 
 const mutIcons = {
   istio: {
-    circuitBreaker: { type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
-    missingSidecar: { type: 'pf', name: 'blueprint', ascii: '\ue915 ', color: 'red' },
-    mtls: { type: 'pf', name: 'locked', ascii: '\ue923 ' },
-    disabledMtls: { type: 'fa', name: 'unlock', ascii: '\uf09c ' },
-    virtualService: { type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
+    circuitBreaker: { className: 'fa fa-bolt', type: 'fa', name: 'bolt', ascii: '\uf0e7 ' },
+    missingSidecar: { className: 'fa pficon-blueprint', type: 'pf', name: 'blueprint', ascii: '\ue915 ', color: 'red' },
+    mtls: { className: 'fa pf-locked', type: 'pf', name: 'locked', ascii: '\ue923 ' },
+    disabledMtls: { className: 'fa fa-unlock', type: 'fa', name: 'unlock', ascii: '\uf09c ' },
+    virtualService: { className: 'fa fa-code-fork', type: 'fa', name: 'code-fork', ascii: '\uf126 ' }
   },
   menu: {
     overview: 'fa fa-tachometer',

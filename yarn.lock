@@ -4823,6 +4823,11 @@ currently-unhandled@^0.4.1:
   dependencies:
     array-find-index "^1.0.1"
 
+cy-node-html-label@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/cy-node-html-label/-/cy-node-html-label-2.0.0.tgz#822c0c8afc88b4ba05268544289d0b367ce21e3b"
+  integrity sha512-hjvXlYAXaOjRryy8D3fHaeoRUVsgFi3589rcMtQRky08Ok+y7Lucqh895pNLJLNmXGm2N7083b8sPkPdhP3pag==
+
 cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
@@ -4859,10 +4864,10 @@ cytoscape-popper@1.0.2:
   dependencies:
     popper.js "^1.0.0"
 
-cytoscape@3.7.1:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.7.1.tgz#cc7aa5e3787c9d8824067739fa986de8c4c30f7c"
-  integrity sha512-FpPjClgyBpZn6HwNS0kCypcEbD/7i4hX1YO7M435uhnDZZ5B2QjRqzkJ60KdZWnkWaOpRa4igWMegy80j1p4xw==
+cytoscape@3.11.0:
+  version "3.11.0"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.11.0.tgz#c5fca7c8b3a01ba24b4d7b8f3eddb1e99d395ed3"
+  integrity sha512-xA9S5UiTjwFwZjxZCTIJjDU5ef2XSqw+/gk+bLcqdOZ496EoPSfnbozGRnKZhxKIVT++NNyWtT7fW1eLU7denQ==
   dependencies:
     heap "^0.2.6"
     lodash.debounce "^4.0.8"
