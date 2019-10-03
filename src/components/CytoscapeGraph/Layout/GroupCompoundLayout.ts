@@ -1,11 +1,12 @@
 /*
   GroupCompoundLayout
 
-  This is a synthetic layout that helps to layout close to each other the contents of compound nodes,
-  in this way we ensure that the compound node itself is as small as possible, avoiding overlaps with other nodes.
+  This is a synthetic layout that helps to layout close to each other the contents of compound
+  nodes, in this way we ensure that the compound node itself is as small as possible, avoiding
+  overlaps with other nodes.
 
-  It requires a real layout to do the actual work, but there are some patches applied to the graph before and after the
-  real layout is run.
+  It requires a real layout to do the actual work, but there are some patches applied to the
+  graph before and after the real layout is run.
 
   Is composed of:
    - A compound layout (dagre in this case) does the layout of the children of a compound node.
@@ -15,15 +16,17 @@
   The algorithm is roughly as follow:
 
   1. For every compound node:
-    a. The compound layout is run for every compound and their relative positions (to the parent) are saved for later use.
-    b. Get the resulting bounding box of the compound, set the width and height of the node using `cy.style`, so that
-       the real layout honors the size when doing the layout.
-    c. For every edge that goes to a child (or comes from a child), create a synthetic edge that goes to (or comes from) the compound node and remove the original
+    a. The compound layout is run for every compound and its relative positions (to the parent)
+       are saved for later use.
+    b. Get the resulting bounding box of the compound, set the width and height of the node
+       using `cy.style`, so that the real layout honors the size when doing the layout.
+    c. For every edge that goes to a child (or comes from a child), create a synthetic edge
+       that goes to (or comes from) the compound node and remove the original
        edge. We can cull away repeated edges as they are not needed.
-    d. Remove the children. This is important, else cytoscape won't honor the size specified in previous step.
-       "A compound parent node does not have independent dimensions (position and size), as those values are
-       automatically inferred by the positions and dimensions of the descendant nodes."
-       http://js.cytoscape.org/#notation/compound-nodes
+    d. Detach the children. This is important, else cytoscape won't honor the size specified
+       in previous step. "A compound parent node does not have independent dimensions (position
+       and size), as those values are automatically inferred by the positions and dimensions
+       of the descendant nodes." http://js.cytoscape.org/#notation/compound-nodes
   2. Run the real layout on this new graph and wait until it finishes.
   3. Remove the synthetic edges.
   4. For every original parent node:
@@ -118,6 +121,7 @@ export default class GroupCompoundLayout {
   run() {
     const { realLayout, compoundLayoutOptions } = this.options;
     const parents = this.parents();
+    const children = parents.children();
 
     // (1.a) Prepare parents by assigning a size and running the compound layout
     parents.each(parent => {
@@ -172,29 +176,24 @@ export default class GroupCompoundLayout {
       parent.addClass(COMPOUND_PARENT_NODE_CLASS);
       // (1.b) Set the size
       parent.style(newStyles);
-      // Save the children as jsons in the parent scratchpad for later
-      parent.scratch(CHILDREN_KEY, parent.children().jsons());
+      // Save the children in the parent scratchpad for later
+      parent.scratch(CHILDREN_KEY, parent.children());
     });
 
     //  Remove the children and its edges and add synthetic edges for every edge that touches a child node.
     let syntheticEdges = this.cy.collection();
     // Removed elements are being stored because later we will add them back.
-    const elementsToRemove = parents.children().reduce((children, child) => {
-      children.push(child);
-      return children.concat(
-        child.connectedEdges().reduce((edges, edge) => {
-          // (1.c) Create synthetic edges.
-          const syntheticEdge = this.syntheticEdgeGenerator.getEdge(edge.source(), edge.target());
-          if (syntheticEdge) {
-            syntheticEdges = syntheticEdges.add(this.cy.add(syntheticEdge));
-          }
-          edges.push(edge);
-          return edges;
-        }, [])
-      );
-    }, []);
-    // (1.d) Remove children and edges that touch a child node.
-    this.cy.remove(this.cy.collection().add(elementsToRemove));
+    children.each(child => {
+      child.connectedEdges().each(edge => {
+        // (1.c) Create synthetic edges.
+        const syntheticEdge = this.syntheticEdgeGenerator.getEdge(edge.source(), edge.target());
+        if (syntheticEdge) {
+          syntheticEdges = syntheticEdges.add(this.cy.add(syntheticEdge));
+        }
+      });
+    });
+    // (1.d) Detach all child nodes from parents.
+    children.move('null');
 
     const layout = this.cy.layout({
       // Create a new layout
@@ -206,16 +205,16 @@ export default class GroupCompoundLayout {
 
     // (2) Add a one-time callback to be fired when the layout stops
     layout.one('layoutstop', _event => {
-      // This part of the code needs to be executed inside a batch to work, else the relative position is not correctly
-      // updated
+      // This part of the code needs to be executed inside a batch to work, else the relative position
+      //  is not correctly updated
       this.cy.startBatch();
       // (3) Remove synthetic edges
       this.cy.remove(syntheticEdges);
 
       // Add and position the children nodes according to the layout
       parents.each(parent => {
-        // (4.a) Add back the children and the edges
-        this.cy.add(parent.scratch(CHILDREN_KEY));
+        // (4.a) Add back the child nodes (with edges still attached)
+        parent.scratch(CHILDREN_KEY).move(parent);
         // (4.b) Layout the children using our compound layout.
         parent.children().each(child => {
           const relativePosition = child.data(RELATIVE_POSITION_KEY);
@@ -230,13 +229,6 @@ export default class GroupCompoundLayout {
         parent.removeScratch(CHILDREN_KEY);
         parent.removeScratch(STYLES_KEY);
       });
-      // (4.a) Add the real edges, we already added the children nodes.
-      this.cy.add(
-        this.cy
-          .collection()
-          .add(elementsToRemove)
-          .edges()
-      );
       this.cy.endBatch();
     });
     layout.run();
