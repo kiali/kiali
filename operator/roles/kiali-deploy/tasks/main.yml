@@ -25,6 +25,30 @@
   - is_openshift == False
   - is_k8s == False
 
+- name: Get information about the operator
+  k8s_facts:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ lookup('env', 'POD_NAMESPACE') }}"
+    name: "{{ lookup('env', 'POD_NAME') }}"
+  register: operator_pod_raw
+  ignore_errors: yes
+- name: Determine the version of the operator based on the version label
+  set_fact:
+    operator_version: "{{ operator_pod_raw.resources[0].metadata.labels.version }}"
+  when:
+  - operator_pod_raw is defined
+  - operator_pod_raw.resources[0] is defined
+  - operator_pod_raw.resources[0].metadata is defined
+  - operator_pod_raw.resources[0].metadata.labels is defined
+  - operator_pod_raw.resources[0].metadata.labels.version is defined
+- set_fact:
+    operator_version: "unknown"
+  when:
+  - operator_version is not defined
+- debug:
+    msg: "OPERATOR VERSION: [{{ operator_version }}]"
+
 # Because we are passing through some yaml directly to Kubernetes resources, we have to retain the camelCase keys.
 # All CR parameters are converted to snake_case, but the original yaml is found in the special _kiali_io_kiali param.
 # We need to copy that original yaml into our vars where appropriate to keep the camelCase.
@@ -181,6 +205,16 @@
   when:
   - kiali_vars.identity.private_key_file is not defined
 
+- name: Default the image name to a known supported image.
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_name': supported_image.name}}, recursive=True) }}"
+  when:
+  - kiali_vars.deployment.image_name == ""
+- name: Default the image version to a known supported image.
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': operator_version if supported_image.version == 'operator_version' else supported_image.version}}, recursive=True) }}"
+  when:
+  - kiali_vars.deployment.image_version == ""
 - name: If image version is latest then we will want to always pull
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_pull_policy': 'Always'}}, recursive=True) }}"

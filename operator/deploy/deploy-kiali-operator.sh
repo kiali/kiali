@@ -157,7 +157,9 @@
 #
 # KIALI_IMAGE_NAME
 #    Determines which image of Kiali to download and install.
-#    Default: "kiali/kiali"
+#    If you set this, you must make sure that image is supported by the operator.
+#    If left empty (the default), the operator will use a known supported image.
+#    Default: ""
 #
 # KIALI_IMAGE_PULL_POLICY
 #    The Kubernetes pull policy for the Kiali deployment.
@@ -169,9 +171,11 @@
 #    This can be set to "latest" in which case the latest image is installed (which may or
 #    may not be a released version of Kiali). This is normally for developer use only.
 #    This can be set to "lastrelease" in which case the last Kiali release is installed.
-#    Otherwise, you can set to this any valid Kiali version (such as "v0.12").
+#    Otherwise, you can set this to any valid Kiali version (such as "v1.0").
 #    NOTE: If this is set to "latest" then the KIALI_IMAGE_PULL_POLICY will be "Always".
-#    Default: "lastrelease"
+#    If you set this, you must make sure that image is supported by the operator.
+#    If left empty (the default), the operator will use a known supported image.
+#    Default: ""
 #
 # ISTIO_NAMESPACE
 #    The namespace where Istio is installed. If empty, assumes the value of NAMESPACE.
@@ -401,14 +405,16 @@ Valid options for Kiali installation (if Kiali is to be installed):
       Default: ""
   -kin|--kiali-image-name
       Determines which image of Kiali to download and install.
-      Default: "kiali/kiali"
+      If left empty (the default), the operator will use a known supported image.
+      Default: ""
   -kipp|--kiali-image-pull-policy
       The Kubernetes pull policy for the Kiali deployment.
       Default: "IfNotPresent"
   -kiv|--kiali-image-version
       Determines which version of Kiali to install.
       Can be a version string or "latest" or "lastrelease".
-      Default: "lastrelease"
+      If left empty (the default), the operator will use a known supported image.
+      Default: ""
   -in|--istio-namespace
       The namespace where Istio is installed.
       If empty, assumes the value of the namespace option.
@@ -644,7 +650,7 @@ fi
 # If asking for the last release of Kiali (which is the default), then pick up the latest release.
 # Note that you could ask for "latest" - that would pick up the current image built from master.
 if [ "${OPERATOR_INSTALL_KIALI}" == "true" ]; then
-  if [ "${KIALI_IMAGE_VERSION:-lastrelease}" == "lastrelease" ]; then
+  if [ "${KIALI_IMAGE_VERSION}" == "lastrelease" ]; then
     resolve_latest_kiali_release
     echo "Will use the last Kiali release: ${kiali_version_we_want}"
     KIALI_IMAGE_VERSION=${kiali_version_we_want}

@@ -160,8 +160,10 @@ spec:
 #      pod_anti: {}
 #
 # Determines which Kiali image to download and install.
+# If you set this to a specific name, you must make sure that image is supported by the operator.
+# If empty, the operator will use a known supported image name.
 #    ---
-#    image_name: "quay.io/kiali/kiali"
+#    image_name: ""
 #
 # The Kubernetes pull policy for the Kiali deployment.
 # This is overridden to be "Always" if image_version is set to "latest".
@@ -175,10 +177,13 @@ spec:
 # Determines which version of Kiali to install.
 # Choose "lastrelease" to use the last Kiali release.
 # Choose "latest" to use the latest image (which may or may not be a released version of Kiali).
-# Otherwise, you can set this to any valid Kiali version (such as "v0.12").
+# Otherwise, you can set this to any valid Kiali version (such as "v1.0").
 # Note that if this is set to "latest" then the image_pull_policy will be "Always".
+# If you set this to a specific version (i.e. you do not leave it as the default empty string),
+# you must make sure that image version is supported by the operator.
+# If empty, the operator will use a known supported image version.
 #    ---
-#    image_version: "lastrelease"
+#    image_version: ""
 #
 # Determines if the Kiali endpoint should be exposed externally.
 # If true, an Ingress will be created if on Kubernetes or a Route if on OpenShift.

@@ -51,10 +51,10 @@ kiali_defaults:
       node: {}
       pod: {}
       pod_anti: {}
-    image_name: "quay.io/kiali/kiali"
+    image_name: ""
     image_pull_policy: "IfNotPresent"
     image_pull_secrets: []
-    image_version: "lastrelease"
+    image_version: ""
     ingress_enabled: true
     namespace: "istio-system"
     secret_name: "kiali"
@@ -146,6 +146,11 @@ kiali_defaults:
 
 # These variables are outside of the kiali_defaults. Their values will be
 # auto-detected by the role and are not meant to be set by the user.
-# However, for debugging purposes you can force one of these to true.
+# However, for debugging purposes you can change these.
+# If supported_image.version is "operator_version" then the version of the
+# operator itself will be assumed, otherwise it can be any valid Kiali
+# version string. If the Kiali CR does not provide an image name or version,
+# supported_image defines the defaults that will be used.
 is_k8s: false
 is_openshift: false
+supported_image: {"name": "quay.io/kiali/kiali", "version": "operator_version" }

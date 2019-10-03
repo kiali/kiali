@@ -30,17 +30,15 @@ oc scale --replicas 0 -n openshift-cluster-version deployments/cluster-version-o
 Now remove the OperatorSources for the different out-of-box sources:
 
 ```
-oc patch operatorsources community-operators -n openshift-marketplace -p '{"spec":{"unmanaged":true}}' --type=merge
+oc delete operatorsources certified-operators -n openshift-marketplace
 oc delete operatorsources community-operators -n openshift-marketplace
-
-oc patch operatorsources redhat-operators -n openshift-marketplace -p '{"spec":{"unmanaged":true}}' --type=merge
 oc delete operatorsources redhat-operators -n openshift-marketplace
 ```
 
 You can disable all OperatorSources in your cluster via:
 
 ```
-for o in $(oc get operatorsources -n openshift-marketplace -o name); do oc patch $o -n openshift-marketplace -p '{"spec":{"unmanaged":true}}' --type=merge ; oc delete $o -n openshift-marketplace ; done
+for o in $(oc get operatorsources -n openshift-marketplace -o name); do oc delete $o -n openshift-marketplace ; done
 ```
 
 _OpenShift 4.2 instructions_
@@ -57,6 +55,10 @@ metadata:
 spec:
   disableAllDefaultSources: true
   sources: [
+    {
+      name: "certified-operators",
+      disabled: true
+    },
     {
       name: "community-operators",
       disabled: true
