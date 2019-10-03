@@ -4473,6 +4473,7 @@
       "x-go-package": "github.com/kiali/kiali/models"
     },
     "ProtocolTraffic": {
+      "description": "ProtocolTraffic supplies all of the traffic information for a single protocol",
       "type": "object",
       "properties": {
         "protocol": {
@@ -4668,19 +4669,42 @@
       },
       "x-go-package": "github.com/kiali/kiali/models"
     },
+    "ResponseDetail": {
+      "type": "object",
+      "title": "ResponseDetail holds information broken down by response code.",
+      "properties": {
+        "flags": {
+          "$ref": "#/definitions/ResponseFlags"
+        },
+        "hosts": {
+          "$ref": "#/definitions/ResponseHosts"
+        }
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
     "ResponseFlags": {
       "description": "\"200\" : {\n\"-\"     : \"80.0\",\n\"DC\"    : \"10.0\",\n\"FI,FD\" : \"10.0\"\n}, ...",
       "type": "object",
-      "title": "ProtocolTraffic.Responses is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:",
+      "title": "ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
+    },
+    "ResponseHosts": {
+      "description": "\"200\" : {\n\"www.google.com\" : \"80.0\",\n\"www.yahoo.com\"  : \"20.0\"\n}, ...",
+      "type": "object",
+      "title": "ResponseHosts is a map of maps. Each response host is broken down by responseFlags:percentageOfTraffic, e.g.:",
       "additionalProperties": {
         "type": "string"
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },
     "Responses": {
+      "description": "Responses maps responseCodes to detailed information for that code",
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/ResponseFlags"
+        "$ref": "#/definitions/ResponseDetail"
       },
       "x-go-package": "github.com/kiali/kiali/graph/config/cytoscape"
     },

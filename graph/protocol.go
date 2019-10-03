@@ -140,33 +140,33 @@ var TCP Protocol = Protocol{
 var Protocols []Protocol = []Protocol{GRPC, HTTP, TCP}
 
 // AddToMetadata takes a single traffic value and adds it appropriately as source, dest and edge traffic
-func AddToMetadata(protocol string, val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func AddToMetadata(protocol string, val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	if val <= 0.0 {
 		return
 	}
 
 	switch protocol {
 	case grpc:
-		addToMetadataGrpc(val, code, flags, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataGrpc(val, code, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	case http:
-		addToMetadataHttp(val, code, flags, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataHTTP(val, code, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	case tcp:
-		addToMetadataTcp(val, flags, sourceMetadata, destMetadata, edgeMetadata)
+		addToMetadataTCP(val, flags, host, sourceMetadata, destMetadata, edgeMetadata)
 	default:
 		log.Tracef("Ignore unhandled metadata protocol [%s]", protocol)
 	}
 }
 
-func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func addToMetadataGrpc(val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, grpcOut, val)
 	addToMetadataValue(destMetadata, grpcIn, val)
 	addToMetadataValue(edgeMetadata, grpc, val)
-	addToMetadataResponses(edgeMetadata, grpcResponses, code, flags, val)
+	addToMetadataResponses(edgeMetadata, grpcResponses, code, flags, host, val)
 
 	// Istio telemetry may use HTTP codes for gRPC, so if it quacks like a duck...
-	isHttpCode := len(code) == 3
+	isHTTPCode := len(code) == 3
 	isErr := false
-	if isHttpCode {
+	if isHTTPCode {
 		isErr = strings.HasPrefix(code, "4") || strings.HasPrefix(code, "5")
 	} else {
 		isErr = code != "0"
@@ -177,11 +177,11 @@ func addToMetadataGrpc(val float64, code, flags string, sourceMetadata, destMeta
 	}
 }
 
-func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func addToMetadataHTTP(val float64, code, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, httpOut, val)
 	addToMetadataValue(destMetadata, httpIn, val)
 	addToMetadataValue(edgeMetadata, http, val)
-	addToMetadataResponses(edgeMetadata, httpResponses, code, flags, val)
+	addToMetadataResponses(edgeMetadata, httpResponses, code, flags, host, val)
 
 	// note, we don't track 2xx because it's not used downstream and can be easily
 	// calculated: 2xx = (rate - 3xx - 4xx - 5xx)
@@ -198,11 +198,11 @@ func addToMetadataHttp(val float64, code, flags string, sourceMetadata, destMeta
 	}
 }
 
-func addToMetadataTcp(val float64, flags string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
+func addToMetadataTCP(val float64, flags, host string, sourceMetadata, destMetadata, edgeMetadata Metadata) {
 	addToMetadataValue(sourceMetadata, tcpOut, val)
 	addToMetadataValue(destMetadata, tcpIn, val)
 	addToMetadataValue(edgeMetadata, tcp, val)
-	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, val)
+	addToMetadataResponses(edgeMetadata, tcpResponses, "-", flags, host, val)
 }
 
 // AddOutgoingEdgeToMetadata updates the source node's outgoing traffic with the outgoing edge traffic value
@@ -218,7 +218,7 @@ func AddOutgoingEdgeToMetadata(sourceMetadata, edgeMetadata Metadata) {
 	}
 }
 
-// AggregateNodeMetadata adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
+// AggregateNodeTraffic adds all <nodeMetadata> values (for all protocols) into aggregateNodeMetadata.
 func AggregateNodeTraffic(node, aggregateNode *Node) {
 	for _, protocol := range Protocols {
 		for _, rate := range protocol.NodeRates {
@@ -292,32 +292,59 @@ func addToMetadataValue(md Metadata, k MetadataKey, v float64) {
 	}
 }
 
-// The metadata for response codes is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic like this:
+// The metadata for response codes is two map of maps. Each response code is broken down by responseFlags:percentageOfTraffic and
+// hosts:percentagOfTraffic like this:
 // "200" : {
-//   "-"  : 90.00,
-//   "DC" : 10.00,
-// }, ...
+// 	  Flags: {
+//      "-"  : 90.00,
+//      "DC" : 10.00,
+//    },
+//    Hosts: {
+//      "www.google.com" : 100.00
+//    },
+//  } ...
 
 type ResponseFlags map[string]float64
-type Responses map[string]ResponseFlags
+type ResponseHosts map[string]float64
+type ResponseDetail struct {
+	Flags ResponseFlags
+	Hosts ResponseHosts
+}
+type Responses map[string]*ResponseDetail
 
 func addToResponses(md Metadata, k MetadataKey, responses Responses) {
-	for code, flagsValMap := range responses {
-		for flags, val := range flagsValMap {
-			addToMetadataResponses(md, k, code, flags, val)
+	for code, detailsValMap := range responses {
+		for flags, val := range detailsValMap.Flags {
+			addToMetadataResponses(md, k, code, flags, "", val)
+		}
+		for host, val := range detailsValMap.Hosts {
+			addToMetadataResponses(md, k, code, "", host, val)
 		}
 	}
 }
 
-func addToMetadataResponses(md Metadata, k MetadataKey, code, flags string, v float64) {
-	if responses, ok := md[k]; ok {
-		if flagsValueMap, ok2 := responses.(Responses)[code]; ok2 {
-			flagsValueMap[flags] += v
-		} else {
-			responses.(Responses)[code] = ResponseFlags{flags: v}
+func addToMetadataResponses(md Metadata, k MetadataKey, code, flags, host string, v float64) {
+	var responses Responses
+	var responseDetail *ResponseDetail
+	var ok bool
+	responses, ok = md[k].(Responses)
+	if !ok {
+		responses = Responses{}
+		md[k] = responses
+	}
+	responseDetail, ok = responses[code]
+	if !ok {
+		responseDetail = &ResponseDetail{
+			Flags: ResponseFlags{},
+			Hosts: ResponseHosts{},
 		}
-	} else {
-		md[k] = Responses{code: {flags: v}}
+		responses[code] = responseDetail
+	}
+	if flags != "" {
+		responseDetail.Flags[flags] += v
+	}
+	if host != "" {
+		responseDetail.Hosts[host] += v
 	}
 }
 

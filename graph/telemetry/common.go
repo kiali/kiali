@@ -57,7 +57,7 @@ func MarkOutsideOrInaccessible(trafficMap graph.TrafficMap, o graph.TelemetryOpt
 		case graph.NodeTypeService:
 			if n.Namespace == graph.Unknown && n.Service == graph.Unknown {
 				n.Metadata[graph.IsInaccessible] = true
-			} else if n.Metadata[graph.IsPassthroughCluster] == true {
+			} else if n.Metadata[graph.IsEgressCluster] == true {
 				n.Metadata[graph.IsInaccessible] = true
 			} else {
 				if isOutside(n, o.Namespaces) {

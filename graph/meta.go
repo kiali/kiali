@@ -13,21 +13,21 @@ func NewMetadata() Metadata {
 
 // Metadata keys to be used instead of literal strings
 const (
-	DestServices         MetadataKey = "destServices"
-	HasCB                MetadataKey = "hasCB"
-	HasMissingSC         MetadataKey = "hasMissingSC"
-	HasVS                MetadataKey = "hasVS"
-	IsDead               MetadataKey = "isDead"
-	IsInaccessible       MetadataKey = "isInaccessible"
-	IsMisconfigured      MetadataKey = "isMisconfigured"
-	IsMTLS               MetadataKey = "isMTLS"
-	IsOutside            MetadataKey = "isOutside"
-	IsPassthroughCluster MetadataKey = "isPassthroughCluster"
-	IsRoot               MetadataKey = "isRoot"
-	IsServiceEntry       MetadataKey = "isServiceEntry"
-	IsUnused             MetadataKey = "isUnused"
-	ProtocolKey          MetadataKey = "protocol"
-	ResponseTime         MetadataKey = "responseTime"
+	DestServices    MetadataKey = "destServices"
+	HasCB           MetadataKey = "hasCB"
+	HasMissingSC    MetadataKey = "hasMissingSC"
+	HasVS           MetadataKey = "hasVS"
+	IsDead          MetadataKey = "isDead"
+	IsEgressCluster MetadataKey = "isEgressCluster" // PassthroughCluster or BlackHoleCluster
+	IsInaccessible  MetadataKey = "isInaccessible"
+	IsMisconfigured MetadataKey = "isMisconfigured"
+	IsMTLS          MetadataKey = "isMTLS"
+	IsOutside       MetadataKey = "isOutside"
+	IsRoot          MetadataKey = "isRoot"
+	IsServiceEntry  MetadataKey = "isServiceEntry"
+	IsUnused        MetadataKey = "isUnused"
+	ProtocolKey     MetadataKey = "protocol"
+	ResponseTime    MetadataKey = "responseTime"
 )
 
 // DestServicesMetadata key=Service.Key()

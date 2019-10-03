@@ -50,8 +50,8 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 				continue
 			}
 
-			// A service node that is the PassthroughCluster is never considered dead
-			if _, ok := n.Metadata[graph.IsPassthroughCluster]; ok {
+			// A service node that is an Istio egress cluster is never considered dead
+			if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
 				continue
 			}
 
