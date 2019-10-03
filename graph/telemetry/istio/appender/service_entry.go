@@ -56,6 +56,33 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	a.applyServiceEntries(trafficMap, globalInfo, namespaceInfo)
 }
 
+// aggregateEdges identifies edges that are going from <node> to <serviceEntryNode> and
+// aggregates them in only one edge per protocol. This ensures that the traffic map
+// will comply with the assumption/rule of one edge per protocol between any two nodes.
+func aggregateEdges(node *graph.Node, serviceEntryNode *graph.Node) {
+	edgesToAggregate := make(map[string][]*graph.Edge)
+	bound := 0
+	for _, edge := range node.Edges {
+		if edge.Dest == serviceEntryNode {
+			protocol := edge.Metadata[graph.ProtocolKey].(string)
+			edgesToAggregate[protocol] = append(edgesToAggregate[protocol], edge)
+		} else {
+			// Manipulating the slice as in this StackOverflow post: https://stackoverflow.com/a/20551116
+			node.Edges[bound] = edge
+			bound++
+		}
+	}
+	node.Edges = node.Edges[:bound]
+	// Add aggregated edge
+	for protocol, edges := range edgesToAggregate {
+		aggregatedEdge := node.AddEdge(serviceEntryNode)
+		aggregatedEdge.Metadata[graph.ProtocolKey] = protocol
+		for _, e := range edges {
+			graph.AggregateEdgeTraffic(e, aggregatedEdge)
+		}
+	}
+}
+
 func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// a map of "se-service" nodes to the "se-aggregate" information
 	seMap := make(map[*serviceEntry][]*graph.Node)
@@ -108,6 +135,12 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 						edge.Dest = &serviceEntryNode
 					}
 				}
+
+				// If there is more than one doomed node, edges leading to the new aggregated node must
+				// also be aggregated per source and protocol.
+				if len(seServiceNodes) > 1 {
+					aggregateEdges(n, &serviceEntryNode)
+				}
 			}
 			// redirect/aggregate edges leading from the doomed se-service node [to an egress gateway]
 			for _, doomedEdge := range doomedSeServiceNode.Edges {
@@ -127,36 +160,6 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, g
 			delete(trafficMap, doomedSeServiceNode.ID)
 		}
 		trafficMap[serviceEntryNode.ID] = &serviceEntryNode
-
-		// If there is more than one doomed node, edges leading to the new aggregated node must
-		// also be aggregated per source and protocol.
-		if len(seServiceNodes) > 1 {
-			for _, n := range trafficMap {
-				// Get the edges that need to be aggregated and remove them from the node.
-				edgesToAggregate := make(map[string][]*graph.Edge) // This is per protocol.
-				bound := 0
-				for _, edge := range n.Edges {
-					if edge.Dest == &serviceEntryNode {
-						protocol := edge.Metadata[graph.ProtocolKey].(string)
-						edgesToAggregate[protocol] = append(edgesToAggregate[protocol], edge)
-					} else {
-						// Manipulating the slice as in this StackOverflow post: https://stackoverflow.com/a/20551116
-						n.Edges[bound] = edge
-						bound++
-					}
-				}
-				n.Edges = n.Edges[:bound]
-
-				// Add aggregated edge
-				for protocol, edges := range edgesToAggregate {
-					aggregatedEdge := n.AddEdge(&serviceEntryNode)
-					aggregatedEdge.Metadata[graph.ProtocolKey] = protocol
-					for _, e := range edges {
-						graph.AggregateEdgeTraffic(e, aggregatedEdge)
-					}
-				}
-			}
-		}
 	}
 }
 
