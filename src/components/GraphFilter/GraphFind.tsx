@@ -262,7 +262,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
 
     const cy = this.props.cyData.cyRef;
     const selector = this.parseValue(this.props.hideValue);
-
     cy.startBatch();
     if (this.hiddenElements) {
       // make visible old hide-hits
@@ -588,11 +587,15 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         }
         return `[${field} ${op} ${val}]`;
       case '=':
-      case '!=':
-        if (val !== 'NaN' && isNaN(val)) {
-          return this.setErrorMsg(`Invalid value [${val}]. Expected NaN or a numeric value (use . for decimals)`);
+        if (isNaN(val)) {
+          return `[!${field}]`;
         }
-        return Number(val) !== 0 ? `[${field} ${op} "${val}"]` : `[${field} ${op} "0"]`;
+        return `[${field} ${op} ${val}]`;
+      case '!=':
+        if (isNaN(val)) {
+          return `[?${field}]`;
+        }
+        return `[${field} ${op} ${val}]`;
       default:
         return this.setErrorMsg(`Invalid operator [${op}] for numeric condition`);
     }

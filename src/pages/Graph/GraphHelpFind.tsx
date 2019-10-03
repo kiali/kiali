@@ -267,16 +267,10 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
                           },
                           { id: 't30', t: 'Expressions can not combine node and edge criteria.' },
                           {
-                            id: 't40',
-                            t: 'Numeric equality (=,!=) is exact match. Include leading 0 and digits of precision.'
-                          },
-                          {
                             id: 't45',
                             t:
                               'Use "<operand> = NaN" to test for no activity. Use "!= NaN" for any activity. (e.g. httpout = NaN)'
                           },
-                          { id: 't50', t: 'Numerics use "." decimal notation.' },
-                          { id: 't60', t: 'Percentages use 1 digit of precision, Rates use 2 digits of precision.' },
                           {
                             id: 't70',
                             t: `Unary operands may optionally be prefixed with "is" or "has". (i.e. "has mtls")`

@@ -135,9 +135,9 @@ describe('Parse find value test', () => {
     // @ts-ignore
     expect(instance.parseValue('httpin >= 5.0')).toEqual('node[httpIn >= 5.0]');
     // @ts-ignore
-    expect(instance.parseValue('httpin = 5.0')).toEqual('node[httpIn = "5.0"]');
+    expect(instance.parseValue('httpin = 5.0')).toEqual('node[httpIn = 5.0]');
     // @ts-ignore
-    expect(instance.parseValue('httpin != 5.0')).toEqual('node[httpIn != "5.0"]');
+    expect(instance.parseValue('httpin != 5.0')).toEqual('node[httpIn != 5.0]');
 
     // check all string operators
     // @ts-ignore
