@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { Responses } from '../../types/Graph';
 import responseFlags from '../../utils/ResponseFlags';
 
-type ResponseTableProps = {
+type ResponseFlagsTableProps = {
   responses: Responses;
   title: string;
 };
@@ -15,7 +15,7 @@ interface Row {
   val: string;
 }
 
-export class ResponseTable extends React.PureComponent<ResponseTableProps> {
+export class ResponseFlagsTable extends React.PureComponent<ResponseFlagsTableProps> {
   render() {
     return (
       <>
@@ -25,7 +25,7 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
             <tr key="table-header">
               <th>Code</th>
               <th>Flags</th>
-              <th>% of Requests</th>
+              <th>% Requests</th>
             </tr>
           </thead>
           <tbody>
@@ -45,8 +45,8 @@ export class ResponseTable extends React.PureComponent<ResponseTableProps> {
   private getRows = (responses: Responses): Row[] => {
     const rows: Row[] = [];
     _.keys(responses).forEach(code => {
-      _.keys(responses[code]).forEach(f => {
-        rows.push({ key: `${code} ${f}`, code: code, flags: f, val: responses[code][f] });
+      _.keys(responses[code].flags).forEach(f => {
+        rows.push({ key: `${code} ${f}`, code: code, flags: f, val: responses[code].flags[f] });
       });
     });
     return rows;

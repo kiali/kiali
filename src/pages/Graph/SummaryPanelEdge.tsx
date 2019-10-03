@@ -28,7 +28,8 @@ import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { icons } from '../../config';
-import { ResponseTable } from '../../components/SummaryPanel/ResponseTable';
+import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
+import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -142,8 +143,11 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                   <NavItem eventKey="traffic">
                     <div>Traffic</div>
                   </NavItem>
-                  <NavItem eventKey="responses">
-                    <div>Response Codes</div>
+                  <NavItem eventKey="flags" title="Response flags by code">
+                    <div>Flags</div>
+                  </NavItem>
+                  <NavItem eventKey="hosts" title="Hosts by code">
+                    <div>Hosts</div>
                   </NavItem>
                 </Nav>
                 <TabContent style={{ paddingTop: '10px' }}>
@@ -169,8 +173,17 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
                       </>
                     )}
                   </TabPane>
-                  <TabPane eventKey="responses" mountOnEnter={true} unmountOnExit={true}>
-                    <ResponseTable title={isGrpc ? 'GRPC codes:' : 'HTTP codes:'} responses={edgeData.responses} />
+                  <TabPane eventKey="flags" mountOnEnter={true} unmountOnExit={true}>
+                    <ResponseFlagsTable
+                      title={'Response flags by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                      responses={edgeData.responses}
+                    />
+                  </TabPane>
+                  <TabPane eventKey="hosts" mountOnEnter={true} unmountOnExit={true}>
+                    <ResponseHostsTable
+                      title={'Hosts by ' + (isGrpc ? 'GRPC code:' : 'HTTP code:')}
+                      responses={edgeData.responses}
+                    />
                   </TabPane>
                 </TabContent>
               </div>
@@ -180,8 +193,27 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
           </div>
         )}
         {isTcp && (
-          <div className="panel-body">
-            <ResponseTable title="TCP Responses:" responses={edgeData.responses} />
+          <div className={`"panel-body ${summaryBodyTabs}`}>
+            <TabContainer id="basic-tabs" defaultActiveKey="flags">
+              <div>
+                <Nav className={`nav nav-tabs nav-tabs-pf ${summaryNavTabs}`}>
+                  <NavItem eventKey="flags" title="Response flags by code">
+                    <div>Flags</div>
+                  </NavItem>
+                  <NavItem eventKey="hosts" title="Hosts by code">
+                    <div>Hosts</div>
+                  </NavItem>
+                </Nav>
+                <TabContent style={{ paddingTop: '10px' }}>
+                  <TabPane eventKey="flags" mountOnEnter={true} unmountOnExit={true}>
+                    <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
+                  </TabPane>
+                  <TabPane eventKey="hosts" mountOnEnter={true} unmountOnExit={true}>
+                    <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
+                  </TabPane>
+                </TabContent>
+              </div>
+            </TabContainer>
             <hr />
             {this.renderCharts(edge, isGrpc, isHttp, isTcp)}
           </div>

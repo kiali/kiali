@@ -90,12 +90,22 @@ export interface CytoscapeMouseOutEvent extends CytoscapeBaseEvent {}
 
 // Graph Structures
 
-// Responses is a map of maps, all strings. e.g.:
-// { code0: {
-//     flags0: %traffic,
-//     flags1: %traffic
-//   }}
-export type Responses = object;
+type PercentageOfTrafficByFlag = {
+  [flag: string]: string;
+};
+
+type PercentageOfTrafficByHost = {
+  [host: string]: string;
+};
+
+export type ResponseDetail = {
+  flags: PercentageOfTrafficByFlag;
+  hosts: PercentageOfTrafficByHost;
+};
+
+export type Responses = {
+  [responseCode: string]: ResponseDetail;
+};
 
 type ValidProtocols = 'http' | 'grpc' | 'tcp';
 

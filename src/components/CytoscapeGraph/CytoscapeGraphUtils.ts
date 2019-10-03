@@ -23,6 +23,11 @@ export const CyEdge = {
   tcp: 'tcp'
 };
 
+export const CyEdgeResponses = {
+  flags: 'flags',
+  hosts: 'hosts'
+};
+
 export const CyNode = {
   app: 'app',
   destServices: 'destServices',
