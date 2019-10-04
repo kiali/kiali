@@ -3906,6 +3906,10 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "namespace": {
+          "type": "string",
+          "x-go-name": "Namespace"
+        },
         "objectType": {
           "type": "string",
           "x-go-name": "ObjectType"
