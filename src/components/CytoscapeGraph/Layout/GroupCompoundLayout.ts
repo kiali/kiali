@@ -40,6 +40,7 @@ export const COMPOUND_PARENT_NODE_CLASS = '__compoundLayoutParentNodeClass';
 const NAMESPACE_KEY = 'group_compound_layout';
 const STYLES_KEY = NAMESPACE_KEY + 'styles';
 const RELATIVE_POSITION_KEY = NAMESPACE_KEY + 'relative_position';
+const PARENT_POSITION_KEY = NAMESPACE_KEY + '.parent_position';
 
 // We can't fully rely on the reported position of the compound nodes, as they are relative to contents
 // Since we are moving a lots of params without waiting for a refresh (maybe related that we are in a batch) we are
@@ -202,9 +203,12 @@ export default class GroupCompoundLayout {
 
     // (2) Add a one-time callback to be fired when the layout stops
     layout.one('layoutstop', _event => {
-      // This part of the code needs to be executed inside a batch to work, else the relative position
-      //  is not correctly updated
-      this.cy.startBatch();
+      // If we add any children back, our parent nodes position are going to take the bounding box's position of all
+      // their children. Before doing it, save this position in order to add this up to their children.
+      parents.each(parent => {
+        parent.scratch(PARENT_POSITION_KEY, { ...parent.position() }); // Make a copy of the position, its an internal data from cy.
+      });
+
       // (3) Remove synthetic edges
       this.cy.remove(syntheticEdges);
 
@@ -213,9 +217,13 @@ export default class GroupCompoundLayout {
       // Add and position the children nodes according to the layout
       parents.each(parent => {
         // (4.b) Layout the children using our compound layout.
+        const parentPosition = parent.scratch(PARENT_POSITION_KEY);
         parent.children().each(child => {
           const relativePosition = child.data(RELATIVE_POSITION_KEY);
-          child.relativePosition(relativePosition);
+          child.position({
+            x: parentPosition.x + relativePosition.x,
+            y: parentPosition.y + relativePosition.y
+          });
           child.removeData(RELATIVE_POSITION_KEY);
         });
 
@@ -224,8 +232,8 @@ export default class GroupCompoundLayout {
 
         // Discard the saved values
         parent.removeScratch(STYLES_KEY);
+        parent.removeScratch(PARENT_POSITION_KEY);
       });
-      this.cy.endBatch();
     });
     layout.run();
   }
