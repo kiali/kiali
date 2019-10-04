@@ -204,12 +204,16 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
 	}
+	return FilterVirtualServices(virtualServiceList.GetItems(), namespace, serviceName), nil
+}
+
+func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
 	typeMeta := meta_v1.TypeMeta{
 		Kind:       PluralType[virtualServices],
 		APIVersion: ApiNetworkingVersion,
 	}
 	virtualServices := make([]IstioObject, 0)
-	for _, virtualService := range virtualServiceList.GetItems() {
+	for _, virtualService := range allVs {
 		appendVirtualService := serviceName == ""
 		routeProtocols := []string{"http", "tcp"}
 		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
@@ -221,7 +225,7 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 			virtualServices = append(virtualServices, vs)
 		}
 	}
-	return virtualServices, nil
+	return virtualServices
 }
 
 // GetSidecars return all Sidecars for a given namespace.
@@ -377,19 +381,22 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 	if err != nil {
 		return nil, err
 	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[destinationRules],
-		APIVersion: ApiNetworkingVersion,
-	}
 	destinationRuleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule list", namespace, serviceName)
 	}
+	return FilterDestinationRules(destinationRuleList.GetItems(), namespace, serviceName), nil
+}
 
+func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[destinationRules],
+		APIVersion: ApiNetworkingVersion,
+	}
 	destinationRules := make([]IstioObject, 0)
-	for _, destinationRule := range destinationRuleList.Items {
+	for _, destinationRule := range allDr {
 		appendDestinationRule := serviceName == ""
-		if host, ok := destinationRule.Spec["host"]; ok {
+		if host, ok := destinationRule.GetSpec()["host"]; ok {
 			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
 				appendDestinationRule = true
 			}
@@ -400,7 +407,7 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 			destinationRules = append(destinationRules, dr)
 		}
 	}
-	return destinationRules, nil
+	return destinationRules
 }
 
 func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {

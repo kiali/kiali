@@ -106,8 +106,13 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 	for _, namespace := range namespaces {
 		go func(ns string) {
 			defer wg.Done()
-
-			drs, err := in.k8s.GetDestinationRules(ns, "")
+			var drs []kubernetes.IstioObject
+			var err error
+			if kialiCache != nil && kialiCache.CheckNamespace("DestinationRule") && kialiCache.CheckNamespace(ns) {
+				drs, err = kialiCache.GetIstioResources("DestinationRule", ns)
+			} else {
+				drs, err = in.k8s.GetDestinationRules(ns, "")
+			}
 			if err != nil {
 				errChan <- err
 				return

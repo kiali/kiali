@@ -146,7 +146,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		if criteria.IncludeVirtualServices {
 			var vs []kubernetes.IstioObject
 			var vsErr error
-			if kialiCache != nil && kialiCache.CheckNamespace(criteria.Namespace) && kialiCache.CheckIstioResource("VirtualService") {
+			if kialiCache != nil && kialiCache.CheckIstioResource("VirtualService") && kialiCache.CheckNamespace(criteria.Namespace) {
 				vs, vsErr = kialiCache.GetIstioResources("VirtualService", criteria.Namespace)
 			} else {
 				vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, "")
@@ -162,7 +162,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeDestinationRules {
-			if dr, drErr := in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
+			var dr []kubernetes.IstioObject
+			var drErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource("DestinationRule") && kialiCache.CheckNamespace(criteria.Namespace) {
+				dr, drErr = kialiCache.GetIstioResources("DestinationRule", criteria.Namespace)
+			} else {
+				dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, "")
+			}
+			if drErr == nil {
 				(&istioConfigList.DestinationRules).Parse(dr)
 			} else {
 				errChan <- drErr

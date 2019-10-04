@@ -253,7 +253,15 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+		if kialiCache != nil && kialiCache.CheckIstioResource("VirtualService") && kialiCache.CheckNamespace(namespace) {
+			vs, err2 = kialiCache.GetIstioResources("VirtualService", namespace)
+			// Cache offers a generic method to bring all resources but it needs filter on VS case
+			if err2 == nil {
+				vs = kubernetes.FilterVirtualServices(vs, namespace, service)
+			}
+		} else {
+			vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+		}
 		if err2 != nil {
 			errChan <- err2
 		}
@@ -262,7 +270,14 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+		if kialiCache != nil && kialiCache.CheckIstioResource("DestinationRule") && kialiCache.CheckNamespace(namespace) {
+			dr, err2 = kialiCache.GetIstioResources("DestinationRule", namespace)
+			if err2 == nil {
+				dr = kubernetes.FilterDestinationRules(dr, namespace, service)
+			}
+		} else {
+			dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+		}
 		if err2 != nil {
 			errChan <- err2
 		}
