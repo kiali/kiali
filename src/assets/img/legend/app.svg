@@ -2,6 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -9,15 +10,24 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="27px"
-   height="27px"
-   viewBox="0 0 27 27"
-   version="1.1"
-   id="SVGRoot"
+   sodipodi:docname="app.svg"
    inkscape:version="0.92.4 (unknown)"
-   sodipodi:docname="app.svg">
+   id="SVGRoot"
+   version="1.1"
+   viewBox="0 0 27 27"
+   height="27px"
+   width="27px">
   <defs
-     id="defs4560" />
+     id="defs4560">
+    <linearGradient
+       id="linearGradient4538"
+       osb:paint="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop4536" />
+    </linearGradient>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,16 +35,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="26.817679"
-     inkscape:cx="13.5"
-     inkscape:cy="13.5"
+     inkscape:zoom="23.833333"
+     inkscape:cx="4.4281847"
+     inkscape:cy="14.942046"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="836"
-     inkscape:window-height="815"
-     inkscape:window-x="607"
-     inkscape:window-y="106"
+     inkscape:window-width="1918"
+     inkscape:window-height="1038"
+     inkscape:window-x="1920"
+     inkscape:window-y="540"
      inkscape:window-maximized="0"
      inkscape:grid-bbox="true" />
   <metadata
@@ -45,7 +55,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -53,21 +63,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <path
-       transform="matrix(0.88669661,0,0,0.91033252,-120.41267,-30.812013)"
-       d="m 163.62782,61.192884 -24.53759,0 0,-24.537593 24.53759,0 z"
-       inkscape:randomized="0"
-       inkscape:rounded="0"
-       inkscape:flatsided="true"
-       sodipodi:arg2="1.5707963"
-       sodipodi:arg1="0.78539816"
-       sodipodi:r2="12.268796"
-       sodipodi:r1="17.350698"
-       sodipodi:cy="48.924088"
-       sodipodi:cx="151.35902"
-       sodipodi:sides="4"
-       id="path1261"
-       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#8b8d8f;stroke-width:1.21389782;stroke-opacity:1"
-       sodipodi:type="star" />
+    <rect
+       style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#8b8d8f;stroke-width:0.80000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4534"
+       width="20.015755"
+       height="20.004221"
+       x="3.4921227"
+       y="3.4978898"
+       ry="3.9080205" />
   </g>
 </svg>
