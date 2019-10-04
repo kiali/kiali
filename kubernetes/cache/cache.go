@@ -5,12 +5,13 @@ import (
 	"strings"
 	"time"
 
+	kube "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	kialiConfig "github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 // Istio uses caches for pods and controllers.
@@ -34,11 +35,13 @@ type (
 	typeCache map[string]cache.SharedIndexInformer
 
 	kialiCacheImpl struct {
-		istioClient     kubernetes.IstioClient
-		refreshDuration time.Duration
-		cacheNamespaces []string
-		stopChan        chan struct{}
-		nsCache         map[string]typeCache
+		istioClient           kubernetes.IstioClient
+		k8sApi                kube.Interface
+		istioNetworkingGetter cache.Getter
+		refreshDuration       time.Duration
+		cacheNamespaces       []string
+		stopChan              chan struct{}
+		nsCache               map[string]typeCache
 	}
 )
 
@@ -78,8 +81,11 @@ func NewKialiCache() (KialiCache, error) {
 		refreshDuration: refreshDuration,
 		cacheNamespaces: cacheNamespaces,
 		stopChan:        make(chan struct{}),
-		nsCache:     	 make(map[string]typeCache),
+		nsCache:         make(map[string]typeCache),
 	}
+
+	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()
+	kialiCacheImpl.istioNetworkingGetter = istioClient.GetIstioNetworkingApi()
 
 	log.Infof("Kiali Cache is active for namespaces %v", cacheNamespaces)
 	return &kialiCacheImpl, nil
@@ -105,7 +111,7 @@ func (c *kialiCacheImpl) createCache(namespace string) bool {
 		for _, informer := range c.nsCache[namespace] {
 			go informer.Run(c.stopChan)
 		}
-		<- c.stopChan
+		<-c.stopChan
 		log.Infof("Kiali cache for [namespace: %s] stopped", namespace)
 	}()
 

@@ -231,19 +231,19 @@ type IstioLabels struct {
 
 // KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
-	Burst         		int      `yaml:"burst,omitempty"`
-	QPS           		float32  `yaml:"qps,omitempty"`
+	Burst int     `yaml:"burst,omitempty"`
+	QPS   float32 `yaml:"qps,omitempty"`
 	// Enable cache for kubernetes and istio resources
-	CacheEnabled  		bool     `yaml:"cache_enabled,omitempty"`
+	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
 	// Cache duration expressed in nanoseconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
-	CacheDuration 		int64    `yaml:"cache_duration,omitempty"`
+	CacheDuration int64 `yaml:"cache_duration,omitempty"`
 	// List of namespaces or regex defining namespaces to include in a cache
-	CacheNamespaces 	[]string `yaml:"cache_namespaces,omitempty"`
+	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
 	// List of controllers that won't be used for Workload calculation
 	// Kiali queries: Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
 	// If user has knowledge that some of them won't be used, Kiali can skip those queries.
-	ExcludeWorkloads 	[]string `yaml:"excluded_workloads,omitempty"`
+	ExcludeWorkloads []string `yaml:"excluded_workloads,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.

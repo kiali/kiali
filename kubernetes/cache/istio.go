@@ -30,8 +30,8 @@ func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
 
 func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCache) {
 	// Networking API
-	(*informer)["VirtualService"] = createIstioIndexInformer(c.istioClient.GetIstioNetworkingApi(), "virtualservices", c.refreshDuration, namespace)
-	(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioClient.GetIstioNetworkingApi(), "destinationrules", c.refreshDuration, namespace)
+	(*informer)["VirtualService"] = createIstioIndexInformer(c.istioNetworkingGetter, "virtualservices", c.refreshDuration, namespace)
+	(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioNetworkingGetter, "destinationrules", c.refreshDuration, namespace)
 }
 
 func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshDuration time.Duration, namespace string) cache.SharedIndexInformer {
@@ -42,7 +42,7 @@ func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshD
 	)
 }
 
-func (c* kialiCacheImpl) GetIstioResources(resource string, namespace string) ([]kubernetes.IstioObject, error) {
+func (c *kialiCacheImpl) GetIstioResources(resource string, namespace string) ([]kubernetes.IstioObject, error) {
 	if !c.CheckIstioResource(resource) {
 		return nil, fmt.Errorf("Kiali cache doesn't support [resource: %s]", resource)
 	}

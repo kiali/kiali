@@ -8,15 +8,15 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func TestFilterNamespaces(t *testing.T) {
+func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
 	kialiCacheImpl := kialiCacheImpl{
-		istioClient:       kubernetes.IstioClient{},
+		istioClient:     kubernetes.IstioClient{},
 		refreshDuration: 0,
 		cacheNamespaces: []string{"bookinfo", "a.*", "galicia"},
 		stopChan:        nil,
-		nsCache:     	 map[string]typeCache{},
+		nsCache:         map[string]typeCache{},
 	}
 
 	assert.True(kialiCacheImpl.isCached("bookinfo"))

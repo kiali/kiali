@@ -29,7 +29,7 @@ type WorkloadService struct {
 }
 
 var (
-	ew sync.RWMutex
+	ew                sync.RWMutex
 	excludedWorkloads map[string]bool
 )
 
@@ -187,7 +187,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		var err error
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			dep, err = kialiCache.GetDeployments(namespace)
- 		} else {
+		} else {
 			dep, err = k8s.GetDeployments(namespace)
 		}
 		if err != nil {

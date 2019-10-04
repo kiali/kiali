@@ -19,7 +19,7 @@ type (
 )
 
 func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
-	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.istioClient.GetK8sApi(), c.refreshDuration, informers.WithNamespace(namespace))
+	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
 	(*informer)["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
 	(*informer)["Service"] = sharedInformers.Core().V1().Services().Informer()
 }

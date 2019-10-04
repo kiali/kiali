@@ -6,10 +6,10 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/routing"
-	"github.com/kiali/kiali/business"
 )
 
 type Server struct {
