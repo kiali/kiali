@@ -1,20 +1,10 @@
 import * as React from 'react';
-import {
-  Chart,
-  ChartArea,
-  ChartAxis,
-  ChartVoronoiContainer,
-  ChartScatter,
-  ChartGroup,
-  ChartTooltip
-} from '@patternfly/react-charts';
 import { InfoAltIcon } from '@patternfly/react-icons';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import Graphing from '../../utils/Graphing';
 import { Datapoint } from '../../types/Metrics';
 import { PfColors } from 'components/Pf/PfColors';
-
-const { VictoryLegend } = require('victory');
+import { SparklineChart } from 'components/Charts/SparklineChart';
 
 export type ResponseTimeUnit = 's' | 'ms';
 type ResponseTimeChartTypeProp = {
@@ -47,67 +37,6 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
       Graphing.toVCLine(scaler(this.props.rt99), 'p99', PfColors.Orange400)
     ];
 
-    const tooltip = (
-      <ChartTooltip
-        style={{ stroke: 'none' }}
-        flyoutStyle={{ fillOpacity: 0.8 }}
-        renderInPortal={true}
-        constrainToVisibleArea={true}
-      />
-    );
-    const container = (
-      <ChartVoronoiContainer
-        labels={obj => {
-          if (obj.datum.childName.startsWith('rt-scatter')) {
-            return null as any;
-          }
-          const val = Math.floor(obj.datum.y * 1000) / 1000;
-          return `${(obj.datum.x as Date).toLocaleTimeString()} - ${obj.datum.name}: ${val} ms`;
-        }}
-        labelComponent={tooltip}
-      />
-    );
-
-    const events = series.map((_, idx) => {
-      return {
-        childName: ['rt-legend'],
-        target: ['data', 'labels'],
-        eventKey: String(idx),
-        eventHandlers: {
-          onMouseOver: () => {
-            return [
-              {
-                childName: ['rt-chart-' + idx],
-                target: 'data',
-                eventKey: 'all',
-                mutation: props => {
-                  return {
-                    style: Object.assign({}, props.style, { strokeWidth: 4, fillOpacity: 0.5 })
-                  };
-                }
-              }
-            ];
-          },
-          onMouseOut: () => {
-            return [
-              {
-                childName: ['rt-chart-' + idx],
-                target: 'data',
-                eventKey: 'all',
-                mutation: () => {
-                  return null;
-                }
-              }
-            ];
-          }
-        }
-      };
-    });
-    const hiddenAxisStyle = {
-      axis: { stroke: 'none' },
-      ticks: { stroke: 'none' },
-      tickLabels: { stroke: 'none', fill: 'none' }
-    };
     return (
       <>
         {!this.props.hide && (
@@ -116,44 +45,18 @@ export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp
               <strong>{this.props.label}:</strong>
             </div>
             {this.thereIsTrafficData() ? (
-              <Chart
-                containerComponent={container}
-                height={100}
+              <SparklineChart
+                name={'rt'}
+                height={70}
                 width={SUMMARY_PANEL_CHART_WIDTH}
-                padding={{
-                  bottom: 30, // Adjusted to accommodate legend
-                  top: 5
+                showLegend={true}
+                padding={{ top: 5 }}
+                tooltipFormat={dp => {
+                  const val = Math.floor(dp.y * 1000) / 1000;
+                  return `${(dp.x as Date).toLocaleTimeString()} - ${dp.name}: ${val} ms`;
                 }}
-                events={events}
-              >
-                <ChartAxis tickCount={15} style={hiddenAxisStyle} />
-                <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />
-                {series.map((serie, idx) => {
-                  return (
-                    <ChartGroup key={'serie-' + idx}>
-                      <ChartScatter
-                        name={'rt-scatter-' + idx}
-                        data={serie.datapoints}
-                        style={{ data: { fill: serie.color } }}
-                        size={({ active }) => (active ? 5 : 2)}
-                      />
-                      <ChartArea
-                        name={'rt-chart-' + idx}
-                        data={serie.datapoints}
-                        style={{
-                          data: {
-                            fill: serie.color,
-                            fillOpacity: 0.2,
-                            stroke: serie.color,
-                            strokeWidth: 2
-                          }
-                        }}
-                      />
-                    </ChartGroup>
-                  );
-                })}
-                <VictoryLegend name={'rt-legend'} data={series.map(s => s.legendItem)} y={70} />
-              </Chart>
+                series={series}
+              />
             ) : (
               <div>
                 <InfoAltIcon /> Not enough traffic to generate chart.

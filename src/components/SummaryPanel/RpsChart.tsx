@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Chart, ChartArea, ChartAxis } from '@patternfly/react-charts';
 import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
 
 import { PfColors } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
-import { createContainer } from '../Charts';
 import { Datapoint } from '../../types/Metrics';
 import Graphing, { VCLines, VCLine, VCDataPoint } from 'utils/Graphing';
+import { SparklineChart } from 'components/Charts/SparklineChart';
 
 type RpsChartTypeProp = {
   label: string;
@@ -51,32 +50,15 @@ const thereIsTrafficData = (seriesData: VCLine) => {
 const renderSparklines = (series: VCLines, yTickFormat?: (val: number) => string) => {
   const yFormat = yTickFormat ? yTickFormat : y => y;
   return (
-    <div className="area-chart-overflow">
-      <Chart
-        height={41}
-        width={SUMMARY_PANEL_CHART_WIDTH}
-        padding={{ top: 5 }}
-        scale={{ x: 'time' }}
-        containerComponent={createContainer(dp => `${(dp.x as Date).toLocaleTimeString()}\n${yFormat(dp.y)} RPS`)}
-      >
-        {series.map((serie, idx) => (
-          <ChartArea
-            key={'serie-' + idx}
-            data={serie.datapoints}
-            style={{
-              data: {
-                fill: serie.color,
-                fillOpacity: 0.2,
-                stroke: serie.color,
-                strokeWidth: 2
-              }
-            }}
-          />
-        ))}
-        <ChartAxis tickCount={15} tickFormat={() => ''} />
-        <ChartAxis dependentAxis={true} tickFormat={() => ''} />
-      </Chart>
-    </div>
+    <SparklineChart
+      name={'rps'}
+      height={41}
+      width={SUMMARY_PANEL_CHART_WIDTH}
+      showLegend={false}
+      padding={{ top: 5 }}
+      tooltipFormat={dp => `${(dp.x as Date).toLocaleTimeString()}\n${yFormat(dp.y)} RPS`}
+      series={series}
+    />
   );
 };
 
