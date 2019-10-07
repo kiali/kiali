@@ -119,8 +119,7 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 	conf := config.Get()
 	svc, err := in.k8s.GetService(namespace, service)
 	if err != nil {
-		log.Errorf("Error fetching API documentation for service [%s:%s]: %s", namespace, service, err)
-		return "", errors.NewInternalError(err)
+		return "", err
 	}
 	apiSpecPath := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
 
