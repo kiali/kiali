@@ -25,7 +25,7 @@ func (s ServiceRoleBindChecker) Check() models.IstioValidations {
 
 func (s ServiceRoleBindChecker) runChecks(roleBind kubernetes.IstioObject) models.IstioValidations {
 	serviceRoleBindName := roleBind.GetObjectMeta().Name
-	key := models.IstioValidationKey{Name: serviceRoleBindName, ObjectType: ServiceRoleBindingCheckerType}
+	key := models.IstioValidationKey{Name: serviceRoleBindName, Namespace: roleBind.GetObjectMeta().Namespace, ObjectType: ServiceRoleBindingCheckerType}
 	validations := &models.IstioValidation{
 		Name:       key.Name,
 		ObjectType: key.ObjectType,

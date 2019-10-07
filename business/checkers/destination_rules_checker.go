@@ -52,7 +52,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 
 func (in DestinationRulesChecker) runChecks(destinationRule kubernetes.IstioObject) models.IstioValidations {
 	destinationRuleName := destinationRule.GetObjectMeta().Name
-	key, rrValidation := EmptyValidValidation(destinationRuleName, DestinationRuleCheckerType)
+	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.GetObjectMeta().Namespace, DestinationRuleCheckerType)
 
 	enabledCheckers := []Checker{
 		destinationrules.MeshWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},

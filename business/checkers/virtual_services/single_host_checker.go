@@ -31,8 +31,8 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 
 	for _, clusterCounter := range hostCounter {
 		for _, namespaceCounter := range clusterCounter {
-			isNamespaceWildcard := len(namespaceCounter["*"]) > 0
 			for _, serviceCounter := range namespaceCounter {
+				isNamespaceWildcard := len(namespaceCounter["*"]) > 0
 				targetSameHost := len(serviceCounter) > 1
 				otherServiceHosts := len(namespaceCounter) > 1
 				for _, virtualService := range serviceCounter {
@@ -40,10 +40,23 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 					// - there is more than one virtual service per a host
 					// - there is one virtual service with wildcard and there are other virtual services pointing
 					//   a host for that namespace
-					if targetSameHost || isNamespaceWildcard && otherServiceHosts {
-						if !hasGateways(virtualService) {
-							multipleVirtualServiceCheck(*virtualService, validations)
+					if hasGateways(virtualService) {
+						continue
+					}
+
+					if targetSameHost {
+						// Reference everything within serviceCounter
+						multipleVirtualServiceCheck(*virtualService, validations, serviceCounter)
+					}
+
+					if isNamespaceWildcard && otherServiceHosts {
+						// Reference the * or in case of * the other hosts inside namespace
+						// or other stars
+						refs := make([]*kubernetes.IstioObject, 0, len(namespaceCounter))
+						for _, serviceCounter := range namespaceCounter {
+							refs = append(refs, serviceCounter...)
 						}
+						multipleVirtualServiceCheck(*virtualService, validations, refs)
 					}
 				}
 			}
@@ -53,9 +66,9 @@ func (in SingleHostChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validations models.IstioValidations) {
+func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validations models.IstioValidations, references []*kubernetes.IstioObject) {
 	virtualServiceName := virtualService.GetObjectMeta().Name
-	key := models.IstioValidationKey{Name: virtualServiceName, ObjectType: "virtualservice"}
+	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.GetObjectMeta().Namespace, ObjectType: "virtualservice"}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
 	rrValidation := &models.IstioValidation{
 		Name:       virtualServiceName,
@@ -64,6 +77,15 @@ func multipleVirtualServiceCheck(virtualService kubernetes.IstioObject, validati
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
+		References: make([]models.IstioValidationKey, 0, len(references)),
+	}
+
+	for _, ref := range references {
+		ref := *ref
+		refKey := models.IstioValidationKey{Name: ref.GetObjectMeta().Name, Namespace: ref.GetObjectMeta().Namespace, ObjectType: "virtualservice"}
+		if refKey != key {
+			rrValidation.References = append(rrValidation.References, refKey)
+		}
 	}
 
 	validations.MergeValidations(models.IstioValidations{key: rrValidation})
@@ -131,12 +153,9 @@ func formatHostForSearch(hostName, virtualServiceNamespace string) Host {
 		if len(domainParts) > 2 {
 			host.Cluster = strings.Join(domainParts[2:], ".")
 		}
-	} else if host.Service != "*" {
+	} else {
 		host.Namespace = virtualServiceNamespace
 		host.Cluster = "svc.cluster.local"
-	} else if host.Service == "*" {
-		host.Namespace = "*"
-		host.Cluster = "*"
 	}
 
 	return host

@@ -13,17 +13,23 @@ type TrafficPolicyChecker struct {
 func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	refdMtls := t.drsWithNonLocalmTLSEnabled()
 	// When mTLS is not enabled, there is no validation to be added.
-	if !t.isNonLocalmTLSEnabled() {
+	if len(refdMtls) == 0 {
 		return validations
+	}
+
+	refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
+	for _, dr := range refdMtls {
+		refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace))
 	}
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
-			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name)
-			validation := buildDestinationRuleValidation(dr, check, true)
+			key := models.BuildKey(DestinationRulesCheckerType, dr.GetObjectMeta().Name, dr.GetObjectMeta().Namespace)
+			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
 
 			if _, exists := validations[key]; !exists {
 				validations.MergeValidations(models.IstioValidations{key: validation})
@@ -34,18 +40,19 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (t TrafficPolicyChecker) isNonLocalmTLSEnabled() bool {
+func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []kubernetes.IstioObject {
+	mtlsDrs := make([]kubernetes.IstioObject, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
 		if host, ok := dr.GetSpec()["host"]; ok {
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 				if isNonLocalmTLSForServiceEnabled(dr, fqdn.Service) {
-					return true
+					mtlsDrs = append(mtlsDrs, dr)
 				}
 			}
 		}
 	}
-	return false
+	return mtlsDrs
 }
 
 func hasTrafficPolicy(dr kubernetes.IstioObject) bool {
@@ -89,7 +96,7 @@ func hasTrafficPolicyTLS(dr kubernetes.IstioObject) bool {
 	return false
 }
 
-func buildDestinationRuleValidation(dr kubernetes.IstioObject, checks models.IstioCheck, valid bool) *models.IstioValidation {
+func buildDestinationRuleValidation(dr kubernetes.IstioObject, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
 	validation := &models.IstioValidation{
 		Name:       dr.GetObjectMeta().Name,
 		ObjectType: DestinationRulesCheckerType,
@@ -97,6 +104,7 @@ func buildDestinationRuleValidation(dr kubernetes.IstioObject, checks models.Ist
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
+		References: refKeys,
 	}
 
 	return validation

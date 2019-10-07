@@ -29,13 +29,14 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	for _, dr := range m.DestinationRules {
 		if host, ok := dr.GetSpec()["host"]; ok {
 			destinationRulesName := dr.GetObjectMeta().Name
+			destinationRulesNamespace := dr.GetObjectMeta().Namespace
 			if dHost, ok := host.(string); ok {
 				fqdn := kubernetes.ParseHost(dHost, dr.GetObjectMeta().Namespace, dr.GetObjectMeta().ClusterName)
 
 				if fqdn.Namespace != dr.GetObjectMeta().Namespace && !strings.HasPrefix(fqdn.Service, "*") && fqdn.Namespace != "" {
 					// Unable to verify if the same host+subset combination is targeted from different namespace DRs
 					// "*" check removes the prefix errors
-					key, rrValidation := createError("validation.unable.cross-namespace", dr.GetObjectMeta().Name, true)
+					key, rrValidation := createError("validation.unable.cross-namespace", destinationRulesNamespace, destinationRulesName, true)
 					validations.MergeValidations(models.IstioValidations{key: rrValidation})
 					continue
 				}
@@ -50,19 +51,19 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 				if fqdn.Service == "*" {
 					// We need to check the matching subsets from all hosts now
 					for _, h := range seenHostSubsets {
-						checkCollisions(validations, destinationRulesName, foundSubsets, h)
+						checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h)
 					}
 					// We add * later
 				}
 				// Search "*" first and then exact name
 				if previous, found := seenHostSubsets["*"]; found {
 					// Need to check subsets of "*"
-					checkCollisions(validations, destinationRulesName, foundSubsets, previous)
+					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
 				}
 
 				if previous, found := seenHostSubsets[fqdn.Service]; found {
 					// Host found, need to check underlying subsets
-					checkCollisions(validations, destinationRulesName, foundSubsets, previous)
+					checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous)
 				}
 				// Nothing threw an error, so add these
 				if _, found := seenHostSubsets[fqdn.Service]; !found {
@@ -119,40 +120,43 @@ func extractSubsets(dr kubernetes.IstioObject, destinationRulesName string) []su
 	return []subset{subset{"~", destinationRulesName}}
 }
 
-func checkCollisions(validations models.IstioValidations, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
+func checkCollisions(validations models.IstioValidations, namespace, destinationRulesName string, foundSubsets []subset, existing map[string]string) {
 	// If current subset is ~
 	if len(foundSubsets) == 1 && foundSubsets[0].Name == "~" {
 		// This should match any subset in the same hostname
 		for _, v := range existing {
-			addError(validations, []string{destinationRulesName, v})
+			addError(validations, namespace, []string{destinationRulesName, v})
 		}
 	}
 
 	// If we have existing subset with ~
 	if ruleName, found := existing["~"]; found {
-		addError(validations, []string{destinationRulesName, ruleName})
+		addError(validations, namespace, []string{destinationRulesName, ruleName})
 	}
 
 	for _, s := range foundSubsets {
 		if ruleName, found := existing[s.Name]; found {
-			addError(validations, []string{destinationRulesName, ruleName})
+			addError(validations, namespace, []string{destinationRulesName, ruleName})
 		}
 	}
 }
 
-func addError(validations models.IstioValidations, destinationRuleNames []string) models.IstioValidations {
-	for _, destinationRuleName := range destinationRuleNames {
-		key, rrValidation := createError("destinationrules.multimatch", destinationRuleName, true)
+// addError links new validation errors to the validations. destinationRuleNames must always be a pair
+func addError(validations models.IstioValidations, namespace string, destinationRuleNames []string) models.IstioValidations {
+	key0, rrValidation0 := createError("destinationrules.multimatch", namespace, destinationRuleNames[0], true)
+	key1, rrValidation1 := createError("destinationrules.multimatch", namespace, destinationRuleNames[1], true)
 
-		if _, exists := validations[key]; !exists {
-			validations.MergeValidations(models.IstioValidations{key: rrValidation})
-		}
-	}
+	rrValidation0.References[0] = key1
+	rrValidation1.References[0] = key0
+
+	validations.MergeValidations(models.IstioValidations{key0: rrValidation0})
+	validations.MergeValidations(models.IstioValidations{key1: rrValidation1})
+
 	return validations
 }
 
-func createError(errorText, destinationRuleName string, valid bool) (models.IstioValidationKey, *models.IstioValidation) {
-	key := models.IstioValidationKey{Name: destinationRuleName, ObjectType: DestinationRulesCheckerType}
+func createError(errorText, namespace, destinationRuleName string, valid bool) (models.IstioValidationKey, *models.IstioValidation) {
+	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectType: DestinationRulesCheckerType}
 	checks := models.Build(errorText, "spec/host")
 	rrValidation := &models.IstioValidation{
 		Name:       destinationRuleName,
@@ -161,6 +165,7 @@ func createError(errorText, destinationRuleName string, valid bool) (models.Isti
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
+		References: make([]models.IstioValidationKey, 1),
 	}
 
 	return key, rrValidation

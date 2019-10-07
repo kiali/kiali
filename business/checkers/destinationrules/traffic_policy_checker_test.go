@@ -203,7 +203,7 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.NotEmpty(validations)
 	assert.Equal(1, len(validations))
 
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews")]
+	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -211,6 +211,8 @@ func testValidationAdded(t *testing.T, destinationRules []kubernetes.IstioObject
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal("spec/trafficPolicy", validation.Checks[0].Path)
 	assert.Equal(models.CheckMessage("destinationrules.trafficpolicy.notlssettings"), validation.Checks[0].Message)
+
+	assert.True(len(validation.References) > 0)
 }
 
 func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioObject, mTLSDetails kubernetes.MTLSDetails) {
@@ -222,7 +224,7 @@ func testValidationsNotAdded(t *testing.T, destinationRules []kubernetes.IstioOb
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews")]
+	validation, ok := validations[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
 
 	assert.False(ok)
 	assert.Nil(validation)

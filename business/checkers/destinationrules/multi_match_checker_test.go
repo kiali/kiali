@@ -26,7 +26,7 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -48,12 +48,15 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 
 	assert.NotEmpty(validations)
 	assert.Equal(2, len(validations))
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(models.CheckMessage("destinationrules.multimatch"), validation.Checks[0].Message)
+
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule1", validation.References[0].Name)
 }
 
 func TestMultiHostMatchWildcardInvalid(t *testing.T) {
@@ -72,11 +75,14 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
+
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule1", validation.References[0].Name)
 
 	destinationRules = []kubernetes.IstioObject{
 		data.CreateTestDestinationRule("test", "rule2", "*.test.svc.cluster.local"),
@@ -88,12 +94,14 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok = validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule1"}]
+	validation, ok = validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule1"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 
+	assert.NotEmpty(validation.References)
+	assert.Equal("rule2", validation.References[0].Name)
 }
 
 func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
@@ -113,7 +121,7 @@ func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -135,7 +143,7 @@ func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 	}.Check()
 
 	assert.Empty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "rule2"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -198,12 +206,15 @@ func TestReviewsExample(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(validations)
-	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Name: "reviews3"}]
+	assert.Equal(3, len(validations))
+	validation, ok := validations[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "bookinfo", Name: "reviews3"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
 	assert.Equal(models.WarningSeverity, validation.Checks[0].Severity)
 	assert.Equal(1, len(validation.Checks))
+
+	assert.Equal(2, len(validation.References)) // Both reviews and reviews2 is faulty
 }
 
 func TestMultiServiceEntry(t *testing.T) {

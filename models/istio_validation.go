@@ -9,8 +9,9 @@ type NamespaceValidations map[string]IstioValidations
 
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
 type IstioValidationKey struct {
-	ObjectType string
-	Name       string
+	ObjectType string `json:"objectType"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 // IstioValidations represents a set of IstioValidation grouped by IstioValidationKey.
@@ -36,6 +37,9 @@ type IstioValidation struct {
 
 	// Array of checks. It might be empty.
 	Checks []*IstioCheck `json:"checks"`
+
+	// Related objects (only validation errors)
+	References []IstioValidationKey `json:"references"`
 }
 
 // IstioCheck represents an individual check.
@@ -213,8 +217,8 @@ func Build(checkId string, path string) IstioCheck {
 	return check
 }
 
-func BuildKey(objectType, name string) IstioValidationKey {
-	return IstioValidationKey{ObjectType: objectType, Name: name}
+func BuildKey(objectType, name, namespace string) IstioValidationKey {
+	return IstioValidationKey{ObjectType: objectType, Namespace: namespace, Name: name}
 }
 
 func CheckMessage(checkId string) string {
@@ -283,8 +287,30 @@ func (iv IstioValidations) MergeValidations(validations IstioValidations) IstioV
 				v.Checks = append(v.Checks, toAdd)
 			}
 			v.Valid = v.Valid && validation.Valid
+		AddUniqueReference:
+			for _, toAdd := range validation.References {
+				for _, existing := range v.References {
+					if toAdd == existing {
+						continue AddUniqueReference
+					}
+				}
+				v.References = append(v.References, toAdd)
+			}
 		}
 	}
+	return iv
+}
+
+func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioValidations {
+	for _, currentValidations := range iv {
+		if currentValidations.References == nil {
+			currentValidations.References = make([]IstioValidationKey, 0, len(validations))
+		}
+		for k := range validations {
+			currentValidations.References = append(currentValidations.References, k)
+		}
+	}
+
 	return iv
 }
 
