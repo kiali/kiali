@@ -1004,7 +1004,13 @@ elif [ "$_CMD" = "bi-install" ]; then
   ${OC} patch -n istio-system --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
-  infomsg "Bookinfo URL: http://$(${OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
+
+  BOOKINFO_PRODUCTPAGE_URL="http://$(${OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
+  infomsg "Bookinfo URL: ${BOOKINFO_PRODUCTPAGE_URL}"
+
+  infomsg "Installing Bookinfo Traffic Generator..."
+  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION="0s" RATE="1" ROUTE="${BOOKINFO_PRODUCTPAGE_URL}" envsubst | ${OC} apply -n ${BOOKINFO_NAMESPACE} -f -
+  curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml | ${OC} apply -n ${BOOKINFO_NAMESPACE} -f -
 
 elif [ "$_CMD" = "k-uninstall" ]; then
 
