@@ -354,3 +354,16 @@ Inline Alerts: background transparent
 .stack_service_details {
   height: 20%;
 }
+
+/*
+Kiosk mode
+*/
+html.kiosk {
+  #page-sidebar {
+    display: none;
+  }
+
+  header[role='banner'] {
+    display: none;
+  }
+}
