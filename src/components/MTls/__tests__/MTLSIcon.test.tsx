@@ -24,8 +24,6 @@ describe('when Icon is LOCK_FULL', () => {
     expect(shallowToJson(wrapper)).toMatchSnapshot();
 
     expect(wrapper.name()).toEqual('Tooltip');
-    console.log(wrapper.props());
-    console.log(wrapper);
     expect(wrapper.props().position).toEqual('right');
     expect(wrapper.props().content).toEqual('Overlay Test');
 

@@ -1,4 +1,4 @@
-import { ObjectValidation } from '../IstioObjects';
+import { ObjectValidation, ValidationTypes } from '../IstioObjects';
 import { parseKialiValidations } from '../AceValidations';
 
 const fs = require('fs');
@@ -10,7 +10,7 @@ const destinationRuleValidations: ObjectValidation = {
   checks: [
     {
       message: "Host doesn't have a valid service",
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/host'
     }
   ]
@@ -23,7 +23,7 @@ const vsInvalidHosts: ObjectValidation = {
   checks: [
     {
       message: "Hosts doesn't have a valid service",
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/hosts'
     }
   ]
@@ -36,7 +36,7 @@ const vsInvalidHttpFirstRoute: ObjectValidation = {
   checks: [
     {
       message: 'All routes should have weight',
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/http[0]/route'
     }
   ]
@@ -49,7 +49,7 @@ const vsInvalidHttpSecondRoute: ObjectValidation = {
   checks: [
     {
       message: 'All routes should have weight',
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/http[1]/route'
     }
   ]
@@ -62,7 +62,7 @@ const vsInvalidHttpThirdRoute: ObjectValidation = {
   checks: [
     {
       message: 'All routes should have weight',
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/http[2]/route'
     }
   ]
@@ -75,7 +75,7 @@ const vsInvalidHttpSecondSecondDestinationField: ObjectValidation = {
   checks: [
     {
       message: 'Destination field is mandatory',
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/http[1]/route[1]'
     }
   ]
@@ -88,7 +88,7 @@ const vsInvalidHttpThirdFirstDestinationField: ObjectValidation = {
   checks: [
     {
       message: 'Destination field is mandatory',
-      severity: 'error',
+      severity: ValidationTypes.Error,
       path: 'spec/http[2]/route[0]'
     }
   ]
@@ -101,7 +101,7 @@ const vsInvalidHttpThirdFirstSubsetNotFound: ObjectValidation = {
   checks: [
     {
       message: 'Subset not found',
-      severity: 'warning',
+      severity: ValidationTypes.Warning,
       path: 'spec/http[2]/route[0]/destination'
     }
   ]
@@ -114,7 +114,7 @@ const vsInvalidHttpFirstSecondSubsetNotFound: ObjectValidation = {
   checks: [
     {
       message: 'Subset not found',
-      severity: 'warning',
+      severity: ValidationTypes.Warning,
       path: 'spec/http[0]/route[1]/destination'
     }
   ]
@@ -127,7 +127,7 @@ const vsInvalidHttpFourthFirstWeigth: ObjectValidation = {
   checks: [
     {
       message: 'Weight must be a number',
-      severity: 'warning',
+      severity: ValidationTypes.Warning,
       path: 'spec/http[3]/route[0]/weigth/25a'
     }
   ]
@@ -140,7 +140,7 @@ const vsInvalidHttpFifthSecondWeigth: ObjectValidation = {
   checks: [
     {
       message: 'Weight must be a number',
-      severity: 'warning',
+      severity: ValidationTypes.Warning,
       path: 'spec/http[4]/route[1]/weigth/28a'
     }
   ]
