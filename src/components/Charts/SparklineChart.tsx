@@ -11,6 +11,7 @@ import {
 import { VictoryLegend } from 'victory';
 
 import { VCDataPoint, VCLines } from '../../utils/Graphing';
+import { PfColors } from 'components/Pf/PfColors';
 
 type Props = ChartProps & {
   name: string;
@@ -21,6 +22,7 @@ type Props = ChartProps & {
 
 type State = {
   width: number;
+  hiddenSeries: Set<number>;
 };
 
 export class SparklineChart extends React.Component<Props, State> {
@@ -31,7 +33,7 @@ export class SparklineChart extends React.Component<Props, State> {
     if (props.width === undefined) {
       this.containerRef = React.createRef<HTMLDivElement>();
     }
-    this.state = { width: props.width || 0 };
+    this.state = { width: props.width || 0, hiddenSeries: new Set() };
   }
 
   handleResize = () => {
@@ -69,6 +71,23 @@ export class SparklineChart extends React.Component<Props, State> {
         target: ['data', 'labels'],
         eventKey: String(idx),
         eventHandlers: {
+          onClick: () => {
+            return [
+              {
+                childName: [this.props.name + '-area-' + idx],
+                target: 'data',
+                eventKey: 'all',
+                mutation: () => {
+                  if (!this.state.hiddenSeries.delete(idx)) {
+                    // Was not already hidden => add to set
+                    this.state.hiddenSeries.add(idx);
+                  }
+                  this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
+                  return null;
+                }
+              }
+            ];
+          },
           onMouseOver: () => {
             return [
               {
@@ -111,14 +130,7 @@ export class SparklineChart extends React.Component<Props, State> {
 
     let container = this.props.containerComponent;
     if (!container) {
-      const tooltip = (
-        <ChartTooltip
-          style={{ stroke: 'none' }}
-          flyoutStyle={{ fillOpacity: 0.8 }}
-          renderInPortal={true}
-          constrainToVisibleArea={true}
-        />
-      );
+      const tooltip = <ChartTooltip flyoutStyle={{ fillOpacity: 0.7 }} constrainToVisibleArea={true} />;
       container = (
         <ChartVoronoiContainer
           labels={obj => {
@@ -148,32 +160,47 @@ export class SparklineChart extends React.Component<Props, State> {
       >
         <ChartAxis tickCount={15} style={hiddenAxisStyle} />
         <ChartAxis dependentAxis={true} style={hiddenAxisStyle} />
-        {this.props.series.map((serie, idx) => (
-          <ChartScatter
-            name={this.props.name + '-scatter-' + idx}
-            data={serie.datapoints}
-            style={{ data: { fill: serie.color } }}
-            size={({ active }) => (active ? 5 : 2)}
-          />
-        ))}
-        {this.props.series.map((serie, idx) => (
-          <ChartArea
-            name={this.props.name + '-area-' + idx}
-            data={serie.datapoints}
-            style={{
-              data: {
-                fill: serie.color,
-                fillOpacity: 0.2,
-                stroke: serie.color,
-                strokeWidth: 2
-              }
-            }}
-          />
-        ))}
+        {this.props.series.map((serie, idx) => {
+          if (this.state.hiddenSeries.has(idx)) {
+            return undefined;
+          }
+          return (
+            <ChartScatter
+              name={this.props.name + '-scatter-' + idx}
+              data={serie.datapoints}
+              style={{ data: { fill: serie.color } }}
+              size={({ active }) => (active ? 5 : 2)}
+            />
+          );
+        })}
+        {this.props.series.map((serie, idx) => {
+          if (this.state.hiddenSeries.has(idx)) {
+            return undefined;
+          }
+          return (
+            <ChartArea
+              name={this.props.name + '-area-' + idx}
+              data={serie.datapoints}
+              style={{
+                data: {
+                  fill: serie.color,
+                  fillOpacity: 0.2,
+                  stroke: serie.color,
+                  strokeWidth: 2
+                }
+              }}
+            />
+          );
+        })}
         {this.props.showLegend && (
           <VictoryLegend
             name={this.props.name + '-legend'}
-            data={this.props.series.map(s => s.legendItem)}
+            data={this.props.series.map((s, idx) => {
+              if (this.state.hiddenSeries.has(idx)) {
+                return { ...s.legendItem, symbol: { fill: PfColors.Gray } };
+              }
+              return s.legendItem;
+            })}
             y={height - legendHeight}
             height={legendHeight}
             themeColor={this.props.themeColor}
