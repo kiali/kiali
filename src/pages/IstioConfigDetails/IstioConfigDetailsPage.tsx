@@ -66,7 +66,10 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (this.state.istioObjectDetails) {
       const objectType = dicIstioType[this.props.match.params.objectType];
       const methodName = objectType.charAt(0).toLowerCase() + objectType.slice(1);
-      title = this.state.istioObjectDetails[methodName].metadata.name;
+      const object = this.state.istioObjectDetails[methodName];
+      if (object) {
+        title = object.metadata.name;
+      }
     }
 
     return title;

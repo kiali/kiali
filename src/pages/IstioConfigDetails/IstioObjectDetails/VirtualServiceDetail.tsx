@@ -60,13 +60,13 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
     return h;
   }
 
-  generateGatewaysList(gateways: string[]) {
+  generateGatewaysList(gateways: string[], isValid: boolean) {
     const childrenList: any = [];
     Object.keys(gateways).forEach((key, j) => {
       const host = this.parseHost(gateways[key]);
       childrenList.push(
         <li key={'gateway_' + host.service + '_' + j}>
-          {host.service === 'mesh' ? (
+          {host.service === 'mesh' || !isValid ? (
             host.service
           ) : (
             <Link to={`/namespaces/${host.namespace}/istio/gateways/${host.service}`}>{gateways[key]}</Link>
@@ -85,13 +85,15 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
 
   rawConfig() {
     const virtualService: VirtualService = this.props.virtualService;
+    const globalStatus = this.globalStatus();
+    const isValid = !globalStatus;
 
     return (
       <GridItem>
         <Card key={'virtualServiceConfig'}>
           <CardBody>
             <Text component={TextVariants.h2}>Virtual Service Overview</Text>
-            {this.globalStatus()}
+            {globalStatus}
             <Text component={TextVariants.h3}>Created at</Text>
             <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
 
@@ -107,7 +109,7 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
               undefined
             )}
             {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
-              ? this.generateGatewaysList(virtualService.spec.gateways)
+              ? this.generateGatewaysList(virtualService.spec.gateways, isValid)
               : undefined}
           </CardBody>
         </Card>
