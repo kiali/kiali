@@ -212,7 +212,7 @@ spec:
     strategy: deployment
     spec:
       deployments:
-      - name: kiali-operator
+      - name: kiali-operator2
         spec:
           replicas: 1
           selector:
