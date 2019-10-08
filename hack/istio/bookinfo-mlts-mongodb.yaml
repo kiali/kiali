@@ -1,0 +1,23 @@
+# Necessary resources that enable mTLS when talking to details service.
+
+# Instruct senders to talk mTLS to details.
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: mongodb-mtls
+spec:
+  host: mongodb
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+# Instruct the receiver (details) to use mTLS
+apiVersion: "authentication.istio.io/v1alpha1"
+kind: "Policy"
+metadata:
+  name: mongodb-mtls
+spec:
+  targets:
+  - name: mongodb
+  peers:
+  - mtls: {}
