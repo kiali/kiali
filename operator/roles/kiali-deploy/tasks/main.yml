@@ -470,8 +470,7 @@
   when:
   - '"**" not in kiali_vars.deployment.accessible_namespaces'
 
-# TODO: do we want to remove the label selector "version" so the Deployment only tracks by app=kiali label?
-- name: Delete Kiali deployment if image is changing since label selectors are immutable and we have version in a label
+- name: Delete Kiali deployment if image is changing - this uninstalled any old version of Kiali that might be running
   k8s:
     state: absent
     api_version: apps/v1

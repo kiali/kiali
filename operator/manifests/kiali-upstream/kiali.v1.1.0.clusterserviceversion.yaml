@@ -218,7 +218,6 @@ spec:
           selector:
             matchLabels:
               app: kiali-operator
-              version: v1.1.0
           template:
             metadata:
               name: kiali-operator

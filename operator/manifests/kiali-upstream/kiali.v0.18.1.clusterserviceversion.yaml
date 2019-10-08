@@ -169,7 +169,6 @@ spec:
           selector:
             matchLabels:
               app: kiali-operator
-              version: v0.18.1
           template:
             metadata:
               name: kiali-operator
