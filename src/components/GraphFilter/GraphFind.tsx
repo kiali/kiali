@@ -84,6 +84,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const compressOnHideChanged = this.props.compressOnHide !== prevProps.compressOnHide;
+    const layoutChanged = this.props.layout !== prevProps.layout;
     const hadCyData = prevProps.cyData != null;
     const hasCyData = this.props.cyData != null;
     const graphChanged =
@@ -102,7 +103,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       this.handleFind();
     }
     if (hideChanged || compressOnHideChanged || (graphChanged && this.props.hideValue)) {
-      this.handleHide(graphChanged, hideChanged, compressOnHideChanged);
+      this.handleHide(graphChanged, hideChanged, compressOnHideChanged, layoutChanged);
     }
   }
 
@@ -254,7 +255,12 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
     this.props.setHideValue('');
   };
 
-  private handleHide = (graphChanged: boolean, hideChanged: boolean, compressOnHideChanged: boolean) => {
+  private handleHide = (
+    graphChanged: boolean,
+    hideChanged: boolean,
+    compressOnHideChanged: boolean,
+    layoutChanged: boolean
+  ) => {
     if (!this.props.cyData) {
       console.debug('Skip Hide: cy not set.');
       return;
@@ -305,12 +311,14 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       }
     }
 
+    cy.endBatch();
+
     const removedElements: boolean = this.removedElements && this.removedElements.size() > 0;
     if (hideChanged || (compressOnHideChanged && selector) || removedElements) {
       const zoom = cy.zoom();
       const pan = cy.pan();
       CytoscapeGraphUtils.runLayout(cy, this.props.layout);
-      if (!hideChanged && !compressOnHideChanged) {
+      if (!hideChanged && !compressOnHideChanged && !layoutChanged) {
         if (zoom !== cy.zoom()) {
           cy.zoom(zoom);
         }
@@ -319,7 +327,6 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         }
       }
     }
-    cy.endBatch();
   };
 
   private handleFind = () => {
