@@ -19,7 +19,6 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
-	var trafficMap graph.TrafficMap
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
@@ -30,7 +29,7 @@ func GraphNamespaces(business *business.Layer, o graph.Options) (code int, confi
 	}
 
 	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, len(trafficMap))
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
 
 	return code, config
 }
@@ -58,7 +57,6 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 	promtimer := internalmetrics.GetGraphGenerationTimePrometheusTimer(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes)
 	defer promtimer.ObserveDuration()
 
-	var trafficMap graph.TrafficMap
 	switch o.TelemetryVendor {
 	case graph.VendorIstio:
 		prom, err := prometheus.NewClient()
@@ -68,7 +66,7 @@ func GraphNode(business *business.Layer, o graph.Options) (code int, config inte
 		graph.Error(fmt.Sprintf("TelemetryVendor [%s] not supported", o.TelemetryVendor))
 	}
 	// update metrics
-	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, len(trafficMap))
+	internalmetrics.SetGraphNodes(o.GetGraphKind(), o.TelemetryOptions.GraphType, o.InjectServiceNodes, 0)
 
 	return code, config
 }

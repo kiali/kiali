@@ -232,7 +232,7 @@ func AggregateNodeTraffic(node, aggregateNode *Node) {
 // AggregateEdgeTraffic is for aggregating edge traffic when reducing multiple edges into one edge (e.g.
 // when generating service graph from workload graph, or aggregating serviceEntry nodes).
 func AggregateEdgeTraffic(edge, aggregateEdge *Edge) {
-	protocol, ok := edge.Metadata["protocol"]
+	protocol, ok := edge.Metadata[ProtocolKey]
 	if !ok {
 		return
 	}
