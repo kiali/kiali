@@ -1,229 +1,100 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#ServiceInfoVirtualServices render correctly with data should render service virtual services 1`] = `
-<Row
-  bsClass="row"
-  className="card-pf-body"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    xs={12}
+<Grid>
+  <GridItem
+    span={12}
   >
-    <TablePfProvider
-      bordered={true}
-      className=""
-      columns={
-        Array [
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "props": Object {
-                "align": "text-center",
-              },
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Status",
-            },
-            "property": "status",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Name",
-            },
-            "property": "name",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Created at",
-            },
-            "property": "createdAt",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Resource version",
-            },
-            "property": "resourceVersion",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Actions",
-            },
-            "property": "actions",
-          },
-        ]
-      }
-      components={Object {}}
-      condensed={false}
-      dataTable={true}
-      hover={true}
-      inlineEdit={false}
-      striped={true}
-    >
-      <Header
-        headerRows={
-          Array [
+    <Card>
+      <CardBody>
+        <Table
+          aria-label="list_virtual_services"
+          borders={true}
+          cells={
             Array [
               Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "props": Object {
-                    "align": "text-center",
+                "title": "Status",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Name",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Created at",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Resource version",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Actions",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+            ]
+          }
+          className=""
+          contentId="expanded-content"
+          dropdownDirection="down"
+          dropdownPosition="right"
+          expandId="expandable-toggle"
+          gridBreakPoint="grid-md"
+          role="grid"
+          rowLabeledBy="simple-node"
+          rows={
+            Array [
+              Object {
+                "cells": Array [
+                  Object {
+                    "title": <ValidationSummary
+                      id="0-config-validation"
+                      validations={Array []}
+                    />,
                   },
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Status",
-                },
-                "property": "status",
-                "props": Object {
-                  "rowSpan": 1,
-                },
+                  Object {
+                    "title": <Link
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
+                    >
+                      reviews-default
+                    </Link>,
+                  },
+                  Object {
+                    "title": <LocalTime
+                      time="2018-03-14T10:17:52Z"
+                    />,
+                  },
+                  Object {
+                    "title": "1234",
+                  },
+                  Object {
+                    "title": <Link
+                      to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
+                    >
+                      View YAML
+                    </Link>,
+                  },
+                ],
               },
-              Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Name",
-                },
-                "property": "name",
-                "props": Object {
-                  "rowSpan": 1,
-                },
-              },
-              Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Created at",
-                },
-                "property": "createdAt",
-                "props": Object {
-                  "rowSpan": 1,
-                },
-              },
-              Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Resource version",
-                },
-                "property": "resourceVersion",
-                "props": Object {
-                  "rowSpan": 1,
-                },
-              },
-              Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Actions",
-                },
-                "property": "actions",
-                "props": Object {
-                  "rowSpan": 1,
-                },
-              },
-            ],
-          ]
-        }
-      />
-      <Body
-        onRow={[Function]}
-        rowKey="id"
-        rows={
-          Array [
-            Object {
-              "actions": <Link
-                to="/namespaces/undefined/istio/virtualservices/reviews-default?list=yaml"
-              >
-                View YAML
-              </Link>,
-              "createdAt": <LocalTime
-                time="2018-03-14T10:17:52Z"
-              />,
-              "id": 0,
-              "name": <Link
-                to="/namespaces/undefined/istio/virtualservices/reviews-default?list=overview"
-              >
-                reviews-default
-              </Link>,
-              "resourceVersion": "1234",
-              "status": <ValidationSummary
-                id="0-config-validation"
-                validations={Array []}
-              />,
-            },
-          ]
-        }
-      />
-    </TablePfProvider>
-  </Col>
-</Row>
+            ]
+          }
+          variant="compact"
+        >
+          <TableHeader />
+          <TableBody />
+        </Table>
+      </CardBody>
+    </Card>
+  </GridItem>
+</Grid>
 `;

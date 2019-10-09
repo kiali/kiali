@@ -1,37 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#ServiceInfoDescription render correctly with data should render service description 1`] = `
-<div
-  className="card-pf"
+<Grid
+  gutter="md"
 >
-  <div
-    className="card-pf-body"
+  <GridItem
+    span={6}
   >
-    <Row
-      bsClass="row"
-      componentClass="div"
+    <Card
+      style={
+        Object {
+          "height": "100%",
+        }
+      }
     >
-      <Col
-        bsClass="col"
-        componentClass="div"
-        lg={5}
-        md={5}
-        sm={6}
-        xs={12}
-      >
-        <div
-          id="labels"
+      <CardBody>
+        <Title
+          headingLevel="h3"
+          size="2xl"
         >
-          <div
-            className="progress-description f2zkptl"
+           
+          Service overview
+           
+        </Title>
+        <Stack>
+          <StackItem
+            id="labels"
           >
-            <strong>
-              Labels
-            </strong>
-          </div>
-          <div
-            className="label-collection f3lrwsf"
-          >
+            <Text
+              component="h3"
+            >
+               Labels 
+            </Text>
             <Labels
               labels={
                 Object {
@@ -39,231 +39,298 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                 }
               }
             />
-          </div>
-        </div>
-        <div
-          id="selectors"
-        >
-          <div
-            className="progress-description f2zkptl"
+          </StackItem>
+          <StackItem
+            id="resource_version"
           >
-            <strong>
-              Selectors
-            </strong>
-          </div>
-          <div
-            className="label-collection f3lrwsf"
+            <Text
+              component="h3"
+            >
+               Resource Version 
+            </Text>
+            1234
+          </StackItem>
+          <StackItem
+            id="selectors"
           >
+            <Text
+              component="h3"
+            >
+               Selectors 
+            </Text>
             <Labels
               labels={Object {}}
             />
-          </div>
-        </div>
-        <div>
-          <strong>
-            Type
-          </strong>
-           
-          ClusterIP
-        </div>
-        <div>
-          <strong>
-            IP
-          </strong>
-           
-          172.30.78.33
-        </div>
-        <div>
-          <strong>
-            Created at
-          </strong>
-           
-          <LocalTime
-            time="2018-04-04T15:11:46Z"
-          />
-        </div>
-        <div>
-          <strong>
-            Resource Version
-          </strong>
-           
-          1234
-        </div>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        lg={2}
-        md={2}
-        sm={4}
-        xs={12}
-      >
-        <div
-          className="progress-description"
-        >
-          <ValidationSummary
-            id="reviews-config-validation"
-            validations={
-              Array [
-                Object {},
-              ]
-            }
-          />
-          <strong
-            style={
-              Object {
-                "margin": "0.1em 0 0 0.5em",
-              }
-            }
+          </StackItem>
+          <StackItem
+            id="created_at"
           >
-            Ports
-          </strong>
-        </div>
-        <ul
-          className="fza38k8"
-        />
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        lg={2}
-        md={2}
-        sm={6}
-        xs={12}
-      >
-        <div
-          className="progress-description"
-        >
-          <strong>
-            Endpoints
-          </strong>
-        </div>
-        <Row
-          bsClass="row"
-          componentClass="div"
-          key="endpoint_0"
-        >
-          <Col
-            bsClass="col"
-            componentClass="div"
-            lg={12}
-            md={12}
-            sm={12}
-            xs={12}
-          >
-            <ul
-              className="fza38k8"
+            <Text
+              component="h3"
             >
-              <li
+               Created at 
+            </Text>
+            <LocalTime
+              time="2018-04-04T15:11:46Z"
+            />
+          </StackItem>
+        </Stack>
+      </CardBody>
+    </Card>
+  </GridItem>
+  <GridItem
+    span={6}
+  >
+    <Card
+      style={
+        Object {
+          "height": "100%",
+        }
+      }
+    >
+      <CardBody>
+        <Title
+          headingLevel="h3"
+          size="2xl"
+        >
+           
+          Health Overview
+           
+        </Title>
+        <Stack
+          className="stack_service_details"
+        >
+          <StackItem
+            id="health"
+          >
+            <Text
+              component="h3"
+            >
+               Health 
+            </Text>
+            <HealthIndicator
+              id="reviews"
+              mode={0}
+              tooltipPlacement="left"
+            />
+          </StackItem>
+        </Stack>
+        <Title
+          headingLevel="h3"
+          size="2xl"
+          style={
+            Object {
+              "marginTop": "60px",
+            }
+          }
+        >
+           
+          Network Overview
+           
+        </Title>
+        <Stack>
+          <StackItem
+            id="ip"
+          >
+            <Text
+              component="h3"
+            >
+               
+              Service IP
+               
+            </Text>
+            172.30.78.33
+          </StackItem>
+          <StackItem
+            id="endpoints"
+          >
+            <Text
+              component="h3"
+            >
+               Endpoints 
+            </Text>
+            <Stack>
+              <StackItem
                 key="endpoint_0_address_0"
               >
-                <OverlayTrigger
-                  defaultOverlayShown={false}
-                  overlay={
-                    <Tooltip
-                      bsClass="tooltip"
-                      id="endpoint_0_address_0_tooltip"
-                      placement="right"
-                    >
+                <Tooltip
+                  appendTo={[Function]}
+                  aria="describedby"
+                  boundary="window"
+                  className=""
+                  content={
+                    <React.Fragment>
                       reviews-v2-4140793682-qrpm9
-                    </Tooltip>
+                    </React.Fragment>
                   }
-                  rootClose={false}
-                  trigger={
+                  distance={15}
+                  enableFlip={true}
+                  entryDelay={500}
+                  exitDelay={500}
+                  flipBehavior={
                     Array [
-                      "hover",
-                      "focus",
+                      "top",
+                      "right",
+                      "bottom",
+                      "left",
+                      "top",
+                      "right",
+                      "bottom",
                     ]
                   }
+                  isAppLauncher={false}
+                  maxWidth="18.75rem"
+                  position="top"
+                  trigger="mouseenter focus"
+                  zIndex={9999}
                 >
-                  <strong>
-                    172.17.0.11
+                  <span>
+                    <EyeIcon
+                      color="currentColor"
+                      noVerticalAlign={false}
+                      size="sm"
+                      title={null}
+                    />
                      
-                  </strong>
-                </OverlayTrigger>
-              </li>
-              <li
+                    172.17.0.11
+                  </span>
+                </Tooltip>
+              </StackItem>
+              <StackItem
                 key="endpoint_0_address_1"
               >
-                <OverlayTrigger
-                  defaultOverlayShown={false}
-                  overlay={
-                    <Tooltip
-                      bsClass="tooltip"
-                      id="endpoint_0_address_1_tooltip"
-                      placement="right"
-                    >
+                <Tooltip
+                  appendTo={[Function]}
+                  aria="describedby"
+                  boundary="window"
+                  className=""
+                  content={
+                    <React.Fragment>
                       reviews-v3-3651831602-zn9g6
-                    </Tooltip>
+                    </React.Fragment>
                   }
-                  rootClose={false}
-                  trigger={
+                  distance={15}
+                  enableFlip={true}
+                  entryDelay={500}
+                  exitDelay={500}
+                  flipBehavior={
                     Array [
-                      "hover",
-                      "focus",
+                      "top",
+                      "right",
+                      "bottom",
+                      "left",
+                      "top",
+                      "right",
+                      "bottom",
                     ]
                   }
+                  isAppLauncher={false}
+                  maxWidth="18.75rem"
+                  position="top"
+                  trigger="mouseenter focus"
+                  zIndex={9999}
                 >
-                  <strong>
-                    172.17.0.14
+                  <span>
+                    <EyeIcon
+                      color="currentColor"
+                      noVerticalAlign={false}
+                      size="sm"
+                      title={null}
+                    />
                      
-                  </strong>
-                </OverlayTrigger>
-              </li>
-              <li
+                    172.17.0.14
+                  </span>
+                </Tooltip>
+              </StackItem>
+              <StackItem
                 key="endpoint_0_address_2"
               >
-                <OverlayTrigger
-                  defaultOverlayShown={false}
-                  overlay={
-                    <Tooltip
-                      bsClass="tooltip"
-                      id="endpoint_0_address_2_tooltip"
-                      placement="right"
-                    >
+                <Tooltip
+                  appendTo={[Function]}
+                  aria="describedby"
+                  boundary="window"
+                  className=""
+                  content={
+                    <React.Fragment>
                       reviews-v1-401049526-tfstp
-                    </Tooltip>
+                    </React.Fragment>
                   }
-                  rootClose={false}
-                  trigger={
+                  distance={15}
+                  enableFlip={true}
+                  entryDelay={500}
+                  exitDelay={500}
+                  flipBehavior={
                     Array [
-                      "hover",
-                      "focus",
+                      "top",
+                      "right",
+                      "bottom",
+                      "left",
+                      "top",
+                      "right",
+                      "bottom",
                     ]
                   }
+                  isAppLauncher={false}
+                  maxWidth="18.75rem"
+                  position="top"
+                  trigger="mouseenter focus"
+                  zIndex={9999}
                 >
-                  <strong>
-                    172.17.0.16
+                  <span>
+                    <EyeIcon
+                      color="currentColor"
+                      noVerticalAlign={false}
+                      size="sm"
+                      title={null}
+                    />
                      
-                  </strong>
-                </OverlayTrigger>
-              </li>
-            </ul>
-          </Col>
-        </Row>
-      </Col>
-      <Col
-        bsClass="col"
-        componentClass="div"
-        lg={3}
-        md={3}
-        sm={6}
-        xs={12}
-      >
-        <div
-          className="progress-description"
-        >
-          <strong>
-            Health
-          </strong>
-        </div>
-        <HealthIndicator
-          id="reviews"
-          mode={0}
-          tooltipPlacement="left"
-        />
-      </Col>
-    </Row>
-  </div>
-</div>
+                    172.17.0.16
+                  </span>
+                </Tooltip>
+              </StackItem>
+            </Stack>
+          </StackItem>
+          <StackItem
+            id="ports"
+          >
+            <Text
+              component="h3"
+            >
+              <ValidationSummary
+                id="reviews-config-validation"
+                validations={
+                  Array [
+                    Object {},
+                  ]
+                }
+              />
+              <span
+                style={
+                  Object {
+                    "marginLeft": "10px",
+                  }
+                }
+              >
+                Ports
+              </span>
+            </Text>
+            <ul
+              className="fza38k8"
+            />
+          </StackItem>
+          <StackItem
+            id="type"
+          >
+            <Text
+              component="h3"
+            >
+               Type 
+            </Text>
+            ClusterIP
+          </StackItem>
+        </Stack>
+      </CardBody>
+    </Card>
+  </GridItem>
+</Grid>
 `;

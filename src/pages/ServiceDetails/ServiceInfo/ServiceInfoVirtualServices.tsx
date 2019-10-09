@@ -1,84 +1,39 @@
 import * as React from 'react';
-import { Col, Row, Table } from 'patternfly-react';
-import * as resolve from 'table-resolver';
+import {
+  Card,
+  CardBody,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  EmptyStateIcon,
+  Grid,
+  GridItem,
+  Title
+} from '@patternfly/react-core';
+import { ICell, IRow, Table, TableHeader, TableBody, TableVariant, cellWidth } from '@patternfly/react-table';
+import { CodeBranchIcon } from '@patternfly/react-icons';
 import { Link } from 'react-router-dom';
 import { ObjectValidation, VirtualService } from '../../../types/IstioObjects';
 import './ServiceInfoVirtualServices.css';
 import LocalTime from '../../../components/Time/LocalTime';
 import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
+import { ServiceDetailsInfo } from '../../../types/ServiceInfo';
 
 interface ServiceInfoVirtualServicesProps {
   virtualServices?: VirtualService[];
+  service: ServiceDetailsInfo;
   validations: { [key: string]: ObjectValidation };
 }
 
 class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServicesProps> {
-  headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
-  cellFormat = (value, { column }) => {
-    const props = column.cell.props;
-    const className = props ? props.align : '';
-
-    return <Table.Cell className={className}>{value}</Table.Cell>;
-  };
-
-  columns() {
-    return {
-      columns: [
-        {
-          property: 'status',
-          header: {
-            label: 'Status',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
-          }
-        },
-        {
-          property: 'name',
-          header: {
-            label: 'Name',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'createdAt',
-          header: {
-            label: 'Created at',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'resourceVersion',
-          header: {
-            label: 'Resource version',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'actions',
-          header: {
-            label: 'Actions',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        }
-      ]
-    };
+  columns(): ICell[] {
+    return [
+      { title: 'Status', transforms: [cellWidth(10)] },
+      { title: 'Name', transforms: [cellWidth(10)] },
+      { title: 'Created at', transforms: [cellWidth(60)] },
+      { title: 'Resource version', transforms: [cellWidth(10)] },
+      { title: 'Actions', transforms: [cellWidth(10)] }
+    ];
   }
 
   hasValidations(virtualService: VirtualService): boolean {
@@ -122,36 +77,77 @@ class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServi
     );
   }
 
-  rows() {
-    return (this.props.virtualServices || []).map((virtualService, vsIdx) => ({
-      id: vsIdx,
-      status: (
-        <ValidationSummary
-          id={vsIdx + '-config-validation'}
-          validations={this.hasValidations(virtualService) ? [this.validation(virtualService)] : []}
-        />
-      ),
-      name: this.overviewLink(virtualService),
-      createdAt: <LocalTime time={virtualService.metadata.creationTimestamp || ''} />,
-      resourceVersion: virtualService.metadata.resourceVersion,
-      actions: this.yamlLink(virtualService)
-    }));
+  noVirtualServices(): IRow[] {
+    return [
+      {
+        cells: [
+          {
+            title: (
+              <EmptyState variant={EmptyStateVariant.full}>
+                <EmptyStateIcon icon={CodeBranchIcon} />
+                <Title headingLevel="h5" size="lg">
+                  No VirtualServices {!this.props.service.istioSidecar && ' and Istio Sidecar '} found
+                </Title>
+                <EmptyStateBody>
+                  No VirtualServices {!this.props.service.istioSidecar && ' and Istio Sidecar '} found for service{' '}
+                  {this.props.service.service.name}
+                </EmptyStateBody>
+              </EmptyState>
+            ),
+            props: { colSpan: 5 }
+          }
+        ]
+      }
+    ];
   }
 
-  renderTable() {
-    return (
-      <Table.PfProvider columns={this.columns().columns} striped={true} bordered={true} hover={true} dataTable={true}>
-        <Table.Header headerRows={resolve.headerRows(this.columns())} />
-        <Table.Body rows={this.rows()} rowKey="id" />
-      </Table.PfProvider>
-    );
+  rows(): IRow[] {
+    if ((this.props.virtualServices || []).length === 0) {
+      return this.noVirtualServices();
+    }
+    let rows: IRow[] = [];
+    (this.props.virtualServices || []).map((virtualService, vsIdx) => {
+      rows.push({
+        cells: [
+          {
+            title: (
+              <ValidationSummary
+                id={vsIdx + '-config-validation'}
+                validations={this.hasValidations(virtualService) ? [this.validation(virtualService)] : []}
+              />
+            )
+          },
+          { title: this.overviewLink(virtualService) },
+          { title: <LocalTime time={virtualService.metadata.creationTimestamp || ''} /> },
+          { title: virtualService.metadata.resourceVersion },
+          { title: this.yamlLink(virtualService) }
+        ]
+      });
+      return rows;
+    });
+
+    return rows;
   }
 
   render() {
     return (
-      <Row className="card-pf-body">
-        <Col xs={12}>{this.renderTable()}</Col>
-      </Row>
+      <Grid>
+        <GridItem span={12}>
+          <Card>
+            <CardBody>
+              <Table
+                variant={TableVariant.compact}
+                aria-label={'list_virtual_services'}
+                cells={this.columns()}
+                rows={this.rows()}
+              >
+                <TableHeader />
+                <TableBody />
+              </Table>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 }

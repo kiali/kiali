@@ -1,6 +1,19 @@
 import * as React from 'react';
-import { Col, Row, Table } from 'patternfly-react';
-import * as resolve from 'table-resolver';
+import {
+  Card,
+  CardBody,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  EmptyStateIcon,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Title
+} from '@patternfly/react-core';
+import { ICell, IRow, Table, TableHeader, TableBody, TableVariant, cellWidth } from '@patternfly/react-table';
+import { NetworkIcon } from '@patternfly/react-icons';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
@@ -8,109 +21,26 @@ import { ValidationSummary } from '../../../components/Validations/ValidationSum
 import { DestinationRule, ObjectValidation, Subset } from '../../../types/IstioObjects';
 import Labels from '../../../components/Label/Labels';
 import { safeRender } from '../../../utils/SafeRender';
+import { ServiceDetailsInfo } from '../../../types/ServiceInfo';
 
 interface ServiceInfoDestinationRulesProps {
   destinationRules?: DestinationRule[];
+  service: ServiceDetailsInfo;
   validations: { [key: string]: ObjectValidation };
 }
 
 class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestinationRulesProps> {
-  headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
-  cellFormat = (value, { column }) => {
-    const props = column.cell.props;
-    const className = props ? props.align : '';
-
-    return <Table.Cell className={className}>{value}</Table.Cell>;
-  };
-
-  columns() {
-    return {
-      columns: [
-        {
-          property: 'status',
-          header: {
-            label: 'Status',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
-          }
-        },
-        {
-          property: 'name',
-          header: {
-            label: 'Name',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'trafficPolicy',
-          header: {
-            label: 'Traffic Policy',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'subsets',
-          header: {
-            label: 'Subsets',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'host',
-          header: {
-            label: 'Host',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'createdAt',
-          header: {
-            label: 'Created at',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'resourceVersion',
-          header: {
-            label: 'Resource version',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'actions',
-          header: {
-            label: 'Actions',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        }
-      ]
-    };
+  columns(): ICell[] {
+    return [
+      { title: 'Status' },
+      { title: 'Name', transforms: [cellWidth(10)] },
+      { title: 'Traffic Policy', transforms: [cellWidth(10)] },
+      { title: 'Subsets', transforms: [cellWidth(50)] },
+      { title: 'Host', transforms: [cellWidth(10)] },
+      { title: 'Created at', transforms: [cellWidth(20)] },
+      { title: 'Resource version', transforms: [cellWidth(10)] },
+      { title: 'Actions', transforms: [cellWidth(20)] }
+    ];
   }
 
   yamlLink(destinationRule: DestinationRule) {
@@ -153,32 +83,72 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
     );
   }
 
-  rows() {
-    return (this.props.destinationRules || []).map((destinationRule, vsIdx) => {
-      return {
-        id: vsIdx,
-        name: this.overviewLink(destinationRule),
-        status: (
-          <ValidationSummary
-            id={vsIdx + '-config-validation'}
-            validations={this.hasValidations(destinationRule) ? [this.validation(destinationRule)] : []}
-          />
-        ),
-        trafficPolicy: destinationRule.spec.trafficPolicy ? (
-          <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
-        ) : (
-          'None'
-        ),
-        subsets:
-          destinationRule.spec.subsets && destinationRule.spec.subsets.length > 0
-            ? this.generateSubsets(destinationRule.spec.subsets)
-            : 'None',
-        host: destinationRule.spec.host ? <DetailObject name="" detail={destinationRule.spec.host} /> : undefined,
-        createdAt: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />,
-        resourceVersion: destinationRule.metadata.resourceVersion,
-        actions: this.yamlLink(destinationRule)
-      };
+  noDestinationRules(): IRow[] {
+    return [
+      {
+        cells: [
+          {
+            title: (
+              <EmptyState variant={EmptyStateVariant.full}>
+                <EmptyStateIcon icon={NetworkIcon} />
+                <Title headingLevel="h5" size="lg">
+                  No Destination Rules {!this.props.service.istioSidecar && ' and Istio Sidecar '} found
+                </Title>
+                <EmptyStateBody>
+                  No Destination Rules {!this.props.service.istioSidecar && ' and istioSidecar '} found for service{' '}
+                  {this.props.service.service.name}
+                </EmptyStateBody>
+              </EmptyState>
+            ),
+            props: { colSpan: 8 }
+          }
+        ]
+      }
+    ];
+  }
+
+  rows(): IRow[] {
+    if ((this.props.destinationRules || []).length === 0) {
+      return this.noDestinationRules();
+    }
+    let rows: IRow[] = [];
+    (this.props.destinationRules || []).map((destinationRule, vsIdx) => {
+      rows.push({
+        cells: [
+          {
+            title: (
+              <ValidationSummary
+                id={vsIdx + '-config-validation'}
+                validations={this.hasValidations(destinationRule) ? [this.validation(destinationRule)] : []}
+              />
+            )
+          },
+          { title: this.overviewLink(destinationRule) },
+          {
+            title: destinationRule.spec.trafficPolicy ? (
+              <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
+            ) : (
+              'None'
+            )
+          },
+          {
+            title:
+              destinationRule.spec.subsets && destinationRule.spec.subsets.length > 0
+                ? this.generateSubsets(destinationRule.spec.subsets)
+                : 'None'
+          },
+          {
+            title: destinationRule.spec.host ? <DetailObject name="" detail={destinationRule.spec.host} /> : undefined
+          },
+          { title: <LocalTime time={destinationRule.metadata.creationTimestamp || ''} /> },
+          { title: destinationRule.metadata.resourceVersion },
+          { title: this.yamlLink(destinationRule) }
+        ]
+      });
+      return rows;
     });
+
+    return rows;
   }
 
   generateKey() {
@@ -191,38 +161,46 @@ class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestination
   }
 
   generateSubsets(subsets: Subset[]) {
-    const childrenList = subsets.map(subset => (
-      <li key={this.generateKey() + '_k' + subset.name} style={{ marginBottom: '13px' }}>
-        <Row>
-          <Col xs={3} style={{ marginTop: '3px' }}>
-            <span>{safeRender(subset.name)}</span>{' '}
-          </Col>
-          <Col xs={4}>
-            <Labels labels={subset.labels} />
-          </Col>
-          <Col xs={4}>
-            <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
-          </Col>
-        </Row>
-      </li>
-    ));
-    return <ul style={{ listStyleType: 'none', paddingLeft: '0px', marginTop: '11.5px' }}>{childrenList}</ul>;
-  }
-
-  renderTable() {
     return (
-      <Table.PfProvider columns={this.columns().columns} striped={true} bordered={true} hover={true} dataTable={true}>
-        <Table.Header headerRows={resolve.headerRows(this.columns())} />
-        <Table.Body rows={this.rows()} rowKey="id" />
-      </Table.PfProvider>
+      <Stack>
+        {subsets.map(subset => (
+          <StackItem>
+            <Grid gutter={'md'}>
+              <GridItem span={3}>
+                <span>{safeRender(subset.name)}</span>{' '}
+              </GridItem>
+              <GridItem span={4}>
+                <Labels labels={subset.labels} />
+              </GridItem>
+              <GridItem span={4}>
+                <DetailObject name={subset.trafficPolicy ? 'trafficPolicy' : ''} detail={subset.trafficPolicy} />
+              </GridItem>
+            </Grid>
+          </StackItem>
+        ))}
+      </Stack>
     );
   }
 
   render() {
     return (
-      <Row className="card-pf-body">
-        <Col xs={12}>{this.renderTable()}</Col>
-      </Row>
+      <Grid>
+        <GridItem span={12}>
+          <Card>
+            <CardBody>
+              <Table
+                variant={TableVariant.compact}
+                aria-label={'list_workloads'}
+                cells={this.columns()}
+                rows={this.rows()}
+              >
+                <TableHeader />
+                <TableBody />
+              </Table>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 }

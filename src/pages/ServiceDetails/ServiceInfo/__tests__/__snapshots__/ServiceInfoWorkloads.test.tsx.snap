@@ -1,277 +1,182 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#ServiceInfoWorkload render correctly with data should render service pods 1`] = `
-<Row
-  bsClass="row"
-  className="card-pf-body"
-  componentClass="div"
->
-  <Col
-    bsClass="col"
-    componentClass="div"
-    xs={12}
+<Grid>
+  <GridItem
+    span={12}
   >
-    <TablePfProvider
-      bordered={true}
-      className=""
-      columns={
-        Array [
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Name",
-            },
-            "property": "name",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "props": Object {
-                "align": "text-center",
-              },
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Type",
-            },
-            "property": "type",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Labels",
-            },
-            "property": "labels",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Created at",
-            },
-            "property": "createdAt",
-          },
-          Object {
-            "cell": Object {
-              "formatters": Array [
-                [Function],
-              ],
-            },
-            "header": Object {
-              "formatters": Array [
-                [Function],
-              ],
-              "label": "Resource version",
-            },
-            "property": "resourceVersion",
-          },
-        ]
-      }
-      components={Object {}}
-      condensed={false}
-      dataTable={true}
-      hover={true}
-      inlineEdit={false}
-      striped={true}
-    >
-      <Header
-        headerRows={
-          Array [
+    <Card>
+      <CardBody>
+        <Table
+          aria-label="list_workloads"
+          borders={true}
+          cells={
             Array [
               Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Name",
-                },
-                "property": "name",
-                "props": Object {
-                  "rowSpan": 1,
-                },
+                "title": "Name",
+                "transforms": Array [
+                  [Function],
+                ],
               },
               Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "props": Object {
-                    "align": "text-center",
+                "title": "Type",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Labels",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Created at",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+              Object {
+                "title": "Resource version",
+                "transforms": Array [
+                  [Function],
+                ],
+              },
+            ]
+          }
+          className=""
+          contentId="expanded-content"
+          dropdownDirection="down"
+          dropdownPosition="right"
+          expandId="expandable-toggle"
+          gridBreakPoint="grid-md"
+          role="grid"
+          rowLabeledBy="simple-node"
+          rows={
+            Array [
+              Object {
+                "cells": Array [
+                  Object {
+                    "title": <span>
+                      <Link
+                        to="/namespaces/ns/workloads/reviews-v2"
+                      >
+                        <Text
+                          component="a"
+                        >
+                          reviews-v2
+                        </Text>
+                      </Link>
+                    </span>,
                   },
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Type",
-                },
-                "property": "type",
-                "props": Object {
-                  "rowSpan": 1,
-                },
+                  Object {
+                    "title": "Deployment",
+                  },
+                  Object {
+                    "title": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v2",
+                        }
+                      }
+                    />,
+                  },
+                  Object {
+                    "title": <LocalTime
+                      time="2018-03-14T10:17:52Z\\""
+                    />,
+                  },
+                  Object {
+                    "title": "081020181987",
+                  },
+                ],
               },
               Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Labels",
-                },
-                "property": "labels",
-                "props": Object {
-                  "rowSpan": 1,
-                },
+                "cells": Array [
+                  Object {
+                    "title": <span>
+                      <Link
+                        to="/namespaces/ns/workloads/reviews-v3"
+                      >
+                        <Text
+                          component="a"
+                        >
+                          reviews-v3
+                        </Text>
+                      </Link>
+                    </span>,
+                  },
+                  Object {
+                    "title": "Deployment",
+                  },
+                  Object {
+                    "title": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v3",
+                        }
+                      }
+                    />,
+                  },
+                  Object {
+                    "title": <LocalTime
+                      time="2018-03-14T10:17:52Z\\""
+                    />,
+                  },
+                  Object {
+                    "title": "081020181987",
+                  },
+                ],
               },
               Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Created at",
-                },
-                "property": "createdAt",
-                "props": Object {
-                  "rowSpan": 1,
-                },
+                "cells": Array [
+                  Object {
+                    "title": <span>
+                      <Link
+                        to="/namespaces/ns/workloads/reviews-v1"
+                      >
+                        <Text
+                          component="a"
+                        >
+                          reviews-v1
+                        </Text>
+                      </Link>
+                    </span>,
+                  },
+                  Object {
+                    "title": "Deployment",
+                  },
+                  Object {
+                    "title": <Labels
+                      labels={
+                        Object {
+                          "app": "reviews",
+                          "version": "v1",
+                        }
+                      }
+                    />,
+                  },
+                  Object {
+                    "title": <LocalTime
+                      time="2018-03-14T10:17:52Z\\""
+                    />,
+                  },
+                  Object {
+                    "title": "081020181987",
+                  },
+                ],
               },
-              Object {
-                "cell": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                },
-                "header": Object {
-                  "formatters": Array [
-                    [Function],
-                  ],
-                  "label": "Resource version",
-                },
-                "property": "resourceVersion",
-                "props": Object {
-                  "rowSpan": 1,
-                },
-              },
-            ],
-          ]
-        }
-      />
-      <Body
-        onRow={[Function]}
-        rowKey="id"
-        rows={
-          Array [
-            Object {
-              "createdAt": <LocalTime
-                time="2018-03-14T10:17:52Z\\""
-              />,
-              "id": 0,
-              "labels": <Labels
-                labels={
-                  Object {
-                    "app": "reviews",
-                    "version": "v2",
-                  }
-                }
-              />,
-              "name": <span>
-                <Link
-                  to="/namespaces/ns/workloads/reviews-v2"
-                >
-                  reviews-v2
-                </Link>
-              </span>,
-              "resourceVersion": "081020181987",
-              "type": "Deployment",
-            },
-            Object {
-              "createdAt": <LocalTime
-                time="2018-03-14T10:17:52Z\\""
-              />,
-              "id": 1,
-              "labels": <Labels
-                labels={
-                  Object {
-                    "app": "reviews",
-                    "version": "v3",
-                  }
-                }
-              />,
-              "name": <span>
-                <Link
-                  to="/namespaces/ns/workloads/reviews-v3"
-                >
-                  reviews-v3
-                </Link>
-              </span>,
-              "resourceVersion": "081020181987",
-              "type": "Deployment",
-            },
-            Object {
-              "createdAt": <LocalTime
-                time="2018-03-14T10:17:52Z\\""
-              />,
-              "id": 2,
-              "labels": <Labels
-                labels={
-                  Object {
-                    "app": "reviews",
-                    "version": "v1",
-                  }
-                }
-              />,
-              "name": <span>
-                <Link
-                  to="/namespaces/ns/workloads/reviews-v1"
-                >
-                  reviews-v1
-                </Link>
-              </span>,
-              "resourceVersion": "081020181987",
-              "type": "Deployment",
-            },
-          ]
-        }
-      />
-    </TablePfProvider>
-  </Col>
-</Row>
+            ]
+          }
+          variant="compact"
+        >
+          <TableHeader />
+          <TableBody />
+        </Table>
+      </CardBody>
+    </Card>
+  </GridItem>
+</Grid>
 `;

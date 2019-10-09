@@ -1,5 +1,17 @@
 import * as React from 'react';
-import { Col, OverlayTrigger, Popover, Row, Tooltip } from 'patternfly-react';
+import {
+  Card,
+  CardBody,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Text,
+  TextVariants,
+  Title,
+  Tooltip
+} from '@patternfly/react-core';
+import { EyeIcon } from '@patternfly/react-icons';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { ServiceHealth } from '../../../types/Health';
@@ -7,10 +19,10 @@ import { Endpoints } from '../../../types/ServiceInfo';
 import { ObjectCheck, ObjectValidation, Port } from '../../../types/IstioObjects';
 import { style } from 'typestyle';
 import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
+import ValidationList from '../../../components/Validations/ValidationList';
 import './ServiceInfoDescription.css';
 import Labels from '../../../components/Label/Labels';
 import { ThreeScaleServiceRule } from '../../../types/ThreeScale';
-import ValidationList from '../../../components/Validations/ValidationList';
 
 interface ServiceInfoDescriptionProps {
   name: string;
@@ -35,14 +47,6 @@ const listStyle = style({
   padding: 0
 });
 
-const labelTitleStyle = style({
-  marginBottom: '2px'
-});
-
-const labelListStyle = style({
-  marginBottom: '4px'
-});
-
 const ExternalNameType = 'ExternalName';
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
@@ -50,7 +54,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
     return this.props.validations ? this.props.validations : ({} as ObjectValidation);
   }
 
-  getPortOver(portId: number): Popover {
+  getPortOver(portId: number): any {
     return (
       <div style={{ float: 'left', fontSize: '12px', padding: '3px 0.6em 0 0' }}>
         <ValidationList checks={this.getPortChecks(portId)} />
@@ -67,106 +71,119 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
   }
 
   render() {
+    console.log(this.props.health);
     return (
-      <div className="card-pf">
-        <div className="card-pf-body">
-          <Row>
-            <Col xs={12} sm={6} md={5} lg={5}>
-              <div id="labels">
-                <div className={'progress-description ' + labelTitleStyle}>
-                  <strong>Labels</strong>
-                </div>
-                <div className={'label-collection ' + labelListStyle}>
+      <Grid gutter="md">
+        <GridItem span={6}>
+          <Card style={{ height: '100%' }}>
+            <CardBody>
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Service overview{' '}
+              </Title>
+              <Stack>
+                <StackItem id={'labels'}>
+                  <Text component={TextVariants.h3}> Labels </Text>
                   <Labels labels={this.props.labels || {}} />
-                </div>
-              </div>
-              <div id="selectors">
-                <div className={'progress-description ' + labelTitleStyle}>
-                  <strong>Selectors</strong>
-                </div>
-                <div className={'label-collection ' + labelListStyle}>
+                </StackItem>
+                <StackItem id={'resource_version'}>
+                  <Text component={TextVariants.h3}> Resource Version </Text>
+                  {this.props.resourceVersion}
+                </StackItem>
+                <StackItem id={'selectors'}>
+                  <Text component={TextVariants.h3}> Selectors </Text>
                   <Labels labels={this.props.selectors || {}} />
-                </div>
-              </div>
-              <div>
-                <strong>Type</strong> {this.props.type ? this.props.type : ''}
-              </div>
-              {this.props.type !== ExternalNameType ? (
-                <div>
-                  <strong>IP</strong> {this.props.ip ? this.props.ip : ''}
-                </div>
-              ) : (
-                <div>
-                  <strong>ExternalName</strong> {this.props.externalName ? this.props.externalName : ''}
-                </div>
-              )}
-              <div>
-                <strong>Created at</strong> <LocalTime time={this.props.createdAt} />
-              </div>
-              <div>
-                <strong>Resource Version</strong> {this.props.resourceVersion}
-              </div>
-              {this.props.threeScaleServiceRule && this.props.threeScaleServiceRule.threeScaleHandlerName !== '' && (
-                <span>
-                  Service linked with 3scale API Handler <i>{this.props.threeScaleServiceRule.threeScaleHandlerName}</i>
-                </span>
-              )}
-            </Col>
-            <Col xs={12} sm={4} md={2} lg={2}>
-              <div className="progress-description">
-                <ValidationSummary id={this.props.name + '-config-validation'} validations={[this.getValidations()]} />
-                <strong style={{ margin: '0.1em 0 0 0.5em' }}>Ports</strong>
-              </div>
-              <ul className={listStyle}>
-                {(this.props.ports || []).map((port, i) => (
-                  <li key={'port_' + i}>
-                    {this.hasIssue(i) ? this.getPortOver(i) : undefined}
-                    {port.protocol} {port.name} ({port.port})
-                  </li>
-                ))}
-              </ul>
-            </Col>
-            <Col xs={12} sm={6} md={2} lg={2}>
-              <div className="progress-description">
-                <strong>Endpoints</strong>
-              </div>
-              {(this.props.endpoints || []).map((endpoint, i) => (
-                <Row key={'endpoint_' + i}>
-                  <Col xs={12} sm={12} md={12} lg={12}>
-                    <ul className={listStyle}>
-                      {(endpoint.addresses || []).map((address, u) => {
-                        const id = 'endpoint_' + i + '_address_' + u;
-                        return (
-                          <li key={id}>
-                            <OverlayTrigger
-                              overlay={<Tooltip id={id + '_tooltip'}>{address.name}</Tooltip>}
-                              trigger={['hover', 'focus']}
-                              rootClose={false}
-                            >
-                              <strong>{address.ip} </strong>
-                            </OverlayTrigger>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </Col>
-                </Row>
-              ))}
-            </Col>
-            <Col xs={12} sm={6} md={3} lg={3}>
-              <div className="progress-description">
-                <strong>Health</strong>
-              </div>
-              <HealthIndicator
-                id={this.props.name}
-                health={this.props.health}
-                mode={DisplayMode.LARGE}
-                tooltipPlacement="left"
-              />
-            </Col>
-          </Row>
-        </div>
-      </div>
+                </StackItem>
+                <StackItem id={'created_at'}>
+                  <Text component={TextVariants.h3}> Created at </Text>
+                  <LocalTime time={this.props.createdAt} />
+                </StackItem>
+              </Stack>
+            </CardBody>
+          </Card>
+        </GridItem>
+        <GridItem span={6}>
+          <Card style={{ height: '100%' }}>
+            <CardBody>
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Health Overview{' '}
+              </Title>
+              <Stack className={'stack_service_details'}>
+                <StackItem id={'health'}>
+                  <Text component={TextVariants.h3}> Health </Text>
+                  <HealthIndicator
+                    id={this.props.name}
+                    health={this.props.health}
+                    mode={DisplayMode.LARGE}
+                    tooltipPlacement="left"
+                  />
+                </StackItem>
+              </Stack>
+              <Title headingLevel="h3" size="2xl" style={{ marginTop: '60px' }}>
+                {' '}
+                Network Overview{' '}
+              </Title>
+              <Stack>
+                <StackItem id={'ip'}>
+                  <Text component={TextVariants.h3}>
+                    {' '}
+                    {this.props.type !== ExternalNameType ? 'Service IP' : 'ExternalName'}{' '}
+                  </Text>
+                  {this.props.type !== ExternalNameType
+                    ? this.props.ip
+                      ? this.props.ip
+                      : ''
+                    : this.props.externalName
+                    ? this.props.externalName
+                    : ''}
+                </StackItem>
+                <StackItem id={'endpoints'}>
+                  <Text component={TextVariants.h3}> Endpoints </Text>
+                  <Stack>
+                    {(this.props.endpoints || []).map((endpoint, i) =>
+                      (endpoint.addresses || []).map((address, u) => (
+                        <StackItem key={'endpoint_' + i + '_address_' + u}>
+                          {address.name !== '' ? (
+                            <Tooltip content={<>{address.name}</>}>
+                              <span>
+                                <EyeIcon /> {address.ip}
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <>{address.name}</>
+                          )}
+                        </StackItem>
+                      ))
+                    )}
+                  </Stack>
+                </StackItem>
+                <StackItem id={'ports'}>
+                  <Text component={TextVariants.h3}>
+                    <ValidationSummary
+                      id={this.props.name + '-config-validation'}
+                      validations={[this.getValidations()]}
+                    />
+                    <span style={{ marginLeft: '10px' }}>Ports</span>
+                  </Text>
+                  <ul className={listStyle}>
+                    {(this.props.ports || []).map((port, i) => (
+                      <li key={'port_' + i}>
+                        {this.hasIssue(i) ? this.getPortOver(i) : undefined}
+                        {port.protocol} {port.name} ({port.port})
+                      </li>
+                    ))}
+                  </ul>
+                </StackItem>
+                <StackItem id={'type'}>
+                  <Text component={TextVariants.h3}> Type </Text>
+                  {this.props.type ? this.props.type : ''}
+                </StackItem>
+              </Stack>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 }

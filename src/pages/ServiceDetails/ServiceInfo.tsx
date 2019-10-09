@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { Col, Row, ToastNotification, ToastNotificationList } from 'patternfly-react';
-
+import { ToastNotification, ToastNotificationList } from 'patternfly-react';
+import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
 import { ServiceDetailsInfo, validationToSeverity } from '../../types/ServiceInfo';
@@ -9,10 +9,7 @@ import ServiceInfoVirtualServices from './ServiceInfo/ServiceInfoVirtualServices
 import ServiceInfoDestinationRules from './ServiceInfo/ServiceInfoDestinationRules';
 import ServiceInfoWorkload from './ServiceInfo/ServiceInfoWorkload';
 import { ObjectValidation, Validations, ValidationTypes } from '../../types/IstioObjects';
-import IstioWizardDropdown from '../../components/IstioWizards/IstioWizardDropdown';
 import { ThreeScaleInfo, ThreeScaleServiceRule } from '../../types/ThreeScale';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import { Tab } from '@patternfly/react-core';
@@ -161,7 +158,7 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     );
 
     return (
-      <div>
+      <>
         {this.state.error ? (
           <ToastNotificationList>
             <ToastNotification type="danger">
@@ -172,93 +169,72 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
             </ToastNotification>
           </ToastNotificationList>
         ) : null}
-        <div className="container-fluid container-cards-pf">
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <span style={{ float: 'right' }}>
-                <DurationDropdownContainer id="service-info-duration-dropdown" />{' '}
-                <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
-                &nbsp;
-                <IstioWizardDropdown
-                  namespace={this.props.namespace}
-                  serviceName={this.props.serviceDetails.service.name}
-                  show={false}
-                  workloads={workloads}
-                  // @ts-ignore
-                  virtualServices={virtualServices}
-                  // @ts-ignore
-                  destinationRules={destinationRules}
-                  gateways={this.props.gateways}
-                  tlsStatus={this.props.serviceDetails.namespaceMTLS}
-                  onChange={this.props.onRefresh}
-                  threeScaleInfo={this.props.threeScaleInfo}
-                  threeScaleServiceRule={this.props.threeScaleServiceRule}
-                />
-              </span>
-            </Col>
-          </Row>
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <ServiceInfoDescription
-                name={this.props.serviceDetails.service.name}
-                namespace={this.props.namespace}
-                createdAt={this.props.serviceDetails.service.createdAt}
-                resourceVersion={this.props.serviceDetails.service.resourceVersion}
-                istioEnabled={this.props.serviceDetails.istioSidecar}
-                labels={this.props.serviceDetails.service.labels}
-                selectors={this.props.serviceDetails.service.selectors}
-                ports={this.props.serviceDetails.service.ports}
-                type={this.props.serviceDetails.service.type}
-                ip={this.props.serviceDetails.service.ip}
-                endpoints={this.props.serviceDetails.endpoints}
-                health={this.props.serviceDetails.health}
-                externalName={this.props.serviceDetails.service.externalName}
-                threeScaleServiceRule={this.props.threeScaleServiceRule}
-                validations={this.getServiceValidation()}
-              />
-            </Col>
-          </Row>
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <ParameterizedTabs
-                id="service-tabs"
-                onSelect={tabValue => {
-                  this.setState({ currentTab: tabValue });
-                }}
-                tabMap={paramToTab}
-                tabName={tabName}
-                defaultTab={defaultTab}
-                activeTab={this.state.currentTab}
-              >
-                <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>
-                    {(Object.keys(workloads).length > 0 || this.props.serviceDetails.istioSidecar) && (
-                      <ServiceInfoWorkload workloads={workloads} namespace={this.props.namespace} />
-                    )}
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-                <Tab eventKey={1} title={vsTabTitle}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
-                    {(vsItems.length > 0 || this.props.serviceDetails.istioSidecar) && (
-                      <ServiceInfoVirtualServices virtualServices={vsItems} validations={validations!.virtualservice} />
-                    )}
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-                <Tab eventKey={2} title={drTabTitle}>
-                  <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
-                    {(drItems.length > 0 || this.props.serviceDetails.istioSidecar) && (
+        <Grid style={{ margin: '30px' }} gutter={'md'}>
+          <GridItem span={12}>
+            <ServiceInfoDescription
+              name={this.props.serviceDetails.service.name}
+              namespace={this.props.namespace}
+              createdAt={this.props.serviceDetails.service.createdAt}
+              resourceVersion={this.props.serviceDetails.service.resourceVersion}
+              istioEnabled={this.props.serviceDetails.istioSidecar}
+              labels={this.props.serviceDetails.service.labels}
+              selectors={this.props.serviceDetails.service.selectors}
+              ports={this.props.serviceDetails.service.ports}
+              type={this.props.serviceDetails.service.type}
+              ip={this.props.serviceDetails.service.ip}
+              endpoints={this.props.serviceDetails.endpoints}
+              health={this.props.serviceDetails.health}
+              externalName={this.props.serviceDetails.service.externalName}
+              threeScaleServiceRule={this.props.threeScaleServiceRule}
+              validations={this.getServiceValidation()}
+            />
+          </GridItem>
+          <GridItem span={12}>
+            <Card>
+              <CardBody>
+                <ParameterizedTabs
+                  id="service-tabs"
+                  onSelect={tabValue => {
+                    this.setState({ currentTab: tabValue });
+                  }}
+                  tabMap={paramToTab}
+                  tabName={tabName}
+                  defaultTab={defaultTab}
+                  activeTab={this.state.currentTab}
+                >
+                  <Tab eventKey={0} title={'Workloads (' + Object.keys(workloads).length + ')'}>
+                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Workloads')}>
+                      <ServiceInfoWorkload
+                        service={this.props.serviceDetails}
+                        workloads={workloads}
+                        namespace={this.props.namespace}
+                      />
+                    </ErrorBoundaryWithMessage>
+                  </Tab>
+                  <Tab eventKey={1} title={vsTabTitle}>
+                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Virtual Services')}>
+                      <ServiceInfoVirtualServices
+                        service={this.props.serviceDetails}
+                        virtualServices={vsItems}
+                        validations={validations!.virtualservice}
+                      />
+                    </ErrorBoundaryWithMessage>
+                  </Tab>
+                  <Tab eventKey={2} title={drTabTitle}>
+                    <ErrorBoundaryWithMessage message={this.errorBoundaryMessage('Destination Rules')}>
                       <ServiceInfoDestinationRules
+                        service={this.props.serviceDetails}
                         destinationRules={drItems}
                         validations={validations!.destinationrule}
                       />
-                    )}
-                  </ErrorBoundaryWithMessage>
-                </Tab>
-              </ParameterizedTabs>
-            </Col>
-          </Row>
-        </div>
-      </div>
+                    </ErrorBoundaryWithMessage>
+                  </Tab>
+                </ParameterizedTabs>
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
+      </>
     );
   }
 }

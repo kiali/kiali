@@ -340,3 +340,10 @@ Top line in tabs
 .nav-tabs {
   border-top: 1px solid #ededed;
 }
+
+/*
+ Fix problem stack in Firefox in service details
+ */
+.stack_service_details {
+  height: 20%;
+}
