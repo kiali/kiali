@@ -54,9 +54,9 @@
     retries: 2000
     delay: 10
 
-  - name: Pause for 2 minute to wait Maistra to create Admission Controller via OLM
+  - name: Pause for 5 minutes to wait Maistra to create Admission Controller via OLM
     pause:
-      minutes: 2
+      minutes: 5
     
   - name: Deploy Control Planes
     k8s:
