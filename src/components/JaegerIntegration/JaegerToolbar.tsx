@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { ExpandCollapse } from 'patternfly-react';
-import { Form, FormGroup, Grid, GridItem, InputGroup, TextInput } from '@patternfly/react-core';
+import { Form, Expandable, FormGroup, Grid, GridItem, InputGroup, TextInput } from '@patternfly/react-core';
 import ServiceDropdown from './ServiceDropdown';
 import LookBack from './LookBack';
 import RightToolbar from './RightToolbar';
@@ -36,6 +35,7 @@ interface JaegerToolbarState {
   minDuration: string;
   maxDuration: string;
   serviceSelected: string;
+  isExpandedOptions: boolean;
 }
 
 export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToolbarState> {
@@ -60,7 +60,8 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
       maxDuration: HistoryManager.getParam(URLParam.JAEGER_MAX_DURATION) || '',
       lookback: HistoryManager.getParam(URLParam.JAEGER_LOOKBACK) || String(this.defaultLookback),
       serviceSelected: HistoryManager.getParam(URLParam.JAEGER_SERVICE_SELECTOR) || this.props.serviceSelected || '',
-      dateTimes: { start: startDateTime, end: endDateTime }
+      dateTimes: { start: startDateTime, end: endDateTime },
+      isExpandedOptions: false
     };
     if (HistoryManager.getParam(URLParam.JAEGER_SERVICE_SELECTOR) || this.props.serviceSelected) {
       this.onRequestTraces();
@@ -99,9 +100,15 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
     this.props.updateURL(options);
   };
 
+  onToggleExpandedOptions = () => {
+    this.setState({
+      isExpandedOptions: !this.state.isExpandedOptions
+    });
+  };
+
   render() {
     const { disableSelectorNs } = this.props;
-    const { dateTimes, lookback } = this.state;
+    const { dateTimes, lookback, isExpandedOptions } = this.state;
     const tz = lookback === '0' ? new Date().toTimeString().replace(/^.*?GMT/, 'UTC') : null;
     const helperCustomDates = <div style={{ marginLeft: '-90px' }}>Times are expressed in {tz}</div>;
 
@@ -110,7 +117,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
         <Grid>
           {!disableSelectorNs && (
             <>
-              <GridItem span={2}>
+              <GridItem span={3}>
                 <Form isHorizontal={true}>
                   <FormGroup label={'Service'} isRequired={true} fieldId={'service_jaeger_form'}>
                     <ServiceDropdown
@@ -134,8 +141,8 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
               </FormGroup>
             </Form>
           </GridItem>
-          <GridItem span={disableSelectorNs ? 9 : 7} />
-          <GridItem span={1}>
+          <GridItem span={disableSelectorNs ? 8 : 6} />
+          <GridItem span={1} id={'request_traces_button'}>
             <RightToolbar disabled={this.state.serviceSelected === ''} onSubmit={this.onRequestTraces} />
           </GridItem>
           {tz && (
@@ -188,7 +195,11 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
             </>
           )}
         </Grid>
-        <ExpandCollapse textCollapsed="Show Advanced Options" textExpanded="Hide Advanced Options">
+        <Expandable
+          toggleText={isExpandedOptions ? 'Hide Advanced Options' : 'Show Advanced Options'}
+          onToggle={this.onToggleExpandedOptions}
+          isExpanded={isExpandedOptions}
+        >
           <Grid>
             <GridItem span={7}>
               <TagsControl tags={this.state.tags} onChange={value => this.setState({ tags: value })} />
@@ -242,7 +253,7 @@ export class JaegerToolbar extends React.Component<JaegerToolbarProps, JaegerToo
             </GridItem>
             <GridItem span={1} />
           </Grid>
-        </ExpandCollapse>
+        </Expandable>
       </div>
     );
   }

@@ -1,3 +1,7 @@
+#jaeger_toolbar {
+  margin-left: 20px;
+}
+
 #jaeger_toolbar .pf-c-form__label {
   font-size: 1rem;
 }
@@ -9,4 +13,9 @@
 #form-minDurationSpanJaegerTraces-helper,
 #form-maxDurationSpanJaegerTraces-helper {
   margin-left: -75px;
+}
+
+#request_traces_button {
+  position: absolute;
+  right: 50px;
 }
