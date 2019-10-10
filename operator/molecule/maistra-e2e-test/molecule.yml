@@ -15,11 +15,11 @@ provisioner:
       all:
         kiali_operator_assets_path : "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/deploy"
         kiali_operator_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/kiali-cr.yaml"
-        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-operator.yaml"
-        elasticsearch_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/elasticsearch-operator.yaml"
-        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/maistra-cr.yaml"
-        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/jaeger-operator.yaml"
-        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e/assets/bookinfo"
+        maistra_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e-test/assets/maistra-operator.yaml"
+        elasticsearch_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e-test/assets/elasticsearch-operator.yaml"
+        maistra_cr_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e-test/assets/maistra-cr.yaml"
+        jaeger_operator_file_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e-test/assets/jaeger-operator.yaml"
+        kiali_test_mesh_operator_path: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/maistra-e2e-test/assets/bookinfo"
 
         operators:
           elasticsearch:
