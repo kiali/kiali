@@ -49,6 +49,7 @@ const (
 	EnvKubernetesCacheEnabled           = "KUBERNETES_CACHE_ENABLED"
 	EnvKubernetesCacheDuration          = "KUBERNETES_CACHE_DURATION"
 	EnvKubernetesCacheNamespaces        = "KUBERNETES_CACHE_KUBERNETES"
+	EnvKubernetesCacheIstioTypes        = "KUBERNETES_CACHE_ISTIO_TYPES"
 	EnvKubernetesExcludeWorkloads       = "KUBERNETES_EXCLUDE_WORKLOADS"
 	EnvLdapBase                         = "LDAP_BASE"
 	EnvLdapBindDN                       = "LDAP_BIND_DN"
@@ -240,9 +241,13 @@ type KubernetesConfig struct {
 	CacheDuration int64 `yaml:"cache_duration,omitempty"`
 	// List of namespaces or regex defining namespaces to include in a cache
 	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
+	// Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
+	// on this list of Istio types. Other Istio types are not yet supported.
+	CacheIstioTypes []string `yaml:"cache_istio_types,omitempty"`
 	// List of controllers that won't be used for Workload calculation
-	// Kiali queries: Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
-	// If user has knowledge that some of them won't be used, Kiali can skip those queries.
+	// Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
+	// Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
+	// can be skipped from Kiali workloads query if they are present in this list
 	ExcludeWorkloads []string `yaml:"excluded_workloads,omitempty"`
 }
 
@@ -398,6 +403,7 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
 	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
 	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, ".*")
+	c.KubernetesConfig.CacheIstioTypes = getDefaultStringArray(EnvKubernetesCacheIstioTypes, "VirtualService,DestinationRule,Gateway,ServiceEntry")
 	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,Job,ReplicationController,StatefulSet")
 
 	trimmedExclusionPatterns := []string{}

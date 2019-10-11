@@ -234,7 +234,7 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 		for i, ns := range nss {
 			var getCacheGateways func(string) ([]kubernetes.IstioObject, error)
 			if kialiCache != nil && kialiCache.CheckNamespace(ns.Name) {
-				getCacheGateways = func (namespace string) ([]kubernetes.IstioObject, error) {
+				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
 					return kialiCache.GetIstioResources("Gateway", namespace)
 				}
 			} else {

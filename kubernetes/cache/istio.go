@@ -20,8 +20,7 @@ type (
 
 func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
 	// This list can be populated from configuration in the future
-	istioResources := []string{"VirtualService", "DestinationRule", "Gateway", "ServiceEntry"}
-	for _, r := range istioResources {
+	for _, r := range c.cacheIstioTypes {
 		if r == resource {
 			return true
 		}
