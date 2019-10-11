@@ -6,7 +6,6 @@ import { Health, healthNotAvailable } from '../../types/Health';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
-import graphUtils from '../../utils/Graphing';
 import { Metric } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { serverConfig } from '../../config/ServerConfig';
@@ -126,27 +125,25 @@ export const mergeMetricsResponses = (promises: Promise<Response<M.Metrics>>[]):
   });
 };
 
+export const getFirstDatapoints = (metric: M.MetricGroup): M.Datapoint[] => {
+  return metric.matrix.length > 0 ? metric.matrix[0].values : [];
+};
+
 export const getDatapoints = (
   mg: M.MetricGroup,
-  title: string,
-  comparator?: (metric: Metric, protocol?: Protocol) => boolean,
+  comparator: (metric: Metric, protocol?: Protocol) => boolean,
   protocol?: Protocol
-): [string | number][] => {
-  let series: M.TimeSeries[] = [];
+): M.Datapoint[] => {
   if (mg && mg.matrix) {
     const tsa: M.TimeSeries[] = mg.matrix;
-    if (comparator) {
-      for (let i = 0; i < tsa.length; ++i) {
-        const ts = tsa[i];
-        if (comparator(ts.metric, protocol)) {
-          series.push(ts);
-        }
+    for (let i = 0; i < tsa.length; ++i) {
+      const ts = tsa[i];
+      if (comparator(ts.metric, protocol)) {
+        return ts.values;
       }
-    } else {
-      series = mg.matrix;
     }
   }
-  return graphUtils.toC3Columns(series, title);
+  return [];
 };
 
 export const renderNodeInfo = (nodeData: DecoratedGraphNodeData) => {

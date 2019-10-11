@@ -8,24 +8,24 @@ import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '..
 import * as API from '../../services/Api';
 import {
   shouldRefreshData,
-  getDatapoints,
+  getFirstDatapoints,
   mergeMetricsResponses,
   summaryBodyTabs,
   summaryNavTabs
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
-import { Metrics } from '../../types/Metrics';
+import { Metrics, Datapoint } from '../../types/Metrics';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Paths } from '../../config';
-import { CyNode } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
+import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 
 type SummaryPanelGraphState = {
   loading: boolean;
-  reqRates: [string | number][] | null;
-  errRates: [string | number][];
-  tcpSent: [string | number][];
-  tcpReceived: [string | number][];
+  reqRates: Datapoint[] | null;
+  errRates: Datapoint[];
+  tcpSent: Datapoint[];
+  tcpReceived: Datapoint[];
   metricsLoadError: string | null;
 };
 
@@ -274,17 +274,12 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     this.metricsPromise.promise
       .then(response => {
-        const reqRates = getDatapoints(response.data.metrics.request_count, 'RPS');
-        const errRates = getDatapoints(response.data.metrics.request_error_count, 'Error');
-        const tcpSent = getDatapoints(response.data.metrics.tcp_sent, 'Sent');
-        const tcpReceived = getDatapoints(response.data.metrics.tcp_received, 'Received');
-
         this.setState({
           loading: false,
-          reqRates: reqRates,
-          errRates: errRates,
-          tcpSent: tcpSent,
-          tcpReceived: tcpReceived
+          reqRates: getFirstDatapoints(response.data.metrics.request_count),
+          errRates: getFirstDatapoints(response.data.metrics.request_error_count),
+          tcpSent: getFirstDatapoints(response.data.metrics.tcp_sent),
+          tcpReceived: getFirstDatapoints(response.data.metrics.tcp_received)
         });
       })
       .catch(error => {
