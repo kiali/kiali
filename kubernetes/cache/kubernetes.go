@@ -2,26 +2,31 @@ package cache
 
 import (
 	"errors"
+	"fmt"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 
 	"github.com/kiali/kiali/log"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 type (
 	KubernetesCache interface {
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 		GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
+		GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
+		GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 	}
 )
 
 func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
 	(*informer)["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
+	(*informer)["ReplicaSet"] = sharedInformers.Apps().V1().ReplicaSets().Informer()
 	(*informer)["Service"] = sharedInformers.Core().V1().Services().Informer()
+	(*informer)["Pod"] = sharedInformers.Core().V1().Pods().Informer()
 }
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
@@ -62,9 +67,10 @@ func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string
 				return nsServices, nil
 			}
 			var filteredServices []core_v1.Service
+			labelsMap := labels.Set(selectorLabels)
 			for _, svc := range nsServices {
 				svcSelector := labels.Set(svc.Spec.Selector).AsSelector()
-				if !svcSelector.Empty() && svcSelector.Matches(labels.Set(selectorLabels)) {
+				if !svcSelector.Empty() && svcSelector.Matches(labelsMap) {
 					filteredServices = append(filteredServices, svc)
 				}
 			}
@@ -72,4 +78,57 @@ func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string
 		}
 	}
 	return []core_v1.Service{}, nil
+}
+
+func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		pods := nsCache["Pod"].GetStore().List()
+		lenPods := len(pods)
+		if lenPods > 0 {
+			_, ok := pods[0].(*core_v1.Pod)
+			if !ok {
+				return []core_v1.Pod{}, errors.New("bad Pod type found in cache")
+			}
+			nsPods := make([]core_v1.Pod, lenPods)
+			for i, pod := range pods {
+				nsPods[i] = *(pod.(*core_v1.Pod))
+			}
+			log.Tracef("[Kiali Cache] Get [resource: Pod] for [namespace: %s] = %d", namespace, lenPods)
+			if labelSelector == "" {
+				return nsPods, nil
+			}
+			var filteredPods []core_v1.Pod
+			selector, selErr := labels.Parse(labelSelector)
+			if selErr != nil {
+				return []core_v1.Pod{}, fmt.Errorf("%s can not be processed as selector: %v", labelSelector, selErr)
+			}
+			for _, pod := range nsPods {
+				if selector.Matches(labels.Set(pod.Labels)) {
+					filteredPods = append(filteredPods, pod)
+				}
+			}
+			return filteredPods, nil
+		}
+	}
+	return []core_v1.Pod{}, nil
+}
+
+func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		reps := nsCache["ReplicaSet"].GetStore().List()
+		lenReps := len(reps)
+		if lenReps > 0 {
+			_, ok := reps[0].(*apps_v1.ReplicaSet)
+			if !ok {
+				return nil, errors.New("bad ReplicaSet type found in cache")
+			}
+			nsReps := make([]apps_v1.ReplicaSet, lenReps)
+			for i, rep := range reps {
+				nsReps[i] = *(rep.(*apps_v1.ReplicaSet))
+			}
+			log.Tracef("[Kiali Cache] Get [resource: ReplicaSet] for [namespace: %s] = %d", namespace, lenReps)
+			return nsReps, nil
+		}
+	}
+	return []apps_v1.ReplicaSet{}, nil
 }

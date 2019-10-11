@@ -12,6 +12,7 @@ import (
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"sync"
 )
 
 // Istio uses caches for pods and controllers.
@@ -42,6 +43,7 @@ type (
 		cacheNamespaces       []string
 		stopChan              chan struct{}
 		nsCache               map[string]typeCache
+		cacheLock             sync.Mutex
 	}
 )
 
@@ -102,6 +104,9 @@ func (c *kialiCacheImpl) isCached(namespace string) bool {
 }
 
 func (c *kialiCacheImpl) createCache(namespace string) bool {
+	if _, exist := c.nsCache[namespace]; exist {
+		return true
+	}
 	informer := make(typeCache)
 	c.createKubernetesInformers(namespace, &informer)
 	c.createIstioInformers(namespace, &informer)
@@ -138,6 +143,8 @@ func (c *kialiCacheImpl) CheckNamespace(namespace string) bool {
 		return false
 	}
 	if _, exist := c.nsCache[namespace]; !exist {
+		defer c.cacheLock.Unlock()
+		c.cacheLock.Lock()
 		return c.createCache(namespace)
 	}
 	return true

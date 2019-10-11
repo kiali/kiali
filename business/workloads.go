@@ -129,7 +129,13 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetPods")
 	defer promtimer.ObserveNow(&err)
 
-	ps, err := in.k8s.GetPods(namespace, labelSelector)
+	var ps []core_v1.Pod
+	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+		ps, err = kialiCache.GetPods(namespace, labelSelector)
+	} else {
+		ps, err = in.k8s.GetPods(namespace, labelSelector)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +181,11 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		pods, err = k8s.GetPods(namespace, labelSelector)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			pods, err = kialiCache.GetPods(namespace, labelSelector)
+		} else {
+			pods, err = k8s.GetPods(namespace, labelSelector)
+		}
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -199,7 +209,11 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		repset, err = k8s.GetReplicaSets(namespace)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			repset, err = kialiCache.GetReplicaSets(namespace)
+		} else {
+			repset, err = k8s.GetReplicaSets(namespace)
+		}
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -639,7 +653,11 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		pods, err = k8s.GetPods(namespace, "")
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			pods, err = kialiCache.GetPods(namespace, "")
+		} else {
+			pods, err = k8s.GetPods(namespace, "")
+		}
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -658,7 +676,11 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		repset, err = k8s.GetReplicaSets(namespace)
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			repset, err = kialiCache.GetReplicaSets(namespace)
+		} else {
+			repset, err = k8s.GetReplicaSets(namespace)
+		}
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
 			errChan <- err

@@ -64,7 +64,11 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err2 error
-		pods, err2 = in.k8s.GetPods(namespace, "")
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			pods, err2 = kialiCache.GetPods(namespace, "")
+		} else {
+			pods, err2 = in.k8s.GetPods(namespace, "")
+		}
 		if err2 != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err2)
 			errChan <- err2
@@ -215,7 +219,11 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		go func() {
 			defer wg.Done()
 			var err2 error
-			pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+			if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+				pods, err2 = kialiCache.GetPods(namespace, labelsSelector)
+			} else {
+				pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+			}
 			if err2 != nil {
 				errChan <- err2
 			}

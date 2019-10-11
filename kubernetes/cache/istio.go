@@ -19,7 +19,7 @@ type (
 )
 
 func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
-	istioResources := []string{"VirtualService", "DestinationRule"}
+	istioResources := []string{"VirtualService", "DestinationRule", "Gateway", "ServiceEntry"}
 	for _, r := range istioResources {
 		if r == resource {
 			return true
@@ -32,6 +32,8 @@ func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCa
 	// Networking API
 	(*informer)["VirtualService"] = createIstioIndexInformer(c.istioNetworkingGetter, "virtualservices", c.refreshDuration, namespace)
 	(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioNetworkingGetter, "destinationrules", c.refreshDuration, namespace)
+	(*informer)["Gateway"] = createIstioIndexInformer(c.istioNetworkingGetter, "gateways", c.refreshDuration, namespace)
+	(*informer)["ServiceEntry"] = createIstioIndexInformer(c.istioNetworkingGetter, "serviceentries", c.refreshDuration, namespace)
 }
 
 func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshDuration time.Duration, namespace string) cache.SharedIndexInformer {
