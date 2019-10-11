@@ -232,7 +232,15 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 
 		wg.Add(len(nss))
 		for i, ns := range nss {
-			go fetchNoEntry(&gwss[i], ns.Name, in.k8s.GetGateways, wg, errChan)
+			var getCacheGateways func(string) ([]kubernetes.IstioObject, error)
+			if kialiCache != nil && kialiCache.CheckNamespace(ns.Name) {
+				getCacheGateways = func (namespace string) ([]kubernetes.IstioObject, error) {
+					return kialiCache.GetIstioResources("Gateway", namespace)
+				}
+			} else {
+				getCacheGateways = in.k8s.GetGateways
+			}
+			go fetchNoEntry(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
 		}
 	} else {
 		select {
@@ -317,7 +325,29 @@ func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, n
 func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
+		var istioDetails *kubernetes.IstioDetails
+		var err error
+
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache are local in memory, so no need to spawn these queries in threads to reduce the overhead
+			// Probably we could refactor in.k8s.GetIstioDetails, too, but I guess that can be done in future
+			// We are following the pattern to invoke cache from the business logic instead of kubernetes one
+			istioDetails = &kubernetes.IstioDetails{}
+			if err == nil {
+				istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
+			}
+			if err == nil {
+				istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
+			}
+			if err == nil {
+				istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
+			}
+			if err == nil {
+				istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
+			}
+		} else {
+			istioDetails, err = in.k8s.GetIstioDetails(namespace, "")
+		}
 		if err != nil {
 			select {
 			case errChan <- err:

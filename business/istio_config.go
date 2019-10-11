@@ -133,7 +133,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeGateways {
-			if gg, ggErr := in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
+			var gg []kubernetes.IstioObject
+			var ggErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource("Gateway") && kialiCache.CheckNamespace(criteria.Namespace) {
+				gg, ggErr = kialiCache.GetIstioResources("Gateway", criteria.Namespace)
+			} else {
+				gg, ggErr = in.k8s.GetGateways(criteria.Namespace)
+			}
+			if ggErr == nil {
 				(&istioConfigList.Gateways).Parse(gg)
 			} else {
 				errChan <- ggErr
@@ -180,7 +187,14 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeServiceEntries {
-			if se, seErr := in.k8s.GetServiceEntries(criteria.Namespace); seErr == nil {
+			var se []kubernetes.IstioObject
+			var seErr error
+			if kialiCache != nil && kialiCache.CheckIstioResource("ServiceEntry") && kialiCache.CheckNamespace(criteria.Namespace) {
+				se, seErr = kialiCache.GetIstioResources("ServiceEntry", criteria.Namespace)
+			} else {
+				se, seErr = in.k8s.GetServiceEntries(criteria.Namespace)
+			}
+			if seErr == nil {
 				(&istioConfigList.ServiceEntries).Parse(se)
 			} else {
 				errChan <- seErr

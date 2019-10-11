@@ -19,6 +19,7 @@ type (
 )
 
 func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
+	// This list can be populated from configuration in the future
 	istioResources := []string{"VirtualService", "DestinationRule", "Gateway", "ServiceEntry"}
 	for _, r := range istioResources {
 		if r == resource {
@@ -30,10 +31,18 @@ func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
 
 func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCache) {
 	// Networking API
-	(*informer)["VirtualService"] = createIstioIndexInformer(c.istioNetworkingGetter, "virtualservices", c.refreshDuration, namespace)
-	(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioNetworkingGetter, "destinationrules", c.refreshDuration, namespace)
-	(*informer)["Gateway"] = createIstioIndexInformer(c.istioNetworkingGetter, "gateways", c.refreshDuration, namespace)
-	(*informer)["ServiceEntry"] = createIstioIndexInformer(c.istioNetworkingGetter, "serviceentries", c.refreshDuration, namespace)
+	if c.CheckIstioResource("VirtualService") {
+		(*informer)["VirtualService"] = createIstioIndexInformer(c.istioNetworkingGetter, "virtualservices", c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource("DestinationRule") {
+		(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioNetworkingGetter, "destinationrules", c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource("Gateway") {
+		(*informer)["Gateway"] = createIstioIndexInformer(c.istioNetworkingGetter, "gateways", c.refreshDuration, namespace)
+	}
+	if c.CheckIstioResource("ServiceEntry") {
+		(*informer)["ServiceEntry"] = createIstioIndexInformer(c.istioNetworkingGetter, "serviceentries", c.refreshDuration, namespace)
+	}
 }
 
 func createIstioIndexInformer(getter cache.Getter, resourceType string, refreshDuration time.Duration, namespace string) cache.SharedIndexInformer {
