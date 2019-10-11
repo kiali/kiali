@@ -50,11 +50,7 @@ const listStyle = style({
 const ExternalNameType = 'ExternalName';
 
 class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps> {
-  getValidations(): ObjectValidation {
-    return this.props.validations ? this.props.validations : ({} as ObjectValidation);
-  }
-
-  getPortOver(portId: number): any {
+  getPortOver(portId: number) {
     return (
       <div style={{ float: 'left', fontSize: '12px', padding: '3px 0.6em 0 0' }}>
         <ValidationList checks={this.getPortChecks(portId)} />
@@ -63,7 +59,9 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
   }
 
   getPortChecks(portId: number): ObjectCheck[] {
-    return this.getValidations().checks.filter(c => c.path === 'spec/ports[' + portId + ']');
+    return this.props.validations
+      ? this.props.validations.checks.filter(c => c.path === 'spec/ports[' + portId + ']')
+      : [];
   }
 
   hasIssue(portId: number): boolean {
@@ -71,7 +69,6 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
   }
 
   render() {
-    console.log(this.props.health);
     return (
       <Grid gutter="md">
         <GridItem span={6}>
@@ -162,7 +159,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
                   <Text component={TextVariants.h3}>
                     <ValidationSummary
                       id={this.props.name + '-config-validation'}
-                      validations={[this.getValidations()]}
+                      validations={this.props.validations ? [this.props.validations] : []}
                     />
                     <span style={{ marginLeft: '10px' }}>Ports</span>
                   </Text>

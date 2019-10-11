@@ -298,11 +298,7 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             >
               <ValidationSummary
                 id="reviews-config-validation"
-                validations={
-                  Array [
-                    Object {},
-                  ]
-                }
+                validations={Array []}
               />
               <span
                 style={

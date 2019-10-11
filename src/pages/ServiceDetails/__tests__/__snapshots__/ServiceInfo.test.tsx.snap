@@ -66,7 +66,6 @@ exports[`#ServiceInfo render correctly with data should render serviceInfo with 
         }
         resourceVersion="2652"
         type="ClusterIP"
-        validations={Object {}}
       />
     </GridItem>
     <GridItem

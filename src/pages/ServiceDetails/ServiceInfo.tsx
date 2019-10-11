@@ -97,11 +97,11 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
     return `One of the ${resourceName} associated to this service has an invalid format`;
   }
 
-  getServiceValidation(): ObjectValidation {
+  getServiceValidation(): ObjectValidation | undefined {
     if (this.props.validations && this.props.validations.service) {
       return this.props.validations.service[this.props.serviceDetails.service.name];
     }
-    return {} as ObjectValidation;
+    return undefined;
   }
 
   render() {

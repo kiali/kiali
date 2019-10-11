@@ -7,7 +7,7 @@ import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
 import * as MessageCenter from '../../utils/MessageCenter';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { ObjectValidation, Validations } from '../../types/IstioObjects';
+import { Validations } from '../../types/IstioObjects';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import ServiceTraces from './ServiceTraces';
 import ServiceInfo from './ServiceInfo';
@@ -143,24 +143,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       parsed.name = firstParams[1];
     }
     return {};
-  }
-
-  searchValidation(parsedSearch: ParsedSearch) {
-    let vals;
-
-    if (
-      this.state.serviceDetailsInfo.validations &&
-      parsedSearch.type &&
-      parsedSearch.name &&
-      this.state.serviceDetailsInfo.validations[parsedSearch.type] &&
-      this.state.serviceDetailsInfo.validations[parsedSearch.type][parsedSearch.name]
-    ) {
-      vals = this.state.serviceDetailsInfo.validations[parsedSearch.type][parsedSearch.name];
-    } else {
-      vals = {} as ObjectValidation;
-    }
-
-    return vals;
   }
 
   componentDidMount() {
