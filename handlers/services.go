@@ -95,19 +95,15 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var istioConfigValidations = models.IstioValidations{}
+	var errValidations error
 
 	wg := sync.WaitGroup{}
 	if includeValidations {
 		wg.Add(1)
-		go func(istioConfigValidations *models.IstioValidations, err *error) {
+		go func() {
 			defer wg.Done()
-			istioConfigValidationResults, errValidations := business.Validations.GetValidations(namespace, service)
-			if errValidations != nil && *err == nil {
-				*err = errValidations
-			} else {
-				*istioConfigValidations = istioConfigValidationResults
-			}
-		}(&istioConfigValidations, &err)
+			istioConfigValidations, errValidations = business.Validations.GetValidations(namespace, service)
+		}()
 	}
 	requestToken, err := getToken(r)
 	if err != nil {
@@ -119,6 +115,7 @@ func ServiceDetails(w http.ResponseWriter, r *http.Request) {
 	if includeValidations && err == nil {
 		wg.Wait()
 		serviceDetails.Validations = istioConfigValidations
+		err = errValidations
 	}
 
 	if err != nil {

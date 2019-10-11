@@ -73,7 +73,7 @@ func (in *IstioValidationsService) GetValidations(namespace, service string) (mo
 	close(errChan)
 	for e := range errChan {
 		if e != nil { // Check that default value wasn't returned
-			return nil, err
+			return nil, e
 		}
 	}
 
