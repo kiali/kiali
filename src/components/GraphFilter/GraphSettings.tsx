@@ -1,4 +1,4 @@
-import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { Dropdown, DropdownToggle } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as React from 'react';
 import { connect } from 'react-redux';
@@ -10,7 +10,6 @@ import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { GraphType } from '../../types/Graph';
 import { PfColors } from '../Pf/PfColors';
-import { Omit } from 'lodash';
 
 type ReduxProps = Omit<GraphFilterState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
   // Dispatch methods
@@ -27,6 +26,8 @@ type ReduxProps = Omit<GraphFilterState, 'findValue' | 'hideValue' | 'showLegend
 
 type GraphSettingsProps = ReduxProps;
 
+type GraphSettingsState = { isOpen: boolean };
+
 interface VisibilityLayersType {
   id: string;
   disabled?: boolean;
@@ -35,13 +36,12 @@ interface VisibilityLayersType {
   onChange: () => void;
 }
 
-class GraphSettings extends React.PureComponent<GraphSettingsProps> {
-  static contextTypes = {
-    router: () => null
-  };
-
+class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   constructor(props: GraphSettingsProps) {
     super(props);
+    this.state = {
+      isOpen: false
+    };
 
     // Let URL override current redux state at construction time. Update URL with unset params.
     const urlInjectServiceNodes = HistoryManager.getBooleanParam(URLParam.GRAPH_SERVICE_NODES);
@@ -53,6 +53,12 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       HistoryManager.setParam(URLParam.GRAPH_SERVICE_NODES, String(this.props.showServiceNodes));
     }
   }
+
+  private onToggle = isOpen => {
+    this.setState({
+      isOpen
+    });
+  };
 
   componentDidUpdate(_prevProps: GraphSettingsProps) {
     // ensure redux state and URL are aligned
@@ -147,8 +153,8 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       }
     ];
 
-    const checkboxStyle = style({ marginLeft: 5 });
-    const disabledCheckboxStyle = style({ marginLeft: 5, color: PfColors.Gray });
+    const checkboxStyle = style({ marginLeft: 10 });
+    const disabledCheckboxStyle = style({ marginLeft: 10, color: PfColors.Gray });
 
     const displaySettingItems = visibilityLayers.map((item: VisibilityLayersType) => (
       <div id={item.id} key={item.id}>
@@ -160,7 +166,6 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
     ));
 
     const badgeItems = badges.map((item: VisibilityLayersType) => (
-      // @todo: consolidate into single function
       <div id={item.id} key={item.id}>
         <label>
           <input type="checkbox" checked={item.value} onChange={() => item.onChange()} />
@@ -173,22 +178,21 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps> {
       height: '1em'
     });
 
-    const graphSettingsPopover = (
-      <Popover id="layers-popover">
+    const graphSettingsContent = (
+      <div style={{ paddingLeft: '10px', backgroundColor: PfColors.White }}>
         {displaySettingItems}
         <div className={spacerStyle} />
         <label>Badges:</label>
         {badgeItems}
-        <div className={spacerStyle} />
-      </Popover>
+      </div>
     );
 
+    const { isOpen } = this.state;
+
     return (
-      <OverlayTrigger overlay={graphSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
-        <Button className="dropdown button-group" id="graph_settings">
-          Display <Icon name="angle-down" />
-        </Button>
-      </OverlayTrigger>
+      <Dropdown toggle={<DropdownToggle onToggle={this.onToggle}>Display</DropdownToggle>} isOpen={isOpen}>
+        {graphSettingsContent}
+      </Dropdown>
     );
   }
 }
