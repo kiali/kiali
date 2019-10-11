@@ -112,12 +112,7 @@ class ServiceInfoDescription extends React.Component<ServiceInfoDescriptionProps
               <Stack className={'stack_service_details'}>
                 <StackItem id={'health'}>
                   <Text component={TextVariants.h3}> Health </Text>
-                  <HealthIndicator
-                    id={this.props.name}
-                    health={this.props.health}
-                    mode={DisplayMode.LARGE}
-                    tooltipPlacement="left"
-                  />
+                  <HealthIndicator id={this.props.name} health={this.props.health} mode={DisplayMode.LARGE} />
                 </StackItem>
               </Stack>
               <Title headingLevel="h3" size="2xl" style={{ marginTop: '60px' }}>

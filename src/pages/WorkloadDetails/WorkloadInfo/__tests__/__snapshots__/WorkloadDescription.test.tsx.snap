@@ -106,7 +106,6 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
         <HealthIndicator
           id="myworkload"
           mode={0}
-          tooltipPlacement="left"
         />
       </Col>
     </Row>

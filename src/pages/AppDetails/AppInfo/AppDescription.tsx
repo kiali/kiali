@@ -140,12 +140,7 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
                 <Text component={TextVariants.h2}>Health Overview</Text>
                 <strong>Health</strong>
               </div>
-              <HealthIndicator
-                id={app.name}
-                health={this.props.health}
-                mode={DisplayMode.LARGE}
-                tooltipPlacement="left"
-              />
+              <HealthIndicator id={app.name} health={this.props.health} mode={DisplayMode.LARGE} />
             </CardBody>
           </Card>
         </GridItem>

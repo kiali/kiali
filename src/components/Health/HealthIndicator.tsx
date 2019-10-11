@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { OverlayTrigger, Popover } from 'patternfly-react';
+import { Popover, PopoverPosition } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
@@ -15,7 +15,7 @@ interface Props {
   id: string;
   health?: H.Health;
   mode: DisplayMode;
-  tooltipPlacement?: string;
+  tooltipPlacement?: PopoverPosition;
 }
 
 interface HealthState {
@@ -69,20 +69,15 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
   }
 
   renderPopover(health: H.Health, icon: JSX.Element) {
-    const popover = (
-      <Popover id={this.props.id + '-health-tooltip'} title={this.state.globalStatus.name}>
-        <HealthDetails health={health} />
-      </Popover>
-    );
     return (
-      <OverlayTrigger
-        placement={this.props.tooltipPlacement || 'right'}
-        overlay={popover}
-        trigger={['hover', 'focus']}
-        rootClose={false}
+      <Popover
+        aria-label={'Health indicator'}
+        headerContent={this.state.globalStatus.name}
+        bodyContent={<HealthDetails health={health} />}
+        position={this.props.tooltipPlacement || PopoverPosition.auto}
       >
         {icon}
-      </OverlayTrigger>
+      </Popover>
     );
   }
 }
