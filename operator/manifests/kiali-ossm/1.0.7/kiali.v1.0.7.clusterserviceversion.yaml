@@ -1,17 +1,17 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: kiali-operator.v1.3.1
+  name: kiali-operator.v1.0.7
   namespace: placeholder
   annotations:
     categories: Monitoring,Logging & Tracing
     certified: "false"
-    containerImage: quay.io/kiali/kiali-operator:v1.3.1
-    capabilities: Basic Install
-    support: Kiali
+    containerImage: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.0.7
+    capabilities: Seamless Upgrades
+    support: Red Hat
     description: "Kiali project provides answers to the questions: What microservices are part of my Istio service mesh and how are they connected?"
     repository: https://github.com/kiali/kiali
-    createdAt: 2019-08-12T00:00:00Z
+    createdAt: 2019-XX-XXT00:00:00Z
     alm-examples: |-
       [
         {
@@ -24,7 +24,7 @@ metadata:
             "installation_tag": "My Kiali",
             "istio_namespace": "istio-system",
             "deployment": {
-              "namespace": "default",
+              "namespace": "istio-system",
               "verbose_mode": "4",
               "view_only_mode": false
             },
@@ -73,37 +73,75 @@ metadata:
         }
       ]
 spec:
-  version: 1.3.1
+  version: 1.0.7
   maturity: stable
-  replaces: kiali-operator.v1.1.0
+  replaces: kiali-operator.v1.0.6
   displayName: Kiali Operator
   description: |-
-    A Microservice Architecture breaks up the monolith into many smaller pieces that are composed together. Patterns to secure the communication between services like fault tolerance (via timeout, retry, circuit breaking, etc.) have come up as well as distributed tracing to be able to see where calls are going.
+    ## About the managed application
 
-    A service mesh can now provide these services on a platform level and frees the application writers from those tasks. Routing decisions are done at the mesh level.
+    A Microservice Architecture breaks up the monolith into many smaller pieces
+    that are composed together. Patterns to secure the communication between
+    services like fault tolerance (via timeout, retry, circuit breaking, etc.)
+    have come up as well as distributed tracing to be able to see where calls
+    are going.
 
-    Kiali works with Istio, in OpenShift or Kubernetes, to visualize the service mesh topology, to provide visibility into features like circuit breakers, request rates and more. It offers insights about the mesh components at different levels, from abstract Applications to Services and Workloads.
+    A service mesh can now provide these services on a platform level and frees
+    the application writers from those tasks. Routing decisions are done at the
+    mesh level.
+
+    Kiali works with Istio, in OpenShift or Kubernetes, to visualize the service
+    mesh topology, to provide visibility into features like circuit breakers,
+    request rates and more. It offers insights about the mesh components at
+    different levels, from abstract Applications to Services and Workloads.
 
     See [https://www.kiali.io](https://www.kiali.io) to read more.
 
-    ### Prerequisites
+    ### Accessing the UI
 
-    Today Kiali works with Istio. So before you install Kiali, you must have already installed Istio. Note that Istio can come pre-bundled with Kiali (specifically if you installed the Istio demo helm profile or if you installed Istio with the helm option '--set kiali.enabled=true'). If you already have the pre-bundled Kiali in your Istio environment and you want to install Kiali via the Kiali Operator, uninstall the pre-bundled Kiali first. You can do this via this command:
+    By default, the Kiali operator exposes the Kiali UI as a Route on OpenShift
+    or Ingress on Kubernetes.
 
-        kubectl delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n istio-system
+    On OpenShift, the default root context path is '/' and on Kubernetes it is
+    '/kiali' though you can change this by configuring the 'web_root' setting in
+    the Kiali CR.
 
-    When you install Kiali in a non-OpenShift Kubernetes environment, the authentication strategy will default to `login`. When using the authentication strategy of `login`, you are required to create a Kubernetes Secret with a `username` and `passphrase` that you want users to provide in order to successfully log into Kiali. Here is an example command you can execute to create such a secret (with a username of `admin` and a passphrase of `admin`):
-
-        kubectl create secret generic kiali -n istio-system --from-literal "username=admin" --from-literal "passphrase=admin"
+    ## About this Operator
 
     ### Kiali Custom Resource Configuration Settings
 
-    For quick descriptions of all the settings you can configure in the Kiali Custom Resource (CR), see the file [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.3.1/operator/deploy/kiali/kiali_cr.yaml)
+    For quick descriptions of all the settings you can configure in the Kiali
+    Custom Resource (CR), see the file
+    [kiali_cr.yaml](https://github.com/kiali/kiali/blob/v1.7.0/operator/deploy/kiali/kiali_cr.yaml)
 
-    ### Accessing the UI
+    Note that the Kiali operator can be told to restrict Kiali's access to
+    specific namespaces, or can provide to Kiali cluster-wide access to all
+    namespaces.
 
-    By default, the Kiali operator exposes the Kiali UI as a Route on OpenShift or Ingress on Kubernetes.
-    On OpenShift, the default root context path is '/' and on Kubernetes it is '/kiali' though you can change this by configuring the 'web_root' setting in the Kiali CR.
+    ## Prerequisites for enabling this Operator
+
+    Today Kiali works with Istio. So before you install Kiali, you must have
+    already installed Istio. Note that Istio can come pre-bundled with Kiali
+    (specifically if you installed the Istio demo helm profile or if you
+    installed Istio with the helm option '--set kiali.enabled=true'). If you
+    already have the pre-bundled Kiali in your Istio environment and you want to
+    install Kiali via the Kiali Operator, uninstall the pre-bundled Kiali first.
+    You can do this via this command,
+
+        kubectl delete --ignore-not-found=true all,secrets,sa,templates,configmaps,deployments,clusterroles,clusterrolebindings,ingresses,customresourcedefinitions --selector="app=kiali" -n istio-system
+
+    When you install Kiali in a non-OpenShift Kubernetes environment, the
+    authentication strategy will default to `login`. When using the
+    authentication strategy of `login`, you are required to create a Kubernetes
+    Secret with a `username` and `passphrase` that you want users to provide in
+    order to successfully log into Kiali. Here is an example command you can
+    execute to create such a secret (with a username of `admin` and a passphrase
+    of `admin`),
+
+        kubectl create secret generic kiali -n istio-system --from-literal "username=admin" --from-literal "passphrase=admin"
+
+    If you wish to use the "ldap" authentication strategy, you must have an LDAP
+    server available and accessible to Kiali.
   icon:
   - base64data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIyLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAxMjgwIDEyODAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDEyODAgMTI4MDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMwMTMxNDQ7fQoJLnN0MXtmaWxsOiMwMDkzREQ7fQo8L3N0eWxlPgo8Zz4KCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik04MTAuOSwxODAuOWMtMjUzLjYsMC00NTkuMSwyMDUuNS00NTkuMSw0NTkuMXMyMDUuNSw0NTkuMSw0NTkuMSw0NTkuMVMxMjcwLDg5My42LDEyNzAsNjQwCgkJUzEwNjQuNSwxODAuOSw4MTAuOSwxODAuOXogTTgxMC45LDEwMjkuMmMtMjE1LDAtMzg5LjItMTc0LjMtMzg5LjItMzg5LjJjMC0yMTUsMTc0LjMtMzg5LjIsMzg5LjItMzg5LjJTMTIwMC4xLDQyNSwxMjAwLjEsNjQwCgkJUzEwMjUuOSwxMDI5LjIsODEwLjksMTAyOS4yeiIvPgoJPHBhdGggY2xhc3M9InN0MSIgZD0iTTY1My4zLDI4NGMtMTM2LjQsNjAuNS0yMzEuNiwxOTcuMS0yMzEuNiwzNTZjMCwxNTguOCw5NS4yLDI5NS41LDIzMS42LDM1NmM5OC40LTg3LjEsMTYwLjQtMjE0LjMsMTYwLjQtMzU2CgkJQzgxMy43LDQ5OC4zLDc1MS42LDM3MS4xLDY1My4zLDI4NHoiLz4KCTxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zNTEuOCw2NDBjMC0xMDkuOCwzOC42LTIxMC41LDEwMi44LTI4OS41Yy0zOS42LTE4LjItODMuNi0yOC4zLTEzMC0yOC4zQzE1MC45LDMyMi4yLDEwLDQ2NC41LDEwLDY0MAoJCXMxNDAuOSwzMTcuOCwzMTQuNiwzMTcuOGM0Ni4zLDAsOTAuNC0xMC4xLDEzMC0yOC4zQzM5MC4zLDg1MC41LDM1MS44LDc0OS44LDM1MS44LDY0MHoiLz4KPC9nPgo8L3N2Zz4K
     mediatype: image/svg+xml
@@ -112,7 +150,7 @@ spec:
   - name: Kiali Developers Google Group
     email: kiali-dev@googlegroups.com
   provider:
-    name: Kiali
+    name: Red Hat
   labels:
     name: kiali-operator
   selector:
@@ -223,23 +261,12 @@ spec:
               name: kiali-operator
               labels:
                 app: kiali-operator
-                version: v1.3.1
+                version: v1.0.7
             spec:
               serviceAccountName: kiali-operator
               containers:
-              - name: ansible
-                command:
-                - /usr/local/bin/ao-logs
-                - /tmp/ansible-operator/runner
-                - stdout
-                image: quay.io/kiali/kiali-operator:v1.3.1
-                imagePullPolicy: "IfNotPresent"
-                volumeMounts:
-                - mountPath: /tmp/ansible-operator/runner
-                  name: runner
-                  readOnly: true
               - name: operator
-                image: quay.io/kiali/kiali-operator:v1.3.1
+                image: registry.redhat.io/openshift-service-mesh/kiali-rhel7-operator:1.0.7
                 imagePullPolicy: "IfNotPresent"
                 volumeMounts:
                 - mountPath: /tmp/ansible-operator/runner
@@ -253,6 +280,10 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
               volumes:
