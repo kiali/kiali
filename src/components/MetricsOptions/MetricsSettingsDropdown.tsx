@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Icon, OverlayTrigger, Popover } from 'patternfly-react';
+import { Dropdown, DropdownToggle } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import isEqual from 'lodash/fp/isEqual';
 import { PromLabel } from '@kiali/k-charted-pf4';
@@ -20,16 +20,20 @@ interface Props {
   labelsSettings: LabelsSettings;
 }
 
-const checkboxStyle = style({ marginLeft: 5 });
-const secondLevelStyle = style({ marginLeft: 14 });
+type State = MetricsSettings & {
+  isOpen: boolean;
+};
+
+const checkboxStyle = style({ marginLeft: 10 });
+const secondLevelStyle = style({ marginLeft: 18 });
 const spacerStyle = style({ height: '1em' });
 
-export class MetricsSettingsDropdown extends React.Component<Props, MetricsSettings> {
+export class MetricsSettingsDropdown extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     const settings = readMetricsSettingsFromURL();
     settings.labelsSettings = combineLabelsSettings(props.labelsSettings, settings.labelsSettings);
-    this.state = settings;
+    this.state = { ...settings, isOpen: false };
   }
 
   componentDidUpdate() {
@@ -38,6 +42,10 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
       this.setState({ labelsSettings: labelsSettings });
     }
   }
+
+  private onToggle = isOpen => {
+    this.setState({ isOpen: isOpen });
+  };
 
   onGroupingChanged = (label: PromLabel, checked: boolean) => {
     const objLbl = this.state.labelsSettings.get(label);
@@ -107,19 +115,16 @@ export class MetricsSettingsDropdown extends React.Component<Props, MetricsSetti
       return null;
     }
 
-    const metricsSettingsPopover = (
-      <Popover id="layers-popover">
-        {hasLabels && this.renderLabelOptions()}
-        {hasHistograms && this.renderHistogramOptions()}
-      </Popover>
-    );
-
     return (
-      <OverlayTrigger overlay={metricsSettingsPopover} placement="bottom" trigger={['click']} rootClose={true}>
-        <Button>
-          Metrics Settings <Icon name="angle-down" />
-        </Button>
-      </OverlayTrigger>
+      <Dropdown
+        toggle={<DropdownToggle onToggle={this.onToggle}>Metrics Settings</DropdownToggle>}
+        isOpen={this.state.isOpen}
+      >
+        <div style={{ paddingLeft: '10px' }}>
+          {hasLabels && this.renderLabelOptions()}
+          {hasHistograms && this.renderHistogramOptions()}
+        </div>
+      </Dropdown>
     );
   }
 
