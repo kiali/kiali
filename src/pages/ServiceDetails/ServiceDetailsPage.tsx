@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { Icon } from 'patternfly-react';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
@@ -410,7 +410,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       } else {
         const jaegerTitle: any = (
           <>
-            Traces <Icon type={'fa'} name={'external-link'} />
+            Traces <ExternalLinkAltIcon />
           </>
         );
         jaegerTag = (
