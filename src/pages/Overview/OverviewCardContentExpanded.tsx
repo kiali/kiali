@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { AggregateStatusNotification, AggregateStatusNotifications } from 'patternfly-react';
 import { Link } from 'react-router-dom';
+import { Text, TextVariants } from '@patternfly/react-core';
+
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
@@ -58,9 +59,7 @@ class OverviewCardContentExpanded extends React.Component<Props> {
       return (
         <>
           {mainLink}
-          <AggregateStatusNotifications>
-            <AggregateStatusNotification>N/A</AggregateStatusNotification>
-          </AggregateStatusNotifications>
+          <Text component={TextVariants.h2}>N/A</Text>
         </>
       );
     }
@@ -68,35 +67,37 @@ class OverviewCardContentExpanded extends React.Component<Props> {
       <>
         {mainLink}
         <OverviewCardBars status={this.props.status} />
-        <AggregateStatusNotifications style={{ marginTop: -20, position: 'relative' }}>
-          {status.inError.length > 0 && (
-            <OverviewStatus
-              id={name + '-failure'}
-              namespace={name}
-              status={FAILURE}
-              items={status.inError}
-              targetPage={targetPage}
-            />
-          )}
-          {status.inWarning.length > 0 && (
-            <OverviewStatus
-              id={name + '-degraded'}
-              namespace={name}
-              status={DEGRADED}
-              items={status.inWarning}
-              targetPage={targetPage}
-            />
-          )}
-          {status.inSuccess.length > 0 && (
-            <OverviewStatus
-              id={name + '-healthy'}
-              namespace={name}
-              status={HEALTHY}
-              items={status.inSuccess}
-              targetPage={targetPage}
-            />
-          )}
-        </AggregateStatusNotifications>
+        <div style={{ marginTop: -20, position: 'relative' }}>
+          <Text component={TextVariants.h2} style={{ marginTop: 0 }}>
+            {status.inError.length > 0 && (
+              <OverviewStatus
+                id={name + '-failure'}
+                namespace={name}
+                status={FAILURE}
+                items={status.inError}
+                targetPage={targetPage}
+              />
+            )}
+            {status.inWarning.length > 0 && (
+              <OverviewStatus
+                id={name + '-degraded'}
+                namespace={name}
+                status={DEGRADED}
+                items={status.inWarning}
+                targetPage={targetPage}
+              />
+            )}
+            {status.inSuccess.length > 0 && (
+              <OverviewStatus
+                id={name + '-healthy'}
+                namespace={name}
+                status={HEALTHY}
+                items={status.inSuccess}
+                targetPage={targetPage}
+              />
+            )}
+          </Text>
+        </div>
       </>
     );
   }

@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { AggregateStatusNotification, AggregateStatusNotifications } from 'patternfly-react';
 import { Link } from 'react-router-dom';
+import { Text, TextVariants } from '@patternfly/react-core';
+
 import { DEGRADED, FAILURE, HEALTHY } from '../../types/Health';
 import OverviewStatus from './OverviewStatus';
 import { OverviewType } from './OverviewToolbar';
@@ -14,7 +15,7 @@ type Props = {
   status: NamespaceStatus;
 };
 
-class OverviewCardContent extends React.Component<Props> {
+class OverviewCardContentCompact extends React.Component<Props> {
   render() {
     const targetPage = switchType(this.props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.props.name;
@@ -30,7 +31,7 @@ class OverviewCardContent extends React.Component<Props> {
     return (
       <>
         <Link to={`/${targetPage}?namespaces=${name}`}>{text}</Link>
-        <AggregateStatusNotifications>
+        <Text component={TextVariants.h3} style={{ marginTop: 5 }}>
           {status.inError.length > 0 && (
             <OverviewStatus
               id={name + '-failure'}
@@ -58,11 +59,11 @@ class OverviewCardContent extends React.Component<Props> {
               targetPage={targetPage}
             />
           )}
-          {nbItems === status.notAvailable.length && <AggregateStatusNotification>N/A</AggregateStatusNotification>}
-        </AggregateStatusNotifications>
+          {nbItems === status.notAvailable.length && 'N/A'}
+        </Text>
       </>
     );
   }
 }
 
-export default OverviewCardContent;
+export default OverviewCardContentCompact;
