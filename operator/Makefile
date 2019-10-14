@@ -71,7 +71,7 @@ help: Makefile
 # Requires operator-sdk - download it from https://github.com/operator-framework/operator-sdk/releases
 operator-build: .ensure-operator-sdk-exists
 	@echo Build operator
-	"${OP_SDK}" build "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
+	"${OP_SDK}" build --image-build-args "--pull" "${OPERATOR_IMAGE_NAME}:${OPERATOR_IMAGE_VERSION}"
 
 ## ocp-operator-push: Push the Kiali operator container image to a OCP cluster
 ocp-operator-push:

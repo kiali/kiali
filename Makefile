@@ -200,7 +200,7 @@ swagger-travis: swagger-validate
 ## docker-build-kiali: Build Kiali container image into local docker daemon.
 docker-build-kiali: .prepare-docker-image-files
 	@echo Building container image for Kiali into local docker daemon...
-	docker build -t ${DOCKER_TAG} _output/docker
+	docker build --pull -t ${DOCKER_TAG} _output/docker
 	docker tag ${DOCKER_TAG} ${QUAY_TAG}
 
 ## docker-build-operator: Build Kiali operator container image into local docker daemon.
