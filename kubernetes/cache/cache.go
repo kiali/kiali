@@ -3,6 +3,7 @@ package cache
 import (
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	kube "k8s.io/client-go/kubernetes"
@@ -12,7 +13,7 @@ import (
 	kialiConfig "github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"sync"
+	"github.com/kiali/kiali/models"
 )
 
 // Istio uses caches for pods and controllers.
@@ -29,22 +30,32 @@ type (
 
 		KubernetesCache
 		IstioCache
+		NamespacesCache
 	}
 
 	// This map will store Informers per specific types
 	// i.e. map["Deployment"], map["Service"]
 	typeCache map[string]cache.SharedIndexInformer
 
+	namespaceCache struct {
+		created     time.Time
+		namespaces  []models.Namespace
+		isNamespace map[string]bool
+	}
+
 	kialiCacheImpl struct {
-		istioClient           kubernetes.IstioClient
-		k8sApi                kube.Interface
-		istioNetworkingGetter cache.Getter
-		refreshDuration       time.Duration
-		cacheNamespaces       []string
-		cacheIstioTypes       map[string]bool
-		stopChan              chan struct{}
-		nsCache               map[string]typeCache
-		cacheLock             sync.Mutex
+		istioClient            kubernetes.IstioClient
+		k8sApi                 kube.Interface
+		istioNetworkingGetter  cache.Getter
+		refreshDuration        time.Duration
+		cacheNamespaces        []string
+		cacheIstioTypes        map[string]bool
+		stopChan               chan struct{}
+		nsCache                map[string]typeCache
+		cacheLock              sync.Mutex
+		tokenLock              sync.RWMutex
+		tokenNamespaces        map[string]namespaceCache
+		tokenNamespaceDuration time.Duration
 	}
 )
 
@@ -78,18 +89,21 @@ func NewKialiCache() (KialiCache, error) {
 	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig)
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration)
+	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration)
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	cacheIstioTypes := make(map[string]bool)
 	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
 		cacheIstioTypes[iType] = true
 	}
 	kialiCacheImpl := kialiCacheImpl{
-		istioClient:     *istioClient,
-		refreshDuration: refreshDuration,
-		cacheNamespaces: cacheNamespaces,
-		cacheIstioTypes: cacheIstioTypes,
-		stopChan:        make(chan struct{}),
-		nsCache:         make(map[string]typeCache),
+		istioClient:            *istioClient,
+		refreshDuration:        refreshDuration,
+		cacheNamespaces:        cacheNamespaces,
+		cacheIstioTypes:        cacheIstioTypes,
+		stopChan:               make(chan struct{}),
+		nsCache:                make(map[string]typeCache),
+		tokenNamespaces:        make(map[string]namespaceCache),
+		tokenNamespaceDuration: tokenNamespaceDuration,
 	}
 
 	kialiCacheImpl.k8sApi = istioClient.GetK8sApi()

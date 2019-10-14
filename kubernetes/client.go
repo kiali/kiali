@@ -98,6 +98,7 @@ type IstioClientInterface interface {
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
+	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsMaistraApi() bool
@@ -109,6 +110,7 @@ type IstioClientInterface interface {
 // It hides the way it queries each API
 type IstioClient struct {
 	IstioClientInterface
+	token                    string
 	k8s                      *kube.Clientset
 	istioConfigApi           *rest.RESTClient
 	istioNetworkingApi       *rest.RESTClient
@@ -152,6 +154,11 @@ func (client *IstioClient) GetIstioRbacApi() *rest.RESTClient {
 	return client.istioRbacApi
 }
 
+// GetToken returns the BearerToken used from the config
+func (client *IstioClient) GetToken() string {
+	return client.token
+}
+
 // ConfigClient return a client with the correct configuration
 // Returns configuration if Kiali is in Cluster when InCluster is true
 // Returns configuration if Kiali is not int Cluster when InCluster is false
@@ -184,7 +191,9 @@ func ConfigClient() (*rest.Config, error) {
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
 func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
-	client := IstioClient{}
+	client := IstioClient{
+		token: config.BearerToken,
+	}
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
 
 	k8s, err := kube.NewForConfig(config)

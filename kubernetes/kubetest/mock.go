@@ -406,7 +406,9 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 	return args.Get(0).(*version.Info), args.Error(1)
 }
 
-func (o *K8SClientMock) Stop() {
+func (o *K8SClientMock) GetToken() string {
+	args := o.Called()
+	return args.Get(0).(string)
 }
 
 func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {
