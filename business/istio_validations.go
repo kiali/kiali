@@ -6,6 +6,7 @@ import (
 
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -332,10 +333,8 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		if !in.k8s.IsMaistraApi() {
 			if meshPolicies, iErr := in.k8s.GetMeshPolicies(); iErr == nil {
 				details.MeshPolicies = meshPolicies
-			} else {
-				// This query can return false if user doesn't have cluster permissions
-				// On this case we log internally the error but we return an empty list
-				log.Warningf("GetMeshPolicies failed during a TLS validation. Probably Kiali doesn't have cluster permissions. Error: %s", iErr)
+			} else if !checkForbidden("GetMeshPolicies", iErr, "probably Kiali doesn't have cluster permissions") {
+				errChan <- iErr
 			}
 		} else {
 			// ServiceMeshPolicies are namespace scoped.
@@ -347,10 +346,8 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 			controlPlaneNs := config.Get().IstioNamespace
 			if serviceMeshPolicies, iErr := in.k8s.GetServiceMeshPolicies(controlPlaneNs); iErr == nil {
 				details.ServiceMeshPolicies = serviceMeshPolicies
-			} else {
-				// This query can return false if user can't access to controlPlaneNs
-				// On this case we log internally the error but we return an empty list
-				log.Warningf("GetServiceMeshPolicies failed during a TLS validation. Probably user can't access to %s namespace. Error: %s", controlPlaneNs, iErr)
+			} else if !checkForbidden("GetServiceMeshPolicies", iErr, fmt.Sprintf("probably user can't access to %s namespace", controlPlaneNs)) {
+				errChan <- iErr
 			}
 		}
 	}(mtlsDetails)
@@ -390,6 +387,9 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 	if len(errChan) == 0 {
 		authDetails, err := in.k8s.GetAuthorizationDetails(namespace)
 		if err != nil {
+			if checkForbidden("GetAuthorizationDetails", err, "") {
+				return
+			}
 			select {
 			case errChan <- err:
 			default:
@@ -398,4 +398,18 @@ func (in *IstioValidationsService) fetchAuthorizationDetails(rValue *kubernetes.
 			*rValue = *authDetails
 		}
 	}
+}
+
+func checkForbidden(caller string, err error, context string) bool {
+	// Some checks return 'forbidden' errors if user doesn't have cluster permissions
+	// On this case we log it internally but we don't consider it as an internal error
+	if errors.IsForbidden(err) {
+		if context == "" {
+			log.Warningf("%s validation failed due to insufficient permissions. Error: %s", caller, err)
+		} else {
+			log.Warningf("%s validation failed due to insufficient permissions (%s). Error: %s", caller, context, err)
+		}
+		return true
+	}
+	return false
 }
