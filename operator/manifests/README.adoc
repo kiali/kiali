@@ -19,31 +19,13 @@ If on OKD or OCP, these quick instructions summarize what you have to do. This a
 
 Kiali operator is published in the community and so will appear by default in the OpenShift Catalog. Kiali is also available in OCP installations via the `redhat-operators` OperatorSource. You will need to disable all of the OperatorSources that provide published Kiali operators, otherwise they will conflict with the Kiali operator you are testing.
 
-_OpenShift 4.1 instructions_
-
-Make sure you link:https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md[turn off the CVO] so the OperatorHub is not refreshed.
+Starting in OpenShift 4.2, you disable the sources through the OperatorHub "cluster" resource:
 
 ```
-oc scale --replicas 0 -n openshift-cluster-version deployments/cluster-version-operator
+oc patch operatorhub cluster -n openshift-marketplace -p '{"spec":{"disableAllDefaultSources": true}}' --type=merge
 ```
 
-Now remove the OperatorSources for the different out-of-box sources:
-
-```
-oc delete operatorsources certified-operators -n openshift-marketplace
-oc delete operatorsources community-operators -n openshift-marketplace
-oc delete operatorsources redhat-operators -n openshift-marketplace
-```
-
-You can disable all OperatorSources in your cluster via:
-
-```
-for o in $(oc get operatorsources -n openshift-marketplace -o name); do oc delete $o -n openshift-marketplace ; done
-```
-
-_OpenShift 4.2 instructions_
-
-Disable the OperatorSources through a config object:
+You can disable individual sources via:
 
 ```
 cat <<EOF | oc apply -f -
@@ -53,7 +35,7 @@ metadata:
   name: cluster
   namespace: openshift-marketplace
 spec:
-  disableAllDefaultSources: true
+  disableAllDefaultSources: false
   sources: [
     {
       name: "certified-operators",
@@ -88,26 +70,43 @@ An alternative to getting your token is through the use of the link:https://raw.
 
 ==== Push the Kiali operator manifest bundle to Quay.io
 
+First define what manifest bundles you want to push to your Quay.io app registry:
+
 ```
 OPERATOR_DIR=kiali-community/ # other manifests here are: kiali-upstream/ and kiali-ossm/
 PACKAGE_NAME=kiali # use kiali-ossm if pushing the OCP manifest found in directory kiali-ossm/
-PACKAGE_VERSION=1.0.0 # unrelated to operator version but you can set this to the highest operator version
+PACKAGE_VERSION=1.0.0 # unrelated to operator version, but set this to the highest operator version
+```
 
+If the bundles are already uploaded to the RedHat app repository and you want to use those,
+you do not have to do this next step. But if you plan on building your own images of the operator and want to use those,
+then you have to push them to your Quay.io image repository (e.g. `quay.io/${QUAY_USERNAME}/kiali-operator`).
+If this is the case, you need to point the manifests to your own image repository:
+
+```
+for csv in $(ls ${OPERATOR_DIR}/*/kiali.v*.yaml); do sed -i "s| image: .\+:| image: quay.io/${QUAY_USERNAME}/kiali-operator:|g" ${csv}; done
+```
+
+Now upload the manifest bundles to your Quay.io app registry:
+
+```
 curl --silent -H "Content-Type: application/json" -H "Authorization: ${QUAY_TOKEN}" -XPOST "https://quay.io/cnr/api/v1/packages/${QUAY_USERNAME}/${PACKAGE_NAME}" -d '{"release":"'"${PACKAGE_VERSION}"'","media_type":"helm","blob":"'"$(tar cz ${OPERATOR_DIR} | base64 -w 0 | iconv -t utf-8)"'"}'
 ```
 
-An alternative is to use `operator-courier`:
+An alternative to that above curl command is to use `operator-courier`:
 
 ```
 operator-courier push "$OPERATOR_DIR" "$QUAY_USERNAME" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$QUAY_TOKEN"
 ```
 
-Once this step has been completed, you should see your operator manifest bundle listed in your account's `Applications` tab. If the application has a lock icon, click through to the application and its Settings tab and select to make the application public.
-
+Once this step has been completed, you should see your operator manifest bundle listed in your account's `Applications` tab.
+If the application has a lock icon, it means your application is private and only you can see it or access it.
+You can click through to the application and its Settings tab and select to make the application public. If you do not, you will
+need to tell your OperatorSource what your Quay.io token is - the "Create OperatorSource" step below will tell you how to do that.
 
 ===== Push the other Service Mesh manifest bundles to Quay.io
 
-Because we removed the redhat-operators earlier, you will probably want to publish your own copy of the Service Mesh manifest bundles (Service Mesh, Jaeger, ElasticSearch). Run the script code below to do this. Note that this requires link:https://stedolan.github.io/jq/download/[jq] to be installed.
+Because we disabled/removed the redhat-operators earlier, you will probably want to publish your own copy of the Service Mesh manifest bundles (Service Mesh, Jaeger, ElasticSearch). Run the script code below to do this. Note that this requires link:https://stedolan.github.io/jq/download/[jq] to be installed.
 You do not need to do this if you plan on installing Service Mesh or Istio through some other mechanism other than OLM.
 
 ```
@@ -126,11 +125,14 @@ do
 done
 ```
 
-Once done, your Quay.io account will have its own copies of the Service Mesh operator manifests in your account's `Applications` tab. The first time you do this, the applications will have a lock icon indicating "private" access only - you will need to change them all to allow for public access.
+Once done, your Quay.io account will have its own copies of the Service Mesh operator manifests in your account's `Applications` tab.
+The first time you do this, the applications will have a lock icon indicating your applications are private and only you can see them or access them.
+You can click through to the applications and their Settings tabs and select to make the applications public. If you do not, you will
+need to tell your OperatorSource what your Quay.io token is - the "Create OperatorSource" step below will tell you how to do that.
 
 ==== Create OperatorSource
 
-Tell OpenShift where your operator bundles are.
+If your applications were made public, tell OpenShift where your operator manifest bundles are via this OperatorSource:
 
 ```
 cat <<EOF | oc apply -f -
@@ -148,6 +150,37 @@ spec:
 EOF
 ```
 
+If you left your applications private, then you must create a secret containing your Quay.io token and assign that secret to
+the OperatorSource so OpenShift can authenticate with Quay.io:
+
+```
+cat <<EOF | oc apply -f -
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${QUAY_USERNAME}-operators-secret
+  namespace: openshift-marketplace
+type: Opaque
+stringData:
+  token: "${QUAY_TOKEN}"
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorSource
+metadata:
+  name: ${QUAY_USERNAME}-operators
+  namespace: openshift-marketplace
+spec:
+  type: appregistry
+  endpoint: https://quay.io/cnr
+  registryNamespace: ${QUAY_USERNAME}
+  displayName: "${QUAY_USERNAME}'s Operators"
+  publisher: "${QUAY_USERNAME}"
+  authorizationToken:
+    secretName: ${QUAY_USERNAME}-operators-secret
+EOF
+```
+
 ==== Verify the OperatorSource was processed correctly
 
 ```
@@ -156,31 +189,17 @@ oc get operatorsource ${QUAY_USERNAME}-operators -n openshift-marketplace
 
 _At this point, the operator is ready to be installed. You can do so using the OpenShift UI or follow the rest of the instructions here to do it manually via 'oc' commands._
 
-==== Create CatalogSourceConfig to identify the operator to enable on the cluster.
-
-Create the catalog containing all the packages you want to install. If you are installing all of Service Mesh via OLM, you need all the packages listed. If you plan on installing Service Mesh or Istio outside of OLM, just put the Kiali package name
-in the spec.packages setting.
+==== Set environment variable to declare where the operator will be deployed
 
 ```
-ALL_PACKAGES="${PACKAGE_NAME},elasticsearch-operator,jaeger-product,servicemeshoperator"
 KIALI_OPERATOR_NAMESPACE="openshift-operators"
-cat <<EOF | oc apply -f -
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: kiali
-  namespace: openshift-marketplace
-spec:
-  targetNamespace: ${KIALI_OPERATOR_NAMESPACE}
-  packages: ${ALL_PACKAGES}
-EOF
 ```
 
 ==== Create OperatorGroup
 
 Here's some docs on link:https://github.com/operator-framework/operator-lifecycle-manager/blob/master/doc/design/operatorgroups.md[OperatorGroup] resources.
 
-You do not need to do this if your CatalogSourceConfig has a targetNamespace of `openshift-operators`. In that case, the operator will be considered with an InstallMode of AllNamespaces and will watch all namespaces for a Kiali CR.
+You do not need to do this if you are putting the operator in `openshift-operators`. In that case, the operator will be considered with an InstallMode of AllNamespaces and will watch all namespaces for a Kiali CR.
 
 If you want the operator to watch its own namespace (InstallMode of OwnNamespace), then create an OperatorGroup in the namespace where the operator is to be installed (i.e. in the namespace where the Subscription will be) and set the targetNamespace as the same namespace where the operator is to be installed. Note that targetNamespace is the namespace that will be watched by the operator and can be different from the namespace where the OperatorGroup is (this would be InstallMode of SingleNamespace).
 
@@ -197,13 +216,16 @@ spec:
 EOF
 ```
 
-==== Create Subscription to the operator
+==== Create Subscription to the Kiali operator
 
 Create a Subscription to the version of the Kiali operator you want installed/upgraded.
 The namespace where the Subscription is created is the namespace where the operator is installed.
 
+If you plan on installing Service Mesh, you can skip this step since the Service Mesh operator
+will install the Kiali operator automatically since Kiali is a dependency of Service Mesh.
+
 ```
-KIALI_VERSION="1.0.0"
+KIALI_VERSION=1.0.0
 cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -214,13 +236,13 @@ spec:
   channel: stable
   installPlanApproval: Automatic
   name: ${PACKAGE_NAME}
-  source: kiali
-  sourceNamespace: ${KIALI_OPERATOR_NAMESPACE}
+  source: ${QUAY_USERNAME}-operators
+  sourceNamespace: openshift-marketplace
   startingCSV: kiali-operator.v${KIALI_VERSION}
 EOF
 ```
 
-==== Create Subscription to the Service Mesh operators
+==== Create Subscription to the Service Mesh operator
 
 To install Service Mesh and its other components:
 
@@ -230,38 +252,14 @@ cat <<EOF | oc apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: elasticsearch-operator
-  namespace: openshift-operators
-spec:
-  channel: preview
-  installPlanApproval: Automatic
-  name: elasticsearch-operator
-  source: kiali
-  sourceNamespace: ${KIALI_OPERATOR_NAMESPACE}
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: jaeger-product
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: jaeger-product
-  source: kiali
-  sourceNamespace: ${KIALI_OPERATOR_NAMESPACE}
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
   name: servicemeshoperator
-  namespace: openshift-operators
+  namespace: ${KIALI_OPERATOR_NAMESPACE}
 spec:
   channel: '1.0'
   installPlanApproval: Automatic
   name: servicemeshoperator
-  source: kiali
-  sourceNamespace: ${KIALI_OPERATOR_NAMESPACE}
+  source: ${QUAY_USERNAME}-operators
+  sourceNamespace: openshift-marketplace
 EOF
 ```
 

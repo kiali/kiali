@@ -132,8 +132,11 @@ get_status() {
     check_insecure_registry
     get_console_url
     get_api_server_url
+    get_worker_node_count
     echo "Version from oc command [${OC}]"
     ${OC} version
+    echo "====================================================================="
+    echo "Number of worker nodes in cluster: ${OPENSHIFT_WORKER_NODE_COUNT}"
     echo "====================================================================="
     echo "whoami: $(${OC} whoami)"
     echo "====================================================================="
@@ -258,56 +261,8 @@ print_all_service_endpoints() {
 
 install_service_mesh() {
   local create_smcp="$1"
-  infomsg "Installing the operators..."
+  infomsg "Installing the Service Mesh operator..."
   cat <<EOM | ${OC} apply -f -
----
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: hack-redhat-openshift-operators
-  namespace: openshift-marketplace
-spec:
-  csDisplayName: Hack Red Hat Operators
-  csPublisher: Hack Red Hat
-  packages: 'elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator'
-  targetNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: elasticsearch-operator
-  namespace: openshift-operators
-spec:
-  channel: preview
-  installPlanApproval: Automatic
-  name: elasticsearch-operator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: jaeger-product
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: jaeger-product
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: kiali-ossm
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: kiali-ossm
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -317,13 +272,14 @@ spec:
   channel: '1.0'
   installPlanApproval: Automatic
   name: servicemeshoperator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
 EOM
   if [ "${create_smcp}" == "true" ] ; then
 
     infomsg "Waiting for the operator CRDs to come online"
-    for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io elasticsearches.logging.openshift.io
+    #### TODO: when 1.0.7 is released, add elasticsearches.logging.openshift.io
+    for crd in servicemeshcontrolplanes.maistra.io servicemeshmemberrolls.maistra.io kialis.kiali.io jaegers.jaegertracing.io
     do
       echo -n "Waiting for $crd ..."
       while ! ${OC} get crd $crd > /dev/null 2>&1
@@ -334,9 +290,35 @@ EOM
       echo "done."
     done
 
+
+    infomsg "Waiting for operator Deployments to be created..."
+
+    debug "Waiting for service mesh deployment to be created..."
+    local servicemesh_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep istio)
+    while [ "${servicemesh_deployment}" == "" ]
+    do
+      sleep 2
+      servicemesh_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep istio)
+    done
+
+    debug "Waiting for kiali deployment to be created..."
+    local kiali_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep kiali)
+    while [ "${kiali_deployment}" == "" ]
+    do
+      sleep 2
+      kiali_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep kiali)
+    done
+
+    debug "Waiting for jaeger deployment to be created..."
+    local jaeger_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep jaeger)
+    while [ "${jaeger_deployment}" == "" ]
+    do
+      sleep 2
+      jaeger_deployment=$(${OC} get deployment -n openshift-operators -o name 2>/dev/null | grep jaeger)
+    done
+
     infomsg "Waiting for operator Deployments to start..."
-    #### TODO: when 1.0.7 is released, flip this back to kiali-operator (remove the "2")
-    for op in elasticsearch-operator jaeger-operator kiali-operator2 istio-operator
+    for op in ${servicemesh_deployment} ${kiali_deployment} ${jaeger_deployment}
     do
       echo -n "Waiting for ${op} to be ready..."
       readyReplicas="0"
@@ -344,7 +326,7 @@ EOM
       do
         sleep 1
         echo -n '.'
-        readyReplicas="$(${OC} get deployment ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+        readyReplicas="$(${OC} get ${op} -n openshift-operators -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
       done
       echo "done."
     done
@@ -366,12 +348,52 @@ EOM
   fi
 }
 
+get_worker_node_count() {
+  OPENSHIFT_WORKER_NODE_COUNT="$(${OC} get nodes 2>/dev/null | grep worker | wc -l)"
+}
+
+scale_worker_nodes() {
+  if [ -z "${1}" ]; then
+    infomsg "ERROR: did not provide the number of worker nodes that are desired"
+    return
+  fi
+
+  local desired_worker_nodes=${1}
+  get_worker_node_count
+  if [ "${OPENSHIFT_WORKER_NODE_COUNT}" -ge "${desired_worker_nodes}" ]; then
+    infomsg "Cluster has [${OPENSHIFT_WORKER_NODE_COUNT}] worker nodes which is enough to satify the requested [${desired_worker_nodes}] worker nodes. No new nodes will be created."
+  else
+    local additional_worker_nodes_needed=$(expr ${desired_worker_nodes} - ${OPENSHIFT_WORKER_NODE_COUNT})
+    infomsg "Cluster has [${OPENSHIFT_WORKER_NODE_COUNT}] worker nodes but [${desired_worker_nodes}] worker nodes are desired. [${additional_worker_nodes_needed}] new nodes will be created."
+    if [ "${additional_worker_nodes_needed}" -gt "9" ]; then
+      infomsg "WARNING: This hack script will not request more than 9 additional new nodes. You must do so manually."
+      return
+    fi
+    local machineset=$(${OC} get machinesets -n openshift-machine-api -o name 2>/dev/null | head -n 1)
+    if [ -z "${machineset}" ]; then
+      infomsg "WARNING: Cannot determine a valid machine set - cannot create new nodes"
+      return
+    fi
+    local current_replicas=$(${OC} get ${machineset} -n openshift-machine-api -o jsonpath='{.spec.replicas}')
+    local additional_replicas_needed=$(expr ${current_replicas} + ${additional_worker_nodes_needed})
+    debug "Will scale the machine set [${machineset}] from [${current_replicas}] to [${additional_replicas_needed}] replicas"
+    if [ -z "${additional_replicas_needed}" ]; then
+      infomsg "WARNING: Cannot determine how many additional replicas are needed - cannot create new nodes"
+      return
+    fi
+    ${OC} scale --replicas=${additional_replicas_needed} ${machineset} -n openshift-machine-api
+  fi
+}
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of OpenShift to be downloaded
-DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.1.14"
+DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.2.0"
+
+# The default number of worker nodes that should be in the cluster.
+DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES="4"
 
 # The default domain for the AWS OpenShift cluster
 DEFAULT_AWS_BASE_DOMAIN="devcluster.openshift.com"
@@ -451,6 +473,10 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_DOWNLOAD_VERSION="$2"
       shift;shift
       ;;
+    -rn|--required-nodes)
+      OPENSHIFT_REQUIRED_WORKER_NODES="$2"
+      shift;shift
+      ;;
     -ie|--istio-enabled)
       ISTIO_ENABLED="$2"
       shift;shift
@@ -500,6 +526,11 @@ Valid options:
   -ov|--openshift-version <version>
       The version of OpenShift to use.
       Default: ${DEFAULT_OPENSHIFT_DOWNLOAD_VERSION}
+  -rn|--required-nodes <node count>
+      The number of required worker nodes in the cluster. If the number of worker nodes in the cluster is less than
+      the given value, new nodes will be requested to bring it up to the number of nodes specified by the given value.
+      Default: ${DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES}
+      Used only for the 'create' command.
   -h|--help : this message
   -ie|--istio-enabled (true|false)
       When set to true, Maistra will be installed in OpenShift.
@@ -587,6 +618,9 @@ AWS_BASE_DOMAIN="${AWS_BASE_DOMAIN:-${DEFAULT_AWS_BASE_DOMAIN}}"
 AWS_CLUSTER_NAME="${AWS_CLUSTER_NAME:-${DEFAULT_AWS_CLUSTER_NAME}}"
 AWS_REGION="${AWS_REGION:-${DEFAULT_AWS_REGION}}"
 
+# The minimum number of worker nodes the cluster needs to have
+OPENSHIFT_REQUIRED_WORKER_NODES=${OPENSHIFT_REQUIRED_WORKER_NODES:-${DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES}}
+
 #--------------------------------------------------------------
 # Variables below have values derived from the variables above.
 # These variables below are not meant for users to change.
@@ -642,21 +676,24 @@ debug "ENVIRONMENT:
   OPENSHIFT_INSTALL_PATH=$OPENSHIFT_INSTALL_PATH
   OPENSHIFT_INSTALLER_DOWNLOAD_LOCATION=$OPENSHIFT_INSTALLER_DOWNLOAD_LOCATION
   OPENSHIFT_INSTALLER_EXE=$OPENSHIFT_INSTALLER_EXE
+  OPENSHIFT_REQUIRED_WORKER_NODES=$OPENSHIFT_REQUIRED_WORKER_NODES
   SEDOPTIONS=$SEDOPTIONS
   "
 
 # Download the installer if we do not have it yet
 if [ -f "${OPENSHIFT_INSTALLER_EXE}" ]; then
   _existingVersion=$(${OPENSHIFT_INSTALLER_EXE} version | head -n 1 | sed ${SEDOPTIONS} 's/^.*v\([0-9.]*\).*/\1/')
-  if [ "${_existingVersion}" != "${OPENSHIFT_DOWNLOAD_VERSION}" ]; then
+  _desiredVersion=$(echo -n ${OPENSHIFT_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^\([0-9.]*\).*/\1/')
+  if [ "${_existingVersion}" != "${_desiredVersion}" ]; then
     infomsg "===== WARNING ====="
     infomsg "You already have the OpenShift installer but it does not match the version you want."
     infomsg "This appears incorrect: ${OPENSHIFT_INSTALLER_EXE}"
     infomsg "The version of the installer is: ${_existingVersion}"
-    infomsg "You asked for version: ${OPENSHIFT_DOWNLOAD_VERSION}"
+    infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
     infomsg "===== WARNING ====="
     exit 1
   fi
+  debug "Existing OpenShift installer version (${_existingVersion}) matches the desired version (${_desiredVersion}; download version ${OPENSHIFT_DOWNLOAD_VERSION})"
 else
   infomsg "Downloading OpenShift installer to ${OPENSHIFT_DOWNLOAD_PATH}"
   get_downloader
@@ -685,16 +722,18 @@ debug "$(${OPENSHIFT_INSTALLER_EXE} version)"
 
 # Download the client tarball if we do not have it yet
 if [ -f "${OC}" ]; then
-  _existingVersion=$(${OC} version --short --client | head -n 1 | sed ${SEDOPTIONS} 's/^.*v\([0-9.]*\).*/\1/')
-  if [ "${_existingVersion}" != "${OPENSHIFT_DOWNLOAD_VERSION}" ]; then
+  _existingVersion=$(${OC} version --client | head -n 1 | sed ${SEDOPTIONS} 's/^[^0-9]*\([0-9.]*\).*/\1/')
+  _desiredVersion=$(echo -n ${OPENSHIFT_DOWNLOAD_VERSION} | sed ${SEDOPTIONS} 's/^\([0-9.]*\).*/\1/')
+  if [ "${_existingVersion}" != "${_desiredVersion}" ]; then
     infomsg "===== WARNING ====="
     infomsg "You already have the OpenShift oc client but it does not match the version you want."
     infomsg "This appears incorrect: ${OC}"
     infomsg "The version of the oc client is: ${_existingVersion}"
-    infomsg "You asked for version: ${OPENSHIFT_DOWNLOAD_VERSION}"
+    infomsg "You asked for version: ${_desiredVersion} (${OPENSHIFT_DOWNLOAD_VERSION})"
     infomsg "===== WARNING ====="
     exit 1
   fi
+  debug "Existing OpenShift oc client version (${_existingVersion}) matches the desired version (${_desiredVersion}; download version ${OPENSHIFT_DOWNLOAD_VERSION})"
 else
   infomsg "Downloading OpenShift oc client to ${OPENSHIFT_DOWNLOAD_PATH}"
   get_downloader
@@ -839,6 +878,9 @@ EOM
     debug "The image registry operator has exposed the internal image registry"
   fi
 
+  # Ask for enough nodes that will be required for Maistra/Service Mesh/Kiali to run
+  scale_worker_nodes ${OPENSHIFT_REQUIRED_WORKER_NODES}
+
   # Install Maistra
   ${OC} get -n istio-system ServiceMeshControlPlane > /dev/null 2>&1
   if [ "$?" != "0" ]; then
@@ -930,58 +972,28 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
   ${OC} delete namespace istio-system
 
   # clean up OLM Subscriptions
-  for sub in servicemeshoperator kiali-ossm jaeger-product elasticsearch-operator
+  for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep -E 'servicemesh|kiali|jaeger|elasticsearch')
   do
-    ${OC} delete subscription -n openshift-operators ${sub}
+    ${OC} delete -n openshift-operators ${sub}
   done
 
-  # clean up OLM CatalogSourceConfig
-  ${OC} delete catalogsourceconfig -n openshift-marketplace hack-redhat-openshift-operators
-
-  # clean up OLM CSVs for all the different operators
-  for csv in $(${OC} get csv -n openshift-operators -o name | grep servicemesh)
+  # clean up OLM CSVs for all the different operators which deletes the operators and their related resources
+  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep -E 'servicemesh|kiali|jaeger|elasticsearch')
   do
-    ${OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${OC} get csv -n openshift-operators -o name | grep kiali)
-  do
-    ${OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${OC} get csv -n openshift-operators -o name | grep jaeger)
-  do
-    ${OC} delete -n openshift-operators ${csv}
-  done
-  for csv in $(${OC} get csv -n openshift-operators -o name | grep elasticsearch)
-  do
-    ${OC} delete -n openshift-operators ${csv}
+    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
 
-  # These should have been deleted when the CSV was removed but for some reason are not. Purge them now
-  for r in $(${OC} get clusterrolebindings -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  # Delete Istio-CNI resources that are getting left behind for some reason
+  for r in \
+    $(${OC} get clusterrolebindings -o name | grep -E 'istio') \
+    $(${OC} get clusterroles -o name | grep -E 'istio')
   do
     ${OC} delete ${r}
   done
-  for r in $(${OC} get clusterroles -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${OC} delete ${r}
-  done
-  for r in $(${OC} get rolebindings -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get roles -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get sa -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get configmaps -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get secrets -n openshift-operators -o name | grep -E 'elastic|jaeger|kiali|servicemesh|istio')
+  for r in \
+    $(${OC} get sa -n openshift-operators -o name | grep -E 'istio') \
+    $(${OC} get configmaps -n openshift-operators -o name | grep -E 'istio') \
+    $(${OC} get secrets -n openshift-operators -o name | grep -E 'istio')
   do
     ${OC} delete -n openshift-operators ${r}
   done
@@ -1015,32 +1027,33 @@ elif [ "$_CMD" = "bi-install" ]; then
 
 elif [ "$_CMD" = "k-uninstall" ]; then
 
-  ${OC} delete subscription -n openshift-operators kiali-ossm
-  for csv in $(${OC} get csv -n openshift-operators -o name | grep kiali)
+  # Tell ServiceMesh to disable Kiali so it doesn't try to manage it
+  _smcp=$(${OC} get smcp -n istio-system -o name 2>/dev/null)
+  if [ "${_smcp}" != "" ]; then
+    debug "Telling ServiceMesh to disable Kiali"
+    ${OC} patch ${_smcp} -n istio-system -p '{"spec":{"istio":{"kiali":{"enabled": "false"}}}}' --type=merge
+  fi
+
+  # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
+  _kialicr=$(${OC} get kiali -n istio-system -o name 2>/dev/null)
+  if [ "${_kialicr}" != "" ]; then
+    debug "Deleting the Kiali CR"
+    ${OC} delete ${_kialicr} -n istio-system
+  fi
+
+  # clean up OLM subscriptions
+  for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep kiali)
   do
-    ${OC} delete -n openshift-operators ${csv}
+    ${OC} delete -n openshift-operators ${sub}
   done
-  for r in $(${OC} get clusterrolebindings -o name | grep -E 'kiali')
+
+  # clean up OLM CSVs which deletes the operator and its related resources
+  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed ${SEDOPTIONS} 's/  */:/g' | grep kiali)
   do
-    ${OC} delete ${r}
+    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
-  for r in $(${OC} get clusterroles -o name | grep -E 'kiali')
-  do
-    ${OC} delete ${r}
-  done
-  for r in $(${OC} get rolebindings -n openshift-operators -o name | grep -E 'kiali')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get roles -n openshift-operators -o name | grep -E 'kiali')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  for r in $(${OC} get sa -n openshift-operators -o name | grep -E 'kiali')
-  do
-    ${OC} delete -n openshift-operators ${r}
-  done
-  ${OC} patch kiali kiali -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge ; true
+
+  # clean up additional leftover items
   ${OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${OC} delete
 
 else
