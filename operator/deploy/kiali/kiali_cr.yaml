@@ -400,10 +400,6 @@ spec:
 #    ---
 #    burst: 200
 #
-# The QPS value of the Kubernetes client.
-#    ---
-#    qps: 175
-#
 # Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
 # Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
 #    ---
@@ -413,6 +409,36 @@ spec:
 # Only used when cache_enabled is true.
 #    ---
 #    cache_duration: 300000000
+#
+# Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
+# on this list of Istio types. Other Istio types are not yet supported.
+#    ---
+#    cache_istio_types:
+#    - "VirtualService"
+#    - "DestinationRule"
+#    - "Gateway"
+#    - "ServiceEntry"
+#
+# List of namespaces or regex defining namespaces to include in a cache.
+#    ---
+#    cache_namespaces:
+#    - "bookinfo"
+#
+# List of controllers that won't be used for Workload calculation.
+# Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers.
+# Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
+# can be skipped from Kiali workloads query if they are present in this list.
+#    ---
+#    excluded_workloads:
+#    - "CronJob"
+#    - "Job"
+#    - "ReplicationController"
+#    - "StatefulSet"
+#
+# The QPS value of the Kubernetes client.
+#    ---
+#    qps: 175
+#
 
 ##########
 #  ---
