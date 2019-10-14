@@ -3,7 +3,7 @@ import:
 - package: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - package: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: v2.2.4
 - package: github.com/gorilla/mux
   version: ^1.6.1
 - package: k8s.io/client-go

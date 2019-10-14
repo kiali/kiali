@@ -1,5 +1,5 @@
-hash: 0eb5cc51418f24f3270a506b36478148093a02df626dd9c16da461288e50e243
-updated: 2019-04-04T14:46:48.080783237+02:00
+hash: d687b2eda06507de61188646cb9a8b70e3b56147d23b893f95067bdd59c2e4df
+updated: 2019-10-08T15:47:44.265072109-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 3a771d992973f24aa725d07868b467d1ddfceafb
@@ -39,7 +39,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gorilla/mux
-  version: a7962380ca08b5a188038c69871b8d3fbdf31e89
+  version: 00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15
 - name: github.com/gregjones/httpcache
   version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
@@ -65,6 +65,7 @@ imports:
   subpackages:
   - apps/v1
   - project/v1
+  - route/v1
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/pmezard/go-difflib
@@ -129,7 +130,7 @@ imports:
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: f221b8435cfb71e54062f6c6e99e9ade30b124d5
 - name: k8s.io/api
   version: 2d6f90ab1293a1fb871cf149423ebb72aa7423aa
   subpackages:
