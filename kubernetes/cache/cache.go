@@ -41,7 +41,7 @@ type (
 		istioNetworkingGetter cache.Getter
 		refreshDuration       time.Duration
 		cacheNamespaces       []string
-		cacheIstioTypes       []string
+		cacheIstioTypes       map[string]bool
 		stopChan              chan struct{}
 		nsCache               map[string]typeCache
 		cacheLock             sync.Mutex
@@ -79,7 +79,10 @@ func NewKialiCache() (KialiCache, error) {
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration)
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
-	cacheIstioTypes := kConfig.KubernetesConfig.CacheIstioTypes
+	cacheIstioTypes := make(map[string]bool)
+	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
+		cacheIstioTypes[iType] = true
+	}
 	kialiCacheImpl := kialiCacheImpl{
 		istioClient:     *istioClient,
 		refreshDuration: refreshDuration,

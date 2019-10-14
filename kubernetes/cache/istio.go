@@ -19,13 +19,8 @@ type (
 )
 
 func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
-	// This list can be populated from configuration in the future
-	for _, r := range c.cacheIstioTypes {
-		if r == resource {
-			return true
-		}
-	}
-	return false
+	_, exist := c.cacheIstioTypes[resource]
+	return exist
 }
 
 func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCache) {
