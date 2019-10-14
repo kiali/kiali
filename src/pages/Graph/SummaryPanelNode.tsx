@@ -36,6 +36,7 @@ import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
 import { icons } from '../../config/Icons';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { PopoverPosition } from '@patternfly/react-core';
 
 type SummaryPanelStateType = {
   loading: boolean;
@@ -305,7 +306,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
                 id="graph-health-indicator"
                 mode={DisplayMode.SMALL}
                 health={this.state.health}
-                tooltipPlacement="left"
+                tooltipPlacement={PopoverPosition.left}
               />
             )
           )}

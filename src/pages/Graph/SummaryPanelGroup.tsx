@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Badge } from '@patternfly/react-core';
+import { Badge, PopoverPosition } from '@patternfly/react-core';
 import { Icon } from 'patternfly-react';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
@@ -116,7 +116,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
                 id="graph-health-indicator"
                 mode={DisplayMode.SMALL}
                 health={this.state.health}
-                tooltipPlacement="left"
+                tooltipPlacement={PopoverPosition.left}
               />
             )
           )}

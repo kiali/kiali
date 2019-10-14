@@ -1,102 +1,117 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`HealthIndicator renders healthy 1`] = `
-<OverlayTrigger
-  defaultOverlayShown={false}
-  overlay={
-    <Popover
-      bsClass="popover"
-      id="svc-health-tooltip"
-      placement="right"
-      title="Healthy"
-    >
-      <HealthDetails
-        health={
-          AppHealth {
-            "items": Array [
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "class": "icon-healthy",
-                      "color": "var(--pf-global--success-color--100)",
-                      "icon": [Function],
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "A: 1 / 1",
+<Popover
+  appendTo={[Function]}
+  aria-label="Health indicator"
+  bodyContent={
+    <HealthDetails
+      health={
+        AppHealth {
+          "items": Array [
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "class": "icon-healthy",
+                    "color": "var(--pf-global--success-color--100)",
+                    "icon": [Function],
+                    "name": "Healthy",
+                    "priority": 1,
                   },
-                  Object {
-                    "status": Object {
-                      "class": "icon-healthy",
-                      "color": "var(--pf-global--success-color--100)",
-                      "icon": [Function],
-                      "name": "Healthy",
-                      "priority": 1,
-                    },
-                    "text": "B: 2 / 2",
-                  },
-                ],
-                "status": Object {
-                  "class": "icon-healthy",
-                  "color": "var(--pf-global--success-color--100)",
-                  "icon": [Function],
-                  "name": "Healthy",
-                  "priority": 1,
+                  "text": "A: 1 / 1",
                 },
-                "title": "Pods Status",
-              },
-              Object {
-                "children": Array [
-                  Object {
-                    "status": Object {
-                      "class": "icon-na",
-                      "color": "#72767b",
-                      "icon": [Function],
-                      "name": "No health information",
-                      "priority": 0,
-                    },
-                    "text": "Inbound: No requests",
+                Object {
+                  "status": Object {
+                    "class": "icon-healthy",
+                    "color": "var(--pf-global--success-color--100)",
+                    "icon": [Function],
+                    "name": "Healthy",
+                    "priority": 1,
                   },
-                  Object {
-                    "status": Object {
-                      "class": "icon-na",
-                      "color": "#72767b",
-                      "icon": [Function],
-                      "name": "No health information",
-                      "priority": 0,
-                    },
-                    "text": "Outbound: No requests",
-                  },
-                ],
-                "status": Object {
-                  "class": "icon-na",
-                  "color": "#72767b",
-                  "icon": [Function],
-                  "name": "No health information",
-                  "priority": 0,
+                  "text": "B: 2 / 2",
                 },
-                "title": "Error Rate over last 10m",
+              ],
+              "status": Object {
+                "class": "icon-healthy",
+                "color": "var(--pf-global--success-color--100)",
+                "icon": [Function],
+                "name": "Healthy",
+                "priority": 1,
               },
-            ],
-            "requests": Object {
-              "errorRatio": -1,
-              "inboundErrorRatio": -1,
-              "outboundErrorRatio": -1,
+              "title": "Pods Status",
             },
-          }
+            Object {
+              "children": Array [
+                Object {
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#72767b",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "text": "Inbound: No requests",
+                },
+                Object {
+                  "status": Object {
+                    "class": "icon-na",
+                    "color": "#72767b",
+                    "icon": [Function],
+                    "name": "No health information",
+                    "priority": 0,
+                  },
+                  "text": "Outbound: No requests",
+                },
+              ],
+              "status": Object {
+                "class": "icon-na",
+                "color": "#72767b",
+                "icon": [Function],
+                "name": "No health information",
+                "priority": 0,
+              },
+              "title": "Error Rate over last 10m",
+            },
+          ],
+          "requests": Object {
+            "errorRatio": -1,
+            "inboundErrorRatio": -1,
+            "outboundErrorRatio": -1,
+          },
         }
-      />
-    </Popover>
+      }
+    />
   }
-  placement="right"
-  rootClose={false}
-  trigger={
+  boundary="window"
+  className=""
+  closeBtnAriaLabel="Close"
+  distance={25}
+  enableFlip={true}
+  flipBehavior={
     Array [
-      "hover",
-      "focus",
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top",
+      "right",
+      "bottom",
     ]
   }
+  footerContent={null}
+  headerContent="Healthy"
+  hideOnOutsideClick={true}
+  isVisible={null}
+  maxWidth="calc(2rem + 18.75rem)"
+  onHidden={[Function]}
+  onHide={[Function]}
+  onMount={[Function]}
+  onShow={[Function]}
+  onShown={[Function]}
+  position="auto"
+  shouldClose={[Function]}
+  zIndex={9999}
 >
   <CheckCircleIcon
     className="icon-healthy"
@@ -105,5 +120,5 @@ exports[`HealthIndicator renders healthy 1`] = `
     size="sm"
     title={null}
   />
-</OverlayTrigger>
+</Popover>
 `;

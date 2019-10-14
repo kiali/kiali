@@ -111,7 +111,6 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
             <HealthIndicator
               id="reviews"
               mode={0}
-              tooltipPlacement="left"
             />
           </StackItem>
         </Stack>

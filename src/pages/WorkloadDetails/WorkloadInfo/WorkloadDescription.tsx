@@ -77,12 +77,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
               <div className="progress-description">
                 <strong>Health</strong>
               </div>
-              <HealthIndicator
-                id={workload.name}
-                health={this.props.health}
-                mode={DisplayMode.LARGE}
-                tooltipPlacement="left"
-              />
+              <HealthIndicator id={workload.name} health={this.props.health} mode={DisplayMode.LARGE} />
             </Col>
           </Row>
         </div>
