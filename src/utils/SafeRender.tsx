@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Icon } from 'patternfly-react';
+import { ErrorCircleOIcon } from '@patternfly/react-icons';
 
 export const canRender = (value: any): boolean => {
   return typeof value !== 'object';
@@ -7,10 +7,9 @@ export const canRender = (value: any): boolean => {
 
 export const renderErrorMessage = (message: string): any => {
   return (
-    <Icon type="pf" name="error">
-      {' '}
-      {message + ' '}
-    </Icon>
+    <>
+      <ErrorCircleOIcon /> {message + ' '}
+    </>
   );
 };
 
