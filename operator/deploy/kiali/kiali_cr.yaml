@@ -362,6 +362,7 @@ spec:
 # enabled: When true, Kiali shows Jaeger and will attempt to autodiscover it.
 # in_cluster_url: Set URL for in-cluster access. Example: "http://jaeger-query.istio-system:16686".
 # namespace: The Kubernetes namespace that holds the Tracing service (if empty, assumes the same value as deployment.namespace)
+# namespace_selector: Kiali use this boolean to look traces with namespace selector : service.namespace. Default: true
 # port: The kubernetes port where the tracing service is mount. Default port is Jaeger port, 16686. Autodiscovered when service is not specified.
 # service: The Kubernetes service name for tracing. Kiali uses this to connect within the cluster to Jaeger.
 # url: The URL that Kiali uses when integrating with Tracing. This URL must be accessible to clients external to
@@ -380,6 +381,7 @@ spec:
 #      enabled: true
 #      in_cluster_url: ""
 #      namespace: ""
+#      namespace_selector: true
 #      port: 16686
 #      service : ""
 #      url: ""

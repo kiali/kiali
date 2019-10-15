@@ -64,7 +64,8 @@ func getJaegerInfo(requestToken string) (*models.JaegerInfo, int, error) {
 	}
 
 	info := &models.JaegerInfo{
-		URL: externalUrl,
+		URL:               externalUrl,
+		NamespaceSelector: jaegerConfig.NamespaceSelector,
 	}
 
 	return info, http.StatusOK, nil

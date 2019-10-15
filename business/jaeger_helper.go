@@ -51,7 +51,11 @@ func getErrorTracesFromJaeger(namespace string, service string, requestToken str
 		} else {
 			q := u.Query()
 			q.Set("lookback", "1h")
-			q.Set("service", fmt.Sprintf("%s.%s", service, namespace))
+			queryService := fmt.Sprintf("%s.%s", service, namespace)
+			if !config.Get().ExternalServices.Tracing.NamespaceSelector {
+				queryService = service
+			}
+			q.Set("service", queryService)
 			t := time.Now().UnixNano() / 1000
 			q.Set("start", fmt.Sprintf("%d", t-60*60*1000*1000))
 			q.Set("end", fmt.Sprintf("%d", t))

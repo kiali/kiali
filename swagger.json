@@ -3932,6 +3932,10 @@
       "description": "JaegerInfo provides information to access Jaeger UI",
       "type": "object",
       "properties": {
+        "namespace_selector": {
+          "type": "boolean",
+          "x-go-name": "NamespaceSelector"
+        },
         "url": {
           "type": "string",
           "x-go-name": "URL"
