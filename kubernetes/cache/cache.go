@@ -95,6 +95,7 @@ func NewKialiCache() (KialiCache, error) {
 	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
 		cacheIstioTypes[iType] = true
 	}
+	log.Tracef("[Kiali Cache] cacheIstioTypes %v", cacheIstioTypes)
 	kialiCacheImpl := kialiCacheImpl{
 		istioClient:            *istioClient,
 		refreshDuration:        refreshDuration,

@@ -410,7 +410,7 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, ".*")
 	c.KubernetesConfig.CacheIstioTypes = getDefaultStringArray(EnvKubernetesCacheIstioTypes, "VirtualService,DestinationRule,Gateway,ServiceEntry")
 	c.KubernetesConfig.CacheTokenNamespaceDuration = getDefaultInt64(EnvKubernetesCacheTokeNamespaceDuration, time.Duration(10*time.Second).Nanoseconds())
-	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,Job,ReplicationController,StatefulSet")
+	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,DeploymentConfig,Job,ReplicationController,StatefulSet")
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.API.Namespaces.Exclude {

@@ -136,6 +136,7 @@ kiali_defaults:
     cache_duration: 300000000
     excluded_workloads:
     - "CronJob"
+    - "DeploymentConfig"
     - "Job"
     - "ReplicationController"
     - "StatefulSet"
