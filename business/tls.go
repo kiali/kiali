@@ -108,8 +108,12 @@ func (in *TLSService) getAllDestinationRules(namespaces []string) ([]kubernetes.
 			defer wg.Done()
 			var drs []kubernetes.IstioObject
 			var err error
+			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckIstioResource("DestinationRule") && kialiCache.CheckNamespace(ns) {
-				drs, err = kialiCache.GetIstioResources("DestinationRule", ns)
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+					drs, err = kialiCache.GetIstioResources("DestinationRule", ns)
+				}
 			} else {
 				drs, err = in.k8s.GetDestinationRules(ns, "")
 			}

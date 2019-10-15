@@ -66,7 +66,7 @@ func (in *WorkloadService) GetWorkloadList(namespace string) (models.WorkloadLis
 		Namespace: models.Namespace{Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads: []models.WorkloadListItem{},
 	}
-	ws, err := fetchWorkloads(in.k8s, namespace, "")
+	ws, err := fetchWorkloads(in.businessLayer, namespace, "")
 	if err != nil {
 		return *workloadList, err
 	}
@@ -87,7 +87,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "WorkloadService", "GetWorkload")
 	defer promtimer.ObserveNow(&err)
 
-	workload, err := fetchWorkload(in.k8s, namespace, workloadName)
+	workload, err := fetchWorkload(in.businessLayer, namespace, workloadName)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +107,12 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 	if includeServices {
 		var services []core_v1.Service
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			services, err = kialiCache.GetServices(namespace, workload.Labels)
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				services, err = kialiCache.GetServices(namespace, workload.Labels)
+			}
 		} else {
 			services, err = in.k8s.GetServices(namespace, workload.Labels)
 		}
@@ -130,8 +134,12 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	defer promtimer.ObserveNow(&err)
 
 	var ps []core_v1.Pod
+	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-		ps, err = kialiCache.GetPods(namespace, labelSelector)
+		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+		if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			ps, err = kialiCache.GetPods(namespace, labelSelector)
+		}
 	} else {
 		ps, err = in.k8s.GetPods(namespace, labelSelector)
 	}
@@ -162,7 +170,7 @@ func (in *WorkloadService) GetPodLogs(namespace, name string, opts *core_v1.PodL
 	return in.k8s.GetPodLogs(namespace, name, opts)
 }
 
-func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, labelSelector string) (models.Workloads, error) {
+func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (models.Workloads, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep []apps_v1.Deployment
@@ -184,7 +192,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			pods, err = kialiCache.GetPods(namespace, labelSelector)
 		} else {
-			pods, err = k8s.GetPods(namespace, labelSelector)
+			pods, err = layer.k8s.GetPods(namespace, labelSelector)
 		}
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
@@ -195,10 +203,14 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			dep, err = kialiCache.GetDeployments(namespace)
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+				dep, err = kialiCache.GetDeployments(namespace)
+			}
 		} else {
-			dep, err = k8s.GetDeployments(namespace)
+			dep, err = layer.k8s.GetDeployments(namespace)
 		}
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
@@ -209,10 +221,14 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+				repset, err = kialiCache.GetReplicaSets(namespace)
+			}
 		} else {
-			repset, err = k8s.GetReplicaSets(namespace)
+			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
@@ -224,7 +240,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("ReplicationController") {
-			repcon, err = k8s.GetReplicationControllers(namespace)
+			repcon, err = layer.k8s.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -235,8 +251,8 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	go func() {
 		defer wg.Done()
 		var err error
-		if k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
-			depcon, err = k8s.GetDeploymentConfigs(namespace)
+		if layer.k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
+			depcon, err = layer.k8s.GetDeploymentConfigs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -248,7 +264,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("StatefulSet") {
-			fulset, err = k8s.GetStatefulSets(namespace)
+			fulset, err = layer.k8s.GetStatefulSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -260,7 +276,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("CronJob") {
-			conjbs, err = k8s.GetCronJobs(namespace)
+			conjbs, err = layer.k8s.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -272,7 +288,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("Job") {
-			jbs, err = k8s.GetJobs(namespace)
+			jbs, err = layer.k8s.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -631,7 +647,7 @@ func fetchWorkloads(k8s kubernetes.IstioClientInterface, namespace string, label
 	return ws, nil
 }
 
-func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, workloadName string) (*models.Workload, error) {
+func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models.Workload, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep *apps_v1.Deployment
@@ -653,10 +669,15 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			pods, err = kialiCache.GetPods(namespace, "")
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+				pods, err = kialiCache.GetPods(namespace, "")
+			}
+
 		} else {
-			pods, err = k8s.GetPods(namespace, "")
+			pods, err = layer.k8s.GetPods(namespace, "")
 		}
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err)
@@ -667,7 +688,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		dep, err = k8s.GetDeployment(namespace, workloadName)
+		dep, err = layer.k8s.GetDeployment(namespace, workloadName)
 		if err != nil {
 			dep = nil
 		}
@@ -676,10 +697,14 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			repset, err = kialiCache.GetReplicaSets(namespace)
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+				repset, err = kialiCache.GetReplicaSets(namespace)
+			}
 		} else {
-			repset, err = k8s.GetReplicaSets(namespace)
+			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
 		if err != nil {
 			log.Errorf("Error fetching ReplicaSets per namespace %s: %s", namespace, err)
@@ -691,7 +716,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("ReplicationController") {
-			repcon, err = k8s.GetReplicationControllers(namespace)
+			repcon, err = layer.k8s.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -702,8 +727,8 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 	go func() {
 		defer wg.Done()
 		var err error
-		if k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
-			depcon, err = k8s.GetDeploymentConfig(namespace, workloadName)
+		if layer.k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
+			depcon, err = layer.k8s.GetDeploymentConfig(namespace, workloadName)
 			if err != nil {
 				depcon = nil
 			}
@@ -714,7 +739,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("StatefulSet") {
-			fulset, err = k8s.GetStatefulSet(namespace, workloadName)
+			fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
 			if err != nil {
 				fulset = nil
 			}
@@ -725,7 +750,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("CronJob") {
-			conjbs, err = k8s.GetCronJobs(namespace)
+			conjbs, err = layer.k8s.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -737,7 +762,7 @@ func fetchWorkload(k8s kubernetes.IstioClientInterface, namespace string, worklo
 		defer wg.Done()
 		var err error
 		if isWorkloadIncluded("Job") {
-			jbs, err = k8s.GetJobs(namespace)
+			jbs, err = layer.k8s.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err

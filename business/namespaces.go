@@ -115,6 +115,12 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespace")
 	defer promtimer.ObserveNow(&err)
 
+	if kialiCache != nil {
+		if ns := kialiCache.GetNamespace(in.k8s.GetToken(), namespace); ns != nil {
+			return ns, nil
+		}
+	}
+
 	if in.hasProjects {
 		var project *osproject_v1.Project
 		project, err = in.k8s.GetProject(namespace)

@@ -17,8 +17,9 @@ import (
 
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
 type AppService struct {
-	prom prometheus.ClientInterface
-	k8s  kubernetes.IstioClientInterface
+	prom          prometheus.ClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
@@ -31,7 +32,7 @@ func (in *AppService) GetAppList(namespace string) (models.AppList, error) {
 		Namespace: models.Namespace{Name: namespace},
 		Apps:      []models.AppListItem{},
 	}
-	apps, err := fetchNamespaceApps(in.k8s, namespace, "")
+	apps, err := fetchNamespaceApps(in.businessLayer, namespace, "")
 	if err != nil {
 		return *appList, err
 	}
@@ -57,7 +58,7 @@ func (in *AppService) GetApp(namespace string, appName string) (models.App, erro
 	defer promtimer.ObserveNow(&err)
 
 	appInstance := &models.App{Namespace: models.Namespace{Name: namespace}, Name: appName}
-	namespaceApps, err := fetchNamespaceApps(in.k8s, namespace, appName)
+	namespaceApps, err := fetchNamespaceApps(in.businessLayer, namespace, appName)
 	if err != nil {
 		return *appInstance, err
 	}
@@ -134,7 +135,7 @@ func castAppDetails(services []core_v1.Service, ws models.Workloads) namespaceAp
 // Helper method to fetch all applications for a given namespace.
 // Optionally if appName parameter is provided, it filters apps for that name.
 // Return an error on any problem.
-func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, appName string) (namespaceApps, error) {
+func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespaceApps, error) {
 	var services []core_v1.Service
 	var ws models.Workloads
 	cfg := config.Get()
@@ -151,10 +152,14 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			services, err = kialiCache.GetServices(namespace, nil)
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+				services, err = kialiCache.GetServices(namespace, nil)
+			}
 		} else {
-			services, err = k8s.GetServices(namespace, nil)
+			services, err = layer.k8s.GetServices(namespace, nil)
 		}
 		if appName != "" {
 			selector := labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName}).AsSelector()
@@ -169,7 +174,7 @@ func fetchNamespaceApps(k8s kubernetes.IstioClientInterface, namespace string, a
 	go func() {
 		defer wg.Done()
 		var err error
-		ws, err = fetchWorkloads(k8s, namespace, labelSelector)
+		ws, err = fetchWorkloads(layer, namespace, labelSelector)
 		if err != nil {
 			log.Errorf("Error fetching Workload per namespace %s: %s", namespace, err)
 			errChan <- err

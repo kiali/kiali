@@ -17,8 +17,9 @@ import (
 
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
-	prom prometheus.ClientInterface
-	k8s  kubernetes.IstioClientInterface
+	prom          prometheus.ClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 // GetServiceHealth returns a service health (service request error rate)
@@ -43,7 +44,7 @@ func (in *HealthService) GetAppHealth(namespace, app, rateInterval string, query
 	selectorLabels[appLabel] = app
 	labelSelector := labels.FormatLabels(selectorLabels)
 
-	ws, err := fetchWorkloads(in.k8s, namespace, labelSelector)
+	ws, err := fetchWorkloads(in.businessLayer, namespace, labelSelector)
 	if err != nil {
 		log.Errorf("Error fetching Workloads per namespace %s and app %s: %s", namespace, app, err)
 		return models.AppHealth{}, err
@@ -84,7 +85,7 @@ func (in *HealthService) GetWorkloadHealth(namespace, workload, rateInterval str
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetWorkloadHealth")
 	defer promtimer.ObserveNow(&err)
 
-	w, err := fetchWorkload(in.k8s, namespace, workload)
+	w, err := fetchWorkload(in.businessLayer, namespace, workload)
 	if err != nil {
 		return models.WorkloadHealth{}, err
 	}
@@ -116,7 +117,7 @@ func (in *HealthService) GetNamespaceAppHealth(namespace, rateInterval string, q
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceAppHealth")
 	defer promtimer.ObserveNow(&err)
 
-	appEntities, err := fetchNamespaceApps(in.k8s, namespace, "")
+	appEntities, err := fetchNamespaceApps(in.businessLayer, namespace, "")
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +165,12 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
 	defer promtimer.ObserveNow(&err)
 	var services []core_v1.Service
+	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-		services, err = kialiCache.GetServices(namespace, nil)
+		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+		if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			services, err = kialiCache.GetServices(namespace, nil)
+		}
 	} else {
 		services, err = in.k8s.GetServices(namespace, nil)
 	}
@@ -207,7 +212,7 @@ func (in *HealthService) GetNamespaceWorkloadHealth(namespace, rateInterval stri
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceWorkloadHealth")
 	defer promtimer.ObserveNow(&err)
 
-	wl, err := fetchWorkloads(in.k8s, namespace, "")
+	wl, err := fetchWorkloads(in.businessLayer, namespace, "")
 	if err != nil {
 		return nil, err
 	}

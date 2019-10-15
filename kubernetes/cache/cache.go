@@ -38,9 +38,9 @@ type (
 	typeCache map[string]cache.SharedIndexInformer
 
 	namespaceCache struct {
-		created     time.Time
-		namespaces  []models.Namespace
-		isNamespace map[string]bool
+		created       time.Time
+		namespaces    []models.Namespace
+		nameNamespace map[string]models.Namespace
 	}
 
 	kialiCacheImpl struct {
