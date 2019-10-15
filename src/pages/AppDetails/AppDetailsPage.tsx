@@ -20,6 +20,8 @@ import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type AppDetailsState = {
   app: App;
@@ -191,12 +193,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         {this.state.currentTab === 'info' ? (
-          <AppInfo
-            app={this.state.app}
-            namespace={this.props.match.params.namespace}
-            onRefresh={this.doRefresh}
-            health={this.state.health}
-          />
+          <AppInfo app={this.state.app} namespace={this.props.match.params.namespace} health={this.state.health} />
         ) : (
           undefined
         )}
@@ -253,6 +250,15 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return [overTab, trafficTab, inTab, outTab];
   }
 
+  renderActions = () => {
+    return (
+      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+        <DurationDropdownContainer id="app-info-duration-dropdown" />
+        <RefreshButtonContainer handleRefresh={this.doRefresh} />
+      </span>
+    );
+  };
+
   renderTabs() {
     // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
@@ -265,6 +271,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={istioSidecar} />
+        {this.state.currentTab === 'info' && this.renderActions()}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {
