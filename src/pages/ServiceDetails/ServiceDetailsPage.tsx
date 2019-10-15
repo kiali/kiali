@@ -312,7 +312,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         }
       }
     });
-    return validations ? validations : ({} as Validations);
+    return validations ? validations : {};
   }
 
   renderActions() {
