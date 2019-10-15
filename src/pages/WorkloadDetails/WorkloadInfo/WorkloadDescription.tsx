@@ -1,11 +1,22 @@
 import * as React from 'react';
-import { Col, Row } from 'patternfly-react';
 import { Workload } from '../../../types/Workload';
 import LocalTime from '../../../components/Time/LocalTime';
 import { DisplayMode, HealthIndicator } from '../../../components/Health/HealthIndicator';
 import { WorkloadHealth } from '../../../types/Health';
 import { runtimesLogoProviders } from '../../../config/Logos';
 import Labels from '../../../components/Label/Labels';
+import {
+  Card,
+  CardBody,
+  Grid,
+  GridItem,
+  PopoverPosition,
+  Stack,
+  StackItem,
+  Text,
+  TextVariants,
+  Title
+} from '@patternfly/react-core';
 
 type WorkloadDescriptionProps = {
   workload: Workload;
@@ -37,51 +48,70 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
       ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
         0;
     return workload ? (
-      <div className="card-pf">
-        <div className="card-pf-body">
-          <Row>
-            <Col xs={12} sm={8} md={6} lg={6}>
-              <div id="labels">
-                <div className="progress-description">
-                  <strong>{isTemplateLabels ? 'Template Labels' : 'Labels'}</strong>
-                </div>
-                <div className="label-collection">
-                  <Labels labels={workload.labels} />
-                </div>
-              </div>
-              <div>
-                <strong>Type</strong> {workload.type ? workload.type : ''}
-              </div>
-              <div>
-                <strong>Created at</strong> <LocalTime time={workload.createdAt} />
-              </div>
-              <div>
-                <strong>Resource Version</strong> {workload.resourceVersion}
-              </div>
-              {workload.runtimes.length > 0 && (
-                <div>
-                  <br />
-                  {workload.runtimes
-                    .filter(r => r.name !== '')
-                    .map((rt, idx) => this.renderLogo(rt.name, idx))
-                    .reduce(
-                      (list: JSX.Element[], elem) =>
-                        list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
-                      []
-                    )}
-                </div>
-              )}
-            </Col>
-            <Col xs={12} sm={4} md={3} lg={3} />
-            <Col xs={12} sm={4} md={3} lg={3}>
-              <div className="progress-description">
-                <strong>Health</strong>
-              </div>
-              <HealthIndicator id={workload.name} health={this.props.health} mode={DisplayMode.LARGE} />
-            </Col>
-          </Row>
-        </div>
-      </div>
+      <Grid gutter="md">
+        <GridItem span={6}>
+          <Card style={{ height: '100%' }}>
+            <CardBody>
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Workload overview{' '}
+              </Title>
+              <Stack>
+                <StackItem id="labels">
+                  <Text component={TextVariants.h3}> {isTemplateLabels ? 'Template Labels' : 'Labels'} </Text>
+                  <Labels labels={workload.labels || {}} />
+                </StackItem>
+                <StackItem id="type">
+                  <Text component={TextVariants.h3}> Type </Text>
+                  {workload.type ? workload.type : 'N/A'}
+                </StackItem>
+                <StackItem id="created-at">
+                  <Text component={TextVariants.h3}> Created at </Text>
+                  <LocalTime time={workload.createdAt} />
+                </StackItem>
+                <StackItem id="resource-version">
+                  <Text component={TextVariants.h3}> Resource Version </Text>
+                  {workload.resourceVersion}
+                </StackItem>
+                {workload.runtimes.length > 0 && (
+                  <StackItem id="runtimes">
+                    <Text component={TextVariants.h3}> Runtimes</Text>
+                    {workload.runtimes
+                      .filter(r => r.name !== '')
+                      .map((rt, idx) => this.renderLogo(rt.name, idx))
+                      .reduce(
+                        (list: JSX.Element[], elem) =>
+                          list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
+                        []
+                      )}
+                  </StackItem>
+                )}
+              </Stack>
+            </CardBody>
+          </Card>
+        </GridItem>
+        <GridItem span={6}>
+          <Card style={{ height: '100%' }}>
+            <CardBody>
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Health Overview{' '}
+              </Title>
+              <Stack>
+                <StackItem id="health" className={'stack_service_details'}>
+                  <Text component={TextVariants.h3}> Health</Text>
+                  <HealthIndicator
+                    id={workload.name}
+                    health={this.props.health}
+                    mode={DisplayMode.LARGE}
+                    tooltipPlacement={PopoverPosition.left}
+                  />
+                </StackItem>
+              </Stack>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     ) : (
       'Loading'
     );

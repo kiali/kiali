@@ -1,153 +1,120 @@
 import * as React from 'react';
 import { ObjectValidation, Pod } from '../../../types/IstioObjects';
-import { Col, Row, Table } from 'patternfly-react';
-import * as resolve from 'table-resolver';
 import { ValidationSummary } from '../../../components/Validations/ValidationSummary';
 import Labels from '../../../components/Label/Labels';
+import { cellWidth, ICell, IRow, Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
+import LocalTime from '../../../components/Time/LocalTime';
+import {
+  Card,
+  CardBody,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateIcon,
+  EmptyStateVariant,
+  Grid,
+  GridItem,
+  Title
+} from '@patternfly/react-core';
+import { CogsIcon } from '@patternfly/react-icons';
 
 type WorkloadPodsProps = {
   namespace: string;
+  workload: string;
   pods: Pod[];
   validations: { [key: string]: ObjectValidation };
 };
 
 class WorkloadPods extends React.Component<WorkloadPodsProps> {
-  headerFormat = (label, { column }) => <Table.Heading className={column.property}>{label}</Table.Heading>;
-  cellFormat = value => {
-    return <Table.Cell>{value}</Table.Cell>;
-  };
-
-  columns() {
-    return {
-      columns: [
-        {
-          property: 'status',
-          header: {
-            label: 'Status',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat],
-            props: {
-              align: 'text-center'
-            }
-          }
-        },
-        {
-          property: 'name',
-          header: {
-            label: 'Name',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'createdAt',
-          header: {
-            label: 'Created at',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'createdBy',
-          header: {
-            label: 'Created by',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'labels',
-          header: {
-            label: 'Labels',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'istioInitContainers',
-          header: {
-            label: 'Istio Init Containers',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'istioContainers',
-          header: {
-            label: 'Istio Containers',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        },
-        {
-          property: 'podStatus',
-          header: {
-            label: 'Phase',
-            formatters: [this.headerFormat]
-          },
-          cell: {
-            formatters: [this.cellFormat]
-          }
-        }
-      ]
-    };
+  columns(): ICell[] {
+    return [
+      { title: 'Status', transforms: [cellWidth(10)] },
+      { title: 'Name', transforms: [cellWidth(10)] },
+      { title: 'Created at', transforms: [cellWidth(10)] },
+      { title: 'Created by', transforms: [cellWidth(10)] },
+      { title: 'Labels', transforms: [cellWidth(60)] },
+      { title: 'Istio Init Containers', transforms: [cellWidth(60)] },
+      { title: 'Istio Containers', transforms: [cellWidth(60)] },
+      { title: 'Phase', transforms: [cellWidth(10)] }
+    ];
   }
 
-  rows() {
-    return (this.props.pods || []).map((pod, podIdx) => {
+  noPods(): IRow[] {
+    return [
+      {
+        cells: [
+          {
+            title: (
+              <EmptyState variant={EmptyStateVariant.full}>
+                <EmptyStateIcon icon={CogsIcon} />
+                <Title headingLevel="h5" size="lg">
+                  No Pods found
+                </Title>
+                <EmptyStateBody>No Pods in workload {this.props.workload}</EmptyStateBody>
+              </EmptyState>
+            ),
+            props: { colSpan: 5 }
+          }
+        ]
+      }
+    ];
+  }
+
+  rows(): IRow[] {
+    if ((this.props.pods || []).length === 0) {
+      return this.noPods();
+    }
+
+    let rows: IRow[] = [];
+    (this.props.pods || []).map((pod, podIdx) => {
       const validations: ObjectValidation[] = [];
       if (this.props.validations[pod.name]) {
         validations.push(this.props.validations[pod.name]);
       }
-      return {
-        id: podIdx,
-        status: <ValidationSummary id={podIdx + '-config-validation'} validations={validations} definition={true} />,
-        name: pod.name,
-        createdAt: new Date(pod.createdAt).toLocaleString(),
-        createdBy:
-          pod.createdBy && pod.createdBy.length > 0
-            ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
-            : '',
-        labels: <Labels key={'labels' + podIdx} labels={pod.labels} />,
-        istioInitContainers: pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : '',
-        istioContainers: pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : '',
-        podStatus: pod.status
-      };
+
+      rows.push({
+        cells: [
+          {
+            title: <ValidationSummary id={podIdx + '-config-validation'} validations={validations} definition={true} />
+          },
+          { title: <>{pod.name}</> },
+          { title: <LocalTime time={pod.createdAt || ''} /> },
+          {
+            title:
+              pod.createdBy && pod.createdBy.length > 0
+                ? pod.createdBy.map(ref => ref.name + ' (' + ref.kind + ')').join(', ')
+                : ''
+          },
+          { title: <Labels key={'labels' + podIdx} labels={pod.labels} /> },
+          { title: pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : '' },
+          { title: pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : '' },
+          { title: pod.status }
+        ]
+      });
+      return rows;
     });
+
+    return rows;
   }
 
   render() {
     return (
-      <>
-        <Row className="card-pf-body">
-          <Col xs={12}>
-            <Table.PfProvider
-              columns={this.columns().columns}
-              striped={true}
-              bordered={true}
-              hover={true}
-              dataTable={true}
-            >
-              <Table.Header headerRows={resolve.headerRows(this.columns())} />
-              <Table.Body rows={this.rows()} rowKey="id" />
-            </Table.PfProvider>
-          </Col>
-        </Row>
-      </>
+      <Grid>
+        <GridItem span={12}>
+          <Card>
+            <CardBody>
+              <Table
+                variant={TableVariant.compact}
+                aria-label={'list_workloads_pods'}
+                cells={this.columns()}
+                rows={this.rows()}
+              >
+                <TableHeader />
+                <TableBody />
+              </Table>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 }

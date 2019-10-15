@@ -23,6 +23,8 @@ import { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
 import { Tab } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
+import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
+import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
 
 type WorkloadDetailsState = {
   workload: Workload;
@@ -234,7 +236,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             workload={this.state.workload}
             namespace={this.props.match.params.namespace}
             validations={this.state.validations}
-            onRefresh={this.doRefresh}
             istioEnabled={this.state.istioEnabled}
             health={this.state.health}
           />
@@ -341,6 +342,16 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
     return tabs;
   }
 
+  renderActions = () => {
+    return (
+      <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
+        <DurationDropdownContainer id="service-info-duration-dropdown" />
+        <RefreshButtonContainer handleRefresh={this.doRefresh} />
+        &nbsp;
+      </span>
+    );
+  };
+
   renderTabs() {
     // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
@@ -351,6 +362,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
+        {this.state.currentTab === 'info' && this.renderActions()}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

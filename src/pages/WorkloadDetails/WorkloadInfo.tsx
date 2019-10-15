@@ -1,16 +1,13 @@
 import * as React from 'react';
 import { style } from 'typestyle';
 import { Validations, ValidationTypes } from '../../types/IstioObjects';
-import { Col, Row } from 'patternfly-react';
 import WorkloadDescription from './WorkloadInfo/WorkloadDescription';
 import WorkloadPods from './WorkloadInfo/WorkloadPods';
 import WorkloadServices from './WorkloadInfo/WorkloadServices';
 import { validationToSeverity } from '../../types/ServiceInfo';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
-import { DurationDropdownContainer } from '../../components/DurationDropdown/DurationDropdown';
-import RefreshButtonContainer from '../../components/Refresh/RefreshButton';
-import { Tab } from '@patternfly/react-core';
+import { Grid, GridItem, Tab } from '@patternfly/react-core';
 import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import Validation from '../../components/Validations/Validation';
 
@@ -18,7 +15,6 @@ type WorkloadInfoProps = {
   workload: Workload;
   validations: Validations;
   namespace: string;
-  onRefresh: () => void;
   istioEnabled: boolean;
   health?: WorkloadHealth;
 };
@@ -33,9 +29,6 @@ type WorkloadInfoState = {
 
 const tabIconStyle = style({
   fontSize: '0.9em'
-});
-const floatRightStyle = style({
-  float: 'right'
 });
 
 const tabName = 'list';
@@ -114,55 +107,44 @@ class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState>
     );
 
     return (
-      <div>
-        <div className="container-fluid container-cards-pf">
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <span className={floatRightStyle}>
-                <DurationDropdownContainer id="workload-info-duration-dropdown" />{' '}
-                <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
-              </span>
-            </Col>
-          </Row>
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <WorkloadDescription
-                workload={workload}
+      <Grid style={{ margin: '30px' }} gutter={'md'}>
+        <GridItem span={12}>
+          <WorkloadDescription
+            workload={workload}
+            namespace={this.props.namespace}
+            istioEnabled={this.props.istioEnabled}
+            health={this.props.health}
+          />
+        </GridItem>
+        <GridItem span={12}>
+          <ParameterizedTabs
+            id="service-tabs"
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+          >
+            <Tab title={podTabTitle} eventKey={0}>
+              <WorkloadPods
                 namespace={this.props.namespace}
-                istioEnabled={this.props.istioEnabled}
-                health={this.props.health}
+                workload={this.props.workload.name}
+                pods={pods}
+                validations={this.props.validations!.pod}
               />
-            </Col>
-          </Row>
-          <Row className="row-cards-pf">
-            <Col xs={12} sm={12} md={12} lg={12}>
-              <ParameterizedTabs
-                id="service-tabs"
-                onSelect={tabValue => {
-                  this.setState({ currentTab: tabValue });
-                }}
-                tabMap={paramToTab}
-                tabName={tabName}
-                defaultTab={defaultTab}
-                activeTab={this.state.currentTab}
-              >
-                <Tab title={podTabTitle} eventKey={0}>
-                  {pods.length > 0 && (
-                    <WorkloadPods
-                      namespace={this.props.namespace}
-                      pods={pods}
-                      validations={this.props.validations!.pod}
-                    />
-                  )}
-                </Tab>
-                <Tab title={'Services (' + services.length + ')'} eventKey={1}>
-                  {services.length > 0 && <WorkloadServices services={services} namespace={this.props.namespace} />}
-                </Tab>
-              </ParameterizedTabs>
-            </Col>
-          </Row>
-        </div>
-      </div>
+            </Tab>
+            <Tab title={'Services (' + services.length + ')'} eventKey={1}>
+              <WorkloadServices
+                services={services}
+                workload={this.props.workload.name}
+                namespace={this.props.namespace}
+              />
+            </Tab>
+          </ParameterizedTabs>
+        </GridItem>
+      </Grid>
     );
   }
 }
