@@ -104,7 +104,7 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
       minRps = sample < minRps ? sample : minRps;
       maxRps = sample > maxRps ? sample : maxRps;
       if (sample !== 0) {
-        errSample = i <= dataErrors.length ? dataErrors[i].y : 0;
+        errSample = i < dataErrors.length ? dataErrors[i].y : 0;
         const errPct = (100 * errSample) / sample;
         if (isNaN(minPctErr) || errPct < minPctErr) {
           minPctErr = errPct;
