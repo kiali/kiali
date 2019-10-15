@@ -1,8 +1,8 @@
 import React from 'react';
 import { KialiAppState } from '../store/Store';
 import { connect } from 'react-redux';
-import { Spinner } from 'patternfly-react';
 import { style } from 'typestyle';
+import { SpinnerIcon } from '@patternfly/react-icons';
 
 type PfSpinnerProps = {
   isLoading: boolean;
@@ -10,8 +10,9 @@ type PfSpinnerProps = {
 
 const spinnerStyle = style({
   position: 'absolute',
-  left: 240,
-  top: 25
+  left: 210,
+  top: 35,
+  animation: 'rotation 1000ms infinite linear'
 });
 
 const mapStateToProps = (state: KialiAppState) => ({
@@ -22,7 +23,7 @@ export const PfSpinner: React.SFC<PfSpinnerProps> = props => {
   const { isLoading } = props;
   // It is more than likely it won't have any children; but it could.
   // @todo: Patternfly Spinner is not working here
-  return <Spinner className={spinnerStyle} loading={isLoading} inverse={true} />;
+  return isLoading ? <SpinnerIcon className={spinnerStyle} /> : <></>;
 };
 
 // hook up to Redux for our State to be mapped to props
