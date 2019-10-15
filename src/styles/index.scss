@@ -33,7 +33,7 @@ $pf-global--font-path: '@patternfly/patternfly/assets/fonts/';
 body {
   margin: 0;
   padding: 0;
-  font-family: overpass;
+  font-family: var(--pf-global--FontFamily--sans-serif);
   font-size: 14px;
   overflow: hidden;
   height: 100%;

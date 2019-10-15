@@ -305,11 +305,11 @@ Set width 100% parent in matching routing wizard
 }
 
 button {
-  font-family: overpass;
+  font-family: var(--pf-global--FontFamily--sans-serif);
 }
 
 input {
-  font-family: overpass;
+  font-family: var(--pf-global--FontFamily--sans-serif);
 }
 
 /*
