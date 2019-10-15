@@ -71,8 +71,8 @@ def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
 def test_istio_config_create(kiali_client):
-    data = {"metadata": {"namespace": "bookinfo", "name": "details", "labels": {"kiali_wizard": "suspend_traffic"}}, "spec": {"http": [{"route": [{"destination": {"host": "details"}}], "fault": {"abort": {"httpStatus": 503, "percentage": {"value": 100}}}}], "hosts": ["details"], "gateways": None}}
-    evaluate_response(kiali_client, method_name='istioConfigCreate', path={'namespace': 'istio-system', 'object_type': 'virtualservices'}, data=data, http_method='POST')
+    data = '{"metadata":{"namespace":"bookinfo","name":"reviews","labels":{"kiali_wizard":"weighted_routing"}},"spec":{"http":[{"route":[{"destination":{"host":"reviews","subset":"v1"},"weight":75},{"destination":{"host":"reviews","subset":"v2"},"weight":13},{"destination":{"host":"reviews","subset":"v3"},"weight":12}]}],"hosts":["reviews"],"gateways":null}}'    
+    evaluate_response(kiali_client, method_name='istioConfigCreate', path={'namespace': 'bookinfo', 'object_type': 'virtualservices'}, data=data, http_method='POST')
 
 def test_jaeger_info(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
