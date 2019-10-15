@@ -1,155 +1,103 @@
 import * as React from 'react';
-import { StackedBarChart } from 'patternfly-react';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { PfColors } from '../../components/Pf/PfColors';
-import { LegendPosition, SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import * as Legend from 'components/Charts/LegendHelper';
 
 type RateChartGrpcPropType = {
-  height?: number;
-  legendPos?: LegendPosition;
   percentErr: number;
   percentOK: number;
-  showLegend?: boolean;
-  width?: number;
+};
+
+type ValueData = Legend.LegendItem & {
+  value: number;
+};
+
+const renderChartBars = (baseName: string, data: ValueData[]) => {
+  let height = 80 + Legend.TOP_MARGIN + Legend.HEIGHT;
+  const padding = {
+    top: 10,
+    left: 38,
+    bottom: 20 + Legend.TOP_MARGIN + Legend.HEIGHT,
+    right: 10
+  };
+  const events = Legend.events({
+    items: data,
+    itemBaseName: baseName + '-bars-',
+    legendName: baseName + '-legend',
+    onMouseOver: (_, props) => {
+      return {
+        style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
+      };
+    }
+  });
+  return (
+    <Chart
+      height={height}
+      width={SUMMARY_PANEL_CHART_WIDTH}
+      padding={padding}
+      domainPadding={{ x: [15, 15] }}
+      domain={{ y: [0, 100] }}
+      events={events}
+    >
+      <ChartStack colorScale={data.map(d => d.color)} horizontal={true}>
+        {data.map((datum, idx) => {
+          return (
+            <ChartBar
+              name={baseName + '-bars-' + idx}
+              data={[
+                { name: datum.name, x: 'rate', y: datum.value, label: `${datum.name}: ${datum.value.toFixed(2)} %` }
+              ]}
+              barWidth={30}
+              labelComponent={<ChartTooltip constrainToVisibleArea={true} />}
+            />
+          );
+        })}
+      </ChartStack>
+      <ChartAxis style={{ tickLabels: { fill: 'none' } }} />
+      <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
+      {Legend.buildRateBarsLegend(baseName + '-legend', data, height, SUMMARY_PANEL_CHART_WIDTH)}
+    </Chart>
+  );
 };
 
 export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
   static defaultProps: RateChartGrpcPropType = {
-    height: 100,
-    legendPos: 'bottom',
     percentErr: 0,
-    percentOK: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
+    percentOK: 0
   };
 
   render() {
-    return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: [''],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
-            }
-          }
-        }}
-        data={{
-          groups: [['OK', 'Err']],
-          columns: [['OK', this.props.percentOK], ['Err', this.props.percentErr]],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            Err: PfColors.Danger
-          }
-        }}
-      />
-    );
+    const data = [
+      { name: 'OK', value: this.props.percentOK, color: PfColors.Green400 },
+      { name: 'Err', value: this.props.percentErr, color: PfColors.Red100 }
+    ];
+    return renderChartBars('rate-grpc', data);
   }
 }
 
 type RateChartHttpPropType = {
-  height?: number;
-  legendPos?: string; // e.g. right, left
   percent2xx: number;
   percent3xx: number;
   percent4xx: number;
   percent5xx: number;
-  showLegend?: boolean;
-  width?: number;
 };
 
 export class RateChartHttp extends React.Component<RateChartHttpPropType> {
   static defaultProps: RateChartHttpPropType = {
-    height: 100,
-    legendPos: 'bottom',
     percent2xx: 0,
     percent3xx: 0,
     percent4xx: 0,
-    percent5xx: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
+    percent5xx: 0
   };
 
   render() {
-    return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: [''],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
-            }
-          }
-        }}
-        data={{
-          groups: [['OK', '3xx', '4xx', '5xx']],
-          columns: [
-            ['OK', this.props.percent2xx.toFixed(2)],
-            ['3xx', this.props.percent3xx.toFixed(2)],
-            ['4xx', this.props.percent4xx.toFixed(2)],
-            ['5xx', this.props.percent5xx.toFixed(2)]
-          ],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            '3xx': PfColors.Info,
-            '4xx': PfColors.DangerBackground, // 4xx is also an error use close but distinct color
-            '5xx': PfColors.Danger
-          }
-        }}
-      />
-    );
+    const data = [
+      { name: 'OK', value: this.props.percent2xx, color: PfColors.Green400 },
+      { name: '3xx', value: this.props.percent3xx, color: PfColors.Blue },
+      { name: '4xx', value: this.props.percent4xx, color: PfColors.Orange400 },
+      { name: '5xx', value: this.props.percent5xx, color: PfColors.Red100 }
+    ];
+    return renderChartBars('rate-http', data);
   }
 }

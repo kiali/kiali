@@ -1,88 +1,88 @@
 import * as React from 'react';
-import { StackedBarChart } from 'patternfly-react';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
 import { PfColors } from '../../components/Pf/PfColors';
-import { LegendPosition, SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import * as Legend from 'components/Charts/LegendHelper';
 
 type InOutRateChartGrpcPropType = {
-  height?: number;
-  legendPos?: LegendPosition;
   percentOkIn: number;
   percentErrIn: number;
   percentOkOut: number;
   percentErrOut: number;
-  showLegend?: boolean;
-  width?: number;
+};
+
+type InOutData = Legend.LegendItem & {
+  in: number;
+  out: number;
+};
+
+const renderChartBars = (baseName: string, data: InOutData[]) => {
+  let height = 132 + Legend.TOP_MARGIN + Legend.HEIGHT;
+  const padding = {
+    top: 15,
+    left: 47,
+    bottom: 30 + Legend.TOP_MARGIN + Legend.HEIGHT,
+    right: 10
+  };
+  const events = Legend.events({
+    items: data,
+    itemBaseName: baseName + '-bars-',
+    legendName: baseName + '-legend',
+    onMouseOver: (_, props) => {
+      return {
+        style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
+      };
+    }
+  });
+  return (
+    <Chart
+      height={height}
+      width={SUMMARY_PANEL_CHART_WIDTH}
+      padding={padding}
+      domainPadding={{ x: [30, 25] }}
+      domain={{ y: [0, 100] }}
+      events={events}
+    >
+      <ChartStack colorScale={data.map(d => d.color)} horizontal={true}>
+        {data.map((datum, idx) => {
+          return (
+            <ChartBar
+              name={baseName + '-bars-' + idx}
+              data={[
+                { name: datum.name, x: 'Out', y: datum.out, label: `${datum.name}: ${datum.out.toFixed(2)} %` },
+                { name: datum.name, x: 'In', y: datum.in, label: `${datum.name}: ${datum.in.toFixed(2)} %` }
+              ]}
+              barWidth={30}
+              labelComponent={<ChartTooltip constrainToVisibleArea={true} />}
+            />
+          );
+        })}
+      </ChartStack>
+      <ChartAxis />
+      <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
+      {Legend.buildRateBarsLegend(baseName + '-legend', data, height, SUMMARY_PANEL_CHART_WIDTH)}
+    </Chart>
+  );
 };
 
 export class InOutRateChartGrpc extends React.Component<InOutRateChartGrpcPropType> {
   static defaultProps: InOutRateChartGrpcPropType = {
-    height: 150,
-    legendPos: 'bottom',
     percentOkIn: 0,
     percentErrIn: 0,
     percentOkOut: 0,
-    percentErrOut: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
+    percentErrOut: 0
   };
 
   render() {
-    return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: ['In', 'Out'],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
-            }
-          }
-        }}
-        data={{
-          groups: [['OK', 'Err']],
-          columns: [
-            ['OK', this.props.percentOkIn, this.props.percentOkOut],
-            ['Err', this.props.percentErrIn, this.props.percentErrOut]
-          ],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            Err: PfColors.Danger
-          }
-        }}
-      />
-    );
+    const data = [
+      { name: 'OK', in: this.props.percentOkIn, out: this.props.percentOkOut, color: PfColors.Green400 },
+      { name: 'Err', in: this.props.percentErrIn, out: this.props.percentErrOut, color: PfColors.Red100 }
+    ];
+    return renderChartBars('in-out-grpc', data);
   }
 }
 
 type InOutRateChartHttpPropType = {
-  height?: number;
-  legendPos?: LegendPosition;
   percent2xxIn: number;
   percent3xxIn: number;
   percent4xxIn: number;
@@ -91,14 +91,10 @@ type InOutRateChartHttpPropType = {
   percent3xxOut: number;
   percent4xxOut: number;
   percent5xxOut: number;
-  showLegend?: boolean;
-  width?: number;
 };
 
 export class InOutRateChartHttp extends React.Component<InOutRateChartHttpPropType> {
   static defaultProps: InOutRateChartHttpPropType = {
-    height: 150,
-    legendPos: 'bottom',
     percent2xxIn: 0,
     percent3xxIn: 0,
     percent4xxIn: 0,
@@ -106,65 +102,16 @@ export class InOutRateChartHttp extends React.Component<InOutRateChartHttpPropTy
     percent2xxOut: 0,
     percent3xxOut: 0,
     percent4xxOut: 0,
-    percent5xxOut: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
+    percent5xxOut: 0
   };
 
   render() {
-    return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: ['In', 'Out'],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
-            }
-          }
-        }}
-        data={{
-          groups: [['OK', '3xx', '4xx', '5xx']],
-          columns: [
-            ['OK', this.props.percent2xxIn, this.props.percent2xxOut],
-            ['3xx', this.props.percent3xxIn, this.props.percent3xxOut],
-            ['4xx', this.props.percent4xxIn, this.props.percent4xxOut],
-            ['5xx', this.props.percent5xxIn, this.props.percent5xxOut]
-          ],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            '3xx': PfColors.Info,
-            '4xx': PfColors.DangerBackground, // 4xx is also an error use close but distinct color
-            '5xx': PfColors.Danger
-          }
-        }}
-      />
-    );
+    const data = [
+      { name: 'OK', in: this.props.percent2xxIn, out: this.props.percent2xxOut, color: PfColors.Green400 },
+      { name: '3xx', in: this.props.percent3xxIn, out: this.props.percent3xxOut, color: PfColors.Blue },
+      { name: '4xx', in: this.props.percent4xxIn, out: this.props.percent4xxOut, color: PfColors.Orange400 },
+      { name: '5xx', in: this.props.percent5xxIn, out: this.props.percent5xxOut, color: PfColors.Red100 }
+    ];
+    return renderChartBars('in-out', data);
   }
 }
