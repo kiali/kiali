@@ -3,6 +3,8 @@ export interface Point {
   y: number;
 }
 
+type Vector = Point;
+
 // Restricts value x to [min, max], if outside, moves to the nearest available value.
 export const clamp = (x, min, max) => {
   return x < min ? min : x > max ? max : x;
@@ -56,4 +58,21 @@ export const bezierLength = (p0: Point, p1: Point, p2: Point) => {
 
 export const distance = (p0: Point, p1: Point) => {
   return Math.sqrt(Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
+};
+
+export const squaredDistance = (p0: Point, p1: Point) => {
+  return Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2);
+};
+
+export const normalize = (v1: Vector): Vector => {
+  const norm = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+  return {
+    x: v1.x / norm,
+    y: v1.y / norm
+  };
+};
+
+// http://www.euclideanspace.com/maths/algebra/vectors/angleBetween/index.htm
+export const angleBetweenVectors = (v1: Vector, v2: Vector) => {
+  return Math.atan2(v2.y, v2.x) - Math.atan2(v1.y, v1.x);
 };

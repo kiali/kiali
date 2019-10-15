@@ -49,6 +49,7 @@ import GraphThunkActions from '../../actions/GraphThunkActions';
 import * as MessageCenterUtils from '../../utils/MessageCenter';
 import FocusAnimation from './FocusAnimation';
 import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
+import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -457,6 +458,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     cy.on('layoutstop', (_evt: any) => {
       // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
       this.safeFit(cy);
+      this.fixLoopOverlap(cy);
     });
 
     cy.ready((evt: any) => {
@@ -858,6 +860,99 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         }
         console.error(`Could not fetch health for [${ele.data(CyNode.nodeType)}] [${key}]: ${API.getErrorString(err)}`);
       });
+  }
+
+  private fixLoopOverlap(cy: any) {
+    cy.$(':loop').forEach(loop => {
+      const node = loop.source();
+      const otherEdges = node.connectedEdges().subtract(loop);
+      const minDistance = 1;
+
+      // Default values in rads (taken from cytoscape docs)
+      const DEFAULT_LOOP_SWEEP = -1.5707;
+      const DEFAULT_LOOP_DIRECTION = -0.7854;
+
+      loop.style('loop-direction', DEFAULT_LOOP_DIRECTION);
+      loop.style('loop-sweep', DEFAULT_LOOP_SWEEP);
+
+      let found = false;
+      // Check if we have any other edge that overlaps with any of our loop edges
+      // this uses cytoscape forEach (https://js.cytoscape.org/#eles.forEach)
+      otherEdges.forEach(edge => {
+        const testPoint = edge.source().same(node) ? edge.sourceEndpoint() : edge.targetEndpoint();
+        if (
+          squaredDistance(testPoint, loop.sourceEndpoint()) <= minDistance ||
+          squaredDistance(testPoint, loop.targetEndpoint()) <= minDistance
+        ) {
+          found = true;
+          return false; // break the inner cytoscape forEach
+        }
+        return; // return to avoid typescript error about "not all code paths return a value"
+      });
+
+      if (!found) {
+        return;
+      }
+
+      // Simple case, one other edge, just move the loop-direction half the default loop-sweep value to avoid the edge
+      if (otherEdges.length === 1) {
+        const loopDirection = loop.numericStyle('loop-direction') - loop.numericStyle('loop-sweep') * 0.5;
+        loop.style('loop-direction', loopDirection);
+        return;
+      }
+
+      // Compute every angle between the top (12 o’clock position)
+      // We store the angles as radians and positive numbers, thus we add PI to the negative angles.
+      const usedAngles: number[] = [];
+      otherEdges.forEach(edge => {
+        const testPoint = edge.source().same(node) ? edge.sourceEndpoint() : edge.targetEndpoint();
+        const angle = angleBetweenVectors(
+          normalize({ x: testPoint.x - node.position().x, y: testPoint.y - node.position().y }),
+          { x: 0, y: 1 }
+        );
+        usedAngles.push(angle < 0 ? angle + 2 * Math.PI : angle);
+      });
+
+      usedAngles.sort((a, b) => a - b);
+
+      // Try to fit our loop in the longest arc
+      // Iterate over the found angles and find the longest distance
+      let maxArc = {
+        start: 0,
+        end: 0,
+        value: 0
+      };
+      for (let i = 0; i < usedAngles.length; ++i) {
+        const start = i === 0 ? usedAngles[usedAngles.length - 1] : usedAngles[i - 1];
+        const end = usedAngles[i];
+        const arc = Math.abs(start - end);
+        if (arc > maxArc.value) {
+          maxArc.value = arc;
+          maxArc.start = start;
+          maxArc.end = end;
+        }
+      }
+
+      // If the max arc is 1.0 radians (the biggest gap is of about 50 deg), the node is already too busy, ignore it
+      if (maxArc.value < 1.0) {
+        return;
+      }
+
+      if (maxArc.start > maxArc.end) {
+        // To ensure the difference between end and start goes in the way we want, we add a full circle to our end
+        maxArc.end += Math.PI * 2;
+      }
+
+      if (maxArc.value <= -DEFAULT_LOOP_SWEEP) {
+        // Make it slightly smaller to be able to fit
+        // loop-sweep is related to the distance between the start and end of our loop edge
+        loop.style('loop-sweep', -maxArc.value * 0.9);
+        maxArc.start += maxArc.value * 0.05;
+        maxArc.end -= maxArc.value * 0.05;
+      }
+      // Move the loop to the center of the arc, loop-direction is related to the middle point of the loop
+      loop.style('loop-direction', maxArc.start + (maxArc.end - maxArc.start) * 0.5);
+    });
   }
 }
 
