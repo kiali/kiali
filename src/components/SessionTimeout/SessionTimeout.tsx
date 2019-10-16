@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { Modal, Button, Icon, Row, Col } from 'patternfly-react';
+import { Modal, Button } from '@patternfly/react-core';
+import { WarningTriangleIcon } from '@patternfly/react-icons';
 import { AuthStrategy } from '../../types/Auth';
 import { LoginSession } from '../../store/Store';
 import * as API from '../../services/Api';
 import authenticationConfig from '../../config/AuthenticationConfig';
+import { PFColorVars } from 'components/Pf/PfColors';
 
 type SessionTimeoutProps = {
   onLogout: () => void;
@@ -15,41 +17,30 @@ type SessionTimeoutProps = {
 
 export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
   render() {
+    const defaultAction =
+      authenticationConfig.strategy === AuthStrategy.login ? this.extendSessionHandler : this.props.onDismiss;
+    const buttons = [
+      <Button key="confirm" variant="link" onClick={this.props.onLogout}>
+        Log Out
+      </Button>,
+      authenticationConfig.strategy === AuthStrategy.login ? (
+        <Button autoFocus={true} variant="primary" onClick={this.extendSessionHandler}>
+          Continue Session
+        </Button>
+      ) : (
+        <Button autoFocus={true} variant="primary" onClick={this.props.onDismiss}>
+          OK
+        </Button>
+      )
+    ];
     return (
-      <Modal
-        backdrop="static"
-        className={'message-dialog-pf'}
-        show={this.props.show}
-        enforceFocus={true}
-        aria-modal={true}
-      >
-        <Modal.Body>
-          <Row style={{ paddingTop: '25px' }}>
-            <Col xs={12} sm={1} md={1} lg={1} />
-            <Col xs={12} sm={1} md={1} lg={1} style={{ paddingLeft: '10px' }}>
-              <Icon name="warning-triangle-o" type="pf" style={{ fontSize: '48px' }} />
-            </Col>
-            <Col xs={12} sm={10} md={10} lg={10}>
-              {this.textForAuthStrategy(authenticationConfig.strategy)}
-            </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
-          <React.Fragment>
-            <Button bsStyle={'default'} onClick={this.props.onLogout}>
-              Log Out
-            </Button>
-            {authenticationConfig.strategy === AuthStrategy.login ? (
-              <Button autoFocus={true} bsStyle={'primary'} onClick={this.extendSessionHandler}>
-                Continue Session
-              </Button>
-            ) : (
-              <Button autoFocus={true} bsStyle={'primary'} onClick={this.props.onDismiss}>
-                OK
-              </Button>
-            )}
-          </React.Fragment>
-        </Modal.Footer>
+      <Modal isOpen={this.props.show} onClose={defaultAction} actions={buttons} title={'Session Timeout'} width={'40%'}>
+        <span>
+          <WarningTriangleIcon size={'xl'} color={PFColorVars.WarningColor} />
+        </span>
+        <span style={{ float: 'right', width: '80%' }} className={'lead'}>
+          {this.textForAuthStrategy(authenticationConfig.strategy)}
+        </span>
       </Modal>
     );
   }
@@ -75,11 +66,11 @@ export class SessionTimeout extends React.Component<SessionTimeoutProps, {}> {
         : 'Would you like to extend your session?';
 
     return (
-      <p className={'lead'}>
+      <>
         {line1}
         <br />
         {line2}
-      </p>
+      </>
     );
   };
 }
