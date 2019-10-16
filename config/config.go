@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -237,9 +236,9 @@ type KubernetesConfig struct {
 	QPS   float32 `yaml:"qps,omitempty"`
 	// Enable cache for kubernetes and istio resources
 	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
-	// Cache duration expressed in nanoseconds
+	// Cache duration expressed in seconds
 	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
-	CacheDuration int64 `yaml:"cache_duration,omitempty"`
+	CacheDuration int `yaml:"cache_duration,omitempty"`
 	// List of namespaces or regex defining namespaces to include in a cache
 	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
 	// Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
@@ -250,10 +249,10 @@ type KubernetesConfig struct {
 	// Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
 	// can be skipped from Kiali workloads query if they are present in this list
 	ExcludeWorkloads []string `yaml:"excluded_workloads,omitempty"`
-	// Cache duration expressed in nanoseconds
+	// Cache duration expressed in seconds
 	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
 	// namespace cache defined by previous CacheDuration parameter
-	CacheTokenNamespaceDuration int64 `yaml:"cache_token_namespace_duration,omitempty"`
+	CacheTokenNamespaceDuration int `yaml:"cache_token_namespace_duration,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
@@ -406,10 +405,10 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
 	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
-	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
+	c.KubernetesConfig.CacheDuration = getDefaultInt(EnvKubernetesCacheDuration, 5*60)
 	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, ".*")
 	c.KubernetesConfig.CacheIstioTypes = getDefaultStringArray(EnvKubernetesCacheIstioTypes, "VirtualService,DestinationRule,Gateway,ServiceEntry")
-	c.KubernetesConfig.CacheTokenNamespaceDuration = getDefaultInt64(EnvKubernetesCacheTokeNamespaceDuration, time.Duration(10*time.Second).Nanoseconds())
+	c.KubernetesConfig.CacheTokenNamespaceDuration = getDefaultInt(EnvKubernetesCacheTokeNamespaceDuration, 10)
 	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,DeploymentConfig,Job,ReplicationController,StatefulSet")
 
 	trimmedExclusionPatterns := []string{}

@@ -91,8 +91,8 @@ func NewKialiCache() (KialiCache, error) {
 		return nil, err
 	}
 
-	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration)
-	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration)
+	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration) * time.Second
+	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	cacheNamespaces := kConfig.KubernetesConfig.CacheNamespaces
 	cacheIstioTypes := make(map[string]bool)
 	for _, iType := range kConfig.KubernetesConfig.CacheIstioTypes {
