@@ -26,15 +26,17 @@ type WorkloadPodsProps = {
 
 class WorkloadPods extends React.Component<WorkloadPodsProps> {
   columns(): ICell[] {
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
     return [
-      { title: 'Status', transforms: [cellWidth(10)] },
-      { title: 'Name', transforms: [cellWidth(10)] },
-      { title: 'Created at', transforms: [cellWidth(10)] },
-      { title: 'Created by', transforms: [cellWidth(10)] },
-      { title: 'Labels', transforms: [cellWidth(60)] },
-      { title: 'Istio Init Containers', transforms: [cellWidth(60)] },
-      { title: 'Istio Containers', transforms: [cellWidth(60)] },
-      { title: 'Phase', transforms: [cellWidth(10)] }
+      { title: 'Status', transforms: [cellWidth(10) as any] },
+      { title: 'Name', transforms: [cellWidth(10) as any] },
+      { title: 'Created at', transforms: [cellWidth(10) as any] },
+      { title: 'Created by', transforms: [cellWidth(10) as any] },
+      { title: 'Labels', transforms: [cellWidth(60) as any] },
+      { title: 'Istio Init Containers', transforms: [cellWidth(60) as any] },
+      { title: 'Istio Containers', transforms: [cellWidth(60) as any] },
+      { title: 'Phase', transforms: [cellWidth(10) as any] }
     ];
   }
 
