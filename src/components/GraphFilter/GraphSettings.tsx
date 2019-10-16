@@ -179,7 +179,9 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
     });
 
     const graphSettingsContent = (
-      <div style={{ paddingLeft: '10px', backgroundColor: PfColors.White }}>
+      // TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
+      // https://github.com/patternfly/patternfly-react/issues/3156
+      <div style={{ paddingLeft: '10px', backgroundColor: PfColors.White }} className="pf-c-dropdown__menu-item">
         {displaySettingItems}
         <div className={spacerStyle} />
         <label>Badges:</label>
