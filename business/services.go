@@ -86,7 +86,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 				deployments, err = kialiCache.GetDeployments(namespace)
 			}
 		} else {
@@ -413,7 +413,7 @@ func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.Servic
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
 		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-			kialiCache.GetServices(namespace, nil)
+			svcs, err = kialiCache.GetServices(namespace, nil)
 		}
 	} else {
 		svcs, err = in.k8s.GetServices(namespace, nil)

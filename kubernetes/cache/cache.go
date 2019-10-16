@@ -87,6 +87,9 @@ func NewKialiCache() (KialiCache, error) {
 		Burst:           config.Burst,
 	}
 	istioClient, err := kubernetes.NewClientFromConfig(&istioConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	refreshDuration := time.Duration(kConfig.KubernetesConfig.CacheDuration)
 	tokenNamespaceDuration := time.Duration(kConfig.KubernetesConfig.CacheTokenNamespaceDuration)

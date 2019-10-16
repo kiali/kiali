@@ -110,7 +110,7 @@ func (in *WorkloadService) GetWorkload(namespace string, workloadName string, in
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 				services, err = kialiCache.GetServices(namespace, workload.Labels)
 			}
 		} else {
@@ -137,7 +137,7 @@ func (in *WorkloadService) GetPods(namespace string, labelSelector string) (mode
 	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-		if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 			ps, err = kialiCache.GetPods(namespace, labelSelector)
 		}
 	} else {
@@ -206,7 +206,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
 				dep, err = kialiCache.GetDeployments(namespace)
 			}
 		} else {
@@ -224,7 +224,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
 				repset, err = kialiCache.GetReplicaSets(namespace)
 			}
 		} else {
@@ -672,7 +672,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
 				pods, err = kialiCache.GetPods(namespace, "")
 			}
 
@@ -700,7 +700,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
 				repset, err = kialiCache.GetReplicaSets(namespace)
 			}
 		} else {

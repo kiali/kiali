@@ -299,7 +299,7 @@ func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 				deployments, err = kialiCache.GetDeployments(namespace)
 			}
 		} else {
