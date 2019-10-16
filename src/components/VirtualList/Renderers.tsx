@@ -41,10 +41,17 @@ const getIstioLink = (item: TResource) => {
 export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem> = (
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
+  const hasMissingSC = hasMissingSidecar(item);
+  const apiType = (item as ServiceListItem).apiType;
+  const hasApiType = apiType && apiType !== '';
+  const spacer = hasMissingSC && hasApiType;
   return (
     <td role="gridcell" key={'VirtuaItem_Details_' + item.namespace + '_' + item.name}>
-      {hasMissingSidecar(item) && <MissingSidecar namespace={item.namespace} />}{' '}
-      {(item as ServiceListItem).apiType && <ApiTypeIndicator apiType={(item as ServiceListItem).apiType} />}
+      <span>
+        {hasMissingSC && <MissingSidecar namespace={item.namespace} />}
+        {spacer && ' '}
+        {hasApiType && <ApiTypeIndicator apiType={(item as ServiceListItem).apiType} />}
+      </span>
     </td>
   );
 };

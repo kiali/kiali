@@ -12,7 +12,6 @@ type MissingSidecarProps = {
   icon: IconType;
   color: string;
   namespace: string;
-  style?: any;
 };
 
 const MissingSidecar = (props: MissingSidecarProps) => {
