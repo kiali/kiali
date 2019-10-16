@@ -65,10 +65,11 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
           onShown={[Function]}
           position="right"
           shouldClose={[Function]}
+          tippyProps={Object {}}
           zIndex={9999}
         >
           <React.Fragment>
-            <Button
+            <Unknown
               variant="plain"
             >
               <InfoAltIcon
@@ -77,7 +78,7 @@ exports[`TagsControls renders TagsControl correctly 1`] = `
                 size="sm"
                 title={null}
               />
-            </Button>
+            </Unknown>
             e.g. http.status_code=200 error=true
           </React.Fragment>
         </Popover>

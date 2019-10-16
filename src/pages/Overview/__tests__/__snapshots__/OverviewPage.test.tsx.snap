@@ -2,7 +2,7 @@
 
 exports[`Overview page renders initial layout 1`] = `
 <Fragment>
-  <Breadcrumb
+  <Component
     style={
       Object {
         "marginTop": "10px",
@@ -14,7 +14,7 @@ exports[`Overview page renders initial layout 1`] = `
     >
       Namespaces
     </BreadcrumbItem>
-  </Breadcrumb>
+  </Component>
   <Connect(OverviewToolbar)
     displayMode={1}
     onError={[Function]}

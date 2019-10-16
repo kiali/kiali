@@ -111,6 +111,7 @@ exports[`HealthIndicator renders healthy 1`] = `
   onShown={[Function]}
   position="auto"
   shouldClose={[Function]}
+  tippyProps={Object {}}
   zIndex={9999}
 >
   <CheckCircleIcon
