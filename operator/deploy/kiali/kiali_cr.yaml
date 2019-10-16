@@ -414,15 +414,20 @@ spec:
 # on this list of Istio types. Other Istio types are not yet supported.
 #    ---
 #    cache_istio_types:
-#    - "VirtualService"
 #    - "DestinationRule"
 #    - "Gateway"
 #    - "ServiceEntry"
+#    - "VirtualService"
 #
 # List of namespaces or regex defining namespaces to include in a cache.
 #    ---
-#    cache_namespaces:
-#    - "bookinfo"
+#    cache_namespaces: []
+#
+# Cache duration expressed in nanoseconds
+# Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
+# namespace cache defined by previous CacheDuration parameter
+#    ---
+#    cache_token_namespace_duration: 10000000
 #
 # List of controllers that won't be used for Workload calculation.
 # Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers.
@@ -431,6 +436,7 @@ spec:
 #    ---
 #    excluded_workloads:
 #    - "CronJob"
+#    - "DeploymentConfig"
 #    - "Job"
 #    - "ReplicationController"
 #    - "StatefulSet"

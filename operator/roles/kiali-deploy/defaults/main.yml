@@ -128,12 +128,14 @@ kiali_defaults:
   kubernetes_config:
     burst: 200
     cache_enabled: false
-    cache_istio_types:
-    - "VirtualService"
-    - "DestinationRule"
-    - "Gateway"
-    - "ServiceEntry"
     cache_duration: 300000000
+    cache_istio_types:
+      - "DestinationRule"
+      - "Gateway"
+      - "ServiceEntry"
+      - "VirtualService"
+    cache_namespaces: []
+    cache_token_namespace_duration: 10000000
     excluded_workloads:
     - "CronJob"
     - "DeploymentConfig"
