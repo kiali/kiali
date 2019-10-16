@@ -136,12 +136,17 @@ func (m MultiMatchChecker) findMatch(host Host) (bool, []Host) {
 			current := strings.ToLower(strings.Replace(host.Hostname, "*", ".*", -1))
 			previous := strings.ToLower(strings.Replace(h.Hostname, "*", ".*", -1))
 
+			// Escaping dot chars for RegExp. Dot char means all possible chars.
+			// This protects this validation to false positive for (api-dev.example.com and api.dev.example.com)
+			escapedCurrent := strings.Replace(host.Hostname, ".", "\\.", -1)
+			escapedPrevious := strings.Replace(h.Hostname, ".", "\\.", -1)
+
 			// We anchor the beginning and end of the string when it's
 			// to be used as a regex, so that we don't get spurious
 			// substring matches, e.g., "example.com" matching
 			// "foo.example.com".
-			currentRegexp := strings.Join([]string{"^", current, "$"}, "")
-			previousRegexp := strings.Join([]string{"^", previous, "$"}, "")
+			currentRegexp := strings.Join([]string{"^", escapedCurrent, "$"}, "")
+			previousRegexp := strings.Join([]string{"^", escapedPrevious, "$"}, "")
 
 			if regexp.MustCompile(currentRegexp).MatchString(previous) ||
 				regexp.MustCompile(previousRegexp).MatchString(current) {
