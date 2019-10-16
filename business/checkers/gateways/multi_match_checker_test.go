@@ -61,6 +61,31 @@ func TestCaseMatching(t *testing.T) {
 	assert.True(validation.Valid)
 }
 
+func TestDashSubdomainMatching(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gwObject := data.AddServerToGateway(data.CreateServer(
+		[]string{
+			"api.dev.example.com",
+			"api-dev.example.com",
+		}, 80, "http", "http"),
+
+		data.CreateEmptyGateway("foxxed", "test", map[string]string{
+			"app": "canidae",
+		}))
+
+	gws := [][]kubernetes.IstioObject{{gwObject}}
+
+	validations := MultiMatchChecker{
+		GatewaysPerNamespace: gws,
+	}.Check()
+
+	assert.Empty(validations)
+}
+
 func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
