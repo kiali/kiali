@@ -335,7 +335,8 @@ EOM
     done
 
     infomsg "Waiting for operator Deployments to start..."
-    for op in elasticsearch-operator jaeger-operator kiali-operator istio-operator
+    #### TODO: when 1.0.7 is released, flip this back to kiali-operator (remove the "2")
+    for op in elasticsearch-operator jaeger-operator kiali-operator2 istio-operator
     do
       echo -n "Waiting for ${op} to be ready..."
       readyReplicas="0"
