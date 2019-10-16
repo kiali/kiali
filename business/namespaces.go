@@ -121,21 +121,27 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 		}
 	}
 
+	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
 		project, err = in.k8s.GetProject(namespace)
 		if err != nil {
 			return nil, err
 		}
-		result := models.CastProject(*project)
-		return &result, nil
+		result = models.CastProject(*project)
 	} else {
 		var ns *core_v1.Namespace
 		ns, err = in.k8s.GetNamespace(namespace)
 		if err != nil {
 			return nil, err
 		}
-		result := models.CastNamespace(*ns)
-		return &result, nil
+		result = models.CastNamespace(*ns)
 	}
+	// Refresh cache in case of cache expiration
+	if kialiCache != nil {
+		if _, err = in.GetNamespaces(); err != nil {
+			return nil, err
+		}
+	}
+	return &result, nil
 }
