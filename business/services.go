@@ -277,7 +277,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckIstioResource("VirtualService") && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err2 := in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
 				vs, err2 = kialiCache.GetIstioResources("VirtualService", namespace)
 			}
 			if err2 == nil {
@@ -412,7 +412,7 @@ func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.Servic
 	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-		if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 			kialiCache.GetServices(namespace, nil)
 		}
 	} else {

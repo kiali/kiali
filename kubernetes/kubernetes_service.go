@@ -120,14 +120,13 @@ func (in *IstioClient) IsMaistraApi() bool {
 // It returns an error on any problem.
 func (in *IstioClient) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	var allServices []core_v1.Service
-	var err error
 
 	if allServicesList, err := in.k8s.CoreV1().Services(namespace).List(emptyListOptions); err == nil {
 		allServices = allServicesList.Items
-	}
-	if err != nil {
+	} else {
 		return []core_v1.Service{}, err
 	}
+
 	if selectorLabels == nil {
 		return allServices, nil
 	}

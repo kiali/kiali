@@ -274,7 +274,7 @@ func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, name
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 				services, err = kialiCache.GetServices(namespace, nil)
 			}
 		} else {
@@ -340,14 +340,12 @@ func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails,
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 				// Cache are local in memory, so no need to spawn these queries in threads to reduce the overhead
 				// Probably we could refactor in.k8s.GetIstioDetails, too, but I guess that can be done in future
 				// We are following the pattern to invoke cache from the business logic instead of kubernetes one
 				istioDetails = &kubernetes.IstioDetails{}
-				if err == nil {
-					istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
-				}
+				istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
 				if err == nil {
 					istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
 				}

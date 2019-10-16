@@ -155,7 +155,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := layer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
 				services, err = kialiCache.GetServices(namespace, nil)
 			}
 		} else {

@@ -168,7 +168,7 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-		if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
 			services, err = kialiCache.GetServices(namespace, nil)
 		}
 	} else {
