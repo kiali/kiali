@@ -3,6 +3,7 @@ import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfl
 import { PfColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import * as Legend from 'components/Charts/LegendHelper';
+import { CustomFlyout } from 'components/Charts/CustomFlyout';
 
 type InOutRateChartGrpcPropType = {
   percentOkIn: number;
@@ -20,8 +21,8 @@ const renderChartBars = (baseName: string, data: InOutData[]) => {
   let height = 132 + Legend.TOP_MARGIN + Legend.HEIGHT;
   const padding = {
     top: 15,
-    left: 47,
-    bottom: 30 + Legend.TOP_MARGIN + Legend.HEIGHT,
+    left: 30,
+    bottom: 10 + Legend.TOP_MARGIN + Legend.HEIGHT,
     right: 10
   };
   const events = Legend.events({
@@ -49,18 +50,30 @@ const renderChartBars = (baseName: string, data: InOutData[]) => {
             <ChartBar
               name={baseName + '-bars-' + idx}
               data={[
-                { name: datum.name, x: 'Out', y: datum.out, label: `${datum.name}: ${datum.out.toFixed(2)} %` },
-                { name: datum.name, x: 'In', y: datum.in, label: `${datum.name}: ${datum.in.toFixed(2)} %` }
+                {
+                  name: datum.name,
+                  x: 'Out',
+                  y: datum.out,
+                  label: `${datum.name}: ${datum.out.toFixed(2)} %`,
+                  color: datum.color
+                },
+                {
+                  name: datum.name,
+                  x: 'In',
+                  y: datum.in,
+                  label: `${datum.name}: ${datum.in.toFixed(2)} %`,
+                  color: datum.color
+                }
               ]}
               barWidth={30}
-              labelComponent={<ChartTooltip constrainToVisibleArea={true} />}
+              labelComponent={<ChartTooltip constrainToVisibleArea={true} flyoutComponent={<CustomFlyout />} />}
             />
           );
         })}
       </ChartStack>
-      <ChartAxis />
+      <ChartAxis style={{ tickLabels: { padding: 2 } }} />
       <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
-      {Legend.buildRateBarsLegend(baseName + '-legend', data, height, SUMMARY_PANEL_CHART_WIDTH)}
+      {Legend.buildRateBarsLegend(baseName + '-legend', data, 25, height, SUMMARY_PANEL_CHART_WIDTH)}
     </Chart>
   );
 };

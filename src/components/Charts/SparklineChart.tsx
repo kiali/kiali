@@ -13,6 +13,7 @@ import { VictoryLegend } from 'victory';
 import { VCDataPoint, VCLines } from '../../utils/Graphing';
 import { PfColors } from 'components/Pf/PfColors';
 import * as Legend from './LegendHelper';
+import { CustomFlyout } from './CustomFlyout';
 
 type Props = ChartProps & {
   name: string;
@@ -95,7 +96,7 @@ export class SparklineChart extends React.Component<Props, State> {
 
     let container = this.props.containerComponent;
     if (!container) {
-      const tooltip = <ChartTooltip flyoutStyle={{ fillOpacity: 0.7 }} constrainToVisibleArea={true} />;
+      const tooltip = <ChartTooltip flyoutComponent={<CustomFlyout />} constrainToVisibleArea={true} />;
       container = (
         <ChartVoronoiContainer
           labels={obj => {

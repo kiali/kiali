@@ -7,9 +7,15 @@ export interface LegendItem {
 }
 
 export const HEIGHT = 30;
-export const TOP_MARGIN = 5;
+export const TOP_MARGIN = 25;
 
-export const buildRateBarsLegend = (name: string, data: LegendItem[], chartHeight: number, width?: number) => {
+export const buildRateBarsLegend = (
+  name: string,
+  data: LegendItem[],
+  xOffset: number,
+  viewportHeight: number,
+  width?: number
+) => {
   return (
     <VictoryLegend
       name={name}
@@ -19,8 +25,8 @@ export const buildRateBarsLegend = (name: string, data: LegendItem[], chartHeigh
           symbol: { fill: d.color }
         };
       })}
-      x={39}
-      y={chartHeight + TOP_MARGIN - HEIGHT}
+      x={xOffset}
+      y={viewportHeight - HEIGHT}
       height={HEIGHT}
       width={width}
       gutter={14}

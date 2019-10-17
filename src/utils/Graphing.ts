@@ -4,6 +4,7 @@ export type VCDataPoint = {
   name: string;
   x: number | Date;
   y: number;
+  color?: string;
 };
 
 type LegendItem = {
@@ -26,7 +27,8 @@ export default {
         return {
           name: title,
           x: new Date(dp[0] * 1000) as any,
-          y: Number(dp[1])
+          y: Number(dp[1]),
+          color: color
         };
       })
       .filter(dp => !isNaN(dp.y));

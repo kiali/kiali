@@ -3,6 +3,7 @@ import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfl
 import { PfColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
 import * as Legend from 'components/Charts/LegendHelper';
+import { CustomFlyout } from 'components/Charts/CustomFlyout';
 
 type RateChartGrpcPropType = {
   percentErr: number;
@@ -17,8 +18,8 @@ const renderChartBars = (baseName: string, data: ValueData[]) => {
   let height = 80 + Legend.TOP_MARGIN + Legend.HEIGHT;
   const padding = {
     top: 10,
-    left: 38,
-    bottom: 20 + Legend.TOP_MARGIN + Legend.HEIGHT,
+    left: 5,
+    bottom: 10 + Legend.TOP_MARGIN + Legend.HEIGHT,
     right: 10
   };
   const events = Legend.events({
@@ -46,17 +47,23 @@ const renderChartBars = (baseName: string, data: ValueData[]) => {
             <ChartBar
               name={baseName + '-bars-' + idx}
               data={[
-                { name: datum.name, x: 'rate', y: datum.value, label: `${datum.name}: ${datum.value.toFixed(2)} %` }
+                {
+                  name: datum.name,
+                  x: 'rate',
+                  y: datum.value,
+                  label: `${datum.name}: ${datum.value.toFixed(2)} %`,
+                  color: datum.color
+                }
               ]}
               barWidth={30}
-              labelComponent={<ChartTooltip constrainToVisibleArea={true} />}
+              labelComponent={<ChartTooltip constrainToVisibleArea={true} flyoutComponent={<CustomFlyout />} />}
             />
           );
         })}
       </ChartStack>
       <ChartAxis style={{ tickLabels: { fill: 'none' } }} />
       <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
-      {Legend.buildRateBarsLegend(baseName + '-legend', data, height, SUMMARY_PANEL_CHART_WIDTH)}
+      {Legend.buildRateBarsLegend(baseName + '-legend', data, 0, height, SUMMARY_PANEL_CHART_WIDTH)}
     </Chart>
   );
 };
