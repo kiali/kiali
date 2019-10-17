@@ -15,7 +15,7 @@ func ServiceApiDocumentation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vars := mux.Vars(r)
-	apidoc, err := business.Svc.GetServiceApiDocumentation(vars["namespace"], vars["service"])
+	apidoc, err := business.Svc.GetServiceApiDocumentation(vars["namespace"], vars["service"], vars["lpath"])
 	handleApiDocumentationResponse(w, apidoc, err)
 }
 

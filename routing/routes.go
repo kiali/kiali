@@ -421,7 +421,7 @@ func NewRoutes() (r *Routes) {
 			handlers.ServiceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec services serviceApiDocumentation
+		// swagger:route GET /namespaces/{namespace}/services/{service}/apispec/{lpath:.*} services serviceApiDocumentation
 		// ---
 		// Get api spec associated to the given service. This is just a proxy to the url of the service serving the spec
 		//
@@ -435,7 +435,7 @@ func NewRoutes() (r *Routes) {
 		{
 			"ServiceApiDocumentation",
 			"GET",
-			"/api/namespaces/{namespace}/services/{service}/apispec",
+			"/api/namespaces/{namespace}/services/{service}/apispec/{lpath:.*}",
 			handlers.ServiceApiDocumentation,
 			true,
 		},

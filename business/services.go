@@ -3,6 +3,7 @@ package business
 import (
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -135,7 +136,7 @@ func (in *SvcService) buildServiceList(namespace models.Namespace, svcs []core_v
 }
 
 //GetServiceApiDocumentation returns the api documentation fetched from a service
-func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (string, error) {
+func (in *SvcService) GetServiceApiDocumentation(namespace, service string, requestURI string) (string, error) {
 	var err error
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "SvcService", "GetServiceApiDocumentation")
 	defer promtimer.ObserveNow(&err)
@@ -158,15 +159,26 @@ func (in *SvcService) GetServiceApiDocumentation(namespace, service string) (str
 	if !strings.HasPrefix(apiSpecPath, "http://") && !strings.HasPrefix(apiSpecPath, "https://") {
 		service := svc.ObjectMeta.Name + "." + svc.ObjectMeta.Namespace
 		if svc.ObjectMeta.Name == "kiali" {
-			// k8s doesn't want to call the service from the pod
-			service = "localhost"
+			// k8s doesn't want to call the service from the pod and kiali may have different configs so we just read
+			bytesKiali, errFile := ioutil.ReadFile("/opt/kiali/console/swagger.json")
+			if errFile != nil {
+				log.Errorf("Cannot read Kiali local file: %s", errFile)
+				return "", errFile
+			} else {
+				return string(bytesKiali), nil
+			}
 		}
 		apiSpecPath = "http://" + service + ":" + strconv.Itoa(int(svc.Spec.Ports[0].Port)) + apiSpecPath
 	}
 
-	resp, err2 := http.Get(apiSpecPath)
+	specURI, err2 := url.Parse(apiSpecPath)
 	if err2 != nil {
-		log.Errorf("API Documentation error while fetching spec URL (%s): %v", apiSpecPath, err)
+		log.Errorf("Cannot parse spec from annotation %s: %s", apiSpecPath, err2)
+	}
+
+	resp, err2 := http.Get(specURI.Scheme + "://" + specURI.Host + "/" + requestURI)
+	if err2 != nil {
+		log.Errorf("API Documentation error while fetching spec URL (%s): %v", requestURI, err)
 		return "", errors.NewInternalError(err2)
 	}
 	defer resp.Body.Close()
@@ -216,10 +228,19 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	conf := config.Get()
 	apiSpecFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiSpecAnnotationName]
 	apiTypeFromAnnotation := svc.ObjectMeta.Annotations[conf.ApiDocumentation.Annotations.ApiTypeAnnotationName]
+	specURI, err2 := url.Parse(apiSpecFromAnnotation)
+	if err2 != nil {
+		log.Errorf("Cannot parse sepc from annotation %s: %s", apiSpecFromAnnotation, err2)
+	}
+
+	var finalPath = specURI.RequestURI()
+	if !strings.HasPrefix(finalPath, "/") {
+		finalPath = "/" + finalPath
+	}
 
 	apidoc = models.ApiDocumentation{
-		Type:    apiTypeFromAnnotation,
-		HasSpec: (apiSpecFromAnnotation != ""),
+		Type: apiTypeFromAnnotation,
+		Path: finalPath,
 	}
 
 	additionalDetails := models.GetAdditionalDetails(conf, svc.ObjectMeta.Annotations)
