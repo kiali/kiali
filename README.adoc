@@ -325,6 +325,19 @@ ${GOPATH}/bin/kiali -config <your-config-file>
 
 Many configuration settings can optionally be set within the Kiali Operator custom resource (CR) file. See link:./operator/deploy/kiali/kiali_cr.yaml[this example Kiali CR file] that has all the configuration settings documented.
 
+== Embedding Kiali
+
+If you want to embed Kiali in other applications, Kiali offers a simple feature called _Kiosk mode_. In this mode, Kiali won't show the main header, nor the main navigation bar.
+
+To enable Kiosk mode, you only need to add a `kiosk=true` URL parameter. You will need to use the full path of the page you want to embed. For example, assuming that you access Kiali through HTTPS:
+
+* To embed the _Overview_ page, use `https://_kiali_path_/overview?kiosk=true`.
+* To embed the _Graph_ page, use `https://_kiali_path_/graph/namespaces?kiosk=true`.
+* To embed the _Applications list_ page, use `https://_kiali_path_/applications?kiosk=true`.
+
+If the page you want to embed uses other URL arguments, you can specify any of them to preset options. For example, if you want to embed the graph of the _bookinfo_ namespace, use the following URL: `http://_kiali_path_/graph/namespaces?namespaces=bookinfo&kiosk=true`.
+
+
 == Configure External Services
 
 === Jaeger
