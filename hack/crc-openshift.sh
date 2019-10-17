@@ -243,54 +243,6 @@ install_service_mesh() {
   local create_smcp="$1"
   infomsg "Installing the operators..."
   cat <<EOM | ${CRC_OC} apply -f -
----
-apiVersion: operators.coreos.com/v1
-kind: CatalogSourceConfig
-metadata:
-  name: hack-redhat-openshift-operators
-  namespace: openshift-marketplace
-spec:
-  csDisplayName: Hack Red Hat Operators
-  csPublisher: Hack Red Hat
-  packages: 'elasticsearch-operator,jaeger-product,kiali-ossm,servicemeshoperator'
-  targetNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: elasticsearch-operator
-  namespace: openshift-operators
-spec:
-  channel: preview
-  installPlanApproval: Automatic
-  name: elasticsearch-operator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: jaeger-product
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: jaeger-product
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: kiali-ossm
-  namespace: openshift-operators
-spec:
-  channel: stable
-  installPlanApproval: Automatic
-  name: kiali-ossm
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
----
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -300,8 +252,8 @@ spec:
   channel: '1.0'
   installPlanApproval: Automatic
   name: servicemeshoperator
-  source: hack-redhat-openshift-operators
-  sourceNamespace: openshift-operators
+  source: redhat-openshift-operators
+  sourceNamespace: openshift-marketplace
 EOM
   if [ "${create_smcp}" == "true" ] ; then
 
@@ -353,10 +305,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="1.0.0-beta.3"
+DEFAULT_CRC_DOWNLOAD_VERSION="1.0.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.1.11"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.2.0"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="5"
@@ -525,7 +477,7 @@ Valid options:
   -h|--help : this message
   -ie|--istio-enabled (true|false)
       When set to true, Maistra/Istio will be installed in OpenShift.
-      Default: true
+      Default: false
       Used only for the 'start' command.
   -smcp|--maistra-smcp-yaml <file or url>
       Points to the YAML file that defines the ServiceMeshControlPlane custom resource which declares what to install.
@@ -617,11 +569,8 @@ CRC_KUBECONFIG="${CRC_ROOT_DIR}/cache/crc_libvirt_${CRC_LIBVIRT_DOWNLOAD_VERSION
 CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC="${CRC_ROOT_DIR}/bin/oc"
 
-# The version of Maistra/Istio to be installed if enabled
-MAISTRA_VERSION="maistra-0.11.0"
-
 # If ISTIO_ENABLED=true, then a version of Maistra/Istio will be installed for you.
-ISTIO_ENABLED="${ISTIO_ENABLED:-true}"
+ISTIO_ENABLED="${ISTIO_ENABLED:-false}"
 
 # By default, wait for Maistra/Istio to be up and running before the script ends.
 WAIT_FOR_ISTIO="${WAIT_FOR_ISTIO:-true}"
@@ -645,6 +594,7 @@ fi
 
 # Determine where to get the binaries and their full paths and how to execute them.
 CRC_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
+CRC_DOWNLOAD_LOCATION_ALT="http://cdk-builds.usersys.redhat.com/builds/crc/releases/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_EXE_NAME=crc
 CRC_EXE_PATH="${OPENSHIFT_BIN_PATH}/${CRC_EXE_NAME}"
 CRC_COMMAND="${CRC_EXE_PATH}"
@@ -663,6 +613,7 @@ debug "ENVIRONMENT:
   CRC_COMMAND=$CRC_COMMAND
   CRC_CPUS=$CRC_CPUS
   CRC_DOWNLOAD_LOCATION=$CRC_DOWNLOAD_LOCATION
+  CRC_DOWNLOAD_LOCATION_ALT=$CRC_DOWNLOAD_LOCATION_ALT
   CRC_DOWNLOAD_PLATFORM=$CRC_DOWNLOAD_PLATFORM
   CRC_DOWNLOAD_VERSION=$CRC_DOWNLOAD_VERSION
   CRC_EXE_NAME=$CRC_EXE_NAME
@@ -680,7 +631,6 @@ debug "ENVIRONMENT:
   DOCKER_SUDO=$DOCKER_SUDO
   ISTIO_ENABLED=$ISTIO_ENABLED
   MAISTRA_SMCP_YAML=$MAISTRA_SMCP_YAML
-  MAISTRA_VERSION=$MAISTRA_VERSION
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
   OPENSHIFT_IP_ADDRESS=$OPENSHIFT_IP_ADDRESS
   OPENSHIFT_ISTIO_MASTER_PUBLIC_URL=$OPENSHIFT_ISTIO_MASTER_PUBLIC_URL
@@ -694,7 +644,7 @@ fi
 
 # Download the crc tool if we do not have it yet
 if [[ -f "${CRC_EXE_PATH}" ]]; then
-  _existingVersion=$(${CRC_EXE_PATH} version | tail -n 1 | sed ${SEDOPTIONS} "s/^version: \([A-Za-z0-9.]*\)-[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
+  _existingVersion=$(${CRC_EXE_PATH} version | head -n 1 | sed ${SEDOPTIONS} "s/^crc version: \([A-Za-z0-9.]*\)[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
   _crc_major_minor_patch_version="$(echo -n ${CRC_DOWNLOAD_VERSION} | sed -E 's/([0-9]+.[0-9]+.[0-9]+).*/\1/')"
   if [ "${_existingVersion}" != "${CRC_DOWNLOAD_VERSION}" -a "${_existingVersion}" != "${_crc_major_minor_patch_version}" ]; then
     infomsg "===== WARNING ====="
@@ -713,12 +663,16 @@ else
   get_downloader
   eval ${DOWNLOADER} "${CRC_EXE_PATH}.tar.xz" ${CRC_DOWNLOAD_LOCATION}
   if [ "$?" != "0" ]; then
-    infomsg "===== WARNING ====="
-    infomsg "Could not download the client binary for the version you want."
-    infomsg "Make sure this is valid: ${CRC_DOWNLOAD_LOCATION}"
-    infomsg "===== WARNING ====="
-    rm "${CRC_EXE_PATH}.tar.xz"
-    exit 1
+    eval ${DOWNLOADER} "${CRC_EXE_PATH}.tar.xz" ${CRC_DOWNLOAD_LOCATION_ALT}
+    if [ "$?" != "0" ]; then
+      infomsg "===== WARNING ====="
+      infomsg "Could not download the client binary for the version you want."
+      infomsg "Make sure this is valid: ${CRC_DOWNLOAD_LOCATION}"
+      infomsg "Or this is valid: ${CRC_DOWNLOAD_LOCATION_ALT}"
+      infomsg "===== WARNING ====="
+      rm "${CRC_EXE_PATH}.tar.xz"
+      exit 1
+    fi
   fi
   tar xvf "${CRC_EXE_PATH}.tar.xz" -C "$(dirname ${CRC_EXE_PATH})" --strip 1 '*/crc'
   chmod +x ${CRC_EXE_PATH}
