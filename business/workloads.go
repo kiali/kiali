@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Workload deals with fetching istio/kubernetes workloads related content and convert to kiali model
@@ -46,12 +47,8 @@ func setExcludedWorkloads(m map[string]bool) {
 }
 
 func isWorkloadIncluded(workload string) bool {
-	if isExcludedWorkloadsEmpty() {
-		excludedWorkloads = make(map[string]bool)
-		for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
-			excludedWorkloads[w] = true
-		}
-		setExcludedWorkloads(excludedWorkloads)
+	if excludedWorkloads == nil {
+		return true
 	}
 	return !excludedWorkloads[workload]
 }
@@ -688,9 +685,22 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		dep, err = layer.k8s.GetDeployment(namespace, workloadName)
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
+				dep, err = kialiCache.GetDeployment(namespace, workloadName)
+			}
+		} else {
+			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
+		}
 		if err != nil {
-			dep = nil
+			if errors.IsNotFound(err) {
+				dep = nil
+			} else {
+				log.Errorf("Error fetching Deployment per namespace %s and name %s: %s", namespace, workloadName, err)
+				errChan <- err
+			}
 		}
 	}()
 

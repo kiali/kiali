@@ -40,6 +40,13 @@ func initKialiCache() {
 				kialiCache = cache
 			}
 		}
+		if isExcludedWorkloadsEmpty() {
+			excludedWorkloads = make(map[string]bool)
+			for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
+				excludedWorkloads[w] = true
+			}
+			setExcludedWorkloads(excludedWorkloads)
+		}
 	})
 }
 

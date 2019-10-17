@@ -15,6 +15,7 @@ import (
 type (
 	KubernetesCache interface {
 		GetDeployments(namespace string) ([]apps_v1.Deployment, error)
+		GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
 		GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error)
 		GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 		GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
@@ -47,6 +48,26 @@ func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment,
 		}
 	}
 	return []apps_v1.Deployment{}, nil
+}
+
+func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deployment, error) {
+	if nsCache, ok := c.nsCache[namespace]; ok {
+		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
+		key := namespace + "/" + name
+		obj, exist, err := nsCache["Deployment"].GetStore().GetByKey(key)
+		if err != nil {
+			return nil, err
+		}
+		if exist {
+			dep, ok := obj.(*apps_v1.Deployment)
+			if !ok {
+				return nil, errors.New("bad Deployment type found in cache")
+			}
+			log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] [name: %s]", namespace, name)
+			return dep, nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {

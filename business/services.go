@@ -50,7 +50,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
 				svcs, err2 = kialiCache.GetServices(namespace, nil)
 			}
 		} else {
@@ -68,7 +68,7 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
 				pods, err2 = kialiCache.GetPods(namespace, "")
 			}
 		} else {
@@ -231,7 +231,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-				if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
 					pods, err2 = kialiCache.GetPods(namespace, labelsSelector)
 				}
 			} else {
