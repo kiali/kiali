@@ -326,7 +326,7 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	// Setup mocks
 
 	gr := schema.GroupResource{
-		Group: "test-group",
+		Group:    "test-group",
 		Resource: "test-resource",
 	}
 	notfound := errors.NewNotFound(gr, "not found")
@@ -358,7 +358,7 @@ func TestGetWorkloadFromPods(t *testing.T) {
 
 	// Setup mocks
 	gr := schema.GroupResource{
-		Group: "test-group",
+		Group:    "test-group",
 		Resource: "test-resource",
 	}
 	notfound := errors.NewNotFound(gr, "not found")

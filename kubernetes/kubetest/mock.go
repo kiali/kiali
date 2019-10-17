@@ -10,10 +10,10 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -67,7 +67,7 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interface{}) {
 	gr := schema.GroupResource{
-		Group: "test-group",
+		Group:    "test-group",
 		Resource: "test-resource",
 	}
 	notfound := errors.NewNotFound(gr, "not found")
