@@ -130,10 +130,10 @@ kiali_defaults:
     cache_enabled: false
     cache_duration: 300
     cache_istio_types:
-      - "DestinationRule"
-      - "Gateway"
-      - "ServiceEntry"
-      - "VirtualService"
+    - "DestinationRule"
+    - "Gateway"
+    - "ServiceEntry"
+    - "VirtualService"
     cache_namespaces: []
     cache_token_namespace_duration: 10
     excluded_workloads:
