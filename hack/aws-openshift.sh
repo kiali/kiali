@@ -965,8 +965,19 @@ elif [ "$_CMD" = "sm-install" ]; then
 elif [ "$_CMD" = "sm-uninstall" ]; then
 
   # remove the SMCP and SMMR CRs which uninstalls all the Service Mesh components
+  debug "Deleting the ServiceMesh SMCP and SMMR CRs"
   ${OC} delete -n istio-system $(${OC} get smcp -n istio-system -o name)
   ${OC} delete -n istio-system $(${OC} get smmr -n istio-system -o name)
+
+  # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
+  _kialicr=$(${OC} get kiali -n istio-system -o name 2>/dev/null)
+  if [ "${_kialicr}" != "" ]; then
+    debug "Deleting the Kiali CR"
+    ${OC} patch ${_kialicr} -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
+    ${OC} delete ${_kialicr} -n istio-system
+  fi
+
+  debug "Cleaning up the rest of ServiceMesh"
 
   # clean up the control plane namespace
   ${OC} delete namespace istio-system
@@ -1038,6 +1049,7 @@ elif [ "$_CMD" = "k-uninstall" ]; then
   _kialicr=$(${OC} get kiali -n istio-system -o name 2>/dev/null)
   if [ "${_kialicr}" != "" ]; then
     debug "Deleting the Kiali CR"
+    ${OC} patch ${_kialicr} -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
     ${OC} delete ${_kialicr} -n istio-system
   fi
 
