@@ -25,17 +25,17 @@ func (c *kialiCacheImpl) CheckIstioResource(resource string) bool {
 
 func (c *kialiCacheImpl) createIstioInformers(namespace string, informer *typeCache) {
 	// Networking API
-	if c.CheckIstioResource("VirtualService") {
-		(*informer)["VirtualService"] = createIstioIndexInformer(c.istioNetworkingGetter, "virtualservices", c.refreshDuration, namespace)
+	if c.CheckIstioResource(kubernetes.VirtualServiceType) {
+		(*informer)[kubernetes.VirtualServiceType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.VirtualServices, c.refreshDuration, namespace)
 	}
-	if c.CheckIstioResource("DestinationRule") {
-		(*informer)["DestinationRule"] = createIstioIndexInformer(c.istioNetworkingGetter, "destinationrules", c.refreshDuration, namespace)
+	if c.CheckIstioResource(kubernetes.DestinationRuleType) {
+		(*informer)[kubernetes.DestinationRuleType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.DestinationRules, c.refreshDuration, namespace)
 	}
-	if c.CheckIstioResource("Gateway") {
-		(*informer)["Gateway"] = createIstioIndexInformer(c.istioNetworkingGetter, "gateways", c.refreshDuration, namespace)
+	if c.CheckIstioResource(kubernetes.GatewayType) {
+		(*informer)[kubernetes.GatewayType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Gateways, c.refreshDuration, namespace)
 	}
-	if c.CheckIstioResource("ServiceEntry") {
-		(*informer)["ServiceEntry"] = createIstioIndexInformer(c.istioNetworkingGetter, "serviceentries", c.refreshDuration, namespace)
+	if c.CheckIstioResource(kubernetes.ServiceentryType) {
+		(*informer)[kubernetes.ServiceentryType] = createIstioIndexInformer(c.istioNetworkingGetter, kubernetes.Serviceentries, c.refreshDuration, namespace)
 	}
 }
 

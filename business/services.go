@@ -275,10 +275,10 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		defer wg.Done()
 		var err2 error
 		// Check if namespace is cached
-		if kialiCache != nil && kialiCache.CheckIstioResource("VirtualService") && kialiCache.CheckNamespace(namespace) {
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(namespace) {
 			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
 			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
-				vs, err2 = kialiCache.GetIstioResources("VirtualService", namespace)
+				vs, err2 = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, namespace)
 			}
 			if err2 == nil {
 				// Cache offers a generic method to bring all resources but it needs filter on VS case
@@ -295,8 +295,8 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		if kialiCache != nil && kialiCache.CheckIstioResource("DestinationRule") && kialiCache.CheckNamespace(namespace) {
-			dr, err2 = kialiCache.GetIstioResources("DestinationRule", namespace)
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(namespace) {
+			dr, err2 = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, namespace)
 			if err2 == nil {
 				dr = kubernetes.FilterDestinationRules(dr, namespace, service)
 			}

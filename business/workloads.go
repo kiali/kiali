@@ -236,7 +236,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("ReplicationController") {
+		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			repcon, err = layer.k8s.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
@@ -248,7 +248,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
-		if layer.k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
+		if layer.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			depcon, err = layer.k8s.GetDeploymentConfigs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
@@ -260,7 +260,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("StatefulSet") {
+		if isWorkloadIncluded(kubernetes.StatefulSetType) {
 			fulset, err = layer.k8s.GetStatefulSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching StatefulSets per namespace %s: %s", namespace, err)
@@ -272,7 +272,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("CronJob") {
+		if isWorkloadIncluded(kubernetes.CronJobType) {
 			conjbs, err = layer.k8s.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
@@ -284,7 +284,7 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("Job") {
+		if isWorkloadIncluded(kubernetes.JobType) {
 			jbs, err = layer.k8s.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
@@ -725,7 +725,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("ReplicationController") {
+		if isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			repcon, err = layer.k8s.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
@@ -737,7 +737,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		if layer.k8s.IsOpenShift() && isWorkloadIncluded("DeploymentConfig") {
+		if layer.k8s.IsOpenShift() && isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			depcon, err = layer.k8s.GetDeploymentConfig(namespace, workloadName)
 			if err != nil {
 				depcon = nil
@@ -748,7 +748,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("StatefulSet") {
+		if isWorkloadIncluded(kubernetes.StatefulSetType) {
 			fulset, err = layer.k8s.GetStatefulSet(namespace, workloadName)
 			if err != nil {
 				fulset = nil
@@ -759,7 +759,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("CronJob") {
+		if isWorkloadIncluded(kubernetes.CronJobType) {
 			conjbs, err = layer.k8s.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
@@ -771,7 +771,7 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 	go func() {
 		defer wg.Done()
 		var err error
-		if isWorkloadIncluded("Job") {
+		if isWorkloadIncluded(kubernetes.JobType) {
 			jbs, err = layer.k8s.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)

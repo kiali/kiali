@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
 
@@ -24,15 +25,15 @@ type (
 
 func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *typeCache) {
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
-	(*informer)["Deployment"] = sharedInformers.Apps().V1().Deployments().Informer()
-	(*informer)["ReplicaSet"] = sharedInformers.Apps().V1().ReplicaSets().Informer()
-	(*informer)["Service"] = sharedInformers.Core().V1().Services().Informer()
-	(*informer)["Pod"] = sharedInformers.Core().V1().Pods().Informer()
+	(*informer)[kubernetes.DeploymentType] = sharedInformers.Apps().V1().Deployments().Informer()
+	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
+	(*informer)[kubernetes.ServiceentryType] = sharedInformers.Core().V1().Services().Informer()
+	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 }
 
 func (c *kialiCacheImpl) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
-		deps := nsCache["Deployment"].GetStore().List()
+		deps := nsCache[kubernetes.DeploymentType].GetStore().List()
 		lenDeps := len(deps)
 		if lenDeps > 0 {
 			_, ok := deps[0].(*apps_v1.Deployment)
@@ -54,7 +55,7 @@ func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 	if nsCache, ok := c.nsCache[namespace]; ok {
 		// Cache stores natively items with namespace/name pattern, we can skip the Indexer by name and make a direct call
 		key := namespace + "/" + name
-		obj, exist, err := nsCache["Deployment"].GetStore().GetByKey(key)
+		obj, exist, err := nsCache[kubernetes.DeploymentType].GetStore().GetByKey(key)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +73,7 @@ func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 
 func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
-		services := nsCache["Service"].GetStore().List()
+		services := nsCache[kubernetes.ServiceentryType].GetStore().List()
 		lenServices := len(services)
 		if lenServices > 0 {
 			_, ok := services[0].(*core_v1.Service)
@@ -103,7 +104,7 @@ func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string
 
 func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
-		pods := nsCache["Pod"].GetStore().List()
+		pods := nsCache[kubernetes.PodType].GetStore().List()
 		lenPods := len(pods)
 		if lenPods > 0 {
 			_, ok := pods[0].(*core_v1.Pod)
@@ -136,7 +137,7 @@ func (c *kialiCacheImpl) GetPods(namespace, labelSelector string) ([]core_v1.Pod
 
 func (c *kialiCacheImpl) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
-		reps := nsCache["ReplicaSet"].GetStore().List()
+		reps := nsCache[kubernetes.ReplicaSetType].GetStore().List()
 		lenReps := len(reps)
 		if lenReps > 0 {
 			_, ok := reps[0].(*apps_v1.ReplicaSet)
