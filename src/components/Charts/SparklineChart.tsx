@@ -133,6 +133,7 @@ export class SparklineChart extends React.Component<Props, State> {
           return (
             <ChartScatter
               name={this.props.name + '-scatter-' + idx}
+              key={this.props.name + '-scatter-' + idx}
               data={serie.datapoints}
               style={{ data: { fill: serie.color } }}
               size={({ active }) => (active ? 5 : 2)}
@@ -146,6 +147,7 @@ export class SparklineChart extends React.Component<Props, State> {
           return (
             <ChartArea
               name={this.props.name + '-area-' + idx}
+              key={this.props.name + '-area-' + idx}
               data={serie.datapoints}
               style={{
                 data: {

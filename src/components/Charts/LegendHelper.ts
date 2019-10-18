@@ -1,40 +1,3 @@
-import * as React from 'react';
-import { VictoryLegend } from 'victory';
-
-export interface LegendItem {
-  name: string;
-  color: string;
-}
-
-export const HEIGHT = 30;
-export const TOP_MARGIN = 25;
-
-export const buildRateBarsLegend = (
-  name: string,
-  data: LegendItem[],
-  xOffset: number,
-  viewportHeight: number,
-  width?: number
-) => {
-  return (
-    <VictoryLegend
-      name={name}
-      data={data.map(d => {
-        return {
-          name: d.name,
-          symbol: { fill: d.color }
-        };
-      })}
-      x={xOffset}
-      y={viewportHeight - HEIGHT}
-      height={HEIGHT}
-      width={width}
-      gutter={14}
-      symbolSpacer={8}
-    />
-  );
-};
-
 interface EventsOptions {
   items: any[];
   legendName: string;
@@ -52,8 +15,13 @@ export const events = (options: EventsOptions) => {
           {
             childName: [options.itemBaseName + idx],
             target: 'data',
-            eventKey: 'all',
             mutation: props => options.onClick!(idx, props)
+          },
+          {
+            childName: [options.itemBaseName + idx],
+            target: 'data',
+            eventKey: 'all',
+            mutation: _ => null
           }
         ];
       };
@@ -75,9 +43,7 @@ export const events = (options: EventsOptions) => {
             childName: [options.itemBaseName + idx],
             target: 'data',
             eventKey: 'all',
-            mutation: () => {
-              return null;
-            }
+            mutation: _ => null
           }
         ];
       };

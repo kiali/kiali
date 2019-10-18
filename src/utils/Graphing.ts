@@ -2,7 +2,7 @@ import { TimeSeries, Datapoint } from '../types/Metrics';
 
 export type VCDataPoint = {
   name: string;
-  x: number | Date;
+  x: number | Date | string;
   y: number;
   color?: string;
 };
