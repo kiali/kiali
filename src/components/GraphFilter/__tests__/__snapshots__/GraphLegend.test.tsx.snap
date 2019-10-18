@@ -2,7 +2,7 @@
 
 exports[`GraphLegend test should render correctly 1`] = `
 <div
-  className="fqvou5s"
+  className="f1g9a3br"
 >
   <div
     className="f1xvjjtv"
@@ -179,30 +179,30 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="Warning"
+                alt="Warn"
                 src="node-color-warning.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Warning
+              Warn
             </span>
           </div>
           <div
             className="f1n8a700"
-            key="node-color-error.svg"
+            key="node-color-danger.svg"
           >
             <span>
               <img
-                alt="Error"
-                src="node-color-error.svg"
+                alt="Danger"
+                src="node-color-danger.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              Error
+              Danger
             </span>
           </div>
           <div
@@ -267,18 +267,18 @@ exports[`GraphLegend test should render correctly 1`] = `
           Edges
           <div
             className="f1n8a700"
-            key="edge-error.svg"
+            key="edge-danger.svg"
           >
             <span>
               <img
-                alt="20% Error"
-                src="edge-error.svg"
+                alt="20% Error (Danger)"
+                src="edge-danger.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              20% Error
+              20% Error (Danger)
             </span>
           </div>
           <div
@@ -287,30 +287,30 @@ exports[`GraphLegend test should render correctly 1`] = `
           >
             <span>
               <img
-                alt="0.1 - 20% Error"
+                alt="0.1 - 20% Error (Warn)"
                 src="edge-warn.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              0.1 - 20% Error
+              0.1 - 20% Error (Warn)
             </span>
           </div>
           <div
             className="f1n8a700"
-            key="edge-normal.svg"
+            key="edge-success.svg"
           >
             <span>
               <img
-                alt="0.1 Error"
-                src="edge-normal.svg"
+                alt="0.1 Error (Success)"
+                src="edge-success.svg"
               />
             </span>
             <span
               className="f1hob5wc"
             >
-              0.1 Error
+              0.1 Error (Success)
             </span>
           </div>
           <div

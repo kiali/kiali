@@ -41,6 +41,7 @@ import { GraphActions } from '../../actions/GraphActions';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { GlobalActions } from '../../actions/GlobalActions';
+import { PfColors } from 'components/Pf/PfColors';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -108,11 +109,10 @@ const kioskContainerStyle = style({
 });
 
 const cytoscapeGraphContainerStyle = style({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const cytoscapeGraphWrapperDivStyle = style({ position: 'relative' });
+const cytoscapeGraphWrapperDivStyle = style({ position: 'relative', backgroundColor: PfColors.GrayBackground });
 const cytoscapeToolbarWrapperDivStyle = style({
   position: 'absolute',
   bottom: '10px',
-  left: '-13px',
   zIndex: 2,
   borderStyle: 'hidden'
 });

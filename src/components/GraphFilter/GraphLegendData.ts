@@ -7,14 +7,14 @@ import serviceEntryImage from '../../assets/img/legend/service-entry.svg';
 // Node Colors
 import nodeColorNormalImage from '../../assets/img/legend/node-color-normal.svg';
 import nodeColorWarningImage from '../../assets/img/legend/node-color-warning.svg';
-import nodeColorErrorImage from '../../assets/img/legend/node-color-error.svg';
+import nodeColorDangerImage from '../../assets/img/legend/node-color-danger.svg';
 import nodeColorUnusedImage from '../../assets/img/legend/node-color-unused.svg';
 // Node Background
 import externalNamespaceImage from '../../assets/img/legend/external-namespace.svg';
 import restrictedNamespaceImage from '../../assets/img/legend/restricted-namespace.svg';
 // Edges
-import edgeNormalImage from '../../assets/img/legend/edge-normal.svg';
-import edgeErrorImage from '../../assets/img/legend/edge-error.svg';
+import edgeSuccessImage from '../../assets/img/legend/edge-success.svg';
+import edgeDangerImage from '../../assets/img/legend/edge-danger.svg';
 import edgeWarnImage from '../../assets/img/legend/edge-warn.svg';
 import edgeIdlemage from '../../assets/img/legend/edge-idle.svg';
 import edgeTcpImage from '../../assets/img/legend/edge-tcp.svg';
@@ -53,8 +53,8 @@ const legendData: GraphLegendItem[] = [
     title: 'Node Colors',
     data: [
       { label: 'Normal', icon: nodeColorNormalImage },
-      { label: 'Warning', icon: nodeColorWarningImage },
-      { label: 'Error', icon: nodeColorErrorImage },
+      { label: 'Warn', icon: nodeColorWarningImage },
+      { label: 'Danger', icon: nodeColorDangerImage },
       { label: 'Unused', icon: nodeColorUnusedImage }
     ]
   },
@@ -68,9 +68,9 @@ const legendData: GraphLegendItem[] = [
   {
     title: 'Edges',
     data: [
-      { label: '20% Error', icon: edgeErrorImage },
-      { label: '0.1 - 20% Error', icon: edgeWarnImage },
-      { label: '0.1 Error', icon: edgeNormalImage },
+      { label: '20% Error (Danger)', icon: edgeDangerImage },
+      { label: '0.1 - 20% Error (Warn)', icon: edgeWarnImage },
+      { label: '0.1 Error (Success)', icon: edgeSuccessImage },
       { label: 'TCP Connection', icon: edgeTcpImage },
       { label: 'Idle', icon: edgeIdlemage },
       { label: 'mTLS (badge)', icon: edgeMtlsImage }

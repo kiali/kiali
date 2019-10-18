@@ -11,12 +11,17 @@ import { Response } from '../../services/Api';
 import { serverConfig } from '../../config/ServerConfig';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Badge } from '@patternfly/react-core';
+import { PfColors } from 'components/Pf/PfColors';
 
 export enum NodeMetricType {
   APP = 1,
   WORKLOAD = 2,
   SERVICE = 3
 }
+
+export const summaryHeader: React.CSSProperties = {
+  backgroundColor: PfColors.White
+};
 
 export const summaryBodyTabs = style({
   padding: '0 15px 15px'

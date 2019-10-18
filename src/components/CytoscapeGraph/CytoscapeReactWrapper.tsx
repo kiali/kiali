@@ -1,7 +1,5 @@
 import * as React from 'react';
-
 import { GraphStyles } from './graphs/GraphStyles';
-
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
 import cycola from 'cytoscape-cola';

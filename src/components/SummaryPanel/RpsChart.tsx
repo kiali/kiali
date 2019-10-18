@@ -79,8 +79,8 @@ export class RpsChart extends React.Component<RpsChartTypeProp, {}> {
   }
 
   private renderContent = () => {
-    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PfColors.Blue);
-    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PfColors.Red);
+    const rpsLine = Graphing.toVCLine(this.props.dataRps, 'RPS', PfColors.Info);
+    const errLine = Graphing.toVCLine(this.props.dataErrors, 'Error', PfColors.Danger);
     if (thereIsTrafficData(rpsLine)) {
       return (
         <>

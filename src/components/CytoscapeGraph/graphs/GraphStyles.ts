@@ -18,10 +18,14 @@ import _ from 'lodash';
 export const DimClass = 'mousedim';
 
 // UX-specified colors, widths, etc
-const EdgeColor = PfColors.Green400;
+const ColorDanger = PfColors.Danger; // Same as Health.FAILURE.color
+const ColorHealthy = PfColors.Success; // Same as Health.HEALTHY.color
+const ColorWarning = PfColors.Warning; // Same as Health.DEGRADED.color
+
+const EdgeColor = ColorHealthy;
 const EdgeColorDead = PfColors.Black500;
-const EdgeColorDegraded = PfColors.Orange;
-const EdgeColorFailure = PfColors.Red;
+const EdgeColorDegraded = ColorWarning;
+const EdgeColorFailure = ColorDanger;
 const EdgeColorTCPWithTraffic = PfColors.Blue600;
 const EdgeIconMTLS = icons.istio.mtls.ascii; // lock
 const EdgeIconDisabledMTLS = icons.istio.disabledMtls.ascii; // broken lock
@@ -30,13 +34,13 @@ const EdgeTextOutlineWidth = '1px';
 const EdgeTextFont = 'Verdana,Arial,Helvetica,sans-serif,FontAwesome,PatternFlyIcons-webfont';
 const EdgeTextFontSize = '6px';
 const EdgeTextFontSizeHover = '10px';
-const EdgeWidth = 1;
-const EdgeWidthSelected = 3;
+const EdgeWidth = 2;
+const EdgeWidthSelected = 4;
 const NodeBorderWidth = '1px';
 const NodeBorderWidthSelected = '3px';
 const NodeColorBorder = PfColors.Black400;
-const NodeColorBorderDegraded = PfColors.Orange;
-const NodeColorBorderFailure = PfColors.Red;
+const NodeColorBorderDegraded = ColorWarning;
+const NodeColorBorderFailure = ColorDanger;
 const NodeColorBorderHover = PfColors.Blue300;
 const NodeColorBorderSelected = PfColors.Blue300;
 const NodeColorFill = PfColors.White;
@@ -64,7 +68,7 @@ type NodeShape = 'round-rectangle' | 'round-triangle' | 'round-tag' | 'round-dia
 
 const labelStyleDefault = style({
   borderRadius: '3px',
-  boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
+  boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 2px 8px 0 rgba(0, 0, 0, 0.19)',
   display: 'flex',
   fontFamily: NodeTextFont,
   fontSize: '0',

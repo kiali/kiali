@@ -17,13 +17,13 @@ type MainSummaryPanelPropType = SummaryPanelPropType & {
 
 const expandedStyle = style({
   fontSize: '74%', // TODO: Remove
-  paddingTop: '1em',
+  padding: '0',
   position: 'relative'
 });
 
 const collapsedStyle = style({
   fontSize: '74%', // TODO: Remove
-  paddingTop: '1em',
+  padding: '0',
   position: 'relative',
   $nest: {
     '& > .panel': {
@@ -37,7 +37,7 @@ const toggleSidePanelStyle = style({
   border: '1px #ddd solid',
   borderRadius: '3px',
   cursor: 'pointer',
-  left: '-1.7em',
+  left: '-1.6em',
   minWidth: '5em',
   position: 'absolute',
   textAlign: 'center',

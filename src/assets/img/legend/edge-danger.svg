@@ -15,7 +15,7 @@
    version="1.1"
    id="svg5464"
    inkscape:version="0.92.4 (unknown)"
-   sodipodi:docname="edge-error.svg">
+   sodipodi:docname="edge-danger.svg">
   <defs
      id="defs5458">
     <pattern
@@ -101,7 +101,7 @@
          inkscape:connector-curvature="0"
          sodipodi:nodetypes="ccccc" />
       <path
-         style="fill:#cc0000;fill-opacity:1;fill-rule:evenodd;stroke:#cc0000;stroke-width:0.88000005pt;stroke-opacity:1"
+         style="fill:#c9190b;fill-opacity:1;fill-rule:evenodd;stroke:#c9190b;stroke-width:0.88000005pt;stroke-opacity:1"
          d="m 597.87328,36.65529 -3.61508,5.969848 14.61508,-5.969848 -14.92905,-5.498894 z"
          id="path1845"
          inkscape:connector-curvature="0"

@@ -27,7 +27,8 @@ import {
   getNodeMetricType,
   renderNodeInfo,
   renderNoTraffic,
-  mergeMetricsResponses
+  mergeMetricsResponses,
+  summaryHeader
 } from './SummaryPanelCommon';
 import { HealthIndicator, DisplayMode } from '../../components/Health/HealthIndicator';
 import { Health } from '../../types/Health';
@@ -296,7 +297,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
 
     return (
       <div ref={this.mainDivRef} className="panel panel-default" style={SummaryPanelNode.panelStyle}>
-        <div className="panel-heading">
+        <div className="panel-heading" style={summaryHeader}>
           {this.state.healthLoading ? (
             // Remove glitch while health is being reloaded
             <span style={{ width: 18, height: 17, display: 'inline-block' }} />

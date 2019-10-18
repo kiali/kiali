@@ -21,6 +21,7 @@ import {
   NodeMetricType,
   renderNodeInfo,
   summaryBodyTabs,
+  summaryHeader,
   summaryNavTabs
 } from './SummaryPanelCommon';
 import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
@@ -118,7 +119,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     const HeadingBlock = ({ prefix, node }) => {
       const nodeData = decoratedNodeData(node);
       return (
-        <div className="panel-heading label-collection">
+        <div className="panel-heading label-collection" style={summaryHeader}>
           <strong>{prefix}</strong> {renderTitle(nodeData)}
           <br />
           {renderNodeInfo(nodeData)}

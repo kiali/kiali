@@ -67,12 +67,12 @@
          transform="translate(747.12125,29.049462)"
          id="Polygon"
          points="23,23 29,29 23,35 17,29 "
-         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#cc0000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#c9190b;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <polygon
          transform="matrix(0.56467605,0,0,0.56467605,757.1337,41.673856)"
          id="Polygon-9"
          points="23,23 29,29 23,35 17,29 "
-         style="fill:#cc0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#c9190b;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
   </g>
 </svg>

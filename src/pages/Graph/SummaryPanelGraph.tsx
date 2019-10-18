@@ -11,6 +11,7 @@ import {
   getFirstDatapoints,
   mergeMetricsResponses,
   summaryBodyTabs,
+  summaryHeader,
   summaryNavTabs
 } from './SummaryPanelCommon';
 import { Response } from '../../services/Api';
@@ -106,7 +107,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
 
     return (
       <div className="panel panel-default" style={SummaryPanelGraph.panelStyle}>
-        <div className="panel-heading">
+        <div className="panel-heading" style={summaryHeader}>
           <strong>Namespace{this.props.namespaces.length > 1 ? 's' : ''}: </strong>
           {this.props.namespaces.map(namespace => namespace.name).join(', ')}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}

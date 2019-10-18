@@ -71,8 +71,8 @@ export class InOutRateChartGrpc extends React.Component<InOutRateChartGrpcPropTy
           ],
           // order: 'asc',
           colors: {
-            OK: PfColors.Green400,
-            Err: PfColors.Red100
+            OK: PfColors.Success,
+            Err: PfColors.Danger
           }
         }}
       />
@@ -158,10 +158,10 @@ export class InOutRateChartHttp extends React.Component<InOutRateChartHttpPropTy
           ],
           // order: 'asc',
           colors: {
-            OK: PfColors.Green400,
-            '3xx': PfColors.Blue,
-            '4xx': PfColors.Orange400,
-            '5xx': PfColors.Red100
+            OK: PfColors.Success,
+            '3xx': PfColors.Info,
+            '4xx': PfColors.DangerBackground, // 4xx is also an error use close but distinct color
+            '5xx': PfColors.Danger
           }
         }}
       />

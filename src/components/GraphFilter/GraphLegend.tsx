@@ -3,6 +3,7 @@ import { style } from 'typestyle';
 import legendData, { GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, Tooltip } from '@patternfly/react-core';
 import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
+import { PfColors } from 'components/Pf/PfColors';
 
 export interface GraphLegendProps {
   closeLegend: () => void;
@@ -15,12 +16,13 @@ const width = '200px';
 export default class GraphLegend extends React.Component<GraphLegendProps> {
   render() {
     const legendBoxStyle = style({
-      margin: '1em 0 4em 0',
+      margin: '0 0 3.8em 0',
       padding: '1em',
-      border: '1px solid #EDEDED',
+      border: '1px #ddd solid',
       overflow: 'hidden',
       overflowX: 'auto',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      backgroundColor: PfColors.White
     });
 
     const headerStyle = style({

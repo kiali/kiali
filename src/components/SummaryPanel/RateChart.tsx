@@ -64,8 +64,8 @@ export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
           columns: [['OK', this.props.percentOK], ['Err', this.props.percentErr]],
           // order: 'asc',
           colors: {
-            OK: PfColors.Green400,
-            Err: PfColors.Red100
+            OK: PfColors.Success,
+            Err: PfColors.Danger
           }
         }}
       />
@@ -143,10 +143,10 @@ export class RateChartHttp extends React.Component<RateChartHttpPropType> {
           ],
           // order: 'asc',
           colors: {
-            OK: PfColors.Green400,
-            '3xx': PfColors.Blue,
-            '4xx': PfColors.Orange400,
-            '5xx': PfColors.Red100
+            OK: PfColors.Success,
+            '3xx': PfColors.Info,
+            '4xx': PfColors.DangerBackground, // 4xx is also an error use close but distinct color
+            '5xx': PfColors.Danger
           }
         }}
       />
