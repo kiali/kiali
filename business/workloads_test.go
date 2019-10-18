@@ -124,7 +124,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	setExcludedWorkloads(map[string]bool{})
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -164,7 +164,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	setExcludedWorkloads(map[string]bool{})
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -204,7 +204,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
-	setExcludedWorkloads(map[string]bool{})
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 

@@ -30,21 +30,8 @@ type WorkloadService struct {
 }
 
 var (
-	ew                sync.RWMutex
 	excludedWorkloads map[string]bool
 )
-
-func isExcludedWorkloadsEmpty() bool {
-	defer ew.RUnlock()
-	ew.RLock()
-	return excludedWorkloads == nil
-}
-
-func setExcludedWorkloads(m map[string]bool) {
-	defer ew.Unlock()
-	ew.Lock()
-	excludedWorkloads = m
-}
 
 func isWorkloadIncluded(workload string) bool {
 	if excludedWorkloads == nil {

@@ -32,22 +32,19 @@ var once sync.Once
 var kialiCache cache.KialiCache
 
 func initKialiCache() {
-	once.Do(func() {
-		if config.Get().KubernetesConfig.CacheEnabled {
-			if cache, err := cache.NewKialiCache(); err != nil {
-				log.Errorf("Error initializing Kiali Cache. Details: %s", err)
-			} else {
-				kialiCache = cache
-			}
+	if config.Get().KubernetesConfig.CacheEnabled {
+		if cache, err := cache.NewKialiCache(); err != nil {
+			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
+		} else {
+			kialiCache = cache
 		}
-		if isExcludedWorkloadsEmpty() {
-			excludedWorkloads = make(map[string]bool)
-			for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
-				excludedWorkloads[w] = true
-			}
-			setExcludedWorkloads(excludedWorkloads)
+	}
+	if excludedWorkloads == nil {
+		excludedWorkloads = make(map[string]bool)
+		for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
+			excludedWorkloads[w] = true
 		}
-	})
+	}
 }
 
 func GetUnauthenticated() (*Layer, error) {
@@ -57,9 +54,8 @@ func GetUnauthenticated() (*Layer, error) {
 // Get the business.Layer
 func Get(token string) (*Layer, error) {
 	// Kiali Cache will be initialized once at first use of Business layer
-	if kialiCache == nil {
-		initKialiCache()
-	}
+	once.Do(initKialiCache)
+
 	// Use an existing client factory if it exists, otherwise create and use in the future
 	if clientFactory == nil {
 		userClient, err := kubernetes.GetClientFactory()

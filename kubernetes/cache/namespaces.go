@@ -17,7 +17,7 @@ type (
 func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespace) {
 	defer c.tokenLock.Unlock()
 	c.tokenLock.Lock()
-	nameNamespace := make(map[string]models.Namespace)
+	nameNamespace := make(map[string]models.Namespace, len(namespaces))
 	for _, ns := range namespaces {
 		nameNamespace[ns.Name] = ns
 	}
