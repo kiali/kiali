@@ -196,7 +196,7 @@ func (in *IstioClient) getRbacResources() map[string]bool {
 // If serviceName param is provided it will filter all VirtualServices having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(VirtualServices).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -204,12 +204,16 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a VirtualService list", namespace, serviceName)
 	}
+	return FilterVirtualServices(virtualServiceList.GetItems(), namespace, serviceName), nil
+}
+
+func FilterVirtualServices(allVs []IstioObject, namespace string, serviceName string) []IstioObject {
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[virtualServices],
+		Kind:       PluralType[VirtualServices],
 		APIVersion: ApiNetworkingVersion,
 	}
 	virtualServices := make([]IstioObject, 0)
-	for _, virtualService := range virtualServiceList.GetItems() {
+	for _, virtualService := range allVs {
 		appendVirtualService := serviceName == ""
 		routeProtocols := []string{"http", "tcp"}
 		if !appendVirtualService && FilterByRoute(virtualService.GetSpec(), routeProtocols, serviceName, namespace, nil) {
@@ -221,13 +225,13 @@ func (in *IstioClient) GetVirtualServices(namespace string, serviceName string) 
 			virtualServices = append(virtualServices, vs)
 		}
 	}
-	return virtualServices, nil
+	return virtualServices
 }
 
 // GetSidecars return all Sidecars for a given namespace.
 // It returns an error on any problem
 func (in *IstioClient) GetSidecars(namespace string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(sidecars).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Sidecars).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +240,7 @@ func (in *IstioClient) GetSidecars(namespace string) ([]IstioObject, error) {
 		return nil, fmt.Errorf("%s doesn't return a Sidecar list", namespace)
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[sidecars],
+		Kind:       PluralType[Sidecars],
 		APIVersion: ApiNetworkingVersion,
 	}
 	sidecars := make([]IstioObject, 0)
@@ -249,12 +253,12 @@ func (in *IstioClient) GetSidecars(namespace string) ([]IstioObject, error) {
 }
 
 func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(sidecars).SubResource(sidecar).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Sidecars).SubResource(sidecar).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[sidecars],
+		Kind:       PluralType[Sidecars],
 		APIVersion: ApiNetworkingVersion,
 	}
 	sidecarObject, ok := result.(*GenericIstioObject)
@@ -267,12 +271,12 @@ func (in *IstioClient) GetSidecar(namespace string, sidecar string) (IstioObject
 }
 
 func (in *IstioClient) GetVirtualService(namespace string, virtualservice string) (IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(virtualServices).SubResource(virtualservice).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(VirtualServices).SubResource(virtualservice).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[virtualServices],
+		Kind:       PluralType[VirtualServices],
 		APIVersion: ApiNetworkingVersion,
 	}
 	virtualService, ok := result.(*GenericIstioObject)
@@ -287,7 +291,7 @@ func (in *IstioClient) GetVirtualService(namespace string, virtualservice string
 // GetGateways return all Gateways for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Gateways).Do().Get()
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +300,7 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 		return nil, fmt.Errorf("%s doesn't return a Gateway list", namespace)
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[gateways],
+		Kind:       PluralType[Gateways],
 		APIVersion: ApiNetworkingVersion,
 	}
 	gateways := make([]IstioObject, 0)
@@ -309,12 +313,12 @@ func (in *IstioClient) GetGateways(namespace string) ([]IstioObject, error) {
 }
 
 func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(gateways).SubResource(gateway).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Gateways).SubResource(gateway).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[gateways],
+		Kind:       PluralType[Gateways],
 		APIVersion: ApiNetworkingVersion,
 	}
 	gatewayObject, ok := result.(*GenericIstioObject)
@@ -329,12 +333,12 @@ func (in *IstioClient) GetGateway(namespace string, gateway string) (IstioObject
 // GetServiceEntries return all ServiceEntry objects for a given namespace.
 // It returns an error on any problem.
 func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Serviceentries).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[serviceentries],
+		Kind:       PluralType[Serviceentries],
 		APIVersion: ApiNetworkingVersion,
 	}
 	serviceEntriesList, ok := result.(*GenericIstioObjectList)
@@ -352,12 +356,12 @@ func (in *IstioClient) GetServiceEntries(namespace string) ([]IstioObject, error
 }
 
 func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string) (IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(serviceentries).SubResource(serviceEntryName).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(Serviceentries).SubResource(serviceEntryName).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[serviceentries],
+		Kind:       PluralType[Serviceentries],
 		APIVersion: ApiNetworkingVersion,
 	}
 	serviceEntry, ok := result.(*GenericIstioObject)
@@ -373,23 +377,26 @@ func (in *IstioClient) GetServiceEntry(namespace string, serviceEntryName string
 // If serviceName param is provided it will filter all DestinationRules having a host defined on a particular service.
 // It returns an error on any problem.
 func (in *IstioClient) GetDestinationRules(namespace string, serviceName string) ([]IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(DestinationRules).Do().Get()
 	if err != nil {
 		return nil, err
-	}
-	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[destinationRules],
-		APIVersion: ApiNetworkingVersion,
 	}
 	destinationRuleList, ok := result.(*GenericIstioObjectList)
 	if !ok {
 		return nil, fmt.Errorf("%s/%s doesn't return a DestinationRule list", namespace, serviceName)
 	}
+	return FilterDestinationRules(destinationRuleList.GetItems(), namespace, serviceName), nil
+}
 
+func FilterDestinationRules(allDr []IstioObject, namespace string, serviceName string) []IstioObject {
+	typeMeta := meta_v1.TypeMeta{
+		Kind:       PluralType[DestinationRules],
+		APIVersion: ApiNetworkingVersion,
+	}
 	destinationRules := make([]IstioObject, 0)
-	for _, destinationRule := range destinationRuleList.Items {
+	for _, destinationRule := range allDr {
 		appendDestinationRule := serviceName == ""
-		if host, ok := destinationRule.Spec["host"]; ok {
+		if host, ok := destinationRule.GetSpec()["host"]; ok {
 			if dHost, ok := host.(string); ok && FilterByHost(dHost, serviceName, namespace) {
 				appendDestinationRule = true
 			}
@@ -400,16 +407,16 @@ func (in *IstioClient) GetDestinationRules(namespace string, serviceName string)
 			destinationRules = append(destinationRules, dr)
 		}
 	}
-	return destinationRules, nil
+	return destinationRules
 }
 
 func (in *IstioClient) GetDestinationRule(namespace string, destinationrule string) (IstioObject, error) {
-	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(destinationRules).SubResource(destinationrule).Do().Get()
+	result, err := in.istioNetworkingApi.Get().Namespace(namespace).Resource(DestinationRules).SubResource(destinationrule).Do().Get()
 	if err != nil {
 		return nil, err
 	}
 	typeMeta := meta_v1.TypeMeta{
-		Kind:       PluralType[destinationRules],
+		Kind:       PluralType[DestinationRules],
 		APIVersion: ApiNetworkingVersion,
 	}
 	destinationRule, ok := result.(*GenericIstioObject)

@@ -1,9 +1,6 @@
 package kubetest
 
 import (
-	"fmt"
-
-	"github.com/kiali/kiali/kubernetes"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
@@ -13,8 +10,12 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_apps_v1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 //// Mock for the K8SClientFactory
@@ -65,7 +66,11 @@ func (o *K8SClientMock) MockEmptyWorkloads(namespace interface{}) {
 
 // MockEmptyWorkload setup the current mock to return an empty workload for every type of workloads (deployment, dc, rs, jobs, etc.)
 func (o *K8SClientMock) MockEmptyWorkload(namespace interface{}, workload interface{}) {
-	notfound := fmt.Errorf("not found")
+	gr := schema.GroupResource{
+		Group:    "test-group",
+		Resource: "test-resource",
+	}
+	notfound := errors.NewNotFound(gr, "not found")
 	o.On("GetDeployment", namespace, workload).Return(&apps_v1.Deployment{}, notfound)
 	o.On("GetStatefulSet", namespace, workload).Return(&apps_v1.StatefulSet{}, notfound)
 	o.On("GetDeploymentConfig", namespace, workload).Return(&osapps_v1.DeploymentConfig{}, notfound)
@@ -406,7 +411,9 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 	return args.Get(0).(*version.Info), args.Error(1)
 }
 
-func (o *K8SClientMock) Stop() {
+func (o *K8SClientMock) GetToken() string {
+	args := o.Called()
+	return args.Get(0).(string)
 }
 
 func (o *K8SClientMock) UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (kubernetes.IstioObject, error) {

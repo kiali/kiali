@@ -18,7 +18,10 @@ import (
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {
 	prom := new(prometheustest.PromClientMock)
-	return AppService{k8s: k8s, prom: prom}
+	layer := Layer{
+		k8s: k8s,
+	}
+	return AppService{k8s: k8s, prom: prom, businessLayer: &layer}
 }
 
 func TestGetAppListFromDeployments(t *testing.T) {

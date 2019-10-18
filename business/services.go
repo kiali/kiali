@@ -47,7 +47,15 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err2 error
-		svcs, err2 = in.k8s.GetServices(namespace, nil)
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
+				svcs, err2 = kialiCache.GetServices(namespace, nil)
+			}
+		} else {
+			svcs, err2 = in.k8s.GetServices(namespace, nil)
+		}
 		if err2 != nil {
 			log.Errorf("Error fetching Services per namespace %s: %s", namespace, err2)
 			errChan <- err2
@@ -57,7 +65,15 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err2 error
-		pods, err2 = in.k8s.GetPods(namespace, "")
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
+				pods, err2 = kialiCache.GetPods(namespace, "")
+			}
+		} else {
+			pods, err2 = in.k8s.GetPods(namespace, "")
+		}
 		if err2 != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", namespace, err2)
 			errChan <- err2
@@ -67,7 +83,15 @@ func (in *SvcService) GetServiceList(namespace string) (*models.ServiceList, err
 	go func() {
 		defer wg.Done()
 		var err error
-		deployments, err = in.k8s.GetDeployments(namespace)
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				deployments, err = kialiCache.GetDeployments(namespace)
+			}
+		} else {
+			deployments, err = in.k8s.GetDeployments(namespace)
+		}
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", namespace, err)
 			errChan <- err
@@ -204,7 +228,15 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		go func() {
 			defer wg.Done()
 			var err2 error
-			pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+			// Check if namespace is cached
+			if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
+					pods, err2 = kialiCache.GetPods(namespace, labelsSelector)
+				}
+			} else {
+				pods, err2 = in.k8s.GetPods(namespace, labelsSelector)
+			}
 			if err2 != nil {
 				errChan <- err2
 			}
@@ -213,7 +245,7 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 		go func() {
 			defer wg.Done()
 			var err2 error
-			ws, err2 = fetchWorkloads(in.k8s, namespace, labelsSelector)
+			ws, err2 = fetchWorkloads(in.businessLayer, namespace, labelsSelector)
 			if err2 != nil {
 				log.Errorf("Error fetching Workloads per namespace %s and service %s: %s", namespace, service, err2)
 				errChan <- err2
@@ -242,7 +274,19 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err2 = in.businessLayer.Namespace.GetNamespace(namespace); err2 == nil {
+				vs, err2 = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, namespace)
+			}
+			if err2 == nil {
+				// Cache offers a generic method to bring all resources but it needs filter on VS case
+				vs = kubernetes.FilterVirtualServices(vs, namespace, service)
+			}
+		} else {
+			vs, err2 = in.k8s.GetVirtualServices(namespace, service)
+		}
 		if err2 != nil {
 			errChan <- err2
 		}
@@ -251,7 +295,14 @@ func (in *SvcService) GetService(namespace, service, interval string, queryTime 
 	go func() {
 		defer wg.Done()
 		var err2 error
-		dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+		if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(namespace) {
+			dr, err2 = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, namespace)
+			if err2 == nil {
+				dr = kubernetes.FilterDestinationRules(dr, namespace, service)
+			}
+		} else {
+			dr, err2 = in.k8s.GetDestinationRules(namespace, service)
+		}
 		if err2 != nil {
 			errChan <- err2
 		}
@@ -358,7 +409,15 @@ func (in *SvcService) GetServiceDefinitionList(namespace string) (*models.Servic
 	defer promtimer.ObserveNow(&err)
 
 	var svcs []core_v1.Service
-	svcs, err = in.k8s.GetServices(namespace, nil)
+	// Check if namespace is cached
+	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+			svcs, err = kialiCache.GetServices(namespace, nil)
+		}
+	} else {
+		svcs, err = in.k8s.GetServices(namespace, nil)
+	}
 	if err != nil {
 		log.Errorf("Error fetching Service definitions for namespace %s: %s", namespace, err)
 	}

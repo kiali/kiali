@@ -17,7 +17,8 @@ import (
 )
 
 type IstioConfigService struct {
-	k8s kubernetes.IstioClientInterface
+	k8s           kubernetes.IstioClientInterface
+	businessLayer *Layer
 }
 
 type IstioConfigCriteria struct {
@@ -133,7 +134,18 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeGateways {
-			if gg, ggErr := in.k8s.GetGateways(criteria.Namespace); ggErr == nil {
+			var gg []kubernetes.IstioObject
+			var ggErr error
+			// Check if namespace is cached
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.GatewayType) && kialiCache.CheckNamespace(criteria.Namespace) {
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, ggErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); ggErr == nil {
+					gg, ggErr = kialiCache.GetIstioResources(kubernetes.GatewayType, criteria.Namespace)
+				}
+			} else {
+				gg, ggErr = in.k8s.GetGateways(criteria.Namespace)
+			}
+			if ggErr == nil {
 				(&istioConfigList.Gateways).Parse(gg)
 			} else {
 				errChan <- ggErr
@@ -144,7 +156,18 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeVirtualServices {
-			if vs, vsErr := in.k8s.GetVirtualServices(criteria.Namespace, ""); vsErr == nil {
+			var vs []kubernetes.IstioObject
+			var vsErr error
+			// Check if namespace is cached
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(criteria.Namespace) {
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, vsErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); vsErr == nil {
+					vs, vsErr = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, criteria.Namespace)
+				}
+			} else {
+				vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, "")
+			}
+			if vsErr == nil {
 				(&istioConfigList.VirtualServices).Parse(vs)
 			} else {
 				errChan <- vsErr
@@ -155,7 +178,18 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeDestinationRules {
-			if dr, drErr := in.k8s.GetDestinationRules(criteria.Namespace, ""); drErr == nil {
+			var dr []kubernetes.IstioObject
+			var drErr error
+			// Check if namespace is cached
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(criteria.Namespace) {
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, drErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); drErr == nil {
+					dr, drErr = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, criteria.Namespace)
+				}
+			} else {
+				dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, "")
+			}
+			if drErr == nil {
 				(&istioConfigList.DestinationRules).Parse(dr)
 			} else {
 				errChan <- drErr
@@ -166,7 +200,18 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 	go func(errChan chan error) {
 		defer wg.Done()
 		if criteria.IncludeServiceEntries {
-			if se, seErr := in.k8s.GetServiceEntries(criteria.Namespace); seErr == nil {
+			var se []kubernetes.IstioObject
+			var seErr error
+			// Check if namespace is cached
+			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.ServiceentryType) && kialiCache.CheckNamespace(criteria.Namespace) {
+				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+				if _, seErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); seErr == nil {
+					se, seErr = kialiCache.GetIstioResources(kubernetes.ServiceentryType, criteria.Namespace)
+				}
+			} else {
+				se, seErr = in.k8s.GetServiceEntries(criteria.Namespace)
+			}
+			if seErr == nil {
 				(&istioConfigList.ServiceEntries).Parse(se)
 			} else {
 				errChan <- seErr

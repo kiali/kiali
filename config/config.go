@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -18,71 +17,75 @@ import (
 
 // Environment vars can define some default values. This list is ALPHABETIZED for readability.
 const (
-	EnvActiveNamespace                  = "ACTIVE_NAMESPACE"
-	EnvApiDocAnnotationNameApiType      = "APIDOC_ANNOTATION_NAME_API_TYPE"
-	EnvApiDocAnnotationNameApiSpec      = "APIDOC_ANNOTATION_NAME_API_SPEC"
-	EnvApiNamespacesExclude             = "API_NAMESPACES_EXCLUDE"
-	EnvAuthStrategy                     = "AUTH_STRATEGY"
-	EnvAuthSuffixCAFile                 = "_CA_FILE"
-	EnvAuthSuffixInsecureSkipVerify     = "_INSECURE_SKIP_VERIFY"
-	EnvAuthSuffixPassword               = "_PASSWORD"
-	EnvAuthSuffixToken                  = "_TOKEN"
-	EnvAuthSuffixType                   = "_AUTH_TYPE"
-	EnvAuthSuffixUseKialiToken          = "_USE_KIALI_TOKEN"
-	EnvAuthSuffixUsername               = "_USERNAME"
-	EnvGrafanaEnabled                   = "GRAFANA_ENABLED"
-	EnvGrafanaInClusterURL              = "GRAFANA_IN_CLUSTER_URL"
-	EnvGrafanaURL                       = "GRAFANA_URL"
-	EnvIdentityCertFile                 = "IDENTITY_CERT_FILE"
-	EnvIdentityPrivateKeyFile           = "IDENTITY_PRIVATE_KEY_FILE"
-	EnvInCluster                        = "IN_CLUSTER"
-	EnvInstallationTag                  = "KIALI_INSTALLATION_TAG"
-	EnvIstioComponentNamespaces         = "ISTIO_COMPONENT_NAMESPACES"
-	EnvIstioIdentityDomain              = "ISTIO_IDENTITY_DOMAIN"
-	EnvIstioLabelNameApp                = "ISTIO_LABEL_NAME_APP"
-	EnvIstioLabelNameVersion            = "ISTIO_LABEL_NAME_VERSION"
-	EnvIstioNamespace                   = "ISTIO_NAMESPACE"
-	EnvIstioSidecarAnnotation           = "ISTIO_SIDECAR_ANNOTATION"
-	EnvIstioUrlServiceVersion           = "ISTIO_URL_SERVICE_VERSION"
-	EnvKubernetesBurst                  = "KUBERNETES_BURST"
-	EnvKubernetesQPS                    = "KUBERNETES_QPS"
-	EnvKubernetesCacheEnabled           = "KUBERNETES_CACHE_ENABLED"
-	EnvKubernetesCacheDuration          = "KUBERNETES_CACHE_DURATION"
-	EnvLdapBase                         = "LDAP_BASE"
-	EnvLdapBindDN                       = "LDAP_BIND_DN"
-	EnvLdapGroupFilter                  = "LDAP_GROUP_FILTER"
-	EnvLdapHost                         = "LDAP_HOST"
-	EnvLdapInsecureSkipVerify           = "LDAP_INSECURE_SKIP_VERIFY"
-	EnvLdapMailIdKey                    = "LDAP_MAIL_ID_KEY"
-	EnvLdapMemberOfKey                  = "LDAP_MEMBER_OF_KEY"
-	EnvLdapPort                         = "LDAP_PORT"
-	EnvLdapRoleFilter                   = "LDAP_ROLE_FILTER"
-	EnvLdapSearchFilter                 = "LDAP_SEARCH_FILTER"
-	EnvLdapUserFilter                   = "LDAP_USER_FILTER"
-	EnvLdapUserIdKey                    = "LDAP_USER_ID_KEY"
-	EnvLdapUseSSL                       = "LDAP_USE_SSL"
-	EnvLoginTokenExpirationSeconds      = "LOGIN_TOKEN_EXPIRATION_SECONDS"
-	EnvLoginTokenSigningKey             = "LOGIN_TOKEN_SIGNING_KEY"
-	EnvNamespaceLabelSelector           = "NAMESPACE_LABEL_SELECTOR"
-	EnvPrometheusCustomMetricsURL       = "PROMETHEUS_CUSTOM_METRICS_URL"
-	EnvPrometheusServiceURL             = "PROMETHEUS_SERVICE_URL"
-	EnvServerAddress                    = "SERVER_ADDRESS"
-	EnvServerAuditLog                   = "SERVER_AUDIT_LOG"
-	EnvServerCORSAllowAll               = "SERVER_CORS_ALLOW_ALL"
-	EnvServerGzipEnabled                = "SERVER_GZIP_ENABLED"
-	EnvServerMetricsPort                = "SERVER_METRICS_PORT"
-	EnvServerMetricsEnabled             = "SERVER_METRICS_ENABLED"
-	EnvServerPort                       = "SERVER_PORT"
-	EnvServerStaticContentRootDirectory = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
-	EnvThreeScaleAdapterName            = "THREESCALE_ADAPTER_NAME"
-	EnvThreeScaleServiceName            = "THREESCALE_SERVICE_NAME"
-	EnvThreeScaleServicePort            = "THREESCALE_SERVICE_PORT"
-	EnvTracingEnabled                   = "TRACING_ENABLED"
-	EnvTracingInClusterURL              = "TRACING_IN_CLUSTER_URL"
-	EnvTracingServiceNamespace          = "TRACING_SERVICE_NAMESPACE"
-	EnvTracingServicePort               = "TRACING_SERVICE_PORT"
-	EnvTracingURL                       = "TRACING_URL"
-	EnvWebRoot                          = "SERVER_WEB_ROOT"
+	EnvActiveNamespace                      = "ACTIVE_NAMESPACE"
+	EnvApiDocAnnotationNameApiType          = "APIDOC_ANNOTATION_NAME_API_TYPE"
+	EnvApiDocAnnotationNameApiSpec          = "APIDOC_ANNOTATION_NAME_API_SPEC"
+	EnvApiNamespacesExclude                 = "API_NAMESPACES_EXCLUDE"
+	EnvAuthStrategy                         = "AUTH_STRATEGY"
+	EnvAuthSuffixCAFile                     = "_CA_FILE"
+	EnvAuthSuffixInsecureSkipVerify         = "_INSECURE_SKIP_VERIFY"
+	EnvAuthSuffixPassword                   = "_PASSWORD"
+	EnvAuthSuffixToken                      = "_TOKEN"
+	EnvAuthSuffixType                       = "_AUTH_TYPE"
+	EnvAuthSuffixUseKialiToken              = "_USE_KIALI_TOKEN"
+	EnvAuthSuffixUsername                   = "_USERNAME"
+	EnvGrafanaEnabled                       = "GRAFANA_ENABLED"
+	EnvGrafanaInClusterURL                  = "GRAFANA_IN_CLUSTER_URL"
+	EnvGrafanaURL                           = "GRAFANA_URL"
+	EnvIdentityCertFile                     = "IDENTITY_CERT_FILE"
+	EnvIdentityPrivateKeyFile               = "IDENTITY_PRIVATE_KEY_FILE"
+	EnvInCluster                            = "IN_CLUSTER"
+	EnvInstallationTag                      = "KIALI_INSTALLATION_TAG"
+	EnvIstioComponentNamespaces             = "ISTIO_COMPONENT_NAMESPACES"
+	EnvIstioIdentityDomain                  = "ISTIO_IDENTITY_DOMAIN"
+	EnvIstioLabelNameApp                    = "ISTIO_LABEL_NAME_APP"
+	EnvIstioLabelNameVersion                = "ISTIO_LABEL_NAME_VERSION"
+	EnvIstioNamespace                       = "ISTIO_NAMESPACE"
+	EnvIstioSidecarAnnotation               = "ISTIO_SIDECAR_ANNOTATION"
+	EnvIstioUrlServiceVersion               = "ISTIO_URL_SERVICE_VERSION"
+	EnvKubernetesBurst                      = "KUBERNETES_BURST"
+	EnvKubernetesQPS                        = "KUBERNETES_QPS"
+	EnvKubernetesCacheEnabled               = "KUBERNETES_CACHE_ENABLED"
+	EnvKubernetesCacheDuration              = "KUBERNETES_CACHE_DURATION"
+	EnvKubernetesCacheNamespaces            = "KUBERNETES_CACHE_KUBERNETES"
+	EnvKubernetesCacheIstioTypes            = "KUBERNETES_CACHE_ISTIO_TYPES"
+	EnvKubernetesCacheTokeNamespaceDuration = "KUBERNETES_CACHE_TOKEN_NAMESPACE_DURATION"
+	EnvKubernetesExcludeWorkloads           = "KUBERNETES_EXCLUDE_WORKLOADS"
+	EnvLdapBase                             = "LDAP_BASE"
+	EnvLdapBindDN                           = "LDAP_BIND_DN"
+	EnvLdapGroupFilter                      = "LDAP_GROUP_FILTER"
+	EnvLdapHost                             = "LDAP_HOST"
+	EnvLdapInsecureSkipVerify               = "LDAP_INSECURE_SKIP_VERIFY"
+	EnvLdapMailIdKey                        = "LDAP_MAIL_ID_KEY"
+	EnvLdapMemberOfKey                      = "LDAP_MEMBER_OF_KEY"
+	EnvLdapPort                             = "LDAP_PORT"
+	EnvLdapRoleFilter                       = "LDAP_ROLE_FILTER"
+	EnvLdapSearchFilter                     = "LDAP_SEARCH_FILTER"
+	EnvLdapUserFilter                       = "LDAP_USER_FILTER"
+	EnvLdapUserIdKey                        = "LDAP_USER_ID_KEY"
+	EnvLdapUseSSL                           = "LDAP_USE_SSL"
+	EnvLoginTokenExpirationSeconds          = "LOGIN_TOKEN_EXPIRATION_SECONDS"
+	EnvLoginTokenSigningKey                 = "LOGIN_TOKEN_SIGNING_KEY"
+	EnvNamespaceLabelSelector               = "NAMESPACE_LABEL_SELECTOR"
+	EnvPrometheusCustomMetricsURL           = "PROMETHEUS_CUSTOM_METRICS_URL"
+	EnvPrometheusServiceURL                 = "PROMETHEUS_SERVICE_URL"
+	EnvServerAddress                        = "SERVER_ADDRESS"
+	EnvServerAuditLog                       = "SERVER_AUDIT_LOG"
+	EnvServerCORSAllowAll                   = "SERVER_CORS_ALLOW_ALL"
+	EnvServerGzipEnabled                    = "SERVER_GZIP_ENABLED"
+	EnvServerMetricsPort                    = "SERVER_METRICS_PORT"
+	EnvServerMetricsEnabled                 = "SERVER_METRICS_ENABLED"
+	EnvServerPort                           = "SERVER_PORT"
+	EnvServerStaticContentRootDirectory     = "SERVER_STATIC_CONTENT_ROOT_DIRECTORY"
+	EnvThreeScaleAdapterName                = "THREESCALE_ADAPTER_NAME"
+	EnvThreeScaleServiceName                = "THREESCALE_SERVICE_NAME"
+	EnvThreeScaleServicePort                = "THREESCALE_SERVICE_PORT"
+	EnvTracingEnabled                       = "TRACING_ENABLED"
+	EnvTracingInClusterURL                  = "TRACING_IN_CLUSTER_URL"
+	EnvTracingServiceNamespace              = "TRACING_SERVICE_NAMESPACE"
+	EnvTracingServicePort                   = "TRACING_SERVICE_PORT"
+	EnvTracingURL                           = "TRACING_URL"
+	EnvWebRoot                              = "SERVER_WEB_ROOT"
 )
 
 // The versions that Kiali requires
@@ -227,12 +230,29 @@ type IstioLabels struct {
 	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
-// KubernetesConfig holds the k8s client configuration
+// KubernetesConfig holds the k8s client, caching and performance configuration
 type KubernetesConfig struct {
-	Burst         int     `yaml:"burst,omitempty"`
-	QPS           float32 `yaml:"qps,omitempty"`
-	CacheEnabled  bool    `yaml:"cache_enabled,omitempty"`
-	CacheDuration int64   `yaml:"cache_duration,omitempty"`
+	Burst int     `yaml:"burst,omitempty"`
+	QPS   float32 `yaml:"qps,omitempty"`
+	// Enable cache for kubernetes and istio resources
+	CacheEnabled bool `yaml:"cache_enabled,omitempty"`
+	// Cache duration expressed in seconds
+	// Cache uses watchers to sync with the backend, after a CacheDuration watchers are closed and re-opened
+	CacheDuration int `yaml:"cache_duration,omitempty"`
+	// List of namespaces or regex defining namespaces to include in a cache
+	CacheNamespaces []string `yaml:"cache_namespaces,omitempty"`
+	// Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
+	// on this list of Istio types. Other Istio types are not yet supported.
+	CacheIstioTypes []string `yaml:"cache_istio_types,omitempty"`
+	// List of controllers that won't be used for Workload calculation
+	// Kiali queries Deployment,ReplicaSet,ReplicationController,DeploymentConfig,StatefulSet,Job and CronJob controllers
+	// Deployment and ReplicaSet will be always queried, but ReplicationController,DeploymentConfig,StatefulSet,Job and CronJobs
+	// can be skipped from Kiali workloads query if they are present in this list
+	ExcludeWorkloads []string `yaml:"excluded_workloads,omitempty"`
+	// Cache duration expressed in seconds
+	// Kiali cache list of namespaces per user, this is typically short lived cache compared with the duration of the
+	// namespace cache defined by previous CacheDuration parameter
+	CacheTokenNamespaceDuration int `yaml:"cache_token_namespace_duration,omitempty"`
 }
 
 // ApiConfig contains API specific configuration.
@@ -311,7 +331,6 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = new(Config)
-
 	c.InstallationTag = getDefaultString(EnvInstallationTag, "")
 
 	c.Identity.CertFile = getDefaultString(EnvIdentityCertFile, "")
@@ -373,7 +392,7 @@ func NewConfig() (c *Config) {
 	c.ExternalServices.Istio.IstioSidecarAnnotation = strings.TrimSpace(getDefaultString(EnvIstioSidecarAnnotation, "sidecar.istio.io/status"))
 	c.ExternalServices.Istio.UrlServiceVersion = strings.TrimSpace(getDefaultString(EnvIstioUrlServiceVersion, "http://istio-pilot:8080/version"))
 
-	// ThreeScale Configuration
+	// ThreeScale ConfigEnvKubernetesCacheNamespacesuration
 	c.ExternalServices.ThreeScale.AdapterName = strings.TrimSpace(getDefaultString(EnvThreeScaleAdapterName, "threescale"))
 	c.ExternalServices.ThreeScale.AdapterService = strings.TrimSpace(getDefaultString(EnvThreeScaleServiceName, "threescale-istio-adapter"))
 	c.ExternalServices.ThreeScale.AdapterPort = strings.TrimSpace(getDefaultString(EnvThreeScaleServicePort, "3333"))
@@ -386,7 +405,11 @@ func NewConfig() (c *Config) {
 	c.KubernetesConfig.Burst = getDefaultInt(EnvKubernetesBurst, 200)
 	c.KubernetesConfig.QPS = getDefaultFloat32(EnvKubernetesQPS, 175)
 	c.KubernetesConfig.CacheEnabled = getDefaultBool(EnvKubernetesCacheEnabled, false)
-	c.KubernetesConfig.CacheDuration = getDefaultInt64(EnvKubernetesCacheDuration, time.Duration(5*time.Minute).Nanoseconds())
+	c.KubernetesConfig.CacheDuration = getDefaultInt(EnvKubernetesCacheDuration, 5*60)
+	c.KubernetesConfig.CacheNamespaces = getDefaultStringArray(EnvKubernetesCacheNamespaces, ".*")
+	c.KubernetesConfig.CacheIstioTypes = getDefaultStringArray(EnvKubernetesCacheIstioTypes, "VirtualService,DestinationRule,Gateway,ServiceEntry")
+	c.KubernetesConfig.CacheTokenNamespaceDuration = getDefaultInt(EnvKubernetesCacheTokeNamespaceDuration, 10)
+	c.KubernetesConfig.ExcludeWorkloads = getDefaultStringArray(EnvKubernetesExcludeWorkloads, "CronJob,DeploymentConfig,Job,ReplicationController,StatefulSet")
 
 	trimmedExclusionPatterns := []string{}
 	for _, entry := range c.API.Namespaces.Exclude {

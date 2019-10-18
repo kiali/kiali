@@ -11,11 +11,13 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	batch_v1beta1 "k8s.io/api/batch/v1beta1"
 	core_v1 "k8s.io/api/core/v1"
+	errors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func setupWorkloadService(k8s *kubetest.K8SClientMock) WorkloadService {
@@ -107,8 +109,6 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 
 func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	assert := assert.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
@@ -124,6 +124,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -163,6 +164,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -202,6 +204,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 
 	svc := setupWorkloadService(k8s)
 
+	excludedWorkloads = map[string]bool{}
 	workloadList, _ := svc.GetWorkloadList("Namespace")
 	workloads := workloadList.Workloads
 
@@ -321,7 +324,12 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	notfound := fmt.Errorf("not found")
+
+	gr := schema.GroupResource{
+		Group:    "test-group",
+		Resource: "test-resource",
+	}
+	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&FakeDepSyncedWithRS()[0], nil)
@@ -349,7 +357,11 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	notfound := fmt.Errorf("not found")
+	gr := schema.GroupResource{
+		Group:    "test-group",
+		Resource: "test-resource",
+	}
+	notfound := errors.NewNotFound(gr, "not found")
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
 	k8s.On("GetDeployment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&apps_v1.Deployment{}, notfound)

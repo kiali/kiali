@@ -14,27 +14,38 @@ import (
 )
 
 const (
+	// Kubernetes Controllers
+	CronJobType               = "CronJob"
+	DeploymentType            = "Deployment"
+	DeploymentConfigType      = "DeploymentConfig"
+	JobType                   = "Job"
+	PodType                   = "Pod"
+	ReplicationControllerType = "ReplicationController"
+	ReplicaSetType            = "ReplicaSet"
+	ServiceType               = "Service"
+	StatefulSetType           = "StatefulSet"
+
 	// Networking
 
-	destinationRules        = "destinationrules"
-	destinationRuleType     = "DestinationRule"
-	destinationRuleTypeList = "DestinationRuleList"
+	DestinationRules        = "destinationrules"
+	DestinationRuleType     = "DestinationRule"
+	DestinationRuleTypeList = "DestinationRuleList"
 
-	gateways        = "gateways"
-	gatewayType     = "Gateway"
-	gatewayTypeList = "GatewayList"
+	Gateways        = "gateways"
+	GatewayType     = "Gateway"
+	GatewayTypeList = "GatewayList"
 
-	sidecars        = "sidecars"
-	sidecarType     = "Sidecar"
-	sidecarTypeList = "SidecarList"
+	Sidecars        = "sidecars"
+	SidecarType     = "Sidecar"
+	SidecarTypeList = "SidecarList"
 
-	serviceentries       = "serviceentries"
-	serviceentryType     = "ServiceEntry"
-	serviceentryTypeList = "ServiceEntryList"
+	Serviceentries       = "serviceentries"
+	ServiceentryType     = "ServiceEntry"
+	ServiceentryTypeList = "ServiceEntryList"
 
-	virtualServices        = "virtualservices"
-	virtualServiceType     = "VirtualService"
-	virtualServiceTypeList = "VirtualServiceList"
+	VirtualServices        = "virtualservices"
+	VirtualServiceType     = "VirtualService"
+	VirtualServiceTypeList = "VirtualServiceList"
 
 	// Quotas
 
@@ -278,24 +289,24 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     gatewayType,
-			collectionKind: gatewayTypeList,
+			objectKind:     GatewayType,
+			collectionKind: GatewayTypeList,
 		},
 		{
-			objectKind:     virtualServiceType,
-			collectionKind: virtualServiceTypeList,
+			objectKind:     VirtualServiceType,
+			collectionKind: VirtualServiceTypeList,
 		},
 		{
-			objectKind:     destinationRuleType,
-			collectionKind: destinationRuleTypeList,
+			objectKind:     DestinationRuleType,
+			collectionKind: DestinationRuleTypeList,
 		},
 		{
-			objectKind:     serviceentryType,
-			collectionKind: serviceentryTypeList,
+			objectKind:     ServiceentryType,
+			collectionKind: ServiceentryTypeList,
 		},
 		{
-			objectKind:     sidecarType,
-			collectionKind: sidecarTypeList,
+			objectKind:     SidecarType,
+			collectionKind: SidecarTypeList,
 		},
 	}
 
@@ -574,11 +585,11 @@ var (
 
 	PluralType = map[string]string{
 		// Networking
-		gateways:         gatewayType,
-		virtualServices:  virtualServiceType,
-		destinationRules: destinationRuleType,
-		serviceentries:   serviceentryType,
-		sidecars:         sidecarType,
+		Gateways:         GatewayType,
+		VirtualServices:  VirtualServiceType,
+		DestinationRules: DestinationRuleType,
+		Serviceentries:   ServiceentryType,
+		Sidecars:         SidecarType,
 
 		// Main Config files
 		rules:             ruleType,

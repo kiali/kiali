@@ -1,7 +1,12 @@
 package business
 
 import (
+	"sync"
+
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -23,6 +28,24 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var clientFactory kubernetes.ClientFactory
 var prometheusClient prometheus.ClientInterface
+var once sync.Once
+var kialiCache cache.KialiCache
+
+func initKialiCache() {
+	if config.Get().KubernetesConfig.CacheEnabled {
+		if cache, err := cache.NewKialiCache(); err != nil {
+			log.Errorf("Error initializing Kiali Cache. Details: %s", err)
+		} else {
+			kialiCache = cache
+		}
+	}
+	if excludedWorkloads == nil {
+		excludedWorkloads = make(map[string]bool)
+		for _, w := range config.Get().KubernetesConfig.ExcludeWorkloads {
+			excludedWorkloads[w] = true
+		}
+	}
+}
 
 func GetUnauthenticated() (*Layer, error) {
 	return Get("")
@@ -30,6 +53,9 @@ func GetUnauthenticated() (*Layer, error) {
 
 // Get the business.Layer
 func Get(token string) (*Layer, error) {
+	// Kiali Cache will be initialized once at first use of Business layer
+	once.Do(initKialiCache)
+
 	// Use an existing client factory if it exists, otherwise create and use in the future
 	if clientFactory == nil {
 		userClient, err := kubernetes.GetClientFactory()
@@ -67,12 +93,12 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // NewWithBackends creates the business layer using the passed k8s and prom clients
 func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.ClientInterface) *Layer {
 	temporaryLayer := &Layer{}
-	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s}
+	temporaryLayer.Health = HealthService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s}
+	temporaryLayer.IstioConfig = IstioConfigService{k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = WorkloadService{k8s: k8s, prom: prom, businessLayer: temporaryLayer}
 	temporaryLayer.Validations = IstioValidationsService{k8s: k8s, businessLayer: temporaryLayer}
-	temporaryLayer.App = AppService{prom: prom, k8s: k8s}
+	temporaryLayer.App = AppService{prom: prom, k8s: k8s, businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(k8s)
 	temporaryLayer.k8s = k8s
 	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: k8s}
@@ -82,8 +108,8 @@ func NewWithBackends(k8s kubernetes.IstioClientInterface, prom prometheus.Client
 	return temporaryLayer
 }
 
-func (in *Layer) Stop() {
-	if in.k8s != nil {
-		in.k8s.Stop()
+func Stop() {
+	if kialiCache != nil {
+		kialiCache.Stop()
 	}
 }

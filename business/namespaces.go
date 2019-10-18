@@ -40,6 +40,12 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespaces")
 	defer promtimer.ObserveNow(&err)
 
+	if kialiCache != nil {
+		if ns := kialiCache.GetNamespaces(in.k8s.GetToken()); ns != nil {
+			return ns, nil
+		}
+	}
+
 	labelSelector := config.Get().API.Namespaces.LabelSelector
 
 	namespaces := []models.Namespace{}
@@ -96,6 +102,10 @@ func (in *NamespaceService) GetNamespaces() ([]models.Namespace, error) {
 		}
 	}
 
+	if kialiCache != nil {
+		kialiCache.SetNamespaces(in.k8s.GetToken(), result)
+	}
+
 	return result, nil
 }
 
@@ -105,21 +115,33 @@ func (in *NamespaceService) GetNamespace(namespace string) (*models.Namespace, e
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "NamespaceService", "GetNamespace")
 	defer promtimer.ObserveNow(&err)
 
+	if kialiCache != nil {
+		if ns := kialiCache.GetNamespace(in.k8s.GetToken(), namespace); ns != nil {
+			return ns, nil
+		}
+	}
+
+	var result models.Namespace
 	if in.hasProjects {
 		var project *osproject_v1.Project
 		project, err = in.k8s.GetProject(namespace)
 		if err != nil {
 			return nil, err
 		}
-		result := models.CastProject(*project)
-		return &result, nil
+		result = models.CastProject(*project)
 	} else {
 		var ns *core_v1.Namespace
 		ns, err = in.k8s.GetNamespace(namespace)
 		if err != nil {
 			return nil, err
 		}
-		result := models.CastNamespace(*ns)
-		return &result, nil
+		result = models.CastNamespace(*ns)
 	}
+	// Refresh cache in case of cache expiration
+	if kialiCache != nil {
+		if _, err = in.GetNamespaces(); err != nil {
+			return nil, err
+		}
+	}
+	return &result, nil
 }

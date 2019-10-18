@@ -127,9 +127,22 @@ kiali_defaults:
 
   kubernetes_config:
     burst: 200
-    qps: 175
     cache_enabled: false
-    cache_duration: 300000000
+    cache_duration: 300
+    cache_istio_types:
+    - "DestinationRule"
+    - "Gateway"
+    - "ServiceEntry"
+    - "VirtualService"
+    cache_namespaces: []
+    cache_token_namespace_duration: 10
+    excluded_workloads:
+    - "CronJob"
+    - "DeploymentConfig"
+    - "Job"
+    - "ReplicationController"
+    - "StatefulSet"
+    qps: 175
 
   login_token:
     expiration_seconds: 86400

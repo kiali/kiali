@@ -233,7 +233,16 @@ func (in *IstioValidationsService) fetchGatewaysPerNamespace(gatewaysPerNamespac
 
 		wg.Add(len(nss))
 		for i, ns := range nss {
-			go fetchNoEntry(&gwss[i], ns.Name, in.k8s.GetGateways, wg, errChan)
+			var getCacheGateways func(string) ([]kubernetes.IstioObject, error)
+			// businessLayer.Namespace.GetNamespaces() is invoked before, so, namespace used are under the user's view
+			if kialiCache != nil && kialiCache.CheckNamespace(ns.Name) {
+				getCacheGateways = func(namespace string) ([]kubernetes.IstioObject, error) {
+					return kialiCache.GetIstioResources("Gateway", namespace)
+				}
+			} else {
+				getCacheGateways = in.k8s.GetGateways
+			}
+			go fetchNoEntry(&gwss[i], ns.Name, getCacheGateways, wg, errChan)
 		}
 	} else {
 		select {
@@ -261,7 +270,17 @@ func fetchNoEntry(rValue *[]kubernetes.IstioObject, namespace string, fetcher fu
 func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		services, err := in.k8s.GetServices(namespace, nil)
+		var services []core_v1.Service
+		var err error
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				services, err = kialiCache.GetServices(namespace, nil)
+			}
+		} else {
+			services, err = in.k8s.GetServices(namespace, nil)
+		}
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -276,7 +295,17 @@ func (in *IstioValidationsService) fetchServices(rValue *[]core_v1.Service, name
 func (in *IstioValidationsService) fetchDeployments(rValue *[]apps_v1.Deployment, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		deployments, err := in.k8s.GetDeployments(namespace)
+		var deployments []apps_v1.Deployment
+		var err error
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				deployments, err = kialiCache.GetDeployments(namespace)
+			}
+		} else {
+			deployments, err = in.k8s.GetDeployments(namespace)
+		}
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -306,7 +335,31 @@ func (in *IstioValidationsService) fetchWorkloads(rValue *models.WorkloadList, n
 func (in *IstioValidationsService) fetchDetails(rValue *kubernetes.IstioDetails, namespace string, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if len(errChan) == 0 {
-		istioDetails, err := in.k8s.GetIstioDetails(namespace, "")
+		var istioDetails *kubernetes.IstioDetails
+		var err error
+
+		// Check if namespace is cached
+		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
+			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
+			if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
+				// Cache are local in memory, so no need to spawn these queries in threads to reduce the overhead
+				// Probably we could refactor in.k8s.GetIstioDetails, too, but I guess that can be done in future
+				// We are following the pattern to invoke cache from the business logic instead of kubernetes one
+				istioDetails = &kubernetes.IstioDetails{}
+				istioDetails.VirtualServices, err = kialiCache.GetIstioResources("VirtualService", namespace)
+				if err == nil {
+					istioDetails.DestinationRules, err = kialiCache.GetIstioResources("DestinationRule", namespace)
+				}
+				if err == nil {
+					istioDetails.ServiceEntries, err = kialiCache.GetIstioResources("ServiceEntry", namespace)
+				}
+				if err == nil {
+					istioDetails.Gateways, err = kialiCache.GetIstioResources("Gateway", namespace)
+				}
+			}
+		} else {
+			istioDetails, err = in.k8s.GetIstioDetails(namespace, "")
+		}
 		if err != nil {
 			select {
 			case errChan <- err:

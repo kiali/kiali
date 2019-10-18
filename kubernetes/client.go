@@ -1,11 +1,9 @@
 package kubernetes
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -100,11 +98,11 @@ type IstioClientInterface interface {
 	GetServiceRoleBinding(namespace string, name string) (IstioObject, error)
 	GetServiceRoleBindings(namespace string) ([]IstioObject, error)
 	GetServerVersion() (*version.Info, error)
+	GetToken() string
 	GetVirtualService(namespace string, virtualservice string) (IstioObject, error)
 	GetVirtualServices(namespace string, serviceName string) ([]IstioObject, error)
 	IsMaistraApi() bool
 	IsOpenShift() bool
-	Stop()
 	UpdateIstioObject(api, namespace, resourceType, name, jsonPatch string) (IstioObject, error)
 }
 
@@ -112,6 +110,7 @@ type IstioClientInterface interface {
 // It hides the way it queries each API
 type IstioClient struct {
 	IstioClientInterface
+	token                    string
 	k8s                      *kube.Clientset
 	istioConfigApi           *rest.RESTClient
 	istioNetworkingApi       *rest.RESTClient
@@ -133,10 +132,6 @@ type IstioClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See istio_details_service.go#HasRbacResource() for more details.
 	rbacResources *map[string]bool
-	// Cache controller is a global cache for all k8s objects fetched by kiali in multiple namespaces.
-	// It doesn't support reduced permissions scenarios yet, don't forget to disabled on those use cases.
-	k8sCache  cacheController
-	stopCache chan struct{}
 }
 
 // GetK8sApi returns the clientset referencing all K8s rest clients
@@ -157,6 +152,11 @@ func (client *IstioClient) GetIstioNetworkingApi() *rest.RESTClient {
 // GetIstioRbacApi returns the istio rbac rest client
 func (client *IstioClient) GetIstioRbacApi() *rest.RESTClient {
 	return client.istioRbacApi
+}
+
+// GetToken returns the BearerToken used from the config
+func (client *IstioClient) GetToken() string {
+	return client.token
 }
 
 // ConfigClient return a client with the correct configuration
@@ -191,7 +191,9 @@ func ConfigClient() (*rest.Config, error) {
 // It hides the low level use of the API of Kubernetes and Istio, it should be considered as an implementation detail.
 // It returns an error on any problem.
 func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
-	client := IstioClient{}
+	client := IstioClient{
+		token: config.BearerToken,
+	}
 	log.Debugf("Rest perf config QPS: %f Burst: %d", config.QPS, config.Burst)
 
 	k8s, err := kube.NewForConfig(config)
@@ -199,19 +201,6 @@ func NewClientFromConfig(config *rest.Config) (*IstioClient, error) {
 		return nil, err
 	}
 	client.k8s = k8s
-
-	// Init client cache
-	// Note that cache will work only in full permissions scenarios (similar permissions as mixer/istio-telemetry component)
-	kialiK8sCfg := kialiConfig.Get().KubernetesConfig
-	if client.k8sCache == nil && kialiK8sCfg.CacheEnabled {
-		log.Infof("Kiali K8S Cache enabled")
-		client.stopCache = make(chan struct{})
-		client.k8sCache = newCacheController(client.k8s, time.Duration(kialiConfig.Get().KubernetesConfig.CacheDuration))
-		client.k8sCache.Start()
-		if !client.k8sCache.WaitForSync() {
-			return nil, errors.New("Cache cannot connect with the k8s API on host: " + config.Host)
-		}
-	}
 
 	// Istio is a CRD extension of Kubernetes API, so any custom type should be registered here.
 	// KnownTypes registers the Istio objects we use, as soon as we get more info we will increase the number of types.
@@ -328,10 +317,4 @@ func newClientForAPI(fromCfg *rest.Config, groupVersion schema.GroupVersion, sch
 		Burst:           fromCfg.Burst,
 	}
 	return rest.RESTClientFor(&cfg)
-}
-
-func (in *IstioClient) Stop() {
-	if in.k8sCache != nil {
-		in.k8sCache.Stop()
-	}
 }

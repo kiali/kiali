@@ -6,6 +6,7 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/routing"
@@ -76,6 +77,7 @@ func (s *Server) Start() {
 // Stop the HTTP server
 func (s *Server) Stop() {
 	StopMetricsServer()
+	business.Stop()
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
 }

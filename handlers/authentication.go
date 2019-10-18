@@ -382,7 +382,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			statusCode = checkKialiSession(w, r)
 			token = aHandler.saToken
 		case config.AuthStrategyAnonymous:
-			log.Trace("Access to the server endpoint is not secured with credentials - letting request come in")
+			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			token = aHandler.saToken
 		case config.AuthStrategyLDAP:
 			statusCode, _ = checkLDAPSession(w, r)

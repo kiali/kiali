@@ -43,10 +43,13 @@ func TestGetAppHealth(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	layer := Layer{
+		k8s: k8s,
+	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkloads("ns")
@@ -70,10 +73,13 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	layer := Layer{
+		k8s: k8s,
+	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
@@ -97,10 +103,13 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	layer := Layer{
+		k8s: k8s,
+	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkloads("ns")
@@ -121,10 +130,13 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	layer := Layer{
+		k8s: k8s,
+	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
@@ -142,10 +154,13 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
+	layer := Layer{
+		k8s: k8s,
+	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
 	k8s.On("IsOpenShift").Return(false)
 	k8s.MockEmptyWorkloads("ns")
