@@ -316,28 +316,41 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   renderActions() {
+    let component;
+    switch (this.state.currentTab) {
+      case 'info':
+        component = <DurationDropdownContainer id="service-info-duration-dropdown" />;
+        break;
+      case 'traffic':
+        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        break;
+      default:
+        return undefined;
+    }
     const serviceDetails = this.state.serviceDetailsInfo;
     const workloads = serviceDetails.workloads || [];
     const virtualServices = serviceDetails.virtualServices || [];
     const destinationRules = serviceDetails.destinationRules || [];
     return (
       <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
-        <DurationDropdownContainer id="service-info-duration-dropdown" />
+        {component}
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
         &nbsp;
-        <IstioWizardDropdown
-          namespace={this.props.match.params.namespace}
-          serviceName={serviceDetails.service.name}
-          show={false}
-          workloads={workloads}
-          virtualServices={virtualServices}
-          destinationRules={destinationRules}
-          gateways={this.state.gateways}
-          tlsStatus={serviceDetails.namespaceMTLS}
-          onChange={this.doRefresh}
-          threeScaleInfo={this.state.threeScaleInfo}
-          threeScaleServiceRule={this.state.threeScaleServiceRule}
-        />
+        {this.state.currentTab === 'info' && (
+          <IstioWizardDropdown
+            namespace={this.props.match.params.namespace}
+            serviceName={serviceDetails.service.name}
+            show={false}
+            workloads={workloads}
+            virtualServices={virtualServices}
+            destinationRules={destinationRules}
+            gateways={this.state.gateways}
+            tlsStatus={serviceDetails.namespaceMTLS}
+            onChange={this.doRefresh}
+            threeScaleInfo={this.state.threeScaleInfo}
+            threeScaleServiceRule={this.state.threeScaleServiceRule}
+          />
+        )}
       </span>
     );
   }
@@ -369,8 +382,6 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             itemType={MetricsObjectTypes.SERVICE}
             namespace={this.props.match.params.namespace}
             serviceName={this.props.match.params.service}
-            onDurationChanged={this.fetchTrafficData}
-            onRefresh={this.doRefresh}
           />
         )}
       </Tab>
@@ -446,7 +457,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={this.state.serviceDetailsInfo.istioSidecar} />
-        {this.state.currentTab === 'info' && this.renderActions()}
+        {this.renderActions()}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

@@ -208,8 +208,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             itemType={MetricsObjectTypes.APP}
             namespace={this.state.app.namespace.name}
             appName={this.state.app.name}
-            onDurationChanged={this.fetchTrafficData}
-            onRefresh={this.doRefresh}
           />
         ) : (
           undefined
@@ -251,10 +249,22 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 
   renderActions = () => {
+    let component;
+    switch (this.state.currentTab) {
+      case 'info':
+        component = <DurationDropdownContainer id="app-info-duration-dropdown" />;
+        break;
+      case 'traffic':
+        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        break;
+      default:
+        return undefined;
+    }
     return (
       <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
-        <DurationDropdownContainer id="app-info-duration-dropdown" />
+        {component}
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
+        &nbsp;
       </span>
     );
   };
@@ -271,7 +281,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={istioSidecar} />
-        {this.state.currentTab === 'info' && this.renderActions()}
+        {this.renderActions()}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow, ShallowWrapper } from 'enzyme';
+import { mount, shallow, ReactWrapper } from 'enzyme';
 import TrafficDetails from '../TrafficDetails';
 import DetailedTrafficList from '../../Details/DetailedTrafficList';
 import { MetricsObjectTypes } from '../../../types/Metrics';
@@ -11,6 +11,7 @@ import {
   GraphType,
   NodeType
 } from '../../../types/Graph';
+import { MemoryRouter } from 'react-router';
 
 describe('TrafficDetails', () => {
   const INBOUND_IDX = 0;
@@ -91,7 +92,7 @@ describe('TrafficDetails', () => {
     ]
   });
 
-  const resolveTrafficLists = (wrapper: ShallowWrapper): { inboundList: string[]; outboundList: string[] } => {
+  const resolveTrafficLists = (wrapper: ReactWrapper): { inboundList: string[]; outboundList: string[] } => {
     const lists = wrapper.find('DetailedTrafficList');
     if (lists.length !== 2) {
       return {
@@ -100,18 +101,26 @@ describe('TrafficDetails', () => {
       };
     }
 
-    const inboundRows = lists
-      .at(INBOUND_IDX)
-      .dive()
-      .find('TableGridRow');
-    const outboundRows = lists
-      .at(OUTBOUND_IDX)
-      .dive()
-      .find('TableGridRow');
+    const inboundRows = lists.at(INBOUND_IDX).find('BodyRow');
+    const outboundRows = lists.at(OUTBOUND_IDX).find('BodyRow');
 
-    const toText = (item: ShallowWrapper): string => {
-      const icon = item.find('Icon');
-      if (icon.length > 1 && icon.at(1).prop('style')!.paddingLeft) {
+    const toText = (item: ReactWrapper): string => {
+      const iconsType = [
+        'BundleIcon',
+        'ServiceIcon',
+        'ApplicationsIcon',
+        'ErrorCircleOIcon',
+        'InfoAltIcon',
+        'CheckCircleIcon',
+        'UnknownIcon',
+        'WarningTriangleIcon'
+      ];
+      const elementIcons = iconsType.filter(
+        iconT =>
+          item.find(iconT).length > 0 && item.find(iconT).prop('style')! && item.find(iconT).prop('style')!.marginLeft
+      );
+      const icon = elementIcons.length > 0 ? item.find(elementIcons[0]).at(0) : undefined;
+      if (icon && icon.exists()) {
         return (
           '->' +
           item
@@ -123,12 +132,11 @@ describe('TrafficDetails', () => {
       }
 
       if (item.find('Link').length === 0) {
-        return item
-          .find('TableGridCol')
+        const items = item
+          .find('BodyCell')
           .at(DetailedTrafficList.WORKLOAD_COLUMN_IDX)
-          .children()
-          .last()
-          .text();
+          .children();
+        return items.length === 0 ? '' : items.last().text();
       }
 
       return item
@@ -195,13 +203,17 @@ describe('TrafficDetails', () => {
       [wk, se] // traffic from wk to seNode (outbound)
     ]);
 
-    const wrapper = shallow(<TrafficDetails {...trafficDetailProps} trafficData={traffic} />);
+    const wrapper = mount(
+      <MemoryRouter>
+        <TrafficDetails {...trafficDetailProps} trafficData={traffic} />
+      </MemoryRouter>
+    );
     const { inboundList, outboundList } = resolveTrafficLists(wrapper);
 
     expect(inboundList).toHaveLength(1);
     expect(inboundList.join()).toEqual('wk1');
     expect(outboundList).toHaveLength(2);
-    expect(outboundList.join()).toEqual('seNode,wk2');
+    expect(outboundList.join()).toEqual(' seNode,wk2');
   });
 
   it('pass down traffic - simple in-out graph two levels', () => {
@@ -217,7 +229,11 @@ describe('TrafficDetails', () => {
       [svc2, wk2] // traffic from svc2 to wk2 (outbound)
     ]);
 
-    const wrapper = shallow(<TrafficDetails {...trafficDetailProps} trafficData={traffic} />);
+    const wrapper = mount(
+      <MemoryRouter>
+        <TrafficDetails {...trafficDetailProps} trafficData={traffic} />
+      </MemoryRouter>
+    );
     const { inboundList, outboundList } = resolveTrafficLists(wrapper);
 
     expect(inboundList).toHaveLength(2);
@@ -242,7 +258,11 @@ describe('TrafficDetails', () => {
       [wk3, wk] // traffic from wk3 to wk (direct workload to workload traffic)
     ]);
 
-    const wrapper = shallow(<TrafficDetails {...trafficDetailProps} trafficData={traffic} />);
+    const wrapper = mount(
+      <MemoryRouter>
+        <TrafficDetails {...trafficDetailProps} trafficData={traffic} />
+      </MemoryRouter>
+    );
     const { inboundList } = resolveTrafficLists(wrapper);
 
     expect(inboundList).toHaveLength(6);

@@ -253,8 +253,6 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
             itemType={MetricsObjectTypes.WORKLOAD}
             namespace={this.props.match.params.namespace}
             workloadName={this.state.workload.name}
-            onDurationChanged={this.fetchTrafficData}
-            onRefresh={this.doRefresh}
           />
         ) : (
           undefined
@@ -343,9 +341,20 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
   }
 
   renderActions = () => {
+    let component;
+    switch (this.state.currentTab) {
+      case 'info':
+        component = <DurationDropdownContainer id="workload-info-duration-dropdown" />;
+        break;
+      case 'traffic':
+        component = <MetricsDuration onChanged={this.fetchTrafficData} />;
+        break;
+      default:
+        return undefined;
+    }
     return (
       <span style={{ position: 'absolute', right: '50px', zIndex: 1 }}>
-        <DurationDropdownContainer id="service-info-duration-dropdown" />
+        {component}
         <RefreshButtonContainer handleRefresh={this.doRefresh} />
         &nbsp;
       </span>
@@ -362,7 +371,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       <>
         <BreadcrumbView location={this.props.location} />
         <PfTitle location={this.props.location} istio={this.state.istioEnabled} />
-        {this.state.currentTab === 'info' && this.renderActions()}
+        {this.renderActions()}
         <ParameterizedTabs
           id="basic-tabs"
           onSelect={tabValue => {

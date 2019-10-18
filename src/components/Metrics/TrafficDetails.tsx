@@ -1,11 +1,8 @@
-import { Col, Row } from 'patternfly-react';
 import * as React from 'react';
 import { GraphDefinition, GraphEdgeWrapper, GraphNodeData, NodeType } from '../../types/Graph';
+import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
 import DetailedTrafficList, { TrafficItem, TrafficNode } from '../Details/DetailedTrafficList';
-import { DurationInSeconds } from '../../types/Common';
 import { MetricsObjectTypes } from '../../types/Metrics';
-import MetricsDurationContainer from '../MetricsOptions/MetricsDuration';
-import RefreshButtonContainer from '../Refresh/RefreshButton';
 
 type AppProps = {
   itemType: MetricsObjectTypes.APP;
@@ -26,8 +23,6 @@ type WorkloadProps = {
 };
 
 type TrafficDetailsProps = {
-  onDurationChanged: (duration: DurationInSeconds) => void;
-  onRefresh: () => void;
   trafficData: GraphDefinition | null;
 } & (AppProps | WorkloadProps | ServiceProps);
 
@@ -78,22 +73,17 @@ class TrafficDetails extends React.Component<TrafficDetailsProps, TrafficDetails
     }
 
     return (
-      <Row className="card-pf-body">
-        <Col xs={12}>
-          <div>
-            <div style={{ float: 'right', paddingRight: '2em' }}>
-              <MetricsDurationContainer onChanged={this.props.onDurationChanged} />{' '}
-              <RefreshButtonContainer handleRefresh={this.props.onRefresh} />
-            </div>
-            <strong>Inbound</strong>
-          </div>
-          <DetailedTrafficList direction="inbound" traffic={this.state.inboundTraffic} />
-          <div style={{ marginTop: '2em' }}>
-            <strong>Outbound</strong>
-          </div>
-          <DetailedTrafficList direction="outbound" traffic={this.state.outboundTraffic} />
-        </Col>
-      </Row>
+      <Grid>
+        <GridItem span={12}>
+          <Card>
+            <CardBody>
+              <DetailedTrafficList header="Inbound" direction="inbound" traffic={this.state.inboundTraffic} />
+              <div style={{ marginTop: '2em' }} />
+              <DetailedTrafficList header="Outbound" direction="outbound" traffic={this.state.outboundTraffic} />
+            </CardBody>
+          </Card>
+        </GridItem>
+      </Grid>
     );
   }
 
