@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { InOutRateChartGrpc, InOutRateChartHttp } from './InOutRateChart';
+import { renderInOutRateChartHttp, renderInOutRateChartGrpc } from './RateChart';
 
 type InOutRateTableGrpcPropType = {
   title: string;
@@ -44,20 +44,7 @@ export class InOutRateTableGrpc extends React.Component<InOutRateTableGrpcPropTy
             </tr>
           </tbody>
         </table>
-        <table className="table">
-          <tbody>
-            <tr>
-              <td>
-                <InOutRateChartGrpc
-                  percentOkIn={percentOkIn}
-                  percentErrIn={percentErrIn}
-                  percentOkOut={percentOkOut}
-                  percentErrOut={percentErrOut}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {renderInOutRateChartGrpc(percentOkIn, percentErrIn, percentOkOut, percentErrOut)}
       </div>
     );
   }
@@ -130,24 +117,16 @@ export class InOutRateTableHttp extends React.Component<InOutRateTableHttpPropTy
             </tr>
           </tbody>
         </table>
-        <table className="table">
-          <tbody>
-            <tr>
-              <td>
-                <InOutRateChartHttp
-                  percent2xxIn={percent2xxIn}
-                  percent3xxIn={percent3xxIn}
-                  percent4xxIn={percent4xxIn}
-                  percent5xxIn={percent5xxIn}
-                  percent2xxOut={percent2xxOut}
-                  percent3xxOut={percent3xxOut}
-                  percent4xxOut={percent4xxOut}
-                  percent5xxOut={percent5xxOut}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {renderInOutRateChartHttp(
+          percent2xxIn,
+          percent3xxIn,
+          percent4xxIn,
+          percent5xxIn,
+          percent2xxOut,
+          percent3xxOut,
+          percent4xxOut,
+          percent5xxOut
+        )}
       </div>
     );
   }

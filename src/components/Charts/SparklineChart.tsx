@@ -12,6 +12,8 @@ import { VictoryLegend } from 'victory';
 
 import { VCDataPoint, VCLines } from '../../utils/Graphing';
 import { PfColors } from 'components/Pf/PfColors';
+import * as Legend from './LegendHelper';
+import { CustomFlyout } from './CustomFlyout';
 
 type Props = ChartProps & {
   name: string;
@@ -64,73 +66,37 @@ export class SparklineChart extends React.Component<Props, State> {
     return this.renderChart();
   }
 
-  buildEvents() {
-    return this.props.series.map((_, idx) => {
-      return {
-        childName: [this.props.name + '-legend'],
-        target: ['data', 'labels'],
-        eventKey: String(idx),
-        eventHandlers: {
-          onClick: () => {
-            return [
-              {
-                childName: [this.props.name + '-area-' + idx],
-                target: 'data',
-                eventKey: 'all',
-                mutation: () => {
-                  if (!this.state.hiddenSeries.delete(idx)) {
-                    // Was not already hidden => add to set
-                    this.state.hiddenSeries.add(idx);
-                  }
-                  this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
-                  return null;
-                }
-              }
-            ];
-          },
-          onMouseOver: () => {
-            return [
-              {
-                childName: [this.props.name + '-area-' + idx],
-                target: 'data',
-                eventKey: 'all',
-                mutation: props => {
-                  return {
-                    style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
-                  };
-                }
-              }
-            ];
-          },
-          onMouseOut: () => {
-            return [
-              {
-                childName: [this.props.name + '-area-' + idx],
-                target: 'data',
-                eventKey: 'all',
-                mutation: () => {
-                  return null;
-                }
-              }
-            ];
-          }
-        }
-      };
-    });
-  }
-
   renderChart() {
     const legendHeight = 30;
     let height = this.props.height || 300;
     const padding = { top: 0, bottom: 0, left: 0, right: 0, ...this.props.padding };
+    let events: any = undefined;
     if (this.props.showLegend) {
       padding.bottom += legendHeight;
       height += legendHeight;
+      events = Legend.events({
+        items: this.props.series,
+        itemBaseName: this.props.name + '-area-',
+        legendName: this.props.name + '-legend',
+        onClick: idx => {
+          if (!this.state.hiddenSeries.delete(idx)) {
+            // Was not already hidden => add to set
+            this.state.hiddenSeries.add(idx);
+          }
+          this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
+          return null;
+        },
+        onMouseOver: (_, props) => {
+          return {
+            style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
+          };
+        }
+      });
     }
 
     let container = this.props.containerComponent;
     if (!container) {
-      const tooltip = <ChartTooltip flyoutStyle={{ fillOpacity: 0.7 }} constrainToVisibleArea={true} />;
+      const tooltip = <ChartTooltip flyoutComponent={<CustomFlyout />} constrainToVisibleArea={true} />;
       container = (
         <ChartVoronoiContainer
           labels={obj => {
@@ -155,7 +121,7 @@ export class SparklineChart extends React.Component<Props, State> {
         height={height}
         width={this.state.width}
         padding={padding}
-        events={this.props.showLegend ? this.buildEvents() : undefined}
+        events={events}
         containerComponent={container}
       >
         <ChartAxis tickCount={15} style={hiddenAxisStyle} />
@@ -167,6 +133,7 @@ export class SparklineChart extends React.Component<Props, State> {
           return (
             <ChartScatter
               name={this.props.name + '-scatter-' + idx}
+              key={this.props.name + '-scatter-' + idx}
               data={serie.datapoints}
               style={{ data: { fill: serie.color } }}
               size={({ active }) => (active ? 5 : 2)}
@@ -180,6 +147,7 @@ export class SparklineChart extends React.Component<Props, State> {
           return (
             <ChartArea
               name={this.props.name + '-area-' + idx}
+              key={this.props.name + '-area-' + idx}
               data={serie.datapoints}
               style={{
                 data: {

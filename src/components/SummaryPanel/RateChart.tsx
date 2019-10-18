@@ -1,155 +1,211 @@
 import * as React from 'react';
-import { StackedBarChart } from 'patternfly-react';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip } from '@patternfly/react-charts';
+import { VictoryLegend } from 'victory';
+
 import { PfColors } from '../../components/Pf/PfColors';
-import { LegendPosition, SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
+import * as Legend from 'components/Charts/LegendHelper';
+import { CustomFlyout } from 'components/Charts/CustomFlyout';
+import { VCLines } from 'utils/Graphing';
 
-type RateChartGrpcPropType = {
-  height?: number;
-  legendPos?: LegendPosition;
-  percentErr: number;
-  percentOK: number;
-  showLegend?: boolean;
-  width?: number;
+export const legendHeight = 30;
+export const legendTopMargin = 25;
+
+type Props = {
+  baseName: string;
+  series: VCLines;
+  height: number;
+  xLabelsWidth: number;
 };
 
-export class RateChartGrpc extends React.Component<RateChartGrpcPropType> {
-  static defaultProps: RateChartGrpcPropType = {
-    height: 100,
-    legendPos: 'bottom',
-    percentErr: 0,
-    percentOK: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
-  };
+type State = {
+  hiddenSeries: Set<number>;
+};
+
+export class RateChart extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hiddenSeries: new Set() };
+  }
 
   render() {
+    const singleBar = this.props.series[0].datapoints.length === 1;
+    let height = this.props.height + legendTopMargin + legendHeight;
+    const padding = {
+      top: singleBar ? 10 : 15,
+      left: 5 + this.props.xLabelsWidth,
+      bottom: 10 + legendTopMargin + legendHeight,
+      right: 10
+    };
+    const events = Legend.events({
+      items: this.props.series,
+      itemBaseName: this.props.baseName + '-bars-',
+      legendName: this.props.baseName + '-legend',
+      onClick: idx => {
+        // Same event can be fired for several targets, so make sure we only apply it once
+        if (!this.state.hiddenSeries.delete(idx)) {
+          // Was not already hidden => add to set
+          this.state.hiddenSeries.add(idx);
+        }
+        this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
+        return null;
+      },
+      onMouseOver: (_, props) => {
+        return {
+          style: { ...props.style, strokeWidth: 4, fillOpacity: 0.5 }
+        };
+      }
+    });
+    const verticalAxisStyle = singleBar ? { tickLabels: { fill: 'none' } } : { tickLabels: { padding: 2 } };
     return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: [''],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
+      <Chart
+        height={height}
+        width={SUMMARY_PANEL_CHART_WIDTH}
+        padding={padding}
+        domainPadding={{ x: singleBar ? [15, 15] : [30, 25] }}
+        domain={{ y: [0, 100] }}
+        events={events}
+      >
+        <ChartStack
+          colorScale={this.props.series.filter((_, idx) => !this.state.hiddenSeries.has(idx)).map(d => d.color)}
+          horizontal={true}
+        >
+          {this.props.series.map((datum, idx) => {
+            if (this.state.hiddenSeries.has(idx)) {
+              return undefined;
             }
-          }
-        }}
-        data={{
-          groups: [['OK', 'Err']],
-          columns: [['OK', this.props.percentOK], ['Err', this.props.percentErr]],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            Err: PfColors.Danger
-          }
-        }}
-      />
+            return (
+              <ChartBar
+                key={this.props.baseName + '-bars-' + idx}
+                name={this.props.baseName + '-bars-' + idx}
+                data={datum.datapoints.map(dp => {
+                  return {
+                    ...dp,
+                    label: `${dp.name}: ${dp.y.toFixed(2)} %`
+                  };
+                })}
+                barWidth={30}
+                labelComponent={<ChartTooltip constrainToVisibleArea={true} flyoutComponent={<CustomFlyout />} />}
+              />
+            );
+          })}
+        </ChartStack>
+        <ChartAxis style={verticalAxisStyle} />
+        <ChartAxis dependentAxis={true} showGrid={true} crossAxis={false} tickValues={[0, 25, 50, 75, 100]} />
+        <VictoryLegend
+          name={this.props.baseName + '-legend'}
+          data={this.props.series.map((s, idx) => {
+            if (this.state.hiddenSeries.has(idx)) {
+              return { ...s.legendItem, symbol: { fill: PfColors.Gray } };
+            }
+            return s.legendItem;
+          })}
+          x={this.props.xLabelsWidth}
+          y={height - legendHeight}
+          height={legendHeight}
+          width={SUMMARY_PANEL_CHART_WIDTH}
+          gutter={14}
+          symbolSpacer={8}
+        />
+      </Chart>
     );
   }
 }
 
-type RateChartHttpPropType = {
-  height?: number;
-  legendPos?: string; // e.g. right, left
-  percent2xx: number;
-  percent3xx: number;
-  percent4xx: number;
-  percent5xx: number;
-  showLegend?: boolean;
-  width?: number;
+export const renderRateChartHttp = (percent2xx: number, percent3xx: number, percent4xx: number, percent5xx: number) => {
+  const vcLines: VCLines = [
+    { name: 'OK', x: 'rate', y: percent2xx, color: PfColors.Success },
+    { name: '3xx', x: 'rate', y: percent3xx, color: PfColors.Info },
+    { name: '4xx', x: 'rate', y: percent4xx, color: PfColors.DangerBackground }, // 4xx is also an error use close but distinct color
+    { name: '5xx', x: 'rate', y: percent5xx, color: PfColors.Danger }
+  ].map(dp => {
+    return {
+      datapoints: [dp],
+      color: dp.color,
+      legendItem: {
+        name: dp.name,
+        symbol: { fill: dp.color }
+      }
+    };
+  });
+  return <RateChart baseName={'rate-http'} height={80} xLabelsWidth={0} series={vcLines} />;
 };
 
-export class RateChartHttp extends React.Component<RateChartHttpPropType> {
-  static defaultProps: RateChartHttpPropType = {
-    height: 100,
-    legendPos: 'bottom',
-    percent2xx: 0,
-    percent3xx: 0,
-    percent4xx: 0,
-    percent5xx: 0,
-    showLegend: true,
-    width: SUMMARY_PANEL_CHART_WIDTH
-  };
+export const renderRateChartGrpc = (percentOK: number, percentErr: number) => {
+  const vcLines: VCLines = [
+    { name: 'OK', x: 'rate', y: percentOK, color: PfColors.Success },
+    { name: 'Err', x: 'rate', y: percentErr, color: PfColors.Danger }
+  ].map(dp => {
+    return {
+      datapoints: [dp],
+      color: dp.color,
+      legendItem: {
+        name: dp.name,
+        symbol: { fill: dp.color }
+      }
+    };
+  });
+  return <RateChart baseName={'rate-grpc'} height={80} xLabelsWidth={0} series={vcLines} />;
+};
 
-  render() {
-    return (
-      <StackedBarChart
-        size={{ height: this.props.height, width: this.props.width }}
-        legend={{ show: this.props.showLegend, position: this.props.legendPos }}
-        grid={{
-          x: {
-            show: false
-          },
-          y: {
-            show: true
-          }
-        }}
-        axis={{
-          rotated: true,
-          x: {
-            categories: [''],
-            type: 'category'
-          },
-          y: {
-            show: true,
-            inner: false,
-            label: {
-              text: '%',
-              position: 'inner-right'
-            },
-            min: 0,
-            max: 100,
-            tick: {
-              values: [0, 25, 50, 75, 100]
-            },
-            padding: {
-              top: 20,
-              bottom: 0
-            }
-          }
-        }}
-        data={{
-          groups: [['OK', '3xx', '4xx', '5xx']],
-          columns: [
-            ['OK', this.props.percent2xx.toFixed(2)],
-            ['3xx', this.props.percent3xx.toFixed(2)],
-            ['4xx', this.props.percent4xx.toFixed(2)],
-            ['5xx', this.props.percent5xx.toFixed(2)]
-          ],
-          // order: 'asc',
-          colors: {
-            OK: PfColors.Success,
-            '3xx': PfColors.Info,
-            '4xx': PfColors.DangerBackground, // 4xx is also an error use close but distinct color
-            '5xx': PfColors.Danger
-          }
-        }}
-      />
-    );
-  }
-}
+export const renderInOutRateChartHttp = (
+  percent2xxIn: number,
+  percent3xxIn: number,
+  percent4xxIn: number,
+  percent5xxIn: number,
+  percent2xxOut: number,
+  percent3xxOut: number,
+  percent4xxOut: number,
+  percent5xxOut: number
+) => {
+  const vcLines: VCLines = [
+    { name: 'OK', dp: [{ x: 'In', y: percent2xxIn }, { x: 'Out', y: percent2xxOut }], color: PfColors.Success },
+    { name: '3xx', dp: [{ x: 'In', y: percent3xxIn }, { x: 'Out', y: percent3xxOut }], color: PfColors.Info },
+    {
+      name: '4xx',
+      dp: [{ x: 'In', y: percent4xxIn }, { x: 'Out', y: percent4xxOut }],
+      color: PfColors.DangerBackground
+    }, // 4xx is also an error use close but distinct color
+    { name: '5xx', dp: [{ x: 'In', y: percent5xxIn }, { x: 'Out', y: percent5xxOut }], color: PfColors.Danger }
+  ].map(line => {
+    return {
+      datapoints: line.dp.map(dp => ({
+        name: line.name,
+        color: line.color,
+        ...dp
+      })),
+      color: line.color,
+      legendItem: {
+        name: line.name,
+        symbol: { fill: line.color }
+      }
+    };
+  });
+  return <RateChart baseName={'in-out-rate-http'} height={132} xLabelsWidth={25} series={vcLines} />;
+};
+
+export const renderInOutRateChartGrpc = (
+  percentOKIn: number,
+  percentErrIn: number,
+  percentOKOut: number,
+  percentErrOut: number
+) => {
+  const vcLines: VCLines = [
+    { name: 'OK', dp: [{ x: 'In', y: percentOKIn }, { x: 'Out', y: percentOKOut }], color: PfColors.Success },
+    { name: 'Err', dp: [{ x: 'In', y: percentErrIn }, { x: 'Out', y: percentErrOut }], color: PfColors.Danger }
+  ].map(line => {
+    return {
+      datapoints: line.dp.map(dp => ({
+        name: line.name,
+        color: line.color,
+        ...dp
+      })),
+      color: line.color,
+      legendItem: {
+        name: line.name,
+        symbol: { fill: line.color }
+      }
+    };
+  });
+  return <RateChart baseName={'in-out-rate-grpc'} height={132} xLabelsWidth={25} series={vcLines} />;
+};

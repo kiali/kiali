@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RateChartGrpc, RateChartHttp } from './RateChart';
+import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
 
 type RateTableGrpcPropType = {
   title: string;
@@ -32,7 +32,7 @@ export class RateTableGrpc extends React.Component<RateTableGrpcPropType, {}> {
             </tr>
           </tbody>
         </table>
-        <RateChartGrpc percentOK={percentOK} percentErr={percentErr} />
+        {renderRateChartGrpc(percentOK, percentErr)}
       </div>
     );
   }
@@ -80,12 +80,7 @@ export class RateTableHttp extends React.Component<RateTableHttpPropType, {}> {
             </tr>
           </tbody>
         </table>
-        <RateChartHttp
-          percent2xx={percent2xx}
-          percent3xx={percent3xx}
-          percent4xx={percent4xx}
-          percent5xx={percent5xx}
-        />
+        {renderRateChartHttp(percent2xx, percent3xx, percent4xx, percent5xx)}
       </div>
     );
   }
