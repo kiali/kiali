@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, TableHeader, TableBody, cellWidth } from '@patternfly/react-table';
+import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { style } from 'typestyle';
 import { Badge, Button, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -99,15 +99,17 @@ class SuspendTraffic extends React.Component<Props, State> {
   };
 
   render() {
-    const headerCells = [
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
+    const headerCells: ICell[] = [
       {
         title: 'Workload',
-        transforms: [cellWidth(30)],
+        transforms: [cellWidth(30) as any],
         props: {}
       },
       {
         title: 'Suspended Status',
-        transforms: [cellWidth(70)],
+        transforms: [cellWidth(70) as any],
         props: {}
       }
     ];

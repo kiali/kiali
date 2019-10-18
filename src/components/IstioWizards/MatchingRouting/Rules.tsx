@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, TableHeader, TableBody, cellWidth } from '@patternfly/react-table';
+import { cellWidth, ICell, Table, TableHeader, TableBody } from '@patternfly/react-table';
 import { style } from 'typestyle';
 import { PfColors } from '../../Pf/PfColors';
 import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -74,10 +74,12 @@ class Rules extends React.Component<Props> {
   };
 
   render() {
-    const headerCells = [
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
+    const headerCells: ICell[] = [
       {
         title: 'Rule order',
-        transforms: [cellWidth(10)],
+        transforms: [cellWidth(10) as any],
         props: {}
       },
       {

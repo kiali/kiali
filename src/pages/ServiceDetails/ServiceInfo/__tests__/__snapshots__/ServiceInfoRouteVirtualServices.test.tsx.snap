@@ -10,6 +10,7 @@ exports[`#ServiceInfoVirtualServices render correctly with data should render se
         <Table
           aria-label="list_virtual_services"
           borders={true}
+          canSelectAll={true}
           cells={
             Array [
               Object {

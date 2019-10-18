@@ -10,6 +10,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
         <Table
           aria-label="list_workloads"
           borders={true}
+          canSelectAll={true}
           cells={
             Array [
               Object {

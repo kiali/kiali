@@ -25,14 +25,16 @@ type WorkloadServicesProps = {
 
 class WorkloadServices extends React.Component<WorkloadServicesProps> {
   columns(): ICell[] {
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
     return [
-      { title: 'Name', transforms: [cellWidth(10)] },
-      { title: 'Created at', transforms: [cellWidth(10)] },
-      { title: 'Type', transforms: [cellWidth(10)] },
-      { title: 'Labels', transforms: [cellWidth(30)] },
-      { title: 'Resource Version', transforms: [cellWidth(10)] },
-      { title: 'Ip', transforms: [cellWidth(40)] },
-      { title: 'Ports', transforms: [cellWidth(20)] }
+      { title: 'Name', transforms: [cellWidth(10) as any] },
+      { title: 'Created at', transforms: [cellWidth(10) as any] },
+      { title: 'Type', transforms: [cellWidth(10) as any] },
+      { title: 'Labels', transforms: [cellWidth(30) as any] },
+      { title: 'Resource Version', transforms: [cellWidth(10) as any] },
+      { title: 'Ip', transforms: [cellWidth(40) as any] },
+      { title: 'Ports', transforms: [cellWidth(20) as any] }
     ];
   }
 

@@ -79,17 +79,19 @@ class DetailedTrafficList extends React.Component<DetailedTrafficProps> {
   static METRICS_LINK_COLUMN_IDX = 4;
   static HEADER_PROPS = { style: { color: '#72767b', fontWeight: 300, fontSize: '12px' } };
   static COLUMN_PROPS = { style: { color: 'black', fontWeight: 400, fontSize: '1rem', verticalAlign: 'middle' } };
+  // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+  // https://github.com/patternfly/patternfly-next/issues/2373
   columns = (): ICell[] => {
     return [
-      { title: 'STATUS', transforms: [cellWidth(10)], props: DetailedTrafficList.HEADER_PROPS },
+      { title: 'STATUS', transforms: [cellWidth(10) as any], props: DetailedTrafficList.HEADER_PROPS },
       {
         title: this.props.direction === 'inbound' ? 'SOURCE' : 'DESTINATION',
-        transforms: [cellWidth(30)],
+        transforms: [cellWidth(30) as any],
         props: DetailedTrafficList.HEADER_PROPS
       },
-      { title: 'TYPE', transforms: [cellWidth(10)], props: DetailedTrafficList.HEADER_PROPS },
-      { title: 'TRAFFIC', transforms: [cellWidth(30)], props: DetailedTrafficList.HEADER_PROPS },
-      { title: '', transforms: [cellWidth(10)], props: DetailedTrafficList.HEADER_PROPS }
+      { title: 'TYPE', transforms: [cellWidth(10) as any], props: DetailedTrafficList.HEADER_PROPS },
+      { title: 'TRAFFIC', transforms: [cellWidth(30) as any], props: DetailedTrafficList.HEADER_PROPS },
+      { title: '', transforms: [cellWidth(10) as any], props: DetailedTrafficList.HEADER_PROPS }
     ];
   };
 

@@ -27,12 +27,14 @@ interface ServiceInfoVirtualServicesProps {
 
 class ServiceInfoVirtualServices extends React.Component<ServiceInfoVirtualServicesProps> {
   columns(): ICell[] {
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
     return [
-      { title: 'Status', transforms: [cellWidth(10)] },
-      { title: 'Name', transforms: [cellWidth(10)] },
-      { title: 'Created at', transforms: [cellWidth(60)] },
-      { title: 'Resource version', transforms: [cellWidth(10)] },
-      { title: 'Actions', transforms: [cellWidth(10)] }
+      { title: 'Status', transforms: [cellWidth(10) as any] },
+      { title: 'Name', transforms: [cellWidth(10) as any] },
+      { title: 'Created at', transforms: [cellWidth(60) as any] },
+      { title: 'Resource version', transforms: [cellWidth(10) as any] },
+      { title: 'Actions', transforms: [cellWidth(10) as any] }
     ];
   }
 

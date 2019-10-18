@@ -31,15 +31,17 @@ interface ServiceInfoDestinationRulesProps {
 
 class ServiceInfoDestinationRules extends React.Component<ServiceInfoDestinationRulesProps> {
   columns(): ICell[] {
+    // TODO: Casting 'as any' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
     return [
       { title: 'Status' },
-      { title: 'Name', transforms: [cellWidth(10)] },
-      { title: 'Traffic Policy', transforms: [cellWidth(10)] },
-      { title: 'Subsets', transforms: [cellWidth(50)] },
-      { title: 'Host', transforms: [cellWidth(10)] },
-      { title: 'Created at', transforms: [cellWidth(20)] },
-      { title: 'Resource version', transforms: [cellWidth(10)] },
-      { title: 'Actions', transforms: [cellWidth(20)] }
+      { title: 'Name', transforms: [cellWidth(10) as any] },
+      { title: 'Traffic Policy', transforms: [cellWidth(10) as any] },
+      { title: 'Subsets', transforms: [cellWidth(50) as any] },
+      { title: 'Host', transforms: [cellWidth(10) as any] },
+      { title: 'Created at', transforms: [cellWidth(20) as any] },
+      { title: 'Resource version', transforms: [cellWidth(10) as any] },
+      { title: 'Actions', transforms: [cellWidth(20) as any] }
     ];
   }
 

@@ -28,12 +28,14 @@ interface ServiceInfoWorkloadProps {
 
 class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
   columns(): ICell[] {
+    // TODO: Casting 'as ITransforms' because @patternfly/react-table@2.22.19 has a typing bug. Remove the casting when PF fixes it.
+    // https://github.com/patternfly/patternfly-next/issues/2373
     return [
-      { title: 'Name', transforms: [cellWidth(10)] },
-      { title: 'Type', transforms: [cellWidth(10)] },
-      { title: 'Labels', transforms: [cellWidth(60)] },
-      { title: 'Created at', transforms: [cellWidth(20)] },
-      { title: 'Resource version', transforms: [cellWidth(10)] }
+      { title: 'Name', transforms: [cellWidth(10) as any] },
+      { title: 'Type', transforms: [cellWidth(10) as any] },
+      { title: 'Labels', transforms: [cellWidth(60) as any] },
+      { title: 'Created at', transforms: [cellWidth(20) as any] },
+      { title: 'Resource version', transforms: [cellWidth(10) as any] }
     ];
   }
 

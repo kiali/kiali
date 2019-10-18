@@ -120,7 +120,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         toggle={<DropdownToggle onToggle={this.onToggle}>Metrics Settings</DropdownToggle>}
         isOpen={this.state.isOpen}
       >
-        <div style={{ paddingLeft: '10px' }}>
+        {/* TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
+         * https://github.com/patternfly/patternfly-react/issues/3156 */}
+        <div style={{ paddingLeft: '10px' }} className="pf-c-dropdown__menu-item">
           {hasLabels && this.renderLabelOptions()}
           {hasHistograms && this.renderHistogramOptions()}
         </div>

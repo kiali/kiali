@@ -178,8 +178,10 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                     ]
                   }
                   isAppLauncher={false}
+                  isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
+                  tippyProps={Object {}}
                   trigger="mouseenter focus"
                   zIndex={9999}
                 >
@@ -224,8 +226,10 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                     ]
                   }
                   isAppLauncher={false}
+                  isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
+                  tippyProps={Object {}}
                   trigger="mouseenter focus"
                   zIndex={9999}
                 >
@@ -270,8 +274,10 @@ exports[`#ServiceInfoDescription render correctly with data should render servic
                     ]
                   }
                   isAppLauncher={false}
+                  isVisible={false}
                   maxWidth="18.75rem"
                   position="top"
+                  tippyProps={Object {}}
                   trigger="mouseenter focus"
                   zIndex={9999}
                 >
