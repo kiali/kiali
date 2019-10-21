@@ -27,7 +27,7 @@ func (c *kialiCacheImpl) createKubernetesInformers(namespace string, informer *t
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.k8sApi, c.refreshDuration, informers.WithNamespace(namespace))
 	(*informer)[kubernetes.DeploymentType] = sharedInformers.Apps().V1().Deployments().Informer()
 	(*informer)[kubernetes.ReplicaSetType] = sharedInformers.Apps().V1().ReplicaSets().Informer()
-	(*informer)[kubernetes.ServiceentryType] = sharedInformers.Core().V1().Services().Informer()
+	(*informer)[kubernetes.ServiceType] = sharedInformers.Core().V1().Services().Informer()
 	(*informer)[kubernetes.PodType] = sharedInformers.Core().V1().Pods().Informer()
 }
 
@@ -73,7 +73,7 @@ func (c *kialiCacheImpl) GetDeployment(namespace, name string) (*apps_v1.Deploym
 
 func (c *kialiCacheImpl) GetServices(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	if nsCache, ok := c.nsCache[namespace]; ok {
-		services := nsCache[kubernetes.ServiceentryType].GetStore().List()
+		services := nsCache[kubernetes.ServiceType].GetStore().List()
 		lenServices := len(services)
 		if lenServices > 0 {
 			_, ok := services[0].(*core_v1.Service)
