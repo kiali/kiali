@@ -368,6 +368,53 @@
   # this regex is not 100% accurate, but we want to at least catch obvious errors
   - kiali_vars.api.namespaces.label_selector is not regex('^[a-zA-Z0-9/_.-]+=[a-zA-Z0-9_.-]+$')
 
+# Prepare any additional environment variables that need to be defined in the deployment
+
+- set_fact:
+    kiali_deployment_environment_variables: {}
+
+- name: Prepare environment variable for prometheus password
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'PROMETHEUS_PASSWORD': {'secret_name': kiali_vars.external_services.prometheus.auth.password | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.prometheus.auth.password | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.prometheus.auth.password | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for prometheus token
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'PROMETHEUS_TOKEN': {'secret_name': kiali_vars.external_services.prometheus.auth.token | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.prometheus.auth.token | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.prometheus.auth.token | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for tracing password
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'TRACING_PASSWORD': {'secret_name': kiali_vars.external_services.tracing.auth.password | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.tracing.auth.password | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.tracing.auth.password | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for tracing token
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'TRACING_TOKEN': {'secret_name': kiali_vars.external_services.tracing.auth.token | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.tracing.auth.token | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.tracing.auth.token | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for grafana password
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'GRAFANA_PASSWORD': {'secret_name': kiali_vars.external_services.grafana.auth.password | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.grafana.auth.password | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.grafana.auth.password | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for grafana token
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'GRAFANA_TOKEN': {'secret_name': kiali_vars.external_services.grafana.auth.token | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.external_services.grafana.auth.token | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.external_services.grafana.auth.token | regex_search('secret:.+:.+')
+
+- name: Prepare environment variable for login token signing key
+  set_fact:
+    kiali_deployment_environment_variables: "{{ kiali_deployment_environment_variables | combine({'LOGIN_TOKEN_SIGNING_KEY': {'secret_name': kiali_vars.login_token.signing_key | regex_replace('secret:(.+):.+', '\\1'), 'secret_key': kiali_vars.login_token.signing_key | regex_replace('secret:.+:(.+)', '\\1') }}) }}"
+  when:
+  - kiali_vars.login_token.signing_key | regex_search('secret:.+:.+')
+
 # The following few tasks read the current Kiali configmap (if one exists) in order to figure out what
 # namespaces are no longer accessible. Those namespaces will have their Kiali roles removed.
 # They will also have the Kiali labels removed.
