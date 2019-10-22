@@ -42,9 +42,15 @@
   register: ldap_service
 
 - set_fact:
-    external_ldap_host: "{{ cluster_node_ip }}"
-    external_ldap_port: "{{ ldap_service | json_query('resources[0].spec.ports[?name==`ldap-port`].nodePort') | join() }}"
-    external_ldap_port_ssl: "{{ ldap_service | json_query('resources[0].spec.ports[?name==`ssl-ldap-port`].nodePort') | join() }}"
+    external_ldap_host: "{{ ldap_service.resources[0].status.loadBalancer.ingress[0].hostname }}"
+    external_ldap_port: "389"
+    external_ldap_port_ssl: "636"
+
+- name: Wait for the LoadBalancer to provide the endpoint for the LDAP service which takes a long time
+  wait_for:
+    host: "{{ external_ldap_host }}"
+    port: "{{ external_ldap_port }}"
+    timeout: 300
 
 - name: Make sure we have a parent entry for users (this tests unsecure LDAP access)
   ldap_entry:

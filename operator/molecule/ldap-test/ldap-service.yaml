@@ -6,7 +6,7 @@ metadata:
     app: ldap
   name: ldap-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - name: ldap-port
       targetPort: ldap-port
