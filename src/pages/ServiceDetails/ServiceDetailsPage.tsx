@@ -403,10 +403,10 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
     const tabsArray: any[] = [overviewTab, trafficTab, inboundMetricsTab];
 
     // Conditional Traces tab
-    if (errorTraces !== undefined && this.props.jaegerUrl !== '') {
+    if (this.props.jaegerUrl !== '') {
       let jaegerTag: any = undefined;
       if (this.props.jaegerIntegration) {
-        const jaegerTitle: string = errorTraces > 0 ? 'Error Traces (' + errorTraces + ')' : 'Traces';
+        const jaegerTitle: string = errorTraces && errorTraces > 0 ? 'Error Traces (' + errorTraces + ')' : 'Traces';
         jaegerTag = (
           <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key="traces">
             {currentTab === 'traces' && (
