@@ -3,7 +3,7 @@ import { DestinationRule, ObjectValidation } from '../../../types/IstioObjects';
 import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import { Link } from 'react-router-dom';
-import { Card, CardBody, Grid, GridItem, Text, TextVariants, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Stack, StackItem, Text, TextVariants, TooltipPosition } from '@patternfly/react-core';
 import { Table, TableBody, TableHeader, TableVariant } from '@patternfly/react-table';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 import { ServiceIcon } from '@patternfly/react-icons';
@@ -117,17 +117,24 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
           <CardBody>
             <Text component={TextVariants.h2}>Destination Rule Overview</Text>
             {globalStatus}
-            <Text component={TextVariants.h3}>Created at</Text>
-            <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />
-
-            <Text component={TextVariants.h3}>Resource Version</Text>
-            {destinationRule.metadata.resourceVersion}
-            {destinationRule.spec.host && (
-              <>
-                <Text component={TextVariants.h3}>Host</Text>
-                {this.serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
-              </>
-            )}
+            <Stack>
+              <StackItem id={'created_at'}>
+                <Text component={TextVariants.h3}>Created at</Text>
+                <LocalTime time={destinationRule.metadata.creationTimestamp || ''} />
+              </StackItem>
+              <StackItem id={'resource_version'}>
+                <Text component={TextVariants.h3}>Resource Version</Text>
+                {destinationRule.metadata.resourceVersion}
+              </StackItem>
+              <StackItem id={'hosts'}>
+                {destinationRule.spec.host && (
+                  <>
+                    <Text component={TextVariants.h3}>Host</Text>
+                    {this.serviceLink(destinationRule.metadata.namespace || '', destinationRule.spec.host, isValid)}
+                  </>
+                )}
+              </StackItem>
+            </Stack>
           </CardBody>
         </Card>
       </GridItem>
@@ -143,11 +150,15 @@ class DestinationRuleDetail extends React.Component<DestinationRuleProps> {
         <Card>
           <CardBody>
             <Text component={TextVariants.h2}>Traffic Policy</Text>
-            {hasTrafficPolicy ? (
-              <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
-            ) : (
-              <Text component={TextVariants.p}>No traffic policy defined.</Text>
-            )}
+            <Stack>
+              <StackItem id={'traffic_policy'}>
+                {hasTrafficPolicy ? (
+                  <DetailObject name="" detail={destinationRule.spec.trafficPolicy} />
+                ) : (
+                  <Text component={TextVariants.p}>No traffic policy defined.</Text>
+                )}
+              </StackItem>
+            </Stack>
           </CardBody>
         </Card>
       </GridItem>

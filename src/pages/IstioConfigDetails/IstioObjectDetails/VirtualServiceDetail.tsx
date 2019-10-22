@@ -5,7 +5,7 @@ import LocalTime from '../../../components/Time/LocalTime';
 import DetailObject from '../../../components/Details/DetailObject';
 import VirtualServiceRoute from './VirtualServiceRoute';
 import { Link } from 'react-router-dom';
-import { Card, CardBody, Grid, GridItem, Text, TextVariants } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Stack, StackItem, Text, TextVariants } from '@patternfly/react-core';
 import GlobalValidation from '../../../components/Validations/GlobalValidation';
 
 interface VirtualServiceProps {
@@ -94,23 +94,31 @@ class VirtualServiceDetail extends React.Component<VirtualServiceProps> {
           <CardBody>
             <Text component={TextVariants.h2}>Virtual Service Overview</Text>
             {globalStatus}
-            <Text component={TextVariants.h3}>Created at</Text>
-            <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
-
-            <Text component={TextVariants.h3}>Resource Version</Text>
-            {virtualService.metadata.resourceVersion}
-
-            {virtualService.spec.hosts && virtualService.spec.hosts.length > 0 ? (
-              <>
-                <Text component={TextVariants.h3}>Hosts</Text>
-                <DetailObject name="" detail={virtualService.spec.hosts} validation={this.hostStatusMessage()} />
-              </>
-            ) : (
-              undefined
-            )}
-            {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
-              ? this.generateGatewaysList(virtualService.spec.gateways, isValid)
-              : undefined}
+            <Stack>
+              <StackItem id={'created_at'}>
+                <Text component={TextVariants.h3}>Created at</Text>
+                <LocalTime time={virtualService.metadata.creationTimestamp || ''} />
+              </StackItem>
+              <StackItem id={'resource_version'}>
+                <Text component={TextVariants.h3}>Resource Version</Text>
+                {virtualService.metadata.resourceVersion}
+              </StackItem>
+              <StackItem id={'hosts'}>
+                {virtualService.spec.hosts && virtualService.spec.hosts.length > 0 ? (
+                  <>
+                    <Text component={TextVariants.h3}>Hosts</Text>
+                    <DetailObject name="" detail={virtualService.spec.hosts} validation={this.hostStatusMessage()} />
+                  </>
+                ) : (
+                  undefined
+                )}
+              </StackItem>
+              <StackItem id={'gateways'}> 
+                {virtualService.spec.gateways && virtualService.spec.gateways.length > 0
+                  ? this.generateGatewaysList(virtualService.spec.gateways, isValid)
+                  : undefined}
+              </StackItem>
+            </Stack>
           </CardBody>
         </Card>
       </GridItem>
