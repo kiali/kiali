@@ -46,21 +46,15 @@
     - app = kiali
   register: kiali_service
 
-- name: Get cluster node IP that can be used to communicate to cluster services
+- name: Get Kiali Route
   k8s_facts:
-    api_version: v1
-    kind: Node
-  register: cluster_node
-- set_fact:
-    cluster_node_ip: "{{ cluster_node | json_query('resources[0].status.addresses[?type==`InternalIP`].address') | join() }}"
-    kiali_port: "{{ kiali_service | json_query('resources[0].spec.ports[?name==`tcp`].nodePort') | join() }}"
-- set_fact:
-    kiali_base_url: "https://{{ cluster_node_ip }}:{{ kiali_port }}"
-  when:
-  - kiali_service.resources[0].spec.type == 'NodePort'
-- debug:
-    msg: "This test does not have kiali_base_url set because the kiali service is not of type NodePort"
-  when:
-  - kiali_service.resources[0].spec.type != 'NodePort'
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: "{{ istio.control_plane_namespace }}"
+    label_selectors:
+    - app = kiali
+  register: kiali_route
 
-
+- name: Set Kiali's Route URL
+  set_fact:
+    kiali_base_url: "https://{{ kiali_route.resources[0].spec.host }}"
