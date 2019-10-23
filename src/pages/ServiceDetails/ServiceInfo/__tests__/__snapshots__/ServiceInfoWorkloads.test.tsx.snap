@@ -63,7 +63,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
                         to="/namespaces/ns/workloads/reviews-v2"
                       >
                         <Text
-                          component="a"
+                          component="p"
                         >
                           reviews-v2
                         </Text>
@@ -101,7 +101,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
                         to="/namespaces/ns/workloads/reviews-v3"
                       >
                         <Text
-                          component="a"
+                          component="p"
                         >
                           reviews-v3
                         </Text>
@@ -139,7 +139,7 @@ exports[`#ServiceInfoWorkload render correctly with data should render service p
                         to="/namespaces/ns/workloads/reviews-v1"
                       >
                         <Text
-                          component="a"
+                          component="p"
                         >
                           reviews-v1
                         </Text>
