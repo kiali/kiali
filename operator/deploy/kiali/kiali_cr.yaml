@@ -400,15 +400,15 @@ spec:
 #    ---
 #    burst: 200
 #
-# Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
-# Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
-#    ---
-#    cache_enabled: false
-#
 # The ratio interval (expressed in seconds) used for the cache to perform a full refresh.
 # Only used when cache_enabled is true.
 #    ---
 #    cache_duration: 300
+#
+# Flag to use a Kubernetes cache for watching changes and updating pods and controllers data asynchronously.
+# Caution: Kubernetes cache is not compatible with reduced permissions scenearios.
+#    ---
+#    cache_enabled: false
 #
 # Kiali can cache VirtualService,DestinationRule,Gateway and ServiceEntry Istio resources if they are present
 # on this list of Istio types. Other Istio types are not yet supported.
@@ -477,7 +477,6 @@ spec:
 #
 # When true, Kiali serves http requests with gzip enabled (if the browser supports it) when the requests are
 #  over 1400 bytes.
-#
 #    ---
 #    gzip_enabled: true
 #

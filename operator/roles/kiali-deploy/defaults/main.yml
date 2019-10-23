@@ -127,8 +127,8 @@ kiali_defaults:
 
   kubernetes_config:
     burst: 200
-    cache_enabled: false
     cache_duration: 300
+    cache_enabled: false
     cache_istio_types:
     - "DestinationRule"
     - "Gateway"
@@ -152,6 +152,7 @@ kiali_defaults:
     address: ""
     audit_log: true
     cors_allow_all: false
+    gzip_enabled: true
     metrics_enabled: true
     metrics_port: 9090
     port: 20001
