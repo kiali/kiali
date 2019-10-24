@@ -19,6 +19,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	conf.ExternalServices.Prometheus.Auth.Token = "prometheustoken"
 	conf.ExternalServices.Tracing.Auth.Password = "tracingpassword"
 	conf.ExternalServices.Tracing.Auth.Token = "tracingtoken"
+	conf.LoginToken.SigningKey = "signingkey"
 
 	// Unmarshal will override settings found in env vars (if there are any env vars)
 	yamlString, _ := Marshal(conf)
@@ -31,6 +32,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
+	assert.Equal(t, conf.LoginToken.SigningKey, "signingkey")
 
 	defer os.Unsetenv(EnvGrafanaPassword)
 	defer os.Unsetenv(EnvGrafanaToken)
@@ -38,12 +40,14 @@ func TestEnvVarOverrides(t *testing.T) {
 	defer os.Unsetenv(EnvPrometheusToken)
 	defer os.Unsetenv(EnvTracingPassword)
 	defer os.Unsetenv(EnvTracingToken)
+	defer os.Unsetenv(EnvLoginTokenSigningKey)
 	os.Setenv(EnvGrafanaPassword, "grafanapasswordENV")
 	os.Setenv(EnvGrafanaToken, "grafanatokenENV")
 	os.Setenv(EnvPrometheusPassword, "prometheuspasswordENV")
 	os.Setenv(EnvPrometheusToken, "prometheustokenENV")
 	os.Setenv(EnvTracingPassword, "tracingpasswordENV")
 	os.Setenv(EnvTracingToken, "tracingtokenENV")
+	os.Setenv(EnvLoginTokenSigningKey, "signingkeyENV")
 
 	conf, _ = Unmarshal(yamlString)
 
@@ -54,6 +58,7 @@ func TestEnvVarOverrides(t *testing.T) {
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
+	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {

@@ -14,12 +14,16 @@ import (
 
 // Environment variables that can override the ConfigMap yaml values
 const (
+	// External services auth
 	EnvGrafanaPassword    = "GRAFANA_PASSWORD"
 	EnvGrafanaToken       = "GRAFANA_TOKEN"
 	EnvPrometheusPassword = "PROMETHEUS_PASSWORD"
 	EnvPrometheusToken    = "PROMETHEUS_TOKEN"
 	EnvTracingPassword    = "TRACING_PASSWORD"
 	EnvTracingToken       = "TRACING_TOKEN"
+
+	// Login Token signing key used to prepare the token for user login
+	EnvLoginTokenSigningKey = "LOGIN_TOKEN_SIGNING_KEY"
 )
 
 // The versions that Kiali requires
@@ -435,6 +439,10 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Token,
 			envVarName:  EnvTracingToken,
+		},
+		{
+			configValue: &conf.LoginToken.SigningKey,
+			envVarName:  EnvLoginTokenSigningKey,
 		},
 	}
 
