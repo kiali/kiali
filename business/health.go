@@ -165,12 +165,16 @@ func (in *HealthService) GetNamespaceServiceHealth(namespace, rateInterval strin
 	promtimer := internalmetrics.GetGoFunctionMetric("business", "HealthService", "GetNamespaceServiceHealth")
 	defer promtimer.ObserveNow(&err)
 	var services []core_v1.Service
+
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+		return nil, err
+	}
+
 	// Check if namespace is cached
 	if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-		// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-		if _, err = in.businessLayer.Namespace.GetNamespace(namespace); err == nil {
-			services, err = kialiCache.GetServices(namespace, nil)
-		}
+		services, err = kialiCache.GetServices(namespace, nil)
 	} else {
 		services, err = in.k8s.GetServices(namespace, nil)
 	}

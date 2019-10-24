@@ -5,6 +5,7 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -201,6 +202,7 @@ func buildFakeWorkloadPodsNoSidecar() []core_v1.Pod {
 func setupSidecarsCheckWorkloads(deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
 
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return(deployments, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)

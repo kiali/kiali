@@ -126,6 +126,12 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 		ServiceRoleBindings:    models.ServiceRoleBindings{},
 	}
 
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := in.businessLayer.Namespace.GetNamespace(criteria.Namespace); err != nil {
+		return models.IstioConfigList{}, err
+	}
+
 	errChan := make(chan error, 1)
 
 	var wg sync.WaitGroup
@@ -138,10 +144,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			var ggErr error
 			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.GatewayType) && kialiCache.CheckNamespace(criteria.Namespace) {
-				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-				if _, ggErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); ggErr == nil {
-					gg, ggErr = kialiCache.GetIstioResources(kubernetes.GatewayType, criteria.Namespace)
-				}
+				gg, ggErr = kialiCache.GetIstioResources(kubernetes.GatewayType, criteria.Namespace)
 			} else {
 				gg, ggErr = in.k8s.GetGateways(criteria.Namespace)
 			}
@@ -160,10 +163,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			var vsErr error
 			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.VirtualServiceType) && kialiCache.CheckNamespace(criteria.Namespace) {
-				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-				if _, vsErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); vsErr == nil {
-					vs, vsErr = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, criteria.Namespace)
-				}
+				vs, vsErr = kialiCache.GetIstioResources(kubernetes.VirtualServiceType, criteria.Namespace)
 			} else {
 				vs, vsErr = in.k8s.GetVirtualServices(criteria.Namespace, "")
 			}
@@ -182,10 +182,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			var drErr error
 			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.DestinationRuleType) && kialiCache.CheckNamespace(criteria.Namespace) {
-				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-				if _, drErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); drErr == nil {
-					dr, drErr = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, criteria.Namespace)
-				}
+				dr, drErr = kialiCache.GetIstioResources(kubernetes.DestinationRuleType, criteria.Namespace)
 			} else {
 				dr, drErr = in.k8s.GetDestinationRules(criteria.Namespace, "")
 			}
@@ -204,10 +201,7 @@ func (in *IstioConfigService) GetIstioConfigList(criteria IstioConfigCriteria) (
 			var seErr error
 			// Check if namespace is cached
 			if kialiCache != nil && kialiCache.CheckIstioResource(kubernetes.ServiceentryType) && kialiCache.CheckNamespace(criteria.Namespace) {
-				// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-				if _, seErr = in.businessLayer.Namespace.GetNamespace(criteria.Namespace); seErr == nil {
-					se, seErr = kialiCache.GetIstioResources(kubernetes.ServiceentryType, criteria.Namespace)
-				}
+				se, seErr = kialiCache.GetIstioResources(kubernetes.ServiceentryType, criteria.Namespace)
 			} else {
 				se, seErr = in.k8s.GetServiceEntries(criteria.Namespace)
 			}
@@ -410,6 +404,12 @@ func (in *IstioConfigService) GetIstioConfigDetails(namespace, objectType, objec
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
 	istioConfigDetail.ObjectType = objectType
+
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := in.businessLayer.Namespace.GetNamespace(namespace); err != nil {
+		return istioConfigDetail, err
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)

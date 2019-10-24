@@ -3,6 +3,7 @@ package business
 import (
 	"testing"
 
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	auth_v1 "k8s.io/api/authorization/v1"
@@ -17,6 +18,9 @@ import (
 
 func TestGetIstioConfigList(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	criteria := IstioConfigCriteria{
 		Namespace:               "test",
 		IncludeGateways:         false,
@@ -208,6 +212,8 @@ func TestGetIstioConfigList(t *testing.T) {
 
 func TestGetIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	configService := mockGetIstioConfigDetails()
 
@@ -247,6 +253,8 @@ func TestGetIstioConfigDetails(t *testing.T) {
 
 func mockGetIstioConfigList() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetGateways", mock.AnythingOfType("string")).Return(fakeGetGateways(), nil)
 	k8s.On("GetVirtualServices", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetVirtualServices(), nil)
 	k8s.On("GetDestinationRules", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(fakeGetDestinationRules(), nil)
@@ -258,7 +266,7 @@ func mockGetIstioConfigList() IstioConfigService {
 	k8s.On("GetQuotaSpecBindings", mock.AnythingOfType("string")).Return(fakeGetQuotaSpecBindings(), nil)
 	k8s.On("GetPolicies", mock.AnythingOfType("string")).Return(fakeGetPolicies(), nil)
 
-	return IstioConfigService{k8s: k8s}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 }
 
 func fakeGetGateways() []kubernetes.IstioObject {
@@ -565,6 +573,8 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 
 func mockGetIstioConfigDetails() IstioConfigService {
 	k8s := new(kubetest.K8SClientMock)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetGateway", "test", "gw-1").Return(fakeGetGateways()[0], nil)
 	k8s.On("GetVirtualService", "test", "reviews").Return(fakeGetVirtualServices()[0], nil)
 	k8s.On("GetDestinationRule", "test", "reviews-dr").Return(fakeGetDestinationRules()[0], nil)
@@ -576,7 +586,7 @@ func mockGetIstioConfigDetails() IstioConfigService {
 	k8s.On("GetQuotaSpecBinding", "test", "request-count").Return(fakeGetQuotaSpecBindings()[0], nil)
 	k8s.On("GetSelfSubjectAccessReview", "test", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("[]string")).Return(fakeGetSelfSubjectAccessReview(), nil)
 
-	return IstioConfigService{k8s: k8s}
+	return IstioConfigService{k8s: k8s, businessLayer: NewWithBackends(k8s, nil)}
 }
 
 func TestIsValidHost(t *testing.T) {
