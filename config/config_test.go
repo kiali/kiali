@@ -6,98 +6,59 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config/security"
 )
 
-func TestEnvVar(t *testing.T) {
-	defer os.Setenv(EnvServerAddress, os.Getenv(EnvServerAddress))
-	defer os.Setenv(EnvServerPort, os.Getenv(EnvServerPort))
-	defer os.Setenv(EnvServerCORSAllowAll, os.Getenv(EnvServerCORSAllowAll))
-	defer os.Setenv(EnvPrometheusCustomMetricsURL, os.Getenv(EnvPrometheusCustomMetricsURL))
-	defer os.Setenv(EnvServerGzipEnabled, os.Getenv(EnvServerGzipEnabled))
-	os.Setenv(EnvServerAddress, "test-address")
-	os.Setenv(EnvServerPort, "12345")
-	os.Setenv(EnvServerCORSAllowAll, "true")
-	os.Setenv(EnvPrometheusCustomMetricsURL, "test-address")
-	os.Setenv(EnvServerGzipEnabled, "false")
-
+func TestEnvVarOverrides(t *testing.T) {
 	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Password = "grafanapassword"
+	conf.ExternalServices.Grafana.Auth.Token = "grafanatoken"
+	conf.ExternalServices.Prometheus.Auth.Password = "prometheuspassword"
+	conf.ExternalServices.Prometheus.Auth.Token = "prometheustoken"
+	conf.ExternalServices.Tracing.Auth.Password = "tracingpassword"
+	conf.ExternalServices.Tracing.Auth.Token = "tracingtoken"
+	conf.LoginToken.SigningKey = "signingkey"
 
-	if conf.Server.Address != "test-address" {
-		t.Error("server address is wrong")
-	}
-	if conf.Server.Port != 12345 {
-		t.Error("server port is wrong")
-	}
-	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
-		t.Error("prometheus dashboard url is wrong")
-	}
-	if !conf.Server.CORSAllowAll {
-		t.Error("server CORS setting is wrong")
-	}
+	// Unmarshal will override settings found in env vars (if there are any env vars)
+	yamlString, _ := Marshal(conf)
+	conf, _ = Unmarshal(yamlString)
 
-	if conf.Server.GzipEnabled {
-		t.Error("server GzipEnabled setting is wrong")
-	}
-}
+	// we don't have the env vars set yet - so nothing should be overridden from the original yaml
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapassword")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatoken")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspassword")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
+	assert.Equal(t, conf.LoginToken.SigningKey, "signingkey")
 
-func TestPrometheusDashboardUrlFallback(t *testing.T) {
-	defer os.Setenv(EnvPrometheusServiceURL, os.Getenv(EnvPrometheusServiceURL))
-	defer os.Setenv(EnvPrometheusCustomMetricsURL, os.Getenv(EnvPrometheusCustomMetricsURL))
+	defer os.Unsetenv(EnvGrafanaPassword)
+	defer os.Unsetenv(EnvGrafanaToken)
+	defer os.Unsetenv(EnvPrometheusPassword)
+	defer os.Unsetenv(EnvPrometheusToken)
+	defer os.Unsetenv(EnvTracingPassword)
+	defer os.Unsetenv(EnvTracingToken)
+	defer os.Unsetenv(EnvLoginTokenSigningKey)
+	os.Setenv(EnvGrafanaPassword, "grafanapasswordENV")
+	os.Setenv(EnvGrafanaToken, "grafanatokenENV")
+	os.Setenv(EnvPrometheusPassword, "prometheuspasswordENV")
+	os.Setenv(EnvPrometheusToken, "prometheustokenENV")
+	os.Setenv(EnvTracingPassword, "tracingpasswordENV")
+	os.Setenv(EnvTracingToken, "tracingtokenENV")
+	os.Setenv(EnvLoginTokenSigningKey, "signingkeyENV")
 
-	os.Setenv(EnvPrometheusServiceURL, "test-address")
+	conf, _ = Unmarshal(yamlString)
 
-	conf := NewConfig()
-
-	if conf.ExternalServices.Prometheus.URL != "test-address" {
-		t.Error("prometheus service url is wrong")
-	}
-	if conf.ExternalServices.Prometheus.CustomMetricsURL != "test-address" {
-		t.Error("prometheus dashboard url is not taking main prometheus url")
-	}
-
-	os.Setenv(EnvPrometheusCustomMetricsURL, "second-test-address")
-
-	conf = NewConfig()
-
-	if conf.ExternalServices.Prometheus.URL != "test-address" {
-		t.Error("prometheus service url is wrong")
-	}
-	if conf.ExternalServices.Prometheus.CustomMetricsURL != "second-test-address" {
-		t.Error("prometheus dashboard url is not taking main prometheus url")
-	}
-}
-
-func TestDefaults(t *testing.T) {
-	conf := NewConfig()
-
-	if conf.Server.Address != "" {
-		t.Error("server address default is wrong")
-	}
-
-	if conf.Server.Port != 20000 {
-		t.Error("server port default is wrong")
-	}
-
-	if conf.Server.CORSAllowAll {
-		t.Error("server CORS default setting is wrong")
-	}
-
-	if len(conf.API.Namespaces.Exclude) != 4 {
-		t.Error("Api namespace exclude default setting is wrong")
-	} else {
-		// our default exclusion list: istio-operator,kube.*,openshift.*,ibm.*
-		if conf.API.Namespaces.Exclude[0] != "istio-operator" ||
-			conf.API.Namespaces.Exclude[1] != "kube.*" ||
-			conf.API.Namespaces.Exclude[2] != "openshift.*" ||
-			conf.API.Namespaces.Exclude[3] != "ibm.*" {
-			t.Errorf("Api namespace exclude default list is wrong: %+v", conf.API.Namespaces.Exclude)
-		}
-	}
-
-	if !conf.Server.GzipEnabled {
-		t.Error("server GzipEnabled default setting is wrong")
-	}
+	// env vars are now set- values should be overridden
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
+	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
