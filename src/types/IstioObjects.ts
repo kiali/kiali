@@ -192,15 +192,6 @@ export interface Abort {
   percentage?: Percent;
 }
 
-export interface Throttle {
-  percent: number;
-  downstreamLimitBps: number;
-  upstreamLimitBps: number;
-  throttleAfterPeriod: string;
-  throttleAfterBytes: number;
-  throttleForPeriod: string;
-}
-
 export interface CorsPolicy {
   allowOrigin: string[];
   allowMethods: string[];

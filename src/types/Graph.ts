@@ -8,7 +8,6 @@ export interface CyData {
 }
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
-export type LegendPosition = 'bottom' | 'right' | 'inset';
 export type SummaryType = 'graph' | 'node' | 'edge' | 'group';
 export interface SummaryData {
   summaryType: SummaryType;

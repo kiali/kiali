@@ -39,12 +39,6 @@ export const emptyWorkload: Workload = {
   runtimes: []
 };
 
-export const worloadLink = (ns: string, name: string) => {
-  return `/namespaces/${ns}/workloads/${name}`;
-};
-
-export const WorkloadIcon = 'bundle';
-
 export const WorkloadType = {
   CronJob: 'CronJob',
   DaemonSet: 'DaemonSet',
