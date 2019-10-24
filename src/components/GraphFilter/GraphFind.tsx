@@ -12,7 +12,7 @@ import { CyNode, CyEdge } from '../CytoscapeGraph/CytoscapeGraphUtils';
 import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData, NodeType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from 'types/GraphFilter';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -568,7 +568,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       case 'rt':
       case 'responsetime': {
         if (this.props.edgeLabelMode !== EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE) {
-          MessageCenter.addSuccess('Enabling "response time" edge labels for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "response time" edge labels for graph find/hide expression');
           this.props.setEdgeLabelMode(EdgeLabelMode.RESPONSE_TIME_95TH_PERCENTILE);
         }
         const s = this.getNumericSelector(CyEdge.responseTime, op, val, expression);
@@ -634,7 +634,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
         return { target: 'node', selector: isNegation ? `[^${CyNode.isRoot}]` : `[?${CyNode.isRoot}]` };
       case 'unused':
         if (!this.props.showUnusedNodes) {
-          MessageCenter.addSuccess('Enabling "unused nodes" display option for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "unused nodes" display option for graph find/hide expression');
           this.props.toggleUnusedNodes();
         }
         return { target: 'node', selector: isNegation ? `[^${CyNode.isUnused}]` : `[?${CyNode.isUnused}]` };
@@ -646,7 +646,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
       //
       case 'mtls':
         if (!this.props.showSecurity) {
-          MessageCenter.addSuccess('Enabling "security" display option for graph find/hide expression');
+          AlertUtils.addSuccess('Enabling "security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
         return { target: 'edge', selector: isNegation ? `[${CyEdge.isMTLS} <= 0]` : `[${CyEdge.isMTLS} > 0]` };

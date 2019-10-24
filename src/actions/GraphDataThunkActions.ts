@@ -6,7 +6,7 @@ import { GraphType, GroupByType, NodeParamsType } from '../types/Graph';
 import { AppenderString, DurationInSeconds } from '../types/Common';
 import { KialiAppAction } from './KialiAppAction';
 import { GraphDataActions } from './GraphDataActions';
-import * as MessageCenter from '../utils/MessageCenter';
+import * as AlertUtils from '../utils/AlertUtils';
 import { EdgeLabelMode } from '../types/GraphFilter';
 import * as API from '../services/Api';
 import { PromisesRegistry } from '../utils/CancelablePromises';
@@ -86,7 +86,7 @@ const GraphDataThunkActions = {
             if (error.isCanceled) {
               return;
             }
-            MessageCenter.addError('Cannot load the graph', error);
+            AlertUtils.addError('Cannot load the graph', error);
             dispatch(GraphDataActions.getGraphDataFailure(`Cannot load the graph: ${API.getErrorString(error)}`));
           }
         );
@@ -105,7 +105,7 @@ const GraphDataThunkActions = {
           if (error.isCanceled) {
             return;
           }
-          MessageCenter.addError('Cannot load the graph', error);
+          AlertUtils.addError('Cannot load the graph', error);
           dispatch(GraphDataActions.getGraphDataFailure(`Cannot load the graph: ${API.getErrorString(error)}`));
         }
       );

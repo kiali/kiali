@@ -13,7 +13,7 @@ import {
 import { CaretDownIcon } from '@patternfly/react-icons';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { DestinationRules, VirtualServices } from '../../types/IstioObjects';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import { serverConfig } from '../../config/ServerConfig';
 import { TLSStatus } from '../../types/TLSStatus';
@@ -231,7 +231,7 @@ class IstioWizardDropdown extends React.Component<Props, State> {
         this.props.onChange();
       })
       .catch(error => {
-        MessageCenter.addError('Could not delete Istio config objects.', error);
+        AlertUtils.addError('Could not delete Istio config objects.', error);
         this.setState({
           isDeleting: false
         });

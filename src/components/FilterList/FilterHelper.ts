@@ -2,14 +2,14 @@ import history, { URLParam, HistoryManager } from '../../app/History';
 import { config } from '../../config';
 import { ActiveFilter, FilterType } from '../../types/Filters';
 import { SortField } from '../../types/SortFilters';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 
 export const perPageOptions: number[] = [5, 10, 15];
 const defaultDuration = 600;
 const defaultPollInterval = config.toolbar.defaultPollInterval;
 
 export const handleError = (error: string) => {
-  MessageCenter.add(error);
+  AlertUtils.add(error);
 };
 
 export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFilter[] => {

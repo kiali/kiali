@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Prompt, RouteComponentProps } from 'react-router-dom';
 import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
 import 'brace/mode/yaml';
@@ -98,7 +98,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         });
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch IstioConfig details.', error);
+        AlertUtils.addError('Could not fetch IstioConfig details.', error);
       });
   };
 
@@ -201,7 +201,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     deletePromise
       .then(_r => this.backToList())
       .catch(error => {
-        MessageCenter.addError('Could not delete IstioConfig details.', error);
+        AlertUtils.addError('Could not delete IstioConfig details.', error);
       });
   };
 
@@ -232,11 +232,11 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
               : this.props.match.params.objectType) +
             ' / ' +
             this.props.match.params.object;
-          MessageCenter.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
+          AlertUtils.add('Changes applied on ' + targetMessage, 'default', MessageType.SUCCESS);
           this.fetchIstioObjectDetails();
         })
         .catch(error => {
-          MessageCenter.addError('Could not update IstioConfig details.', error);
+          AlertUtils.addError('Could not update IstioConfig details.', error);
         });
     });
   };

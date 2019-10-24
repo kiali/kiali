@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { emptyWorkload, Workload, WorkloadId } from '../../types/Workload';
 import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
 import WorkloadInfo from './WorkloadInfo';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { WorkloadHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
@@ -210,7 +210,7 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
-        MessageCenter.addError('Could not fetch Workload.', error);
+        AlertUtils.addError('Could not fetch Workload.', error);
       });
   };
 

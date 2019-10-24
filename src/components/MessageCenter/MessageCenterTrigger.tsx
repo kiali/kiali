@@ -2,11 +2,12 @@ import * as React from 'react';
 import { ThunkDispatch } from 'redux-thunk';
 import { connect } from 'react-redux';
 import { Badge, Button, ButtonVariant } from '@patternfly/react-core';
-import { BellIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { KialiAppState } from '../../store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from '../../types/MessageCenter';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import MessageCenterThunkActions from '../../actions/MessageCenterThunkActions';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
 
 type PropsType = {
   newMessagesCount: number;
@@ -38,7 +39,7 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
         onClick={this.props.toggleSystemErrorsCenter}
         variant={ButtonVariant.plain}
       >
-        <WarningTriangleIcon />
+        <KialiIcon.Warning />
         {this.props.systemErrorsCount}
         {this.props.systemErrorsCount === 1 ? ' Open Issue' : ' Open Issues'}
       </Button>
@@ -46,6 +47,12 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
   };
 
   private renderMessageCenterBadge = () => {
+    const bell = style({
+      position: 'relative',
+      right: '5px',
+      top: '2px'
+    });
+
     return (
       <Button
         id={'bell_icon_warning'}
@@ -53,9 +60,9 @@ export class MessageCenterTrigger extends React.PureComponent<PropsType, {}> {
         onClick={this.props.toggleMessageCenter}
         variant={ButtonVariant.plain}
       >
-        <BellIcon />
+        <KialiIcon.Bell className={bell} />
         {this.props.newMessagesCount > 0 && (
-          <Badge className={'pf-badge-bodered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
+          <Badge className={'pf-badge-bordered' + (this.props.badgeDanger ? ' badge-danger' : '')}>
             {this.props.newMessagesCount > 0 ? this.props.newMessagesCount : ' '}
           </Badge>
         )}

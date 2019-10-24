@@ -61,14 +61,7 @@ describe('MessageCenter', () => {
     const wrapper = shallow(
       <MessageCenter
         drawerTitle="Title"
-        onExpandDrawer={() => console.log('onExpand')}
-        onHideDrawer={() => console.log('onHideDrawer')}
-        onToggleGroup={() => console.log('onToggleGroup')}
-        onMarkGroupAsRead={() => console.log('onMarkGroupAsRead')}
-        onClearGroup={() => console.log('onClearGroup')}
-        onNotificationClick={() => console.log('onNotificationClick')}
         onDismissNotification={() => console.log('onDismissNotification')}
-        onNotificationToggleDetail={() => console.log('onNotificationToggleDetail')}
         groups={groupMessages}
       />
     );

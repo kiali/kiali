@@ -5,7 +5,7 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import * as API from '../../services/Api';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Validations } from '../../types/IstioObjects';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
@@ -211,11 +211,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
             });
           })
           .catch(gwError => {
-            MessageCenter.addError('Could not fetch Namespaces list.', gwError);
+            AlertUtils.addError('Could not fetch Namespaces list.', gwError);
           });
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch Namespaces list.', error);
+        AlertUtils.addError('Could not fetch Namespaces list.', error);
       });
 
     API.getServiceDetail(this.props.match.params.namespace, this.props.match.params.service, true, this.props.duration)
@@ -225,7 +225,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           validations: this.addFormatValidation(results, results.validations)
         });
         if (results.errorTraces === -1 && this.props.jaegerUrl !== '') {
-          MessageCenter.add(
+          AlertUtils.add(
             'Could not fetch Traces in the service ' +
               this.props.match.params.service +
               ' in namespace ' +
@@ -237,7 +237,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         }
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch Service Details.', error);
+        AlertUtils.addError('Could not fetch Service Details.', error);
       });
 
     API.getThreeScaleInfo()
@@ -258,13 +258,13 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
               });
               // Only log 500 errors. 404 response is a valid response on this composition case
               if (error.response && error.response.status >= 500) {
-                MessageCenter.addError('Could not fetch ThreeScaleServiceRule.', error);
+                AlertUtils.addError('Could not fetch ThreeScaleServiceRule.', error);
               }
             });
         }
       })
       .catch(error => {
-        MessageCenter.addError(
+        AlertUtils.addError(
           'Could not fetch 3scale info. Turning off 3scale integration.',
           error,
           'default',

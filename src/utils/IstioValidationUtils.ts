@@ -1,5 +1,5 @@
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioObjects';
-import * as MessageCenter from './MessageCenter';
+import * as AlertUtils from './AlertUtils';
 
 const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck) => {
   return `${validation.objectType}:${validation.name} ${failedCheck.message}`;
@@ -9,10 +9,10 @@ const showInMessageCenterValidation = (validation: ObjectValidation) => {
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
-        MessageCenter.addWarning(validationMessage(validation, check));
+        AlertUtils.addWarning(validationMessage(validation, check));
         break;
       case ValidationTypes.Error:
-        MessageCenter.addError(validationMessage(validation, check));
+        AlertUtils.addError(validationMessage(validation, check));
         break;
     }
   }
@@ -32,7 +32,7 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
     }
   }
   if (elementsWithFailedValidations.length > 0) {
-    const messageCenterMethod = hasError ? MessageCenter.addError : MessageCenter.addWarning;
+    const messageCenterMethod = hasError ? AlertUtils.addError : AlertUtils.addWarning;
     messageCenterMethod(`Some IstioConfigs (${elementsWithFailedValidations.join(', ')}) have warnings or errors`);
   }
 };

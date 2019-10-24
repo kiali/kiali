@@ -1,23 +1,30 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
-
-import NotificationDrawer from './NotificationDrawer';
 import NotificationList from './NotificationList';
 import { style } from 'typestyle';
-import { NotificationMessage, NotificationGroup, MessageCenterPropsType } from '../../types/MessageCenter';
-import { KialiAppState } from '../../store/Store';
-import { KialiAppAction } from '../../actions/KialiAppAction';
-import { MessageCenterActions } from '../../actions/MessageCenterActions';
-import MessageCenterThunkActions from '../../actions/MessageCenterThunkActions';
+import { NotificationMessage, NotificationGroup } from '../../types/MessageCenter';
+import AlertDrawerContainer from './AlertDrawer';
+import { KialiAppState } from 'store/Store';
+import { ThunkDispatch } from 'redux-thunk';
+import { KialiAppAction } from 'actions/KialiAppAction';
+import { MessageCenterActions } from 'actions/MessageCenterActions';
 
 const notificationStyle = style({
+  position: 'relative',
   zIndex: 100
 });
 
-type StateType = {};
+type ReduxProps = {
+  groups: NotificationGroup[];
 
-export class MessageCenter extends React.Component<MessageCenterPropsType, StateType> {
+  onDismissNotification: (message: NotificationMessage, userDismissed: boolean) => void;
+};
+
+type MessageCenterProps = ReduxProps & {
+  drawerTitle: string;
+};
+
+export class MessageCenter extends React.Component<MessageCenterProps> {
   // Get messages that are meant to be show as notifications (Toast), appending
   // the groupId to allow to recognize the group they belong. (see onDismissNotification)
   getNotificationMessages = (groups: NotificationGroup[]) => {
@@ -30,60 +37,28 @@ export class MessageCenter extends React.Component<MessageCenterPropsType, State
     }, []);
   };
 
-  onDismissNotification = (message: NotificationMessage, userDismissed: boolean) => {
-    this.props.onDismissNotification(
-      message,
-      this.props.groups.find(group => group.id === message.groupId)!,
-      userDismissed
-    );
-  };
-
   render() {
     return (
       <div className={notificationStyle}>
-        <NotificationDrawer
-          title={this.props.drawerTitle}
-          isHidden={this.props.drawerIsHidden}
-          isExpanded={this.props.drawerIsExpanded}
-          expandedGroupId={this.props.drawerExpandedGroupId}
-          groups={this.props.groups}
-          reverseMessageOrder={this.props.drawerReverseMessageOrder}
-          onExpandDrawer={this.props.onExpandDrawer}
-          onHideDrawer={this.props.onHideDrawer}
-          onToggleGroup={this.props.onToggleGroup}
-          onMarkGroupAsRead={this.props.onMarkGroupAsRead}
-          onClearGroup={this.props.onClearGroup}
-          onNotificationClick={this.props.onNotificationClick}
-          onNotificationToggleDetail={this.props.onNotificationToggleDetail}
-        />
+        <AlertDrawerContainer title={this.props.drawerTitle} />
         <NotificationList
           messages={this.getNotificationMessages(this.props.groups)}
-          onDismiss={this.onDismissNotification}
+          onDismiss={this.props.onDismissNotification}
         />
       </div>
     );
   }
 }
 
-const mapStateToPropsMessageCenter = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState) => {
   return {
-    groups: state.messageCenter.groups,
-    drawerIsHidden: state.messageCenter.hidden,
-    drawerIsExpanded: state.messageCenter.expanded,
-    drawerExpandedGroupId: state.messageCenter.expandedGroupId
+    groups: state.messageCenter.groups
   };
 };
 
-const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
+const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => {
   return {
-    onExpandDrawer: () => dispatch(MessageCenterActions.toggleExpandedMessageCenter()),
-    onHideDrawer: () => dispatch(MessageCenterActions.hideMessageCenter()),
-    onToggleGroup: group => dispatch(MessageCenterActions.toggleGroup(group.id)),
-    onMarkGroupAsRead: group => dispatch(MessageCenterThunkActions.markGroupAsRead(group.id)),
-    onClearGroup: group => dispatch(MessageCenterThunkActions.clearGroup(group.id)),
-    onNotificationClick: message => dispatch(MessageCenterActions.markAsRead(message.id)),
-    onNotificationToggleDetail: message => dispatch(MessageCenterActions.toggleMessageDetail(message.id)),
-    onDismissNotification: (message, _group, userDismissed) => {
+    onDismissNotification: (message, userDismissed) => {
       if (userDismissed) {
         dispatch(MessageCenterActions.markAsRead(message.id));
       } else {
@@ -94,7 +69,7 @@ const mapDispatchToPropsMessageCenter = (dispatch: ThunkDispatch<KialiAppState, 
 };
 
 const MessageCenterContainer = connect(
-  mapStateToPropsMessageCenter,
-  mapDispatchToPropsMessageCenter
+  mapStateToProps,
+  mapDispatchToProps
 )(MessageCenter);
 export default MessageCenterContainer;

@@ -11,7 +11,7 @@ import RefreshContainer from '../../components/Refresh/Refresh';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
@@ -80,7 +80,7 @@ export class CustomMetrics extends React.Component<CustomMetricsProps, MetricsSt
         });
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch custom dashboard.', error);
+        AlertUtils.addError('Could not fetch custom dashboard.', error);
       });
   };
 

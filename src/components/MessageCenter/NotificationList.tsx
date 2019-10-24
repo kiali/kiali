@@ -1,34 +1,44 @@
 import * as React from 'react';
+import { NotificationMessage, MessageType } from '../../types/MessageCenter';
+import { AlertVariant } from '@patternfly/react-core';
+import AlertToast from './AlertToast';
 
-import { NotificationMessage } from '../../types/MessageCenter';
-
-import { ToastNotificationList, TimedToastNotification } from 'patternfly-react';
-
-const DEFAULT_TIMER_DELAY = 5000;
-
-type PropsType = {
+type NotificationListProps = {
   messages: NotificationMessage[];
   onDismiss: (message: NotificationMessage, userDismissed: boolean) => void;
 };
-type StateType = {};
 
-export default class NotificationList extends React.PureComponent<PropsType, StateType> {
+export default class NotificationList extends React.PureComponent<NotificationListProps> {
   render() {
     return (
-      <ToastNotificationList>
-        {this.props.messages.map(message => (
-          <TimedToastNotification
-            key={message.id}
-            persistent={false}
-            paused={false}
-            timerdelay={DEFAULT_TIMER_DELAY}
-            onDismiss={event => this.props.onDismiss(message, event !== undefined)}
-            type={message.type}
-          >
-            <span>{message.content}</span>
-          </TimedToastNotification>
-        ))}
-      </ToastNotificationList>
+      <>
+        {this.props.messages.map((message, i) => {
+          let variant: AlertVariant;
+          switch (message.type) {
+            case MessageType.SUCCESS:
+              variant = AlertVariant.success;
+              break;
+            case MessageType.WARNING:
+              variant = AlertVariant.warning;
+              break;
+            default:
+              variant = AlertVariant.danger;
+          }
+          const onClose = () => {
+            this.props.onDismiss(message, true);
+          };
+          return (
+            <AlertToast
+              style={{ width: '30em', right: '0', top: `${i * 5}em`, position: 'absolute' }}
+              message={message}
+              variant={variant}
+              title={message.content}
+              onClose={onClose}
+              onTtl={onClose}
+            />
+          );
+        })}
+      </>
     );
   }
 }

@@ -11,7 +11,7 @@ import { KialiDispatch } from '../types/Redux';
 import { ServerStatus } from '../types/ServerStatus';
 import InitializingScreen from './InitializingScreen';
 import { isKioskMode } from '../utils/SearchParamUtils';
-import * as MessageCenter from '../utils/MessageCenter';
+import * as AlertUtils from '../utils/AlertUtils';
 import { setServerConfig } from '../config/ServerConfig';
 import { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
@@ -99,13 +99,13 @@ class AuthenticationController extends React.Component<AuthenticationControllerP
       const getStatusPromise = API.getStatus()
         .then(response => this.props.setServerStatus(response.data))
         .catch(error => {
-          MessageCenter.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
+          AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
       const getJaegerInfoPromise = API.getJaegerInfo()
         .then(response => this.setJaegerInfo(response.data))
         .catch(error => {
           this.props.setJaegerInfo(null);
-          MessageCenter.addError(
+          AlertUtils.addError(
             'Could not fetch Jaeger info. Turning off Jaeger integration.',
             error,
             'default',

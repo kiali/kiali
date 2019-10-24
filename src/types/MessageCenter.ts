@@ -27,23 +27,3 @@ export interface NotificationGroup {
   showActions: boolean;
   hideIfEmpty: boolean;
 }
-
-export interface MessageCenterPropsType {
-  drawerTitle: string;
-  drawerIsHidden?: boolean;
-  drawerIsExpanded?: boolean;
-  drawerExpandedGroupId?: string;
-  drawerReverseMessageOrder?: boolean;
-
-  onExpandDrawer: () => void;
-  onHideDrawer: () => void;
-  onToggleGroup: (group: NotificationGroup) => void;
-  onMarkGroupAsRead: (group: NotificationGroup) => void;
-  onClearGroup: (group: NotificationGroup) => void;
-  onNotificationClick: (message: NotificationMessage, group: NotificationGroup) => void;
-  onNotificationToggleDetail: (message: NotificationMessage, group: NotificationGroup) => void;
-
-  onDismissNotification: (message: NotificationMessage, group: NotificationGroup, userDismissed: boolean) => void;
-
-  groups: NotificationGroup[];
-}

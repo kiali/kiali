@@ -4,7 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { App, AppId } from '../../types/App';
 import { Tab } from '@patternfly/react-core';
 import AppInfo from './AppInfo';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import IstioMetricsContainer from '../../components/Metrics/IstioMetrics';
 import { AppHealth } from '../../types/Health';
 import { MetricsObjectTypes } from '../../types/Metrics';
@@ -121,7 +121,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       })
       .then(health => this.setState({ health: health }))
       .catch(error => {
-        MessageCenter.addError('Could not fetch App Details.', error);
+        AlertUtils.addError('Could not fetch App Details.', error);
       });
   };
 

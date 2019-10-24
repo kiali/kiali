@@ -3,7 +3,7 @@ import { Button, Expandable, Modal } from '@patternfly/react-core';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { Response } from '../../services/Api';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import MatchingRouting from './MatchingRouting';
 import WeightedRouting, { WorkloadWeight } from './WeightedRouting';
 import TrafficPolicyContainer, {
@@ -203,7 +203,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
     Promise.all(promises)
       .then(results => {
         if (results.length > 0) {
-          MessageCenter.add(
+          AlertUtils.add(
             'Istio Config ' +
               (this.props.update ? 'updated' : 'created') +
               ' for ' +
@@ -216,10 +216,7 @@ class IstioWizard extends React.Component<WizardProps, WizardState> {
         this.props.onClose(true);
       })
       .catch(error => {
-        MessageCenter.addError(
-          'Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.',
-          error
-        );
+        AlertUtils.addError('Could not ' + (this.props.update ? 'update' : 'create') + ' Istio config objects.', error);
         this.props.onClose(true);
       });
   };

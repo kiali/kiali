@@ -46,7 +46,7 @@ import { GraphUrlParams, makeNodeGraphUrlFromParams } from '../Nav/NavUtils';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { DurationInSeconds, PollIntervalInMs } from '../../types/Common';
 import GraphThunkActions from '../../actions/GraphThunkActions';
-import * as MessageCenterUtils from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
 import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
@@ -632,7 +632,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
 
     if (targetOrGroupChildren.every(t => t.data(CyNode.hasMissingSC))) {
-      MessageCenterUtils.add(
+      AlertUtils.add(
         `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
         undefined,
         MessageType.WARNING
@@ -640,7 +640,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return;
     }
     if (targetOrGroupChildren.every(t => t.data(CyNode.isUnused))) {
-      MessageCenterUtils.add(
+      AlertUtils.add(
         `An unused node has no node-specific traffic and can not provide a node detail graph.`,
         undefined,
         MessageType.WARNING

@@ -10,7 +10,7 @@ import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { DurationInSeconds } from '../../types/Common';
 import { Direction, IstioMetricsOptions, Reporter } from '../../types/MetricsOptions';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 
 import * as MetricsHelper from './Helper';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
@@ -95,7 +95,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
         });
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch metrics.', error);
+        AlertUtils.addError('Could not fetch metrics.', error);
         throw error;
       });
   };
@@ -118,7 +118,7 @@ class IstioMetrics extends React.Component<IstioMetricsProps, MetricsState> {
         }
       })
       .catch(err => {
-        MessageCenter.addError(
+        AlertUtils.addError(
           'Could not fetch Grafana info. Turning off links to Grafana.',
           err,
           'default',

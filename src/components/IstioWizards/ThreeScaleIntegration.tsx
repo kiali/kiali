@@ -25,7 +25,7 @@ import {
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
 import * as API from '../../services/Api';
-import * as MessageCenter from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import { PfColors } from '../Pf/PfColors';
 
 type Props = {
@@ -110,7 +110,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.addError('Could not fetch ThreeScaleHandlers.', error);
+        AlertUtils.addError('Could not fetch ThreeScaleHandlers.', error);
       });
   };
 
@@ -143,7 +143,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.addError('Could not update ThreeScaleHandlers.', error);
+        AlertUtils.addError('Could not update ThreeScaleHandlers.', error);
       });
   };
 
@@ -176,7 +176,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.addError('Could not delete ThreeScaleHandlers.', error);
+        AlertUtils.addError('Could not delete ThreeScaleHandlers.', error);
       });
   };
 
@@ -270,7 +270,7 @@ class ThreeScaleIntegration extends React.Component<Props, State> {
         );
       })
       .catch(error => {
-        MessageCenter.addError('Could not create ThreeScaleHandlers.', error);
+        AlertUtils.addError('Could not create ThreeScaleHandlers.', error);
       });
   };
 

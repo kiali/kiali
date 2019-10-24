@@ -13,7 +13,7 @@ import { GraphType, NodeParamsType, NodeType, SummaryData, UNKNOWN } from '../..
 import { EdgeLabelMode, Layout } from '../../types/GraphFilter';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import * as MessageCenterUtils from '../../utils/MessageCenter';
+import * as AlertUtils from '../../utils/AlertUtils';
 import CytoscapeGraphContainer from '../../components/CytoscapeGraph/CytoscapeGraph';
 import CytoscapeToolbarContainer from '../../components/CytoscapeGraph/CytoscapeToolbar';
 import ErrorBoundary from '../../components/ErrorBoundary/ErrorBoundary';
@@ -459,9 +459,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
   }
 
   private notifyError = (error: Error, _componentStack: string) => {
-    MessageCenterUtils.add(
-      `There was an error when rendering the graph: ${error.message}, please try a different layout`
-    );
+    AlertUtils.add(`There was an error when rendering the graph: ${error.message}, please try a different layout`);
   };
 }
 
