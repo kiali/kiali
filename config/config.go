@@ -3,12 +3,23 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sync"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
+)
+
+// Environment variables that can override the ConfigMap yaml values
+const (
+	EnvGrafanaPassword    = "GRAFANA_PASSWORD"
+	EnvGrafanaToken       = "GRAFANA_TOKEN"
+	EnvPrometheusPassword = "PROMETHEUS_PASSWORD"
+	EnvPrometheusToken    = "PROMETHEUS_TOKEN"
+	EnvTracingPassword    = "TRACING_PASSWORD"
+	EnvTracingToken       = "TRACING_TOKEN"
 )
 
 // The versions that Kiali requires
@@ -390,6 +401,50 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
 	}
+
+	// Some config settings (such as sensitive settings like passwords) are overrideable
+	// via environment variables. This allows a user to store sensitive values in secrets
+	// and mount those secrets to environment variables rather than storing them directly
+	// in the config map itself.
+	type overridesType struct {
+		configValue *string
+		envVarName  string
+	}
+
+	overrides := []overridesType{
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Password,
+			envVarName:  EnvGrafanaPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Token,
+			envVarName:  EnvGrafanaToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.Password,
+			envVarName:  EnvPrometheusPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.Token,
+			envVarName:  EnvPrometheusToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.Password,
+			envVarName:  EnvTracingPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.Token,
+			envVarName:  EnvTracingToken,
+		},
+	}
+
+	for _, override := range overrides {
+		envVarValue := os.Getenv(override.envVarName)
+		if envVarValue != "" {
+			*override.configValue = envVarValue
+		}
+	}
+
 	return
 }
 

@@ -6,8 +6,55 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kiali/kiali/config/security"
 )
+
+func TestEnvVarOverrides(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Password = "grafanapassword"
+	conf.ExternalServices.Grafana.Auth.Token = "grafanatoken"
+	conf.ExternalServices.Prometheus.Auth.Password = "prometheuspassword"
+	conf.ExternalServices.Prometheus.Auth.Token = "prometheustoken"
+	conf.ExternalServices.Tracing.Auth.Password = "tracingpassword"
+	conf.ExternalServices.Tracing.Auth.Token = "tracingtoken"
+
+	// Unmarshal will override settings found in env vars (if there are any env vars)
+	yamlString, _ := Marshal(conf)
+	conf, _ = Unmarshal(yamlString)
+
+	// we don't have the env vars set yet - so nothing should be overridden from the original yaml
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapassword")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatoken")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspassword")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
+
+	defer os.Unsetenv(EnvGrafanaPassword)
+	defer os.Unsetenv(EnvGrafanaToken)
+	defer os.Unsetenv(EnvPrometheusPassword)
+	defer os.Unsetenv(EnvPrometheusToken)
+	defer os.Unsetenv(EnvTracingPassword)
+	defer os.Unsetenv(EnvTracingToken)
+	os.Setenv(EnvGrafanaPassword, "grafanapasswordENV")
+	os.Setenv(EnvGrafanaToken, "grafanatokenENV")
+	os.Setenv(EnvPrometheusPassword, "prometheuspasswordENV")
+	os.Setenv(EnvPrometheusToken, "prometheustokenENV")
+	os.Setenv(EnvTracingPassword, "tracingpasswordENV")
+	os.Setenv(EnvTracingToken, "tracingtokenENV")
+
+	conf, _ = Unmarshal(yamlString)
+
+	// env vars are now set- values should be overridden
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
+}
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
 	testConf := Config{
