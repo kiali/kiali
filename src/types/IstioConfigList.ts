@@ -1,5 +1,6 @@
 import Namespace from './Namespace';
 import {
+  ClusterRbacConfig,
   DestinationRule,
   DestinationRules,
   Gateway,
@@ -10,16 +11,15 @@ import {
   Policy,
   QuotaSpec,
   QuotaSpecBinding,
-  ServiceEntry,
-  VirtualService,
-  VirtualServices,
-  Validations,
   RbacConfig,
-  Sidecar,
+  ServiceEntry,
+  ServiceMeshRbacConfig,
   ServiceRole,
   ServiceRoleBinding,
-  ClusterRbacConfig,
-  ServiceMeshRbacConfig
+  Sidecar,
+  Validations,
+  VirtualService,
+  VirtualServices
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
@@ -70,14 +70,6 @@ export interface IstioConfigList {
   serviceRoleBindings: ServiceRoleBinding[];
   permissions: { [key: string]: ResourcePermissions };
   validations: Validations;
-}
-
-export interface IstioService {
-  name: string;
-  namespace?: string;
-  domain?: string;
-  service?: string;
-  labels?: { [key: string]: string };
 }
 
 export const dicIstioType = {
@@ -213,9 +205,8 @@ export const toIstioItems = (istioConfigList: IstioConfigList): IstioConfigItem[
     const typeNameProto = dicIstioType[field.toLowerCase()]; // ex. serviceEntries -> ServiceEntry
     const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
     const entryName = typeNameProto.charAt(0).toLowerCase() + typeNameProto.slice(1);
-    const itemField = istioConfigList[field];
 
-    let entries = itemField;
+    let entries = istioConfigList[field];
     if (!(entries instanceof Array)) {
       // VirtualServices, DestinationRules
       entries = entries.items;

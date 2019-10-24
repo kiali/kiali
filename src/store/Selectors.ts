@@ -18,15 +18,6 @@ const activeNamespaces = (state: KialiAppState) => state.namespaces.activeNamesp
 // Select from the above field(s) and the last function is the formatter
 export const activeNamespacesSelector = createIdentitySelector(activeNamespaces);
 
-/**
- * Gets a comma separated list of the namespaces for displaying
- * @type {OutputSelector<KialiAppState, any, (res: Namespace[]) => any>}
- */
-export const activeNamespacesAsStringSelector = createSelector(
-  activeNamespaces,
-  namespaces => namespaces.map(namespace => namespace.name).join(', ')
-);
-
 const duration = (state: KialiAppState) => state.userSettings.duration;
 
 export const durationSelector = createIdentitySelector(duration);
@@ -62,10 +53,6 @@ export const refreshIntervalSelector = createIdentitySelector(refreshInterval);
 const lastRefreshAt = (state: KialiAppState) => state.globalState.lastRefreshAt;
 
 export const lastRefreshAtSelector = createIdentitySelector(lastRefreshAt);
-
-const showServiceNodes = (state: KialiAppState) => state.graph.filterState.showServiceNodes;
-
-export const showServiceNodesSelector = createIdentitySelector(showServiceNodes);
 
 const showUnusedNodes = (state: KialiAppState) => state.graph.filterState.showUnusedNodes;
 

@@ -337,5 +337,3 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     );
   }
 }
-
-export default StatefulFilters;

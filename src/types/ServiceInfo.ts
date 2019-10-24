@@ -3,7 +3,6 @@ import {
   DestinationRules,
   ObjectCheck,
   ObjectValidation,
-  Pod,
   Port,
   Validations,
   ValidationTypes,
@@ -30,15 +29,6 @@ export interface WorkloadOverview {
   resourceVersion: string;
   createdAt: string;
 }
-
-// Istio Sidecar
-
-export const hasIstioSidecar = (pods?: Pod[]) => {
-  if (pods) {
-    return pods.find(pod => pod.istioContainers != null) !== undefined;
-  }
-  return false;
-};
 
 export interface ApiDocumentation {
   type: string;
@@ -80,22 +70,6 @@ const higherThan = [
   'improvement-correct'
 ];
 
-const IconSeverityMap = new Map<string, string>([
-  ['error', 'error-circle-o'],
-  ['warning', 'warning-triangle-o'],
-  ['improvement', 'info'],
-  ['correct', 'ok']
-]);
-
-export const severityToIconName = (severity: string): string => {
-  let iconName = IconSeverityMap.get(severity);
-  if (!iconName) {
-    iconName = 'ok';
-  }
-
-  return iconName;
-};
-
 export const higherSeverity = (a: ValidationTypes, b: ValidationTypes): boolean => {
   return higherThan.includes(a + '-' + b);
 };
@@ -133,11 +107,9 @@ export const checkForPath = (object: ObjectValidation | undefined, path: string)
     return [];
   }
 
-  const check = object.checks.filter(item => {
+  return object.checks.filter(item => {
     return item.path === path;
   });
-
-  return check;
 };
 
 export const globalChecks = (object: ObjectValidation): ObjectCheck[] => {
