@@ -390,7 +390,7 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of OpenShift to be downloaded
-DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.2.0"
+DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.2.1"
 
 # The default number of worker nodes that should be in the cluster.
 DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES="4"
@@ -477,6 +477,14 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_REQUIRED_WORKER_NODES="$2"
       shift;shift
       ;;
+    -sk|--ssh-key)
+      SSH_PUBLIC_KEY_FILE="$2"
+      if [ ! -f ${SSH_PUBLIC_KEY_FILE} ]; then
+        infomsg "ERROR: SSH public key file is invalid: ${SSH_PUBLIC_KEY_FILE}"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -ie|--istio-enabled)
       ISTIO_ENABLED="$2"
       shift;shift
@@ -495,6 +503,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -p|--pull-secret-file)
       PULL_SECRET_FILE="$2"
+      if [ ! -f ${PULL_SECRET_FILE} ]; then
+        infomsg "ERROR: Pull secret file is invalid: ${PULL_SECRET_FILE}"
+        exit 1
+      fi
       shift;shift
       ;;
     -v|--verbose)
@@ -530,6 +542,10 @@ Valid options:
       The number of required worker nodes in the cluster. If the number of worker nodes in the cluster is less than
       the given value, new nodes will be requested to bring it up to the number of nodes specified by the given value.
       Default: ${DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES}
+      Used only for the 'create' command.
+  -sk|--ssh-key <path to SSH public key file>
+      If provided, this is a file containing the SSH public key that will be used when performing installation
+      debugging. This is optional, but without it you may have difficulty debugging installation errors.
       Used only for the 'create' command.
   -h|--help : this message
   -ie|--istio-enabled (true|false)
@@ -780,6 +796,10 @@ if [ "$_CMD" = "create" ]; then
     echo "${_PULL_SECRET}" | sed ${SEDOPTIONS} 's/./*/g'
   fi
 
+  if [ "${SSH_PUBLIC_KEY_FILE}" != "" ]; then
+    _SSH_KEY_YAML="sshKey: $(cat ${SSH_PUBLIC_KEY_FILE})"
+  fi
+
   cat <<EOM > ${OPENSHIFT_INSTALL_PATH}/install-config.yaml
 apiVersion: v1
 baseDomain: ${AWS_BASE_DOMAIN}
@@ -789,6 +809,7 @@ platform:
   aws:
     region: ${AWS_REGION}
 pullSecret: '${_PULL_SECRET}'
+${_SSH_KEY_YAML}
 EOM
 
   ${OPENSHIFT_INSTALLER_EXE} ${LOG_LEVEL_ARG} create cluster --dir "${OPENSHIFT_INSTALL_PATH}"
