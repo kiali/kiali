@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -20,7 +21,10 @@ import (
 
 func setupWorkloads() *business.Layer {
 	k8s := kubetest.NewK8SClientMock()
+	conf := config.NewConfig()
+	config.Set(conf)
 
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetCronJobs", mock.AnythingOfType("string")).Return([]batch_v1beta1.CronJob{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string")).Return([]apps_v1.Deployment{
 		apps_v1.Deployment{

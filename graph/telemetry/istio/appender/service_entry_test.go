@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,7 @@ func setupServiceEntries() *business.Layer {
 		},
 	}
 
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
 		&externalSE,
 		&internalSE},
@@ -246,6 +248,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		},
 	}
 
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetServiceEntries", mock.AnythingOfType("string")).Return([]kubernetes.IstioObject{
 		&remoteSE},
 		nil)

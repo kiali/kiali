@@ -145,6 +145,12 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		labelSelector = fmt.Sprintf("%s=%s", cfg.IstioLabels.AppLabelName, appName)
 	}
 
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+		return nil, err
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	errChan := make(chan error, 2)
@@ -154,10 +160,7 @@ func fetchNamespaceApps(layer *Layer, namespace string, appName string) (namespa
 		var err error
 		// Check if namespace is cached
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				services, err = kialiCache.GetServices(namespace, nil)
-			}
+			services, err = kialiCache.GetServices(namespace, nil)
 		} else {
 			services, err = layer.k8s.GetServices(namespace, nil)
 		}

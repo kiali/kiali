@@ -166,6 +166,12 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 
 	ws := models.Workloads{}
 
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+		return nil, err
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(8)
 	errChan := make(chan error, 8)
@@ -173,6 +179,8 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 	go func() {
 		defer wg.Done()
 		var err error
+		// Check if namespace is cached
+		// Namespace access is checked in the upper caller
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
 			pods, err = kialiCache.GetPods(namespace, labelSelector)
 		} else {
@@ -188,11 +196,9 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
+		// Namespace access is checked in the upper caller
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				dep, err = kialiCache.GetDeployments(namespace)
-			}
+			dep, err = kialiCache.GetDeployments(namespace)
 		} else {
 			dep, err = layer.k8s.GetDeployments(namespace)
 		}
@@ -206,11 +212,9 @@ func fetchWorkloads(layer *Layer, namespace string, labelSelector string) (model
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
+		// Namespace access is checked in the upper caller
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				repset, err = kialiCache.GetReplicaSets(namespace)
-			}
+			repset, err = kialiCache.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}
@@ -646,6 +650,12 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		Services: models.Services{},
 	}
 
+	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	if _, err := layer.Namespace.GetNamespace(namespace); err != nil {
+		return nil, err
+	}
+
 	wg := sync.WaitGroup{}
 	wg.Add(8)
 	errChan := make(chan error, 8)
@@ -654,12 +664,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
+		// Namespace access is checked in the upper call
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				pods, err = kialiCache.GetPods(namespace, "")
-			}
-
+			pods, err = kialiCache.GetPods(namespace, "")
 		} else {
 			pods, err = layer.k8s.GetPods(namespace, "")
 		}
@@ -673,11 +680,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
+		// Namespace access is checked in the upper call
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				dep, err = kialiCache.GetDeployment(namespace, workloadName)
-			}
+			dep, err = kialiCache.GetDeployment(namespace, workloadName)
 		} else {
 			dep, err = layer.k8s.GetDeployment(namespace, workloadName)
 		}
@@ -695,11 +700,9 @@ func fetchWorkload(layer *Layer, namespace string, workloadName string) (*models
 		defer wg.Done()
 		var err error
 		// Check if namespace is cached
+		// Namespace access is checked in the upper call
 		if kialiCache != nil && kialiCache.CheckNamespace(namespace) {
-			// Cache uses Kiali ServiceAccount, check if user can access to the namespace
-			if _, err = layer.Namespace.GetNamespace(namespace); err == nil {
-				repset, err = kialiCache.GetReplicaSets(namespace)
-			}
+			repset, err = kialiCache.GetReplicaSets(namespace)
 		} else {
 			repset, err = layer.k8s.GetReplicaSets(namespace)
 		}

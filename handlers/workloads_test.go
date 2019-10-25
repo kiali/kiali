@@ -53,6 +53,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 	ts, k8s, _ := setupWorkloadList()
 	defer ts.Close()
 
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeDepSyncedWithRS(), nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(business.FakeRSSyncedWithPods(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)

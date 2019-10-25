@@ -1,9 +1,10 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"time"
 )
 
 type (

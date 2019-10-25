@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,10 +25,13 @@ func TestGetServiceHealth(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockServiceRequestRates("ns", "httpbin", serviceRates)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	health, _ := hs.GetServiceHealth("ns", "httpbin", "1m", queryTime)
 
@@ -43,18 +47,17 @@ func TestGetAppHealth(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReview(), nil)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
@@ -73,20 +76,20 @@ func TestGetWorkloadHealth(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
+
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReview(), nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
@@ -103,21 +106,20 @@ func TestGetAppHealthWithoutIstio(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app=reviews").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockAppRequestRates("ns", "reviews", otherRatesIn, otherRatesOut)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	health, _ := hs.GetAppHealth("ns", "reviews", "1m", queryTime)
 
@@ -130,20 +132,20 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
+
 	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkload("ns", "reviews-v1")
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployment", "ns", "reviews-v1").Return(&fakeDeploymentsHealthReview()[0], nil)
 	k8s.On("GetPods", "ns", "").Return(fakePodsHealthReviewWithoutIstio(), nil)
 
 	queryTime := time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC)
 	prom.MockWorkloadRequestRates("ns", "reviews-v1", otherRatesIn, otherRatesOut)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	health, _ := hs.GetWorkloadHealth("ns", "reviews-v1", "1m", queryTime)
 
@@ -154,19 +156,18 @@ func TestGetWorkloadHealthWithoutIstio(t *testing.T) {
 func TestGetNamespaceAppHealthWithoutIstio(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom, businessLayer: &layer}
 
-	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsOpenShift").Return(true)
 	k8s.MockEmptyWorkloads("ns")
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetServices", "ns", mock.AnythingOfType("map[string]string")).Return([]core_v1.Service{}, nil)
 	k8s.On("GetDeployments", "ns").Return(fakeDeploymentsHealthReview(), nil)
 	k8s.On("GetPods", "ns", "app").Return(fakePodsHealthReviewWithoutIstio(), nil)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	_, _ = hs.GetNamespaceAppHealth("ns", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 
@@ -182,11 +183,13 @@ func TestGetNamespaceServiceHealthWithNA(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	conf := config.NewConfig()
 	config.Set(conf)
-	hs := HealthService{k8s: k8s, prom: prom}
 
-	k8s.On("IsOpenShift").Return(false)
+	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.MockServices("tutorial", []string{"reviews", "httpbin"})
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+
+	hs := HealthService{k8s: k8s, prom: prom, businessLayer: NewWithBackends(k8s, prom)}
 
 	health, err := hs.GetNamespaceServiceHealth("tutorial", "1m", time.Date(2017, 01, 15, 0, 0, 0, 0, time.UTC))
 

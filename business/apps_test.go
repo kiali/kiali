@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -18,10 +19,8 @@ import (
 
 func setupAppService(k8s *kubetest.K8SClientMock) AppService {
 	prom := new(prometheustest.PromClientMock)
-	layer := Layer{
-		k8s: k8s,
-	}
-	return AppService{k8s: k8s, prom: prom, businessLayer: &layer}
+	layer := NewWithBackends(k8s, prom)
+	return AppService{k8s: k8s, prom: prom, businessLayer: layer}
 }
 
 func TestGetAppListFromDeployments(t *testing.T) {
@@ -33,6 +32,8 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
 	k8s.On("IsOpenShift").Return(true)
+	// Not needed a result, just to not send an error to test this usecase
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
@@ -60,6 +61,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeDeployments(), nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.ReplicaSet{}, nil)
@@ -92,6 +94,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 	k8s := new(kubetest.K8SClientMock)
 	// Auxiliar fake* tests defined in workload_test.go
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeReplicaSets(), nil)
@@ -119,6 +122,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	// Setup mocks
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
+	k8s.On("GetProject", mock.AnythingOfType("string")).Return(&osproject_v1.Project{}, nil)
 	k8s.On("GetDeployments", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]apps_v1.Deployment{}, nil)
 	k8s.On("GetDeploymentConfigs", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return([]osapps_v1.DeploymentConfig{}, nil)
 	k8s.On("GetReplicaSets", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(FakeReplicaSets(), nil)

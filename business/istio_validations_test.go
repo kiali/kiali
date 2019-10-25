@@ -73,6 +73,7 @@ func mockWorkLoadService(k8s *kubetest.K8SClientMock) WorkloadService {
 func mockMultiNamespaceGatewaysValidationService() IstioValidationsService {
 	k8s := new(kubetest.K8SClientMock)
 	k8s.On("IsOpenShift").Return(false)
+	k8s.On("GetNamespace", mock.AnythingOfType("string")).Return(&core_v1.Namespace{}, nil)
 	k8s.On("IsMaistraApi").Return(false)
 	k8s.On("GetGateways", "test", mock.AnythingOfType("string")).Return(getGateway("first"), nil)
 	k8s.On("GetGateways", "test2", mock.AnythingOfType("string")).Return(getGateway("second"), nil)
