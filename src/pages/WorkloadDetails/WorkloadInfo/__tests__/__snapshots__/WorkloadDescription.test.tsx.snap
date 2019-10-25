@@ -20,7 +20,7 @@ exports[`WorkloadDescription should render with runtimes 1`] = `
           size="2xl"
         >
            
-          Workload overview
+          Workload Overview
            
         </Title>
         <Stack>

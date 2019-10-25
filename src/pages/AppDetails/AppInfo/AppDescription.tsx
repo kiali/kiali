@@ -15,10 +15,14 @@ import {
   DataListItemRow,
   Grid,
   GridItem,
+  PopoverPosition,
   List,
   ListItem,
+  Stack,
+  StackItem,
   Text,
-  TextVariants
+  TextVariants,
+  Title
 } from '@patternfly/react-core';
 
 type AppDescriptionProps = {
@@ -132,13 +136,23 @@ class AppDescription extends React.Component<AppDescriptionProps, AppDescription
           </Card>
         </GridItem>
         <GridItem span={6}>
-          <Card>
+          <Card style={{ height: '100%' }}>
             <CardBody>
-              <div>
-                <Text component={TextVariants.h2}>Health Overview</Text>
-                <strong>Health</strong>
-              </div>
-              <HealthIndicator id={app.name} health={this.props.health} mode={DisplayMode.LARGE} />
+              <Title headingLevel="h3" size="2xl">
+                {' '}
+                Health Overview{' '}
+              </Title>
+              <Stack>
+                <StackItem id="health" className={'stack_service_details'}>
+                  <Text component={TextVariants.h3}> Health</Text>
+                  <HealthIndicator
+                    id={app.name}
+                    health={this.props.health}
+                    mode={DisplayMode.LARGE}
+                    tooltipPlacement={PopoverPosition.left}
+                  />
+                </StackItem>
+              </Stack>
             </CardBody>
           </Card>
         </GridItem>

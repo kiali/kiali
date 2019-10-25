@@ -54,7 +54,7 @@ class WorkloadDescription extends React.Component<WorkloadDescriptionProps, Work
             <CardBody>
               <Title headingLevel="h3" size="2xl">
                 {' '}
-                Workload overview{' '}
+                Workload Overview{' '}
               </Title>
               <Stack>
                 <StackItem id="labels">
