@@ -1,4 +1,6 @@
 import * as React from 'react';
+import * as Cy from 'cytoscape';
+
 import { GraphStyles } from './graphs/GraphStyles';
 import canvas from 'cytoscape-canvas';
 import cytoscape from 'cytoscape';
@@ -17,7 +19,7 @@ cytoscape.use(popper);
 cytoscape('layout', 'group-compound-layout', GroupCompoundLayout);
 nodeHtmlLabel(cytoscape);
 
-type CytoscapeReactWrapperProps = any;
+type CytoscapeReactWrapperProps = {};
 
 type CytoscapeReactWrapperState = {};
 
@@ -41,12 +43,11 @@ const styleContainer: React.CSSProperties = {
  * here because they are not normal Cytoscape defined functions like those found in CytoscapeGraph.
  */
 export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapperProps, CytoscapeReactWrapperState> {
-  cy: any;
-  divParentRef: any;
+  cy?: Cy.Core;
+  divParentRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: CytoscapeReactWrapperProps) {
     super(props);
-    this.cy = null;
     this.divParentRef = React.createRef();
   }
 
@@ -57,7 +58,7 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
 
   // This is VERY important - this must always return false to ensure the div is never destroyed.
   // If the div is destroyed, the cached cy becomes useless.
-  shouldComponentUpdate(_nextProps: any, _nextState: any) {
+  shouldComponentUpdate(_nextProps: CytoscapeReactWrapperProps, _nextState: CytoscapeReactWrapperState) {
     return false;
   }
 
@@ -86,13 +87,14 @@ export class CytoscapeReactWrapper extends React.Component<CytoscapeReactWrapper
     };
 
     this.cy = cytoscape(opts);
-    this.cy.nodeHtmlLabel(GraphStyles.htmlNodeLabels(this.cy));
+    // Using an extension
+    (this.cy as any).nodeHtmlLabel(GraphStyles.htmlNodeLabels(this.cy));
   }
 
   destroy() {
     if (this.cy) {
       this.cy.destroy();
-      this.cy = null;
+      this.cy = undefined;
     }
   }
 }

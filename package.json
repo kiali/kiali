@@ -117,6 +117,7 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
+    "@types/cytoscape": "3.8.4",
     "@types/enzyme": "3.10.3",
     "@types/jest": "23.3.10",
     "@types/lodash": "4.14.123",

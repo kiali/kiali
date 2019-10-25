@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import * as Cy from 'cytoscape';
 import { Router } from 'react-router';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
@@ -20,7 +21,7 @@ type ContextMenuContainer = HTMLDivElement & {
 };
 
 type ContextMenuProps = {
-  element: any;
+  element: Cy.NodeSingular | Cy.Core;
   contextMenu: TippyInstance;
 };
 
@@ -61,7 +62,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     }
   };
 
-  handleContextMenu = (event: any) => {
+  handleContextMenu = (event: MouseEvent) => {
     // Disable the context menu in popper
     const currentContextMenu = this.getCurrentContextMenu();
     if (currentContextMenu) {
@@ -73,8 +74,8 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   };
 
   // Connects cy to this component
-  connectCy(cy: any) {
-    cy.on('cxttapstart taphold', (event: any) => {
+  connectCy(cy: Cy.Core) {
+    cy.on('cxttapstart taphold', (event: Cy.EventObject) => {
       event.preventDefault();
       if (event.target) {
         const currentContextMenu = this.getCurrentContextMenu();
@@ -114,11 +115,11 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     return this.contextMenuRef!.current!._contextMenu;
   }
 
-  private setCurrentContextMenu(current: any) {
+  private setCurrentContextMenu(current: TippyInstance) {
     this.contextMenuRef!.current!._contextMenu = current;
   }
 
-  private tippyDistance(target: any) {
+  private tippyDistance(target: Cy.NodeSingular | Cy.EdgeSingular) {
     if (target.isNode === undefined || target.isNode()) {
       return 10;
     }
@@ -133,23 +134,29 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     document.removeEventListener('contextmenu', this.handleContextMenu);
   }
 
-  private makeContextMenu(ContextMenuComponentClass: EdgeContextMenuType | NodeContextMenuType, target: any) {
+  private makeContextMenu(
+    ContextMenuComponentClass: EdgeContextMenuType | NodeContextMenuType,
+    target: Cy.NodeSingular | Cy.EdgeSingular
+  ) {
     // Prevent the tippy content from picking up the right-click when we are moving it over to the edge/node
     this.addContextMenuEventListener();
     const content = this.contextMenuRef.current;
-    const tippyInstance = tippy(target.popperRef(), {
-      content: content as HTMLDivElement,
-      trigger: 'manual',
-      arrow: true,
-      placement: 'bottom',
-      hideOnClick: false,
-      multiple: false,
-      sticky: true,
-      interactive: true,
-      theme: 'light-border',
-      size: 'large',
-      distance: this.tippyDistance(target)
-    }).instances[0];
+    const tippyInstance = tippy(
+      (target as any).popperRef(), // Using an extension, popperRef is not in base definition
+      {
+        content: content as HTMLDivElement,
+        trigger: 'manual',
+        arrow: true,
+        placement: 'bottom',
+        hideOnClick: false,
+        multiple: false,
+        sticky: true,
+        interactive: true,
+        theme: 'light-border',
+        size: 'large',
+        distance: this.tippyDistance(target)
+      }
+    ).instances[0];
 
     const result = (
       <Provider store={store}>

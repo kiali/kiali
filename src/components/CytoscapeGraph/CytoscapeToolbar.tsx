@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Cy from 'cytoscape';
 import { Button, Toolbar, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { ExpandArrowsAltIcon, SearchMinusIcon, SearchPlusIcon, TopologyIcon } from '@patternfly/react-icons';
 import { style } from 'typestyle';
@@ -153,7 +154,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
     );
   }
 
-  getCy() {
+  getCy(): Cy.Core | null {
     if (this.props.cytoscapeGraphRef.current) {
       return this.props.cytoscapeGraphRef.current.getCy();
     }
@@ -161,13 +162,14 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
   }
 
   zoom(step: number) {
-    const cy: any = this.getCy();
-    if (cy) {
+    const cy = this.getCy();
+    const container = cy ? cy.container() : undefined;
+    if (cy && container) {
       cy.zoom({
         level: cy.zoom() * (1 + step),
         renderedPosition: {
-          x: cy.container().offsetWidth / 2,
-          y: cy.container().offsetHeight / 2
+          x: container.offsetWidth / 2,
+          y: container.offsetHeight / 2
         }
       });
     }
@@ -182,7 +184,7 @@ export class CytoscapeToolbar extends React.PureComponent<CytoscapeToolbarProps>
   };
 
   fit = () => {
-    const cy: any = this.getCy();
+    const cy = this.getCy();
     if (cy) {
       CytoscapeGraphUtils.safeFit(cy);
     }

@@ -1,3 +1,4 @@
+import * as Cy from 'cytoscape';
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -11,7 +12,7 @@ import TrafficRender from './TrafficAnimation/TrafficRenderer';
 import EmptyGraphLayoutContainer from '../EmptyGraphLayout';
 import { CytoscapeReactWrapper } from './CytoscapeReactWrapper';
 import * as CytoscapeGraphUtils from './CytoscapeGraphUtils';
-import { CyNode } from './CytoscapeGraphUtils';
+import { CyNode, isCore, isEdge, isNode } from './CytoscapeGraphUtils';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphActions } from '../../actions/GraphActions';
 import * as API from '../../services/Api';
@@ -50,6 +51,9 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import FocusAnimation from './FocusAnimation';
 import { CytoscapeContextMenuWrapper, NodeContextMenuType, EdgeContextMenuType } from './CytoscapeContextMenu';
 import { angleBetweenVectors, squaredDistance, normalize } from '../../utils/MathUtils';
+import { NodeSingular } from 'cytoscape';
+import { EdgeSingular } from 'cytoscape';
+import { Core } from 'cytoscape';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -120,7 +124,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   private nodeChanged: boolean;
   private resetSelection: boolean = false;
   private initialValues: InitialValues;
-  private cy: any;
+  private cy?: Cy.Core;
 
   constructor(props: CytoscapeGraphProps) {
     super(props);
@@ -259,7 +263,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
   };
 
-  private cyInitialization(cy: any) {
+  private cyInitialization(cy: Cy.Core) {
     if (!cy) {
       return;
     }
@@ -279,17 +283,17 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     this.graphHighlighter = new GraphHighlighter(cy);
     this.trafficRenderer = new TrafficRender(cy, cy.edges());
 
-    const getCytoscapeBaseEvent = (event: any): CytoscapeBaseEvent | null => {
+    const getCytoscapeBaseEvent = (event: Cy.EventObject): CytoscapeBaseEvent | null => {
       const target = event.target;
       if (target === cy) {
         return { summaryType: 'graph', summaryTarget: cy };
-      } else if (target.isNode()) {
+      } else if (isNode(target)) {
         if (target.data(CyNode.isGroup)) {
           return { summaryType: 'group', summaryTarget: target };
         } else {
           return { summaryType: 'node', summaryTarget: target };
         }
-      } else if (target.isEdge()) {
+      } else if (isEdge(target)) {
         return { summaryType: 'edge', summaryTarget: target };
       } else {
         console.log(`${event.type} UNHANDLED`);
@@ -312,7 +316,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       return null;
     };
 
-    cy.on('tap', (event: any) => {
+    cy.on('tap', (event: Cy.EventObject) => {
       // Check if we clicked a label, if so stop processing the event right away.
       if (event.originalEvent) {
         const element = document.elementFromPoint(event.originalEvent.clientX, event.originalEvent.clientY);
@@ -327,7 +331,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         }
       }
 
-      let tapped = event.target;
+      let tapped: NodeSingular | EdgeSingular | Core | null = event.target;
       if (CytoscapeGraph.tapTimeout) {
         // cancel any single-tap timer in progress
         clearTimeout(CytoscapeGraph.tapTimeout);
@@ -357,21 +361,21 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
         }, CytoscapeGraph.doubleTapMs);
       }
     });
-    cy.on('mouseover', 'node,edge', (evt: any) => {
+    cy.on('mouseover', 'node,edge', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent) {
         this.handleMouseIn(cytoscapeEvent);
       }
     });
 
-    cy.on('mouseout', 'node,edge', (evt: any) => {
+    cy.on('mouseout', 'node,edge', (evt: Cy.EventObject) => {
       const cytoscapeEvent = getCytoscapeBaseEvent(evt);
       if (cytoscapeEvent) {
         this.handleMouseOut(cytoscapeEvent);
       }
     });
 
-    cy.on('nodehtml-create-or-update', 'node', (evt: any, data: any) => {
+    cy.on('nodehtml-create-or-update', 'node', (evt: Cy.EventObjectNode, data: any) => {
       const { label, isNew } = data;
       const { target } = evt;
       // This is the DOM node of the label, if we want the cyNode it is `target`
@@ -445,8 +449,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
           // The timeout ensures that the previous value is already applied
           setTimeout(() => {
             if (!target.cy().destroyed()) {
-              target
-                .cy()
+              (target.cy() as any) // because we are using an extension
                 .nodeHtmlLabel()
                 .updateNodeLabel(target.parent());
             }
@@ -455,25 +458,25 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       }
     });
 
-    cy.on('layoutstop', (_evt: any) => {
+    cy.on('layoutstop', (_evt: Cy.EventObject) => {
       // Don't allow a large zoom if the graph has a few nodes (nodes would look too big).
       this.safeFit(cy);
       this.fixLoopOverlap(cy);
     });
 
-    cy.ready((evt: any) => {
+    cy.ready((evt: Cy.EventObject) => {
       this.props.onReady(evt.cy);
       this.processGraphUpdate(cy, true);
     });
 
-    cy.on('destroy', (_evt: any) => {
+    cy.on('destroy', (_evt: Cy.EventObject) => {
       this.trafficRenderer!.stop();
       this.cy = undefined;
       this.props.updateSummary({ summaryType: 'graph', summaryTarget: undefined });
     });
   }
 
-  private focus(cy: any, elements?: any) {
+  private focus(cy: Cy.Core, elements?: Cy.Collection) {
     // We only want to focus once, but allow the url to be shared.
     if (this.focusFinished) {
       return;
@@ -514,14 +517,14 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     return focusElements;
   }
 
-  private safeFit(cy: any) {
+  private safeFit(cy: Cy.Core) {
     this.focus(cy);
     CytoscapeGraphUtils.safeFit(cy);
     this.initialValues.position = { ...cy.pan() };
     this.initialValues.zoom = cy.zoom();
   }
 
-  private processGraphUpdate(cy: any, updateLayout: boolean) {
+  private processGraphUpdate(cy: Cy.Core, updateLayout: boolean) {
     if (!cy) {
       return;
     }
@@ -531,7 +534,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     const isTheGraphSelected = cy.$(':selected').length === 0;
     if (this.resetSelection) {
       if (!isTheGraphSelected) {
-        this.selectTarget(null);
+        this.selectTarget();
         this.handleTap({ summaryType: 'graph', summaryTarget: cy });
       }
       this.resetSelection = false;
@@ -591,24 +594,23 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     }
   }
 
-  private selectTarget = (target: any) => {
-    if (!target) {
-      target = this.cy;
-    }
-    this.cy
-      .$(':selected')
-      .selectify()
-      .unselect()
-      .unselectify();
-    if (target !== this.cy) {
-      target
+  private selectTarget = (target?: Cy.NodeSingular | Cy.EdgeSingular | Cy.Core) => {
+    if (this.cy) {
+      this.cy
+        .$(':selected')
         .selectify()
-        .select()
+        .unselect()
         .unselectify();
+      if (target && !isCore(target)) {
+        target
+          .selectify()
+          .select()
+          .unselectify();
+      }
     }
   };
 
-  private selectTargetAndUpdateSummary = (target: any) => {
+  private selectTargetAndUpdateSummary = (target: Cy.NodeSingular | Cy.EdgeSingular) => {
     this.selectTarget(target);
     const event: CytoscapeClickEvent = {
       summaryType: target.data(CyNode.isGroup) ? 'group' : 'node',
@@ -735,7 +737,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   // Tests if the element is still in the current graph
-  private isElementValid(ele: any) {
+  private isElementValid(ele: Cy.NodeSingular | Cy.EdgeSingular) {
     return ele.cy() === this.cy;
   }
 
@@ -768,7 +770,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
     );
   }
 
-  private nodeOrEdgeArrayHasSameIds(a: Array<any>, b: Array<any>) {
+  private nodeOrEdgeArrayHasSameIds<T extends Cy.NodeSingular | Cy.EdgeSingular>(a: Array<T>, b: Array<T>) {
     const aIds = a.map(e => e.id).sort();
     return b
       .map(e => e.id)
@@ -776,7 +778,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       .every((eId, index) => eId === aIds[index]);
   }
 
-  private updateHealth(cy: any) {
+  private updateHealth(cy: Cy.Core) {
     if (!cy) {
       return;
     }
@@ -831,7 +833,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
   }
 
   private updateNodeHealth(
-    ele: any,
+    ele: Cy.NodeSingular,
     promise: Promise<H.NamespaceAppHealth | H.NamespaceServiceHealth | H.NamespaceWorkloadHealth>,
     key: string
   ) {
@@ -862,7 +864,7 @@ export class CytoscapeGraph extends React.Component<CytoscapeGraphProps, Cytosca
       });
   }
 
-  private fixLoopOverlap(cy: any) {
+  private fixLoopOverlap(cy: Cy.Core) {
     cy.$(':loop').forEach(loop => {
       const node = loop.source();
       const otherEdges = node.connectedEdges().subtract(loop);
@@ -978,7 +980,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch<KialiAppState, void, KialiAppAction>) => ({
-  onReady: (cy: any) => dispatch(GraphThunkActions.graphReady(cy)),
+  onReady: (cy: Cy.Core) => dispatch(GraphThunkActions.graphReady(cy)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   updateGraph: (cyData: CyData) => dispatch(GraphActions.updateGraph(cyData)),

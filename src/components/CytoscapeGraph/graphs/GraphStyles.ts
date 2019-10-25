@@ -14,6 +14,7 @@ import NodeImageTopology from '../../../assets/img/node-background-topology.png'
 import NodeImageKey from '../../../assets/img/node-background-key.png';
 import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
+import * as Cy from 'cytoscape';
 
 export const DimClass = 'mousedim';
 
@@ -63,8 +64,6 @@ const NodeTextFont = EdgeTextFont;
 const NodeTextFontSize = '8px';
 const NodeTextFontSizeHover = '11px';
 const NodeWidth = NodeHeight;
-
-type NodeShape = 'round-rectangle' | 'round-triangle' | 'round-tag' | 'round-diamond' | 'ellipse';
 
 const labelStyleDefault = style({
   borderRadius: '3px',
@@ -117,8 +116,8 @@ export class GraphStyles {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
   }
 
-  static htmlLabelForNode(ele: any) {
-    const getCyGlobalData = (ele: any): CytoscapeGlobalScratchData => {
+  static htmlLabelForNode(ele: Cy.NodeSingular) {
+    const getCyGlobalData = (ele: Cy.NodeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
@@ -236,7 +235,7 @@ export class GraphStyles {
     return `<div class="${labelStyleDefault}" style="${labelRawStyle}">${badges}${content}</div>`;
   }
 
-  static htmlNodeLabels(cy: any) {
+  static htmlNodeLabels(cy: Cy.Core) {
     return [
       {
         query: 'node:visible',
@@ -249,12 +248,12 @@ export class GraphStyles {
     ];
   }
 
-  static styles() {
-    const getCyGlobalData = (ele: any): CytoscapeGlobalScratchData => {
+  static styles(): Cy.Stylesheet[] {
+    const getCyGlobalData = (ele: Cy.NodeSingular | Cy.EdgeSingular): CytoscapeGlobalScratchData => {
       return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
     };
 
-    const getEdgeColor = (ele: any): string => {
+    const getEdgeColor = (ele: Cy.EdgeSingular): string => {
       let rate = 0;
       let pErr = 0;
       const edgeData = decoratedEdgeData(ele);
@@ -283,7 +282,7 @@ export class GraphStyles {
       return EdgeColor;
     };
 
-    const getEdgeLabel = (ele: any, includeProtocol?: boolean): string => {
+    const getEdgeLabel = (ele: Cy.EdgeSingular, includeProtocol?: boolean): string => {
       const cyGlobal = getCyGlobalData(ele);
       const edgeLabelMode = cyGlobal.edgeLabelMode;
       let content = '';
@@ -371,7 +370,7 @@ export class GraphStyles {
       return content;
     };
 
-    const getNodeBackgroundImage = (ele: any): string => {
+    const getNodeBackgroundImage = (ele: Cy.NodeSingular): string => {
       const nodeData = decoratedNodeData(ele);
       const isInaccessible = nodeData.isInaccessible;
       const isServiceEntry = nodeData.isServiceEntry;
@@ -386,21 +385,21 @@ export class GraphStyles {
       return 'none';
     };
 
-    const getNodeBackgroundPositionX = (ele: any): string => {
+    const getNodeBackgroundPositionX = (ele: Cy.NodeSingular): string => {
       if (getNodeShape(ele) === 'round-tag') {
         return '0';
       }
       return '50%';
     };
 
-    const getNodeBackgroundPositionY = (ele: any): string => {
+    const getNodeBackgroundPositionY = (ele: Cy.NodeSingular): string => {
       if (getNodeShape(ele) === 'round-triangle') {
         return '6px';
       }
       return '50%';
     };
 
-    const getNodeBorderColor = (ele: any): string => {
+    const getNodeBorderColor = (ele: Cy.NodeSingular): string => {
       if (ele.hasClass(DEGRADED.name)) {
         return NodeColorBorderDegraded;
       }
@@ -410,7 +409,7 @@ export class GraphStyles {
       return NodeColorBorder;
     };
 
-    const getNodeShape = (ele: any): NodeShape => {
+    const getNodeShape = (ele: Cy.NodeSingular): Cy.Css.NodeShape => {
       const nodeData = decoratedNodeData(ele);
       const nodeType = nodeData.nodeType;
       switch (nodeType) {
@@ -428,7 +427,7 @@ export class GraphStyles {
     };
 
     const nodeSelectedStyle = {
-      'border-color': (ele: any) => {
+      'border-color': (ele: Cy.NodeSingular) => {
         if (ele.hasClass(DEGRADED.name)) {
           return NodeColorBorderDegraded;
         }
@@ -446,30 +445,30 @@ export class GraphStyles {
         selector: 'node',
         css: {
           'background-color': NodeColorFill,
-          'background-image': (ele: any) => {
+          'background-image': (ele: Cy.NodeSingular) => {
             return getNodeBackgroundImage(ele);
           },
           'background-width': '80%',
           'background-height': '80%',
           'background-position-x': getNodeBackgroundPositionX,
           'background-position-y': getNodeBackgroundPositionY,
-          'border-color': (ele: any) => {
+          'border-color': (ele: Cy.NodeSingular) => {
             return getNodeBorderColor(ele);
           },
-          'border-style': (ele: any) => {
+          'border-style': (ele: Cy.NodeSingular) => {
             return decoratedNodeData(ele).isUnused ? 'dotted' : 'solid';
           },
           'border-width': NodeBorderWidth,
           ghost: 'yes',
-          'ghost-offset-x': '1',
-          'ghost-offset-y': '1',
-          'ghost-opacity': '0.4',
+          'ghost-offset-x': 1,
+          'ghost-offset-y': 1,
+          'ghost-opacity': 0.4,
           height: NodeHeight,
-          shape: (ele: any) => {
+          shape: (ele: Cy.NodeSingular) => {
             return getNodeShape(ele);
           },
           width: NodeWidth,
-          'z-index': '10'
+          'z-index': 10
         }
       },
       // Node is an App Box
@@ -495,7 +494,7 @@ export class GraphStyles {
       {
         selector: 'node.mousehighlight[^isGroup]',
         style: {
-          'background-color': (ele: any) => {
+          'background-color': (ele: Cy.NodeSingular) => {
             if (ele.hasClass(DEGRADED.name)) {
               return NodeColorFillHoverDegraded;
             }
@@ -504,7 +503,7 @@ export class GraphStyles {
             }
             return NodeColorFillHover;
           },
-          'border-color': (ele: any) => {
+          'border-color': (ele: Cy.NodeSingular) => {
             if (ele.hasClass(DEGRADED.name)) {
               return NodeColorBorderDegraded;
             }
@@ -519,7 +518,7 @@ export class GraphStyles {
       {
         selector: `node.${DimClass}`,
         style: {
-          opacity: '0.6'
+          opacity: 0.6
         }
       },
       {
@@ -528,15 +527,15 @@ export class GraphStyles {
           'curve-style': 'bezier',
           'font-family': EdgeTextFont,
           'font-size': EdgeTextFontSize,
-          label: (ele: any) => {
+          label: (ele: Cy.EdgeSingular) => {
             return getEdgeLabel(ele);
           },
-          'line-color': (ele: any) => {
+          'line-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
           'line-style': 'dashed',
           'target-arrow-shape': 'vee',
-          'target-arrow-color': (ele: any) => {
+          'target-arrow-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
           'text-events': 'yes',
@@ -550,7 +549,7 @@ export class GraphStyles {
         selector: 'edge:selected',
         css: {
           width: EdgeWidthSelected,
-          label: (ele: any) => getEdgeLabel(ele, true)
+          label: (ele: Cy.EdgeSingular) => getEdgeLabel(ele, true)
         }
       },
       {
@@ -569,7 +568,7 @@ export class GraphStyles {
       {
         selector: 'edge.mousehover',
         style: {
-          label: (ele: any) => {
+          label: (ele: Cy.EdgeSingular) => {
             return getEdgeLabel(ele, true);
           }
         }
@@ -577,7 +576,7 @@ export class GraphStyles {
       {
         selector: `edge.${DimClass}`,
         style: {
-          opacity: '0.3'
+          opacity: 0.3
         }
       },
       {
@@ -585,7 +584,7 @@ export class GraphStyles {
         style: {
           'overlay-color': PfColors.Gold400,
           'overlay-padding': '8px',
-          'overlay-opacity': '0.5'
+          'overlay-opacity': 0.5
         }
       }
     ];

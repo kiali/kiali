@@ -1430,6 +1430,11 @@
   resolved "https://registry.yarnpkg.com/@types/cheerio/-/cheerio-0.22.10.tgz#780d552467824be4a241b29510a7873a7432c4a6"
   integrity sha512-fOM/Jhv51iyugY7KOBZz2ThfT1gwvsGCfWxpLpZDgkGjpEO4Le9cld07OdskikLjDUQJ43dzDaVRSFwQlpdqVg==
 
+"@types/cytoscape@3.8.4":
+  version "3.8.4"
+  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.8.4.tgz#7522ecc627a1e7364516b885d2112885ce170b57"
+  integrity sha512-Z0nt8Btl8B7RuZoJW3VRaJTVCBdKpV2s8VrsQkEPqFOYLFGlFm82l4e8/CPzYfUG16yZTsb4xEF31FK9xzV5qw==
+
 "@types/d3-array@*":
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-1.2.4.tgz#7088445c8717ba1fba416a1df7bbd11cc72a3763"
