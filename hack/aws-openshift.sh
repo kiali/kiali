@@ -22,6 +22,9 @@
 #
 ##############################################################################
 
+########################################
+# START FUNCTIONS
+
 infomsg() {
   echo "HACK: $1"
 }
@@ -166,7 +169,7 @@ get_status() {
 
 check_istio_app() {
   local expected="$1"
-  apps=$(${OC} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+  apps=$(${OC} get deployment.apps -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
   for app in ${apps[@]}
   do
     if [[ "$expected" == "$app" ]]; then
@@ -331,17 +334,17 @@ EOM
       echo "done."
     done
 
-    infomsg "Creating istio-system namespace."
-    ${OC} create namespace istio-system
+    infomsg "Creating control plane namespace: ${CONTROL_PLANE_NAMESPACE}"
+    ${OC} create namespace ${CONTROL_PLANE_NAMESPACE}
     infomsg "Installing Maistra via ServiceMeshControlPlane Custom Resource."
     if [ "${MAISTRA_SMCP_YAML}" != "" ]; then
-      ${OC} create -n istio-system -f ${MAISTRA_SMCP_YAML}
+      ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f ${MAISTRA_SMCP_YAML}
     else
       debug "Using example SMCP/SMMR"
       rm -f /tmp/maistra-smcp.yaml
       get_downloader
       eval ${DOWNLOADER} /tmp/maistra-smcp.yaml "https://raw.githubusercontent.com/Maistra/istio-operator/maistra-1.0/deploy/examples/maistra_v1_servicemeshcontrolplane_cr_full.yaml"
-      ${OC} create -n istio-system -f /tmp/maistra-smcp.yaml
+      ${OC} create -n ${CONTROL_PLANE_NAMESPACE} -f /tmp/maistra-smcp.yaml
     fi
   else
     infomsg "The operators should be available but the Maistra SMCP CR will not be created."
@@ -385,6 +388,9 @@ scale_worker_nodes() {
   fi
 }
 
+# END FUNCTIONS
+########################################
+
 # Change to the directory where this script is and set our environment
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
@@ -404,11 +410,20 @@ DEFAULT_AWS_CLUSTER_NAME="${USER}-dev"
 # The AWS region where the cluster will be installed.
 DEFAULT_AWS_REGION="us-east-1"
 
+# Default control plane namespace - where the CRs and the Istio components are installed
+DEFAULT_CONTROL_PLANE_NAMESPACE="istio-system"
+
+# Default namespace where bookinfo is to be installed
+DEFAULT_BOOKINFO_NAMESPACE="bookinfo"
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+
+    # COMMANDS
+
     create|start|up)
       _CMD="create"
       shift
@@ -449,6 +464,9 @@ while [[ $# -gt 0 ]]; do
       _CMD="k-uninstall"
       shift
       ;;
+
+    # OPTIONS CONFIGURING THE HACK SCRIPT ITSELF AND THE CLUSTER
+
     -ar|--aws-region)
       AWS_REGION="$2"
       shift;shift
@@ -473,6 +491,14 @@ while [[ $# -gt 0 ]]; do
       OPENSHIFT_DOWNLOAD_VERSION="$2"
       shift;shift
       ;;
+    -p|--pull-secret-file)
+      PULL_SECRET_FILE="$2"
+      if [ ! -f ${PULL_SECRET_FILE} ]; then
+        infomsg "ERROR: Pull secret file is invalid: ${PULL_SECRET_FILE}"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -rn|--required-nodes)
       OPENSHIFT_REQUIRED_WORKER_NODES="$2"
       shift;shift
@@ -485,12 +511,23 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -ie|--istio-enabled)
-      ISTIO_ENABLED="$2"
+    -v|--verbose)
+      _VERBOSE=true
+      shift
+      ;;
+
+    # OPTIONS CONFIGURING THE SERVICE MESH AND ITS COMPONENTS
+
+    -bin|--bookinfo-namespace)
+      BOOKINFO_NAMESPACE="$2"
       shift;shift
       ;;
-    -smcp|--maistra-smcp-yaml)
-      MAISTRA_SMCP_YAML="$2"
+    -cpn|--control-plane-namespace)
+      CONTROL_PLANE_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -ie|--istio-enabled)
+      ISTIO_ENABLED="$2"
       shift;shift
       ;;
     -kuca|--kiali-user-cluster-admin)
@@ -501,24 +538,20 @@ while [[ $# -gt 0 ]]; do
       WAIT_FOR_ISTIO=false
       shift
       ;;
-    -p|--pull-secret-file)
-      PULL_SECRET_FILE="$2"
-      if [ ! -f ${PULL_SECRET_FILE} ]; then
-        infomsg "ERROR: Pull secret file is invalid: ${PULL_SECRET_FILE}"
-        exit 1
-      fi
+    -smcp|--maistra-smcp-yaml)
+      MAISTRA_SMCP_YAML="$2"
       shift;shift
       ;;
-    -v|--verbose)
-      _VERBOSE=true
-      shift
-      ;;
+
+    # HELP
+
     -h|--help)
       cat <<HELPMSG
 
 $0 [option...] command
 
-Valid options:
+Valid options that configure the hack script itself and the cluster:
+
   -ar|--aws-region <name>
       The AWS region where the cluster will be deployed.
       Options: us-east-1, us-east-2, us-west-1, us-west-2, eu-west-2, eu-west-3, sa-east-1
@@ -538,6 +571,11 @@ Valid options:
   -ov|--openshift-version <version>
       The version of OpenShift to use.
       Default: ${DEFAULT_OPENSHIFT_DOWNLOAD_VERSION}
+  -p|--pull-secret-file <filename>
+      Specifies the file containing your Image pull secret.
+      You can download it from https://cloud.redhat.com/openshift/install/metal/user-provisioned
+      Used only for the 'create' command.
+      Default: not set (you will be prompted for the pull secret json at startup if it does not exist yet)
   -rn|--required-nodes <node count>
       The number of required worker nodes in the cluster. If the number of worker nodes in the cluster is less than
       the given value, new nodes will be requested to bring it up to the number of nodes specified by the given value.
@@ -547,14 +585,21 @@ Valid options:
       If provided, this is a file containing the SSH public key that will be used when performing installation
       debugging. This is optional, but without it you may have difficulty debugging installation errors.
       Used only for the 'create' command.
-  -h|--help : this message
+  -v|--verbose
+      Enable logging of debug messages from this script.
+
+Valid options that configure the service mesh components:
+
+  -bin|--bookinfo-namespace
+      The namespace where the bookinfo demo will be installed.
+      Default: ${DEFAULT_BOOKINFO_NAMESPACE}
+      Used only for the 'bi-install' command.
+  -cpn|--control-plane-namespace
+      The namespace where the service mesh components are or will be installed. The operator CRs are installed here also.
+      Default: ${DEFAULT_CONTROL_PLANE_NAMESPACE}
   -ie|--istio-enabled (true|false)
       When set to true, Maistra will be installed in OpenShift.
       Default: true
-      Used only for the 'create' command.
-  -smcp|--maistra-smcp-yaml <file or url>
-      Points to the YAML file that defines the ServiceMeshControlPlane custom resource which declares what to install.
-      If not defined, a basic one will be used.
       Used only for the 'create' command.
   -kuca|--kiali-user-cluster-admin (true|false)
       Determines if the "kiali" OpenShift user is to be given cluster admin rights.
@@ -564,13 +609,10 @@ Valid options:
       When specified, this script will not wait for Maistra to be up and running before exiting.
       This will be ignored when --istio-enabled is false.
       Used only for the 'create' command.
-  -p|--pull-secret-file <filename>
-      Specifies the file containing your Image pull secret.
-      You can download it from https://cloud.redhat.com/openshift/install/metal/user-provisioned
+  -smcp|--maistra-smcp-yaml <file or url>
+      Points to the YAML file that defines the ServiceMeshControlPlane custom resource which declares what to install.
+      If not defined, a basic one will be used.
       Used only for the 'create' command.
-      Default: not set (you will be prompted for the pull secret json at startup if it does not exist yet)
-  -v|--verbose
-      Enable logging of debug messages from this script.
 
 The command must be one of:
 
@@ -637,6 +679,10 @@ AWS_REGION="${AWS_REGION:-${DEFAULT_AWS_REGION}}"
 # The minimum number of worker nodes the cluster needs to have
 OPENSHIFT_REQUIRED_WORKER_NODES=${OPENSHIFT_REQUIRED_WORKER_NODES:-${DEFAULT_OPENSHIFT_REQUIRED_WORKER_NODES}}
 
+# Namespaces for the components
+CONTROL_PLANE_NAMESPACE="${CONTROL_PLANE_NAMESPACE:-${DEFAULT_CONTROL_PLANE_NAMESPACE}}"
+BOOKINFO_NAMESPACE="${BOOKINFO_NAMESPACE:-${DEFAULT_BOOKINFO_NAMESPACE}}"
+
 #--------------------------------------------------------------
 # Variables below have values derived from the variables above.
 # These variables below are not meant for users to change.
@@ -681,6 +727,8 @@ debug "ENVIRONMENT:
   AWS_KUBECONFIG=$AWS_KUBECONFIG
   AWS_PROFILE=$AWS_PROFILE
   AWS_REGION=$AWS_REGION
+  BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
+  CONTROL_PLANE_NAMESPACE=$CONTROL_PLANE_NAMESPACE
   ISTIO_ENABLED=$ISTIO_ENABLED
   LOCAL_PLATFORM=$LOCAL_PLATFORM
   MAISTRA_SMCP_YAML=$MAISTRA_SMCP_YAML
@@ -694,6 +742,7 @@ debug "ENVIRONMENT:
   OPENSHIFT_INSTALLER_EXE=$OPENSHIFT_INSTALLER_EXE
   OPENSHIFT_REQUIRED_WORKER_NODES=$OPENSHIFT_REQUIRED_WORKER_NODES
   SEDOPTIONS=$SEDOPTIONS
+  SSH_PUBLIC_KEY_FILE=$SSH_PUBLIC_KEY_FILE
   "
 
 # Download the installer if we do not have it yet
@@ -903,7 +952,7 @@ EOM
   scale_worker_nodes ${OPENSHIFT_REQUIRED_WORKER_NODES}
 
   # Install Maistra
-  ${OC} get -n istio-system ServiceMeshControlPlane > /dev/null 2>&1
+  ${OC} get -n ${CONTROL_PLANE_NAMESPACE} ServiceMeshControlPlane > /dev/null 2>&1
   if [ "$?" != "0" ]; then
     if [ "${ISTIO_ENABLED}" == "true" ] ; then
       install_service_mesh "${_CREATE_SMCP_RESOURCE}"
@@ -937,7 +986,7 @@ EOM
       done
 
       infomsg "Waiting for Maistra Deployments to start..."
-      for app in $(${OC} get deployment.apps -n istio-system -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
+      for app in $(${OC} get deployment.apps -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}' 2> /dev/null)
       do
          echo -n "Waiting for ${app} to be ready..."
          readyReplicas="0"
@@ -945,7 +994,7 @@ EOM
          do
             sleep 1
             echo -n '.'
-            readyReplicas="$(${OC} get deployment.app/${app} -n istio-system -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
+            readyReplicas="$(${OC} get deployment.app/${app} -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2> /dev/null)"
          done
          echo "done."
       done
@@ -987,21 +1036,21 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
 
   # remove the SMCP and SMMR CRs which uninstalls all the Service Mesh components
   debug "Deleting the ServiceMesh SMCP and SMMR CRs"
-  ${OC} delete -n istio-system $(${OC} get smcp -n istio-system -o name)
-  ${OC} delete -n istio-system $(${OC} get smmr -n istio-system -o name)
+  ${OC} delete -n ${CONTROL_PLANE_NAMESPACE} $(${OC} get smcp -n ${CONTROL_PLANE_NAMESPACE} -o name)
+  ${OC} delete -n ${CONTROL_PLANE_NAMESPACE} $(${OC} get smmr -n ${CONTROL_PLANE_NAMESPACE} -o name)
 
   # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
-  _kialicr=$(${OC} get kiali -n istio-system -o name 2>/dev/null)
+  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
   if [ "${_kialicr}" != "" ]; then
     debug "Deleting the Kiali CR"
-    ${OC} patch ${_kialicr} -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
-    ${OC} delete ${_kialicr} -n istio-system
+    ${OC} patch ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge
+    ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
   fi
 
   debug "Cleaning up the rest of ServiceMesh"
 
   # clean up the control plane namespace
-  ${OC} delete namespace istio-system
+  ${OC} delete namespace ${CONTROL_PLANE_NAMESPACE}
 
   # clean up OLM Subscriptions
   for sub in $(${OC} get subscriptions -n openshift-operators -o name | grep -E 'servicemesh|kiali|jaeger|elasticsearch')
@@ -1043,14 +1092,15 @@ elif [ "$_CMD" = "sm-uninstall" ]; then
 
 elif [ "$_CMD" = "bi-install" ]; then
 
+  infomsg "Installing Bookinfo into namespace [${BOOKINFO_NAMESPACE}]"
+
   # see: https://maistra.io/docs/examples/bookinfo/
-  BOOKINFO_NAMESPACE="bookinfo"
   ${OC} new-project ${BOOKINFO_NAMESPACE}
-  ${OC} patch -n istio-system --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
+  ${OC} patch -n ${CONTROL_PLANE_NAMESPACE} --type='json' smmr default -p '[{"op": "add", "path": "/spec/members", "value":["'"${BOOKINFO_NAMESPACE}"'"]}]'
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo.yaml
   ${OC} apply -n ${BOOKINFO_NAMESPACE} -f https://raw.githubusercontent.com/Maistra/bookinfo/maistra-1.0/bookinfo-gateway.yaml
 
-  BOOKINFO_PRODUCTPAGE_URL="http://$(${OC} get route istio-ingressgateway -n istio-system -o jsonpath='{.spec.host}')/productpage"
+  BOOKINFO_PRODUCTPAGE_URL="http://$(${OC} get route istio-ingressgateway -n ${CONTROL_PLANE_NAMESPACE} -o jsonpath='{.spec.host}')/productpage"
   infomsg "Bookinfo URL: ${BOOKINFO_PRODUCTPAGE_URL}"
 
   infomsg "Installing Bookinfo Traffic Generator..."
@@ -1060,18 +1110,18 @@ elif [ "$_CMD" = "bi-install" ]; then
 elif [ "$_CMD" = "k-uninstall" ]; then
 
   # Tell ServiceMesh to disable Kiali so it doesn't try to manage it
-  _smcp=$(${OC} get smcp -n istio-system -o name 2>/dev/null)
+  _smcp=$(${OC} get smcp -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
   if [ "${_smcp}" != "" ]; then
     debug "Telling ServiceMesh to disable Kiali"
-    ${OC} patch ${_smcp} -n istio-system -p '{"spec":{"istio":{"kiali":{"enabled": "false"}}}}' --type=merge
+    ${OC} patch ${_smcp} -n ${CONTROL_PLANE_NAMESPACE} -p '{"spec":{"istio":{"kiali":{"enabled": "false"}}}}' --type=merge
   fi
 
   # Make sure the Kiail CR is deleted (probably not needed, ServiceMesh should be doing this)
-  _kialicr=$(${OC} get kiali -n istio-system -o name 2>/dev/null)
+  _kialicr=$(${OC} get kiali -n ${CONTROL_PLANE_NAMESPACE} -o name 2>/dev/null)
   if [ "${_kialicr}" != "" ]; then
     debug "Deleting the Kiali CR"
-    ${OC} patch ${_kialicr} -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
-    ${OC} delete ${_kialicr} -n istio-system
+    ${OC} patch ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE} -p '{"metadata":{"finalizers": []}}' --type=merge
+    ${OC} delete ${_kialicr} -n ${CONTROL_PLANE_NAMESPACE}
   fi
 
   # clean up OLM subscriptions
@@ -1090,6 +1140,6 @@ elif [ "$_CMD" = "k-uninstall" ]; then
   ${OC} get crds -o name | grep '.*\.kiali\.io' | xargs -r -n 1 ${OC} delete
 
 else
-  infomsg "ERROR: Required command must be either: create, destroy, status, routes, services, oc-env, sm-install, sm-uninstall, bi-install"
+  infomsg "ERROR: Missing command. See --help for usage."
   exit 1
 fi
