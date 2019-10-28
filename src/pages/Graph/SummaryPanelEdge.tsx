@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
@@ -28,9 +28,9 @@ import { MetricGroup, Metric, Metrics, Datapoint } from '../../types/Metrics';
 import { Response } from '../../services/Api';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { icons } from '../../config';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
+import { KialiIcon } from 'config/KialiIcon';
 
 type SummaryPanelEdgeState = {
   loading: boolean;
@@ -424,14 +424,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     if (!this.hasSupportedCharts(edge)) {
       return isGrpc || isHttp ? (
         <>
-          <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. See the
-          chart above for aggregate traffic or use the workload graph type to observe individual workload-to-service
-          edge sparklines.
+          <KialiIcon.Info /> Service graphs do not support service-to-service aggregate sparklines. See the chart above
+          for aggregate traffic or use the workload graph type to observe individual workload-to-service edge
+          sparklines.
         </>
       ) : (
         <>
-          <Icon type="pf" name="info" /> Service graphs do not support service-to-service aggregate sparklines. Use the
-          workload graph type to observe individual workload-to-service edge sparklines.
+          <KialiIcon.Info /> Service graphs do not support service-to-service aggregate sparklines. Use the workload
+          graph type to observe individual workload-to-service edge sparklines.
         </>
       );
     }
@@ -441,15 +441,14 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     if (target.isInaccessible) {
       return (
         <>
-          <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the destination is inaccessible.
+          <KialiIcon.Info /> Sparkline charts cannot be shown because the destination is inaccessible.
         </>
       );
     }
     if (source.isServiceEntry || target.isServiceEntry) {
       return (
         <>
-          <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the source or destination is a
-          serviceEntry.
+          <KialiIcon.Info /> Sparkline charts cannot be shown because the source or destination is a serviceEntry.
         </>
       );
     }
@@ -461,7 +460,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
     if (this.state.metricsLoadError) {
       return (
         <div>
-          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -529,7 +528,7 @@ export default class SummaryPanelEdge extends React.Component<SummaryPanelPropTy
       <>
         {isMtls && (
           <div>
-            <Icon name={icons.istio.mtls.name} type={icons.istio.mtls.type} style={{ width: '10px' }} />
+            <KialiIcon.MtlsLock />
             <span style={{ paddingLeft: '6px' }}>{mtls}</span>
           </div>
         )}

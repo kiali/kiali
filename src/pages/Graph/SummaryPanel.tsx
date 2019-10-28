@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { SummaryPanelPropType } from '../../types/Graph';
 import SummaryPanelEdge from './SummaryPanelEdge';
 import SummaryPanelGraph from './SummaryPanelGraph';
 import SummaryPanelGroup from './SummaryPanelGroup';
 import SummaryPanelNode from './SummaryPanelNode';
+import { KialiIcon } from 'config/KialiIcon';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -69,11 +69,11 @@ export default class SummaryPanel extends React.Component<MainSummaryPanelPropTy
         <div className={toggleSidePanelStyle} onClick={this.togglePanel}>
           {this.state.isVisible ? (
             <>
-              <Icon name="angle-double-down" /> Hide
+              <KialiIcon.AngleDoubleDown /> Hide
             </>
           ) : (
             <>
-              <Icon name="angle-double-up" /> Show
+              <KialiIcon.AngleDoubleUp /> Show
             </>
           )}
         </div>

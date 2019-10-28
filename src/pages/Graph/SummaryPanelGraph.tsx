@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
+import { Nav, NavItem, TabContainer, TabContent, TabPane } from 'patternfly-react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { SummaryPanelPropType, NodeType } from '../../types/Graph';
@@ -20,6 +20,8 @@ import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Paths } from '../../config';
 import { CyNode } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { KialiIcon } from 'config/KialiIcon';
+import { style } from 'typestyle';
 
 type SummaryPanelGraphState = {
   loading: boolean;
@@ -29,6 +31,10 @@ type SummaryPanelGraphState = {
   tcpReceived: Datapoint[];
   metricsLoadError: string | null;
 };
+
+const topologyStyle = style({
+  margin: '0 1em'
+});
 
 export default class SummaryPanelGraph extends React.Component<SummaryPanelPropType, SummaryPanelGraphState> {
   static readonly panelStyle = {
@@ -131,7 +137,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <>
                     {incomingRateGrpc.rate === 0 && incomingRateHttp.rate === 0 && (
                       <>
-                        <Icon type="pf" name="info" /> No incoming traffic.
+                        <KialiIcon.Info /> No incoming traffic.
                       </>
                     )}
                     {incomingRateGrpc.rate > 0 && (
@@ -160,7 +166,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <>
                     {outgoingRateGrpc.rate === 0 && outgoingRateHttp.rate === 0 && (
                       <>
-                        <Icon type="pf" name="info" /> No outgoing traffic.
+                        <KialiIcon.Info /> No outgoing traffic.
                       </>
                     )}
                     {outgoingRateGrpc.rate > 0 && (
@@ -189,7 +195,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
                   <>
                     {totalRateGrpc.rate === 0 && totalRateHttp.rate === 0 && (
                       <>
-                        <Icon type="pf" name="info" /> No traffic.
+                        <KialiIcon.Info /> No traffic.
                       </>
                     )}
                     {totalRateGrpc.rate > 0 && (
@@ -331,7 +337,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       <br />
       {numApps > 0 && (
         <>
-          <Icon name="applications" type="pf" style={{ padding: '0 1em' }} />
+          <KialiIcon.Applications className={topologyStyle} />
           {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
           {numVersions > 0 && `(${numVersions} versions)`}
           <br />
@@ -339,21 +345,21 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
       )}
       {numSvc > 0 && (
         <>
-          <Icon name="service" type="pf" style={{ padding: '0 1em' }} />
+          <KialiIcon.Services className={topologyStyle} />
           {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
           <br />
         </>
       )}
       {numWorkloads > 0 && (
         <>
-          <Icon name="bundle" type="pf" style={{ padding: '0 1em' }} />
+          <KialiIcon.Workloads className={topologyStyle} />
           {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
           <br />
         </>
       )}
       {numEdges > 0 && (
         <>
-          <Icon name="topology" type="pf" style={{ padding: '0 1em' }} />
+          <KialiIcon.Topology className={topologyStyle} />
           {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
         </>
       )}
@@ -366,7 +372,7 @@ export default class SummaryPanelGraph extends React.Component<SummaryPanelPropT
     } else if (this.state.metricsLoadError) {
       return (
         <div>
-          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
           {this.state.metricsLoadError}
         </div>
       );

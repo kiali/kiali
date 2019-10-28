@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import _ from 'lodash';
 import { style } from 'typestyle';
-import { Button, FormControl, Icon, InputGroup, OverlayTrigger, Popover } from 'patternfly-react';
+import { Button, FormControl, InputGroup, OverlayTrigger, Popover } from 'patternfly-react';
 import { KialiAppState } from '../store/Store';
 import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
 import { KialiAppAction } from '../actions/KialiAppAction';
@@ -16,6 +16,7 @@ import {
   BoundingClientAwareComponent,
   PropertyType
 } from './BoundingClientAwareComponent/BoundingClientAwareComponent';
+import { KialiIcon } from 'config/KialiIcon';
 
 const namespaceButtonColors = {
   backgroundColor: PfColors.White,
@@ -162,7 +163,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
               {this.props.filter !== '' && (
                 <InputGroup.Button>
                   <Button onClick={this.clearFilter}>
-                    <Icon name="close" />
+                    <KialiIcon.Close />
                   </Button>
                 </InputGroup.Button>
               )}
@@ -196,7 +197,7 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
         rootClose={true}
       >
         <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="namespace-selector">
-          {this.namespaceButtonText()} <Icon name="angle-down" />
+          {this.namespaceButtonText()} <KialiIcon.AngleDown />
         </Button>
       </OverlayTrigger>
     );

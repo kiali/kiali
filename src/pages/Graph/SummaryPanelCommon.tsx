@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Icon } from 'patternfly-react';
 import { style } from 'typestyle';
 import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
 import { Health, healthNotAvailable } from '../../types/Health';
@@ -12,6 +11,7 @@ import { serverConfig } from '../../config/ServerConfig';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Badge } from '@patternfly/react-core';
 import { PfColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
 
 export enum NodeMetricType {
   APP = 1,
@@ -173,7 +173,7 @@ export const renderNoTraffic = (protocol?: string) => {
   return (
     <>
       <div>
-        <Icon type="pf" name="info" /> No {protocol ? protocol : ''} traffic logged.
+        <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
       </div>
     </>
   );

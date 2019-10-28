@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, FormControl, FormGroup, Icon, InputGroup, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Button, FormControl, FormGroup, InputGroup, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
@@ -13,6 +13,7 @@ import * as CytoscapeGraphUtils from '../CytoscapeGraph/CytoscapeGraphUtils';
 import { CyData, NodeType } from '../../types/Graph';
 import { Layout, EdgeLabelMode } from 'types/GraphFilter';
 import * as AlertUtils from '../../utils/AlertUtils';
+import { KialiIcon } from 'config/KialiIcon';
 
 type ReduxProps = {
   compressOnHide: boolean;
@@ -137,7 +138,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 >
                   <InputGroup.Button>
                     <Button onClick={this.clearFind}>
-                      <Icon name="close" type="fa" />
+                      <KialiIcon.Close />
                     </Button>
                   </InputGroup.Button>
                 </OverlayTrigger>
@@ -166,7 +167,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
                 >
                   <InputGroup.Button>
                     <Button onClick={this.clearHide}>
-                      <Icon name="close" type="fa" />
+                      <KialiIcon.Close />
                     </Button>
                   </InputGroup.Button>
                 </OverlayTrigger>
@@ -178,7 +179,7 @@ export class GraphFind extends React.PureComponent<GraphFindProps, GraphFindStat
               overlay={<Tooltip id={'tt_graph_find_help'}>Find/Hide Help...</Tooltip>}
             >
               <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleFindHelp}>
-                <Icon name="help" type="pf" />
+                <KialiIcon.Help />
               </Button>
             </OverlayTrigger>
           </span>

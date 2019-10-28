@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Badge, PopoverPosition } from '@patternfly/react-core';
-import { Icon } from 'patternfly-react';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RpsChart, TcpChart } from '../../components/SummaryPanel/RpsChart';
 import { NodeType, SummaryPanelPropType } from '../../types/Graph';
@@ -23,7 +22,7 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { serverConfig } from '../../config/ServerConfig';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
-import { icons } from '../../config';
+import { KialiIcon } from 'config/KialiIcon';
 
 type SummaryPanelGroupState = {
   loading: boolean;
@@ -146,7 +145,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
           {/* TODO: link to App Details charts when available
            <p style={{ textAlign: 'right' }}>
             <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
-              View detailed charts <Icon name="angle-double-right" />
+              View detailed charts <KialiIcon.AngleDoubleRight />
             </Link>
           </p> */}
           {this.hasGrpcTraffic(group) ? this.renderGrpcRates(group) : renderNoTraffic('GRPC')}
@@ -239,21 +238,13 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
       <>
         {hasCB && (
           <div>
-            <Icon
-              name={icons.istio.circuitBreaker.name}
-              type={icons.istio.circuitBreaker.type}
-              style={{ width: '10px' }}
-            />
+            <KialiIcon.CircuitBreaker />
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
         {hasVS && (
           <div>
-            <Icon
-              name={icons.istio.virtualService.name}
-              type={icons.istio.virtualService.type}
-              style={{ width: '10px' }}
-            />
+            <KialiIcon.VirtualService />
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
@@ -309,7 +300,7 @@ export default class SummaryPanelGroup extends React.Component<SummaryPanelPropT
     } else if (this.state.metricsLoadError) {
       return (
         <div>
-          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
           {this.state.metricsLoadError}
         </div>
       );

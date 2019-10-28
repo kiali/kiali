@@ -1,18 +1,9 @@
 import * as React from 'react';
 import Draggable from 'react-draggable';
-import {
-  Button,
-  Icon,
-  Nav,
-  NavItem,
-  TabContainer,
-  TabContent,
-  TabPane,
-  Table,
-  TablePfProvider
-} from 'patternfly-react';
+import { Button, Nav, NavItem, TabContainer, TabContent, TabPane, Table, TablePfProvider } from 'patternfly-react';
 import { style } from 'typestyle';
 import * as resolve from 'table-resolver';
+import { KialiIcon } from 'config/KialiIcon';
 
 export interface GraphHelpFindProps {
   onClose: () => void;
@@ -221,7 +212,7 @@ export default class GraphHelpFind extends React.Component<GraphHelpFindProps> {
         <div className={`modal-content ${className} ${contentStyle}`}>
           <div id="helpheader" className={`modal-header ${headerStyle}`}>
             <Button className="close" bsClass="" onClick={this.props.onClose}>
-              <Icon title="Close" type="pf" name="close" />
+              <KialiIcon.Close />
             </Button>
             <span className="modal-title">Help: Graph Find/Hide</span>
           </div>

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { renderDestServicesLinks, RenderLink, renderTitle } from './SummaryLink';
-import { Icon } from 'patternfly-react';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -35,7 +34,6 @@ import { Health } from '../../types/Health';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { Response } from '../../services/Api';
 import { Reporter } from '../../types/MetricsOptions';
-import { icons } from '../../config/Icons';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
@@ -340,7 +338,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {nodeType !== NodeType.UNKNOWN && (
             <p style={{ textAlign: 'right' }}>
               <Link to={`/namespaces/${namespace}/services/${app}?tab=metrics&groupings=local+version%2Cresponse+code`}>
-                View detailed charts <Icon name="angle-double-right" />
+                View detailed charts <KialiIcon.AngleDoubleRight />
               </Link>
             </p>
           )} */}
@@ -410,7 +408,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return (
         <>
           <div>
-            <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the selected node is inaccessible.
+            <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is inaccessible.
             <hr />
           </div>
         </>
@@ -419,7 +417,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       return (
         <>
           <div>
-            <Icon type="pf" name="info" /> Sparkline charts cannot be shown because the selected node is a serviceEntry.
+            <KialiIcon.Info /> Sparkline charts cannot be shown because the selected node is a serviceEntry.
             <hr />
           </div>
         </>
@@ -431,7 +429,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
     if (this.state.metricsLoadError) {
       return (
         <div>
-          <Icon type="pf" name="warning-triangle-o" /> <strong>Error loading metrics: </strong>
+          <KialiIcon.Warning /> <strong>Error loading metrics: </strong>
           {this.state.metricsLoadError}
         </div>
       );
@@ -462,7 +460,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {serviceWithUnknownSource && (
             <>
               <div>
-                <Icon type="pf" name="info" /> Traffic from unknown not included. Use edge for details.
+                <KialiIcon.Info /> Traffic from unknown not included. Use edge for details.
               </div>
             </>
           )}
@@ -475,7 +473,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {this.isIstioOutgoingCornerCase(node) && (
             <>
               <div>
-                <Icon type="pf" name="info" /> Traffic to Istio namespaces not included. Use edge for details.
+                <KialiIcon.Info /> Traffic to Istio namespaces not included. Use edge for details.
               </div>
             </>
           )}
@@ -495,7 +493,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {serviceWithUnknownSource && (
             <>
               <div>
-                <Icon type="pf" name="info" /> Traffic from unknown not included. Use edge for details.
+                <KialiIcon.Info /> Traffic from unknown not included. Use edge for details.
               </div>
             </>
           )}
@@ -508,7 +506,7 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
           {this.isIstioOutgoingCornerCase(node) && (
             <>
               <div>
-                <Icon type="pf" name="info" /> Traffic to Istio namespaces not included. Use edge for details.
+                <KialiIcon.Info />" /> Traffic to Istio namespaces not included. Use edge for details.
               </div>
             </>
           )}
@@ -551,37 +549,27 @@ export default class SummaryPanelNode extends React.Component<SummaryPanelPropTy
       <>
         {hasCB && (
           <div>
-            <Icon
-              name={icons.istio.circuitBreaker.name}
-              type={icons.istio.circuitBreaker.type}
-              style={{ width: '10px' }}
-            />
+            <KialiIcon.CircuitBreaker />
             <span style={{ paddingLeft: '4px' }}>Has Circuit Breaker</span>
           </div>
         )}
         {hasVS && (
           <div>
-            <Icon
-              name={icons.istio.virtualService.name}
-              type={icons.istio.virtualService.type}
-              style={{ width: '10px' }}
-            />
+            <KialiIcon.VirtualService />
             <span style={{ paddingLeft: '4px' }}>Has Virtual Service</span>
           </div>
         )}
         {hasMissingSC && (
           <div>
-            <Icon
-              name={icons.istio.missingSidecar.name}
-              type={icons.istio.missingSidecar.type}
-              style={{ width: '10px', marginRight: '5px' }}
-            />
+            <KialiIcon.MissingSidecar />
             <span style={{ paddingLeft: '4px' }}>Has Missing Sidecar</span>
           </div>
         )}
         {isDead && (
           <div>
-            <Icon type="pf" name="info" style={{ width: '10px', marginRight: '5px' }} />
+            <span style={{ marginRight: '5px' }}>
+              <KialiIcon.Info />
+            </span>
             <span style={{ paddingLeft: '4px' }}>Has No Running Pods</span>
           </div>
         )}

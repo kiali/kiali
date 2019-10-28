@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { AboutModal, TextContent, TextList, TextListItem, Title, Button } from '@patternfly/react-core';
-import * as icons from '@patternfly/react-icons';
 import { Component, Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogo } from '../../config';
+import { style } from 'typestyle';
+import { KialiIcon } from 'config/KialiIcon';
 
 type AboutUIModalState = {
   showModal: boolean;
@@ -12,6 +13,10 @@ type AboutUIModalProps = {
   status: Status;
   components: Component[];
 };
+
+const iconStyle = style({
+  marginRight: '10px'
+});
 
 class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState> {
   constructor(props: AboutUIModalProps) {
@@ -104,11 +109,10 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
 
   private renderWebsiteLink = () => {
     if (config.about && config.about.website) {
-      const Icon = icons[config.about.website.icon];
       return (
         // @ts-ignore
         <Button component="a" href={config.about.website.url} variant="link" target="_blank">
-          <Icon style={{ marginRight: '10px' }} />
+          <KialiIcon.Website className={iconStyle} />
           {config.about.website.linkText}
         </Button>
       );
@@ -119,11 +123,10 @@ class AboutUIModal extends React.Component<AboutUIModalProps, AboutUIModalState>
 
   private renderProjectLink = () => {
     if (config.about && config.about.project) {
-      const Icon = icons[config.about.project.icon];
       return (
         // @ts-ignore
         <Button component="a" href={config.about.project.url} variant="link" target="_blank">
-          <Icon style={{ marginRight: '10px' }} />
+          <KialiIcon.Repository className={iconStyle} />
           {config.about.project.linkText}
         </Button>
       );

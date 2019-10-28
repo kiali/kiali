@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Icon } from 'patternfly-react';
 import { NodeType, DecoratedGraphNodeData, GraphNodeData } from '../../types/Graph';
 import { CyNode, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
+import { KialiIcon } from 'config/KialiIcon';
 
 const getTitle = (nodeData: DecoratedGraphNodeData) => {
   if (nodeData.nodeType === NodeType.UNKNOWN) {
@@ -72,7 +72,9 @@ export const RenderLink = (props: RenderLinkProps) => {
     <>
       {link}
       {props.nodeData.isInaccessible && (
-        <Icon key="link-icon" name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />
+        <span style={{ paddingLeft: '2px' }}>
+          <KialiIcon.MtlsLock />
+        </span>
       )}
     </>
   );
@@ -83,8 +85,7 @@ export const renderTitle = (nodeData: DecoratedGraphNodeData) => {
 
   return (
     <>
-      <strong>{getTitle(nodeData)}:</strong> {link}{' '}
-      {nodeData.isInaccessible && <Icon name="private" type="pf" style={{ paddingLeft: '2px', width: '10px' }} />}
+      <strong>{getTitle(nodeData)}:</strong> {link} {nodeData.isInaccessible && <KialiIcon.MtlsLock />}
     </>
   );
 };

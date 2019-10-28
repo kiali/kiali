@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import FlexView from 'react-flexview';
-import { Breadcrumb, Button, Icon, OverlayTrigger, Tooltip } from 'patternfly-react';
+import { Breadcrumb, Button, OverlayTrigger, Tooltip } from 'patternfly-react';
 import { style } from 'typestyle';
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, PollIntervalInMs, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
@@ -42,6 +42,7 @@ import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { NodeContextMenuContainer } from '../../components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { PfColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
 
 // GraphURLPathProps holds path variable values.  Currenly all path variables are relevant only to a node graph
 type GraphURLPathProps = {
@@ -314,7 +315,7 @@ export class GraphPage extends React.Component<GraphPageProps, GraphPageState> {
                   overlay={<Tooltip id={'graph-tour-help-tt'}>Graph help tour...</Tooltip>}
                 >
                   <Button bsStyle="link" style={{ paddingLeft: '6px' }} onClick={this.toggleHelp}>
-                    <Icon type="pf" name="help" />
+                    <KialiIcon.Help />
                   </Button>
                 </OverlayTrigger>
               </Breadcrumb.Item>

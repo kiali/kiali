@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Button, Icon } from 'patternfly-react';
+import { Button } from 'patternfly-react';
 import { PfColors } from '../Pf/PfColors';
 import ReactResizeDetector from 'react-resize-detector';
 import { style } from 'typestyle';
+import { KialiIcon } from 'config/KialiIcon';
 
 // We have to import it like this, because current index.d.ts file is broken for this component.
 const Floater = require('react-floater').default;
@@ -66,7 +67,7 @@ const BackButton = (props: TourProps) => {
   }
   return (
     <Button className={buttonTextStyle} onClick={props.onBack}>
-      <Icon type="fa" name="angle-left" /> Back
+      <KialiIcon.AngleLeft /> Back
     </Button>
   );
 };
@@ -78,7 +79,7 @@ const NextButton = (props: TourProps) => {
         'Done'
       ) : (
         <>
-          Next <Icon type="fa" name="angle-right" />
+          Next <KialiIcon.AngleRight />
         </>
       )}
     </Button>
@@ -97,7 +98,7 @@ const TourModal = (props: TourProps, step: Step) => {
           {StepNumber(props.stepNumber)}
           <span className="modal-title">{step.name}</span>
           <Button className="close" bsClass="default" onClick={props.onClose}>
-            <Icon title="Close" type="pf" name="close" />
+            <KialiIcon.Close />
           </Button>
         </div>
         <div className={`modal-body ${modalBody}`}>{step.description}</div>
