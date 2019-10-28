@@ -199,7 +199,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
           this.props.match.params.object
         );
     deletePromise
-      .then(_r => this.backToList())
+      .then(() => this.backToList())
       .catch(error => {
         AlertUtils.addError('Could not delete IstioConfig details.', error);
       });
@@ -223,7 +223,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
             jsonPatch
           );
       updatePromise
-        .then(_r => {
+        .then(() => {
           const targetMessage =
             this.props.match.params.namespace +
             ' / ' +
@@ -308,7 +308,7 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
 
   renderActionButtons = () => {
     // User won't save if file has yaml errors
-    const yamlErrors = this.state.yamlValidations && this.state.yamlValidations.markers.length > 0 ? true : false;
+    const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
     return (
       <IstioActionButtonsContainer
         objectName={this.props.match.params.object}
@@ -376,14 +376,14 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
     if (this.hasOverview()) {
       tabs.push(
         <Tab key="istio-overview" title="Overview" eventKey={0}>
-          {this.state.currentTab === 'overview' ? this.renderOverview() : undefined}
+          {this.renderOverview()}
         </Tab>
       );
     }
 
     tabs.push(
       <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={1}>
-        {this.state.currentTab === 'yaml' ? this.renderEditor() : undefined}
+        {this.renderEditor()}
       </Tab>
     );
 
@@ -397,6 +397,8 @@ class IstioConfigDetailsPage extends React.Component<RouteComponentProps<IstioCo
         tabName={tabName}
         defaultTab={this.defaultTab()}
         activeTab={this.state.currentTab}
+        mountOnEnter={true}
+        unmountOnExit={true}
       >
         {tabs}
       </ParameterizedTabs>

@@ -299,7 +299,7 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   };
 
   addFormatValidation(details: ServiceDetailsInfo, validations: Validations): Validations {
-    details.destinationRules.items.forEach((destinationRule, _index, _ary) => {
+    details.destinationRules.items.forEach(destinationRule => {
       const dr = new DestinationRuleValidator(destinationRule);
       const formatValidation = dr.formatValidation();
 
@@ -359,46 +359,39 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
   }
 
   render() {
-    const currentTab = this.state.currentTab;
     const errorTraces = this.state.serviceDetailsInfo.errorTraces;
     const overviewTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
-        {currentTab === 'info' && (
-          <ServiceInfo
-            namespace={this.props.match.params.namespace}
-            service={this.props.match.params.service}
-            serviceDetails={this.state.serviceDetailsInfo}
-            gateways={this.state.gateways}
-            validations={this.state.validations}
-            onRefresh={this.doRefresh}
-            threeScaleInfo={this.state.threeScaleInfo}
-            threeScaleServiceRule={this.state.threeScaleServiceRule}
-          />
-        )}
+        <ServiceInfo
+          namespace={this.props.match.params.namespace}
+          service={this.props.match.params.service}
+          serviceDetails={this.state.serviceDetailsInfo}
+          gateways={this.state.gateways}
+          validations={this.state.validations}
+          onRefresh={this.doRefresh}
+          threeScaleInfo={this.state.threeScaleInfo}
+          threeScaleServiceRule={this.state.threeScaleServiceRule}
+        />
       </Tab>
     );
     const trafficTab = (
       <Tab eventKey={1} title="Traffic" key="Traffic">
-        {currentTab === 'traffic' && (
-          <TrafficDetails
-            trafficData={this.state.trafficData}
-            itemType={MetricsObjectTypes.SERVICE}
-            namespace={this.props.match.params.namespace}
-            serviceName={this.props.match.params.service}
-          />
-        )}
+        <TrafficDetails
+          trafficData={this.state.trafficData}
+          itemType={MetricsObjectTypes.SERVICE}
+          namespace={this.props.match.params.namespace}
+          serviceName={this.props.match.params.service}
+        />
       </Tab>
     );
     const inboundMetricsTab = (
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
-        {currentTab === 'metrics' && (
-          <IstioMetricsContainer
-            namespace={this.props.match.params.namespace}
-            object={this.props.match.params.service}
-            objectType={MetricsObjectTypes.SERVICE}
-            direction={'inbound'}
-          />
-        )}
+        <IstioMetricsContainer
+          namespace={this.props.match.params.namespace}
+          object={this.props.match.params.service}
+          objectType={MetricsObjectTypes.SERVICE}
+          direction={'inbound'}
+        />
       </Tab>
     );
 
@@ -412,13 +405,11 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
         const jaegerTitle: string = errorTraces && errorTraces > 0 ? 'Error Traces (' + errorTraces + ')' : 'Traces';
         jaegerTag = (
           <Tab eventKey={3} style={{ textAlign: 'center' }} title={jaegerTitle} key="traces">
-            {currentTab === 'traces' && (
-              <ServiceTraces
-                namespace={this.props.match.params.namespace}
-                service={this.props.match.params.service}
-                errorTags={errorTraces ? errorTraces > -1 : false}
-              />
-            )}
+            <ServiceTraces
+              namespace={this.props.match.params.namespace}
+              service={this.props.match.params.service}
+              errorTags={errorTraces ? errorTraces > -1 : false}
+            />
           </Tab>
         );
       } else {
@@ -471,6 +462,8 @@ class ServiceDetails extends React.Component<ServiceDetailsProps, ServiceDetails
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
         >
           {tabsArray}
         </ParameterizedTabs>

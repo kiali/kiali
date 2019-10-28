@@ -3,13 +3,15 @@ import { TabProps, Tabs } from '@patternfly/react-core';
 import history from '../../app/History';
 
 type TabsProps = {
-  id: string;
-  tabMap: { [key: string]: number };
-  tabName: string;
-  defaultTab: string;
   activeTab: string;
+  defaultTab: string;
+  id: string;
+  mountOnEnter?: boolean;
   onSelect: (tabName: string) => void;
   postHandler?: (tabName: string) => void;
+  tabMap: { [key: string]: number };
+  tabName: string;
+  unmountOnExit?: boolean;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
@@ -97,6 +99,8 @@ export default class ParameterizedTabs extends React.Component<TabsProps> {
             this.tabTransitionHandler(ek as number);
           }
         }}
+        mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
+        unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
       >
         {this.props.children}
       </Tabs>

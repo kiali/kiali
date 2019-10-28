@@ -170,15 +170,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
         const tab = (
           <Tab title={dashboard.title} key={dashboard.template} eventKey={tabKey}>
-            {this.state.currentTab === dashboard.template ? (
-              <CustomMetricsContainer
-                namespace={this.props.match.params.namespace}
-                app={this.props.match.params.app}
-                template={dashboard.template}
-              />
-            ) : (
-              undefined
-            )}
+            <CustomMetricsContainer
+              namespace={this.props.match.params.namespace}
+              app={this.props.match.params.app}
+              template={dashboard.template}
+            />
           </Tab>
         );
         tabs.push(tab);
@@ -192,56 +188,40 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   staticTabs() {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        {this.state.currentTab === 'info' ? (
-          <AppInfo app={this.state.app} namespace={this.props.match.params.namespace} health={this.state.health} />
-        ) : (
-          undefined
-        )}
+        <AppInfo app={this.state.app} namespace={this.props.match.params.namespace} health={this.state.health} />
       </Tab>
     );
 
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
-        {this.state.currentTab === 'traffic' ? (
-          <TrafficDetails
-            trafficData={this.state.trafficData}
-            itemType={MetricsObjectTypes.APP}
-            namespace={this.state.app.namespace.name}
-            appName={this.state.app.name}
-          />
-        ) : (
-          undefined
-        )}
+        <TrafficDetails
+          trafficData={this.state.trafficData}
+          itemType={MetricsObjectTypes.APP}
+          namespace={this.state.app.namespace.name}
+          appName={this.state.app.name}
+        />
       </Tab>
     );
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
-        {this.state.currentTab === 'in_metrics' ? (
-          <IstioMetricsContainer
-            namespace={this.props.match.params.namespace}
-            object={this.props.match.params.app}
-            objectType={MetricsObjectTypes.APP}
-            direction={'inbound'}
-          />
-        ) : (
-          undefined
-        )}
+        <IstioMetricsContainer
+          namespace={this.props.match.params.namespace}
+          object={this.props.match.params.app}
+          objectType={MetricsObjectTypes.APP}
+          direction={'inbound'}
+        />
       </Tab>
     );
 
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
-        {this.state.currentTab === 'out_metrics' ? (
-          <IstioMetricsContainer
-            namespace={this.props.match.params.namespace}
-            object={this.props.match.params.app}
-            objectType={MetricsObjectTypes.APP}
-            direction={'outbound'}
-          />
-        ) : (
-          undefined
-        )}
+        <IstioMetricsContainer
+          namespace={this.props.match.params.namespace}
+          object={this.props.match.params.app}
+          objectType={MetricsObjectTypes.APP}
+          direction={'outbound'}
+        />
       </Tab>
     );
 
@@ -292,6 +272,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
         >
           {this.renderTabs()}
         </ParameterizedTabs>

@@ -231,73 +231,56 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
 
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        {this.state.currentTab === 'info' ? (
-          <WorkloadInfo
-            workload={this.state.workload}
-            namespace={this.props.match.params.namespace}
-            validations={this.state.validations}
-            istioEnabled={this.state.istioEnabled}
-            health={this.state.health}
-          />
-        ) : (
-          undefined
-        )}
+        <WorkloadInfo
+          workload={this.state.workload}
+          namespace={this.props.match.params.namespace}
+          validations={this.state.validations}
+          istioEnabled={this.state.istioEnabled}
+          health={this.state.health}
+        />
       </Tab>
     );
 
     const trafficTab = (
       <Tab title="Traffic" eventKey={1} key={'Traffic'}>
-        {this.state.currentTab === 'traffic' ? (
-          <TrafficDetails
-            trafficData={this.state.trafficData}
-            itemType={MetricsObjectTypes.WORKLOAD}
-            namespace={this.props.match.params.namespace}
-            workloadName={this.state.workload.name}
-          />
-        ) : (
-          undefined
-        )}
+        <TrafficDetails
+          trafficData={this.state.trafficData}
+          itemType={MetricsObjectTypes.WORKLOAD}
+          namespace={this.props.match.params.namespace}
+          workloadName={this.state.workload.name}
+        />
       </Tab>
     );
 
     const logTab = (
       <Tab title="Logs" eventKey={2} key={'Logs'}>
-        {this.state.currentTab === 'logs' && hasPods ? (
+        {hasPods ? (
           <WorkloadPodLogs namespace={this.props.match.params.namespace} pods={this.state.workload.pods} />
         ) : (
           'There are no logs to display because the workload has no pods.'
-        )}
         )}
       </Tab>
     );
 
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={3} key={'Inbound Metrics'}>
-        {this.state.currentTab === 'in_metrics' ? (
-          <IstioMetricsContainer
-            namespace={this.props.match.params.namespace}
-            object={this.props.match.params.workload}
-            objectType={MetricsObjectTypes.WORKLOAD}
-            direction={'inbound'}
-          />
-        ) : (
-          undefined
-        )}
+        <IstioMetricsContainer
+          namespace={this.props.match.params.namespace}
+          object={this.props.match.params.workload}
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={'inbound'}
+        />
       </Tab>
     );
 
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={4} key={'Outbound Metrics'}>
-        {this.state.currentTab === 'out_metrics' ? (
-          <IstioMetricsContainer
-            namespace={this.props.match.params.namespace}
-            object={this.props.match.params.workload}
-            objectType={MetricsObjectTypes.WORKLOAD}
-            direction={'outbound'}
-          />
-        ) : (
-          undefined
-        )}
+        <IstioMetricsContainer
+          namespace={this.props.match.params.namespace}
+          object={this.props.match.params.workload}
+          objectType={MetricsObjectTypes.WORKLOAD}
+          direction={'outbound'}
+        />
       </Tab>
     );
 
@@ -319,16 +302,12 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           paramToTab[dashboard.template] = tabKey;
           const tab = (
             <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
-              {this.state.currentTab === dashboard.template ? (
-                <CustomMetricsContainer
-                  namespace={this.props.match.params.namespace}
-                  app={app}
-                  version={version}
-                  template={dashboard.template}
-                />
-              ) : (
-                undefined
-              )}
+              <CustomMetricsContainer
+                namespace={this.props.match.params.namespace}
+                app={app}
+                version={version}
+                template={dashboard.template}
+              />
             </Tab>
           );
           tabs.push(tab);
@@ -382,6 +361,8 @@ class WorkloadDetails extends React.Component<WorkloadDetailsPageProps, Workload
           defaultTab={defaultTab}
           postHandler={this.fetchTrafficDataOnTabChange}
           activeTab={this.state.currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
         >
           {this.renderTabs()}
         </ParameterizedTabs>
