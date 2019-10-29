@@ -1,5 +1,4 @@
-import { Dropdown, DropdownToggle } from '@patternfly/react-core';
-import { style } from 'typestyle';
+import { Select, SelectGroup, SelectOption, SelectVariant } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -9,7 +8,6 @@ import { GraphFilterState, KialiAppState } from '../../store/Store';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { GraphFilterActions } from '../../actions/GraphFilterActions';
 import { GraphType } from '../../types/Graph';
-import { PfColors } from '../Pf/PfColors';
 
 type ReduxProps = Omit<GraphFilterState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp'> & {
   // Dispatch methods
@@ -153,48 +151,40 @@ class GraphSettings extends React.PureComponent<GraphSettingsProps, GraphSetting
       }
     ];
 
-    const checkboxStyle = style({ marginLeft: 10 });
-    const disabledCheckboxStyle = style({ marginLeft: 10, color: PfColors.Gray });
-
-    const displaySettingItems = visibilityLayers.map((item: VisibilityLayersType) => (
-      <div id={item.id} key={item.id}>
-        <label>
-          <input type="checkbox" checked={item.value} onChange={() => item.onChange()} disabled={item.disabled} />
-          <span className={item.disabled ? disabledCheckboxStyle : checkboxStyle}>{item.labelText}</span>
-        </label>
-      </div>
-    ));
-
-    const badgeItems = badges.map((item: VisibilityLayersType) => (
-      <div id={item.id} key={item.id}>
-        <label>
-          <input type="checkbox" checked={item.value} onChange={() => item.onChange()} />
-          <span className={checkboxStyle}>{item.labelText}</span>
-        </label>
-      </div>
-    ));
-
-    const spacerStyle = style({
-      height: '1em'
-    });
-
-    const graphSettingsContent = (
-      // TODO: Remove the class="pf-c-dropdown__menu-item" attribute which is fixing a sizing issue in PF.
-      // https://github.com/patternfly/patternfly-react/issues/3156
-      <div style={{ paddingLeft: '10px', backgroundColor: PfColors.White }} className="pf-c-dropdown__menu-item">
-        {displaySettingItems}
-        <div className={spacerStyle} />
-        <label>Badges:</label>
-        {badgeItems}
-      </div>
-    );
-
     const { isOpen } = this.state;
 
+    const selection = visibilityLayers
+      .filter((item: VisibilityLayersType) => item.value)
+      .concat(badges.filter((item: VisibilityLayersType) => item.value))
+      .map((item: VisibilityLayersType) => item.labelText);
+
     return (
-      <Dropdown toggle={<DropdownToggle onToggle={this.onToggle}>Display</DropdownToggle>} isOpen={isOpen}>
-        {graphSettingsContent}
-      </Dropdown>
+      <Select
+        placeholderText="Display"
+        onToggle={this.onToggle}
+        onSelect={() => undefined}
+        isExpanded={isOpen}
+        variant={SelectVariant.checkbox}
+        isGrouped={true}
+        selections={selection}
+      >
+        <SelectGroup label="" key="visibilityLayers">
+          {visibilityLayers.map((item: VisibilityLayersType) => (
+            <SelectOption
+              isChecked={item.value}
+              isDisabled={item.disabled}
+              key={item.id}
+              value={item.labelText}
+              onClick={item.onChange}
+            />
+          ))}
+        </SelectGroup>
+        <SelectGroup label="Badges" key="badges">
+          {badges.map((item: VisibilityLayersType) => (
+            <SelectOption isChecked={item.value} key={item.id} value={item.labelText} onClick={item.onChange} />
+          ))}
+        </SelectGroup>
+      </Select>
     );
   }
 }
