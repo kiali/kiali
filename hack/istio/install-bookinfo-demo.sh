@@ -13,16 +13,21 @@
 ##############################################################################
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
-# CLIENT_EXE_NAME is going to either be "oc", "kubectl", or "istiooc" (which is the default since it will be installed via cluster-openshift.sh hack script).
+# CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
-CLIENT_EXE_NAME="istiooc"
+CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
 RATE=1
+AUTO_INJECTION="true"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
     -id|--istio-dir)
       ISTIO_DIR="$2"
       shift;shift
@@ -58,8 +63,9 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected or manually injected (default: true).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
-  -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc"
+  -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
   -n|--namespace <name>: Install the demo in this namespace (default: bookinfo)
   -b|--bookinfo.yaml <file>: A custom yaml file to deploy the bookinfo demo
   -g|--gateway.yaml <file>: A custom yaml file to deploy the bookinfo-gateway resources
@@ -79,7 +85,6 @@ done
 
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
-  # The bookinfo demo files rarely change - should be the same no matter what Istio version we find.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
   ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
@@ -120,18 +125,8 @@ fi
 # If OpenShift, we need to do some additional things
 if [[ "$CLIENT_EXE" = *"oc" ]]; then
   $CLIENT_EXE new-project ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-details -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-productpage -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-ratings -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-ratings-v2 -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user anyuid -z bookinfo-reviews -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z default -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-details -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-productpage -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-ratings -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-ratings-v2 -n ${NAMESPACE}
-  $CLIENT_EXE adm policy add-scc-to-user privileged -z bookinfo-reviews -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
+  $CLIENT_EXE adm policy add-scc-to-group privileged system:serviceaccounts -n ${NAMESPACE}
 else
   $CLIENT_EXE create namespace ${NAMESPACE}
 fi
@@ -144,9 +139,12 @@ if [ "${GATEWAY_YAML}" == "" ]; then
   GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
 fi
 
-$ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-# This is only if automatic injection of sidecars is enabled
-# $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+if [ "${AUTO_INJECTION}" == "true" ]; then
+  $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
+  $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+else
+  $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+fi
 
 $ISTIOCTL create -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
@@ -154,16 +152,28 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
   echo "Installing Mongo DB and a ratings service that uses it"
   MONGO_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-db.yaml"
   MONGO_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2.yaml"
-  $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-  $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+
+  if [ "${AUTO_INJECTION}" == "true" ]; then
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_DB_YAML}
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
+  else
+    $ISTIOCTL kube-inject -f ${MONGO_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    $ISTIOCTL kube-inject -f ${MONGO_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  fi
 fi
 
 if [ "${MYSQL_ENABLED}" == "true" ]; then
   echo "Installing MySql DB and a ratings service that uses it"
   MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql.yaml"
   MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml"
-  $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
-  $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+
+  if [ "${AUTO_INJECTION}" == "true" ]; then
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
+    $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
+  else
+    $ISTIOCTL kube-inject -f ${MYSQL_DB_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+    $ISTIOCTL kube-inject -f ${MYSQL_SERVICE_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+  fi
 fi
 
 sleep 4
@@ -187,7 +197,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     # for now, we only support minikube k8s environments
     if minikube status > /dev/null 2>&1 ; then
       INGRESS_HOST=$(minikube ip)
-      INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+      INGRESS_PORT=$($CLIENT_EXE -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
       INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
       echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
     fi
