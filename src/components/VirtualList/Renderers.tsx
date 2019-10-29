@@ -87,11 +87,9 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
 
 export const health: Renderer<TResource> = (item: TResource, __: Resource, _: string, health?: Health) => {
   return (
-    health && (
-      <td role="gridcell" key={'VirtuaItem_Health_' + item.namespace + '_' + item.name}>
-        <HealthIndicator id={item.name} health={health} mode={DisplayMode.SMALL} />
-      </td>
-    )
+    <td role="gridcell" key={'VirtuaItem_Health_' + item.namespace + '_' + item.name}>
+      {health && <HealthIndicator id={item.name} health={health} mode={DisplayMode.SMALL} />}
+    </td>
   );
 };
 

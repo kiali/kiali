@@ -73,7 +73,6 @@ export class VirtualList<R extends TResource> extends React.Component<VirtualLis
       HistoryManager.setParam(URLParam.DIRECTION, direction);
     }
     HistoryManager.setParam(URLParam.SORT, String(this.state.conf.columns[index].param));
-    this.props.updateItems();
   };
 
   render() {
