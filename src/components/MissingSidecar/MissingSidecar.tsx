@@ -12,13 +12,14 @@ type MissingSidecarProps = {
   icon: IconType;
   color: string;
   namespace: string;
+  style?: React.CSSProperties;
 };
 
 const MissingSidecar = (props: MissingSidecarProps) => {
-  const { text, textTooltip, icon, namespace, color, tooltip, ...otherProps } = props;
+  const { text, textTooltip, icon, namespace, color, tooltip, style, ...otherProps } = props;
 
   const iconComponent = (
-    <span {...otherProps}>
+    <span style={style} {...otherProps}>
       {React.createElement(icon, { style: { color: color } })}
       {!tooltip && <span style={{ marginLeft: '5px' }}>{text}</span>}
     </span>
