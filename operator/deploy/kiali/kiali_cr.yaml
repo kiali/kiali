@@ -235,13 +235,25 @@ spec:
 #  ---
 #  external_services:
 #
+# Note about sensitive values in the external_services "auth" sections:
+# Some external services configured below support an "auth" sub-section in order to tell Kiali how it should
+# authenticate with the external services. Credentials used to authenticate Kiali to those external services can
+# be defined in the "auth.password" and "auth.token" values within the "auth" sub-section.
+# Because these are sensitive values, you may not want to declare the actual credentials here in the Kiali CR. In
+# this case, you may store the actual password or token string in a Kubernetes secret. If you do, you need to
+# set the "auth.password" or "auth.token" to a value in the format "secret:<secretName>:<secretKey>" where
+# "<secretName>" is the name of the secret object that Kiali can access, and <secretKey> is the name of the key
+# within the named secret that contains the actual password or token string. For example, if Grafana requires a
+# password, you can store that password in a secret named "myGrafanaCredentials" in a key named "myGrafanaPw".
+# In this case, you would set "external_services.grafana.auth.password" to "secret:myGrafanaCredentials:myGrafanaPw".
+#
 # **Grafana-specific settings:
 # auth: authentication settings to connect to Grafana:
 #   ca_file: The certificate authority file to use when accessing Grafana using https. An empty string means no extra
 #       certificate authority file is used. Default is an empty string.
 #   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Grafana over https.
-#   password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions.
-#   token: Token / API key to access Grafana, for token-based authentication. It only requires viewer permissions.
+#   password: Password to be used when making requests to Grafana, for basic authentication. User only requires viewer permissions. May refer to a secret - see note above.
+#   token: Token / API key to access Grafana, for token-based authentication. It only requires viewer permissions. May refer to a secret - see note above.
 #   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
 #       token to the Grafana server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
 #       Default is "none"
@@ -299,8 +311,8 @@ spec:
 #   ca_file: The certificate authority file to use when accessing Prometheus using https. An empty string means no extra
 #       certificate authority file is used. Default is an empty string.
 #   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Prometheus over https.
-#   password: Password to be used when making requests to Prometheus, for basic authentication.
-#   token: Token / API key to access Prometheus, for token-based authentication.
+#   password: Password to be used when making requests to Prometheus, for basic authentication. May refer to a secret - see note above.
+#   token: Token / API key to access Prometheus, for token-based authentication. May refer to a secret - see note above.
 #   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
 #       token to the Prometheus server. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
 #       Default is "none"
@@ -331,8 +343,8 @@ spec:
 #   ca_file: The certificate authority file to use when accessing Jaeger using https. An empty string means no extra
 #       certificate authority file is used. Default is an empty string.
 #   insecure_skip_verify: Set true to skip verifying certificate validity when Kiali contacts Jaeger over https.
-#   password: Password to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions.
-#   token: Token / API key to access Jaeger, for token-based authentication. It only requires viewer permissions.
+#   password: Password to be used when making requests to Jaeger, for basic authentication. User only requires viewer permissions. May refer to a secret - see note above.
+#   token: Token / API key to access Jaeger, for token-based authentication. It only requires viewer permissions. May refer to a secret - see note above.
 #   type: The type of authentication to use when contacting the server from the Kiali backend. Use "bearer" to send the
 #       token to Jaeger Query. Use "basic" to connect with username and password credentials. Use "none" to not use any authentication.
 #       Default is "none"
@@ -455,6 +467,10 @@ spec:
 #    expiration_seconds: 86400
 #
 # The signing key used to generate tokens for user authentication.
+# Because this is potentially sensitive, you have the option to store this
+# value in a secret. If you store this signing key value in a secret, you
+# must indicate what key in what secret by setting this value to a string
+# in the form of "secret:<secretName>:<secretKey>"
 #    ---
 #    signing_key: "kiali"
 

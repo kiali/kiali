@@ -67,6 +67,13 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+{% for env in kiali_deployment_environment_variables %}
+        - name: {{ env }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ kiali_deployment_environment_variables[env].secret_name }}
+              key: {{ kiali_deployment_environment_variables[env].secret_key }}
+{% endfor %}
         volumeMounts:
         - name: kiali-configuration
           mountPath: "/kiali-configuration"
