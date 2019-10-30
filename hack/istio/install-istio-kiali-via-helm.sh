@@ -16,7 +16,7 @@
 ##############################################################################
 
 # ISTIO_DIR is where the Istio download is installed and thus where the Helm charts are found.
-# CLIENT_EXE_NAME must be either "oc", "kubectl", or "istiooc"
+# CLIENT_EXE_NAME must be either "oc", "kubectl".
 ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="istio-system"
@@ -140,7 +140,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client-exe <name>:
-       Cluster client executable name - valid values are "kubectl" or "oc" or "istiooc".
+       Cluster client executable name - valid values are "kubectl" or "oc".
        Default: oc
   -cp|--client-exe-path <full path to client exec>:
        Cluster client executable path - e.g. "/bin/kubectl" or "minikube kubectl --"
@@ -211,6 +211,7 @@ if [ "${USE_DEMO_VALUES}" == "true" -a "${USE_DEMO_AUTH_VALUES}" == "true" ]; th
 fi
 if [ "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
   # we know Kiali is always enabled in the demo yamls but we do not need to create the secret
+  KIALI_ENABLED="true"
   KIALI_CREATE_SECRET="false"
 fi
 
@@ -271,24 +272,7 @@ if [ "${DELETE_ISTIO}" != "true" ]; then
   if [[ "${CLIENT_EXE}" = *"oc" ]]; then
     ${CLIENT_EXE} new-project ${NAMESPACE}
     echo Performing additional commands for OpenShift
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingress-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z prometheus -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-egressgateway-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-citadel-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-ingressgateway-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-cleanup-old-ca-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-post-install-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-mixer-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-pilot-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-sidecar-injector-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-galley-service-account -n ${NAMESPACE}
-    ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z istio-security-post-install-account -n ${NAMESPACE}
-    if [ "${DASHBOARDS_ENABLED}" == "true" -o "${USE_DEMO_VALUES}" == "true" -o "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z grafana -n ${NAMESPACE}
-      ${CLIENT_EXE} adm policy add-scc-to-user anyuid -z jaeger -n ${NAMESPACE}
-    fi
-    ${CLIENT_EXE} adm policy add-scc-to-user privileged -z default -n ${NAMESPACE}
+    ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n ${NAMESPACE}
   else
     ${CLIENT_EXE} create namespace ${NAMESPACE}
   fi
@@ -324,17 +308,9 @@ if [ -f "/tmp/istio.yaml" ]; then
 fi
 
 if [ "${USE_DEMO_VALUES}" == "true" ]; then
-  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" ]; then
-    cp "${ISTIO_DIR}/install/kubernetes/istio-demo.yaml" /tmp/istio.yaml
-  else
-    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
-  fi
+  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo.yaml"
 elif [ "${USE_DEMO_AUTH_VALUES}" == "true" ]; then
-  if [ -f "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" ]; then
-    cp "${ISTIO_DIR}/install/kubernetes/istio-demo-auth.yaml" /tmp/istio.yaml
-  else
-    _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
-  fi
+  _HELM_VALUES="--values ${ISTIO_DIR}/install/kubernetes/helm/istio/values-istio-demo-auth.yaml"
 else
   if [ "${KIALI_TAG}" != "" ]; then
     _KIALI_TAG_ARG="--set kiali.tag=${KIALI_TAG}"
@@ -353,7 +329,7 @@ if [ ! -f "/tmp/istio.yaml" ]; then
     ${HELM_EXE} dep update "${ISTIO_DIR}/install/kubernetes/helm/istio"
   fi
   echo Building Helm yaml for Istio...
-  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace ${NAMESPACE} > /tmp/istio.yaml
+  ${HELM_EXE} template ${_HELM_VALUES} ${CUSTOM_HELM_VALUES} "${ISTIO_DIR}/install/kubernetes/helm/istio" --name istio --namespace ${NAMESPACE} --set istio_cni.enabled=true --set cni.components.cni.enabled=true > /tmp/istio.yaml
 fi
 
 if [ "${DELETE_ISTIO}" == "true" ]; then
@@ -361,23 +337,43 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   ${CLIENT_EXE} delete -f /tmp/istio.yaml
   ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} delete -f -
   ${CLIENT_EXE} delete -f "${ISTIO_DIR}/install/kubernetes/helm/istio-init/files"
+  ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-cni" --name istio-cni --namespace kube-system --set cniBinDir=/var/lib/cni/bin --set cniConfDir=/var/run/multus/cni/net.d | ${CLIENT_EXE} delete -f -
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
+
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    echo "NOTICE! You need to do this for all app namespaces:"
+    echo " ${CLIENT_EXE} adm policy remove-scc-from-group privileged system:serviceaccounts -n bookinfo"
+    echo " ${CLIENT_EXE} adm policy remove-scc-from-group anyuid system:serviceaccounts -n bookinfo"
+  fi
 else
-  echo Installing Istio...
+  echo "Installing CNI..."
+  ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-cni" --name istio-cni --namespace kube-system --set cniBinDir=/var/lib/cni/bin --set cniConfDir=/var/run/multus/cni/net.d | ${CLIENT_EXE} apply -f -
+  echo "Initializing Istio..."
   ${HELM_EXE} template "${ISTIO_DIR}/install/kubernetes/helm/istio-init" --name istio-init --namespace ${NAMESPACE} | ${CLIENT_EXE} apply -f -
-  _crd_count="0"
-  echo -n "Waiting for the CRDs to be created"
-  while [ "$_crd_count" -lt "23" ]; do
-    sleep 1
-    echo -n "."
-    _crd_count=$(${CLIENT_EXE} get crds | grep 'istio.io\|certmanager.k8s.io' | wc -l)
-  done
-  echo "done"
+  echo "Waiting for Istio Init jobs to finish - this might take a while..."
+  ${CLIENT_EXE} -n ${NAMESPACE} wait --for=condition=complete job --all --timeout=-1s
+  echo "Installing Istio..."
   ${CLIENT_EXE} apply -f /tmp/istio.yaml
+
+  if [[ "${CLIENT_EXE}" = *"oc" ]]; then
+    # If OpenShift, expose some routes
+    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/istio-ingressgateway --port=80
+    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/kiali
+    ${CLIENT_EXE} -n ${NAMESPACE} expose svc/prometheus
+
+    echo "NOTICE! You need to do this for all app namespaces:"
+    echo " ${CLIENT_EXE} adm policy add-scc-to-group privileged system:serviceaccounts -n bookinfo"
+    echo " ${CLIENT_EXE} adm policy add-scc-to-group anyuid system:serviceaccounts -n bookinfo"
+  fi
 
   if [ "${KIALI_ENABLED}" == "true" ]; then
     ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["apps.openshift.io"], "resources":["deploymentconfigs"],"verbs": ["get", "list", "watch"]}}]' --type json
     ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["project.openshift.io"], "resources":["projects"],"verbs": ["get"]}}]' --type json
     ${CLIENT_EXE} patch clusterrole kiali -p '[{"op":"add", "path":"/rules/-", "value":{"apiGroups":["route.openshift.io"], "resources":["routes"],"verbs": ["get"]}}]' --type json
+  fi
+
+  # make sure CNI is enabled, this should return "true"
+  if [ "$($CLIENT_EXE -n ${NAMESPACE} get cm istio-sidecar-injector -ojsonpath='{.data.values}' | jq '.istio_cni.enabled')" != "true" ]; then
+    echo "WARNING: CNI IS NOT ENABLED - THINGS WILL NOT WORK ON OPENSHIFT"
   fi
 fi
