@@ -14,7 +14,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                 Object {
                   "status": Object {
                     "class": "icon-healthy",
-                    "color": "var(--pf-global--success-color--100)",
+                    "color": "#3e8635",
                     "icon": [Function],
                     "name": "Healthy",
                     "priority": 1,
@@ -24,7 +24,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                 Object {
                   "status": Object {
                     "class": "icon-healthy",
-                    "color": "var(--pf-global--success-color--100)",
+                    "color": "#3e8635",
                     "icon": [Function],
                     "name": "Healthy",
                     "priority": 1,
@@ -34,7 +34,7 @@ exports[`HealthIndicator renders healthy 1`] = `
               ],
               "status": Object {
                 "class": "icon-healthy",
-                "color": "var(--pf-global--success-color--100)",
+                "color": "#3e8635",
                 "icon": [Function],
                 "name": "Healthy",
                 "priority": 1,
@@ -116,7 +116,7 @@ exports[`HealthIndicator renders healthy 1`] = `
 >
   <CheckCircleIcon
     className="icon-healthy"
-    color="var(--pf-global--success-color--100)"
+    color="#3e8635"
     noVerticalAlign={false}
     size="sm"
     title={null}

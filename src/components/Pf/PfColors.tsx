@@ -36,7 +36,7 @@ export enum PfColors {
   Green200 = '#9ecf99',
   Green300 = '#6ec664',
   Green400 = '#3f9c35',
-  Green500 = '#2d7623',
+  Green500 = '#3e8635',
   Green600 = '#1e4f18',
   Green700 = '#0f280d',
   LightBlue100 = '#beedf9',
@@ -96,7 +96,7 @@ export enum PfColors {
   DangerBackground = Red400, // --pf-global--danger-color--200
   Info = '#73BCF7', // --pf-global--info-color--100
   InfoBackground = Blue600, // --pf-global--info-color--200
-  Success = LightGreen400, // --pf-global--success-color--100
+  Success = Green500, // --pf-global--success-color--100
   SuccessBackground = LightGreen600, // --pf-global--success-color--200
   Warning = Gold400, // --pf-global--warning-color--100
   WarningBackground = Gold600 // --pf-global--warning-color--200
@@ -104,7 +104,10 @@ export enum PfColors {
 
 export enum PFColorVars {
   DangerColor = 'var(--pf-global--danger-color--100)',
-  SuccessColor = 'var(--pf-global--success-color--100)',
+  // Patternfly has a new green that is darker but they have not yet
+  // updated the PF vars for it
+  // SuccessColor = 'var(--pf-global--success-color--100)',
+  SuccessColor = '#3e8635', // computed values like Green500 are not allowed in enum
   WarningColor = 'var(--pf-global--warning-color--100)'
 }
 
