@@ -12,6 +12,7 @@ import { EdgeLabelMode, Layout } from '../types/GraphFilter';
 import { GraphType, NodeParamsType, SummaryData, CyData, GraphElements } from '../types/Graph';
 import { TLSStatus } from '../types/TLSStatus';
 import { StatusState } from '../types/StatusState';
+import { TourInfo } from 'components/Tour/TourStop';
 
 // Store is the Redux Data store
 
@@ -108,6 +109,11 @@ export interface JaegerState {
   enableIntegration: boolean;
 }
 
+export interface TourState {
+  activeTour?: TourInfo;
+  activeStop?: number; // index into the TourInfo.stops array
+}
+
 // This defines the Kiali Global Application State
 export interface KialiAppState {
   // Global state === across multiple pages
@@ -124,4 +130,5 @@ export interface KialiAppState {
   userSettings: UserSettings;
   /** Jaeger Integration */
   jaegerState: JaegerState | null;
+  tourState: TourState;
 }

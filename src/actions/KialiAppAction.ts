@@ -9,6 +9,7 @@ import { NamespaceAction } from './NamespaceAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { JaegerAction } from './JaegerActions';
 import { MeshTlsAction } from './MeshTlsActions';
+import { TourAction } from './TourActions';
 
 export type KialiAppAction =
   | GlobalAction
@@ -21,4 +22,5 @@ export type KialiAppAction =
   | NamespaceAction
   | UserSettingsAction
   | JaegerAction
-  | MeshTlsAction;
+  | MeshTlsAction
+  | TourAction;

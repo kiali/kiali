@@ -29,6 +29,7 @@ export default class NotificationList extends React.PureComponent<NotificationLi
           };
           return (
             <AlertToast
+              key={'toast_' + message.id}
               style={{ width: '30em', right: '0', top: `${i * 5}em`, position: 'absolute' }}
               message={message}
               variant={variant}

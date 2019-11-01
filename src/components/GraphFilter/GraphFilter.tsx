@@ -28,6 +28,8 @@ import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphActions } from '../../actions/GraphActions';
 import { KialiAppAction } from '../../actions/KialiAppAction';
 import { AlignRightStyle, ThinStyle } from '../../components/Filters/FilterStyles';
+import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
+import TourStopContainer from 'components/Tour/TourStop';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
@@ -153,26 +155,32 @@ export class GraphFilter extends React.PureComponent<GraphFilterProps> {
             {this.props.node ? (
               <Button onClick={this.handleNamespaceReturn}>Back to full {GraphFilter.GRAPH_TYPES[graphTypeKey]}</Button>
             ) : (
-              <ToolbarDropdown
-                id={'graph_filter_view_type'}
-                disabled={this.props.disabled}
-                handleSelect={this.setGraphType}
-                value={graphTypeKey}
-                label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
-                options={GraphFilter.GRAPH_TYPES}
-              />
+              <TourStopContainer info={GraphTourStops.GraphType}>
+                <ToolbarDropdown
+                  id={'graph_filter_view_type'}
+                  disabled={this.props.disabled}
+                  handleSelect={this.setGraphType}
+                  value={graphTypeKey}
+                  label={GraphFilter.GRAPH_TYPES[graphTypeKey]}
+                  options={GraphFilter.GRAPH_TYPES}
+                />
+              </TourStopContainer>
             )}
             <div className={marginLeftRight}>
-              <ToolbarDropdown
-                id={'graph_filter_edge_labels'}
-                disabled={false}
-                handleSelect={this.setEdgeLabelMode}
-                value={edgeLabelModeKey}
-                label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
-                options={GraphFilter.EDGE_LABEL_MODES}
-              />
+              <TourStopContainer info={GraphTourStops.EdgeLabels}>
+                <ToolbarDropdown
+                  id={'graph_filter_edge_labels'}
+                  disabled={false}
+                  handleSelect={this.setEdgeLabelMode}
+                  value={edgeLabelModeKey}
+                  label={GraphFilter.EDGE_LABEL_MODES[edgeLabelModeKey]}
+                  options={GraphFilter.EDGE_LABEL_MODES}
+                />
+              </TourStopContainer>
             </div>
-            <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
+            <TourStopContainer info={GraphTourStops.Display}>
+              <GraphSettingsContainer edgeLabelMode={this.props.edgeLabelMode} graphType={this.props.graphType} />
+            </TourStopContainer>
           </FormGroup>
           <GraphFindContainer />
           <Toolbar.RightContent style={{ ...AlignRightStyle, display: 'flex' }}>

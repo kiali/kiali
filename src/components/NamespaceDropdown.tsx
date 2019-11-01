@@ -17,6 +17,8 @@ import {
   PropertyType
 } from './BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { KialiIcon } from 'config/KialiIcon';
+import TourStopContainer from './Tour/TourStop';
+import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 
 const namespaceButtonColors = {
   backgroundColor: PfColors.White,
@@ -189,17 +191,19 @@ export class NamespaceDropdown extends React.PureComponent<NamespaceDropdownProp
   render() {
     const popover = <Popover id="namespace-list-layers-popover">{this.getPopoverContent()}</Popover>;
     return (
-      <OverlayTrigger
-        onEnter={this.props.refresh}
-        overlay={popover}
-        placement="bottom"
-        trigger={['click']}
-        rootClose={true}
-      >
-        <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="namespace-selector">
-          {this.namespaceButtonText()} <KialiIcon.AngleDown />
-        </Button>
-      </OverlayTrigger>
+      <TourStopContainer info={GraphTourStops.Namespaces}>
+        <OverlayTrigger
+          onEnter={this.props.refresh}
+          overlay={popover}
+          placement="bottom"
+          trigger={['click']}
+          rootClose={true}
+        >
+          <Button bsClass={`btn btn-link btn-lg  ${namespaceButtonStyle}`} id="namespace-selector">
+            {this.namespaceButtonText()} <KialiIcon.AngleDown />
+          </Button>
+        </OverlayTrigger>
+      </TourStopContainer>
     );
   }
 }

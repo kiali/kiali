@@ -31,6 +31,10 @@ import {
 } from '@patternfly/react-icons';
 import { style } from 'typestyle';
 
+export const defaultIconStyle = style({
+  // nothing special
+});
+
 const iconStyle = style({
   width: '10px'
 });
@@ -45,9 +49,9 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   AngleDoubleLeft: (props: IconProps) => <AngleDoubleLeftIcon className={props.className} />,
   AngleDoubleRight: (props: IconProps) => <AngleDoubleRightIcon className={props.className} />,
   AngleDoubleUp: (props: IconProps) => <AngleDoubleUpIcon className={props.className} />,
+  AngleDown: (props: IconProps) => <AngleDownIcon className={props.className} />,
   AngleLeft: (props: IconProps) => <AngleLeftIcon className={props.className} />,
   AngleRight: (props: IconProps) => <AngleRightIcon className={props.className} />,
-  AngleDown: (props: IconProps) => <AngleDownIcon className={props.className} />,
   Applications: (props: IconProps) => <ApplicationsIcon className={props.className} />,
   Bell: (props: IconProps) => <BellIcon className={props.className} />,
   CircuitBreaker: (props: IconProps) => <BoltIcon className={props.className} />,
