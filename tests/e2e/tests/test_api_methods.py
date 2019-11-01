@@ -71,7 +71,7 @@ def test_root(kiali_client):
 def test_virtualservices(kiali_client):
     data = '{"metadata":{"namespace":"bookinfo","name":"reviews","labels":{"kiali_wizard":"weighted_routing"}},"spec":{"http":[{"route":[{"destination":{"host":"reviews","subset":"v1"},"weight":75},{"destination":{"host":"reviews","subset":"v2"},"weight":13},{"destination":{"host":"reviews","subset":"v3"},"weight":12}]}],"hosts":["reviews"],"gateways":null}}'    
     evaluate_response(kiali_client, method_name='istioConfigCreate', path={'namespace': 'bookinfo', 'object_type': 'virtualservices'}, data=data, http_method='POST')
-    evaluate_response(method_name='istioConfigDelete', path={'namespace': 'bookinfo', 'object_type': 'virtualservices', 'object': 'reviews'}, http_method='DELETE')
+    evaluate_oauth_response(method_name='istioConfigDelete', path={'namespace': 'bookinfo', 'object_type': 'virtualservices', 'object': 'reviews'}, http_method='DELETE')
 
 def test_jaeger_info(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
