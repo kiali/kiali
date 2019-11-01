@@ -179,11 +179,7 @@ export default class WorkloadPodLogs extends React.Component<WorkloadPodLogsProp
                   <MetricsDurationContainer tooltip="Time range for log messages" onChanged={this.setDuration} />
                 </ToolbarItem>
                 <ToolbarItem>
-                  <RefreshButtonContainer
-                    id={'wpl_refresh'}
-                    disabled={!this.state.podLogs}
-                    handleRefresh={this.handleRefresh}
-                  />
+                  <RefreshButtonContainer disabled={!this.state.podLogs} handleRefresh={this.handleRefresh} />
                 </ToolbarItem>
               </ToolbarGroup>
             </Toolbar>

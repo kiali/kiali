@@ -75,11 +75,7 @@ export class GraphRefresh extends React.PureComponent<GraphRefreshProps> {
           tooltip={'Refresh interval for graph'}
         />
         <span className={GraphRefresh.refreshButtonStyle}>
-          <RefreshButtonContainer
-            id={'refresh_button'}
-            handleRefresh={this.props.handleRefresh}
-            disabled={this.props.disabled}
-          />
+          <RefreshButtonContainer handleRefresh={this.props.handleRefresh} disabled={this.props.disabled} />
         </span>
       </>
     );
