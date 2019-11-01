@@ -139,7 +139,7 @@ class AppListComponent extends FilterComponent.Component<AppListComponentProps, 
           onFilterChange={this.onFilterChange}
           rightToolbar={[
             <DurationDropdownContainer key={'DurationDropdown'} id="app-list-dropdown" />,
-            <RefreshButtonContainer key={'Refresh'} id="overview-refresh" handleRefresh={this.updateListItems} />
+            <RefreshButtonContainer key={'Refresh'} handleRefresh={this.updateListItems} />
           ]}
         />
       </VirtualList>

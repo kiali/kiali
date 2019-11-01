@@ -76,7 +76,7 @@ class Refresh extends React.Component<Props, State> {
             tooltip={'Refresh interval'}
           />
           <span style={{ paddingLeft: '0.5em' }}>
-            <RefreshButtonContainer id={this.props.id + '_btn'} handleRefresh={this.props.handleRefresh} />
+            <RefreshButtonContainer handleRefresh={this.props.handleRefresh} />
           </span>
         </>
       );
