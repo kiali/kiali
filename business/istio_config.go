@@ -587,16 +587,15 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	} else {
 		kind = kubernetes.PluralType[resourceType]
 	}
+	var pivot interface{}
 	switch resourceType {
 	case Gateways:
 		istioConfigDetail.Gateway = &models.Gateway{}
 		err = json.Unmarshal(body, istioConfigDetail.Gateway)
 	case VirtualServices:
-		istioConfigDetail.VirtualService = &models.VirtualService{}
-		err = json.Unmarshal(body, istioConfigDetail.VirtualService)
+		pivot = &models.VirtualService{}
 	case DestinationRules:
-		istioConfigDetail.DestinationRule = &models.DestinationRule{}
-		err = json.Unmarshal(body, istioConfigDetail.DestinationRule)
+		pivot = &models.DestinationRule{}
 	case ServiceEntries:
 		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
@@ -633,11 +632,27 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
+	if pivot != nil {
+		var marshalledBytes []byte
+
+		// Unmarshall, just to validate JSON sent by client.
+		err = json.Unmarshal(body, pivot)
+		if err == nil {
+			// Re-marshall, to get the cleaned JSON.
+			marshalledBytes, err = json.Marshal(pivot)
+		}
+		if err == nil {
+			// Use the cleaned JSON to create the CRD.
+			marshalled = string(marshalledBytes)
+		}
+	} else {
+		// Use JSON from client as is (assume it's already validated in the above switch).
+		marshalled = string(body)
+	}
 	if err != nil {
 		return "", err
 	}
 	// Append apiVersion and kind
-	marshalled = string(body)
 	marshalled = strings.TrimSpace(marshalled)
 	marshalled = "" +
 		"{\n" +

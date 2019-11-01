@@ -29,7 +29,7 @@ type DestinationRule struct {
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Host          interface{} `json:"host"`
-		TrafficPolicy interface{} `json:"trafficPolicy"`
+		TrafficPolicy interface{} `json:"trafficPolicy,omitempty"`
 		Subsets       interface{} `json:"subsets"`
 	} `json:"spec"`
 }
