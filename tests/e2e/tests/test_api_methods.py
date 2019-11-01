@@ -11,7 +11,7 @@ def before_all_tests(kiali_client):
     swagger_method_list= []
     tested_method_list = ['Root','jaegerInfo', 'grafanaInfo', 'getStatus', 'getConfig', 'Authenticate',
                           'namespaceList', 'namespaceMetrics','namespaceHealth',
-                          'istioConfigList', 'istioConfigDetails', 'objectValidations', ''
+                          'istioConfigList', 'istioConfigDetails', 'istioConfigCreate', 'istioConfigDelete', 'objectValidations', ''
                           'serviceList', 'serviceDetails', 'serviceMetrics', 'serviceHealth',
                           'appHealth', 'appList', 'appDetails', 'appMetrics',
                           'workloadList', 'workloadDetails', 'workloadHealth', 'workloadMetrics',
@@ -43,15 +43,13 @@ def get_pod_id(kiali_client, namespace, pod_name):
 
     return pod_id
 
-def evaluate_response(kiali_client, method_name, path=None, params=None, status_code_expected=200):
-    response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params)
+def evaluate_response(kiali_client, method_name, path=None, params=None, data=None, status_code_expected=200, http_method='GET'):
+    response = kiali_client.request(method_name=get_method_from_method_list(method_name), path=path, params=params, data=data, http_method=http_method)
     assert response is not None
     try:
         assert response.status_code == status_code_expected
     except AssertionError:
         pytest.fail(response.content)
-    assert response.json() is not None
-
     return response
 
 def __test_swagger_coverage():
@@ -70,6 +68,10 @@ def test_swagger_double_api(kiali_client):
 def test_root(kiali_client):
     evaluate_response(kiali_client, method_name='Root')
 
+def test_virtualservices(kiali_client):
+    data = '{"metadata":{"namespace":"bookinfo","name":"reviews","labels":{"kiali_wizard":"weighted_routing"}},"spec":{"http":[{"route":[{"destination":{"host":"reviews","subset":"v1"},"weight":75},{"destination":{"host":"reviews","subset":"v2"},"weight":13},{"destination":{"host":"reviews","subset":"v3"},"weight":12}]}],"hosts":["reviews"],"gateways":null}}'    
+    evaluate_response(kiali_client, method_name='istioConfigCreate', path={'namespace': 'bookinfo', 'object_type': 'virtualservices'}, data=data, http_method='POST')
+    evaluate_oauth_response(method_name='istioConfigDelete', path={'namespace': 'bookinfo', 'object_type': 'virtualservices', 'object': 'reviews'}, http_method='DELETE')
 
 def test_jaeger_info(kiali_client):
     response = kiali_client.request(method_name='jaegerInfo', path=None, params=None)
