@@ -419,13 +419,13 @@ var (
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
 	adapterPlurals = map[string]string{
-		adapterType:       adapters,
-		handlerType:       handlers,
+		adapterType: adapters,
+		handlerType: handlers,
 	}
 
 	templatePlurals = map[string]string{
-		instanceType:      instances,
-		templateType:      templates,
+		instanceType: instances,
+		templateType: templates,
 	}
 
 	PluralType = map[string]string{
