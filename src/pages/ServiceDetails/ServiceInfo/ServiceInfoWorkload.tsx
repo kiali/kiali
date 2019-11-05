@@ -46,9 +46,13 @@ class ServiceInfoWorkload extends React.Component<ServiceInfoWorkloadProps> {
           to={`/namespaces/${this.props.namespace}/workloads/${workload.name}`}
           key={'ServiceWorkloadItem_' + this.props.namespace + '_' + workload.name}
         >
-          <Text component={TextVariants.p}>{workload.name}</Text>
+          <Text component={TextVariants.p}>
+            {workload.name}{' '}
+            {!workload.istioSidecar && (
+              <MissingSidecar namespace={this.props.namespace} style={{ marginLeft: '10px' }} tooltip={true} />
+            )}
+          </Text>
         </Link>
-        {!workload.istioSidecar && <MissingSidecar namespace={this.props.namespace} tooltip={true} />}
       </span>
     );
   }
