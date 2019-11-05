@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { Popover, PopoverPosition } from '@patternfly/react-core';
+import { PopoverPosition, Text, TextContent, TextVariants, Tooltip } from '@patternfly/react-core';
 import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon } from './Helper';
-
 import './Health.css';
 
 export enum DisplayMode {
@@ -67,17 +66,25 @@ export class HealthIndicator extends React.PureComponent<Props, HealthState> {
       </>
     );
   }
+  renderHealthTooltip(health: H.Health) {
+    return (
+      <TextContent>
+        <Text component={TextVariants.h2}>{this.state.globalStatus.name}</Text>
+        <HealthDetails health={health} />
+      </TextContent>
+    );
+  }
 
   renderPopover(health: H.Health, icon: JSX.Element) {
     return (
-      <Popover
+      <Tooltip
         aria-label={'Health indicator'}
-        headerContent={this.state.globalStatus.name}
-        bodyContent={<HealthDetails health={health} />}
-        position={this.props.tooltipPlacement || PopoverPosition.auto}
+        content={this.renderHealthTooltip(health)}
+        position={PopoverPosition.auto}
+        className={'health_indicator'}
       >
         {icon}
-      </Popover>
+      </Tooltip>
     );
   }
 }

@@ -4,3 +4,16 @@ svg:not(:root).icon-healthy,
 svg:not(:root).icon-na {
   overflow: visible;
 }
+.tippy-popper[x-placement^='left'] .pf-tooltip-theme .tippy-arrow {
+  background-color: #fff;
+  border-color: black;
+  border-width: 1px;
+  border-style: solid;
+}
+.health_indicator .pf-c-tooltip__content {
+  background-color: #fff;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+  text-align: left;
+}
