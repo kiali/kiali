@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { style } from 'typestyle';
-import { ToastNotification, ToastNotificationList } from 'patternfly-react';
 import { Card, CardBody, Grid, GridItem } from '@patternfly/react-core';
 import ServiceId from '../../types/ServiceId';
 import ServiceInfoDescription from './ServiceInfo/ServiceInfoDescription';
@@ -51,8 +50,8 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
     super(props);
     this.state = {
-      error: false,
-      errorMessage: '',
+      error: true,
+      errorMessage: 'This is a test by jay',
       currentTab: activeTab(tabName, defaultTab)
     };
   }
