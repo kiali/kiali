@@ -215,6 +215,23 @@
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': operator_version if supported_image.version == 'operator_version' else supported_image.version}}, recursive=True) }}"
   when:
   - kiali_vars.deployment.image_version == ""
+- name: Override the image name if the operator was told to install only a very specific image via env var
+  vars:
+    env_kiali_image: "{{ lookup('env', 'KIALI_IMAGE') }}"
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_name': env_kiali_image | regex_replace('(.+):.+', '\\1')}}, recursive=True) }}"
+  when:
+  - env_kiali_image is defined
+  - env_kiali_image != ""
+- name: Override the image version if the operator was told to install only a very specific image via env var
+  vars:
+    env_kiali_image: "{{ lookup('env', 'KIALI_IMAGE') }}"
+  set_fact:
+    kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_version': env_kiali_image | regex_replace('.+:(.+)', '\\1')}}, recursive=True) }}"
+  when:
+  - env_kiali_image is defined
+  - env_kiali_image != ""
+
 - name: If image version is latest then we will want to always pull
   set_fact:
     kiali_vars: "{{ kiali_vars | combine({'deployment': {'image_pull_policy': 'Always'}}, recursive=True) }}"
