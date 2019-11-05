@@ -28,11 +28,11 @@ type VirtualService struct {
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
 		Hosts    interface{} `json:"hosts"`
-		Gateways interface{} `json:"gateways"`
-		Http     interface{} `json:"http"`
-		Tcp      interface{} `json:"tcp"`
-		Tls      interface{} `json:"tls"`
-		ExportTo interface{} `json:"exportTo"`
+		Gateways interface{} `json:"gateways,omitempty"`
+		Http     interface{} `json:"http,omitempty"`
+		Tcp      interface{} `json:"tcp,omitempty"`
+		Tls      interface{} `json:"tls,omitempty"`
+		ExportTo interface{} `json:"exportTo,omitempty"`
 	} `json:"spec"`
 }
 
