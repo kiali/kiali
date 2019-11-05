@@ -162,6 +162,10 @@ spec:
 # Determines which Kiali image to download and install.
 # If you set this to a specific name, you must make sure that image is supported by the operator.
 # If empty, the operator will use a known supported image name.
+# Note that, as a security measure, a cluster admin may have configured the Kiali operator to
+# ignore this setting. A cluster admin may do this to ensure the Kiali operator only installs
+# a single, specific Kiali version, thus this setting may have no effect depending on how the
+# operator itself was configured.
 #    ---
 #    image_name: ""
 #
@@ -182,6 +186,10 @@ spec:
 # If you set this to a specific version (i.e. you do not leave it as the default empty string),
 # you must make sure that image version is supported by the operator.
 # If empty, the operator will use a known supported image version.
+# Note that, as a security measure, a cluster admin may have configured the Kiali operator to
+# ignore this setting. A cluster admin may do this to ensure the Kiali operator only installs
+# a single, specific Kiali version, thus this setting may have no effect depending on how the
+# operator itself was configured.
 #    ---
 #    image_version: ""
 #

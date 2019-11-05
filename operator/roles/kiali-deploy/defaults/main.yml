@@ -161,10 +161,22 @@ kiali_defaults:
 # These variables are outside of the kiali_defaults. Their values will be
 # auto-detected by the role and are not meant to be set by the user.
 # However, for debugging purposes you can change these.
+
+is_k8s: false
+is_openshift: false
+
 # If supported_image.version is "operator_version" then the version of the
 # operator itself will be assumed, otherwise it can be any valid Kiali
 # version string. If the Kiali CR does not provide an image name or version,
 # supported_image defines the defaults that will be used.
-is_k8s: false
-is_openshift: false
+# A special override to this supported_image default is available by setting an environment
+# variable called KIALI_IMAGE in the operator's Deployment. This environment variable
+# must have a value such as "quay.io/kiali/kiali:v1.0" or "myrepo.io/kiali/kiali@sha256:abcde1234567890".
+# If such an environment variable exists, the value of KIALI_IMAGE overrides not only these defaults
+# but also the deployment.image_[name,version] that might be declared in the Kiali CR.
+# In other words, if you set an environment variable called KIALI_IMAGE in the operator's
+# Deployment then that is the only image the operator will deploy - you cannot tell
+# the operator to install any other Kiali image unless you modify the environment
+# variable's value (or you delete it from the Deployment).
+
 supported_image: {"name": "quay.io/kiali/kiali", "version": "operator_version" }

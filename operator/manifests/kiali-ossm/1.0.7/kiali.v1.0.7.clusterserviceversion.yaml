@@ -11,7 +11,7 @@ metadata:
     support: Red Hat
     description: "Kiali project provides answers to the questions: What microservices are part of my Istio service mesh and how are they connected?"
     repository: https://github.com/kiali/kiali
-    createdAt: 2019-XX-XXT00:00:00Z
+    createdAt: 20XX-XX-XXT00:00:00Z
     alm-examples: |-
       [
         {
@@ -76,6 +76,9 @@ spec:
   version: 1.0.7
   maturity: stable
   replaces: kiali-operator.v1.0.6
+  relatedImages:
+  - name: kiali
+    image: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.7
   displayName: Kiali Operator
   description: |-
     ## About the managed application
@@ -286,6 +289,8 @@ spec:
                       fieldPath: metadata.namespace
                 - name: OPERATOR_NAME
                   value: "kiali-operator"
+                - name: KIALI_IMAGE
+                  value: registry.redhat.io/openshift-service-mesh/kiali-rhel7:1.0.7
               volumes:
               - name: runner
                 emptyDir: {}
