@@ -13,6 +13,8 @@ import ParameterizedTabs, { activeTab } from '../../components/Tab/Tabs';
 import ErrorBoundaryWithMessage from '../../components/ErrorBoundary/ErrorBoundaryWithMessage';
 import { Tab } from '@patternfly/react-core';
 import Validation from '../../components/Validations/Validation';
+import NotificationList from 'components/MessageCenter/NotificationList';
+import { MessageType } from 'types/MessageCenter';
 
 interface ServiceDetails extends ServiceId {
   serviceDetails: ServiceDetailsInfo;
@@ -50,8 +52,8 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
   constructor(props: ServiceDetails) {
     super(props);
     this.state = {
-      error: true,
-      errorMessage: 'This is a test by jay',
+      error: false,
+      errorMessage: '',
       currentTab: activeTab(tabName, defaultTab)
     };
   }
@@ -158,16 +160,22 @@ class ServiceInfo extends React.Component<ServiceDetails, ServiceInfoState> {
 
     return (
       <>
-        {this.state.error ? (
-          <ToastNotificationList>
-            <ToastNotification type="danger">
-              <span>
-                <strong>Error </strong>
-                {this.state.errorMessage}
-              </span>
-            </ToastNotification>
-          </ToastNotificationList>
-        ) : null}
+        {this.state.error && (
+          <NotificationList
+            messages={[
+              {
+                id: 1,
+                count: 1,
+                created: new Date(),
+                seen: false,
+                type: MessageType.ERROR,
+                detail: '',
+                showDetail: false,
+                content: this.state.errorMessage
+              }
+            ]}
+          />
+        )}
         <Grid style={{ margin: '30px' }} gutter={'md'}>
           <GridItem span={12}>
             <ServiceInfoDescription

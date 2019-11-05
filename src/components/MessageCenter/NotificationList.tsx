@@ -5,7 +5,7 @@ import AlertToast from './AlertToast';
 
 type NotificationListProps = {
   messages: NotificationMessage[];
-  onDismiss: (message: NotificationMessage, userDismissed: boolean) => void;
+  onDismiss?: (message: NotificationMessage, userDismissed: boolean) => void;
 };
 
 export default class NotificationList extends React.PureComponent<NotificationListProps> {
@@ -24,9 +24,11 @@ export default class NotificationList extends React.PureComponent<NotificationLi
             default:
               variant = AlertVariant.danger;
           }
-          const onClose = () => {
-            this.props.onDismiss(message, true);
-          };
+          const onClose = this.props.onDismiss
+            ? () => {
+                this.props.onDismiss!(message, true);
+              }
+            : undefined;
           return (
             <AlertToast
               key={'toast_' + message.id}
