@@ -364,88 +364,8 @@ var (
 			collectionKind: adapterTypeList,
 		},
 		{
-			objectKind:     bypassType,
-			collectionKind: bypassTypeList,
-		},
-		{
-			objectKind:     circonusType,
-			collectionKind: circonusTypeList,
-		},
-		{
-			objectKind:     cloudwatchType,
-			collectionKind: cloudwatchTypeList,
-		},
-		{
-			objectKind:     denierType,
-			collectionKind: denierTypeList,
-		},
-		{
-			objectKind:     dogstatsdType,
-			collectionKind: dogstatsdTypeList,
-		},
-		{
-			objectKind:     fluentdType,
-			collectionKind: fluentdTypeList,
-		},
-		{
 			objectKind:     handlerType,
 			collectionKind: handlerTypeList,
-		},
-		{
-			objectKind:     kubernetesenvType,
-			collectionKind: kubernetesenvTypeList,
-		},
-		{
-			objectKind:     listcheckerType,
-			collectionKind: listcheckerTypeList,
-		},
-		{
-			objectKind:     memquotaType,
-			collectionKind: memquotaTypeList,
-		},
-		{
-			objectKind:     noopType,
-			collectionKind: noopTypeList,
-		},
-		{
-			objectKind:     opaType,
-			collectionKind: opaTypeList,
-		},
-		{
-			objectKind:     prometheusType,
-			collectionKind: prometheusTypeList,
-		},
-		{
-			objectKind:     rbacType,
-			collectionKind: rbacTypeList,
-		},
-		{
-			objectKind:     redisquotaType,
-			collectionKind: redisquotaTypeList,
-		},
-		{
-			objectKind:     signalfxType,
-			collectionKind: signalfxTypeList,
-		},
-		{
-			objectKind:     solarwindsType,
-			collectionKind: solarwindsTypeList,
-		},
-		{
-			objectKind:     stackdriverType,
-			collectionKind: stackdriverTypeList,
-		},
-		{
-			objectKind:     statsdType,
-			collectionKind: statsdTypeList,
-		},
-		{
-			objectKind:     stdioType,
-			collectionKind: stdioTypeList,
-		},
-		{
-			objectKind:     zipkinType,
-			collectionKind: zipkinTypeList,
 		},
 	}
 
@@ -454,56 +374,12 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     apikeyType,
-			collectionKind: apikeyTypeList,
-		},
-		{
-			objectKind:     authorizationType,
-			collectionKind: authorizationTypeList,
-		},
-		{
-			objectKind:     checknothingType,
-			collectionKind: checknothingTypeList,
-		},
-		{
-			objectKind:     edgeType,
-			collectionKind: edgeTypeList,
-		},
-		{
-			objectKind:     kubernetesType,
-			collectionKind: kubernetesTypeList,
-		},
-		{
 			objectKind:     instanceType,
 			collectionKind: instanceTypeList,
 		},
 		{
-			objectKind:     listEntryType,
-			collectionKind: listEntryTypeList,
-		},
-		{
-			objectKind:     logentryType,
-			collectionKind: logentryTypeList,
-		},
-		{
-			objectKind:     metricType,
-			collectionKind: metricTypeList,
-		},
-		{
-			objectKind:     quotaType,
-			collectionKind: quotaTypeList,
-		},
-		{
-			objectKind:     reportnothingType,
-			collectionKind: reportnothingTypeList,
-		},
-		{
 			objectKind:     templateType,
 			collectionKind: templateTypeList,
-		},
-		{
-			objectKind:     tracespanType,
-			collectionKind: tracespanTypeList,
 		},
 	}
 
@@ -544,43 +420,12 @@ var (
 	// It should be one entry per adapter/template
 	adapterPlurals = map[string]string{
 		adapterType:       adapters,
-		bypassType:        bypasses,
-		circonusType:      circonuses,
-		cloudwatchType:    cloudwatches,
-		denierType:        deniers,
-		dogstatsdType:     dogstatsds,
-		fluentdType:       fluentds,
 		handlerType:       handlers,
-		kubernetesenvType: kubernetesenvs,
-		listcheckerType:   listcheckers,
-		memquotaType:      memquotas,
-		noopType:          noops,
-		opaType:           opas,
-		prometheusType:    prometheuses,
-		rbacType:          rbacs,
-		redisquotaType:    redisquotas,
-		signalfxType:      signalfxs,
-		solarwindsType:    solarwindses,
-		stackdriverType:   stackdrivers,
-		statsdType:        statsds,
-		stdioType:         stdios,
-		zipkinType:        zipkins,
 	}
 
 	templatePlurals = map[string]string{
-		apikeyType:        apikeys,
-		authorizationType: authorizations,
-		checknothingType:  checknothings,
-		edgeType:          edges,
 		instanceType:      instances,
-		kubernetesType:    kuberneteses,
-		listEntryType:     listEntries,
-		logentryType:      logentries,
-		metricType:        metrics,
-		quotaType:         quotas,
-		reportnothingType: reportnothings,
 		templateType:      templates,
-		tracespanType:     tracespans,
 	}
 
 	PluralType = map[string]string{
