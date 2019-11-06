@@ -5,14 +5,14 @@ export abstract class TrafficPointRenderer {
 }
 
 export class TrafficPointCircleRenderer extends TrafficPointRenderer {
-  readonly radio: number;
+  readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
   readonly lineWidth: number;
 
-  constructor(radio: number, backgroundColor: string, borderColor: string, lineWidth: number) {
+  constructor(radius: number, backgroundColor: string, borderColor: string, lineWidth: number) {
     super();
-    this.radio = radio;
+    this.radius = radius;
     this.backgroundColor = backgroundColor;
     this.borderColor = borderColor;
     this.lineWidth = lineWidth;
@@ -23,7 +23,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     context.strokeStyle = this.borderColor;
     context.lineWidth = this.lineWidth;
     context.beginPath();
-    context.arc(point.x, point.y, this.radio, 0, 2 * Math.PI, true);
+    context.arc(point.x, point.y, this.radius, 0, 2 * Math.PI, true);
     context.stroke();
     context.fill();
   }
@@ -38,11 +38,11 @@ export class TrafficPointConcentricDiamondRenderer extends TrafficPointRenderer 
     context.strokeStyle = diamond.borderColor;
     context.lineWidth = diamond.lineWidth;
     context.beginPath();
-    context.moveTo(point.x, point.y - diamond.radio);
-    context.lineTo(point.x + diamond.radio, point.y);
-    context.lineTo(point.x, point.y + diamond.radio);
-    context.lineTo(point.x - diamond.radio, point.y);
-    context.lineTo(point.x, point.y - diamond.radio);
+    context.moveTo(point.x, point.y - diamond.radius);
+    context.lineTo(point.x + diamond.radius, point.y);
+    context.lineTo(point.x, point.y + diamond.radius);
+    context.lineTo(point.x - diamond.radius, point.y);
+    context.lineTo(point.x, point.y - diamond.radius);
     context.stroke();
     context.fill();
   }
@@ -60,13 +60,13 @@ export class TrafficPointConcentricDiamondRenderer extends TrafficPointRenderer 
 }
 
 export class Diamond {
-  radio: number;
+  radius: number;
   backgroundColor: string;
   borderColor: string;
   lineWidth: number;
 
-  constructor(radio: number, backgroundColor: string, borderColor: string, lineWidth: number) {
-    this.radio = radio;
+  constructor(radius: number, backgroundColor: string, borderColor: string, lineWidth: number) {
+    this.radius = radius;
     this.backgroundColor = backgroundColor;
     this.borderColor = borderColor;
     this.lineWidth = lineWidth;

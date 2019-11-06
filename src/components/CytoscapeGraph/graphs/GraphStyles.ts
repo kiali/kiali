@@ -533,7 +533,7 @@ export class GraphStyles {
           'line-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
-          'line-style': 'dashed',
+          'line-style': 'solid',
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
