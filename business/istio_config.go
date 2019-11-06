@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util"
 )
 
 type IstioConfigService struct {
@@ -587,15 +588,16 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	} else {
 		kind = kubernetes.PluralType[resourceType]
 	}
-	var pivot interface{}
 	switch resourceType {
 	case Gateways:
 		istioConfigDetail.Gateway = &models.Gateway{}
 		err = json.Unmarshal(body, istioConfigDetail.Gateway)
 	case VirtualServices:
-		pivot = &models.VirtualService{}
+		istioConfigDetail.VirtualService = &models.VirtualService{}
+		err = json.Unmarshal(body, istioConfigDetail.VirtualService)
 	case DestinationRules:
-		pivot = &models.DestinationRule{}
+		istioConfigDetail.DestinationRule = &models.DestinationRule{}
+		err = json.Unmarshal(body, istioConfigDetail.DestinationRule)
 	case ServiceEntries:
 		istioConfigDetail.ServiceEntry = &models.ServiceEntry{}
 		err = json.Unmarshal(body, istioConfigDetail.ServiceEntry)
@@ -632,27 +634,26 @@ func (in *IstioConfigService) ParseJsonForCreate(resourceType, subresourceType s
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
-	if pivot != nil {
-		var marshalledBytes []byte
-
-		// Unmarshall, just to validate JSON sent by client.
-		err = json.Unmarshal(body, pivot)
-		if err == nil {
-			// Re-marshall, to get the cleaned JSON.
-			marshalledBytes, err = json.Marshal(pivot)
-		}
-		if err == nil {
-			// Use the cleaned JSON to create the CRD.
-			marshalled = string(marshalledBytes)
-		}
-	} else {
-		// Use JSON from client as is (assume it's already validated in the above switch).
-		marshalled = string(body)
-	}
+	// Validation object against the scheme
 	if err != nil {
 		return "", err
 	}
+	var generic map[string]interface{}
+	err = json.Unmarshal(body, &generic)
+	if err != nil {
+		return "", err
+	}
+
+	util.RemoveNilValues(generic)
+
+	var marshalledBytes []byte
+	marshalledBytes, err = json.Marshal(generic)
+	if err != nil {
+		return "", err
+	}
+
 	// Append apiVersion and kind
+	marshalled = string(marshalledBytes)
 	marshalled = strings.TrimSpace(marshalled)
 	marshalled = "" +
 		"{\n" +
