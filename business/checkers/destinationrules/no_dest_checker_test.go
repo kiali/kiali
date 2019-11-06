@@ -75,6 +75,26 @@ func TestValidMeshWideHost(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestValidServiceNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	validations, valid := NoDestinationChecker{
+		Namespace: "test-namespace",
+		WorkloadList: data.CreateWorkloadList("test-namespace",
+			data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
+			data.CreateWorkloadListItem("reviewsv2", appVersionLabel("reviews", "v2")),
+		),
+		Services:        fakeServicesReview(),
+		DestinationRule: data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace"),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
 func TestNoValidHost(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

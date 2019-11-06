@@ -77,11 +77,18 @@ func (n NoDestinationChecker) hasMatchingWorkload(service string, subsetLabels m
 		return true
 	}
 
+	// Covering 'servicename.namespace' host format scenario
+	svc := service
+	svcParts := strings.Split(service, ".")
+	if len(svcParts) > 1 {
+		svc = svcParts[0]
+	}
+
 	var selectors map[string]string
 
 	// Find the correct service
 	for _, s := range n.Services {
-		if s.Name == service {
+		if s.Name == svc {
 			selectors = s.Spec.Selector
 		}
 	}
@@ -115,16 +122,26 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		return true
 	}
 
-	if host.Namespace == itemNamespace {
+	// Covering 'servicename.namespace' host format scenario
+	localSvc, localNs := host.Service, host.Namespace
+	if !host.CompleteInput {
+		svcParts := strings.Split(host.Service, ".")
+		if len(svcParts) > 1 {
+			localSvc = svcParts[0]
+			localNs = svcParts[1]
+		}
+	}
+
+	if localNs == itemNamespace {
 		// Check Workloads
 		for _, wl := range n.WorkloadList.Workloads {
-			if host.Service == wl.Labels[appLabel] {
+			if localSvc == wl.Labels[appLabel] {
 				return true
 			}
 		}
 		// Check ServiceNames
 		for _, s := range n.Services {
-			if host.Service == s.Name {
+			if localSvc == s.Name {
 				return true
 			}
 		}
