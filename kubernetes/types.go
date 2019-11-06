@@ -108,143 +108,19 @@ const (
 	adapterType     = "adapter"
 	adapterTypeList = "adapterList"
 
-	bypasses       = "bypasses"
-	bypassType     = "bypass"
-	bypassTypeList = "bypassList"
-
-	circonuses       = "circonuses"
-	circonusType     = "circonus"
-	circonusTypeList = "circonusList"
-
-	cloudwatches       = "cloudwatches"
-	cloudwatchType     = "cloudwatch"
-	cloudwatchTypeList = "cloudwatchList"
-
-	deniers        = "deniers"
-	denierType     = "denier"
-	denierTypeList = "denierList"
-
-	dogstatsds        = "dogstatsds"
-	dogstatsdType     = "dogstatsd"
-	dogstatsdTypeList = "dogstatsdList"
-
-	fluentds        = "fluentds"
-	fluentdType     = "fluentd"
-	fluentdTypeList = "fluentdList"
-
 	handlers        = "handlers"
 	handlerType     = "handler"
 	handlerTypeList = "handlerList"
 
-	kubernetesenvs        = "kubernetesenvs"
-	kubernetesenvType     = "kubernetesenv"
-	kubernetesenvTypeList = "kubernetesenvList"
-
-	listcheckers        = "listcheckers"
-	listcheckerType     = "listchecker"
-	listcheckerTypeList = "listcheckerList"
-
-	memquotas        = "memquotas"
-	memquotaType     = "memquota"
-	memquotaTypeList = "memquotaList"
-
-	noops        = "noops"
-	noopType     = "noop"
-	noopTypeList = "noopList"
-
-	opas        = "opas"
-	opaType     = "opa"
-	opaTypeList = "opaList"
-
-	prometheuses       = "prometheuses"
-	prometheusType     = "prometheus"
-	prometheusTypeList = "prometheusList"
-
-	rbacs        = "rbacs"
-	rbacType     = "rbac"
-	rbacTypeList = "rbacList"
-
-	redisquotas        = "redisquotas"
-	redisquotaType     = "redisquota"
-	redisquotaTypeList = "redisquotaList"
-
-	signalfxs        = "signalfxs"
-	signalfxType     = "signalfx"
-	signalfxTypeList = "signalfxList"
-
-	solarwindses       = "solarwindses"
-	solarwindsType     = "solarwinds"
-	solarwindsTypeList = "solarwindsList"
-
-	stackdrivers        = "stackdrivers"
-	stackdriverType     = "stackdriver"
-	stackdriverTypeList = "stackdriverList"
-
-	statsds        = "statsds"
-	statsdType     = "statsd"
-	statsdTypeList = "statsdList"
-
-	stdios        = "stdios"
-	stdioType     = "stdio"
-	stdioTypeList = "stdioList"
-
-	zipkins        = "zipkins"
-	zipkinType     = "zipkin"
-	zipkinTypeList = "zipkinList"
-
 	// Config - Templates
-
-	apikeys        = "apikeys"
-	apikeyType     = "apikey"
-	apikeyTypeList = "apikeyList"
-
-	authorizations        = "authorizations"
-	authorizationType     = "authorization"
-	authorizationTypeList = "authorizationList"
-
-	checknothings        = "checknothings"
-	checknothingType     = "checknothing"
-	checknothingTypeList = "checknothingList"
-
-	edges        = "edges"
-	edgeType     = "edge"
-	edgeTypeList = "edgeList"
 
 	instances        = "instances"
 	instanceType     = "instance"
 	instanceTypeList = "instanceList"
 
-	kuberneteses       = "kuberneteses"
-	kubernetesType     = "kubernetes"
-	kubernetesTypeList = "kubernetesList"
-
-	listEntries       = "listentries"
-	listEntryType     = "listentry"
-	listEntryTypeList = "listentryList"
-
-	logentries       = "logentries"
-	logentryType     = "logentry"
-	logentryTypeList = "logentryList"
-
-	metrics        = "metrics"
-	metricType     = "metric"
-	metricTypeList = "metricList"
-
-	quotas        = "quotas"
-	quotaType     = "quota"
-	quotaTypeList = "quotaList"
-
-	reportnothings        = "reportnothings"
-	reportnothingType     = "reportnothing"
-	reportnothingTypeList = "reportnothingList"
-
 	templates        = "templates"
 	templateType     = "template"
 	templateTypeList = "templateList"
-
-	tracespans        = "tracespans"
-	tracespanType     = "tracespan"
-	tracespanTypeList = "tracespanList"
 )
 
 var (
@@ -442,43 +318,12 @@ var (
 		quotaspecbindings: quotaspecbindingType,
 
 		// Adapters
-		adapters:       adapterType,
-		bypasses:       bypassType,
-		circonuses:     circonusType,
-		cloudwatches:   cloudwatchType,
-		deniers:        denierType,
-		dogstatsds:     dogstatsdType,
-		fluentds:       fluentdType,
-		handlers:       handlerType,
-		kubernetesenvs: kubernetesenvType,
-		listcheckers:   listcheckerType,
-		memquotas:      memquotaType,
-		noops:          noopType,
-		opas:           opaType,
-		prometheuses:   prometheusType,
-		rbacs:          rbacType,
-		redisquotas:    redisquotaType,
-		signalfxs:      signalfxType,
-		solarwindses:   solarwindsType,
-		stackdrivers:   stackdriverType,
-		statsds:        statsdType,
-		stdios:         stdioType,
-		zipkins:        zipkinType,
+		adapters: adapterType,
+		handlers: handlerType,
 
 		// Templates
-		apikeys:        apikeyType,
-		authorizations: authorizationType,
-		checknothings:  checknothingType,
-		edges:          edgeType,
-		instances:      instanceType,
-		kuberneteses:   kubernetesType,
-		listEntries:    listEntryType,
-		logentries:     logentryType,
-		metrics:        metricType,
-		quotas:         quotaType,
-		reportnothings: reportnothingType,
-		templates:      templateType,
-		tracespans:     tracespanType,
+		instances: instanceType,
+		templates: templateType,
 
 		// Policies
 		policies:            policyType,
