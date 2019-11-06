@@ -28,9 +28,9 @@ type DestinationRule struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
-		Host          interface{} `json:"host"`
+		Host          interface{} `json:"host,omitempty"`
 		TrafficPolicy interface{} `json:"trafficPolicy,omitempty"`
-		Subsets       interface{} `json:"subsets"`
+		Subsets       interface{} `json:"subsets,omitempty"`
 	} `json:"spec"`
 }
 

@@ -27,7 +27,7 @@ type VirtualService struct {
 	meta_v1.TypeMeta
 	Metadata meta_v1.ObjectMeta `json:"metadata"`
 	Spec     struct {
-		Hosts    interface{} `json:"hosts"`
+		Hosts    interface{} `json:"hosts,omitempty"`
 		Gateways interface{} `json:"gateways,omitempty"`
 		Http     interface{} `json:"http,omitempty"`
 		Tcp      interface{} `json:"tcp,omitempty"`
