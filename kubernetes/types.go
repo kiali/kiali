@@ -108,143 +108,19 @@ const (
 	adapterType     = "adapter"
 	adapterTypeList = "adapterList"
 
-	bypasses       = "bypasses"
-	bypassType     = "bypass"
-	bypassTypeList = "bypassList"
-
-	circonuses       = "circonuses"
-	circonusType     = "circonus"
-	circonusTypeList = "circonusList"
-
-	cloudwatches       = "cloudwatches"
-	cloudwatchType     = "cloudwatch"
-	cloudwatchTypeList = "cloudwatchList"
-
-	deniers        = "deniers"
-	denierType     = "denier"
-	denierTypeList = "denierList"
-
-	dogstatsds        = "dogstatsds"
-	dogstatsdType     = "dogstatsd"
-	dogstatsdTypeList = "dogstatsdList"
-
-	fluentds        = "fluentds"
-	fluentdType     = "fluentd"
-	fluentdTypeList = "fluentdList"
-
 	handlers        = "handlers"
 	handlerType     = "handler"
 	handlerTypeList = "handlerList"
 
-	kubernetesenvs        = "kubernetesenvs"
-	kubernetesenvType     = "kubernetesenv"
-	kubernetesenvTypeList = "kubernetesenvList"
-
-	listcheckers        = "listcheckers"
-	listcheckerType     = "listchecker"
-	listcheckerTypeList = "listcheckerList"
-
-	memquotas        = "memquotas"
-	memquotaType     = "memquota"
-	memquotaTypeList = "memquotaList"
-
-	noops        = "noops"
-	noopType     = "noop"
-	noopTypeList = "noopList"
-
-	opas        = "opas"
-	opaType     = "opa"
-	opaTypeList = "opaList"
-
-	prometheuses       = "prometheuses"
-	prometheusType     = "prometheus"
-	prometheusTypeList = "prometheusList"
-
-	rbacs        = "rbacs"
-	rbacType     = "rbac"
-	rbacTypeList = "rbacList"
-
-	redisquotas        = "redisquotas"
-	redisquotaType     = "redisquota"
-	redisquotaTypeList = "redisquotaList"
-
-	signalfxs        = "signalfxs"
-	signalfxType     = "signalfx"
-	signalfxTypeList = "signalfxList"
-
-	solarwindses       = "solarwindses"
-	solarwindsType     = "solarwinds"
-	solarwindsTypeList = "solarwindsList"
-
-	stackdrivers        = "stackdrivers"
-	stackdriverType     = "stackdriver"
-	stackdriverTypeList = "stackdriverList"
-
-	statsds        = "statsds"
-	statsdType     = "statsd"
-	statsdTypeList = "statsdList"
-
-	stdios        = "stdios"
-	stdioType     = "stdio"
-	stdioTypeList = "stdioList"
-
-	zipkins        = "zipkins"
-	zipkinType     = "zipkin"
-	zipkinTypeList = "zipkinList"
-
 	// Config - Templates
-
-	apikeys        = "apikeys"
-	apikeyType     = "apikey"
-	apikeyTypeList = "apikeyList"
-
-	authorizations        = "authorizations"
-	authorizationType     = "authorization"
-	authorizationTypeList = "authorizationList"
-
-	checknothings        = "checknothings"
-	checknothingType     = "checknothing"
-	checknothingTypeList = "checknothingList"
-
-	edges        = "edges"
-	edgeType     = "edge"
-	edgeTypeList = "edgeList"
 
 	instances        = "instances"
 	instanceType     = "instance"
 	instanceTypeList = "instanceList"
 
-	kuberneteses       = "kuberneteses"
-	kubernetesType     = "kubernetes"
-	kubernetesTypeList = "kubernetesList"
-
-	listEntries       = "listentries"
-	listEntryType     = "listentry"
-	listEntryTypeList = "listentryList"
-
-	logentries       = "logentries"
-	logentryType     = "logentry"
-	logentryTypeList = "logentryList"
-
-	metrics        = "metrics"
-	metricType     = "metric"
-	metricTypeList = "metricList"
-
-	quotas        = "quotas"
-	quotaType     = "quota"
-	quotaTypeList = "quotaList"
-
-	reportnothings        = "reportnothings"
-	reportnothingType     = "reportnothing"
-	reportnothingTypeList = "reportnothingList"
-
 	templates        = "templates"
 	templateType     = "template"
 	templateTypeList = "templateList"
-
-	tracespans        = "tracespans"
-	tracespanType     = "tracespan"
-	tracespanTypeList = "tracespanList"
 )
 
 var (
@@ -364,88 +240,8 @@ var (
 			collectionKind: adapterTypeList,
 		},
 		{
-			objectKind:     bypassType,
-			collectionKind: bypassTypeList,
-		},
-		{
-			objectKind:     circonusType,
-			collectionKind: circonusTypeList,
-		},
-		{
-			objectKind:     cloudwatchType,
-			collectionKind: cloudwatchTypeList,
-		},
-		{
-			objectKind:     denierType,
-			collectionKind: denierTypeList,
-		},
-		{
-			objectKind:     dogstatsdType,
-			collectionKind: dogstatsdTypeList,
-		},
-		{
-			objectKind:     fluentdType,
-			collectionKind: fluentdTypeList,
-		},
-		{
 			objectKind:     handlerType,
 			collectionKind: handlerTypeList,
-		},
-		{
-			objectKind:     kubernetesenvType,
-			collectionKind: kubernetesenvTypeList,
-		},
-		{
-			objectKind:     listcheckerType,
-			collectionKind: listcheckerTypeList,
-		},
-		{
-			objectKind:     memquotaType,
-			collectionKind: memquotaTypeList,
-		},
-		{
-			objectKind:     noopType,
-			collectionKind: noopTypeList,
-		},
-		{
-			objectKind:     opaType,
-			collectionKind: opaTypeList,
-		},
-		{
-			objectKind:     prometheusType,
-			collectionKind: prometheusTypeList,
-		},
-		{
-			objectKind:     rbacType,
-			collectionKind: rbacTypeList,
-		},
-		{
-			objectKind:     redisquotaType,
-			collectionKind: redisquotaTypeList,
-		},
-		{
-			objectKind:     signalfxType,
-			collectionKind: signalfxTypeList,
-		},
-		{
-			objectKind:     solarwindsType,
-			collectionKind: solarwindsTypeList,
-		},
-		{
-			objectKind:     stackdriverType,
-			collectionKind: stackdriverTypeList,
-		},
-		{
-			objectKind:     statsdType,
-			collectionKind: statsdTypeList,
-		},
-		{
-			objectKind:     stdioType,
-			collectionKind: stdioTypeList,
-		},
-		{
-			objectKind:     zipkinType,
-			collectionKind: zipkinTypeList,
 		},
 	}
 
@@ -454,56 +250,12 @@ var (
 		collectionKind string
 	}{
 		{
-			objectKind:     apikeyType,
-			collectionKind: apikeyTypeList,
-		},
-		{
-			objectKind:     authorizationType,
-			collectionKind: authorizationTypeList,
-		},
-		{
-			objectKind:     checknothingType,
-			collectionKind: checknothingTypeList,
-		},
-		{
-			objectKind:     edgeType,
-			collectionKind: edgeTypeList,
-		},
-		{
-			objectKind:     kubernetesType,
-			collectionKind: kubernetesTypeList,
-		},
-		{
 			objectKind:     instanceType,
 			collectionKind: instanceTypeList,
 		},
 		{
-			objectKind:     listEntryType,
-			collectionKind: listEntryTypeList,
-		},
-		{
-			objectKind:     logentryType,
-			collectionKind: logentryTypeList,
-		},
-		{
-			objectKind:     metricType,
-			collectionKind: metricTypeList,
-		},
-		{
-			objectKind:     quotaType,
-			collectionKind: quotaTypeList,
-		},
-		{
-			objectKind:     reportnothingType,
-			collectionKind: reportnothingTypeList,
-		},
-		{
 			objectKind:     templateType,
 			collectionKind: templateTypeList,
-		},
-		{
-			objectKind:     tracespanType,
-			collectionKind: tracespanTypeList,
 		},
 	}
 
@@ -543,44 +295,13 @@ var (
 	// Used for fetch istio actions details, so only applied to handlers (adapters) and instances (templates) types
 	// It should be one entry per adapter/template
 	adapterPlurals = map[string]string{
-		adapterType:       adapters,
-		bypassType:        bypasses,
-		circonusType:      circonuses,
-		cloudwatchType:    cloudwatches,
-		denierType:        deniers,
-		dogstatsdType:     dogstatsds,
-		fluentdType:       fluentds,
-		handlerType:       handlers,
-		kubernetesenvType: kubernetesenvs,
-		listcheckerType:   listcheckers,
-		memquotaType:      memquotas,
-		noopType:          noops,
-		opaType:           opas,
-		prometheusType:    prometheuses,
-		rbacType:          rbacs,
-		redisquotaType:    redisquotas,
-		signalfxType:      signalfxs,
-		solarwindsType:    solarwindses,
-		stackdriverType:   stackdrivers,
-		statsdType:        statsds,
-		stdioType:         stdios,
-		zipkinType:        zipkins,
+		adapterType: adapters,
+		handlerType: handlers,
 	}
 
 	templatePlurals = map[string]string{
-		apikeyType:        apikeys,
-		authorizationType: authorizations,
-		checknothingType:  checknothings,
-		edgeType:          edges,
-		instanceType:      instances,
-		kubernetesType:    kuberneteses,
-		listEntryType:     listEntries,
-		logentryType:      logentries,
-		metricType:        metrics,
-		quotaType:         quotas,
-		reportnothingType: reportnothings,
-		templateType:      templates,
-		tracespanType:     tracespans,
+		instanceType: instances,
+		templateType: templates,
 	}
 
 	PluralType = map[string]string{
@@ -597,43 +318,12 @@ var (
 		quotaspecbindings: quotaspecbindingType,
 
 		// Adapters
-		adapters:       adapterType,
-		bypasses:       bypassType,
-		circonuses:     circonusType,
-		cloudwatches:   cloudwatchType,
-		deniers:        denierType,
-		dogstatsds:     dogstatsdType,
-		fluentds:       fluentdType,
-		handlers:       handlerType,
-		kubernetesenvs: kubernetesenvType,
-		listcheckers:   listcheckerType,
-		memquotas:      memquotaType,
-		noops:          noopType,
-		opas:           opaType,
-		prometheuses:   prometheusType,
-		rbacs:          rbacType,
-		redisquotas:    redisquotaType,
-		signalfxs:      signalfxType,
-		solarwindses:   solarwindsType,
-		stackdrivers:   stackdriverType,
-		statsds:        statsdType,
-		stdios:         stdioType,
-		zipkins:        zipkinType,
+		adapters: adapterType,
+		handlers: handlerType,
 
 		// Templates
-		apikeys:        apikeyType,
-		authorizations: authorizationType,
-		checknothings:  checknothingType,
-		edges:          edgeType,
-		instances:      instanceType,
-		kuberneteses:   kubernetesType,
-		listEntries:    listEntryType,
-		logentries:     logentryType,
-		metrics:        metricType,
-		quotas:         quotaType,
-		reportnothings: reportnothingType,
-		templates:      templateType,
-		tracespans:     tracespanType,
+		instances: instanceType,
+		templates: templateType,
 
 		// Policies
 		policies:            policyType,
